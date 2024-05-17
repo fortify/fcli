@@ -1,1 +1,36 @@
+task zipResources_templates(type: Zip) {
+    destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/common")
+    archiveFileName = "actions.zip"
+    from("${projectDir}/src/main/resources//com/fortify/cli/common/actions/zip") {
+        // TODO We should also sign file; how do we invoke a sign operation from Gradle?
+        filter(line->project.version.startsWith('0.')
+            ? line 
+            : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json", "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"))
+    }
+}
+
 apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
+
+// Generate build properties and associated resource-config.json file
+ext.buildPropertiesDir = "${buildDir}/generated-build-properties"
+task generateFcliBuildProperties {
+    doLast {
+        def outputDir = "${buildPropertiesDir}/com/fortify/cli/common"
+        mkdir "${outputDir}"
+        ant.propertyfile(file: "${outputDir}/fcli-build.properties") {
+            entry(key: "projectName", value: "fcli")
+            entry(key: "projectVersion", value: project.version)
+            entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
+            entry(key: "actionSchemaVersion", value: fcliActionSchemaVersion)
+        }
+        def resourceConfigOutputDir = "${buildPropertiesDir}/META-INF/native-image/fcli-build-properties"
+        mkdir "${resourceConfigOutputDir}"
+        def contents =
+            '{"resources":[\n' +
+            '  {"pattern":"com/fortify/cli/common/fcli-build.properties"}\n' +
+            ']}\n'
+        file("${resourceConfigOutputDir}/resource-config.json").text = contents;
+        println contents
+    }
+}
+sourceSets.main.output.dir buildPropertiesDir, builtBy: generateFcliBuildProperties

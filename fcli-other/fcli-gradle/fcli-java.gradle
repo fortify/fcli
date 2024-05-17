@@ -7,6 +7,24 @@ java {
 	targetCompatibility = JavaVersion.toVersion("17")
 }
 
+/*
+eclipse {
+    classpath {
+        file.whenMerged { cp ->
+            cp.entries.add( new org.gradle.plugins.ide.eclipse.model.SourceFolder('src/main/zipped-resources', null) )
+        }
+    }
+}
+*/
+sourceSets {
+    main {
+        resources {
+            exclude '**/zip/*'
+            exclude '**/zip'
+        }
+    }
+}
+
 dependencies {
 	implementation platform(project("${fcliBomRef}"))
 	annotationProcessor platform(project("${fcliBomRef}"))
@@ -60,8 +78,11 @@ dependencies {
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	//required for unpacking tar.gz (debricked cli)
-	implementation('org.apache.commons:commons-compress')
+    // Required for unpacking tar.gz (debricked cli)
+    implementation('org.apache.commons:commons-compress')
+    
+    // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
+    implementation('org.jsoup:jsoup')
 }
     
 compileJava {
@@ -81,16 +102,42 @@ test {
 		showStandardStreams = true
 	}
 }
+
+ext.generatedZipResourcesDir = "${buildDir}/generated-zip-resources"
+/* For some reason the below doesn't work, probably related to https://github.com/gradle/gradle/issues/24368
+ * For now, we just have dedicated zip tasks in SSC/FoD build.gradle files
+fileTree(dir: 'src/main/zipped-resources')
+    .visit { e -> if ( e.isDirectory() && e.name=='zip' ) {
+        def zipTaskName = "zipResources_${e.path.replaceAll('/', '_')}" 
+        def destDir = "$generatedZipResourcesDir/${e.relativePath}"
+        def zipName = "${e.relativePath.parent.lastName}.zip"
+        def from    = "${e.file.absolutePath}"
+        println "zipTaskName: $zipTaskName"
+        println "destDir:     $destDir"
+        println "zipName:     $zipName"
+        println "from:        $from"
+        tasks.create(name: "$zipTaskName", type: Zip) {
+            destinationDirectory = file("$destDir")
+            archiveFileName = "$zipName"
+            from = file("$from")
+        }
+    }}
+*/
+task generateZipResources(dependsOn: tasks.matching { Task task -> task.name.startsWith("zipResources_")})
+sourceSets.main.output.dir generatedZipResourcesDir, builtBy: generateZipResources
     
 // Generate resource-config.json
 ext.generatedResourceConfigDir = "${buildDir}/generated-resource-config"
 tasks.register('generateResourceConfig') {
+    dependsOn = [generateZipResources]
 	doLast {
 		def outputDir = "${generatedResourceConfigDir}/META-INF/native-image/fcli-generated/${project.name}";
 		mkdir "${outputDir}"
 		def entries = [];
-		fileTree(dir: 'src/main/resources', excludes: ['**/i18n/**', 'META-INF/**'])
+		fileTree(dir: 'src/main/resources', excludes: ['**/i18n/**', 'META-INF/**', '**/zip/**'])
 			.visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
+        fileTree(dir: generatedZipResourcesDir)
+            .visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
 		if ( entries.size>0 ) {
 			def contents = '{"resources":[' + entries.join(",") + '\n]}';
 			file("${outputDir}/resource-config.json").text = contents;

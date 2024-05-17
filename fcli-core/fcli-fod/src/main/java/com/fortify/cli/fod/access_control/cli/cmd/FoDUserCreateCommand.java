@@ -21,7 +21,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.access_control.helper.FoDUserCreateRequest;
 import com.fortify.cli.fod.access_control.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;

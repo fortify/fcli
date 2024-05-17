@@ -111,12 +111,13 @@ public final class FortifyCLIDynamicInitializer {
     
     @Command(name = "fcli")
     @RequiredArgsConstructor
-    public static final class FortifyCLIInitializerCommand extends AbstractRunnableCommand implements Runnable {
+    public static final class FortifyCLIInitializerCommand extends AbstractRunnableCommand {
         private final Consumer<GenericOptionsArgGroup> consumer;
         
         @Override
-        public void run() {
+        public Integer call() {
             consumer.accept(getGenericOptions());
+            return 0;
         }
     }
 }

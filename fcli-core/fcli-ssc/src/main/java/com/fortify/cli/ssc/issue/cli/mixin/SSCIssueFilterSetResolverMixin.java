@@ -28,10 +28,14 @@ public class SSCIssueFilterSetResolverMixin {
         public SSCIssueFilterSetDescriptor getFilterSetDescriptor(UnirestInstance unirest, String appVersionId) {
             return new SSCIssueFilterSetHelper(unirest, appVersionId).getDescriptorByTitleOrId(getFilterSetTitleOrId(), true);
         }
+        
+        public String getFilterSetId(UnirestInstance unirest, String appVersionId) {
+            return getFilterSetDescriptor(unirest, appVersionId).getGuid();
+        }
     }
     
     public static class FilterSetOption extends AbstractSSCFilterSetResolverMixin {
-        @Option(names="--filterset", descriptionKey = "fcli.ssc.issue.filterset.resolver.titleOrId")
+        @Option(names={"--filterset", "--fs"}, descriptionKey = "fcli.ssc.issue.filterset.resolver.titleOrId")
         @Getter private String filterSetTitleOrId;
     }
     

@@ -1,21 +1,22 @@
 package com.fortify.cli.ftest.ssc;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
-import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
+import com.fortify.cli.ftest._common.spec.Global
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 import com.fortify.cli.ftest.ssc._common.SSCLocalUserSupplier
+
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("ssc.appversion-user") @FcliSession(SSC) @Stepwise
 class SSCAccessControlAppVersionUserSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
+    @Global(SSCAppVersionSupplier.Empty.class) SSCAppVersionSupplier versionSupplier;
     @Shared @AutoCleanup SSCLocalUserSupplier userSupplier = new SSCLocalUserSupplier()
     
     def "list"() {

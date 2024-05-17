@@ -19,9 +19,9 @@ import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVe
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector;
-import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector.MspReportScanCollectorState;
 import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.license.msp_report.config.MspReportSSCSourceConfig;
 import com.fortify.cli.license.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
@@ -154,7 +154,7 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
             .peek(d->resultsCollector().artifactCollector().report(sourceConfig(), versionDescriptor, d))
             .flatMap(MspReportSSCScanDescriptor::from)
             .map(scanCollector::report)
-            .filter(MspReportScanCollectorState.DONE::equals)
+            .filter(Break.TRUE::equals)
             .findFirst()
             .isPresent();
         continueNextPageSupplier.setLoadNextPage(!done);

@@ -15,6 +15,7 @@ package com.fortify.cli.fod._common.scan.helper.dast;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

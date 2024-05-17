@@ -12,11 +12,12 @@
  */
 package com.fortify.cli.ftest.ssc
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
+import com.fortify.cli.ftest._common.spec.Global
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
@@ -27,7 +28,7 @@ import spock.lang.Shared
 @Prefix("ssc.activity-feed") @FcliSession(SSC)
 @Requires({System.getProperty('ft.include.long-running')})
 class SSCSystemStateActivitySpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
+    @Global(SSCAppVersionSupplier.Empty.class) SSCAppVersionSupplier versionSupplier;
     
     def "list"() {
         def args = "ssc state list-activities"

@@ -9,7 +9,7 @@ on:
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
   graal_distribution: graalvm-community
-  graal_java_version: 17
+  graal_java_version: 21
           
 jobs:
   build:
@@ -101,7 +101,6 @@ jobs:
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
-          components: 'native-image'
           native-image-musl: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
       
@@ -151,7 +150,6 @@ jobs:
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/download-artifact@v4
@@ -165,10 +163,11 @@ jobs:
       - name: Create native fcli
         run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
-      - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
-        with:
-          files: fcli
+      # Disabled for now, as compressed binaries crash on macOS Ventura or above
+      #- name: Compress native fcli
+      #  uses: svenstaro/upx-action@v2
+      #  with:
+      #    files: fcli
 
       - name: Basic test of native fcli
         run: ./fcli --help && ./fcli get --help
@@ -190,7 +189,6 @@ jobs:
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/download-artifact@v4
@@ -236,6 +234,17 @@ jobs:
         with:
           path: ./artifacts
           merge-multiple: true
+      - run: |
+          cd ./artifacts/release-assets
+          for f in *; do 
+            sha256sum ${f} > ${f}.sha256
+          done
+          for f in *; do 
+            openssl dgst -sha256 -passin env:SIGN_PASSPHRASE -sign <(echo "${SIGN_KEY}") -out ${f}.rsa_sha256 ${f}
+          done
+        env:
+          SIGN_PASSPHRASE: ${{ secrets.SIGN_PASSPHRASE }}
+          SIGN_KEY: ${{ secrets.SIGN_KEY }}
       - uses: actions/upload-artifact@v4
         with:
           path: ./artifacts
@@ -292,7 +301,7 @@ jobs:
   publishPages:
     name: publishPages
     if: needs.build.outputs.do_release
-    needs: [build, release, combine-artifacts]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Check-out existing docs from gh-pages branch
@@ -305,7 +314,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
-          name: combined-artifacts
+          name: build-output
           
       - name: Update documentation from artifact
         run: |
@@ -335,7 +344,7 @@ jobs:
           ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
           
       - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs

@@ -12,28 +12,36 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.scan.cli.mixin;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import lombok.Setter;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.cli.util.EnvSuffix;
-import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod._common.scan.helper.FoDScanType;
-
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
-
 public class FoDScanResolverMixin {
 
-    public static abstract class AbstractFoDScanResolverMixin {
-        public abstract String getScanId();
+    public static abstract class AbstractFoDScanResolverMixin implements IFoDDelimiterMixinAware  {
+        @Setter private FoDDelimiterMixin delimiterMixin;
+        public abstract String getReleaseQualifiedScanOrId();
 
         public FoDScanDescriptor getScanDescriptor(UnirestInstance unirest) {
-            return FoDScanHelper.getScanDescriptor(unirest, getScanId());
+            var releaseQualifiedScanOrId = getReleaseQualifiedScanOrId();
+            return StringUtils.isBlank(releaseQualifiedScanOrId)
+                    ? null
+                    : FoDScanHelper.getScanDescriptor(unirest, releaseQualifiedScanOrId, getDelimiter());
         }
         
         public FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, FoDScanType scanType) {
@@ -47,13 +55,24 @@ public class FoDScanResolverMixin {
         public String getScanId(UnirestInstance unirest) {
             return getScanDescriptor(unirest).getScanId();
         }
+
+        public final String getDelimiter() {
+            return delimiterMixin.getDelimiter();
+        }
+
     }
 
-    public static abstract class AbstractFoDMultiScanResolverMixin {
-        public abstract String[] getScanIds();
+    public static abstract class AbstractFoDMultiScanResolverMixin implements IFoDDelimiterMixinAware {
+        @Setter private FoDDelimiterMixin delimiterMixin;
+
+        public abstract String[] getReleaseQualifiedScanOrIds();
+
+        public boolean containsReleaseId() {
+            return Arrays.stream(getReleaseQualifiedScanOrIds()).anyMatch((e) -> e.contains(getDelimiter()));
+        }
 
         public FoDScanDescriptor[] getScanDescriptors(UnirestInstance unirest) {
-            return Stream.of(getScanIds()).map(id->FoDScanHelper.getScanDescriptor(unirest, id)).toArray(FoDScanDescriptor[]::new);
+            return Stream.of(getReleaseQualifiedScanOrIds()).map(id -> FoDScanHelper.getScanDescriptor(unirest, id, delimiterMixin.getDelimiter())).toArray(FoDScanDescriptor[]::new);
         }
 
         public Collection<JsonNode> getScanDescriptorJsonNodes(UnirestInstance unirest) {
@@ -63,26 +82,31 @@ public class FoDScanResolverMixin {
         public String[] getScanIds(UnirestInstance unirest) {
             return Stream.of(getScanDescriptors(unirest)).map(FoDScanDescriptor::getScanId).toArray(String[]::new);
         }
+
+        public final String getDelimiter() {
+            return delimiterMixin.getDelimiter();
+        }
+
     }
 
     public static class RequiredOption extends AbstractFoDScanResolverMixin {
         @EnvSuffix("SCAN") @Option(names = {"--scan"}, required = true)
-        @Getter private String scanId;
+        @Getter private String releaseQualifiedScanOrId;
     }
 
     public static class RequiredOptionMulti extends AbstractFoDMultiScanResolverMixin {
         @EnvSuffix("SCANS") @Option(names = {"--scans"}, required=true, split=",", descriptionKey = "fcli.fod.scan.scan-id")
-        @Getter private String[] scanIds;
+        @Getter private String[] releaseQualifiedScanOrIds;
     }
 
     public static class PositionalParameter extends AbstractFoDScanResolverMixin {
         @EnvSuffix("SCAN") @Parameters(index = "0", arity = "1", paramLabel="scan-id", descriptionKey = "fcli.fod.scan.scan-id")
-        @Getter private String scanId;
+        @Getter private String releaseQualifiedScanOrId;
     }
 
     public static class PositionalParameterMulti extends AbstractFoDMultiScanResolverMixin {
         @EnvSuffix("SCANS") @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "fcli.fod.scan.scan-id")
-        @Getter private String[] scanIds;
+        @Getter private String[] releaseQualifiedScanOrIds;
     }
 
 }

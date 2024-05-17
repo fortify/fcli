@@ -12,14 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast.rest.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
-import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastControllerProductHelperBasicMixin;
-import com.fortify.cli.sc_sast._common.rest.helper.SCSastInputTransformer;
+import com.fortify.cli.sc_sast._common.rest.helper.SCSastControllerProductHelper;
+import com.fortify.cli.sc_sast._common.session.cli.mixin.SCSastControllerUnirestInstanceSupplierMixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -29,20 +27,6 @@ import picocli.CommandLine.Mixin;
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT) // Output columns depend on response contents
 public final class SCSastControllerRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private OutputHelperMixins.RestCall outputHelper;
-    @Getter @Mixin private SCSastControllerProductHelperBasicMixin productHelper;
-    
-    @Override
-    protected INextPageUrlProducer _getNextPageUrlProducer() {
-        return null;
-    }
-    
-    @Override
-    protected JsonNode _transformInput(JsonNode input) {
-        return SCSastInputTransformer.getItems(input);
-    }
-    
-    @Override
-    protected JsonNode _transformRecord(JsonNode input) {
-        return input;
-    }
+    @Getter @Mixin private SCSastControllerUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    @Getter private final SCSastControllerProductHelper productHelper = SCSastControllerProductHelper.INSTANCE;
 }

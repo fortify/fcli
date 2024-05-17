@@ -31,7 +31,7 @@ class ToolScClientSpec extends FcliBaseSpec {
     @Shared Path binScript = Path.of(baseDir).resolve("sc-client/${version}/bin/scancentral.bat")
     
     def "install"() {
-        def args = "tool sc-client install -y -v=${version} --progress=none -b ${baseDir}"
+        def args = "tool sc-client install -y -v=${version} -b ${baseDir} --progress none"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -57,7 +57,7 @@ class ToolScClientSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool sc-client uninstall -y --progress=none -v=${version}"
+        def args = "tool sc-client uninstall -y -v=${version} --progress none"
         when:
             def result = Fcli.run(args)
         then:

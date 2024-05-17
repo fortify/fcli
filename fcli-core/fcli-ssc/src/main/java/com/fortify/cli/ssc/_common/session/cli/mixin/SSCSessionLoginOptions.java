@@ -24,6 +24,7 @@ import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
@@ -78,5 +79,13 @@ public class SSCSessionLoginOptions {
     public static class SSCCITokenCredentialOptions {
         @Option(names = {"--ci-token"}, interactive = true, echo = false, arity = "0..1", required = true)
         @Getter private char[] token;
+    }
+    
+    @Command
+    public static final class SSCUrlConfigOptions extends UrlConfigOptions {
+        @Override
+        protected int getDefaultSocketTimeoutInMillis() {
+            return 600000;
+        }
     }
 }

@@ -32,6 +32,6 @@ import picocli.CommandLine;
                 FoDOssScanWaitForCommand.class,
         }
 )
-@DefaultVariablePropertyName("scanId")
+@DefaultVariablePropertyName("releaseAndScanId")
 public class FoDOssScanCommands extends AbstractContainerCommand {
 }

@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.fod;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.FOD
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.FOD
 
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
@@ -83,7 +83,7 @@ class FoDScanSpec extends FcliBaseSpec {
             while(true){
                 def result = Fcli.run("fod rest call ${relScanurl}")
                 if(result.stdout.findAll{
-                    element -> element.contains("analysisStatusType: \"Completed\"")}.size()==4) {
+                    element -> element.contains("analysisStatusType: Completed")}.size()==4) {
                     success=true;
                     break;
                 } else if(System.currentTimeMillis()-start > timeoutMs) {
@@ -114,7 +114,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                //it.any {it.contains("applicationName: \"${webApp.get().appName}\"")}
+                //it.any {it.contains("applicationName: ${webApp.get().appName}")}
             }
     }
     
@@ -135,7 +135,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it.last().contains("state: \"Configured\"")
+                it.last().contains("state: Configured")
             }
     }
     /*
@@ -179,7 +179,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                //it.any {it.contains("applicationName: \"${webApp.get().appName}\"")}
+                //it.any {it.contains("applicationName: ${webApp.get().appName}")}
             }
     }
     
@@ -190,7 +190,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it.last().contains("state: \"Not configured\"")
+                it.last().contains("state: Not configured")
             }
     }
     
@@ -234,7 +234,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                //it.any {it.contains("applicationName: \"${webApp.get().appName}\"")}
+                //it.any {it.contains("applicationName: ${webApp.get().appName}")}
             }
     }
     
@@ -245,7 +245,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it.last().contains("state: \"Not configured\"")
+                it.last().contains("state: Not configured")
             }
     }
     
@@ -289,7 +289,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                //it.any {it.contains("applicationName: \"${webApp.get().appName}\"")}
+                //it.any {it.contains("applicationName: ${webApp.get().appName}")}
             }
     }
     
@@ -300,7 +300,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it.last().contains("state: \"Not configured\"")
+                it.last().contains("state: Not configured")
             }
     }
     

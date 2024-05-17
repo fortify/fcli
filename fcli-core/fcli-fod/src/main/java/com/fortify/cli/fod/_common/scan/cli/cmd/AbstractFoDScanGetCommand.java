@@ -15,7 +15,7 @@ package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 

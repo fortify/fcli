@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ftest.ssc
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -45,7 +45,7 @@ class SSCAccessControlPermissionSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"user_view\"")
+                it[1].equals("id: user_view")
             }
     }
     
@@ -56,7 +56,7 @@ class SSCAccessControlPermissionSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"user_view\"")
+                it[1].equals("id: user_view")
             }
     }
 }

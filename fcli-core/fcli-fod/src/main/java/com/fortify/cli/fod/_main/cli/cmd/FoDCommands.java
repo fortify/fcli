@@ -15,8 +15,10 @@ package com.fortify.cli.fod._main.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.access_control.cli.cmd.FoDAccessControlCommands;
+import com.fortify.cli.fod.action.cli.cmd.FoDActionCommands;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.dast_scan.cli.cmd.FoDDastScanCommands;
+import com.fortify.cli.fod.issue.cli.cmd.FoDIssueCommands;
 import com.fortify.cli.fod.mast_scan.cli.cmd.FoDMastScanCommands;
 import com.fortify.cli.fod.microservice.cli.cmd.FoDMicroserviceCommands;
 import com.fortify.cli.fod.oss_scan.cli.cmd.FoDOssScanCommands;
@@ -42,6 +44,7 @@ import picocli.CommandLine.Command;
                 // - If it makes sense to 'group' related entities, like app, microservice
                 //   and release
                 FoDSessionCommands.class,
+                FoDActionCommands.class,
                 FoDAccessControlCommands.class,
                 FoDAppCommands.class,
                 FoDMicroserviceCommands.class,
@@ -50,6 +53,7 @@ import picocli.CommandLine.Command;
                 FoDDastScanCommands.class,
                 FoDMastScanCommands.class,
                 FoDOssScanCommands.class,
+                FoDIssueCommands.class,
                 FoDReportCommands.class,
                 FoDRestCommands.class,
 

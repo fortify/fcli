@@ -1,0 +1,239 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+# Depending on your IDE/YAML editor, the yaml-language-server comment or the $schema property 
+# above may be used to associate the action YAML file with the action YAML schema. This allows 
+# for your IDE/editor to provide code completion, displaying property descriptions, and validating 
+# the action YAML file. Fcli requires at least one of these to be present to determine whether 
+# current fcli version is compatible with the given schema. If your IDE/editor supports the 
+# yaml-language-server comment, you can remove the $schema line and vice versa. Note that the
+# yaml-language-server line must remain as a comment (don't remove the leading hash-sign), 
+# whereas $schema must be a regular YAML property. If necessary you can have both, but schema 
+# location must be the same. By convention, these lines should appear at the top of the YAML 
+# document.
+
+# This action documents action syntax through comments for the various sections and
+# elements below. Many action properties accept Spring Expression Language (SpEL) 
+# template expressions, combining regular text with SpEL expressions embedded between ${ and }.
+# Please see the Sring Expression Language reference for details:
+# https://docs.spring.io/spring-framework/reference/6.0/core/expressions.html
+
+# This section defines action usage information, consisting of a usage header (shown 
+# by the 'list' and 'help' commands) and a more detailed description (shown by the 
+# 'help' command).
+
+author: Fortify
+usage:
+  header: Sample Action 
+  description: |
+    This action documents action syntax to allow users to build their own custom actions.
+    Note that action syntax is subject to change. Custom action YAML files that work fine 
+    on the current fcli version may not work on either older or newer fcli versions, and 
+    thus may need to be updated when upgrading fcli. Please see this link for details: 
+    https://github.com/fortify/fcli/issues/515
+    
+# This section lists action parameters that action users can provide as command-line 
+# options when running the action. Parameter values can be referenced through the
+# 'parameters' property in SpEL expressions. Each parameter entry supports the
+# following properties:
+# - name:           Required parameter name, used to generate CLI option name and
+#                   for referencing the parameter in SpEL expressions.
+# - cliAliases:     Optional CLI option aliases.
+# - description:    Required parameter description shown in action help output.
+# - required:       Optional, either 'true' or 'false' to indicate whether the 
+#                   parameter is required. Parameters are required by default.
+# - defaultValue:   Optional SpEL template expression that defines the default value 
+#                   for the parameter if not specified by the user.
+# - type:           Optional parameter type, defaults to 'string'; see below.
+# - typeParameters: Map of parameters for the given type; see below. Type parameter
+#                   values may use SpEL template expressions.
+#
+# By default, parameters values are simple string values as supplied by the user. 
+# Based on the given type, fcli may convert the user-supplied value to different
+# types and/or perform additional processing, potentially generating a complex 
+# value with sub-properties. The following types are currently supported:
+#
+# Generic:
+# - string:            No conversion; use the user-supplied value as a string
+# - boolean:           Convert the user-supplief value ('true' or 'false') to boolean
+# - int:               Convert the user-supplied numeric value to an int-value
+# - long:              Convert the user-supplied numeric value to a long-value
+# - double:            Convert the user-supplied numeric value to a double-value
+# - float:             Convert the user-supplied numeric value to a float-value
+#
+# FoD-only:
+# - release_single:    Load the release JSON object for the user-supplied release 
+#                      name or id
+#
+# SSC-only:
+# - appversion_single: Load the application version JSON object for the user-supplied 
+#                      application version name or id
+# - filterset:         Load the filterset JSON object for the user-supplied filter
+#                      set name or id. Takes a typeParameter named 'appversion.id', 
+#                      which defaults to '${appversion.id}'; if a parameter of this
+#                      type is preceded by an appversion_single parameter named 
+#                      'appversion', no type parameters need to be specified.
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Output file name (or 'stdout' / 'stderr'). Default value: sample.json"
+    required: false
+    defaultValue: sample.md
+  - name: github-token
+    description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_TOKEN')}    
+  - name: github-org
+    cliAliases: gho
+    description: GitHub owner/organization for which to list repositories
+    required: false
+    defaultValue: fortify
+  # See SSC/FoD-specific actions for examples on how to load application 
+  # versions/releases and SSC filter sets.
+
+# Optional property for adding request targets. By default, fcli provides request targets
+# corresponding to the module that provides a certain action, i.e.:
+# - The 'fcli fod' module provides an 'fod' request target for interacting with FoD
+# - The 'fcli ssc' module provides an 'ssc' request target for interacting with SSC
+# - Not available yet, but 'fcli sc-sast' and 'fcli sc-dast' modules will provide
+#   both 'ssc' and respectively 'sc-sast'/'sc-dast' request targets.
+# Adding request targets allows an action to interact with other (3rd-party) systems
+# like GitHub or GitLab.
+addRequestTargets:
+  - name: github
+    baseUrl: https://api.github.com
+    headers:
+      Authorization: Bearer ${parameters['github-token']}
+      'X-GitHub-Api-Version': '2022-11-28'
+
+# This section allows for setting default values for some properties. For now, a default
+# request target is the only supported property, avoiding the need to explicitly set a 
+# request target on every request element.
+defaults:
+  requestTarget: github
+  
+# This section defines the steps to be executed for this action. Steps are executed 
+# sequentually. The following step types are currently supported:
+# - progress: Takes an SpEL expression to generate a progress message
+# - requests: Execute one or more requests
+# - set:      Set a data value for use by subsequent or nested steps
+# - append:   Set a data value by appending the given value to a new or existing array or object
+# - write:    Write data to stdout, stderr or a file
+# See below for more information on each step type.
+steps:
+    # Output a progress message based on an SpEL expression
+  - progress: Processing organization ${parameters['github-org']}
+    # Execute one or more requests. Requests within a single requests block
+    # may not depend on each others output data, as they may be executed
+    # in parallel or as a single (SSC) bulk request. Only (REST) requests 
+    # that return JSON data are currently supported. Each request element
+    # supports the following properties:
+    # - if:                Optional; only execute this request if the given SpEL 
+    #                      template expression evaluates to 'true'.
+    # - name:              Required request name. Subsequent steps can reference 
+    #                      raw request JSON output through the <request-name>_raw 
+    #                      property. For FoD/SSC, actual contents (i.e., contents 
+    #                      of the SSC 'data' property or FoD 'items' property) is 
+    #                      available through the <request-name> property.
+    # - target:            Target for this request, i.e., 'ssc', 'fod', ...
+    # - method:            Optional HTTP method, defaults to GET.
+    # - uri:               Required request URI, takes an SpEL template expression.
+    # - query:             Optional map of query parameters; query parameter values
+    #                      may be specified as SpEL template expressions. 
+    # - body:              Optional request body, takes an SpEL expression.
+    # - type:              Either 'simple' or 'paged', with the latter automatically
+    #                      loading subsequent pages (SSC/FoD-only).
+    # - onFail:            Action to take if request fails, either 'error', 'warn' or 'ignore'.
+    #                      Default value: 'error'
+    # - pagingProgress:    Optional; allows for outputting paging-related progress messages.
+    #     prePageLoad:     SpEL expression defining progress message to be shown
+    #                      before a page is loaded from the target system.
+    #     postPageLoad:    SpEL expression defining progress message to be shown
+    #                      after a page is loaded from the target system.
+    #     postPageProcess: SpEL expression defining progress message to be shown
+    #                      after a page has been processed.
+    # - onResponse:        Optional; list of steps to execute after a response has been 
+    #                      received. These steps are executed for every page (if this is 
+    #                      a paged request), and before any forEach block is executed.
+    # - forEach:           Optional; process each record returned by the target system.
+    #     if:              Optional; only process the current record if the given SpEL
+    #                      template expression evaluates to 'true'.
+    #     breakIf:         Optional; stop processing current and subsequent records if
+    #                      the given SpEL template expression evaluates to 'true'.
+    #     name:            Required name for the current record; record data can be
+    #                      accessed through the given name in all steps listed in the
+    #                      'do' block.
+    #     embed:           Each entry defines another request, for which the output will
+    #                      be embedded in the current record under the request 'name' 
+    #                      property. For SSC, a single bulk request will be executed
+    #                      for all records in the current page.
+    #     do:              List of steps to be executed for the current record.
+  - requests:
+      # 
+    - name: repos
+      # if: ${true}
+      # target: github
+      # method: GET
+      uri: /orgs/${parameters['github-org']}/repos
+      query:
+        type: public
+        sort: updated
+      # body: ${reference to previously generated data property}
+      # type: simple # paged is only supported for FoD/SSC
+      # onFail: error
+      # pagingProgress:
+      #  prePageLoad: ...
+      #  postPageLoad: ...
+      #  postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+      # onResponse:
+      #  - steps
+      forEach:
+        # if: ${true}
+        # breakIf: ${false}
+        name: repo
+        # embed:
+        #  - name: releases
+        #    uri: /repos/${repo.full_name}/releases
+        do:
+          - append: # See documentation for 'append' below
+            - name: repositories
+              valueTemplate: repositories
+            - name: repositories_json
+              value: ${repo}
+  # Write one or more outputs. Each write element supports the following properties:
+  # - to: Required; either 'stdout', 'stderr' or a file name.
+  #   value: Required if no valueTemplate specified; SpEL template expression that generates the output to be written.
+  #   valueTemplate: Required if no value specified; template output for the given template name.            
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: output
+    - if: ${parameters.file!='stdout'}
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+# This section defines value templates for use with 'set', 'append' and 'write' steps. Each value template
+# supports the following properties:
+# - name:     Name of this value template
+# - contents: Contents of this value template; may either be an SpEL template
+#             expression that generates a string, or an object tree that defines
+#             value properties, with each property taking either a nested object
+#             tree or an SpEL template expression that defines property contents.
+valueTemplates:
+  - name: output
+    contents: |
+      # List of repositories
+      
+      ${#join('\n',repositories)}
+      
+      # Raw repositories JSON
+      
+      ```
+      ${repositories_json.toString()}
+      ```
+  - name: repositories
+    contents: |
+      ## ${repo.name}
+      
+      ${repo.description}
+      

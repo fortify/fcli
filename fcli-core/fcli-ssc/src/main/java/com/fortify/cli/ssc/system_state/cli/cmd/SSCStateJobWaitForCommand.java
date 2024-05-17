@@ -17,7 +17,7 @@ import java.util.Set;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperStandardMixin;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
 import com.fortify.cli.ssc.system_state.helper.SSCJobStatus;
 import com.fortify.cli.ssc.system_state.helper.SSCJobStatus.SSCJobStatusIterable;
@@ -30,7 +30,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = "wait-for-job") @CommandGroup("job")
 public class SSCStateJobWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SSCProductHelperStandardMixin productHelper;
+    @Getter @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
     @Mixin private SSCJobResolverMixin.PositionalParameterMulti jobsResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="FINISHED", completionCandidates = SSCJobStatusIterable.class)
     private Set<String> states;

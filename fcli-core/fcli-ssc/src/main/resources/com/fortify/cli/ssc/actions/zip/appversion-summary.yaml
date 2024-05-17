@@ -1,0 +1,244 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Generate application version summary. 
+  description: |
+    This action generates a short summary listing issue counts and other statistics
+    for a given application version. Based on user feedback on this initial version 
+    of this action, parameters and output of this action may change in the next 
+    couple of fcli releases.
+
+defaults:
+  requestTarget: ssc
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: stdout"
+    required: false
+    defaultValue: stdout
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  - name: filtersets
+    cliAliases: fs
+    description: "Comma-separated list of filter set names, guid's or 'default' to display in the summary. If not specified, all filter sets will be included."
+    required: false
+  
+steps:
+  # Set output date format and convert filtersets parameter to array
+  - set:
+    - name: dateFmt
+      value: YYYY-MM-dd HH:mm
+    - name: filtersetsArray
+      value: ${parameters.filtersets?.split(',')}
+    - name: issueStateNames
+      value: ${{'NEW', 'REINTRODUCED', 'REMOVED', 'UPDATED'}}
+  # Load SSC issue selector filter by sets
+  - progress: Loading issue selector sets
+  - requests:
+    - name: issueSelectorSet
+      uri:  /api/v1/projectVersions/${parameters.appversion.id}/issueSelectorSet?fields=filterBySet
+  - set:
+    - name: analysisTypes
+      value: ${issueSelectorSet.filterBySet.^[displayName=='Analysis Type'].selectorOptions}
+  - requests:
+    - if: ${analysisTypes!=null && analysisTypes.size()>0}
+      name: artifactsResponse
+      uri:  /api/v1/projectVersions/${parameters.appversion.id}/artifacts
+      type: paged
+      query:
+        embed: scans
+      forEach:
+        name: artifact
+        breakIf: ${analysizedScans?.![type]?.containsAll(analysisTypes.![displayName])?:false}
+        do:
+          - forEach:
+              values: ${artifact._embed.scans}
+              name: scan
+              do:
+                - append:
+                  - name:     lastScans
+                    if:       ${lastScans==null || lastScans[scan.type]==null}
+                    property: ${analysisTypes?.^[guid==#root.scan.type].displayName}
+                    value:    ${scan}
+                  - name:  analyzedScans
+                    value: ${scan}
+                    
+                    
+  # Collect SSC filter set data, together with issue counts by analysis type & folder
+  - requests:
+    - name: filterSetsResponse
+      uri:  /api/v1/projectVersions/${parameters.appversion.id}/filterSets
+      type: paged
+      forEach:
+        # Process each filter set if included by filtersets parameter value
+        name: filterset
+        if:   ${filtersetsArray==null || filtersetsArray.contains(filterset.title) || filtersetsArray.contains(filterset.guid) || (filtersetsArray.contains('default') && filterset.defaultFilterSet)}
+        do: 
+          - progress: Loading ${filterset.title} filter set data
+          # Collect filter sets
+          - append:
+            - name: filtersets
+              value: ${filterset}
+          # Collect issue counts for current filter set and each analysis type
+          - forEach:
+              name: analysisType
+              values: ${analysisTypes}
+              do:
+                # Load SSC issue counts by folder for current filter set and analysis type
+                - requests:
+                  - name: issueGroupsByFolder
+                    uri:  /api/v1/projectVersions/${parameters.appversion.id}/issueGroups
+                    query:
+                      qm: issues
+                      groupingtype: FOLDER
+                      filter: ISSUE[11111111-1111-1111-1111-111111111151]:${analysisType.guid}
+                      filterset: ${filterset.guid}
+                    type: paged
+                    forEach:
+                      name: issueGroupFolder
+                      do:
+                        # Collect issue count by filter set, analysis type & folder
+                        - append:
+                          - name: issueCountsByFolder
+                            property: ${filterset.title+':'+analysisType.displayName+':'+issueGroupFolder.id}
+                            value: ${issueGroupFolder.visibleCount}
+                  - name: issueGroupsByState
+                    uri:  /api/v1/projectVersions/${parameters.appversion.id}/issueGroups
+                    query:
+                      qm: issues
+                      groupingtype: 11111111-1111-1111-1111-111111111167
+                      filter: ISSUE[11111111-1111-1111-1111-111111111151]:${analysisType.guid}
+                      filterset: ${filterset.guid}
+                      showremoved: true
+                    type: paged
+                    forEach:
+                      name: issueGroupState
+                      do:
+                        # Collect issue count by filter set, analysis type & issue state
+                        - append:
+                          - name: issueCountsByState
+                            property: ${filterset.title+':'+analysisType.displayName+':'+issueGroupState.id} 
+                            value: ${issueGroupState.visibleCount}
+                            
+  - progress: Generating output data
+  
+  # For each filter set, generate the issue counts table
+  - forEach:
+      name: filterset
+      values: ${filtersets}
+      do:
+        # Clear variables for each filter set being processed
+        - unset:
+          - name: folderNames
+          - name: issueCountByFolderRows
+          - name: issueCountByStateRows
+        - set:
+          - name: folderTotals
+            value: ${{:}}
+          - name: stateTotals
+            value: ${{:}}
+        # Collect folder names from current filter set
+        - forEach:
+            name: folderName
+            values: ${filterset.folders.![name]}
+            do:
+              - append:
+                - name: folderNames
+                  value: ${folderName}
+        # For current filter set, generate an issue count table row for each analysis type
+        - forEach: 
+            name: analysisTypeName
+            if:   ${analysisTypes!=null}
+            values: ${analysisTypes.![displayName]}
+            do:
+              # Clear counts for each analysis type being processed
+              - unset:
+                - name: issueCountByFolderRowValues
+              # For each folder, collect issue counts for current filter set & analysis type
+              - forEach:
+                  name: folderName
+                  values: ${filterset.folders.![name]}
+                  do:
+                  - set:
+                    - name: folderIssueCount
+                      value: ${issueCountsByFolder[filterset.title+':'+analysisTypeName+':'+folderName]?:0}
+                  - append:
+                    - name: issueCountByFolderRowValues
+                      value: ${folderIssueCount}
+                    - name: folderTotals
+                      property: ${folderName}
+                      value: ${folderIssueCount + (folderTotals[folderName]?:0)}
+              # Generate issue count row for current filter set and analysis type, listing
+              # issue counts as collected above
+              - append:
+                - name: issueCountByFolderRows
+                  value: "| ${#fmt('%-22s', '**'+analysisTypeName+'**')} | ${#formatDateTime(dateFmt, lastScans[analysisTypeName].uploadDate)} | ${#join(' | ', issueCountByFolderRowValues.![#fmt('%10s', #this)])} |"
+        # For current filter set, generate an issue count table row for each issue state
+        - forEach: 
+            name: analysisTypeName
+            if:   ${analysisTypes!=null}
+            values: ${analysisTypes.![displayName]}
+            do:
+              # Clear counts for each analysis type being processed
+              - unset:
+                - name: issueCountByStateRowValues
+              # For each issue state, collect issue counts for current filter set & analysis type
+              - forEach:
+                  name: stateName
+                  values: ${issueStateNames}
+                  do:
+                  - set:
+                    - name: stateIssueCount
+                      value: ${issueCountsByState[filterset.title+':'+analysisTypeName+':'+stateName]?:0}
+                  - append:
+                    - name: issueCountByStateRowValues
+                      value: ${stateIssueCount}
+                    - name: stateTotals
+                      property: ${stateName}
+                      value: ${stateIssueCount + (stateTotals[stateName]?:0)}
+              # Generate issue count row for current filter set and analysis type, listing
+              # issue counts as collected above
+              - append:
+                - name: issueCountByStateRows
+                  value: "| ${#fmt('%-22s', '**'+analysisTypeName+'**')} | ${#formatDateTime(dateFmt, lastScans[analysisTypeName].uploadDate)} | ${#join(' | ', issueCountByStateRowValues.![#fmt('%13s', #this)])} |"        
+        # Combine the output of the steps above to generate full issue counts table for current filter set  
+        - append:
+          - name: issueCountsOutput
+            value: |
+              #### ${filterset.title} ${filterset.defaultFilterSet?'(default)':''}
+              | Analysis Type          | Last Scan Date   | ${#join(' | ', folderNames.![#fmt('%10s', #this)])} | 
+              | ---------------------- | ---------------- | ${#join(' | ', folderNames.!['----------'])} |
+              ${#join('\n', issueCountByFolderRows)}
+              | **Total**              |                  | ${#join(' | ', folderNames.![#fmt('%10s', #root.folderTotals?.getRealNode()?.get(#this)?:0)])} |
+              
+              | Analysis Type          | Last Scan Date   | New           | Re-introduced | Removed       | Updated       | 
+              | ---------------------- | ---------------- | ------------- | ------------- | ------------- | ------------- |
+              ${#join('\n', issueCountByStateRows)}
+              | **Total**              |                  | ${#join(' | ', issueStateNames.![#fmt('%13s', #root.stateTotals?.getRealNode()?.get(#this)?:0)])} |
+              
+  # Write output based on data collected above, and value template defined below 
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: summary-md
+    - if: ${parameters.file!='stdout'}
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: summary-md
+    contents: |
+      # SSC Application Version Summary
+      
+      ## [${parameters.appversion.project.name} - ${parameters.appversion.name}](${#ssc.appversionBrowserUrl(parameters.appversion)})
+      
+      Summary generated on: ${#formatDateTime(dateFmt)}
+      
+      ### Issue Counts
+      
+      ${#join('\n', issueCountsOutput)}
+      

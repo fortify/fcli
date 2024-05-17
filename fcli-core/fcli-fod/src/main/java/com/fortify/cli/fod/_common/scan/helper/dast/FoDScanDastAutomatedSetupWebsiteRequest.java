@@ -13,13 +13,19 @@
 
 package com.fortify.cli.fod._common.scan.helper.dast;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.fod._common.util.FoDEnums;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor

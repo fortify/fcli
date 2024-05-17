@@ -24,6 +24,7 @@ import java.util.TreeSet;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
+import com.fortify.cli.common.util.Break;
 import com.fortify.cli.license.msp_report.config.MspReportConfig;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppDescriptor;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppSummaryDescriptor;
@@ -62,12 +63,12 @@ public final class MspReportAppScanCollector implements AutoCloseable {
     
     /**
      * Report an SSC application version scan. 
-     * @return {@link MspReportScanCollectorState#DONE} is we're done processing
-     *         this application version, {@link MspReportScanCollectorState#DONE}
+     * @return {@link Break#TRUE} is we're done processing
+     *         this application version, {@link Break#TRUE}
      *         otherwise.
      */
     @SneakyThrows
-    public MspReportScanCollectorState report(MspReportSSCScanDescriptor scanDescriptor) {
+    public Break report(MspReportSSCScanDescriptor scanDescriptor) {
         addScan(scanDescriptor);
         return continueOrDone(scanDescriptor);
     }
@@ -99,7 +100,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
      *  <li>Both uploadDate and lastScanDate within reporting period</li>
      * </ol> 
      */
-    private MspReportScanCollectorState continueOrDone(MspReportSSCScanDescriptor scanDescriptor) {
+    private Break continueOrDone(MspReportSSCScanDescriptor scanDescriptor) {
         /*
         var licenseType = appDescriptor.getMspLicenseType();
         var uploadDateTime = scanDescriptor.getArtifactUploadDate();
@@ -110,7 +111,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
             return MspReportScanCollectorState.DONE;
         }
         */
-        return MspReportScanCollectorState.CONTINUE;
+        return Break.FALSE;
     }
     
     private void addScan(MspReportSSCScanDescriptor scanDescriptor) {
@@ -267,10 +268,6 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         return previousScan;
     }
 
-    public static enum MspReportScanCollectorState {
-        CONTINUE, DONE
-    }
-    
     @RequiredArgsConstructor
     public static enum MspReportArtifactEntitlementConsumedReason {
         beforeContractStartDate(MspReportArtifactEntitlementConsumed.none, true),

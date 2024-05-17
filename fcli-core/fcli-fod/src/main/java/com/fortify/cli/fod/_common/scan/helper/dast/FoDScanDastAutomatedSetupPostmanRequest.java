@@ -13,14 +13,15 @@
 
 package com.fortify.cli.fod._common.scan.helper.dast;
 
+import java.util.ArrayList;
+
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
 
 @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor

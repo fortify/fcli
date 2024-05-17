@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanConfigGetCommand;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyDescriptor;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyHelper;

@@ -16,7 +16,13 @@ package com.fortify.cli.fod._common.scan.helper.dast;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import lombok.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor

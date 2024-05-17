@@ -26,9 +26,9 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCDelimiterMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-
 import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;

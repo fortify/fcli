@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ftest.ssc
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -55,7 +55,7 @@ class SSCAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + roleSupplier.role.roleName + "\"")
+                it[2].equals("name: " + roleSupplier.role.roleName)
             }
     }
     
@@ -66,7 +66,7 @@ class SSCAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + roleSupplier.role.roleName + "\"")
+                it[2].equals("name: " + roleSupplier.role.roleName)
             }
     }
     

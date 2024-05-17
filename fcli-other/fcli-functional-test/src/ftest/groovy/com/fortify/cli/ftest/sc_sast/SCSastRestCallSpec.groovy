@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ftest.sc_sast
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCSAST
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCSAST
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -32,7 +32,7 @@ class SCSastRestCallSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()==2
                 it[0] == '---'
-                it[1] =~ '- message: ".* I am still alive."'
+                it[1] =~ '- message: .* I am still alive.'
             }
     }
 }

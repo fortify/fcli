@@ -31,7 +31,7 @@ class ToolVulnExporterSpec extends FcliBaseSpec {
     @Shared Path binScript = Path.of(baseDir).resolve("vuln-exporter/${version}/bin/FortifyVulnerabilityExporter.bat");
     
     def "install"() {
-        def args = "tool vuln-exporter install -y -v=${version} --progress=none -b ${baseDir}"
+        def args = "tool vuln-exporter install -y -v=${version} -b ${baseDir} --progress none"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -57,7 +57,7 @@ class ToolVulnExporterSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool vuln-exporter uninstall -y --progress=none -v=${version}"
+        def args = "tool vuln-exporter uninstall -y -v=${version} --progress none"
         when:
             def result = Fcli.run(args)
         then:

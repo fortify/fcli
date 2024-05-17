@@ -27,6 +27,11 @@ public class FcliBuildPropertiesHelper {
         return buildProperties;
     }
     
+    public static final boolean isDevelopmentRelease() {
+        var version = getFcliVersion();
+        return version.startsWith("0.") || version.equals("unknown");
+    }
+    
     public static final String getFcliProjectName() {
         return buildProperties.getProperty("projectName", "fcli");
     }
@@ -49,6 +54,10 @@ public class FcliBuildPropertiesHelper {
         return null;
     }
     
+    public static final String getFcliActionSchemaVersion() {
+        return buildProperties.getProperty("actionSchemaVersion", "unknown");
+    }
+    
     public static final String getFcliBuildInfo() {
         return String.format("%s version %s, built on %s" 
                 , FcliBuildPropertiesHelper.getFcliProjectName()
@@ -58,7 +67,7 @@ public class FcliBuildPropertiesHelper {
 
     private static final Properties loadProperties() {
         final Properties p = new Properties();
-        try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/app/fcli-build.properties")) {
+        try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/common/fcli-build.properties")) {
             if ( stream!=null ) { p.load(stream); }
         } catch ( IOException ioe ) {
             throw new RuntimeException("Error reading fcli-build.properties from classpath", ioe);

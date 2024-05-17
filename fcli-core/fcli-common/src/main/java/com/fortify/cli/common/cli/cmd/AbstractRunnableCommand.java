@@ -14,6 +14,7 @@ package com.fortify.cli.common.cli.cmd;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 
@@ -36,7 +37,7 @@ import picocli.CommandLine.Spec;
  *
  * @author Ruud Senden
  */
-public abstract class AbstractRunnableCommand implements Runnable {
+public abstract class AbstractRunnableCommand implements Callable<Integer> {
     // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
     

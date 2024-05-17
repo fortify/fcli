@@ -12,14 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.wait;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 // TODO Add multithreaded tests that emulate actual state changes
 @Timeout(value = 5)

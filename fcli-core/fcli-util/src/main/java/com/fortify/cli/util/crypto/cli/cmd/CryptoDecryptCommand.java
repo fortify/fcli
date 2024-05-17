@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.crypto.cli.cmd;
 
-import com.fortify.cli.common.util.EncryptionHelper;
+import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 
 import picocli.CommandLine.Command;
 

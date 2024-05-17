@@ -14,6 +14,7 @@
 package com.fortify.cli.fod._common.scan.cli.mixin;
 
 import com.fortify.cli.fod._common.util.FoDEnums;
+
 import lombok.Getter;
 import picocli.CommandLine.Option;
 

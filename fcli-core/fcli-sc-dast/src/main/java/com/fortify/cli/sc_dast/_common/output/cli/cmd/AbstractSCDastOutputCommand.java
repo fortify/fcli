@@ -15,7 +15,8 @@ package com.fortify.cli.sc_dast._common.output.cli.cmd;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperStandardMixin;
+import com.fortify.cli.sc_dast._common.rest.helper.SCDastProductHelper;
+import com.fortify.cli.sc_dast._common.session.cli.mixin.SCDastUnirestInstanceSupplierMixin;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -24,9 +25,10 @@ import picocli.CommandLine.Mixin;
 public abstract class AbstractSCDastOutputCommand extends AbstractOutputCommand 
     implements IProductHelperSupplier, IUnirestInstanceSupplier
 {
-    @Getter @Mixin SCDastProductHelperStandardMixin productHelper;
+    @Mixin private SCDastUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    @Getter private final SCDastProductHelper productHelper = SCDastProductHelper.INSTANCE;
     
     public final UnirestInstance getUnirestInstance() {
-        return productHelper.getUnirestInstance();
+        return unirestInstanceSupplier.getUnirestInstance();
     }
 }

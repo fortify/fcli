@@ -40,9 +40,9 @@ import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
-
 import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -78,9 +78,9 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         SSCAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
 
-        SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
-
         SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
+        
+        SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
 
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
             .request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
