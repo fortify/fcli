@@ -441,10 +441,9 @@
         "additionalProperties" : false
       }
     },
-    "custom" : {
-      "type" : "boolean",
-      "description" : "Read-only boolean: Whether this is a custom action, inferred from where the action is loaded from.",
-      "readOnly" : true
+    "author" : {
+      "type" : "string",
+      "description" : "Required string: Author of this action."
     },
     "defaults" : {
       "type" : "object",
@@ -456,11 +455,6 @@
       },
       "additionalProperties" : false,
       "description" : "Optional object: Default values for some specific properties. Currently only used to set a default request target."
-    },
-    "name" : {
-      "type" : "string",
-      "description" : "Read-only string: Action name, inferred from file name.",
-      "readOnly" : true
     },
     "parameters" : {
       "description" : "Optional list: Action parameters.",
@@ -501,12 +495,6 @@
         "required" : [ "description", "name" ],
         "additionalProperties" : false
       }
-    },
-    "signatureStatus" : {
-      "type" : "string",
-      "enum" : [ "VALID_SIGNATURE", "INVALID_SIGNATURE", "NO_PUBLIC_KEY", "NO_SIGNATURE", "NOT_VERIFIED" ],
-      "description" : "Read-only object: Action signature verification status.",
-      "readOnly" : true
     },
     "steps" : {
       "description" : "Required list: Steps to be executed when this action is being run.",
@@ -552,7 +540,7 @@
       }
     }
   },
-  "required" : [ "steps", "usage" ],
+  "required" : [ "author", "steps", "usage" ],
   "description" : "Fortify CLI action definition",
   "additionalProperties" : false
 }
