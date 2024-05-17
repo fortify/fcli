@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.4.0](https://github.com/fortify/fcli/compare/v2.3.0...v2.4.0) (2024-05-17)
+
+
+### Features
+
+* Add `fcli config public-key` commands for managing trusted public keys ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add `fcli fod action` commands for running a variety of yaml-based actions ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add `fcli fod issue list` command ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add `fcli ssc action` commands for running a variety of yaml-based actions ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add `fcli ssc issue list` command ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add actions for generating application version/release summary ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add actions for generating BitBucket, GitHub, GitLab, SARIF and SonarQube vulnerability reports ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add preview actions for generating GitHub Pull Request comments ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Add sample actions for checking security policy criteria ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* Migrate FortifyVulnerabilityExporter functionality to yaml-based fcli actions ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+
+
+### Bug Fixes
+
+* `fcli ssc appversion create`: Command will now fail instead of creating uncommitted application version if the application version specified on `--copy-from` option does not exist ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+* FoD: Update `wait-for` commands to use internal API (closes [#526](https://github.com/fortify/fcli/issues/526), [#500](https://github.com/fortify/fcli/issues/500)) ([4dff325](https://github.com/fortify/fcli/commit/4dff325bd52b27fad55e417b82af3bc00b8d756a))
+
 ## [2.3.0](https://github.com/fortify/fcli/compare/v2.2.0...v2.3.0) (2024-03-05)
 
 
