@@ -1,0 +1,167 @@
+---
+title: fcli-ssc-action-sign(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-action-sign(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.4.0" %}
+
+
+<div id="header">
+<h1>fcli-ssc-action-sign(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-action-sign - Sign action.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc action sign</strong> [<strong>-y</strong>] [<strong>-p</strong>[=<em>&lt;privateKeyPassword&gt;</em>]] <strong>--in</strong>=<em>&lt;actionFileToSign&gt;</em>
+                     [<strong>--info</strong>=<em>&lt;extraInfoPath&gt;</em>] <strong>--out</strong>=<em>&lt;signedActionFile&gt;</em>
+                     [<strong>--pubout</strong>=<em>&lt;publicKeyPath&gt;</em>] [<strong>--signer</strong>=<em>&lt;signer&gt;</em>]
+                     <strong>--with</strong>=<em>&lt;privateKeyPath&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                     <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+         _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command allows for signing custom actions, allowing those actions to be run without confirmation if the corresponding public key has been imported through the <code>fcli config public-key import</code> command or passed in the <code>--pubkey</code> option on various action commands. The action to be signed must be a local file.</p>
+</div>
+<div class="paragraph">
+<p>This command can use an existing private key for signing, or generate a new key pair if the private key file as specified through the <code>--with</code> option doesn&#8217;t yet exist and <code>--pubout</code> is specified to output the corresponding public key.</p>
+</div>
+<div class="paragraph">
+<p>Private keys may also be generated using OpenSSL or similar tools, but note that only RSA keys in PEM format are supported, and only a small set of encryption schemes are supported for encrypted private keys. It is recommended to use AES encryption, which is supported by both native fcli executables and the .jar version of fcli. The latter requires Java 19 or above though to handle AES-encrypted private keys. Following is a sample OpenSSL command for generating an encrypted private key that&#8217;s supported by fcli for signing:
+  openssl genpkey -algorithm rsa -out private-key.pem -aes256</p>
+</div>
+<div class="paragraph">
+<p>For convenience, when using a pre-existing private key, the <code>--pubout</code> option allows for outputting the corresponding public key for use by the <code>fcli config public-key import</code> command. Note that public keys will not be automatically added to the fcli trusted public key store; even if this command generates a key pair on the fly, you&#8217;ll still need to import the generated public key using the <code>fcli config public-key import</code> command.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--in</strong>=<em>&lt;actionFileToSign&gt;</em></dt>
+<dd>
+<p>Action YAML file to sign.</p>
+</dd>
+<dt class="hdlist1"><strong>--info</strong>=<em>&lt;extraInfoPath&gt;</em></dt>
+<dd>
+<p>YAML file containing informational properties to be added to signature metadata. For example, this can be used to document where the public key can be retrieved from, or some extra information about the action being signed.</p>
+</dd>
+<dt class="hdlist1"><strong>--out</strong>=<em>&lt;signedActionFile&gt;</em></dt>
+<dd>
+<p>Signed action output file.</p>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;privateKeyPassword&gt;</em>]</dt>
+<dd>
+<p>Private key password.</p>
+</dd>
+<dt class="hdlist1"><strong>--pubout</strong>=<em>&lt;publicKeyPath&gt;</em></dt>
+<dd>
+<p>Public key output file. This option is required when generating a new key pair (if given private key doesn&#8217;t exist), and may optionally be used for outputting the public key if an already existing private key is being used.</p>
+</dd>
+<dt class="hdlist1"><strong>--signer</strong>=<em>&lt;signer&gt;</em></dt>
+<dd>
+<p>Free-format text string describing who signed this action, for example a person, team or organization name. If not specified, signer will be taken from a property named 'signer' in the file specified with the --info option if available, otherwise the current user name will be used as the signer.</p>
+</dd>
+<dt class="hdlist1"><strong>--with</strong>=<em>&lt;privateKeyPath&gt;</em></dt>
+<dd>
+<p>PEM file containing private key used for signing.</p>
+</dd>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+<dd>
+<p>Confirm overwriting existing output file.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-05-17 17:10:47 UTC
+</div>
+</div>
+</body>
+</html>

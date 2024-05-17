@@ -1,0 +1,192 @@
+---
+title: fcli-tool-sc-client-install(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-sc-client-install(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.4.0" %}
+
+
+<div id="header">
+<h1>fcli-tool-sc-client-install(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-sc-client-install - Download and install ScanCentral SAST Client.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool sc-client install</strong> [<strong>-y</strong>] [<strong>--[no-]global-bin</strong>]
+                            [<strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em>]
+                            [<strong>-p</strong>=<em>&lt;platform&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                            [<strong>-t</strong>=<em>&lt;clientAuthToken&gt;</em>] [<strong>-v</strong>=<em>&lt;version&gt;</em>]
+                            [<strong>-u</strong>=<em>&lt;versionsToUninstall&gt;</em>[,
+                            <em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                            [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>-d</strong>=<em>&lt;installDir&gt;</em> |
+                            <strong>-b</strong>=<em>&lt;baseDir&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                            [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                            [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command allows for tool installation and upgrade. All tools are installed to &lt;base-dir&gt;/&lt;tool-name&gt;/&lt;version&gt;. The base directory can be specified using the --base-dir option, defaulting to &lt;user.home&gt;/fortify/tools if not specified. Unless the --no-global-bin option is specified, wrapper scripts for invoking each tool will be installed to &lt;base-dir&gt;/bin, allowing users to add this directory to the system PATH for easy tool invocations.</p>
+</div>
+<div class="paragraph">
+<p>When installing a new version, older versions can optionally be automatically un-installed using the --uninstall option, which is basically the equivalent of an upgrade. When trying to install a version that&#8217;s already been installed, only some post-installation tasks will be re-run, like installing the global bin scripts and performing any tool configuration if applicable.</p>
+</div>
+<div class="paragraph">
+<p>Sample invocations:</p>
+</div>
+<div class="paragraph">
+<p>Install latest tool version, keep older versions:
+  fcli tool &lt;name&gt; install -v latest</p>
+</div>
+<div class="paragraph">
+<p>Install latest tool version (only re-running post-install if already existing), uninstall all other tool versions:
+  fcli tool &lt;name&gt; install -v latest --uninstall all</p>
+</div>
+<div class="paragraph">
+<p>Install latest v2 version, uninstall all other v2 versions:
+  fcli tool &lt;name&gt; install -v 2 --uninstall 2</p>
+</div>
+<div class="paragraph">
+<p>Install latest and latest v1, have global bin-scripts point to latest:
+  fcli tool &lt;name&gt; install -v latest
+  fcli tool &lt;name&gt; install -v 1 --no-global-bin</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-b</strong>, <strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em></dt>
+<dd>
+<p>Directory under which the tool will be installed. Defaults to ~/fortify. Tools will be installed to &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;.</p>
+</dd>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--install-dir</strong>=<em>&lt;installDir&gt;</em></dt>
+<dd>
+<p>Tool installation directory. Deprecated, use --base-dir instead.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]global-bin</strong></dt>
+<dd>
+<p>By default, wrapper scripts will be installed to &lt;base-dir&gt;/bin; use --no-global-bin to skip installing/updating these wrapper scripts.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em></dt>
+<dd>
+<p>Action to take if there is a digest mismatch. Allowed values: fail, warn. Default action is to fail.</p>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--platform</strong>=<em>&lt;platform&gt;</em></dt>
+<dd>
+<p>By default, fcli will try to install tool binaries that match the current operating system &amp; architecture. Use this option to override automatic platform detection. The list-platforms command lists available platforms.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--client-auth-token</strong>=<em>&lt;clientAuthToken&gt;</em></dt>
+<dd>
+<p>ScanCentral SAST client_auth_token used for authenticating with ScanCentral SAST Controller.</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--uninstall</strong>=<em>&lt;versionsToUninstall&gt;</em>[,<em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Uninstall the given versions while installing the new version. Accepts 'all' to uninstall all existing versions, or a comma-separated list of version numbers. Version numbers may be specified as &lt;major&gt;[.&lt;minor&gt;[.&lt;patch&gt;]].</p>
+</dd>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;version&gt;</em></dt>
+<dd>
+<p>Tool version to install; see output of list command to view available versions. Default value: latest</p>
+</dd>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+<dd>
+<p>Automatically confirm all prompts (cleaning the target directory, uninstalling other versions).</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-05-17 17:10:47 UTC
+</div>
+</div>
+</body>
+</html>
