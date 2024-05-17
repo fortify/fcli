@@ -3,6 +3,7 @@ package com.fortify.cli.common.crypto.helper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.crypto.helper.impl.KPGenerator;
@@ -23,7 +24,7 @@ import lombok.SneakyThrows;
 
 
 public class SignatureHelper {
-    private static final String FORTIFY_PUBLIC_KEY = 
+    public static final String FORTIFY_PUBLIC_KEY = 
               "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArij9U9yJVNc53oEMFWYp"
             + "NrXUG1UoRZseDh/p34q1uywD70RGKKWZvXIcUAZZwbZtCu4i0UzsrKRJeUwqanbc"
             + "woJvYanp6lc3DccXUN1w1Y0WOHOaBxiiK3B1TtEIH1cK/X+ZzazPG5nX7TSGh8Tp"
@@ -140,25 +141,40 @@ public class SignatureHelper {
         private String signature;
         /** Public key fingerprint */
         private String publicKeyFingerprint;
-        /** Additional information about the signature or action */
+        /** Signature metadata */
+        private SignatureMetadata metadata;
+    }
+    
+    @Reflectable @NoArgsConstructor
+    @Data @AllArgsConstructor @Builder
+    public static final class SignatureMetadata {
+        /** Fcli version */
+        private String fcliVersion;
+        /** Free-format string describing who signed this file */
+        private String signer;
+        /** Additional free-format information about the signed file,
+         *  for example information about where the public key can
+         *  be found, information about the signed file, ... */
         private ObjectNode extraInfo;
     }
     
     @Reflectable @NoArgsConstructor
     @Data @AllArgsConstructor @Builder
     public static final class SignedTextDescriptor {
-        /** Raw text that was parsed, including signature if present */
-        private String rawText;
+        /** Original text that was parsed, including signature if present */
+        private String original;
         /** Text that was signed */
-        private String text;
+        private String payload;
         /** Signature descriptor */
         private SignatureDescriptor signatureDescriptor; 
         /** Signature status */
         private SignatureStatus signatureStatus;
+        /** Public key descriptor */
+        private PublicKeyDescriptor publicKeyDescriptor;
     }
     
     @Reflectable @NoArgsConstructor
-    @Data @EqualsAndHashCode(callSuper = false) @AllArgsConstructor @Builder
+    @Data @EqualsAndHashCode(callSuper = false) @AllArgsConstructor @Builder(toBuilder = true)
     public static final class PublicKeyDescriptor extends JsonNodeHolder {
         /** Name for this public key */
         private String name;
@@ -166,5 +182,12 @@ public class SignatureHelper {
         private String fingerprint;
         /** Actual public key */
         private String publicKey;
+        /** Source where public key was loaded from */
+        @JsonIgnore private PublicKeySource source;
+    }
+    
+    @Reflectable
+    public static enum PublicKeySource {
+        TRUSTSTORE, EXTERNAL, INTERNAL
     }
 }

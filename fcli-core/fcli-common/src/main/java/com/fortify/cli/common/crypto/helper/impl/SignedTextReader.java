@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
@@ -72,27 +73,30 @@ public final class SignedTextReader {
         }
     }
 
-    private SignedTextDescriptor buildUnsignedDescriptor(String text) {
+    private SignedTextDescriptor buildUnsignedDescriptor(String payload) {
         return SignedTextDescriptor.builder()
-                .rawText(text)
-                .text(text)
+                .original(payload)
+                .payload(payload)
                 .signatureStatus(SignatureStatus.NO_SIGNATURE)
                 .build();
     }
     
-    private SignedTextDescriptor buildSignedDescriptor(String rawText, String text, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus, String... extraPublicKeys) {
+    private SignedTextDescriptor buildSignedDescriptor(String original, String payload, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus, String... extraPublicKeys) {
         var signatureStatus = SignatureStatus.NOT_VERIFIED;
+        PublicKeyDescriptor publicKeyDescriptor = null;
         if ( evaluateSignatureStatus ) {
             var fingerprint = signatureDescriptor.getPublicKeyFingerprint();
             var expectedSignature = signatureDescriptor.getSignature();
-            signatureStatus = Verifier.forFingerprint(fingerprint, extraPublicKeys)
-                .verify(text, StandardCharsets.UTF_8, expectedSignature);
+            publicKeyDescriptor = PublicKeyTrustStore.INSTANCE.forFingerprint(fingerprint, extraPublicKeys);
+            signatureStatus = new Verifier(publicKeyDescriptor)
+                .verify(payload, StandardCharsets.UTF_8, expectedSignature);
         }
         return SignedTextDescriptor.builder()
-                .rawText(rawText)
-                .text(text)
+                .original(original)
+                .payload(payload)
                 .signatureDescriptor(signatureDescriptor)
                 .signatureStatus(signatureStatus)
+                .publicKeyDescriptor(publicKeyDescriptor)
                 .build();
     }
 

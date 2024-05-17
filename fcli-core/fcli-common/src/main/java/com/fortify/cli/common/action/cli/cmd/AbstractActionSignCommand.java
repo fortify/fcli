@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
 import com.fortify.cli.common.crypto.helper.impl.TextSigner;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -47,6 +49,8 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
     private Path signedActionFile;
     @Option(names = "--info", required=false, descriptionKey="fcli.action.sign.info") 
     private Path extraInfoPath;
+    @Option(names = "--signer", required=false, descriptionKey="fcli.action.sign.signer") 
+    private String signer;
     @Option(names="--with", required=true, descriptionKey="fcli.action.sign.with") 
     private Path privateKeyPath;
     @Option(names="--pubout", required=false, descriptionKey="fcli.action.sign.pubout") 
@@ -59,16 +63,16 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
     public JsonNode getJsonNode() {
         var keyPairCreated = createKeyPair();
         deleteExistingOutputFile();
-        ObjectNode extraInfo = createExtraInfo();
+        var metadata = createMetadata();
         var signer = SignatureHelper.textSigner(privateKeyPath, privateKeyPassword);
-        signer.signAndWrite(actionFileToSign, signedActionFile, extraInfo);
+        signer.signAndWrite(actionFileToSign, signedActionFile, metadata);
         writePublicKey(signer, !keyPairCreated);
         
         return JsonHelper.getObjectMapper().createObjectNode()
                 .put("in", actionFileToSign.toString())
                 .put("out", signedActionFile.toString())
                 .put("publicKeyFingerprint", signer.publicKeyFingerprint())
-                .set("extraInfo", extraInfo);
+                .set("metadata", JsonHelper.getObjectMapper().valueToTree(metadata));
     }
 
     private void writePublicKey(TextSigner signer, boolean doWritePublicKey) {
@@ -79,10 +83,26 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
                 signer.writePublicKey(publicKeyPath);
             }
         }
-        
     }
-
-
+    
+    private final SignatureMetadata createMetadata() {
+        var extraInfo = createExtraInfo();
+        var signer = getSigner(extraInfo);
+        return SignatureMetadata.builder()
+                .extraInfo(extraInfo)
+                .fcliVersion(FcliBuildPropertiesHelper.getFcliVersion())
+                .signer(signer)
+                .build();
+    }
+    
+    private final String getSigner(ObjectNode extraInfo) {
+        var signerNode = extraInfo.remove("signer");
+        return StringUtils.isNotBlank(this.signer)
+                ? this.signer
+                : signerNode!=null
+                    ? signerNode.asText()
+                    : System.getProperty("user.name");
+    }
 
     private final ObjectNode createExtraInfo() {
         ObjectNode extraInfo = objectMapper.createObjectNode();
@@ -93,7 +113,6 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
                 LOG.warn("WARN: Error parsing extra info file contents");
             }
         }
-        extraInfo.put("fcli", FcliBuildPropertiesHelper.getFcliBuildInfo());
         return extraInfo;
     }
 

@@ -14,6 +14,7 @@
 # when updating one, the other should also be updated. and ideally we should have functional tests
 # that compare the outputs of both actions. 
 
+author: Fortify
 usage:
   header: Generate SARIF report listing SSC SAST vulnerabilities.  
   description: |

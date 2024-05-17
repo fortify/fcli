@@ -38,11 +38,11 @@ public class ActionResolverMixin {
         }
         
         public Action loadAction(String type, ActionValidationHandler actionValidationHandler) {
-            return load(type, actionValidationHandler).asAction();
+            return load(type, actionValidationHandler).getAction();
         }
         
         public String loadActionContents(String type, ActionValidationHandler actionValidationHandler) {
-            return load(type, actionValidationHandler).asText();
+            return load(type, actionValidationHandler).getActionText();
         }
     }
     

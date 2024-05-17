@@ -40,14 +40,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.model.Action.ActionProperties;
+import com.fortify.cli.common.action.model.Action.ActionMetadata;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation.AbortedByUserException;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeySource;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
 import com.fortify.cli.common.util.Break;
+import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.ZipHelper;
@@ -76,15 +81,15 @@ public class ActionLoaderHelper {
         Map<String, ObjectNode> result = new HashMap<>();
         new ActionLoader(sources, actionValidationHandler)
             .processActions(loadResult->{
-                result.putIfAbsent(loadResult.getProperties().getName(), loadResult.asJson());
+                result.putIfAbsent(loadResult.getMetadata().getName(), loadResult.getMetadataAsObjectNode());
                 return Break.FALSE;
             });
         return result.values().stream()
                 .sorted((a,b)->a.get("name").asText().compareTo(b.get("name").asText()));
     }
     
-    public static final String getSignatureStatusMessage(ActionProperties properties, SignatureStatus signatureStatus) {
-        var name = properties.getName();
+    public static final String getSignatureStatusMessage(ActionMetadata metadata, SignatureStatus signatureStatus) {
+        var name = metadata.getName();
         switch (signatureStatus) {
         case INVALID_SIGNATURE: return "Signature for action "+name+" is invalid.";
         case NO_PUBLIC_KEY: return "No trusted public key found to verify "+name+" action signature.";
@@ -123,9 +128,9 @@ public class ActionLoaderHelper {
         private final ActionLoadResult loadFromFileOrUrl(String source) {
             try ( var is = createSourceInputStream(source, false) ) {
                 if ( is!=null ) {
-                    var properties = ActionProperties.builder()
+                    var metadata = ActionMetadata.builder()
                             .custom(true).name(source).build();
-                    return load(is, properties);
+                    return load(is, metadata);
                 }
             } catch (Exception e) {
                 if ( e instanceof AbortedByUserException ) { throw (AbortedByUserException)e; }
@@ -144,47 +149,47 @@ public class ActionLoaderHelper {
             }
         }
         
-        private final void processZipEntries(IZipEntryWithContextProcessor<ActionProperties> processor) {
+        private final void processZipEntries(IZipEntryWithContextProcessor<ActionMetadata> processor) {
             for ( var source: sources ) {
                 var _break = ZipHelper.processZipEntries(source.getInputStreamSupplier(), 
-                        processor, source.getActionProperties());
+                        processor, source.getMetadata());
                 if ( _break.doBreak() ) { break; }
             }
         }
         
-        private final IZipEntryWithContextProcessor<ActionProperties> zipEntryProcessor(ActionLoadResultProcessor loadResultProcessor) {
-            return (zis, ze, properties) -> loadResultProcessor.process(load(zis, ze, properties)); 
+        private final IZipEntryWithContextProcessor<ActionMetadata> zipEntryProcessor(ActionLoadResultProcessor loadResultProcessor) {
+            return (zis, ze, metadata) -> loadResultProcessor.process(load(zis, ze, metadata)); 
         }
         
-        private final IZipEntryWithContextProcessor<ActionProperties> singleZipEntryProcessor(String name, Consumer<ActionLoadResult> loadResultConsumer) {
-            return (zis, ze, properties) -> processSingleZipEntry(zis, ze, name, loadResultConsumer, properties);
+        private final IZipEntryWithContextProcessor<ActionMetadata> singleZipEntryProcessor(String name, Consumer<ActionLoadResult> loadResultConsumer) {
+            return (zis, ze, metadata) -> processSingleZipEntry(zis, ze, name, loadResultConsumer, metadata);
         }
 
-        private Break processSingleZipEntry(ZipInputStream zis, ZipEntry ze, String name, Consumer<ActionLoadResult> loadResultConsumer, ActionProperties properties) {
+        private Break processSingleZipEntry(ZipInputStream zis, ZipEntry ze, String name, Consumer<ActionLoadResult> loadResultConsumer, ActionMetadata metadata) {
             var fileName = name+".yaml";
             if (ze.getName().equals(fileName)) {
-                loadResultConsumer.accept(load(zis, ze, properties));
+                loadResultConsumer.accept(load(zis, ze, metadata));
                 return Break.TRUE;
             }
             return Break.FALSE;
         }
         
-        private final ActionLoadResult load(ZipInputStream zis, ZipEntry ze, ActionProperties properties) {
-            properties = properties.toBuilder().name(getActionName(ze.getName())).build();
-            return load(zis, properties);
+        private final ActionLoadResult load(ZipInputStream zis, ZipEntry ze, ActionMetadata metadata) {
+            metadata = metadata.toBuilder().name(getActionName(ze.getName())).build();
+            return load(zis, metadata);
         }
         
-        final ActionLoadResult load(InputStream is, ActionProperties properties) {
-            return new ActionLoadResult(actionValidationHandler, loadSignedTextDescriptor(properties, is), properties);
+        final ActionLoadResult load(InputStream is, ActionMetadata metadata) {
+            return new ActionLoadResult(actionValidationHandler, loadSignedTextDescriptor(metadata, is), metadata);
         }
             
-        private final SignedTextDescriptor loadSignedTextDescriptor(ActionProperties properties, InputStream is) {
+        private final SignedTextDescriptor loadSignedTextDescriptor(ActionMetadata metadata, InputStream is) {
             return signedTextReader.load(is, StandardCharsets.UTF_8, 
                     // TODO For now, we only evaluate/check signatures for custom actions,
                     // until we've figured out how to sign internal actions during (or 
                     // potentially after) Gradle build.
-                    properties.isCustom() 
-                        ? actionValidationHandler.getSignatureValidator(properties)
+                    metadata.isCustom() 
+                        ? actionValidationHandler.getSignatureValidator(metadata)
                         : null);
         }
         
@@ -199,51 +204,119 @@ public class ActionLoaderHelper {
         private static final Pattern schemaPattern = Pattern.compile("(?m)(^\\$schema:\\s+(?<schemaPropertyValue>\\S+)\\s*$)|(^#\\s+yaml-language-server:\\s+\\$schema=(?<schemaCommentValue>\\S+)\\s*$)");
         private final ActionValidationHandler actionValidationHandler;
         private final SignedTextDescriptor signedTextDescriptor;
-        private final ActionProperties properties;
+        private final ActionMetadata metadata;
         
-        public final Action asAction() {
+        ActionLoadResult(ActionValidationHandler actionValidationHandler, SignedTextDescriptor signedTextDescriptor, ActionMetadata metadata) {
+            this.actionValidationHandler = actionValidationHandler;
+            this.signedTextDescriptor = signedTextDescriptor;
+            this.metadata = updateMetadata(metadata, signedTextDescriptor);
+        }
+        
+        /**
+         * @return Deserialized and initialized {@link Action} instance.
+         */
+        public final Action getAction() {
             try {
-                var actionText = updateSchema(asText());
-                var signatureStatus = signedTextDescriptor.getSignatureStatus();
+                var actionText = updateSchema(getActionText());
                 var result = yamlObjectMapper.readValue(actionText, Action.class);
-                var properties = this.properties.toBuilder().signatureStatus(signatureStatus).build();
-                result.postLoad(properties);
+                result.postLoad(metadata);
                 return result;
             } catch ( Exception e ) {
                 throw createException(e);
             }
         }
         
-        public final String asText() {
-            return signedTextDescriptor.getText();
+        /**
+         * @return Textual action contents.
+         */
+        public final String getActionText() {
+            return signedTextDescriptor.getPayload();
         }
         
-        public final String asRawText() {
-            return signedTextDescriptor.getRawText();
+        /**
+         * @return Original action file contents, including
+         *         signature if available.
+         */
+        public final String getOriginalText() {
+            return signedTextDescriptor.getOriginal();
         }
 
-        public final ObjectNode asJson() {
+        public final ObjectNode getMetadataAsObjectNode() {
             try {
-                var payload = asText();
-                var signatureStatus = signedTextDescriptor.getSignatureStatus();
-                String name = properties.getName();
-                boolean custom = properties.isCustom();
+                
+                String name = metadata.getName();
+                boolean custom = metadata.isCustom();
                 var customString = custom?"Yes":"No";
-                // TODO see ActionLoader#loadSignedTextDescriptor; for internal actions
-                // we currently don't evaluate signatures until we implement functionality
-                // for signing these during or after build.
-                var signatureString = !custom || signatureStatus==SignatureStatus.VALID_SIGNATURE 
+                var signatureStatus = metadata.getSignatureStatus();
+                var signatureDescriptor = metadata.getSignatureDescriptor();
+                var signatureMetadata = signatureDescriptor==null?null:signatureDescriptor.getMetadata();
+                var publicKeyDescriptor = metadata.getPublicKeyDescriptor();
+                
+                var signatureStatusString = signatureStatus==SignatureStatus.VALID_SIGNATURE 
                     ? "Valid" : "Invalid";
-                return yamlObjectMapper.readValue(payload, ObjectNode.class)
+                var signer = StringUtils.defaultIfBlank(signatureMetadata==null 
+                        ? null : signatureMetadata.getSigner(), "N/A");
+                var extraInfo = signatureMetadata==null 
+                        ? null : signatureMetadata.getExtraInfo();
+                var verifiedBy = StringUtils.defaultIfBlank(publicKeyDescriptor==null 
+                        ? null : publicKeyDescriptor.getName(), "N/A");
+                var publicKeyFingerprint = StringUtils.defaultIfBlank(publicKeyDescriptor==null
+                        ? null : publicKeyDescriptor.getFingerprint(), "N/A");
+                
+                var result = yamlObjectMapper.readValue(getActionText(), ObjectNode.class);
+                return result
                         .put("name", name)
                         .put("custom", custom)
                         .put("customString", customString)
                         .put("signatureStatus", signatureStatus.toString())
-                        .put("signatureString", signatureString);
+                        .put("signatureString", signatureStatusString)
+                        .put("signedBy", signer)
+                        .put("verifiedBy", verifiedBy)
+                        .put("publicKeyFingerprint", publicKeyFingerprint)
+                        .put("info", String.format("Author:     %s\nSigned by:  %s\nPublic key: %s", result.get("author").asText(), signer, verifiedBy))
+                        .set("signatureExtraInfo", extraInfo);
             } catch ( Exception e ) {
                 throw createException(e);
             }
         }
+        
+        private static final ActionMetadata updateMetadata(ActionMetadata metadata, SignedTextDescriptor signedTextDescriptor) {
+            var custom = metadata.isCustom();
+            return metadata.toBuilder()
+                    .signatureDescriptor(getSignatureDescriptor(custom, signedTextDescriptor))
+                    .signatureStatus(getSignatureStatus(custom, signedTextDescriptor))
+                    .publicKeyDescriptor(getPublicKeyDescriptor(custom, signedTextDescriptor))
+                    .build();
+        }
+        
+        private static SignatureDescriptor getSignatureDescriptor(boolean custom, SignedTextDescriptor signedTextDescriptor) {
+            return custom 
+                ? signedTextDescriptor.getSignatureDescriptor()
+                : SignatureDescriptor.builder()
+                    .signature("N/A")
+                    .publicKeyFingerprint(SignatureHelper.fortifySignatureVerifier().publicKeyFingerPrint())
+                    .metadata(SignatureMetadata.builder()
+                            .fcliVersion(FcliBuildPropertiesHelper.getFcliVersion())
+                            .signer("Fortify").build()).build();
+        }
+        
+        private static SignatureStatus getSignatureStatus(boolean custom, SignedTextDescriptor signedTextDescriptor) {
+            return custom
+                    ? signedTextDescriptor.getSignatureStatus()
+                    : SignatureStatus.VALID_SIGNATURE;
+        }
+        
+        private static PublicKeyDescriptor getPublicKeyDescriptor(boolean custom, SignedTextDescriptor signedTextDescriptor) {
+            return custom
+                    ? signedTextDescriptor.getPublicKeyDescriptor()
+                    : PublicKeyDescriptor.builder()
+                        .fingerprint(SignatureHelper.fortifySignatureVerifier().publicKeyFingerPrint())
+                        .name("Fortify")
+                        .publicKey(SignatureHelper.FORTIFY_PUBLIC_KEY)
+                        .source(PublicKeySource.INTERNAL)
+                        .build();
+        }
+
         
         private final String updateSchema(String actionText) {
             var result = actionText;
@@ -267,7 +340,7 @@ public class ActionLoaderHelper {
             }
             var schemaVersion = ActionSchemaHelper.getSchemaVersion(schemaUri);
             if ( !ActionSchemaHelper.isSupportedSchemaVersion(schemaVersion) ) {
-                actionValidationHandler.onUnsupportedSchemaVersion(properties, schemaVersion);
+                actionValidationHandler.onUnsupportedSchemaVersion(metadata, schemaVersion);
             }
             return result;
         }
@@ -287,7 +360,7 @@ public class ActionLoaderHelper {
         }
 
         private String getExceptionMessage(String detailMessage) {
-            var msg = "Error loading action "+properties.getName();
+            var msg = "Error loading action "+metadata.getName();
             if ( StringUtils.isNotBlank(detailMessage) ) { msg+=": "+detailMessage; }
             return msg;
         }
@@ -296,7 +369,7 @@ public class ActionLoaderHelper {
     @Data @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class ActionSource {
         private final Supplier<InputStream> inputStreamSupplier;
-        private final ActionProperties actionProperties;
+        private final ActionMetadata metadata;
         
         public static final List<ActionSource> defaultActionSources(String type) {
             var result = new ArrayList<ActionSource>();
@@ -328,19 +401,19 @@ public class ActionLoaderHelper {
         }
         
         private static final ActionSource external(String source) {
-            return new ActionSource(()->createSourceInputStream(source, true), ActionProperties.create(true));
+            return new ActionSource(()->createSourceInputStream(source, true), ActionMetadata.create(true));
         }
         
         private static final ActionSource imported(String type) {
-            return new ActionSource(customActionsInputStreamSupplier(type), ActionProperties.create(true));
+            return new ActionSource(customActionsInputStreamSupplier(type), ActionMetadata.create(true));
         }
         
         private static final ActionSource builtin(String type) {
-            return new ActionSource(builtinActionsInputStreamSupplier(type), ActionProperties.create(false));
+            return new ActionSource(builtinActionsInputStreamSupplier(type), ActionMetadata.create(false));
         }
         
         private static final ActionSource common(String type) {
-            return new ActionSource(commonActionsInputStreamSupplier(), ActionProperties.create(false));
+            return new ActionSource(commonActionsInputStreamSupplier(), ActionMetadata.create(false));
         }
         
         @SneakyThrows
@@ -401,55 +474,55 @@ public class ActionLoaderHelper {
                 .onUnsupportedSchemaVersion(ActionInvalidSchemaVersionHandler.ignore)
                 .build();
         @Singular private final List<String> extraPublicKeys;
-        @Singular private final Map<SignatureStatus, BiConsumer<ActionProperties, SignedTextDescriptor>> onSignatureStatuses;
-        @Builder.Default private final BiConsumer<ActionProperties, SignedTextDescriptor> onSignatureStatusDefault = ActionInvalidSignatureHandler.prompt;
-        @Builder.Default private final BiConsumer<ActionProperties, String> onUnsupportedSchemaVersion = ActionInvalidSchemaVersionHandler.prompt;
+        @Singular private final Map<SignatureStatus, BiConsumer<ActionMetadata, SignedTextDescriptor>> onSignatureStatuses;
+        @Builder.Default private final BiConsumer<ActionMetadata, SignedTextDescriptor> onSignatureStatusDefault = ActionInvalidSignatureHandler.prompt;
+        @Builder.Default private final BiConsumer<ActionMetadata, String> onUnsupportedSchemaVersion = ActionInvalidSchemaVersionHandler.prompt;
         
-        public final SignatureValidator getSignatureValidator(ActionProperties properties) {
-            return new SignatureValidator(d->handleInvalidSignature(properties, d), extraPublicKeys.toArray(String[]::new));
+        public final SignatureValidator getSignatureValidator(ActionMetadata metadata) {
+            return new SignatureValidator(d->handleInvalidSignature(metadata, d), extraPublicKeys.toArray(String[]::new));
         }
-        public final void onUnsupportedSchemaVersion(ActionProperties properties, String schemaVersion) {
-            this.onUnsupportedSchemaVersion.accept(properties, schemaVersion);
+        public final void onUnsupportedSchemaVersion(ActionMetadata metadata, String schemaVersion) {
+            this.onUnsupportedSchemaVersion.accept(metadata, schemaVersion);
         }
-        private final void handleInvalidSignature(ActionProperties properties, SignedTextDescriptor signedTextDescriptor) {
+        private final void handleInvalidSignature(ActionMetadata metadata, SignedTextDescriptor signedTextDescriptor) {
             var consumer = onSignatureStatuses.get(signedTextDescriptor.getSignatureStatus());
             if ( consumer==null ) { consumer = onSignatureStatusDefault; }
-            consumer.accept(properties, signedTextDescriptor);
+            consumer.accept(metadata, signedTextDescriptor);
         }
         
         @RequiredArgsConstructor
-        public static enum ActionInvalidSignatureHandler implements BiConsumer<ActionProperties, SignedTextDescriptor> {
+        public static enum ActionInvalidSignatureHandler implements BiConsumer<ActionMetadata, SignedTextDescriptor> {
             ignore((p,d)->{}),
             warn((p,d)->_warn(signatureFailureMessage(p,d))),
             fail((p,d)->_throw(signatureFailureMessage(p,d))),
             prompt((p,d)->_prompt(signatureFailureMessage(p,d)));
-            private final BiConsumer<ActionProperties, SignedTextDescriptor> onInvalidSignature;
+            private final BiConsumer<ActionMetadata, SignedTextDescriptor> onInvalidSignature;
             
             @Override
-            public void accept(ActionProperties properties, SignedTextDescriptor descriptor) {
-                onInvalidSignature.accept(properties, descriptor);   
+            public void accept(ActionMetadata metadata, SignedTextDescriptor descriptor) {
+                onInvalidSignature.accept(metadata, descriptor);   
             }
             
-            private static final String signatureFailureMessage(ActionProperties properties, SignedTextDescriptor descriptor) {
-                return getSignatureStatusMessage(properties, descriptor.getSignatureStatus());
+            private static final String signatureFailureMessage(ActionMetadata metadata, SignedTextDescriptor descriptor) {
+                return getSignatureStatusMessage(metadata, descriptor.getSignatureStatus());
             }
         }
         
         @RequiredArgsConstructor
-        public static enum ActionInvalidSchemaVersionHandler implements BiConsumer<ActionProperties, String> {
+        public static enum ActionInvalidSchemaVersionHandler implements BiConsumer<ActionMetadata, String> {
             ignore((p,v)->{}),
             warn((p,v)->_warn(unsupportedSchemaMessage(p,v))),
             fail((p,v)->_throw(unsupportedSchemaMessage(p,v))),
             prompt((p,v)->_prompt(unsupportedSchemaMessage(p,v)));
-            private final BiConsumer<ActionProperties, String> onInvalidSchemaVersion;
+            private final BiConsumer<ActionMetadata, String> onInvalidSchemaVersion;
             
             @Override
-            public void accept(ActionProperties properties, String schemaVersion) {
-                onInvalidSchemaVersion.accept(properties, schemaVersion);   
+            public void accept(ActionMetadata metadata, String schemaVersion) {
+                onInvalidSchemaVersion.accept(metadata, schemaVersion);   
             }
             
-            public static final String unsupportedSchemaMessage(ActionProperties properties, String unsupportedVersion) {
-                return String.format("Action "+properties.getName()+" uses unsupported schema version %s and may fail.", unsupportedVersion);
+            public static final String unsupportedSchemaMessage(ActionMetadata metadata, String unsupportedVersion) {
+                return String.format("Action "+metadata.getName()+" uses unsupported schema version %s and may fail.", unsupportedVersion);
             }
         }
         

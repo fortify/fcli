@@ -11,6 +11,7 @@
 # state, rather than trying to identify issues for a particular scan. Based on the
 # '.bak' extension of this file, it won't be included in fcli artifacts. 
 
+author: Fortify
 usage:
   header: Generate GitHub Pull Request decoration.  
   description: |

@@ -35,6 +35,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
     }
     
     private final String getActionHelp(Action action) {
+        var metadata = action.getMetadata();
         var usage = action.getUsage();
         return String.format(
             "\nAction: %s\n"+
@@ -42,7 +43,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
             "\n%s\n"+
             "\nAction options:\n"+
             "%s",
-            action.getName(), usage.getHeader(), usage.getDescription(), ActionParameterHelper.getSupportedOptionsTable(action));
+            metadata.getName(), usage.getHeader(), usage.getDescription(), ActionParameterHelper.getSupportedOptionsTable(action));
     }
     
     protected abstract String getType();

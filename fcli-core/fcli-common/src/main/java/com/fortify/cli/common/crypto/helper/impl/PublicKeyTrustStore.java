@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeySource;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class PublicKeyTrustStore {
@@ -28,7 +29,7 @@ public final class PublicKeyTrustStore {
     public PublicKeyDescriptor importKey(String publicKey, String name) {
         var fingerprint = new Verifier(publicKey).publicKeyFingerPrint();
         if ( StringUtils.isBlank(name) ) { name=fingerprint; }
-        var descriptor = new PublicKeyDescriptor(name, fingerprint, publicKey);
+        var descriptor = new PublicKeyDescriptor(name, fingerprint, publicKey, PublicKeySource.EXTERNAL);
         FcliDataHelper.saveFile(publicKeyPath(fingerprint), descriptor, true);
         return descriptor;
     }
@@ -42,6 +43,27 @@ public final class PublicKeyTrustStore {
                         if ( !failIfNotFound ) { return null; }
                         throw new IllegalArgumentException("No public key found with name or fingerprint "+nameOrFingerprint);
                     });
+        }
+        return result==null ? null : result.toBuilder().source(PublicKeySource.TRUSTSTORE).build();
+    }
+    
+    public final PublicKeyDescriptor forFingerprint(String fingerprint, String... extraPublicKeys) {
+        PublicKeyDescriptor result = load(fingerprint, false);
+        // Try to locate public key for fingerprint from given extra public keys
+        if ( result==null && extraPublicKeys!=null ) {
+            for ( var extraPublicKey : extraPublicKeys ) {
+                if ( StringUtils.isNotBlank(extraPublicKey) ) {
+                    var verifier = new Verifier(extraPublicKey);
+                    if ( fingerprint.equals(verifier.publicKeyFingerPrint()) ) {
+                        result = PublicKeyDescriptor.builder()
+                                .fingerprint(fingerprint)
+                                .name(null)
+                                .publicKey(extraPublicKey)
+                                .source(PublicKeySource.EXTERNAL)
+                                .build();
+                    }
+                }
+            }
         }
         return result;
     }

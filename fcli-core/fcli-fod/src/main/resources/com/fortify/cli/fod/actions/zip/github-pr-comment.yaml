@@ -5,6 +5,7 @@
 # implement this, once FoD supports retrieving new/re-introduced/removed isses
 # for a particular scan id/PR number/commit id.
 
+author: Fortify
 usage:
   header: (PREVIEW) Add GitHub Pull Request review comments.  
   description: |

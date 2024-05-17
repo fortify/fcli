@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
 
+author: Fortify
 usage:
   header: (SAMPLE) Check security policy. 
   description: |

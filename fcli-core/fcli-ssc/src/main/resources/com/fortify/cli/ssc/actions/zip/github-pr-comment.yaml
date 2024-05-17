@@ -4,6 +4,7 @@
 # See corresponding .bak file for a better but incomplete (due to SSC limitations)
 # implementation based on artifact id.
 
+author: Fortify
 usage:
   header: (PREVIEW) Add GitHub Pull Request review comments.  
   description: |

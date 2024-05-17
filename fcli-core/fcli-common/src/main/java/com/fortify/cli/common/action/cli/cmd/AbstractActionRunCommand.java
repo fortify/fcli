@@ -66,7 +66,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     
     private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {
         actionRunner.getSpelEvaluator().configure(context->configure(actionRunner, context));
-        progressWriter.writeProgress("Executing action %s", actionRunner.getAction().getName());
+        progressWriter.writeProgress("Executing action %s", actionRunner.getAction().getMetadata().getName());
         return actionRunner.run(actionArgs);
     }
     

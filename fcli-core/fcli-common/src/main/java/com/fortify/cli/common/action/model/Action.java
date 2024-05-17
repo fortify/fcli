@@ -26,9 +26,10 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -56,17 +57,11 @@ import lombok.ToString;
 @Data
 @JsonClassDescription("Fortify CLI action definition")
 public class Action implements IActionElement {
-    @JsonPropertyDescription("Read-only string: Action name, inferred from file name.")
-    @JsonProperty(access = Access.READ_ONLY) private String name;
-    
-    @JsonPropertyDescription("Read-only boolean: Whether this is a custom action, inferred from where the action is loaded from.")
-    @JsonProperty(access = Access.READ_ONLY) private boolean custom;
-    
-    @JsonPropertyDescription("Read-only object: Action signature verification status.")
-    @JsonProperty(access = Access.READ_ONLY) private SignatureStatus signatureStatus;
-    
     @JsonPropertyDescription("Required string unless `yaml-language-server` comment with schema location is provided: Schema location.")
     @JsonProperty(value = "$schema", required=false) public String schema;
+    
+    @JsonPropertyDescription("Required string: Author of this action.")
+    @JsonProperty(required = true) private String author;
     
     @JsonPropertyDescription("Required object: Action usage help.")
     @JsonProperty(required = true) private ActionUsage usage;
@@ -86,6 +81,7 @@ public class Action implements IActionElement {
     @JsonPropertyDescription("Optional list: Value templates used to format data.")
     @JsonProperty(required = false) private List<ActionValueTemplate> valueTemplates;
     
+    @JsonIgnore ActionMetadata metadata;
     /** Maps/Collections listing action elements. 
      *  These get filled by the {@link #visit(Action, Object)} method. */ 
     @ToString.Exclude @JsonIgnore private final Map<String, ActionValueTemplate> valueTemplatesByName = new HashMap<>();
@@ -114,9 +110,8 @@ public class Action implements IActionElement {
      * methods, as these methods may utilize the collections.
      * @param signatureStatus 
      */
-    public final void postLoad(ActionProperties properties) {
-        this.name = properties.getName();
-        this.custom = properties.isCustom();
+    public final void postLoad(ActionMetadata metadata) {
+        this.metadata = metadata;
         initializeCollections();
         allActionElements.forEach(elt->elt.postLoad(this));
     }
@@ -250,13 +245,15 @@ public class Action implements IActionElement {
         return field.get(actionElement);
     }
     
-    @Data @Builder(toBuilder = true) @AllArgsConstructor
-    public static final class ActionProperties {
+    @Reflectable @Data @Builder(toBuilder = true) @AllArgsConstructor
+    public static final class ActionMetadata {
         private final String name;
         private final boolean custom;
+        private final SignatureDescriptor signatureDescriptor;
+        private final PublicKeyDescriptor publicKeyDescriptor;
         @Builder.Default private final SignatureStatus signatureStatus = SignatureStatus.NOT_VERIFIED;
         
-        public static final ActionProperties create(boolean custom) {
+        public static final ActionMetadata create(boolean custom) {
             return builder().custom(custom).build();
         }
     }

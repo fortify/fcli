@@ -22,10 +22,10 @@ import java.security.PublicKey;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
 
 import lombok.SneakyThrows;
 
@@ -41,18 +41,18 @@ public final class TextSigner {
     }
     
     @SneakyThrows
-    public final void signAndWrite(Path payloadPath, Path outputPath, ObjectNode extraInfo) {
-        var content = sign(Files.readString(payloadPath), extraInfo);
+    public final void signAndWrite(Path payloadPath, Path outputPath, SignatureMetadata metadata) {
+        var content = sign(Files.readString(payloadPath), metadata);
         Files.writeString(outputPath, content, StandardOpenOption.CREATE_NEW);
     }
     
     @SneakyThrows
-    public final String sign(Path payloadPath, ObjectNode extraInfo) {
-        return sign(Files.readString(payloadPath), extraInfo);
+    public final String sign(Path payloadPath, SignatureMetadata metadata) {
+        return sign(Files.readString(payloadPath), metadata);
     }
     
     @SneakyThrows
-    public final String sign(String textToSign, ObjectNode extraInfo) {
+    public final String sign(String textToSign, SignatureMetadata metadata) {
         var payload = readBytes(textToSign);
         var fingerprint = signer.publicKeyFingerprint();
         var signature = signer.sign(payload);
@@ -60,7 +60,7 @@ public final class TextSigner {
         var signatureDescriptor = SignatureDescriptor.builder()
                 .signature(signature)
                 .publicKeyFingerprint(fingerprint)
-                .extraInfo(extraInfo)
+                .metadata(metadata)
                 .build();
         return generateOutput(payload, signatureDescriptor);
     }

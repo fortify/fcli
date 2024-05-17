@@ -33,8 +33,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoader;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
-import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.model.Action.ActionProperties;
+import com.fortify.cli.common.action.model.Action.ActionMetadata;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.Break;
@@ -82,29 +81,30 @@ public class ActionImportHelper {
     }
     
     private static final Break importAction(FileSystem fs, ArrayNode result, ActionLoader loader, ZipInputStream zis, ZipEntry entry) {
-        var properties = ActionProperties.builder()
+        var metadata = ActionMetadata.builder()
                 .custom(true).name(entry.getName()).build();
         try {
-            result.add(importAction(fs, loader.load(zis, properties)));
+            result.add(importAction(fs, loader.load(zis, metadata)));
         } catch ( Exception e ) {
-            result.add(createErrorEntry(properties));
+            result.add(createErrorEntry(metadata));
         }
         return Break.FALSE;  
     }
     
-    private static JsonNode createErrorEntry(ActionProperties properties) {
+    private static JsonNode createErrorEntry(ActionMetadata metadata) {
         return JsonHelper.getObjectMapper().createObjectNode()
-                .put("name", properties.getName())
+                .put("name", metadata.getName())
                 .put(IActionCommandResultSupplier.actionFieldName, "ERROR");
     }
 
     @SneakyThrows
     private static final ObjectNode importAction(FileSystem fs, ActionLoadResult actionLoadResult) {
-        var action = actionLoadResult.asAction(); // Validate action and allow for retrieving name
-        var contents = actionLoadResult.asRawText();
-        var path = fs.getPath(getTargetFileName(action));
+        var metadata = actionLoadResult.getMetadata();
+        actionLoadResult.getAction(); // Validate action
+        var contents = actionLoadResult.getOriginalText();
+        var path = fs.getPath(getTargetFileName(metadata));
         Files.write(path, contents.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        var result = actionLoadResult.asJson();
+        var result = actionLoadResult.getMetadataAsObjectNode();
         return result.put("name", cleanActionName(path.getFileName().toString()));
     }
 
@@ -112,8 +112,8 @@ public class ActionImportHelper {
         return name.replaceAll("\\.([^.]*)$", "[.$1]");
     }
 
-    private static final String getTargetFileName(Action action) {
-        var path = action.getName(); // May be simple name, path or URL
+    private static final String getTargetFileName(ActionMetadata metadata) {
+        var path = metadata.getName(); // May be simple name, path or URL
         // TODO May be can use URI instead, to handle both URLs and local files?
         try {
             path = new URL(path).getPath();
