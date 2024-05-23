@@ -8,7 +8,7 @@ import picocli.CommandLine;
 import java.util.List;
 
 public class FoDIssueIncludeMixin implements IHttpRequestUpdater {
-    @CommandLine.Option(names = {"--include", "-i"}, split = ",", descriptionKey = "fcli.fod.issue.list.includeIssue") // use similar attributes as other multi-value options in fcli
+    @CommandLine.Option(names = {"--include", "-i"}, split = ",", descriptionKey = "fcli.fod.issue.list.includeIssue")
     private List<FoDIssueInclude> includes;
 
     public HttpRequest<?> updateRequest(HttpRequest<?> request) {
