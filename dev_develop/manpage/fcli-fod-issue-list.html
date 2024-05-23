@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240517.172655-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240523.105408-dev_develop" %}
 
 
 <div id="header">
@@ -44,11 +44,12 @@ fcli_version:
 <div class="paragraph">
 <p><strong>fcli fod issue list</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>]
                     <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
-                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                    [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                    [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                    [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]</p>
+                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                    [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                    <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+        _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+              _      expression&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -74,6 +75,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em></dt>
 <dd>
 <p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See the Fortify on Demand REST API documentation for information on supported formats.</p>
+</dd>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--include</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>By default, fixed or suppressed issues will not be included. This option accepts 'fixed', 'suppressed' or 'fixed,suppressed' to include such issues in the output.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
@@ -150,7 +155,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-17 17:28:34 UTC
+Last updated 2024-05-23 10:55:51 UTC
 </div>
 </div>
 </body>
