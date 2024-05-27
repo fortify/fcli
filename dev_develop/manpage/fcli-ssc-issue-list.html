@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240523.105408-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240527.144015-dev_develop" %}
 
 
 <div id="header">
@@ -45,11 +45,12 @@ fcli_version:
 <p><strong>fcli ssc issue list</strong> <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                     [<strong>--filter</strong>=<em>&lt;filter&gt;</em>] [<strong>--fs</strong>=<em>&lt;filterSetTitleOrId&gt;</em>]
                     [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
-                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                    [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                    [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                    [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]</p>
+                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                    [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                    <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+        _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+              _      expression&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -83,6 +84,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--fs, --filterset</strong>=<em>&lt;filterSetTitleOrId&gt;</em></dt>
 <dd>
 <p>Filter set title (name) or id.</p>
+</dd>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--include</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>By default, only visible issues will be returned. This option accepts a comma-separated list to allow (also) fixed, suppressed and/or hidden issues to be returned, for example <code>--include visible,fixed</code> (to return both visible and fixed issues) or <code>--include fixed</code> (to return only fixed issues). Allowed values: visible, hidden, fixed, suppressed.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
@@ -159,7 +164,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-23 10:55:51 UTC
+Last updated 2024-05-27 14:41:52 UTC
 </div>
 </div>
 </body>
