@@ -75,6 +75,20 @@ public class SSCAppVersionHelper {
         return versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
     }
     
+    public static final JsonNode getAttributes(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        return unirest.get(SSCUrls.PROJECT_VERSION_ATTRIBUTES(descriptor.getVersionId()))
+                .asObject(ObjectNode.class)
+                .getBody()
+                .get("data");
+    }
+    
+    public static final JsonNode getUsers(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        return unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(descriptor.getVersionId()))
+                .asObject(ObjectNode.class)
+                .getBody()
+                .get("data");
+    }
+    
     public static final SSCJobDescriptor refreshMetrics(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         if ( !descriptor.isRefreshRequired() ) {
             return null;

@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.access_control.helper;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -89,6 +90,13 @@ public final class SSCAppVersionUserUpdateBuilder {
         return this;
     }
     
+    public SSCAppVersionUserUpdateBuilder add(boolean allowMultipleMatches, Collection<String> authEntitySpecs) {
+        if ( authEntitySpecs!=null && !authEntitySpecs.isEmpty() ) {
+            add(allowMultipleMatches, authEntitySpecs.toArray(String[]::new));
+        }
+        return this;
+    }
+    
     public final SSCAppVersionUserUpdateBuilder remove(boolean allowMultipleMatches, String... authEntitySpecs) {
         this.allowMultipleMatchesForRemove |= allowMultipleMatches;
         if ( authEntitySpecs!=null && authEntitySpecs.length>0 ) {
@@ -96,4 +104,6 @@ public final class SSCAppVersionUserUpdateBuilder {
         }
         return this;
     }
+
+    
 }
