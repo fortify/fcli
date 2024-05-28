@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240527.144015-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240528.144939-dev_develop" %}
 
 
 <div id="header">
@@ -60,7 +60,12 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command allows for updating an existing SSC application version.</p>
+</div>
+<div class="paragraph">
+<p>Note that depending on user and token permissions, SSC may reject some of the application version configuration settings. In particular, user access permissions as specified through the --add-users or --rm-users option may not be applied if the fcli session was created using a CIToken.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -185,7 +190,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-27 14:41:52 UTC
+Last updated 2024-05-28 14:51:32 UTC
 </div>
 </div>
 </body>
