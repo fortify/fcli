@@ -1,8 +1,11 @@
 package com.fortify.cli.fod.issue.cli.mixin;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
@@ -53,7 +56,22 @@ public class FoDIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransfo
         return !includes.contains(FoDIssueInclude.visible)
                 && JsonHelper.evaluateSpelExpression(record, "!isSuppressed && !closedStatus", Boolean.class)
                 ? null
-                : record;
+                : addVisibilityProperties((ObjectNode)record);
+    }
+    
+    private ObjectNode addVisibilityProperties(ObjectNode record) {
+        Map<String,String> visibility = new LinkedHashMap<>();
+        if ( getBoolean(record, "isSuppressed") ) { visibility.put("suppressed", "(S)"); }
+        if ( getBoolean(record, "closedStatus") ) { visibility.put("fixed", "(F)"); } 
+        if ( visibility.isEmpty() )               { visibility.put("visible", " "); }
+        record.put("visibility", String.join(",", visibility.keySet()))
+            .put("visibilityMarker", String.join("", visibility.values()));
+        return record;
+    }
+
+    private boolean getBoolean(ObjectNode record, String propertyName) {
+        var field = record.get(propertyName);
+        return field==null ? false : field.asBoolean();
     }
 
     @RequiredArgsConstructor

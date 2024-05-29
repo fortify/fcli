@@ -1,8 +1,11 @@
 package com.fortify.cli.ssc.issue.cli.mixin;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
@@ -44,12 +47,28 @@ public class SSCIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransfo
         return !includes.contains(SSCIssueInclude.visible)
                 && JsonHelper.evaluateSpelExpression(record, "!hidden && !removed && !suppressed", Boolean.class)
                 ? null
-                : record;
+                : addVisibilityProperties((ObjectNode)record);
+    }
+
+    private ObjectNode addVisibilityProperties(ObjectNode record) {
+        Map<String,String> visibility = new LinkedHashMap<>();
+        if ( getBoolean(record, "hidden") )     { visibility.put("hidden", "(H)"); }
+        if ( getBoolean(record, "removed") )    { visibility.put("removed", "(R)"); } 
+        if ( getBoolean(record, "suppressed") ) { visibility.put("suppressed", "(S)"); }
+        if ( visibility.isEmpty() )             { visibility.put("visible", " "); }
+        record.put("visibility", String.join(",", visibility.keySet()))
+            .put("visibilityMarker", String.join("", visibility.values()));
+        return record;
+    }
+
+    private boolean getBoolean(ObjectNode record, String propertyName) {
+        var field = record.get(propertyName);
+        return field==null ? false : field.asBoolean();
     }
 
     @RequiredArgsConstructor
     public static enum SSCIssueInclude {
-        visible(null), hidden("showhidden"), fixed("showremoved"), suppressed("showsuppressed");
+        visible(null), hidden("showhidden"), removed("showremoved"), suppressed("showsuppressed");
 
         @Getter
         private final String requestParameterName;
