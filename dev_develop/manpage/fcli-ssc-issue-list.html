@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240528.144939-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240529.102316-dev_develop" %}
 
 
 <div id="header">
@@ -57,7 +57,15 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command allows for listing SSC vulnerability data for a given application version. By default, only visible issues will be returned; the --include option can be used to (also) include hidden, suppressed or removed issues. If any such issues are included, the default table output will show (H), (S), and/or &#174; for respectively hidden, suppressed and removed issues.</p>
+</div>
+<div class="paragraph">
+<p>Optionally, additional details may be included in the output using the --embed option, but please note that this may have some impact on performance as this will result in additional HTTP requests to SSC for every page of issues.</p>
+</div>
+<div class="paragraph">
+<p>In general, performance of this command is largely dependent on the number of issues being retrieved from SSC. The default table output collects all data in memory until all issues have been processed, so it may take a long time before you see any output, and there&#8217;s a small risk of running out of memory. Most other output formats (like json, yaml, or csv) output data immediately after each page of issues has been loaded from FoD, resulting in more immediate output.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -87,7 +95,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--include</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>By default, only visible issues will be returned. This option accepts a comma-separated list to allow (also) fixed, suppressed and/or hidden issues to be returned, for example <code>--include visible,fixed</code> (to return both visible and fixed issues) or <code>--include fixed</code> (to return only fixed issues). Allowed values: visible, hidden, fixed, suppressed.</p>
+<p>By default, only visible issues will be returned. This option accepts a comma-separated list to allow (also) removed, suppressed and/or hidden issues to be returned, for example <code>--include visible,removed</code> (to return both visible and removed issues) or <code>--include removed</code> (to return only removed issues). Allowed values: visible, hidden, removed, suppressed.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
@@ -164,7 +172,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-28 14:51:32 UTC
+Last updated 2024-05-29 10:24:56 UTC
 </div>
 </div>
 </body>
