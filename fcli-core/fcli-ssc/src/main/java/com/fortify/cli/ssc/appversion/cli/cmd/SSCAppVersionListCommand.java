@@ -22,8 +22,8 @@ import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc._common.rest.query.cli.mixin.SSCQParamMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionBulkEmbedMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionIncludeMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -40,7 +40,8 @@ public class SSCAppVersionListCommand extends AbstractSSCBaseRequestOutputComman
                 .add("application.id", "project.id", SSCQParamValueGenerators::plain)
                 .add("name", SSCQParamValueGenerators::wrapInQuotes);
     @Mixin private SSCAppVersionBulkEmbedMixin bulkEmbedMixin;
-    
+    @Mixin private SSCAppVersionIncludeMixin includeMixin;
+
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/projectVersions?limit=100");
