@@ -11,8 +11,8 @@ import java.util.Set;
 
 public class SSCAppVersionIncludeMixin implements IHttpRequestUpdater {
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = {"--include", "-i"}, split = ",", descriptionKey = "fcli.ssc.appversion.list.include", paramLabel="<status>")
-    private Set<SSCIssueInclude> includes;
+    @Option(names = {"--include", "-i"}, split = ",", descriptionKey = "fcli.ssc.appversion.list.include", paramLabel="<includeOption>")
+    private Set<SSCAppVersionInclude> includes;
 
     public HttpRequest<?> updateRequest(HttpRequest<?> request) {
         if ( includes!=null ) {
@@ -27,7 +27,7 @@ public class SSCAppVersionIncludeMixin implements IHttpRequestUpdater {
     }
 
     @RequiredArgsConstructor
-    public static enum SSCIssueInclude {
+    public static enum SSCAppVersionInclude {
         inactive("includeInactive"),
         onlyWithMyIssues("myAssignedIssues"),
         onlyNotEmpty("onlyIfHasIssues");
