@@ -43,6 +43,11 @@ public class FoDActionRunCommand extends AbstractActionRunCommand {
     }
     
     @Override
+    protected String getSessionName() {
+        return unirestInstanceSupplier.getSessionName();
+    }
+    
+    @Override
     protected void configure(ActionRunner templateRunner, SimpleEvaluationContext context) {
         templateRunner
             .addParameterConverter("release_single", this::loadRelease)
