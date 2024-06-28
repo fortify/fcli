@@ -70,7 +70,7 @@ public class FoDScanHelper {
         return obj;
     }
     public static final FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, String releaseQualifiedScanOrId, String delimiter) {
-        String[] elts = releaseQualifiedScanOrId.split(delimiter);
+        String[] elts = (delimiter != null) ? releaseQualifiedScanOrId.split(delimiter) : new String[]{releaseQualifiedScanOrId};
         switch (elts.length) {
             case 2:
                 var pollingResult = unirest.get(FoDUrls.SCAN_POLLING_SUMMARY)

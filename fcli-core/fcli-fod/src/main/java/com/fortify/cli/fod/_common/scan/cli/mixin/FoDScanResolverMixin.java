@@ -57,7 +57,10 @@ public class FoDScanResolverMixin {
         }
 
         public final String getDelimiter() {
-            return delimiterMixin.getDelimiter();
+            if( delimiterMixin!=null ) {
+                return delimiterMixin.getDelimiter();
+            }
+            return null;
         }
 
     }
@@ -95,7 +98,7 @@ public class FoDScanResolverMixin {
     }
 
     public static class RequiredOptionMulti extends AbstractFoDMultiScanResolverMixin {
-        @EnvSuffix("SCANS") @Option(names = {"--scans"}, required=true, split=",", descriptionKey = "fcli.fod.scan.scan-id")
+        @EnvSuffix("SCANS") @Option(names = {"--scans"}, required=true, split=",", descriptionKey = "fcli.fod.scan.scan-ids")
         @Getter private String[] releaseQualifiedScanOrIds;
     }
 
@@ -105,7 +108,7 @@ public class FoDScanResolverMixin {
     }
 
     public static class PositionalParameterMulti extends AbstractFoDMultiScanResolverMixin {
-        @EnvSuffix("SCANS") @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "fcli.fod.scan.scan-id")
+        @EnvSuffix("SCANS") @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "fcli.fod.scan.scan-ids")
         @Getter private String[] releaseQualifiedScanOrIds;
     }
 
