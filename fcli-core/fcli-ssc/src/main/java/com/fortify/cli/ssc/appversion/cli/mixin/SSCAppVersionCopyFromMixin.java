@@ -88,17 +88,24 @@ public class SSCAppVersionCopyFromMixin implements ISSCDelimiterMixinAware {
      */
     @RequiredArgsConstructor @Getter
     public static enum SSCAppVersionCopyOption {
-        CustomTags("copyCustomTags", null),
-        BugTracker("copyBugTrackerConfiguration", null),
-        BugTrackerConfiguration("copyBugTrackerConfiguration", BugTracker), // Deprecated
-        ProcessingRules("copyAnalysisProcessingRules", null),
-        AnalysisProcessingRules("copyAnalysisProcessingRules", ProcessingRules), // Deprecated
+        custom_tags("copyCustomTags", null),
+        bugtracker("copyBugTrackerConfiguration", null),
+        BugTrackerConfiguration("copyBugTrackerConfiguration", bugtracker), // Deprecated
+        processing_rules("copyAnalysisProcessingRules", null),
+        AnalysisProcessingRules("copyAnalysisProcessingRules", processing_rules), // Deprecated
         // Contrary to what's sent by SSC UI, attributes are not supported on COPY_FROM_PARTIAL
-        Attributes(null, null),
+        attributes(null, null),
         // Contrary to what's sent by SSC UI, auth entities are not supported on COPY_FROM_PARTIAL
-        Users(null, null),
+        users(null, null),
         // Requires separate call to COPY_CURRENT_STATE action
-        State(null, null);
+        state(null, null);
+        
+        @Override
+        public String toString() {
+            // Show and accept dashes instead of underscores when this
+            // enum is used in picocli options.
+            return name().replace('_', '-');
+        }
 
         private static final Logger LOG = LoggerFactory.getLogger(SSCAppVersionCopyOption.class);
         private final String copyFromPartialProperty;

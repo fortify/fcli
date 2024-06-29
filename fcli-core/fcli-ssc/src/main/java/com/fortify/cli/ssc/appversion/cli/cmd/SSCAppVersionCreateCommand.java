@@ -119,7 +119,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     }
     
     private Set<String> getUsersFromSource(UnirestInstance unirest, SSCAppVersionCopyFromDescriptor copyFromDescriptor) {
-        if ( copyFromDescriptor.isCopyRequested() && copyFromDescriptor.getCopyOptions().contains(SSCAppVersionCopyOption.Users) ) {
+        if ( copyFromDescriptor.isCopyRequested() && copyFromDescriptor.getCopyOptions().contains(SSCAppVersionCopyOption.users) ) {
             return getUsersSet(unirest, copyFromDescriptor.getAppVersionDescriptor());
         }
         return null;
@@ -144,7 +144,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     }
 
     private Map<String, String> getAttributesFromSource(UnirestInstance unirest, SSCAppVersionCopyFromDescriptor copyFromDescriptor) {
-        if ( copyFromDescriptor.isCopyRequested() && copyFromDescriptor.getCopyOptions().contains(SSCAppVersionCopyOption.Attributes) ) {
+        if ( copyFromDescriptor.isCopyRequested() && copyFromDescriptor.getCopyOptions().contains(SSCAppVersionCopyOption.attributes) ) {
             return getAttributesMap(unirest, copyFromDescriptor.getAppVersionDescriptor());
         }
         return null;
@@ -225,7 +225,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
 
     private HttpRequest<?> buildCopyStateRequest(UnirestInstance unirest, SSCAppVersionDescriptor copyTo, SSCAppVersionCopyFromDescriptor copyFromDescriptor) {
         if ( !copyFromDescriptor.isCopyRequested() 
-                || !copyFromDescriptor.getCopyOptions().contains(SSCAppVersionCopyOption.State)) { 
+                || !copyFromDescriptor.getCopyOptions().contains(SSCAppVersionCopyOption.state)) { 
             return null; 
         }
         return unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_CURRENT_STATE)
