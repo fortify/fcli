@@ -24,6 +24,7 @@ import picocli.CommandLine;
                 FoDOssScanDownloadLatestCommand.class,
                 FoDOssScanGetCommand.class,
                 FoDOssScanImportCommand.class,
+                FoDOssScanImportDebrickedCommand.class,
                 FoDOssScanListCommand.class,
                 //FoDOssScanGetConfigCommand.class,
                 //FoDOssScanSetupCommand.class,

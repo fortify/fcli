@@ -30,6 +30,53 @@ steps:
       # Define output date format
     - name: dateFmt
       value: YYYY-MM-dd HH:mm
+  # Note: change/remove the following when Open Source counts are available on the release object     
+  - progress: Loading Scans
+  - requests:
+    - name: scans
+      # we can't filter on scan type so we have to trawl through in to find "latest" open source scan :(
+      uri: /api/v3/releases/${r.releaseId}/scans?limit=50
+      query:
+        orderBy: completedDateTime
+        orderByDirection: DESC
+      type: paged
+      forEach:
+        name: scan
+        breakIf: ${ossScanDate!=null}
+        if: ${scan.scanType=='OpenSource'}
+        do:
+          - set:
+            - name: scanType
+              value: ${scan.scanType}
+            - name: ossScanDate
+              value: ${scan.completedDateTime} 
+          #- write:
+          #  - to: stdout
+          #    value: ${scanType} - ${ossScanDate}                     
+  - progress: Loading Vulnerabilities
+  - requests:
+    - name: issues
+      if: ${ossScanDate!=null}
+      uri: /api/v3/releases/${r.releaseId}/vulnerabilities?filters=category%3AOpen%20Source&limit=1 
+      onResponse:
+        - steps:
+          - set:
+            - name: ossTotal
+              value: ${issues_raw.totalCount}
+          - set:
+            - name: ossCritical
+              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.?[#this.value == "Critical"][0]?.count?:0}       
+          - set:
+            - name: ossHigh
+              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.?[#this.value == "High"][0]?.count?:0}   
+          - set:
+            - name: ossMedium
+              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.?[#this.value == "Medium"][0]?.count?:0}   
+          - set:
+            - name: ossLow
+              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.?[#this.value == "Low"][0]?.count?:0}                      
+  # replace up to here
+
   - write:
     - to: ${parameters.file}
       valueTemplate: summary-md
@@ -38,6 +85,7 @@ steps:
       value: |
         Output written to ${parameters.file}
 
+# Note: update references when Open Source counts are available on the release object, e.g. r.ossScanDate, r.ossCritical ...
 valueTemplates:
   - name: summary-md
     contents: |
@@ -52,11 +100,12 @@ valueTemplates:
       **Status:** ${r.isPassed?'Pass':'Fail'}
       
       ### Issue Counts
-      | Type        | Last Scan Date   | Critical | High     | Medium   | Low      |
-      | ----------- | ---------------- | -------- | -------- | -------- | -------- |
-      | **Static**  | ${(#isBlank(r.staticScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.staticScanDate))  +' | '+#fmt('%8s', r.staticCritical)                                   +' | '+#fmt('%8s', r.staticHigh)                           +' | '+#fmt('%8s', r.staticMedium)                               +' | '+#fmt('%8s', r.staticLow)                         +' |'}
-      | **Dynamic** | ${(#isBlank(r.dynamicScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.dynamicScanDate))+' | '+#fmt('%8s', r.dynamicCritical)                                  +' | '+#fmt('%8s', r.dynamicHigh)                          +' | '+#fmt('%8s', r.dynamicMedium)                              +' | '+#fmt('%8s', r.dynamicLow)                        +' |'}
-      | **Mobile**  | ${(#isBlank(r.mobileScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.mobileScanDate))  +' | '+#fmt('%8s', r.mobileCritical)                                   +' | '+#fmt('%8s', r.mobileHigh)                           +' | '+#fmt('%8s', r.mobileMedium)                               +' | '+#fmt('%8s', r.mobileLow)                         +' |'}
-      | **Total**   |                  | ${#fmt('%8s', r.staticCritical+r.dynamicCritical+r.mobileCritical)+' | '+#fmt('%8s', r.staticHigh+r.dynamicHigh+r.mobileHigh)+' | '+#fmt('%8s', r.staticMedium+r.dynamicMedium+r.mobileMedium)+' | '+#fmt('%8s', r.staticLow+r.dynamicLow+r.mobileLow)+' |'}
+      | Type            | Last Scan Date   | Critical | High     | Medium   | Low      |
+      | --------------- | ---------------- | -------- | -------- | -------- | -------- |
+      | **Static**      | ${(#isBlank(r.staticScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.staticScanDate))  +' | '+#fmt('%8s', r.staticCritical)                                   +' | '+#fmt('%8s', r.staticHigh)                           +' | '+#fmt('%8s', r.staticMedium)                               +' | '+#fmt('%8s', r.staticLow)                         +' |'}
+      | **Dynamic**     | ${(#isBlank(r.dynamicScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.dynamicScanDate))+' | '+#fmt('%8s', r.dynamicCritical)                                  +' | '+#fmt('%8s', r.dynamicHigh)                          +' | '+#fmt('%8s', r.dynamicMedium)                              +' | '+#fmt('%8s', r.dynamicLow)                        +' |'}
+      | **Mobile**      | ${(#isBlank(r.mobileScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.mobileScanDate))  +' | '+#fmt('%8s', r.mobileCritical)                                   +' | '+#fmt('%8s', r.mobileHigh)                           +' | '+#fmt('%8s', r.mobileMedium)                               +' | '+#fmt('%8s', r.mobileLow)                         +' |'}
+      | **Open Source** | ${(#isBlank(ossScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, ossScanDate))  +' | '+#fmt('%8s', (ossCritical!=null?ossCritical:0))                                   +' | '+#fmt('%8s', (ossHigh!=null?ossHigh:0))                           +' | '+#fmt('%8s', (ossMedium!=null?ossMedium:0))                               +' | '+#fmt('%8s', (ossLow!=null?ossLow:0))                         +' |'}
+      | **Total**       |                  | ${#fmt('%8s', r.staticCritical+r.dynamicCritical+r.mobileCritical+(ossCritical!=null?ossCritical:0))+' | '+#fmt('%8s', r.staticHigh+r.dynamicHigh+r.mobileHigh+(ossHigh!=null?ossHigh:0))+' | '+#fmt('%8s', r.staticMedium+r.dynamicMedium+r.mobileMedium+(ossMedium!=null?ossMedium:0))+' | '+#fmt('%8s', r.staticLow+r.dynamicLow+r.mobileLow+(ossLow!=null?ossLow:0))+' |'}
       
       

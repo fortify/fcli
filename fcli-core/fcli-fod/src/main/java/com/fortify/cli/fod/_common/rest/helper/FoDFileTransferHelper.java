@@ -36,7 +36,9 @@ import lombok.SneakyThrows;
 //      chunked uploads for SC DAST as well, so consider refactoring into a
 //      generic class in fcli-common.
 public final class FoDFileTransferHelper {
-    private static final int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+
+    private static int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+    public static void setChunkSize(int chunkSize) { FoDFileTransferHelper.chunkSize = chunkSize; }
 
     @SneakyThrows
     public static final JsonNode upload(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
@@ -64,7 +66,6 @@ public final class FoDFileTransferHelper {
             throw new IllegalArgumentException("Could not read file: " + f.getPath());
         }
         long fileLen = f.length();
-
         String lastBody = null;
         try (var fs = new FileInputStream(f); var progressMonitor = new FoDProgressMonitor("Upload"); ) {
             byte[] readByteArray = new byte[chunkSize];
