@@ -14,7 +14,6 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.SSCArtifactImportDebrickedCommand;
 
 import picocli.CommandLine.Command;
 

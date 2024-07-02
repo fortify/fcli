@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.artifact.cli.cmd.import_debricked;
+package com.fortify.cli.common.cli.cmd.import_debricked;
 
 import java.io.File;
 import java.nio.file.StandardCopyOption;
@@ -24,85 +24,35 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc.artifact.cli.cmd.AbstractSSCArtifactUploadCommand;
-import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
-import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
-import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
+import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
+import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
+import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
+public final class DebrickedHelper  {
+    
+	private DebrickedLoginOptions debrickedLoginOptions;
+	private String repository;
+	private String branch;
 
-@Command(name = "import-debricked")
-public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUploadCommand {
-    @Mixin @Getter private OutputHelperMixins.TableNoQuery outputHelper;
-    @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
-    
-    @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")
-    @Getter private String engineType;
-    
-    @Option(names = {"-f", "--save-sbom-as"}, required = false)
-    private String fileName;
-    
-    @Option(names = {"-r", "--repository"}, required = true)
-    private String repository;
-    
-    @Option(names = {"-b", "--branch"}, required = true)
-    private String branch;
-    
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
-    
-    @Override @SneakyThrows
-    protected File getFile() {
-    	File sbomFile = null;
-    	if ( StringUtils.isNotBlank(fileName) ) {
-    		sbomFile = new File(fileName);
-    	} else {
-    		sbomFile = File.createTempFile("debricked", ".json");
-    		sbomFile.deleteOnExit();
-    	}
-    	return sbomFile;
-    }
-    
-    @Override
-    protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	progressWriter.writeProgress("Status: Generating & downloading SBOM");
-    	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
-    	    downloadSbom(debrickedUnirest, file);
-    	}
-    	progressWriter.writeProgress("Status: Uploading SBOM to SSC");
-    }
-    
-    @Override
-    protected void postUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	if ( StringUtils.isBlank(fileName) ) {
-    		file.delete();
-    	}
-    	progressWriter.writeProgress("Status: SBOM uploaded to SSC");
-    	progressWriter.clearProgress();
-    }
-    
-    private Void downloadSbom(UnirestInstance debrickedUnirest, File file) {
+	public DebrickedHelper(DebrickedLoginOptions debrickedLoginOptions, String repository, String branch) {
+		this.debrickedLoginOptions = debrickedLoginOptions;
+		this.repository = repository;
+		this.branch = branch;
+	}
+
+    public final void downloadSbom(UnirestInstance debrickedUnirest, File file) {
     	configureDebrickedUnirest(debrickedUnirest);
     	String reportUuid = startSbomGeneration(debrickedUnirest);
     	waitSbomGeneration(debrickedUnirest, reportUuid, file);
-    	return null;
     }
 
-	private void configureDebrickedUnirest(UnirestInstance debrickedUnirest) {
+	public final void configureDebrickedUnirest(UnirestInstance debrickedUnirest) {
 		UnirestUnexpectedHttpResponseConfigurer.configure(debrickedUnirest);
         DebrickedUrlConfigOptions debrickedUrlConfig = debrickedLoginOptions.getUrlConfigOptions();
 		UnirestUrlConfigConfigurer.configure(debrickedUnirest, debrickedUrlConfig);
@@ -113,7 +63,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
         debrickedUnirest.config().setDefaultHeader("Authorization", authHeader);
 	}
 
-	private String getDebrickedJwtToken(UnirestInstance debrickedUnirest) {
+	public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest) {
 		DebrickedAuthOptions authOptions = debrickedLoginOptions.getAuthOptions();
 		DebrickedUserCredentialOptions userCredentialsOptions = authOptions.getUserCredentialsOptions();
 		DebrickedAccessTokenCredentialOptions tokenOptions = authOptions.getTokenOptions();
@@ -126,7 +76,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
 		}
 	}
 
-	private String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedAccessTokenCredentialOptions tokenOptions) {
+	public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedAccessTokenCredentialOptions tokenOptions) {
 		return debrickedUnirest.post("/api/login_refresh")
 				.header("Content-Type", "application/x-www-form-urlencoded")
 				.field("refresh_token", new String(tokenOptions.getAccessToken()))
@@ -136,7 +86,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
 				.asText();
 	}
 
-	private String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedUserCredentialOptions userCredentialsOptions) {
+	public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedUserCredentialOptions userCredentialsOptions) {
 		return debrickedUnirest.post("/api/login_check")
 				.header("Content-Type", "application/x-www-form-urlencoded")
 				.field("_username", userCredentialsOptions.getUser())
@@ -147,7 +97,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
 				.asText();
 	}
 	
-	private String getRepositoryId(UnirestInstance debrickedUnirest) {
+	public final String getRepositoryId(UnirestInstance debrickedUnirest) {
 		try {
 			Integer.parseInt(repository);
 			return repository;
@@ -166,7 +116,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
 		}
 	}
 	
-	private String startSbomGeneration(UnirestInstance debrickedUnirest) {
+	public final String startSbomGeneration(UnirestInstance debrickedUnirest) {
 		ObjectNode body = new ObjectMapper().createObjectNode()
 			// TODO generate a proper ArrayNode
 			.putRawValue("repositoryIds", new RawValue("["+getRepositoryId(debrickedUnirest)+"]"))
@@ -184,7 +134,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
 	}
 
 	@SneakyThrows
-	private void waitSbomGeneration(UnirestInstance debrickedUnirest, String reportUuid, File outputFile) {
+	public final void waitSbomGeneration(UnirestInstance debrickedUnirest, String reportUuid, File outputFile) {
 		int status = 202;
 		while ( status==202 ) {
 			Thread.sleep(5000L);
