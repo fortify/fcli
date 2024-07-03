@@ -1,0 +1,19 @@
+# Fortify on Demand Release Summary
+
+## [DAST Automated [KAL] - iwa-website-scan](https://ams.fortify.com/redirect/Releases/1058545)
+
+Summary generated on: 2024-07-03 18:11
+
+### Security Policy
+**Rating:** &bigstar;&star;&star;&star;&star;
+**Status:** Fail
+
+### Issue Counts
+| Type            | Last Scan Date   | Critical | High     | Medium   | Low      |
+| --------------- | ---------------- | -------- | -------- | -------- | -------- |
+| **Static**      | N/A              |        0 |        0 |        0 |        0 |
+| **Dynamic**     | 2024-02-06 08:57 |        3 |        4 |       11 |       56 |
+| **Mobile**      | N/A              |        0 |        0 |        0 |        0 |
+| **Open Source** | N/A              |        0 |        0 |        0 |        0 |
+| **Total**       |                  |        3 |        4 |       11 |       56 |
+
