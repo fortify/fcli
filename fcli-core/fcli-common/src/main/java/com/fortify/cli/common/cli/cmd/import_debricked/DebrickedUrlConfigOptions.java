@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.artifact.cli.cmd.import_debricked;
+package com.fortify.cli.common.cli.cmd.import_debricked;
 
 import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
