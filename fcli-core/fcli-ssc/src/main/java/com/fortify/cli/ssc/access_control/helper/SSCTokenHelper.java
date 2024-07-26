@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestBasicAuthConfigurer;
@@ -88,6 +89,12 @@ public class SSCTokenHelper {
         }
     }
     
+    public static final SSCTokenGetOrCreateResponse getTokenData(IUrlConfig urlConfig, char[] token) {
+        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+            return getTokenData(unirest, urlConfig, token);
+        }
+    }
+
     public static final <R> R run(IUrlConfig urlConfig, char[] activeToken, Function<UnirestInstance, R> f) {
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             configureUnirest(unirest, urlConfig, activeToken);
@@ -134,6 +141,25 @@ public class SSCTokenHelper {
                 .body(tokenCreateRequest)
                 .asObject(returnType)
                 .getBody();
+    }
+    
+    private static SSCTokenGetOrCreateResponse getTokenData(UnirestInstance unirest, IUrlConfig urlConfig, char[] token) {
+        configureUnirest(unirest, urlConfig, token);
+        try {
+            var result = unirest.post("/api/v1/userSession/tokenData")
+                    .body(JsonHelper.getObjectMapper().createObjectNode())
+                    .asObject(SSCTokenGetOrCreateResponse.class)
+                    .getBody();
+            result.getData().setToken(token);
+            return result;
+        } catch ( UnexpectedHttpResponseException e ) {
+            if ( e.getStatus()==404 ) {
+                // Older SSC versions don't support this endpoint, so we just return null
+                return null; 
+            } else {
+                throw e;
+            }
+        }
     }
     
     private static void configureUnirest(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc) {
