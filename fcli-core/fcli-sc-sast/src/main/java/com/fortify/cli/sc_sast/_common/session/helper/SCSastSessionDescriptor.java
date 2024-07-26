@@ -68,8 +68,10 @@ public class SCSastSessionDescriptor extends AbstractSessionDescriptor {
 
     @JsonIgnore
     public void logout(IUserCredentialsConfig userCredentialsConfig) {
-        if ( cachedSscTokenResponse!=null && userCredentialsConfig!=null ) {
-            SSCTokenHelper.deleteTokensById(getSscUrlConfig(), userCredentialsConfig, getTokenId());
+        // We only revoke the token if we generated a token upon login, 
+        // and that token hasn't expired yet.
+        if ( predefinedSscToken==null && hasActiveCachedTokenResponse() ) {
+            SSCTokenHelper.revokeToken(getSscUrlConfig(), userCredentialsConfig, cachedSscTokenResponse.getData().getToken());
         }
     }
     

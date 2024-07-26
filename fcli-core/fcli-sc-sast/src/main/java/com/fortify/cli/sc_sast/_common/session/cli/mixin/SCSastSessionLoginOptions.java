@@ -38,7 +38,7 @@ public class SCSastSessionLoginOptions {
         @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
         @Getter private SCSastUserCredentialAndExpiryOptions userCredentialsConfig = new SCSastUserCredentialAndExpiryOptions();
         @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
-        @Getter private SCDastTokenCredentialOptions tokenOptions = new SCDastTokenCredentialOptions();
+        @Getter private SCSastTokenCredentialOptions tokenOptions = new SCSastTokenCredentialOptions();
         
         @Override
         public char[] getPredefinedToken() {
@@ -46,7 +46,7 @@ public class SCSastSessionLoginOptions {
         }
     }
     
-    public static class SCDastTokenCredentialOptions {
+    public static class SCSastTokenCredentialOptions {
         // Note that the SCSastControllerScanStartCommand requires this predefined token to be
         // a CIToken. If we ever add support for passing arbitrary tokens (i.e. through a new 
         // --ssc-token option), we should be sure that we can distinguish between token passed

@@ -83,6 +83,12 @@ public class SSCTokenHelper {
         }
     }
     
+    public static final void revokeToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, char[] token) {
+        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+            revokeToken(unirest, urlConfig, uc, token);
+        }
+    }
+    
     public static final <T> T createToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, uc, tokenCreateRequest, returnType);
@@ -131,6 +137,21 @@ public class SSCTokenHelper {
         ArrayNode tokenArray = Stream.of(tokens).map(SSCTokenConverter::toRestToken).map(TextNode::new).collect(JsonHelper.arrayNodeCollector());
         tokenRevokeRequest.set("tokens", tokenArray);
         return unirest.post(SSCUrls.TOKENS_ACTION_REVOKE)
+                .body(tokenRevokeRequest)
+                .asObject(JsonNode.class).getBody();
+    }
+    
+    private static final void revokeToken(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc, char[] restToken) {
+        if ( uc!=null ) {
+            configureUnirest(unirest, urlConfig, uc);
+        } else {
+            // SSC 24.2+ allows for revoking tokens using token authentication
+            configureUnirest(unirest, urlConfig, restToken);
+        }
+        ObjectNode tokenRevokeRequest = new ObjectMapper().createObjectNode();
+        ArrayNode tokenArray = JsonHelper.toArrayNode(new String(restToken));
+        tokenRevokeRequest.set("tokens", tokenArray);
+        unirest.post(SSCUrls.TOKENS_ACTION_REVOKE)
                 .body(tokenRevokeRequest)
                 .asObject(JsonNode.class).getBody();
     }
