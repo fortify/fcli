@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240726.100624-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240726.130340-dev_develop" %}
 
 
 <div id="header">
@@ -60,7 +60,7 @@ fcli_version:
 <p>This command stores the SSC and ScanCentral SAST API URL and authentication token in an encrypted session file in the fcli state data folder, for use by other 'fcli sc-sast' commands to connect to the specified SSC/ScanCentral SAST instance. Option values may be passed on the command line or specified through environment variables (common for CI/CD pipeline use) as listed below.</p>
 </div>
 <div class="paragraph">
-<p>When logging in with username and password, this command will connect to SSC to generate a CIToken; the user password is not stored by fcli. When logging in with a pre-generated CIToken, this token will be stored as-is. Note that due to SSC limitations, fcli cannot determine when the token will expire.</p>
+<p>When logging in with username and password, this command will connect to SSC to generate a CIToken; the user password is not stored by fcli. When logging in with a pre-generated CIToken, this token will be stored as-is after checking its validity. Note that on SSC 23.2 or below, fcli cannot determine when a pre-generated token will expire.</p>
 </div>
 <div class="paragraph">
 <p>For interactive use, you may choose to keep the session open until it expires. For CI/CD integrations and other automations, you should always issue a logout command once work is complete. On shared/non-containerized systems, consider setting FCLI_STATE_DIR or FCLI_DATA_DIR environment variables to prevent unexpected interactions between different pipelines.</p>
@@ -234,7 +234,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-07-26 10:08:05 UTC
+Last updated 2024-07-26 13:05:31 UTC
 </div>
 </div>
 </body>
