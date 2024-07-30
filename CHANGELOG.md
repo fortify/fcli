@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/fortify/fcli/compare/v1.3.2...v1.3.3) (2024-07-30)
+
+
+### Bug Fixes
+
+* Ignore unknown properties returned by FoD 24.3 to avoid fcli exceptions (fixes [#566](https://github.com/fortify/fcli/issues/566)) ([df8a9b1](https://github.com/fortify/fcli/commit/df8a9b158815f2836bd81b369a01395d73164306))
+
 ## [1.3.2](https://github.com/fortify/fcli/compare/v1.3.1...v1.3.2) (2023-10-12)
 
 
