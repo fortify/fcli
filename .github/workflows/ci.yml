@@ -2,7 +2,7 @@ name: Build and release
 on:
   push:
     branches:
-      - '**'
+      - 'v1.x'
        
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
@@ -20,12 +20,12 @@ jobs:
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: GoogleCloudPlatform/release-please-action@v3
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/v1.x'
         with:
           command: github-release
           release-type: simple
           package-name: ${{ github.event.repository.name }} 
-          default-branch: main 
+          default-branch: v1.x 
           
       - name: PROD - Define release info
         if: steps.create_prod_release.outputs.release_created
@@ -232,13 +232,13 @@ jobs:
         run: rm -f artifact/fcli_completion
           
       - name: PROD - Prepare release PR
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/v1.x'
         uses: GoogleCloudPlatform/release-please-action@v3
         with:
           command: release-pr
           release-type: simple
           package-name: ${{ github.event.repository.name }}
-          default-branch: main
+          default-branch: v1.x
           
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
