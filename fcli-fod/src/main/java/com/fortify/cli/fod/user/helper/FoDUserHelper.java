@@ -48,7 +48,7 @@ import java.util.ArrayList;
 
 public class FoDUserHelper {
     @Getter
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static ObjectMapper objectMapper = JsonHelper.getObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
