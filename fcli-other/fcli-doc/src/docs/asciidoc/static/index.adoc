@@ -8,6 +8,8 @@ Release documentation can be accessed through the drop-down menu on the top-righ
 
 === Releases Versions
 
+Note that in general, maintenance is performed on the latest release version only; older versions may not receive bug fixes or compatibility updates to support the latest Fortify product releases. Fcli upgrades between minor and patch releases should be straightforward as new releases are mostly backward-compatible with older versions within the same major version range. If you are still on an older major release like v1.x, it is highly recommended to upgrade to fcli v2.x to avoid potential compatibility issues with new Fortify product releases.
+
 ++++
 <ul>
 {% for version in site.data.versions.release %}
