@@ -43,7 +43,7 @@ import java.util.List;
 
 public class FoDLookupHelper {
     @Getter
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
 
 
     public static final JsonNode renameFields(JsonNode record) {

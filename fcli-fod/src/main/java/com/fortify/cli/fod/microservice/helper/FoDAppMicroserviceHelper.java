@@ -47,7 +47,7 @@ import static com.fortify.cli.fod.app.helper.FoDAppHelper.getAppDescriptor;
 
 public class FoDAppMicroserviceHelper {
     @Getter
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);

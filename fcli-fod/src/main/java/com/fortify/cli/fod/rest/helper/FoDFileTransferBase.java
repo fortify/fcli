@@ -49,7 +49,7 @@ import java.util.Arrays;
 
 @ReflectiveAccess
 public abstract class FoDFileTransferBase {
-    @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
+    @Getter private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     @Getter UnirestInstance unirest;
     @Getter HttpRequest endpoint;
     @Getter File uploadFile;
