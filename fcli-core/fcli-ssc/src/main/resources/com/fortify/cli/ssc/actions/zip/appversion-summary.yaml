@@ -238,6 +238,12 @@ valueTemplates:
       
       Summary generated on: ${#formatDateTime(dateFmt)}
       
+      The tables below display summaries for all analysis types available in this application 
+      version, which may include analysis types that were not updated by the current scan job,
+      for example because this scan job didn't run that type of analysis, or because the analysis
+      failed. You can verify this by matching the displayed 'Last Scan Date' against the summary
+      date listed above. 
+      
       ### Issue Counts
       
       ${#join('\n', issueCountsOutput)}

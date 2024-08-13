@@ -12,10 +12,25 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import com.fortify.cli.common.cli.mixin.ICommandAware;
+
 import lombok.Getter;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
-public final class SSCDelimiterMixin {
+public final class SSCDelimiterMixin implements ICommandAware {
     @Option(names = {"--delim"}, defaultValue = ":")
     @Getter private String delimiter;
+    
+    @Override
+    public void setCommandSpec(CommandSpec commandSpec) {
+        commandSpec.mixins().values().forEach(this::injectThis);
+    }
+    
+    private void injectThis(CommandSpec spec) {
+        var mixin = spec.userObject();
+        if ( mixin instanceof ISSCDelimiterMixinAware ) {
+            ((ISSCDelimiterMixinAware)mixin).setDelimiterMixin(this);
+        }
+    }
 }

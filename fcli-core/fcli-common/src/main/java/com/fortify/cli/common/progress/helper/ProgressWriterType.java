@@ -28,6 +28,13 @@ public enum ProgressWriterType {
     single_line(SingleLineProgressWriter::new), 
     ansi(AnsiProgressWriter::new);
     
+    @Override
+    public String toString() {
+        // Show and accept dashes instead of underscores when this
+        // enum is used in picocli options.
+        return name().replace('_', '-');
+    }
+    
     private final Supplier<IProgressWriter> factory;
     
     public IProgressWriter create() {

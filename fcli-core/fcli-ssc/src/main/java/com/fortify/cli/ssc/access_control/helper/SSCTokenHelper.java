@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestBasicAuthConfigurer;
@@ -82,12 +83,24 @@ public class SSCTokenHelper {
         }
     }
     
+    public static final void revokeToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, char[] token) {
+        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+            revokeToken(unirest, urlConfig, uc, token);
+        }
+    }
+    
     public static final <T> T createToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, uc, tokenCreateRequest, returnType);
         }
     }
     
+    public static final SSCTokenGetOrCreateResponse getTokenData(IUrlConfig urlConfig, char[] token) {
+        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+            return getTokenData(unirest, urlConfig, token);
+        }
+    }
+
     public static final <R> R run(IUrlConfig urlConfig, char[] activeToken, Function<UnirestInstance, R> f) {
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             configureUnirest(unirest, urlConfig, activeToken);
@@ -128,12 +141,46 @@ public class SSCTokenHelper {
                 .asObject(JsonNode.class).getBody();
     }
     
+    private static final void revokeToken(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc, char[] restToken) {
+        if ( uc!=null ) {
+            configureUnirest(unirest, urlConfig, uc);
+        } else {
+            // SSC 24.2+ allows for revoking tokens using token authentication
+            configureUnirest(unirest, urlConfig, restToken);
+        }
+        ObjectNode tokenRevokeRequest = new ObjectMapper().createObjectNode();
+        ArrayNode tokenArray = JsonHelper.toArrayNode(new String(restToken));
+        tokenRevokeRequest.set("tokens", tokenArray);
+        unirest.post(SSCUrls.TOKENS_ACTION_REVOKE)
+                .body(tokenRevokeRequest)
+                .asObject(JsonNode.class).getBody();
+    }
+    
     private static final <T> T createToken(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
         configureUnirest(unirest, urlConfig, uc);
         return unirest.post("/api/v1/tokens")
                 .body(tokenCreateRequest)
                 .asObject(returnType)
                 .getBody();
+    }
+    
+    private static SSCTokenGetOrCreateResponse getTokenData(UnirestInstance unirest, IUrlConfig urlConfig, char[] token) {
+        configureUnirest(unirest, urlConfig, token);
+        try {
+            var result = unirest.post("/api/v1/userSession/tokenData")
+                    .body(JsonHelper.getObjectMapper().createObjectNode())
+                    .asObject(SSCTokenGetOrCreateResponse.class)
+                    .getBody();
+            result.getData().setToken(token);
+            return result;
+        } catch ( UnexpectedHttpResponseException e ) {
+            if ( e.getStatus()==404 ) {
+                // Older SSC versions don't support this endpoint, so we just return null
+                return null; 
+            } else {
+                throw e;
+            }
+        }
     }
     
     private static void configureUnirest(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc) {

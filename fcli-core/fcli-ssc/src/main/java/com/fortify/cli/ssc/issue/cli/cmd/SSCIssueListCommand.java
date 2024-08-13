@@ -22,6 +22,7 @@ import com.fortify.cli.ssc._common.rest.query.cli.mixin.SSCQParamMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueBulkEmbedMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetResolverMixin;
+import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueIncludeMixin;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetDescriptor;
 
@@ -41,6 +42,7 @@ public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand imp
     @Mixin private SSCQParamMixin qParamMixin;
     @Mixin private SSCIssueBulkEmbedMixin bulkEmbedMixin;
     @Option(names="--filter", required=false) private String filter;
+    @Mixin private SSCIssueIncludeMixin includeMixin;
     
     // For some reason, SSC q param doesn't use same property names as returned by SSC,
     // so we list the proper mappings below. TODO Any other useful server-side queries?

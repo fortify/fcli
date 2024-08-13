@@ -59,7 +59,11 @@ public final class EnvHelper {
      * other purposes.
      */
     public static final String env(String name) {
-        return System.getProperty("fcli.env."+name, System.getenv(name));
+        return System.getProperty(envSystemPropertyName(name), System.getenv(name));
+    }
+
+    public static String envSystemPropertyName(String envName) {
+        return "fcli.env."+envName;
     }
 
     public static final Boolean asBoolean(String s) {

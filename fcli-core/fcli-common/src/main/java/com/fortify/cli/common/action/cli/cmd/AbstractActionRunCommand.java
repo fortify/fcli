@@ -29,6 +29,7 @@ import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.common.util.EnvHelper;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
@@ -68,7 +69,26 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {
         actionRunner.getSpelEvaluator().configure(context->configure(actionRunner, context));
         progressWriter.writeProgress("Executing action %s", actionRunner.getAction().getMetadata().getName());
-        return actionRunner.run(actionArgs);
+        // We need to set the FCLI_DEFAULT_<module>_SESSION environment variable to allow fcli: statements to 
+        // pick up the current session name, and (although probably not needed currently), reset the default
+        // session name to the previous value once the action completes.
+        var sessionEnvName = String.format("%s_%s_SESSION", System.getProperty("fcli.env.default.prefix", "FCLI_DEFAULT"), getType().toUpperCase());
+        var sessionPropertyName = EnvHelper.envSystemPropertyName(sessionEnvName);
+        var sessionEnvOrgValue = EnvHelper.env(sessionEnvName);
+        try {
+            setOrClearSystemProperty(sessionPropertyName, getSessionName());
+            return actionRunner.run(actionArgs);
+        } finally {
+            setOrClearSystemProperty(sessionPropertyName, sessionEnvOrgValue);
+        }
+    }
+
+    private void setOrClearSystemProperty(String name, String value) {
+        if ( value==null ) {
+            System.clearProperty(name);
+        } else {
+            System.setProperty(name, value);
+        }
     }
     
     private ParameterException onValidationErrors(OptionsParseResult optionsParseResult) {
@@ -79,5 +99,6 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     }
 
     protected abstract String getType();
+    protected abstract String getSessionName();
     protected abstract void configure(ActionRunner actionRunner, SimpleEvaluationContext context);
 }

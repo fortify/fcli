@@ -69,6 +69,11 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
     }
     
     @Override
+    protected String getSessionName() {
+        return unirestInstanceSupplier.getSessionName();
+    }
+    
+    @Override
     protected void configure(ActionRunner templateRunner, SimpleEvaluationContext context) {
         templateRunner
             .addParameterConverter("appversion_single", this::loadAppVersion)

@@ -85,6 +85,7 @@ steps:
               valueTemplate: results
   - progress: Processing rule data
   - forEach:
+      if: ${ruleCategories!=null}
       processor: ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)}
       name: rule
       do:

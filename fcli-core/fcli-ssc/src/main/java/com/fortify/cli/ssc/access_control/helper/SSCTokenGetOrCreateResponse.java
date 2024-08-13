@@ -23,8 +23,8 @@ import lombok.NoArgsConstructor;
 @Data
 @Reflectable @NoArgsConstructor 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public final class SSCTokenCreateResponse {
-    private SSCTokenCreateResponse.SSCTokenData data;
+public final class SSCTokenGetOrCreateResponse {
+    private SSCTokenGetOrCreateResponse.SSCTokenData data;
     @Data 
     @Reflectable @NoArgsConstructor
     public static final class SSCTokenData {

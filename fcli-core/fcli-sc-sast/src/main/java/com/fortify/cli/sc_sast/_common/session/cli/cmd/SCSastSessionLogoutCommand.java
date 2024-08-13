@@ -13,8 +13,11 @@
 package com.fortify.cli.sc_sast._common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.session.helper.SessionLogoutException;
 import com.fortify.cli.sc_sast._common.session.cli.mixin.SCSastSessionLogoutOptions;
+import com.fortify.cli.sc_sast._common.session.cli.mixin.SCSastUserCredentialOptions;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionDescriptor;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionHelper;
 
@@ -29,7 +32,18 @@ public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand<SCS
     @Mixin private SCSastSessionLogoutOptions logoutOptions;
     
     @Override
-    protected void logout(String sessionName, SCSastSessionDescriptor sessionData) {
-        sessionData.logout(logoutOptions.getUserCredentialOptions());
+    protected void logout(String sessionName, SCSastSessionDescriptor sessionDescriptor) {
+        if ( !logoutOptions.isNoRevokeToken() ) {
+            SCSastUserCredentialOptions userCredentialOptions = logoutOptions.getUserCredentialOptions();
+            try {
+                sessionDescriptor.logout(userCredentialOptions);
+            } catch ( UnexpectedHttpResponseException e ) {
+                if ( e.getStatus()==403 && userCredentialOptions==null ) {
+                    throw new SessionLogoutException("SSC user credentials or --no-revoke-token option must be specified on SSC versions 23.2 or below", false);
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 }

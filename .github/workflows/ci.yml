@@ -26,12 +26,11 @@ jobs:
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: GoogleCloudPlatform/release-please-action@v3
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/v2.x'
         with:
           command: github-release
           release-type: simple
           package-name: ${{ github.event.repository.name }}  
-          default-branch: main
           
       - name: PROD - Define release info
         if: steps.create_prod_release.outputs.release_created
@@ -266,13 +265,12 @@ jobs:
           name: combined-artifacts
           
       - name: PROD - Prepare release PR
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/v2.x'
         uses: GoogleCloudPlatform/release-please-action@v3
         with:
           command: release-pr
           release-type: simple
           package-name: ${{ github.event.repository.name }}
-          default-branch: main
           
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
@@ -322,7 +320,7 @@ jobs:
           rm -rf docs/.git*
           
           # Extract top-level documentation resources
-          # TODO Should we do this only when building a release, or also for dev_main,
+          # TODO Should we do this only when building a release, or also for dev_v2.x,
           #      or for all (dev & release) versions like we do now?
           unzip -o artifacts/docs-gh-pages.zip -d "docs"
           
