@@ -1,28 +1,5 @@
 # Changelog
 
-## [2.5.0](https://github.com/fortify/fcli/compare/v2.4.0...v2.5.0) (2024-08-13)
-
-
-### Features
-
-* `fcli ssc appversion create`: Allow for copying attributes & user access ([667ba4f](https://github.com/fortify/fcli/commit/667ba4f08ba1bed9fb32f9d2c3bd9fb376a1c154))
-* FoD: Debricked SBOM Export/Import (resolves [#560](https://github.com/fortify/fcli/issues/560)) ([aac8e10](https://github.com/fortify/fcli/commit/aac8e10661e141a72caa4c948bc6a980033d62fe))
-
-
-### Bug Fixes
-
-* `fcli fod issue list`: Add `--include` option to allow for retrieving `fixed` and/or `suppressed` issues (fixes [#545](https://github.com/fortify/fcli/issues/545)) ([01c2ac2](https://github.com/fortify/fcli/commit/01c2ac2e2110ac53aa2d75c8047c60eda6bc8e2a))
-* `fcli ssc issue list`: Add `--include` option to allow for retrieving `hidden`, `fixed` and/or `suppressed` issues ([318ca98](https://github.com/fortify/fcli/commit/318ca981b5bb0de685192e11e24dbe017186bfd6))
-* fcli fod action run release-summary fails parsing scan dates (fixes fortify[#569](https://github.com/fortify/fcli/issues/569)) ([#570](https://github.com/fortify/fcli/issues/570)) ([9ed8032](https://github.com/fortify/fcli/commit/9ed8032305285bcc38a658b35ba1f288c52b476c))
-* Fix exception in `github-sast-report` & `sarif-sast-report` actions if there are no SAST issues to be processed ([01bce49](https://github.com/fortify/fcli/commit/01bce4931f4e235340f3a02763b2e486002dedcb))
-* No longer require user credentials on SSC, SC-SAST & SC-DAST logout commands (requires SSC 24.2+) ([cb7867b](https://github.com/fortify/fcli/commit/cb7867bccb9629ccf9614d4448f70e48484c7503))
-* NullPointerException in `fcli fod *ast-scan get` (fixes [#553](https://github.com/fortify/fcli/issues/553)) ([f2eab9c](https://github.com/fortify/fcli/commit/f2eab9cfd20dd0c51201106152a981058962d207))
-* Pass non-default session name to fcli: action statements (fixes [#555](https://github.com/fortify/fcli/issues/555)) ([8b762e2](https://github.com/fortify/fcli/commit/8b762e2f11187aca6ba7245f02e13629e3fc7632))
-* Update copyright statement to 2024 ([833c607](https://github.com/fortify/fcli/commit/833c6079cd87658232e4a6edac8fff5e33dfe2b6))
-* Update release-summary action to include OSS (resolves [#561](https://github.com/fortify/fcli/issues/561)) ([aac8e10](https://github.com/fortify/fcli/commit/aac8e10661e141a72caa4c948bc6a980033d62fe))
-* When authenticating with an SSC authentication token, the SSC, SC-SAST & SC-DAST session commands will now display token expiration date (requires SSC 24.2+) ([c2e66bc](https://github.com/fortify/fcli/commit/c2e66bceb34ca1c3f9989dd2c63546ff0c010d99))
-* When authenticating with an SSC authentication token, the SSC, SC-SAST & SC-DAST session login commands will now validate whether the given token is a valid token ([c2e66bc](https://github.com/fortify/fcli/commit/c2e66bceb34ca1c3f9989dd2c63546ff0c010d99))
-
 ## [2.4.0](https://github.com/fortify/fcli/compare/v2.3.0...v2.4.0) (2024-05-17)
 
 
