@@ -1,0 +1,192 @@
+---
+title: fcli-ssc-action-import(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-action-import(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.5.0" %}
+
+
+<div id="header">
+<h1>fcli-ssc-action-import(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-action-import - Import custom actions.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc action import</strong> [<strong>--on-invalid-signature</strong>=<em>&lt;onInvalidSignature&gt;</em>]
+                       [<strong>--on-invalid-version</strong>=<em>&lt;onUnsupportedVersion&gt;</em>]
+                       [<strong>--on-no-public-key</strong>=<em>&lt;onNoPublicKey&gt;</em>]
+                       [<strong>--on-unsigned</strong>=<em>&lt;onUnsigned&gt;</em>] [<strong>--pubkey</strong>=<em>source</em>]
+                       [<strong>-z</strong>=<em>&lt;source&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                       <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+           _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<em>&lt;action&gt;</em>]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Import one or more custom actions. You can import either a single action YAML file, or a zip-file containing one or more action YAML files. Imported actions will take precedence over built-in action if they have the same name.</p>
+</div>
+<div class="paragraph">
+<p>The action can be specified as either a simple name or a local or remote action YAML file location. If specified as a simple name, the action will be loaded from the list of built-in and imported custom actions unless the <code>--from-zip</code> option is specified, in which case the action will be loaded from the given local or remote zip file. The <code>--from-zip</code> option will only be used if action is specified as a simple name, it will be ignored if the action is specified as a local or remote action YAML file location. If only <code>--from-zip</code> is specified, all actions from that zip-file will be imported.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--on-invalid-signature</strong>=<em>&lt;onInvalidSignature&gt;</em></dt>
+<dd>
+<p>Action to take if action signature is invalid. Allowed values: ignore, warn, fail, prompt. Default value: prompt.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-invalid-version</strong>=<em>&lt;onUnsupportedVersion&gt;</em></dt>
+<dd>
+<p>Action to take if action schema version is not supported by this fcli version. Allowed values: ignore, warn, fail, prompt. Default value: prompt.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-no-public-key</strong>=<em>&lt;onNoPublicKey&gt;</em></dt>
+<dd>
+<p>Action to take if no matching public key was found. Allowed values: ignore, warn, fail, prompt. Default value: prompt.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-unsigned</strong>=<em>&lt;onUnsigned&gt;</em></dt>
+<dd>
+<p>Action to take if action isn&#8217;t signed. Allowed values: ignore, warn, fail, prompt. Default value: prompt.</p>
+</dd>
+<dt class="hdlist1"><strong>--pubkey</strong>=<em>source</em></dt>
+<dd>
+<p>Optional public key to use for verifying action signature. Can be specified as one of:</p>
+<div class="literalblock">
+<div class="content">
+<pre>file:&lt;local file&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>url:&lt;url&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>string:&lt;string value&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>env:&lt;env-var name&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted, allowing for having a single-line string:&lt;base64 public key contents&gt; for example. Note that the given public key will be ignored if its fingerprint doesn't match the public key fingerprint stored in the action signature. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command.</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-z</strong>, <strong>--from-zip</strong>=<em>&lt;source&gt;</em></dt>
+<dd>
+<p>Optional local or remote zip-file from which to load the action if the action is specified as a simple name. This option will be ignored if action is specified as local or remote action YAML file location.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[<em>&lt;action&gt;</em>]</dt>
+<dd>
+<p>The action to load; either simple name or local or remote action YAML file location. Note that custom actions are currently considered PREVIEW functionality, as explained in the 'fcli ssc action -h' help output.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-08-13 13:55:26 UTC
+</div>
+</div>
+</body>
+</html>
