@@ -1,0 +1,148 @@
+---
+title: fcli-ssc(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240813.113547-dev_v2.x" %}
+
+
+<div id="header">
+<h1>fcli-ssc(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc - Interact with Fortify Software Security Center (SSC).</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc</strong> [<strong>-h</strong>] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The commands in this module allow for interacting with Fortify Software Security Center (SSC). This includes functionality like managing applications, application versions and their contents like artifacts and vulnerability data, as well as working with other SSC entities like event logs, alerts, plugins, and so on.</p>
+</div>
+<div class="paragraph">
+<p>Before being able to interact with SSC, a session will need to be created by passing SSC URL and credentials to the 'session login' command in this module. As a best practice, 'session logout' should be run to terminate the session when there are no more activities to be performed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-ssc-session.html"><strong>session</strong></a></dt>
+<dd>
+<p>Manage SSC sessions (start here).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-action.html"><strong>action</strong></a></dt>
+<dd>
+<p>Manage SSC actions: data export, integration, automation &amp; more.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-access-control.html"><strong>access-control</strong>, <strong>ac</strong></a></dt>
+<dd>
+<p>Manage SSC users, roles &amp; tokens.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-alert.html"><strong>alert</strong></a></dt>
+<dd>
+<p>Manage SSC alerts &amp; definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-app.html"><strong>app</strong></a></dt>
+<dd>
+<p>Manage SSC applications.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion.html"><strong>appversion</strong>, <strong>av</strong></a></dt>
+<dd>
+<p>Manage SSC application versions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-artifact.html"><strong>artifact</strong></a></dt>
+<dd>
+<p>Manage SSC artifacts.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-attribute.html"><strong>attribute</strong>, <strong>attr</strong></a></dt>
+<dd>
+<p>Manage SSC application version attributes &amp; definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue.html"><strong>issue</strong></a></dt>
+<dd>
+<p>Manage SSC issues (vulnerabilities) and related entities like issue templates, filters and groups.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-performance-indicator.html"><strong>performance-indicator</strong>, <strong>pi</strong></a></dt>
+<dd>
+<p>(PREVIEW) Manage SSC performance indicators &amp; definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-variable.html"><strong>variable</strong>, <strong>var</strong></a></dt>
+<dd>
+<p>(PREVIEW) Manage SSC variables &amp; definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-plugin.html"><strong>plugin</strong></a></dt>
+<dd>
+<p>Manage SSC parser &amp; bug tracker plugins.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-report.html"><strong>report</strong></a></dt>
+<dd>
+<p>Manage SSC reports &amp; templates.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-system-state.html"><strong>system-state</strong>, <strong>state</strong></a></dt>
+<dd>
+<p>View &amp; manage SSC system state (logs, jobs, &#8230;&#8203;)</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-rest.html"><strong>rest</strong></a></dt>
+<dd>
+<p>Interact with SSC REST API endpoints.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-08-13 11:37:25 UTC
+</div>
+</div>
+</body>
+</html>
