@@ -25,13 +25,12 @@ jobs:
 
       - name: PROD - Prepare GitHub release
         id: create_prod_release
-        uses: GoogleCloudPlatform/release-please-action@v3
+        uses: googleapis/release-please-action@v4
         if: github.ref == 'refs/heads/v2.x'
         with:
-          command: github-release
+          skip-github-pull-request: true
           release-type: simple
           package-name: ${{ github.event.repository.name }}
-          default-branch: v2.x 
           
       - name: PROD - Define release info
         if: steps.create_prod_release.outputs.release_created
@@ -267,12 +266,12 @@ jobs:
           
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/v2.x'
-        uses: GoogleCloudPlatform/release-please-action@v3
+        uses: googleapis/release-please-action@v4
         with:
-          command: release-pr
+          skip-github-release: true
           release-type: simple
           package-name: ${{ github.event.repository.name }}
-          default-branch: v2.x
+          target-branch: v2.x
           
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
