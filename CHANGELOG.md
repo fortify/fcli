@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.1](https://github.com/fortify/fcli/compare/v2.5.0...v2.5.1) (2024-08-14)
+
+
+### Bug Fixes
+
+* `fcli fod mast-scan start`: Add `--platform` option as required by current FoD API ([7703939](https://github.com/fortify/fcli/commit/7703939be19eca56855c12153c0be25962af29b8))
+* `fcli fod mast-scan start`: Fix description for `--file` option ([7703939](https://github.com/fortify/fcli/commit/7703939be19eca56855c12153c0be25962af29b8))
+
 ## [2.5.0](https://github.com/fortify/fcli/compare/v2.4.0...v2.5.0) (2024-08-13)
 
 
