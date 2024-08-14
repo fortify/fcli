@@ -1,0 +1,218 @@
+---
+title: fcli-ssc-appversion-create(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-appversion-create(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.5.1" %}
+
+
+<div id="header">
+<h1>fcli-ssc-appversion-create(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_session_options">Session options:</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-appversion-create - Create an application version.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc appversion create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--[no-]refresh</strong>]
+                           [<strong>--skip-if-exists</strong>] [<strong>--active</strong>=<em>&lt;active&gt;</em>]
+                           [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                           [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>]
+                           [<strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,
+                           <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--attrs</strong>=<em>ATTR=VALUE</em>[,
+                           <em>ATTR=VALUE</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                           [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                           [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                           [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]
+                           [<strong>--from</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--copy</strong>=<em>&lt;copyOptions&gt;</em>[,
+                           <em>&lt;copyOptions&gt;</em>&#8230;&#8203;]]&#8230;&#8203;] <em>&lt;app&gt;:&lt;version&gt;</em></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command allows for creating a new SSC application version, optionally skipping creation if the application version already exists (see --skip-if-exists option), and/or copying configuration and state of an existing application version (see --copy and --copy-from options).</p>
+</div>
+<div class="paragraph">
+<p>Note that depending on user and token permissions, SSC may reject some of the application version configuration settings. In particular, user access permissions as specified through the --add-users option or when copying an existing application version may not be applied if the fcli session was created using a CIToken.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--active</strong>=<em>&lt;active&gt;</em></dt>
+<dd>
+<p>Specify whether application version should be activated (true, default) or not (false).</p>
+</dd>
+<dt class="hdlist1"><strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Assign one or more (comma-separated) users or LDAP groups to the application version; accepts user id, entity name or email address. Option is repeatable.</p>
+</dd>
+<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>ATTR=VALUE</em>[,<em>ATTR=VALUE</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Example: ATTR1=[VAL1;VAL2],CATEGORY:ATTR2=VAL3</p>
+<div class="paragraph">
+<p>Set values for one or more attributes. This option accepts a comma-separated list of KEY=VALUE assignments.</p>
+</div>
+<div class="paragraph">
+<p>Each KEY accepts either the Attribute&#8217;s GUID or its Name with the optional Category (InfoClassification or "BUSINESS:Data Classification" or "Data Classification")</p>
+</div>
+<div class="paragraph">
+<p>Each VALUE accepts a semicolon-separated list of Attribute&#8217;s Values, encapsulated in brackets (optional for single value)</p>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--auto-required-attrs</strong></dt>
+<dd>
+<p>Automatically set a default value for required application version attributes.</p>
+</dd>
+<dt class="hdlist1"><strong>--copy</strong>=<em>&lt;copyOptions&gt;</em>[,<em>&lt;copyOptions&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma separated list of elements to copy (Requires --copy-from). By default, all are copied. Allowed values: custom-tags, bugtracker, BugTrackerConfiguration, processing-rules, AnalysisProcessingRules, attributes, users, state. The BugTrackerConfiguration and AnalysisProcessingRules values are deprecated and will be removed in a future fcli version.</p>
+</dd>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
+<dd>
+<p>Application version description.</p>
+</dd>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--from, --copy-from</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Copy FROM application version:</p>
+<div class="paragraph">
+<p>id or &lt;application&gt;:&lt;version&gt; name.</p>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em></dt>
+<dd>
+<p>Issue template name or id.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]refresh</strong></dt>
+<dd>
+<p>By default, this command will refresh the  source application version&#8217;s metrics when copying from it. Note that for large applications this can lead to an error if the timeout expires.</p>
+</dd>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
+<dd>
+<p>Skip application version creation if an application version with the specified name already exists.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>&lt;app&gt;:&lt;version&gt;</em></dt>
+<dd>
+<p>Application and version name.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-08-14 12:20:47 UTC
+</div>
+</div>
+</body>
+</html>
