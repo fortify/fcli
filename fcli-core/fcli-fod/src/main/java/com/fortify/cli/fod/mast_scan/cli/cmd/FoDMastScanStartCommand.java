@@ -60,6 +60,9 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
     private enum MobileFrameworks { iOS, Android }
     @Option(names = {"--framework"}, required = true)
     private MobileFrameworks mobileFramework;
+    private enum MobilePlatforms { Phone, Tablet, Both }
+    @Option(names = {"--platform"}, required = true)
+    private MobilePlatforms mobilePlatform;
     @Option(names = {"--timezone"})
     private String timezone;
     @Option(names = {"--start-date"})
@@ -144,6 +147,7 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
                     .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
                     .timeZone(timeZoneToUse)
                     .frameworkType(mobileFramework.name())
+                    .platformType(mobilePlatform.name())
                     .scanMethodType("Other")
                     .notes(notes != null && !notes.isEmpty() ? notes : "")
                     .scanTool(fcliProperties.getProperty("projectName", "fcli"))
