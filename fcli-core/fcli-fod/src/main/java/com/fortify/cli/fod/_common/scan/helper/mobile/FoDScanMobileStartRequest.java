@@ -35,6 +35,7 @@ public class FoDScanMobileStartRequest {
     private String timeZone;
 
     private String frameworkType;
+    private String platformType;
     private Boolean isRemediationScan;
     //private Boolean isBundledAssessment;
     //private Integer parentAssessmentTypeId;

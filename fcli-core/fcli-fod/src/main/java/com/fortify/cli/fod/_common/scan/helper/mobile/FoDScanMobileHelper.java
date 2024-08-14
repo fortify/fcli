@@ -43,6 +43,7 @@ public class FoDScanMobileHelper extends FoDScanHelper {
                 .queryString("startDate", (req.getStartDate()))
                 .queryString("assessmentTypeId", req.getAssessmentTypeId())
                 .queryString("frameworkType", req.getFrameworkType())
+                .queryString("platformType", req.getPlatformType())
                 .queryString("timeZone", req.getTimeZone())
                 .queryString("entitlementFrequencyType", req.getEntitlementFrequencyType());
 
