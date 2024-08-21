@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.2](https://github.com/fortify/fcli/compare/v2.5.1...v2.5.2) (2024-08-21)
+
+
+### Bug Fixes
+
+* FoD/SSC: Improve `github-pr-comment` action output ([694e7ae](https://github.com/fortify/fcli/commit/694e7aec4d9a47b8219629cdf4332b227c1a87a8))
+* SSC: Fix application version link in `appversion-summary` & `bitbucket-sast-report` actions ([4f40a04](https://github.com/fortify/fcli/commit/4f40a04eb442ca2872799f182107a8ed593443e1))
+
 ## [2.5.1](https://github.com/fortify/fcli/compare/v2.5.0...v2.5.1) (2024-08-14)
 
 
