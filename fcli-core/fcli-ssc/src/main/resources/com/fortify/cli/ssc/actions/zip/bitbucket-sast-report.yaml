@@ -102,7 +102,7 @@ valueTemplates:
       details: Fortify detected ${annotations?.size()?:0} static ${annotations?.size()==1 ? 'vulnerability':'vulnerabilities'}
       #external_id:
       reporter: Fortify Static Code Analyzer ${lastStaticScan?.engineVersion?:''}
-      link: ${#ssc.appversionBrowserUrl(parameters.appversion)}
+      link: ${#ssc.appversionBrowserUrl(parameters.appversion,parameters.filterset)}
       # remote_link_enabled:
       logo_url: https://bitbucket.org/workspaces/fortifysoftware/avatar
       report_type: SECURITY

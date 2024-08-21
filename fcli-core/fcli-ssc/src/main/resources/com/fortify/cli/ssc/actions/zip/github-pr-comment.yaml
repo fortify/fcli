@@ -97,9 +97,6 @@ steps:
             - if: ${(issue.scanStatus=='NEW' || issue.scanStatus=='REINTRODUCED')}
               name: newIssues
               valueTemplate: mdIssueListItem
-            - if: ${(issue.scanStatus=='NEW' || issue.scanStatus=='REINTRODUCED') && issue.engineType=='SCA'}
-              name: jsonSourceCodeComments
-              valueTemplate: jsonSourceCodeComment
           
   - progress: Generating GitHub request
   - set:
@@ -131,7 +128,6 @@ valueTemplates:
       # For now, we don't include any source code comments, as this will cause
       # GitHub to return an error if the source file doesn't exist in the repo.
       comments: ${{}} 
-      # comments: ${jsonSourceCodeComments?:{}}
       
   - name: reviewBody
     contents: |
@@ -149,16 +145,6 @@ valueTemplates:
         ? "* No removed issues were detected" 
         : ("* "+#join('\n* ',removedIssues))}
         
-  - name: jsonSourceCodeComment
-    contents:
-      path: ${issue.fullFileName}
-      line: ${issue.lineNumber==0?1:issue.lineNumber}
-      body: |
-        <p><b>Security Scanning</b> / Fortify SAST</p>
-        <h3>${issue.details.friority} - ${issue.details.issueName} </h3>
-        <p>${issue.details.brief}</p>
-        <br>
-        <p><a href=${#ssc.issueBrowserUrl(issue,parameters.filterset)} target="_blank" rel="noopener noreferrer">More information</a></p>
   - name: mdIssueListItem
-    contents: >
-      ${issue.scanStatus} (${issue.engineCategory}): [${issue.fullFileName}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.issueName}](${#ssc.issueBrowserUrl(issue,parameters.filterset)})
+    contents: "${issue.scanStatus} (${issue.engineCategory}) - ${issue.issueName}:    \n[${issue.fullFileName}${issue.lineNumber==null?'':':'+issue.lineNumber}](${#ssc.issueBrowserUrl(issue,parameters.filterset)})"
+      

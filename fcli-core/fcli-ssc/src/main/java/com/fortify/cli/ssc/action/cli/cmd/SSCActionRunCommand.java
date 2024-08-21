@@ -97,9 +97,12 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
             }
             return templateRunner.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), issue, String.class);
         }
-        public String appversionBrowserUrl(ObjectNode appversion) {
+        public String appversionBrowserUrl(ObjectNode appversion, ObjectNode filterset) {
             var deepLinkExpression = baseUrl()
-                    +"/html/ssc/index.jsp#!/version/${id}/fix";
+                    +"/html/ssc/version/${id}/audit";
+            if ( filterset!=null ) { 
+                deepLinkExpression+="?filterSet="+filterset.get("guid").asText();
+            }
             return templateRunner.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), appversion, String.class);
         }
         private String baseUrl() {
