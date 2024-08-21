@@ -127,6 +127,8 @@ valueTemplates:
     contents: |
       ## Fortify vulnerability summary
       
+      Any issues listed below are based on comparing the latest scan results against the previous scan results for FoD release [${parameters.release.applicationName}${#isNotBlank(parameters.release.microserviceNae)?'- '+parameters.release.microserviceName:''} - ${parameters.release.releaseName}](${#fod.releaseBrowserUrl(parameters.release)}). To avoid interference from scans for other PR's or branches, it is recommended to track each PR/branch in a separate FoD release.
+      
       ### New Issues
       
       ${newIssues==null 
