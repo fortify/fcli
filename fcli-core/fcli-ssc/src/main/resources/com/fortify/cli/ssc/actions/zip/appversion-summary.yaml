@@ -234,7 +234,7 @@ valueTemplates:
     contents: |
       # SSC Application Version Summary
       
-      ## [${parameters.appversion.project.name} - ${parameters.appversion.name}](${#ssc.appversionBrowserUrl(parameters.appversion)})
+      ## [${parameters.appversion.project.name} - ${parameters.appversion.name}](${#ssc.appversionBrowserUrl(parameters.appversion,null)})
       
       Summary generated on: ${#formatDateTime(dateFmt)}
       
