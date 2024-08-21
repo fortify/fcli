@@ -91,9 +91,6 @@ steps:
             - if: ${(issue.status=='New' || issue.status=='Reopen')}
               name: newIssues
               valueTemplate: mdIssueListItem
-            - if: ${(issue.status=='New' || issue.status=='Reopen') && issue.engineType=='Static'}
-              name: jsonSourceCodeComments
-              valueTemplate: jsonSourceCodeComment
           
   - progress: Generating GitHub request
   - set:
@@ -125,7 +122,6 @@ valueTemplates:
       # For now, we don't include any source code comments, as this will cause
       # GitHub to return an error if the source file doesn't exist in the repo.
       comments: ${{}} 
-      # comments: ${jsonSourceCodeComments?:{}}
       
   - name: reviewBody
     contents: |
@@ -143,19 +139,8 @@ valueTemplates:
         ? "* No removed issues were detected" 
         : ("* "+#join('\n* ',removedIssues))}
         
-  - name: jsonSourceCodeComment
-    contents:
-      path: ${issue.primaryLocationFull}
-      line: ${issue.lineNumber==0?1:issue.lineNumber}
-      body: |
-        <p><b>Security Scanning</b> / Fortify SAST</p>
-        <h3>${issue.severityString} - ${issue.category} </h3>
-        <p>${#htmlToText(issue.details?.summary)}</p>
-        <br>
-        <p><a href=${#fod.issueBrowserUrl(issue)} target="_blank" rel="noopener noreferrer">More information</a></p>
   - name: mdIssueListItem
-    contents: >
-      ${issue.status} (${issue.scantype}): [${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.category}](${#fod.issueBrowserUrl(issue)})
+    contents: "${issue.status} (${issue.scantype}) - ${issue.category}:    \n[${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber}](${#fod.issueBrowserUrl(issue)})"
       
       
       
