@@ -2,10 +2,10 @@
 
 author: Fortify
 usage:
-  header: Generate a GitHub Code Scanning report listing SSC SAST vulnerabilities.  
+  header: (PREVIEW)Generate a AWS Security Hub SAST report listing Fortify SSC SAST vulnerabilities. 
   description: |
-    For information on how to import this report into GitHub, see 
-    https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
+     Future versions may provide direct integration with AWS API. For information on how to create or update findings into AWS Security Hub, see 
+    https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-update-types.html
 
 defaults:
   requestTarget: ssc
@@ -93,12 +93,13 @@ valueTemplates:
       GeneratorId: "arn:aws:securityhub:${parameters['aws-region']}:${parameters['aws-account']}:product/${parameters['aws-account']}/default"
       ProductName: 'Fortify SAST'
       CompanyName: OpenText
-      Types: "[ 'Software and Configuration Checks/Vulnerabilities/CVE' ]"
-      start_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", lastStaticScan?.uploadDate?:'1970-01-01T00:00:00')}
-      end_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", lastStaticScan?.uploadDate?:'1970-01-01T00:00:00')}
-      severity: 
+      Types: 
+        - Software and Configuration Checks/Vulnerabilities/CVE
+      CreatedAt: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss'Z'", lastStaticScan?.uploadDate?:'1970-01-01T00:00:00Z')}
+      UpdatedAt: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss'Z'", lastStaticScan?.uploadDate?:'1970-01-01T00:00:00Z')}
+      Severity: 
+        Label: ${(issue.friority matches "(Critical|High|Medium|Low)") ? issue.friority.toUpperCase():"LOW"}
         Original: ${issue.friority}
-        Normalized: ${{'Critical':10.0,'High':8.9,'Medium':6.9,'Low':3.9}.get(issue.friority)}
       Title: ${issue.issueName}
       Description: ${#abbreviate(#htmlToText(issue.details?.brief), 510)}
       Remediation:
@@ -114,12 +115,12 @@ valueTemplates:
         Id: ${parameters.appversion.id}-${issue.id}
         Partition: aws
         Region: ${parameters['aws-region']}
-        details:
+        Details:
           Other:
-            APPLICATION: ${parameters.appversion.id}
+            APPLICATION: ${parameters.appversion.id+''}
             APPLICATION NAME: ${parameters.appversion.project.name}
             APPLICATION VERSION: ${parameters.appversion.name}
             PRIMARY LOCATION:  ${issue.fullFileName}
-            LINE NUMBER: ${issue.lineNumber}
+            LINE NUMBER: ${issue.lineNumber+''}
             INSTANCE ID: ${issue.issueInstanceId}
       RecordState: ACTIVE

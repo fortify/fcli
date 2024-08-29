@@ -2,14 +2,14 @@
 
 author: Fortify
 usage:
-  header: Generate a AWS Security Hub SAST report listing FoD SAST vulnerabilities. 
+  header: (PREVIEW)Generate a AWS Security Hub SAST report listing FoD SAST vulnerabilities. 
   description: |
     For information on how to create or update findings into AWS Security Hub, see 
     https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-update-types.html
 
 parameters:
-  - name: report-file
-    cliAliases: r
+  - name: file
+    cliAliases: f
     description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: aws-fortify-report.json"
     required: false
     defaultValue: aws-fortify-report.json
@@ -55,7 +55,7 @@ steps:
             - name: vulnerabilities
               valueTemplate: issues
   - write:
-    - to: ${parameters['report-file']}
+    - to: ${parameters['file']}
       valueTemplate: report
     - if: ${parameters.file!='stdout'}
       to: stdout
@@ -75,12 +75,13 @@ valueTemplates:
       GeneratorId: "arn:aws:securityhub:${parameters['aws-region']}:${parameters['aws-account']}:product/${parameters['aws-account']}/default"
       ProductName: 'Fortify SAST'
       CompanyName: OpenText
-      Types: "[ 'Software and Configuration Checks/Vulnerabilities/CVE' ]"
-      CreatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",parameters.release.staticScanDate?:'1970-01-01T00:00:00',parameters.release.serverZoneId)}
-      UpdatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",parameters.release.staticScanSummary?.completedDateTime?:'1970-01-01T00:00:00',parameters.release.serverZoneId)}
-      severity: 
+      Types: 
+        - Software and Configuration Checks/Vulnerabilities/CVE
+      CreatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss'Z'",parameters.release.staticScanDate?:'1970-01-01T00:00:00Z',parameters.release.serverZoneId)}
+      UpdatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss'Z'",parameters.release.staticScanSummary?.completedDateTime?:'1970-01-01T00:00:00Z',parameters.release.serverZoneId)}
+      Severity: 
+        Label: ${(issue.severityString matches "(Critical|High|Medium|Low)") ? issue.severityString.toUpperCase():"LOW"}
         Original: ${issue.severityString}
-        Normalized: ${{'Critical':10.0,'High':8.9,'Medium':6.9,'Low':3.9}.get(issue.severityString)}
       Title: ${issue.category}
       Description: ${#abbreviate(#htmlToText(issue.details?.summary), 510)}
       Remediation:
@@ -96,12 +97,12 @@ valueTemplates:
         Id: ${parameters.release.releaseId}-${issue.id}
         Partition: aws
         Region: ${parameters['aws-region']}
-        details:
+        Details:
           Other:
-            APPLICATION: ${parameters.release.releaseId}
+            APPLICATION: ${parameters.release.releaseId+''}
             APPLICATION NAME: ${parameters.release.applicationName}
             APPLICATION VERSION: ${parameters.release.releaseName}
             PRIMARY LOCATION: ${issue.primaryLocationFull}
-            LINE NUMBER: ${issue.lineNumber}
+            LINE NUMBER: ${issue.lineNumber+''}
             INSTANCE ID: ${issue.instanceId}
       RecordState: ACTIVE
