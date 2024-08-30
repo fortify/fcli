@@ -174,7 +174,7 @@ public class SSCTokenHelper {
             result.getData().setToken(token);
             return result;
         } catch ( UnexpectedHttpResponseException e ) {
-            if ( e.getStatus()==404 ) {
+            if ( e.getStatus()==404 || e.getStatus()==401 ) {
                 // Older SSC versions don't support this endpoint, so we just return null
                 return null; 
             } else {
