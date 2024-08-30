@@ -1,0 +1,100 @@
+---
+title: fcli-tool-definitions(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-definitions(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.5.3" %}
+
+
+<div id="header">
+<h1>fcli-tool-definitions(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-definitions - Manage tool definitions.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool definitions</strong> [<strong>-h</strong>] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Tool definitions list the available versions, corresponding download location, and other details for each tool. These tool definitions are used by the various 'fcli tool' commands to identify what tool versions are currently available and where to download them from. By default, each fcli release ships with the latest tool definitions that were available at the time that release was built.</p>
+</div>
+<div class="paragraph">
+<p>The commands in this module allow for managing tool definitions, like updating tool definitions from a URL or local file.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-tool-definitions-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dd>
+<p>List tool definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-definitions-update.html"><strong>update</strong></a></dt>
+<dd>
+<p>Update tool definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-definitions-reset.html"><strong>reset</strong></a></dt>
+<dd>
+<p>Reset tool definitions.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-08-30 16:36:19 UTC
+</div>
+</div>
+</body>
+</html>
