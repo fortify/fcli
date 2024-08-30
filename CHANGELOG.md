@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.3](https://github.com/fortify/fcli/compare/v2.5.2...v2.5.3) (2024-08-30)
+
+
+### Bug Fixes
+
+* Fix error on `fcli ssc session login` command on older SSC versions (fixes [#584](https://github.com/fortify/fcli/issues/584)) ([d028052](https://github.com/fortify/fcli/commit/d02805231abf4bc7afeab3c719db56ef46b50c2c))
+
 ## [2.5.2](https://github.com/fortify/fcli/compare/v2.5.1...v2.5.2) (2024-08-21)
 
 
