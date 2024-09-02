@@ -2,8 +2,10 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW)Generate a AWS Security Hub SAST report listing FoD SAST vulnerabilities. 
+  header: Generate a AWS Security Hub SAST report listing FoD SAST vulnerabilities. 
   description: |
+    This action generate a ASFF report to integrate AWS Security Hub, generated reports 
+    then parsed by the lambda function, see: https://github.com/fortify/CloudDevSecOpsTemplates/
     For information on how to create or update findings into AWS Security Hub, see 
     https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-update-types.html
 
@@ -99,9 +101,10 @@ valueTemplates:
         Region: ${parameters['aws-region']}
         Details:
           Other:
-            APPLICATION: ${parameters.release.releaseId+''}
+            APPLICATION ID: ${parameters.release.applicationId+''}
             APPLICATION NAME: ${parameters.release.applicationName}
-            APPLICATION VERSION: ${parameters.release.releaseName}
+            RELEASE ID: ${parameters.release.releaseId+''}
+            RELEASE NAME: ${parameters.release.releaseName}
             PRIMARY LOCATION: ${issue.primaryLocationFull}
             LINE NUMBER: ${issue.lineNumber+''}
             INSTANCE ID: ${issue.instanceId}
