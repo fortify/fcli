@@ -12,9 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.common.util;
 
+import java.util.function.Supplier;
+
 public final class EnvHelper {
     private static final String PFX = "FCLI";
     private EnvHelper() {}
+    
+    public static final String getUserHome() {
+        return envOrDefault(PFX+"_USER_HOME", ()->System.getProperty("user.home"));
+    }
     
     public static final void checkSecondaryWithoutPrimary(String secondaryEnvName, String primaryEnvName) {
         if ( env(primaryEnvName)==null && env(secondaryEnvName)!=null ) {
@@ -49,6 +55,11 @@ public final class EnvHelper {
         return StringUtils.isBlank(productEnvId)
                 ? String.format("%s_%s", PFX, suffix)
                 : String.format("%s_%s_%s", PFX, productEnvId, suffix);
+    }
+    
+    public static final String envOrDefault(String name, Supplier<String> defaultSupplier) {
+        var value = env(name);
+        return StringUtils.isNotBlank(value) ? value : defaultSupplier.get();    
     }
     
     /**

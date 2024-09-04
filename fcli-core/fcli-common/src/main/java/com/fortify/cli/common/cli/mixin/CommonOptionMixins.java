@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 import org.apache.commons.io.IOUtils;
 
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -120,7 +121,7 @@ public class CommonOptionMixins {
             private static final String resolveFile(String file) {
                 // As '~' will not be resolved by the shell due to the 'file:'
                 // prefix, we resolve this manually to user home directory.
-                file = file.replaceFirst("^~", System.getProperty("user.home"));
+                file = file.replaceFirst("^~", EnvHelper.getUserHome());
                 return Files.readString(Path.of(file));
             }
             
