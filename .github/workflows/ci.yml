@@ -282,7 +282,7 @@ jobs:
             password: ${{ secrets.DOCKER_PASSWORD }}
         
         - name: DEV - Tag Linux images
-          if: needs.build.outputs.do_prod_release
+          if: needs.build.outputs.do_dev_release
           run: |
             docker tag fcli-scratch fortifydocker/fcli:${RELEASE_TAG}
         
