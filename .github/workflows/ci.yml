@@ -45,17 +45,26 @@ jobs:
           echo DO_PROD_RELEASE=true >> $GITHUB_ENV
           echo RELEASE_TAG=${tag} >> $GITHUB_ENV
           echo RELEASE_VERSION=${version} >> $GITHUB_ENV
+          echo VERSION_MAJOR=${major} >> $GITHUB_ENV
+          echo VERSION_MINOR=${minor} >> $GITHUB_ENV
+          echo VERSION_PATCH=${patch} >> $GITHUB_ENV
           
       - name: DEV - Define release info
         if: startsWith(github.ref, 'refs/heads/') && !env.DO_PROD_RELEASE
         run: |
           branch="${GITHUB_REF#refs/heads/}"
           tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
-          version="0.$(date +'%Y%m%d.%H%M%S')-${tag}"
+          major="0"
+          minor="$(date +'%Y%m%d)"
+          patch="$(date +'%H%M%S)-$tag"
+          version="${major}.${minor}.${patch}"
           echo DO_BUILD=true >> $GITHUB_ENV # We always want to do a build if we're building a branch
           echo BRANCH=${branch} >> $GITHUB_ENV
           echo RELEASE_TAG=${tag} >> $GITHUB_ENV
           echo RELEASE_VERSION=${version} >> $GITHUB_ENV
+          echo VERSION_MAJOR=${major} >> $GITHUB_ENV
+          echo VERSION_MINOR=${minor} >> $GITHUB_ENV
+          echo VERSION_PATCH=${patch} >> $GITHUB_ENV
           
           if git ls-remote --exit-code origin refs/tags/${tag} >/dev/null 2>&1; then
             echo "Found tag ${tag}, development release will be published"
@@ -85,6 +94,9 @@ jobs:
       do_dev_release: ${{ env.DO_DEV_RELEASE }}
       release_tag: ${{ env.RELEASE_TAG }}
       release_version: ${{ env.RELEASE_VERSION }}
+      version_major: ${{ env.VERSION_MAJOR }}
+      version_minor: ${{ env.VERSION_MINOR }}
+      version_patch: ${{ env.VERSION_PATCH }}
 
   native_linux:
     name: native-image-linux
@@ -285,15 +297,15 @@ jobs:
         - name: DEV - Tag Linux images
           if: needs.build.outputs.do_dev_release
           run: |
-            docker tag fcli-scratch fortifydocker/fcli:${{steps.build.outputs.release_tag}}
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.release_tag}}
         
         - name: PROD - Tag Linux images
           if: needs.build.outputs.do_prod_release
           run: |
             docker tag fcli-scratch fortifydocker/fcli:latest
-            docker tag fcli-scratch fortifydocker/fcli:${{steps.create_prod_release.outputs.major}}
-            docker tag fcli-scratch fortifydocker/fcli:${{steps.create_prod_release.outputs.major}}.${{steps.create_prod_release.outputs.minor}}
-            docker tag fcli-scratch fortifydocker/fcli:${{steps.build.outputs.release_version}} 
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.major}}
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.major}}.${{needs.build.outputs.minor}}
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.release_version}} 
         
         # TODO Should we sign the images as well?
         - name: Publish Linux Docker images
