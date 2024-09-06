@@ -55,8 +55,8 @@ jobs:
           branch="${GITHUB_REF#refs/heads/}"
           tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
           major="0"
-          minor="$(date +'%Y%m%d)"
-          patch="$(date +'%H%M%S)-$tag"
+          minor="$(date +'%Y%m%d')"
+          patch="$(date +'%H%M%S')-$tag"
           version="${major}.${minor}.${patch}"
           echo DO_BUILD=true >> $GITHUB_ENV # We always want to do a build if we're building a branch
           echo BRANCH=${branch} >> $GITHUB_ENV
