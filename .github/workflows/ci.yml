@@ -254,8 +254,6 @@ jobs:
   docker-linux:
     needs: [build, native_linux]
     runs-on: ubuntu-latest
-    env:
-      DOCKER_SRC: fcli-other/fcli-docker/linux
     steps:
         - name: Check-out source code
           uses: actions/checkout@v4
@@ -268,6 +266,7 @@ jobs:
     
         - name: Build Linux images
           run: |
+            export DOCKER_SRC=fcli-other/fcli-docker/linux
             tar -zxvf ./artifacts/release-assets/fcli-linux.tgz -C ${DOCKER_SRC}
             cd ${DOCKER_SRC}
             docker build . --target fcli-scratch -t fcli-scratch
