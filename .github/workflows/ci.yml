@@ -252,7 +252,7 @@ jobs:
   
   # For now, we only publish fcli-scratch image, but we do build the other images just for testing
   docker-linux:
-    needs: [native_linux]
+    needs: [build, native_linux]
     runs-on: ubuntu-latest
     env:
       DOCKER_SRC: fcli-other/fcli-docker/linux
