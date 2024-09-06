@@ -84,6 +84,7 @@ jobs:
       do_prod_release: ${{ env.DO_PROD_RELEASE }}
       do_dev_release: ${{ env.DO_DEV_RELEASE }}
       release_tag: ${{ env.RELEASE_TAG }}
+      release_version: ${{ env.RELEASE_VERSION }}
 
   native_linux:
     name: native-image-linux
@@ -254,6 +255,8 @@ jobs:
   docker-linux:
     needs: [build, native_linux]
     runs-on: ubuntu-latest
+    env:
+      DOCKER_SRC: fcli-other/fcli-docker/linux
     steps:
         - name: Check-out source code
           uses: actions/checkout@v4
@@ -266,7 +269,6 @@ jobs:
     
         - name: Build Linux images
           run: |
-            export DOCKER_SRC=fcli-other/fcli-docker/linux
             tar -zxvf ./artifacts/release-assets/fcli-linux.tgz -C ${DOCKER_SRC}
             cd ${DOCKER_SRC}
             docker build . --target fcli-scratch -t fcli-scratch
@@ -283,7 +285,7 @@ jobs:
         - name: DEV - Tag Linux images
           if: needs.build.outputs.do_dev_release
           run: |
-            docker tag fcli-scratch fortifydocker/fcli:${RELEASE_TAG}
+            docker tag fcli-scratch fortifydocker/fcli:${{steps.build.outputs.release_tag}}
         
         - name: PROD - Tag Linux images
           if: needs.build.outputs.do_prod_release
@@ -291,7 +293,7 @@ jobs:
             docker tag fcli-scratch fortifydocker/fcli:latest
             docker tag fcli-scratch fortifydocker/fcli:${{steps.create_prod_release.outputs.major}}
             docker tag fcli-scratch fortifydocker/fcli:${{steps.create_prod_release.outputs.major}}.${{steps.create_prod_release.outputs.minor}}
-            docker tag fcli-scratch fortifydocker/fcli:${RELEASE_VERSION}    
+            docker tag fcli-scratch fortifydocker/fcli:${{steps.build.outputs.release_version}} 
         
         # TODO Should we sign the images as well?
         - name: Publish Linux Docker images
