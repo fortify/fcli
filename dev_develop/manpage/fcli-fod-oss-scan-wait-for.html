@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.082419-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.082605-dev_develop" %}
 
 
 <div id="header">
@@ -68,6 +68,15 @@ fcli_version:
 <div class="paragraph">
 <p>The following states are currently known by fcli:
 See fcli help output</p>
+</div>
+<div class="paragraph">
+<p>Please note it is recommended to pass the scan id&#8217;s as '&lt;release-id&gt;:&lt;scan-id&gt;' rather than just '&lt;scan-id&gt;'. If only '&lt;scan-id&gt;' is passed then its status might not be available yet, causing FoD to return a '404 - Not Found' error. It is recommended to pass a fcli variable to do this as it will automatically resolve to using &lt;release-id&gt;:&lt;scan-id&gt;. For example, to start a SAST scan and wait for it to complete, use:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>fcli fod sast-scan start ... --store scan
+fcli fod sast-scan wait-for ::scan::</pre>
+</div>
 </div>
 </div>
 </div>
@@ -190,7 +199,7 @@ See fcli help output</p>
 <dl>
 <dt class="hdlist1"><em>scan-id&#8217;s</em>&#8230;&#8203;</dt>
 <dd>
-<p>Scan id(s).</p>
+<p>Whitespace separated list of &lt;release-id&gt;:&lt;scan-id&gt; or &lt;scan-id&gt; items.</p>
 </dd>
 </dl>
 </div>
@@ -200,7 +209,7 @@ See fcli help output</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-09 08:26:06 UTC
+Last updated 2024-09-09 08:27:52 UTC
 </div>
 </div>
 </body>
