@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240909.103705-dev_develop
+fcli_version: 0.20240909.115322-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240909.103705-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.103705-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.115322-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240909.103705-dev_develop</span>
+<span id="revnumber">version 0.20240909.115322-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -58,8 +58,13 @@ fcli_version: 0.20240909.103705-dev_develop
 <li><a href="#_session_storage">Session Storage</a></li>
 </ul>
 </li>
-<li><a href="#_fcli_data_folder">Fcli Data Folder</a></li>
-<li><a href="#_environment_variables">Environment Variables</a></li>
+<li><a href="#_environment_variables">Environment Variables</a>
+<ul class="sectlevel2">
+<li><a href="#_fcli_user_home_folder">Fcli User Home Folder</a></li>
+<li><a href="#_fcli_data_storage">Fcli Data Storage</a></li>
+<li><a href="#_default_values_for_cli_options">Default Values for CLI options</a></li>
+</ul>
+</li>
 <li><a href="#_fcli_variables">Fcli Variables</a></li>
 <li><a href="#_actions">Actions</a>
 <ul class="sectlevel2">
@@ -272,7 +277,10 @@ found, please try with the Java version as it may be an issue specific to the na
 <h2 id="_installation"><a class="anchor" href="#_installation"></a>Installation</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>To install fcli, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page as described in the previous section, and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
+<p>The instructions in this section are only applicable if you wish to install the native or Java binaries onto your local system. We also provide Docker images for fcli; see <a href="https://hub.docker.com/repository/docker/fortifydocker/fcli/general">fortifydocker/fcli</a> for information on how to run fcli using these Docker images.</p>
+</div>
+<div class="paragraph">
+<p>To install the fcli executables on your local system, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page as described in the previous section, and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
 </div>
 <div class="paragraph">
 <p>As a best practice, you should verify the integrity of the downloaded file. Release assets include <code>*.sha256</code> and <code>*.rsa_sha256</code> for this purpose, with the latter being preferred for better security. For example, after downloading both <code>fcli-linux.tgz</code> and <code>fcli-linux.tgz.rsa_sha256</code>, you can verify integrity by running the following OpenSSL command:</p>
@@ -910,8 +918,25 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 </div>
 </div>
 <div class="sect1">
-<h2 id="_fcli_data_folder"><a class="anchor" href="#_fcli_data_folder"></a>Fcli Data Folder</h2>
+<h2 id="_environment_variables"><a class="anchor" href="#_environment_variables"></a>Environment Variables</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>The sections below describe various environment variables that can be used to control fcli behavior. This includes environment variables for overriding some of the default directories used by fcli to store data, and for setting default values for command-line options.</p>
+</div>
+<div class="sect2">
+<h3 id="_fcli_user_home_folder"><a class="anchor" href="#_fcli_user_home_folder"></a>Fcli User Home Folder</h3>
+<div class="paragraph">
+<p>By default, fcli will use the home directory of the current user for various operations, like storing fcli state and configuration (see next section) or for tool installations (see <code>fcli tool</code> manual pages). These locations can be individually overridden through environment variables or command-line options, but in some cases you may want to just specify an alternative 'user home directory' to have all fcli operations use this alternative directory by default, instead of having to override multiple individual directories.</p>
+</div>
+<div class="paragraph">
+<p>For this purpose, fcli will check for an environment variable named <code>FCLI_USER_HOME</code>; if defined, the value of this environment variable will be used instead of the actual user home directory for any fcli command that reads or writes data from/to the user home directory.</p>
+</div>
+<div class="paragraph">
+<p>Of course, even if this environment variable is set, you can still override individual directories through the applicable environment variables or command-line options. For example, if you set both <code>FCLI_USER_HOME</code> and <code>FCLI_CONFIG_DIR</code> (but not any of the other environment variables listed in the next section), then fcli configuration data will be stored in the directory specified through <code>FCLI_CONFIG_DIR</code>, whereas fcli state data will be stored in <code>&lt;FCLI_USER_HOME&gt;/.fortify/fcli/state</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fcli_data_storage"><a class="anchor" href="#_fcli_data_storage"></a>Fcli Data Storage</h3>
 <div class="paragraph">
 <p>By default, fcli stores configuration and state data like session files (see <a href="#_session_management">Session Management</a>), fcli variable contents (see <a href="#_fcli_variables">Fcli Variables</a>) and proxy settings in its data folder. Future versions of fcli may also automatically generated log files in this data directory, if no <code>--log-file</code> option is provided.</p>
 </div>
@@ -957,12 +982,10 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <p>Note that some files stored in the fcli data directory may contain sensitive data, like authentication tokens generated by login commands, or proxy credentials configured through the <code>fcli config proxy</code> commands. Fcli encrypts any sensitive files, but since the encryption key and algorithm are hardcoded, these files can be decrypted fairly easily. You should ensure proper file access permissions on the fcli data folder. In addition, you can consider setting the <code>FCLI_ENCRYPT_KEY</code> environment variable to configure an alternative encryption key. That way, the sensitive files can only be decrypted if someone has access to this custom encryption key.</p>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_environment_variables"><a class="anchor" href="#_environment_variables"></a>Environment Variables</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_default_values_for_cli_options"><a class="anchor" href="#_default_values_for_cli_options"></a>Default Values for CLI options</h3>
 <div class="paragraph">
-<p>Apart from the special-purpose environment variables described in other sections, like the <a href="#_fcli_data_folder">Fcli Data Folder</a> section, fcli allows for specifying default option and parameter values through environment variables. This is particularly useful for specifying product URL’s and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for <code>--issue-template</code> option of the <code>+fcli ssc appversion create</code> option, to avoid having to remember the issue template name every time you invoke this command.</p>
+<p>Apart from the special-purpose environment variables described in the sections above, fcli allows for specifying default option and parameter values through environment variables. This is particularly useful for specifying product URL’s and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for <code>--issue-template</code> option of the <code>+fcli ssc appversion create</code> option, to avoid having to remember the issue template name every time you invoke this command.</p>
 </div>
 <div class="paragraph">
 <p>Fcli walks the command tree to find an environment variable that matches a particular option, starting with the most detailed command prefix first. For the issue-template example above, fcli would look for the following environment variable names, in this order:</p>
@@ -1030,6 +1053,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 </div>
 <div class="paragraph">
 <p>Note that as described in the <a href="#_env_prefix">–env-prefix</a> section, you can override the <code>FCLI_DEFAULT</code> prefix. For example, with <code>--env-prefix MYPREFIX</code>, fcli will look for <code>MYPREFIX_*</code> environment variables instead of <code>FCLI_DEFAULT_*</code> environment variables.</p>
+</div>
 </div>
 </div>
 </div>
@@ -1208,7 +1232,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20240909.103705-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>As shown in the sample schema statements above, the current fcli version 0.20240909.115322-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1310,13 +1334,40 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <h2 id="_manual_pages"><a class="anchor" href="#_manual_pages"></a>Manual Pages</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Manual pages are automatically generated and contain the same information as fcli help output. Manual pages in HTML and Linux man-page formats can be downloaded for offline use from the fcli releases page at <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a>, or can be viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
+<p>Manual pages are automatically generated and contain mostly the same information as fcli help output. Manual pages for the current version of this documentation can be accessed here: <a href="manpage/fcli.html">fcli (1)</a>.</p>
 </div>
 <div class="paragraph">
-<p>Please select the proper fcli version from the links above to access the corresponding manual pages. When using the offline HTML documentation bundle, please make sure to extract the full documentation archive to allow for hyperlinks to work correctly.</p>
+<p>Some important notes:</p>
 </div>
-<div class="paragraph">
-<p>The manual pages for the currently selected fcli release can be found here: <a href="manpage/fcli.html">fcli (1)</a>.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Please make sure that you&#8217;re viewing the correct documentation for the fcli version that you&#8217;re using:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>When viewing offline documentation (docs-html.zip downloaded from fcli releases page), make sure that you downloaded the correct version.</p>
+</li>
+<li>
+<p>When viewing online documentation at fortify.github.io, make sure that the drop-down menu on the top-right is showing the correct fcli version.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>If you are viewing an offline copy of this documentation, the manual pages link above will likely only work if you extracted the full zip-file to a local directory.</p>
+</li>
+<li>
+<p>In some cases, fcli help output may show more details than the manual pages, if those details are only available at runtime.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>A notable example are the various states that may be referenced in <code>wait-for</code> commands; these states are not listed in the manual pages but can be viewed by running <code>fcli &lt;product&gt; &lt;entity&gt; wait-for -h</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -1395,8 +1446,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240909.103705-dev_develop<br>
-Last updated 2024-09-09 10:38:45 UTC
+Version 0.20240909.115322-dev_develop<br>
+Last updated 2024-09-09 11:55:09 UTC
 </div>
 </div>
 </body>
