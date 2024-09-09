@@ -303,9 +303,9 @@ jobs:
           if: needs.build.outputs.do_prod_release
           run: |
             docker tag fcli-scratch fortifydocker/fcli:latest
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.major}}
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.major}}.${{needs.build.outputs.minor}}
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.release_version}} 
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.version_major}}
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
+            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}.${{needs.build.outputs.version_patch}}
         
         # TODO Should we sign the images as well?
         - name: Publish Linux Docker images
