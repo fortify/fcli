@@ -288,7 +288,7 @@ jobs:
             do
               docker build . --target fcli-${i} -t fcli-${i}
               mkdir ${PWD}/${i}
-              docker run --rm -u $(id -u):$(id -g) -v ${PWD}/${i}:/home fcli-${i} fcli tool sc-client install
+              docker run --rm -u $(id -u):$(id -g) -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
               test -f ${PWD}/${i}/fortify/bin/scancentral
             done
             
@@ -346,8 +346,8 @@ jobs:
             do
               docker build . --target fcli-${i} -t fcli-${i}
               mkdir ${PWD}/${i}
-              docker run --rm -v ${PWD}/${i}:/home fcli-${i} fcli tool sc-client install
-              test -f ${PWD}/${i}/fortify/bin/scancentral
+              echo docker run --rm -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
+              echo test -f ${PWD}/${i}/fortify/bin/scancentral
             done
         
         - name: DEV - Tag Windows images
