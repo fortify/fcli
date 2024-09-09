@@ -289,7 +289,7 @@ jobs:
               docker build . --target fcli-${i} -t fcli-${i}
               mkdir ${PWD}/${i}
               docker run --rm -u $(id -u):$(id -g) -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
-              test -f ${PWD}/${i}/fortify/bin/scancentral
+              test -f ${PWD}/${i}/fortify/tools/bin/scancentral
             done
             
         - name: Docker Login
@@ -345,9 +345,11 @@ jobs:
             for i in ltsc2022
             do
               docker build . --target fcli-${i} -t fcli-${i}
+              # Following doesn't work yet, hence the echo statements instead of actually running these.
+              # Likely, we need to pass Windows-style paths to volume mappings in docker run command 
               mkdir ${PWD}/${i}
               echo docker run --rm -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
-              echo test -f ${PWD}/${i}/fortify/bin/scancentral
+              echo test -f ${PWD}/${i}/fortify/tools/bin/scancentral
             done
         
         - name: DEV - Tag Windows images
