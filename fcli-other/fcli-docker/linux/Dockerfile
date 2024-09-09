@@ -56,7 +56,7 @@ ADD data.tgz /
 WORKDIR /data
 ENV FCLI_USER_HOME=/data
 USER fcli
-ENTRYPOINT ["/bin/sh"]
+CMD ["/bin/sh"]
 
 FROM redhat/ubi9-minimal:9.4 AS fcli-ubi9
 RUN echo "fcli:x:10001:10001:fcli:/data:/sbin/nologin" >> /etc/passwd
@@ -65,7 +65,7 @@ ADD data.tgz /
 WORKDIR /data
 ENV FCLI_USER_HOME=/data
 USER fcli
-ENTRYPOINT ["/bin/bash"]
+CMD ["/bin/bash"]
 
 FROM scratch AS fcli-scratch
 ADD minimal-passwd /etc/passwd

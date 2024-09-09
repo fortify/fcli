@@ -36,11 +36,5 @@ ADD data.tgz C:/
 WORKDIR C:/data
 ENV FCLI_USER_HOME=C:/data
 USER ContainerUser
-# TODO, do we want to have the image have fcli as the entrypoint to mimic behavior of the fcli-scratch
-# Linux image, or CMD.exe as the entrypoint to mimic behavior of the shell-based Linux images? Maybe
-# we want to have both, in which case we'd remove the ENTRYPOINT instruction here, and move it two
-# two new build stages that use this build phase as the base image, just adding the applicable ENTRYPOINT
-# (and PATH for CMD.exe-based image) to those new build stages.
-# ENV PATH=$PATH:C:\bin # Only for interactive shell image? Might also be useful for fcli entrypoint, as
-#                       # users may override the entrypoint to CMD.exe.
-ENTRYPOINT ["C:\\bin\\fcli.exe"]
+ENV PATH=$PATH:C:\bin
+CMD ["cmd.exe"]
