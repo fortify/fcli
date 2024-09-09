@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.6.0](https://github.com/fortify/fcli/compare/v2.5.3...v2.6.0) (2024-09-09)
+
+
+### Features
+
+* Publish fortifydocker/fcli image ([c72487d](https://github.com/fortify/fcli/commit/c72487d834c966cf468088290b4e41bae5b5156a))
+
+
+### Bug Fixes
+
+* `fcli fod action run *-sast-report`: Warn instead of fail if scan summary is not (yet) available from FoD ([077157f](https://github.com/fortify/fcli/commit/077157f15f4885ebafe1ef7e7b50b276147b4e1d))
+* FoD: Improve help output for `fcli fod *-scan wait-for` commands ([#587](https://github.com/fortify/fcli/issues/587)) ([937baf5](https://github.com/fortify/fcli/commit/937baf58c00734c3018c76800c585dbeaadf0cd7))
+* Work-around for user.home in Docker images ([9c6a56c](https://github.com/fortify/fcli/commit/9c6a56c1ca9e6781ecd029e53fb0b7a4bb8de45e))
+
 ## [2.5.3](https://github.com/fortify/fcli/compare/v2.5.2...v2.5.3) (2024-08-30)
 
 
