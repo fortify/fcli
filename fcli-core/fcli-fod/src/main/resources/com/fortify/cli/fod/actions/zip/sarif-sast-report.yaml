@@ -43,6 +43,8 @@ steps:
       - name: staticScanSummary
         uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
         if:   ${parameters.release.currentStaticScanId!=null}
+        onFail: 
+          - warn: Unable to load static scan summary, some scan metadata may be missing from the report
   - progress: Processing issue data
   - requests:
     - name: issues

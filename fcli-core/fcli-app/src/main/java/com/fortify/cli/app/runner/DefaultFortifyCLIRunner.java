@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.app.runner;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
@@ -41,6 +42,11 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	@Override
 	public int run(String... args) {
 	    try {
+	        // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
+	        // to scratch Docker image, for consistency with non-scratch/shell-based images.
+	        if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
+	            args = Arrays.copyOfRange(args, 1, args.length);
+	        }
     	    String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
     	    FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
     	    //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066

@@ -49,7 +49,7 @@ public class FcliDataHelper {
         String fortifyData = EnvHelper.env(ENVNAME_FORTIFY_DATA_DIR);
         return StringUtils.isNotBlank(fortifyData) 
                 ? Path.of(fortifyData).toAbsolutePath()
-                : Path.of(System.getProperty("user.home"), DEFAULT_FORTIFY_DIR_NAME).toAbsolutePath();
+                : Path.of(EnvHelper.getUserHome(), DEFAULT_FORTIFY_DIR_NAME).toAbsolutePath();
     }
 
     public static final Path getFcliHomePath() {

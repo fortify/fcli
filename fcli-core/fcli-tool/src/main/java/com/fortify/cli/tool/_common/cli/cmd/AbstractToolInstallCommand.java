@@ -35,6 +35,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
@@ -129,7 +130,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
                 ? null 
                 : installOrBaseDirArgGroup.baseDir.toPath();
         if ( getInstallPath()==null && basePath==null ) {
-            basePath = Path.of(System.getProperty("user.home"),"fortify", "tools"); 
+            basePath = Path.of(EnvHelper.getUserHome(), "fortify", "tools"); 
         }
         return basePath; 
     }
