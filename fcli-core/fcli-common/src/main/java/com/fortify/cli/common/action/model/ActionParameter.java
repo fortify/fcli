@@ -50,6 +50,9 @@ public final class ActionParameter implements IActionElement {
     @JsonPropertyDescription("Optional boolean: All parameters are required by default, unless this property is set to false.")
     @JsonProperty(required = false, defaultValue = "true") private boolean required = true;
     
+    @JsonPropertyDescription("Optional string: Allows for defining groups of parameters")
+    @JsonProperty(required = false) private String group;
+    
     public final void postLoad(Action action) {
         Action.checkNotBlank("parameter name", name, this);
         Action.checkNotNull("parameter description", getDescription(), this);

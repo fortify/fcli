@@ -1,0 +1,76 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+author: Fortify
+usage:
+  header: Set up application version. 
+  description: |
+    This action is primarily meant for use in CI/CD integrations, allowing users to 
+    provide a custom action with a customized application version setup process. For 
+    example, such a custom action could predefine some standard users, attributes or
+    issue template to be set on newly created application versions. This built-in 
+    action just invokes the `fcli ssc appversion create` command, always passing 
+    `--skip-if-exists` and the required application version name, together with any 
+    other creation options if specified. 
+
+defaults:
+  requestTarget: ssc
+  
+parameters:
+  - name: appversion
+    cliAliases: av
+    required: true
+    description: "Required application version name as <appName>:<versionName>"
+  - group: av_create_opts
+    required: false
+    name: active
+    defaultValue: true
+    description: "See 'fcli ssc av create'"
+    type: boolean
+  - group: av_create_opts
+    required: false
+    name: add-users
+    description: "See 'fcli ssc av create'"
+  - group: av_create_opts
+    required: false
+    name: attrs
+    cliAliases: attributes
+    description: "See 'fcli ssc av create'"
+  - group: av_create_opts
+    required: false
+    name: auto-required-attrs
+    defaultValue: true
+    description: "See 'fcli ssc av create'"
+    type: boolean
+  - group: av_create_opts
+    required: false
+    name: copy
+    description: "See 'fcli ssc av create'"
+  - group: av_create_opts
+    required: false
+    name: description
+    cliAliases: d
+    description: "See 'fcli ssc av create'"
+  - group: av_create_opts
+    required: false
+    name: copy-from
+    cliAliases: from
+    description: "See 'fcli ssc av create'"
+  - group: av_create_opts
+    required: false
+    name: issue-template
+    description: "See 'fcli ssc av create'"
+  - group: av_create_opts
+    required: false
+    name: refresh
+    defaultValue: true
+    description: "See 'fcli ssc av create'"
+  
+steps:
+  - progress: Creating SSC application version if non-existing
+  - fcli:
+    - name: createAppVersion
+      args: ssc av create ${parameters.appversion} --skip-if-exists ${#action.copyParametersFromGroup("av_create_opts")}
+  - write:
+      - to: stdout
+        value: "Create application version ${parameters.appversion} (id ${createAppVersion[0].id}): ${createAppVersion[0].__action__}"
+      

@@ -207,6 +207,28 @@ public class ActionRunner implements AutoCloseable {
     
     private final void configureSpelEvaluator(SimpleEvaluationContext context) {
         SpelHelper.registerFunctions(context, ActionSpelFunctions.class);
+        context.setVariable("action", new ActionUtil());
+    }
+    
+    private final class ActionUtil {
+        @SuppressWarnings("unused")
+        public final String copyParametersFromGroup(String group) {
+            StringBuilder result = new StringBuilder();
+            for ( var p : action.getParameters() ) {
+                if ( group==null || group.equals(p.getGroup()) ) {
+                    var val = parameters.get(p.getName());
+                    if ( val!=null && StringUtils.isNotBlank(val.asText()) ) {
+                        result
+                          .append("\"--")
+                          .append(p.getName())
+                          .append("=")
+                          .append(val.asText())
+                          .append("\" ");
+                    }
+                }
+            }
+            return result.toString();
+        }
     }
     
     public final ActionRunner addParameterConverter(String type, BiFunction<String, ParameterTypeConverterArgs, JsonNode> converter) {
