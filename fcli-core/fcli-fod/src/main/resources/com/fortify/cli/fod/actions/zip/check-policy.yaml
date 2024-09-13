@@ -2,10 +2,13 @@
 
 author: Fortify
 usage:
-  header: (SAMPLE) Check security policy. 
+  header: Check security policy. 
   description: |
-    This sample action demonstrates how to implement a security policy using
-    fcli actions, returning a non-zero exit code if any of the checks fail.
+    This action checks the outcome of the FoD Security Policy, returning a non-zero
+    exit code if FoD Security Policy status is Fail. Having this defined in an fcli
+    action allows for users to implement custom security policy checks through a
+    custom action, for example if they need more granuality than what's provided
+    by the standard FoD Security Policy.
 
 defaults:
   requestTarget: fod
@@ -20,7 +23,4 @@ steps:
   - check:
     - displayName: FoD Security Policy must Pass
       passIf:      ${parameters.release.isPassed}
-  - check:
-    - displayName: FoD Star rating must be at least 2 stars
-      passIf:      ${parameters.release.rating>=2}
       
