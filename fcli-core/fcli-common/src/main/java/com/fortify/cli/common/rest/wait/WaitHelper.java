@@ -165,7 +165,7 @@ public class WaitHelper {
     }
     
     private final void updateProgress(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
-        if ( progressMonitor!=null ) {
+        if ( progressMonitor!=null && !recordsWithWaitStatus.isEmpty() ) {
             progressMonitor.updateProgress(recordsWithWaitStatus);
         }
     }
