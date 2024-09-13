@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.system_state.cli.mixin;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,7 +48,8 @@ public class SSCJobResolverMixin {
         }
 
         public Collection<JsonNode> getJobDescriptorJsonNodes(UnirestInstance unirest){
-            return Stream.of(getJobDescriptors(unirest)).map(SSCJobDescriptor::asJsonNode).collect(Collectors.toList());
+            return Stream.of(getJobDescriptors(unirest)).filter(Objects::nonNull)
+                    .map(SSCJobDescriptor::asJsonNode).collect(Collectors.toList());
         }
 
         public String[] getJobNames(UnirestInstance unirest) {

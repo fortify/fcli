@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -41,7 +42,8 @@ public class SSCAppVersionRefreshMetricsCommand extends AbstractSSCJsonNodeOutpu
         SSCJobDescriptor refreshJobDescriptor = SSCAppVersionHelper.refreshMetrics(unirest, descriptor);
         if(refreshJobDescriptor == null){
             return descriptor.asObjectNode()
-                    .put(IActionCommandResultSupplier.actionFieldName, "NO_REFRESH_REQUIRED");
+                    .put(IActionCommandResultSupplier.actionFieldName, "NO_REFRESH_REQUIRED")
+                    .set("job", JsonHelper.getObjectMapper().createObjectNode().put("jobName", ""));
         } else {
             return descriptor.asObjectNode().set("job", refreshJobDescriptor.asJsonNode());
         }

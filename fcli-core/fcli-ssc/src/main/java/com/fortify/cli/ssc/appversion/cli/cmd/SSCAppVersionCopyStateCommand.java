@@ -59,7 +59,7 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
 
         if(refreshOptions.isRefresh() && fromAppVersionDescriptor.isRefreshRequired()){
             SSCJobDescriptor refreshJobDesc = SSCAppVersionHelper.refreshMetrics(unirest, fromAppVersionDescriptor);
-            SSCJobHelper.waitForJob(unirest,refreshJobDesc);
+            SSCJobHelper.waitForJob(unirest,refreshJobDesc, refreshOptions.getRefreshTimeout());
         }
 
         return mapper.valueToTree(copyState(unirest, fromAppVersionDescriptor, toAppVersionDescriptor));
