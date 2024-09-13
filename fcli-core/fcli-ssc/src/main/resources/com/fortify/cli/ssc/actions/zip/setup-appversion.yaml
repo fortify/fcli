@@ -2,7 +2,7 @@
 
 author: Fortify
 usage:
-  header: Set up application version. 
+  header: (PREVIEW) Set up application version. 
   description: |
     This action is primarily meant for use in CI/CD integrations, allowing users to 
     provide a custom action with a customized application version setup process. For 
@@ -36,30 +36,30 @@ parameters:
   - group: av_create_opts
     required: false
     name: add-users
-    description: "See 'fcli ssc av create'"
+    description: "See `fcli ssc appversion create`"
   - group: av_create_opts
     required: false
     name: attrs
     cliAliases: attributes
-    description: "See 'fcli ssc av create'"
+    description: "See `fcli ssc appversion create`"
   - group: av_create_opts
     required: false
     name: copy
-    description: "See 'fcli ssc av create'"
+    description: "See `fcli ssc appversion create`"
   - group: av_create_opts
     required: false
     name: description
     cliAliases: d
-    description: "See 'fcli ssc av create'"
+    description: "See `fcli ssc appversion create`"
   - group: av_create_opts
     required: false
     name: copy-from
     cliAliases: from
-    description: "See 'fcli ssc av create'"
+    description: "See `fcli ssc appversion create`"
   - group: av_create_opts
     required: false
     name: issue-template
-    description: "See 'fcli ssc av create'"
+    description: "See `fcli ssc appversion create`"
   - group: av_create_opts
     required: false
     name: refresh-timeout
