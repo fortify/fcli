@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Set up application release. 
+  description: |
+    This action is primarily meant for use in CI/CD integrations, allowing users to 
+    provide a custom action with a customized application release setup process. For 
+    example, such a custom action could define standard profiles (based on team,
+    business unit, application type/risk, ...) with predefined SDLC status and/or 
+    scan setup. Of course, instead of having a single custom action that defines 
+    profiles, you could also provide multiple custom actions that users can select 
+    from, or you can use a combination; each business unit or team providing their 
+    own custom action, with each of these custom actions defining profiles for 
+    different application types/risk. This built-in action only provides a 'default' 
+    profile that simply invokes the `fcli fod release create` and 
+    `fcli fod sast-scan setup` commands with some default options, amended with
+    options passed to this action.
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: release
+    cliAliases: rel
+    required: true
+    description: "Required release name as <application>[:<microservice>]:<release>"
+  - name: profile
+    cliAliases: p
+    required: true
+    defaultValue: default
+    description: "This built-in action only supports the 'default' profile, which is selected by default"
+  - group: rel_create_opts
+    required: false
+    name: copy-from
+    description: "See 'fcli fod release create'"
+  - group: rel_create_opts
+    required: false
+    name: description
+    cliAliases: d
+    description: "See 'fcli fod release create'"
+  - group: rel_create_opts
+    required: true
+    name: sdlc-status
+    cliAliases: status
+    description: "See 'fcli fod release create'"
+    
+  
+steps:
+  - progress: "Creating FoD application release if non-existing (profile: ${parameters.profile})"
+  - if: ${parameters.profile=="default"}
+    set:
+      - name: relCreateArgs
+        value: --skip-if-exists ${#action.copyParametersFromGroup("rel_create_opts")}
+  # Custom actions can replace/repeat the above to define custom profiles.
+  - if: ${relCreateArgs==null}
+    throw: "Invalid profile: ${parameters.profile}"
+  - fcli:
+    - name: createRelease
+      args: fod release create ${parameters.release} ${relCreateArgs}
+  - write:
+      - to: stdout
+        value: |
+          Create application release ${parameters.release} (id ${createRelease[0].releaseId}): ${createRelease[0].__action__}
+      
