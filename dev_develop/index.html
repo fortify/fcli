@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240909.123814-dev_develop
+fcli_version: 0.20240913.142340-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240909.123814-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.123814-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240913.142340-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240909.123814-dev_develop</span>
+<span id="revnumber">version 0.20240913.142340-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1137,6 +1137,19 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 </ul>
 </div>
 <div class="paragraph">
+<p>Documentation for built-in actions can be found here:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="fod-actions.html">FoD built-in actions documentation</a></p>
+</li>
+<li>
+<p><a href="ssc-actions.html">SSC built-in actions documentation</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
 <p>Future fcli versions may introduce new built-in actions, enhance existing built-in actions, or provide enhanced action syntax, for example to allow for running pipeline-style actions that run a set of commands to package source code, submit a scan request, wait for scan completion, and perform post-scan activities like data export or policy checks.</p>
 </div>
 <div class="paragraph">
@@ -1214,7 +1227,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.1.0.json</pre>
 </div>
 </div>
 </li>
@@ -1222,7 +1235,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.1.0.json</pre>
 </div>
 </div>
 </li>
@@ -1232,7 +1245,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20240909.123814-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>As shown in the sample schema statements above, the current fcli version 0.20240913.142340-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.1.0.json">1.1.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1446,8 +1459,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240909.123814-dev_develop<br>
-Last updated 2024-09-09 12:40:30 UTC
+Version 0.20240913.142340-dev_develop<br>
+Last updated 2024-09-13 14:25:21 UTC
 </div>
 </div>
 </body>

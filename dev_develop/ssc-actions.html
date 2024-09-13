@@ -1,0 +1,771 @@
+---
+title: Fcli SSC Actions
+fcli_version: 0.20240913.142340-dev_develop
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fcli SSC Actions</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240913.142340-dev_develop" %}
+
+
+<div id="header">
+<h1>Fcli SSC Actions</h1>
+<div class="details">
+<span id="revnumber">version 0.20240913.142340-dev_develop</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_sample"><em>sample</em></a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+</ul>
+</li>
+<li><a href="#_appversion_summary">appversion-summary</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_2">Synopsis</a></li>
+<li><a href="#_description_2">Description</a></li>
+<li><a href="#_options_2">Options</a></li>
+</ul>
+</li>
+<li><a href="#_bitbucket_sast_report">bitbucket-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_3">Synopsis</a></li>
+<li><a href="#_description_3">Description</a></li>
+<li><a href="#_options_3">Options</a></li>
+</ul>
+</li>
+<li><a href="#_check_policy">check-policy</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_4">Synopsis</a></li>
+<li><a href="#_description_4">Description</a></li>
+<li><a href="#_options_4">Options</a></li>
+</ul>
+</li>
+<li><a href="#_github_pr_comment">github-pr-comment</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_5">Synopsis</a></li>
+<li><a href="#_description_5">Description</a></li>
+<li><a href="#_options_5">Options</a></li>
+</ul>
+</li>
+<li><a href="#_github_sast_report">github-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_6">Synopsis</a></li>
+<li><a href="#_description_6">Description</a></li>
+<li><a href="#_options_6">Options</a></li>
+</ul>
+</li>
+<li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_7">Synopsis</a></li>
+<li><a href="#_description_7">Description</a></li>
+<li><a href="#_options_7">Options</a></li>
+</ul>
+</li>
+<li><a href="#_gitlab_debricked_report">gitlab-debricked-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_8">Synopsis</a></li>
+<li><a href="#_description_8">Description</a></li>
+<li><a href="#_options_8">Options</a></li>
+</ul>
+</li>
+<li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_9">Synopsis</a></li>
+<li><a href="#_description_9">Description</a></li>
+<li><a href="#_options_9">Options</a></li>
+</ul>
+</li>
+<li><a href="#_gitlab_sonatype_report">gitlab-sonatype-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_10">Synopsis</a></li>
+<li><a href="#_description_10">Description</a></li>
+<li><a href="#_options_10">Options</a></li>
+</ul>
+</li>
+<li><a href="#_sarif_sast_report">sarif-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_11">Synopsis</a></li>
+<li><a href="#_description_11">Description</a></li>
+<li><a href="#_options_11">Options</a></li>
+</ul>
+</li>
+<li><a href="#_setup_appversion">setup-appversion</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_12">Synopsis</a></li>
+<li><a href="#_description_12">Description</a></li>
+<li><a href="#_options_12">Options</a></li>
+</ul>
+</li>
+<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_13">Synopsis</a></li>
+<li><a href="#_description_13">Description</a></li>
+<li><a href="#_options_13">Options</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This manual page describes built-in fcli SSC actions that can be run through
+the <a href="manpage/fcli-ssc-action-run.html"><code>fcli ssc action run &lt;action-name&gt;</code></a> command.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sample"><a class="anchor" href="#_sample"></a><em>sample</em></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Sample Action</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> <em>sample</em> &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description"><a class="anchor" href="#_description"></a>Description</h3>
+<div class="paragraph">
+<p>This action documents action syntax to allow users to build their own custom actions.
+Note that action syntax is subject to change. Custom action YAML files that work fine
+on the current fcli version may not work on either older or newer fcli versions, and
+thus may need to be updated when upgrading fcli. Please see this link for details:
+<a href="https://github.com/fortify/fcli/issues/515" class="bare">https://github.com/fortify/fcli/issues/515</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Output file name (or 'stdout' / 'stderr'). Default value: sample.json</p>
+</dd>
+<dt class="hdlist1">--github-token</dt>
+<dd>
+<p>Required GitHub Token. Default value: GITHUB_TOKEN environment variable.</p>
+</dd>
+<dt class="hdlist1">--github-org, --gho</dt>
+<dd>
+<p>GitHub owner/organization for which to list repositories</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_appversion_summary"><a class="anchor" href="#_appversion_summary"></a>appversion-summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(PREVIEW) Generate application version summary.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> appversion-summary &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
+<div class="paragraph">
+<p>This action generates a short summary listing issue counts and other statistics
+for a given application version. Based on user feedback on this initial version
+of this action, parameters and output of this action may change in the next
+couple of fcli releases.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: stdout</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filtersets, --fs</dt>
+<dd>
+<p>Comma-separated list of filter set names, guid&#8217;s or 'default' to display in the summary. If not specified, all filter sets will be included.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_bitbucket_sast_report"><a class="anchor" href="#_bitbucket_sast_report"></a>bitbucket-sast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a BitBucket Code Insights report listing SSC SAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> bitbucket-sast-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into BitBucket, see
+<a href="https://support.atlassian.com/bitbucket-cloud/docs/code-insights/" class="bare">https://support.atlassian.com/bitbucket-cloud/docs/code-insights/</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_3"><a class="anchor" href="#_options_3"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--report-file, -r</dt>
+<dd>
+<p>Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json</p>
+</dd>
+<dt class="hdlist1">--annotations-file, -a</dt>
+<dd>
+<p>Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_check_policy"><a class="anchor" href="#_check_policy"></a>check-policy</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(SAMPLE) Check security policy.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> check-policy &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
+<div class="paragraph">
+<p>This sample action demonstrates how to implement a security policy using
+fcli actions, returning a non-zero exit code if any of the checks fail.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_4"><a class="anchor" href="#_options_4"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_github_pr_comment"><a class="anchor" href="#_github_pr_comment"></a>github-pr-comment</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(PREVIEW) Add GitHub Pull Request review comments.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-pr-comment &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_5"><a class="anchor" href="#_description_5"></a>Description</h3>
+<div class="paragraph">
+<p>This action adds review comments to a GitHub Pull Request. Currently
+this is marked as PREVIEW as we build out this functionality; later
+versions may have different behavior and/or require different action
+parameters. In particular, note that comments are generated based on
+current (latest) SSC application state, i.e., based on the last
+uploaded scan results. As such, to ensure the comments are accurate
+for the given PR/commit id, this action should be run immediately
+after scan results have been published (and approved if necessary),
+before any subsequent scans are being published. Also, for now this
+action doesn&#8217;t generate any source code annotations, as GitHub will
+return an error if vulnerability path &amp; file name don&#8217;t match exactly
+with repository path &amp; file name.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_5"><a class="anchor" href="#_options_5"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--analysis-type, -t</dt>
+<dd>
+<p>Analysis type for which to list vulnerabilities. Default value: SCA</p>
+</dd>
+<dt class="hdlist1">--github-token</dt>
+<dd>
+<p>Required GitHub Token. Default value: GITHUB_TOKEN environment variable.</p>
+</dd>
+<dt class="hdlist1">--github-owner</dt>
+<dd>
+<p>Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.</p>
+</dd>
+<dt class="hdlist1">--github-repo</dt>
+<dd>
+<p>Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.</p>
+</dd>
+<dt class="hdlist1">--pr</dt>
+<dd>
+<p>Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.</p>
+</dd>
+<dt class="hdlist1">--commit</dt>
+<dd>
+<p>Required commit hash. Default value: GITHUB_SHA environment variable.</p>
+</dd>
+<dt class="hdlist1">--dryrun</dt>
+<dd>
+<p>Set to true to just output PR decoration JSON; don&#8217;t actually update any PR</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_github_sast_report"><a class="anchor" href="#_github_sast_report"></a>github-sast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a GitHub Code Scanning report listing SSC SAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_6"><a class="anchor" href="#_synopsis_6"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-sast-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_6"><a class="anchor" href="#_description_6"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into GitHub, see
+<a href="https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github" class="bare">https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_6"><a class="anchor" href="#_options_6"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gitlab_dast_report"><a class="anchor" href="#_gitlab_dast_report"></a>gitlab-dast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a GitLab DAST report listing SSC DAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_7"><a class="anchor" href="#_synopsis_7"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-dast-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_7"><a class="anchor" href="#_description_7"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into GitLab, see
+<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-dast.json</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gitlab_debricked_report"><a class="anchor" href="#_gitlab_debricked_report"></a>gitlab-debricked-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a GitLab Dependency Scanning report listing SSC Debricked vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-debricked-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into GitLab, see
+<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-debricked-depscan.json</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gitlab_sast_report"><a class="anchor" href="#_gitlab_sast_report"></a>gitlab-sast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a GitLab SAST report listing SSC SAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-sast-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into GitLab, see
+<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gitlab_sonatype_report"><a class="anchor" href="#_gitlab_sonatype_report"></a>gitlab-sonatype-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a GitLab Dependency Scanning report listing SSC Sonatype vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-sonatype-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into GitLab, see
+<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sonatype-depscan.json</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sarif_sast_report"><a class="anchor" href="#_sarif_sast_report"></a>sarif-sast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate SARIF report listing SSC SAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sarif-sast-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
+<div class="paragraph">
+<p>This action generates a SARIF report listing Fortify SAST vulnerabilities, which
+may be useful for integration with various 3rd-party tools that can ingest SARIF
+reports. For more information about SARIF, please see
+<a href="https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html" class="bare">https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: fortify-sast.sarif</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setup_appversion"><a class="anchor" href="#_setup_appversion"></a>setup-appversion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(PREVIEW) Set up application version.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> setup-appversion &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
+<div class="paragraph">
+<p>This action is primarily meant for use in CI/CD integrations, allowing users to
+provide a custom action with a customized application version setup process. For
+example, such a custom action could define standard profiles (based on team,
+business unit, application type/risk, &#8230;&#8203;) with predefined users, attributes or
+issue template to be set on newly created application versions. Of course, instead
+of having a single custom action that defines profiles, you could also provide
+multiple custom actions that users can select from, or you can use a combination;
+each business unit or team providing their own custom action, with each of these
+custom actions defining profiles for different application types/risk. This
+built-in action only provides a 'default' profile that simply invokes the
+<a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a> command, passing the following options by default:
+<code>--skip-if-exists</code>, <code>--auto-required-attrs</code>, <code>--refresh</code>, <code>--refresh-timeout 300s</code>.
+Additional creation options can be passed through the various action options, which
+includes the ability to override the default refresh timeout (only applicable when
+copying an existing application version).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version name as &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--profile, -p</dt>
+<dd>
+<p>This built-in action only supports the 'default' profile, which is selected by default</p>
+</dd>
+<dt class="hdlist1">--add-users</dt>
+<dd>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a></p>
+</dd>
+<dt class="hdlist1">--attrs, --attributes</dt>
+<dd>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a></p>
+</dd>
+<dt class="hdlist1">--copy</dt>
+<dd>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a></p>
+</dd>
+<dt class="hdlist1">--description, -d</dt>
+<dd>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a></p>
+</dd>
+<dt class="hdlist1">--copy-from, --from</dt>
+<dd>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a></p>
+</dd>
+<dt class="hdlist1">--issue-template</dt>
+<dd>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a></p>
+</dd>
+<dt class="hdlist1">--refresh-timeout</dt>
+<dd>
+<p>See 'fcli ssc av create'. Default value: 300s</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sonarqube_sast_report"><a class="anchor" href="#_sonarqube_sast_report"></a>sonarqube-sast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a SonarQube External Issues report listing SSC SAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sonarqube-sast-report &lt;options&gt;</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into SonarQube, see
+<a href="https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/" class="bare">https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_13"><a class="anchor" href="#_options_13"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: sq-fortify-sast.json</p>
+</dd>
+<dt class="hdlist1">--file-path-prefix, --pfx</dt>
+<dd>
+<p>Optional prefix for issue file paths</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Optional filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+<dt class="hdlist1">--page-size</dt>
+<dd>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on <a href="manpage/fcli-ssc-session-login.html">fcli ssc session login</a> command). Default value: 100</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.20240913.142340-dev_develop<br>
+Last updated 2024-09-13 14:25:25 UTC
+</div>
+</div>
+</body>
+</html>
