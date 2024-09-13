@@ -10,24 +10,16 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod.action.cli.cmd;
+package com.fortify.cli.ssc.action.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.action.cli.cmd.AbstractActionAsciidocCommand;
 
 import picocli.CommandLine.Command;
 
-@Command(
-        name = "action",
-        subcommands = {
-                FoDActionAsciidocCommand.class,
-                FoDActionGetCommand.class,
-                FoDActionHelpCommand.class,
-                FoDActionImportCommand.class,
-                FoDActionListCommand.class,
-                FoDActionResetCommand.class,
-                FoDActionRunCommand.class,
-                FoDActionSignCommand.class,
-        }
-)
-public class FoDActionCommands extends AbstractContainerCommand {
+@Command(name = "asciidoc", hidden = true)
+public class SSCActionAsciidocCommand extends AbstractActionAsciidocCommand {
+    @Override
+    protected final String getType() {
+        return "SSC";
+    }
 }

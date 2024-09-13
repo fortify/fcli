@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -73,19 +74,23 @@ public class ActionLoaderHelper {
         return new ActionLoader(sources, actionValidationHandler).load(name);
     }
     
-    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
-        return _streamAsJson(sources, actionValidationHandler);
+    public static final Stream<Action> streamAsActions(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
+        return _stream(sources, actionValidationHandler, ActionLoadResult::getAction, a->a.getMetadata().getName());
     }
     
-    private static final Stream<ObjectNode> _streamAsJson(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
-        Map<String, ObjectNode> result = new HashMap<>();
+    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
+        return _stream(sources, actionValidationHandler, ActionLoadResult::getSummaryObjectNode, o->o.get("name").asText());
+    }
+    
+    private static final <T> Stream<T> _stream(List<ActionSource> sources, ActionValidationHandler actionValidationHandler, Function<ActionLoadResult, T> asTypeFunction, Function<T, String> nameFunction) {
+        Map<String, T> result = new HashMap<>();
         new ActionLoader(sources, actionValidationHandler)
             .processActions(loadResult->{
-                result.putIfAbsent(loadResult.getMetadata().getName(), loadResult.getSummaryObjectNode());
+                result.putIfAbsent(loadResult.getMetadata().getName(), asTypeFunction.apply(loadResult));
                 return Break.FALSE;
             });
         return result.values().stream()
-                .sorted((a,b)->a.get("name").asText().compareTo(b.get("name").asText()));
+                .sorted((a,b)->nameFunction.apply(a).compareTo(nameFunction.apply(b)));
     }
     
     public static final String getSignatureStatusMessage(ActionMetadata metadata, SignatureStatus signatureStatus) {

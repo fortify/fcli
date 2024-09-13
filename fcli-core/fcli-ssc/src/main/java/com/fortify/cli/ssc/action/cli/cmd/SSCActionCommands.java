@@ -19,6 +19,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "action",
         subcommands = {
+                SSCActionAsciidocCommand.class,
                 SSCActionGetCommand.class,
                 SSCActionHelpCommand.class,
                 SSCActionImportCommand.class,
