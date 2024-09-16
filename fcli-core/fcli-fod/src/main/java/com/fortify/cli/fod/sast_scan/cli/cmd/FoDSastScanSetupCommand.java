@@ -69,7 +69,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
-    @Option(names = {"--technology-stack"}, required = true)
+    @Option(names = {"--technology-stack"}, required = true, defaultValue = "Auto Detect")
     private String technologyStack;
     @Option(names = {"--language-level"})
     private String languageLevel;
