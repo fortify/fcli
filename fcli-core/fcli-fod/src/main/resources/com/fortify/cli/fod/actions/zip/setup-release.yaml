@@ -13,7 +13,7 @@ usage:
     from, or you can use a combination; each business unit or team providing their 
     own custom action, with each of these custom actions defining profiles for 
     different application types/risk. This built-in action only provides a 'default' 
-    profile that simply invokes the `fcli fod release create` and 
+    profile that simply invokes the `fcli fod release create` and optionally
     `fcli fod sast-scan setup` commands with some default options, amended with
     options passed to this action.
 
@@ -30,20 +30,25 @@ parameters:
     required: true
     defaultValue: default
     description: "This built-in action only supports the 'default' profile, which is selected by default"
+  - name: scan-types
+    cliAliases: t
+    required: false
+    type: array
+    description: "Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported"
   - group: rel_create_opts
     required: false
     name: copy-from
-    description: "See 'fcli fod release create'"
+    description: "See `fcli fod release create`"
   - group: rel_create_opts
     required: false
     name: description
     cliAliases: d
-    description: "See 'fcli fod release create'"
+    description: "See `fcli fod release create`"
   - group: rel_create_opts
     required: true
     name: sdlc-status
     cliAliases: status
-    description: "See 'fcli fod release create'"
+    description: "See `fcli fod release create`"
     
   
 steps:
@@ -62,4 +67,14 @@ steps:
       - to: stdout
         value: |
           Create application release ${parameters.release} (id ${createRelease[0].releaseId}): ${createRelease[0].__action__}
+  - if: ${parameters["scan-types"].contains("sast")}
+    steps:
+      - fcli:
+        - name: setupSast
+          args: fod sast-scan setup --rel ${parameters.release} --skip-if-exists --assessment-type "Static Assessment" --frequency "Subscription" --audit-preference Automated
+      - write:
+        - to: stdout
+          value: |
+            SAST scan setup status: ${setupSast[0].__action__}
+    
       

@@ -978,12 +978,16 @@ public class ActionRunner implements AutoCloseable {
     
     private static final Map<String, BiFunction<String, ParameterTypeConverterArgs, JsonNode>> createDefaultParameterConverters() {
         Map<String, BiFunction<String, ParameterTypeConverterArgs, JsonNode>> result = new HashMap<>();
+        // TODO Most of these will likely fail in case value is null or empty
         result.put("string",  (v,a)->new TextNode(v));
         result.put("boolean", (v,a)->BooleanNode.valueOf(Boolean.parseBoolean(v)));
         result.put("int",     (v,a)->IntNode.valueOf(Integer.parseInt(v)));
         result.put("long",    (v,a)->LongNode.valueOf(Long.parseLong(v)));
         result.put("double",  (v,a)->DoubleNode.valueOf(Double.parseDouble(v)));
         result.put("float",   (v,a)->FloatNode.valueOf(Float.parseFloat(v)));
+        result.put("array",   (v,a)->StringUtils.isBlank(v)
+                ? JsonHelper.toArrayNode(new String[] {}) 
+                : JsonHelper.toArrayNode(v.split(",")));
         // TODO Add BigIntegerNode/DecimalNode/ShortNode support?
         // TODO Add array support?
         return result;
