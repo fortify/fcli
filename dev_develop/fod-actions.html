@@ -1,6 +1,6 @@
 ---
 title: Fcli FoD Actions
-fcli_version: 0.20240916.093235-dev_develop
+fcli_version: 0.20240916.102704-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240916.093235-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240916.093235-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240916.102704-dev_develop" %}
 
 
 <div id="header">
 <h1>Fcli FoD Actions</h1>
 <div class="details">
-<span id="revnumber">version 0.20240916.093235-dev_develop</span>
+<span id="revnumber">version 0.20240916.102704-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -510,7 +510,7 @@ profiles, you could also provide multiple custom actions that users can select
 from, or you can use a combination; each business unit or team providing their
 own custom action, with each of these custom actions defining profiles for
 different application types/risk. This built-in action only provides a 'default'
-profile that simply invokes the <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a> and
+profile that simply invokes the <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a> and optionally
 <a href="manpage/link:manpage/fcli-fod-sast-scan.html">fcli-fod-sast-scan</a>-setup.html[<a href="manpage/fcli-fod-sast-scan.html"><code>fcli fod sast-scan setup</code></a>] commands with some default options, amended with
 options passed to this action.</p>
 </div>
@@ -527,17 +527,21 @@ options passed to this action.</p>
 <dd>
 <p>This built-in action only supports the 'default' profile, which is selected by default</p>
 </dd>
+<dt class="hdlist1">--scan-types, -t</dt>
+<dd>
+<p>Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported</p>
+</dd>
 <dt class="hdlist1">--copy-from</dt>
 <dd>
-<p>See '<a href="manpage/fcli-fod-release-create.html">fcli fod release create</a>'</p>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
 </dd>
 <dt class="hdlist1">--description, -d</dt>
 <dd>
-<p>See '<a href="manpage/fcli-fod-release-create.html">fcli fod release create</a>'</p>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
 </dd>
 <dt class="hdlist1">--sdlc-status, --status</dt>
 <dd>
-<p>See '<a href="manpage/fcli-fod-release-create.html">fcli fod release create</a>'</p>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
 </dd>
 </dl>
 </div>
@@ -587,8 +591,8 @@ options passed to this action.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240916.093235-dev_develop<br>
-Last updated 2024-09-16 09:34:26 UTC
+Version 0.20240916.102704-dev_develop<br>
+Last updated 2024-09-16 10:28:44 UTC
 </div>
 </div>
 </body>
