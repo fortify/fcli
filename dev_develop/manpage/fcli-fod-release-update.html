@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240917.112225-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240917.131935-dev_develop" %}
 
 
 <div id="header">
@@ -45,12 +45,12 @@ fcli_version:
 <div class="paragraph">
 <p><strong>fcli fod release update</strong> [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                         [<strong>-n</strong>=<em>&lt;releaseName&gt;</em>] [<strong>--owner</strong>=<em>&lt;releaseOwner&gt;</em>]
-                        [<strong>--status</strong>=<em>&lt;sdlcStatusType&gt;</em>] [[<strong>-h</strong>]
-                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                        <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-            _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>id|app[:</em>
-                _        ms]:rel_</p>
+                        [<strong>--status</strong>=<em>&lt;sdlcStatusType&gt;</em>] <em class="<strong>--attrs</strong>=_[ATTR=VALUE">[,
+                        _[ATTR=VALUE]</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                        [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>id|app[:ms]:rel</em></p>
 </div>
 </div>
 </div>
@@ -65,6 +65,10 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[ATTR=VALUE]</em>[,<em>[ATTR=VALUE]</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Attribute id or name and its value to set on the application. For User attributes only userId is currently supported.</p>
+</dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
 <p>Updated description for the release.</p>
@@ -165,7 +169,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-17 11:24:05 UTC
+Last updated 2024-09-17 13:21:15 UTC
 </div>
 </div>
 </body>

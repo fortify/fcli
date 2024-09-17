@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240917.112225-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240917.131935-dev_develop" %}
 
 
 <div id="header">
@@ -43,7 +43,8 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli fod sast-scan setup</strong> [<strong>--include-third-party-libs</strong>] [<strong>--oss</strong>]
-                         [<strong>--skip-if-exists</strong>] [<strong>--use-source-control</strong>]
+                         [<strong>--skip-if-exists</strong>] [<strong>--use-aviator</strong>]
+                         [<strong>--use-source-control</strong>]
                          <strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em>
                          <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
                          [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
@@ -97,7 +98,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 </dd>
 <dt class="hdlist1"><strong>--include-third-party-libs</strong></dt>
 <dd>
-<p>Indicates if third party libraries should be included.</p>
+<p>(LEGACY) Indicates if third party libraries should be included.</p>
 </dd>
 <dt class="hdlist1"><strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em></dt>
 <dd>
@@ -123,9 +124,13 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <dd>
 <p>The technology stack of the application. Default value: Auto Detect.</p>
 </dd>
+<dt class="hdlist1"><strong>--use-aviator</strong></dt>
+<dd>
+<p>Use Fortify Aviator to audit results and provide enhanced remediation guidance.</p>
+</dd>
 <dt class="hdlist1"><strong>--use-source-control</strong></dt>
 <dd>
-<p>Indicates if source control should be used.</p>
+<p>(LEGACY) Indicates if source control should be used.</p>
 </dd>
 </dl>
 </div>
@@ -194,7 +199,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-17 11:24:05 UTC
+Last updated 2024-09-17 13:21:15 UTC
 </div>
 </div>
 </body>
