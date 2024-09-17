@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -52,7 +53,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false)
+@Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false) @CommandGroup("*-scan-setup")
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     private static final Log LOG = LogFactory.getLog(FoDSastScanSetupCommand.class);
@@ -82,7 +83,9 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     @Option(names = {"--use-source-control"})
     private final Boolean useSourceControl = false;
     @Option(names={"--skip-if-exists"})
-    private boolean skipIfExists = false;
+    private Boolean skipIfExists = false;
+    @Option(names={"--use-aviator"})
+    private Boolean useAviator = false;
 
     // TODO We don't actually use a progress writer, but for now we can't
     //      remove the --progress option to maintain backward compatibility.
@@ -128,7 +131,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 .performOpenSourceAnalysis(performOpenSourceAnalysis)
                 .auditPreferenceType(auditPreferenceType.name())
                 .includeThirdPartyLibraries(includeThirdPartyLibraries)
-                .useSourceControl(useSourceControl).build();
+                .useSourceControl(useSourceControl)
+                .includeFortifyAviator(useAviator).build();
 
         return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest);
     }
@@ -194,6 +198,10 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode transformRecord(JsonNode record) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(getUnirestInstance());
         return ((ObjectNode)record)
+        // Start partial fix for (#598)
+                        .put("scanType", staticAssessmentType)
+                        .put("setupType", auditPreferenceType.name())
+        // End               
                         .put("applicationName", releaseDescriptor.getApplicationName())
                         .put("releaseName", releaseDescriptor.getReleaseName())
                         .put("microserviceName", releaseDescriptor.getMicroserviceName());

@@ -63,8 +63,8 @@ public class FoDAttributeHelper {
         Iterator<FoDAttributeDescriptor> lookupIterator = lookupList.iterator();
         while (lookupIterator.hasNext()) {
             FoDAttributeDescriptor currentLookup = lookupIterator.next();
-            // currentLookup.getAttributeTypeId() == 1 is "Application" - filter above does not support querying on this yet!
-            if (currentLookup.getIsRequired() && currentLookup.getAttributeTypeId() == 1) {
+            // currentLookup.getAttributeTypeId() == 1 is "Application", 4 is "Release" - filter above does not support querying on this yet!
+            if (currentLookup.getIsRequired() && (currentLookup.getAttributeTypeId() == 1 || currentLookup.getAttributeTypeId() == 4)) {
                 switch (currentLookup.getAttributeDataType()) {
                     case "Text":
                         reqAttrs.put(currentLookup.getName(), "autofilled by fcli");
