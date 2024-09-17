@@ -90,7 +90,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
             
             === Synopsis
             
-            *fcli ${typeLower} action run %s link:manpage/fcli-${typeLower}-action-run.html#_options[[fcli ${typeLower} action run options]] [action options, see below]* 
+            *fcli ${typeLower} action run %s [fcli ${typeLower} action run options] [action options, see below]* 
             
             === Description
             
