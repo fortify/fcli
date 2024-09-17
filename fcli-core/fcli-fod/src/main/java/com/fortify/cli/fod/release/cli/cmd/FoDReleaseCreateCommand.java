@@ -20,6 +20,8 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameResolverMixin;
@@ -43,9 +45,13 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
     private String description;
     @Option(names={"--skip-if-exists"})
     private boolean skipIfExists = false;
+    @Option(names={"--auto-required-attrs"}, required = false)
+    protected boolean autoRequiredAttrs = false;
 
     @Mixin
     private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
+    @Mixin
+    protected FoDAttributeUpdateOptions.OptionalAttrOption relAttrs;
 
     // TODO Consider splitting method
     @Override
@@ -72,7 +78,8 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
                 .applicationId(Integer.valueOf(appDescriptor.getApplicationId()))
                 .releaseName(simpleReleaseName)
                 .releaseDescription(description)
-                .sdlcStatusType(sdlcStatus.getSdlcStatusType().name());
+                .sdlcStatusType(sdlcStatus.getSdlcStatusType().name())
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, relAttrs.getAttributes(), autoRequiredAttrs));
         if ( microserviceDescriptor!=null ) {
             requestBuilder = requestBuilder.microserviceId(Integer.valueOf(microserviceDescriptor.getMicroserviceId()));
         }
