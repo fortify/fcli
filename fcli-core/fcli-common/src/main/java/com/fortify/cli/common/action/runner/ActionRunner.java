@@ -48,6 +48,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.AbstractActionStepForEach;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionParameter;
@@ -210,6 +211,7 @@ public class ActionRunner implements AutoCloseable {
         context.setVariable("action", new ActionUtil());
     }
     
+    @Reflectable
     private final class ActionUtil {
         @SuppressWarnings("unused")
         public final String copyParametersFromGroup(String group) {
