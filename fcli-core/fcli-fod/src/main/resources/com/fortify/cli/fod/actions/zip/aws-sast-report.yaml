@@ -95,17 +95,17 @@ valueTemplates:
         'aws/securityhub/CompanyName': OpenText
         'aws/securityhub/ProductName': 'Fortify SAST'
       Resources:
-        Type: Application
-        Id: ${parameters.release.releaseId}-${issue.id}
-        Partition: aws
-        Region: ${parameters['aws-region']}
-        Details:
-          Other:
-            APPLICATION ID: ${parameters.release.applicationId+''}
-            APPLICATION NAME: ${parameters.release.applicationName}
-            RELEASE ID: ${parameters.release.releaseId+''}
-            RELEASE NAME: ${parameters.release.releaseName}
-            PRIMARY LOCATION: ${issue.primaryLocationFull}
-            LINE NUMBER: ${issue.lineNumber+''}
-            INSTANCE ID: ${issue.instanceId}
+        - Type: Application
+          Id: ${parameters.release.releaseId}-${issue.id}
+          Partition: aws
+          Region: ${parameters['aws-region']}
+          Details:
+            Other:
+                APPLICATION ID: ${parameters.release.applicationId+''}
+                APPLICATION NAME: ${parameters.release.applicationName}
+                RELEASE ID: ${parameters.release.releaseId+''}
+                RELEASE NAME: ${parameters.release.releaseName}
+                PRIMARY LOCATION: ${issue.primaryLocationFull}
+                LINE NUMBER: ${issue.lineNumber+''}
+                INSTANCE ID: ${issue.instanceId}
       RecordState: ACTIVE
