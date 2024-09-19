@@ -27,6 +27,7 @@ import picocli.CommandLine.Command;
                 FoDActionResetCommand.class,
                 FoDActionRunCommand.class,
                 FoDActionSignCommand.class,
+                TestCommand.class, Test2Command.class
         }
 )
 public class FoDActionCommands extends AbstractContainerCommand {
