@@ -455,4 +455,50 @@ public class FoDEnums {
         @JsonProperty("http,https")
         HTTPandHTTPs;
     }
+
+    public enum AttributeTypes {
+        Application(1),
+        Vulnerability(2),
+        Microservice(3),
+        Release(4);
+
+        private final int _val;
+
+        AttributeTypes(int val) {
+            this._val = val;
+        }
+
+        public int getValue() {
+            return this._val;
+        }
+
+        public String toString() {
+            switch (this._val) {
+                case 1:
+                    return "Application";
+                case 2:
+                    return "Vulnerability";
+                case 3:
+                    return "Microservice";
+                case 4:
+                default:
+                    return "Release";
+            }
+        }
+
+        public static AttributeTypes fromInt(int val) {
+            switch (val) {
+                case 1:
+                    return Application;
+                case 2:
+                    return Vulnerability;
+                case 3:
+                    return Microservice;    
+                case 4:
+                default:
+                    return Release;
+            }
+        }
+    }
+
 }

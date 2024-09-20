@@ -34,7 +34,7 @@ parameters:
     cliAliases: t
     required: false
     type: array
-    description: "Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported"
+    description: "Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported"  
   - group: rel_create_opts
     required: false
     name: copy-from
@@ -49,32 +49,65 @@ parameters:
     name: sdlc-status
     cliAliases: status
     description: "See `fcli fod release create`"
-    
+  - group: sast_setup_opts
+    name: assessment-type
+    required: false
+    defaultValue: "Static Assessment"
+    description: "See `fcli fod sast-scan setup`"  
+  - group: sast_setup_opts
+    required: false
+    name: use-aviator
+    description: "See `fcli fod sast-scan setup`"      
+  - group: sast_setup_opts
+    required: false
+    name: oss
+    description: "See `fcli fod sast-scan setup`"
+  - name: release-attributes
+    required: false
+    type: array
+    cliAliases: rel-attrs
+    description: "Optional comma-separated list of attributes to set on the release"     
   
 steps:
   - progress: "Creating FoD application release if non-existing (profile: ${parameters.profile})"
+  - if: ${parameters['release-attributes']!=null}
+    set:
+      - name: relAttrArgs
+        value: --attrs "${parameters['release-attributes']}"
+  - if: ${parameters['release-attributes']==null}
+    append:
+      - name: relAttrArgs
+        value: --auto-required-attrs  
   - if: ${parameters.profile=="default"}
     set:
       - name: relCreateArgs
-        value: --skip-if-exists ${#action.copyParametersFromGroup("rel_create_opts")}
+        value: --skip-if-exists ${#action.copyParametersFromGroup("rel_create_opts")} ${relAttrArgs}
   # Custom actions can replace/repeat the above to define custom profiles.
   - if: ${relCreateArgs==null}
     throw: "Invalid profile: ${parameters.profile}"
   - fcli:
     - name: createRelease
-      args: fod release create ${parameters.release} ${relCreateArgs}
+      args: fod release create "${parameters.release}" ${relCreateArgs} ${relAttrArgs}
   - write:
       - to: stdout
         value: |
           Create application release ${parameters.release} (id ${createRelease[0].releaseId}): ${createRelease[0].__action__}
   - if: ${parameters["scan-types"].contains("sast")}
     steps:
+      - if: ${parameters.profile=="default"}
+        set:
+         - name: sastSetupArgs
+           value: --skip-if-exists --frequency "Subscription" --audit-preference Automated ${#action.copyParametersFromGroup("sast_setup_opts")}          
+      - progress: "Configuring FoD application release ${parameters.release} for SAST scanning"
       - fcli:
         - name: setupSast
-          args: fod sast-scan setup --rel ${parameters.release} --skip-if-exists --assessment-type "Static Assessment" --frequency "Subscription" --audit-preference Automated
+          args: fod sast-scan setup --rel "${parameters.release}" ${sastSetupArgs} 
       - write:
         - to: stdout
           value: |
             SAST scan setup status: ${setupSast[0].__action__}
-    
+  - if: ${parameters["scan-types"].contains("dast")}
+    steps:
+      - if: ${parameters.profile=="default"}      
+      # Custom actions can replace the above to define DAST setup.
       

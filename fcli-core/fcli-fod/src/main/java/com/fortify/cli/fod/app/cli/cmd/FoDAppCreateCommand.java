@@ -27,6 +27,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.access_control.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
 import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
@@ -100,7 +101,8 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .applicationType(appType.getAppType().getFoDValue())
                 .hasMicroservices(appType.getAppType().isMicroservice())
                 .microservices(FoDAppHelper.getMicroservicesNode(microservices))
-                .attributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Application, 
+                    appAttrs.getAttributes(), autoRequiredAttrs))
                 .userGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups)).build();
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
