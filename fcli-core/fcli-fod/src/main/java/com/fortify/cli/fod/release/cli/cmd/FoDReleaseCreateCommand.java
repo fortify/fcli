@@ -20,6 +20,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
@@ -79,7 +80,8 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
                 .releaseName(simpleReleaseName)
                 .releaseDescription(description)
                 .sdlcStatusType(sdlcStatus.getSdlcStatusType().name())
-                .attributes(FoDAttributeHelper.getAttributesNode(unirest, relAttrs.getAttributes(), autoRequiredAttrs));
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Release, 
+                    relAttrs.getAttributes(), autoRequiredAttrs));
         if ( microserviceDescriptor!=null ) {
             requestBuilder = requestBuilder.microserviceId(Integer.valueOf(microserviceDescriptor.getMicroserviceId()));
         }

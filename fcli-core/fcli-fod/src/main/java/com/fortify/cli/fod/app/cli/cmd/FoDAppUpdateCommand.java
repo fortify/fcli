@@ -25,6 +25,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.app.attr.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
@@ -68,9 +69,10 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
         Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
         JsonNode jsonAttrs = objectMapper.createArrayNode();
         if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
-            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, appAttrsCurrent, attributeUpdates);
+            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Application, appAttrsCurrent, 
+                attributeUpdates);
         } else {
-            jsonAttrs = FoDAttributeHelper.getAttributesNode(appAttrsCurrent);
+            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Application, appAttrsCurrent);
         }
         String appEmailListNew = FoDAppHelper.getEmailList(notificationsUpdate);
 

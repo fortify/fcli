@@ -24,6 +24,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.app.attr.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
@@ -68,9 +69,10 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
         Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
         JsonNode jsonAttrs = objectMapper.createArrayNode();
         if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
-            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, releaseAttrsCurrent, attributeUpdates);
+            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Release, 
+                releaseAttrsCurrent, attributeUpdates);
         } else {
-            jsonAttrs = FoDAttributeHelper.getAttributesNode(releaseAttrsCurrent);
+            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Release, releaseAttrsCurrent);
         }
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
                 .releaseName(StringUtils.isNotBlank(releaseName) ? getUnqualifiedReleaseName(releaseName, releaseDescriptor) : releaseDescriptor.getReleaseName())
