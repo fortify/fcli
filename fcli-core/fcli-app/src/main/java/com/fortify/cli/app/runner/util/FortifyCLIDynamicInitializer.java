@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand.GenericOptionsArgGroup;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand.LogLevel;
+import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;

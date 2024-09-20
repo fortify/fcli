@@ -10,11 +10,10 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.app.runner.util;
+package com.fortify.cli.common.cli.util;
 
 import java.lang.reflect.AnnotatedElement;
 
-import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 

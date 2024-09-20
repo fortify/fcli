@@ -14,8 +14,10 @@ package com.fortify.cli.fod.action.cli.cmd;
 
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
+import com.fortify.cli.common.action.helper.ActionParameterHelper.OnUnknownParameterType;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.fod.action.helper.FoDActionHelper;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -31,9 +33,12 @@ public class TestCommand extends AbstractRunnableCommand {
     @Override
     public Integer call() throws Exception {
         var validationHandler = actionValidationMixin.getActionValidationHandler();
-        var actionLoadResult = actionResolver.load("FoD", validationHandler);
-        return ActionCommand
-                .asCommandLine(commandHelper.getCommandSpec(), actionLoadResult.getAction())
+        var action = actionResolver.load("FoD", validationHandler).getAction();
+        return FoDActionHelper.builder()
+                .action(action)
+                .onUnknownParameterType(OnUnknownParameterType.WARN)
+                .build()
+                .createCommandLine()
                 .execute(actionArgs);
     }
     

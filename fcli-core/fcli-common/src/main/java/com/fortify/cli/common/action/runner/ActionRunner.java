@@ -284,7 +284,7 @@ public class ActionRunner implements AutoCloseable {
         }
         
         private final OptionsParseResult parseParameterValues(String[] args) {
-            List<IOptionDescriptor> optionDescriptors = ActionParameterHelper.getOptionDescriptors(action);
+            List<IOptionDescriptor> optionDescriptors = OldActionParameterHelper.getOptionDescriptors(action);
             var parseResult = new SimpleOptionsParser(optionDescriptors).parse(args);
             addDefaultValues(parseResult);
             addValidationMessages(parseResult);
@@ -308,13 +308,13 @@ public class ActionRunner implements AutoCloseable {
                         ? null 
                         : spelEvaluator.evaluate(defaultValueExpression, globalData, String.class);
             }
-            parseResult.getOptionValuesByName().put(ActionParameterHelper.getOptionName(name), value);
+            parseResult.getOptionValuesByName().put(OldActionParameterHelper.getOptionName(name), value);
         }
         
         private final void addValidationMessages(OptionsParseResult parseResult, ActionParameter parameter) {
             if ( parameter.isRequired() && StringUtils.isBlank(getOptionValue(parseResult, parameter)) ) {
                 parseResult.getValidationErrors().add("No value provided for required option "+
-                        ActionParameterHelper.getOptionName(parameter.getName()));                
+                        OldActionParameterHelper.getOptionName(parameter.getName()));                
             }
         }
 
@@ -330,7 +330,7 @@ public class ActionRunner implements AutoCloseable {
             parameters.set(name, convertParameterValue(value, parameter));
         }
         private String getOptionValue(OptionsParseResult parseResult, ActionParameter parameter) {
-            var optionName = ActionParameterHelper.getOptionName(parameter.getName());
+            var optionName = OldActionParameterHelper.getOptionName(parameter.getName());
             return parseResult.getOptionValuesByName().get(optionName);
         }
         

@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/**
+ * Copyright 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -9,55 +9,66 @@
  * liable for technical or editorial errors or omissions contained 
  * herein. The information contained herein is subject to change 
  * without notice.
- *******************************************************************************/
-package com.fortify.cli.common.action.cli.cmd;
+ */
+package com.fortify.cli.common.action.helper;
 
+import java.util.concurrent.Callable;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.runner.OldActionParameterHelper;
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.action.runner.ActionRunnerCommand;
+import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Unmatched;
+import lombok.Builder;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 
-public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand {
-    @Mixin private ActionResolverMixin.RequiredParameter actionResolver;
-    @Unmatched private String[] actionArgs; // We explicitly ignore any unknown CLI args, to allow for 
-                                            // users to simply switch between run and help commands.
-    
-    @Override
-    public final Integer call() {
-        initMixins();
-        var action = actionResolver.loadAction(getType(), ActionValidationHandler.WARN);
-        System.out.println(getActionHelp(action));
-        return 0;
+@Builder
+public class ActionCommandLineFactory {
+    /** Action run command for which to generate a CommandLine instance */
+    private final String runCmd;
+    /** Action to run, provided through builder method */
+    private final Action action;
+    /** ActionParameterHelper instance, configured through builder method */
+    private final ActionParameterHelper actionParameterHelper;
+    /** ActionRunnerCommand instance, configured through builder method */
+    private final ActionRunnerCommand actionRunnerCommand;
+
+    public final CommandLine createCommandLine() {
+        CommandLine cl = new CommandLine(createCommandSpec());
+        cl.setDefaultValueProvider(FortifyCLIDefaultValueProvider.getInstance());
+        return cl;
     }
     
-    private final String getActionHelp(Action action) {
-        var metadata = action.getMetadata();
-        var usage = action.getUsage();
-        return String.format(
-            "\nAction: %s\n"+
-            "\n%s\n"+
-            "\n%s\n"+
-            "Metadata:\n"+
-            "%s"+
-            "\nAction options:\n"+
-            "%s",
-            metadata.getName(), usage.getHeader(), usage.getDescription(), getMetadata(action), OldActionParameterHelper.getSupportedOptionsTable(action));
+    private final CommandSpec createCommandSpec() {
+        CommandSpec newRunCmd = createRunSpec();
+        CommandSpec actionCmd = CommandSpec.forAnnotatedObject(actionRunnerCommand);
+        addUsage(actionCmd);
+        actionParameterHelper.addOptions(actionCmd);
+        newRunCmd.addSubcommand(action.getMetadata().getName(), actionCmd);
+        return actionCmd;
     }
-    
-    private final String getMetadata(Action action) {
+
+    private final void addUsage(CommandSpec actionCmd) {
+        actionCmd.usageMessage().header(action.getUsage().getHeader());
+        actionCmd.usageMessage().description(getDescription());
+    }
+
+    private final String getDescription() {
+        // TODO Add signature metadata from action.getMetadata()
+        // TODO Improve formatting? Or just have yaml files provide string?
+        return action.getUsage().getDescription().trim()+"\n\n"+getMetadataDescription().trim();
+    }
+
+    private final String getMetadataDescription() {
         var metadata = action.getMetadata();
         var signatureDescriptor = metadata.getSignatureDescriptor();
         var signatureMetadata = signatureDescriptor==null ? null : signatureDescriptor.getMetadata();
@@ -86,7 +97,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
         if ( extraSignatureInfo!=null && extraSignatureInfo.size()>0 ) {
             data.set("Extra signature info", extraSignatureInfo);
         }
-        return toString(data, "  ");  
+        return "Metadata:\n"+toString(data, "  ");  
     }
     
     private static final String toString(ObjectNode data, String indent) {
@@ -107,6 +118,16 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
             return value.asText();
         }
     }
+
+    private final CommandSpec createRunSpec() {
+        return CommandSpec.create().name(runCmd).resourceBundleBaseName("com.fortify.cli.common.i18n.ActionMessages");
+    }
     
-    protected abstract String getType();
+    @Command
+    private static final class DummyCommand implements Callable<Integer> {
+        @Override
+        public Integer call() throws Exception {
+            return 0;
+        }
+    }
 }

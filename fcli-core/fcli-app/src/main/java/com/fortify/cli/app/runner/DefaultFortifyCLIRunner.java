@@ -16,9 +16,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
-import com.fortify.cli.app.runner.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.app.runner.util.FortifyCLIDynamicInitializer;
 import com.fortify.cli.app.runner.util.FortifyCLIStaticInitializer;
+import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 

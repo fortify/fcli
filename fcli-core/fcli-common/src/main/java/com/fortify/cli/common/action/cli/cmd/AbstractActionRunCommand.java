@@ -19,7 +19,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
-import com.fortify.cli.common.action.runner.ActionParameterHelper;
+import com.fortify.cli.common.action.runner.OldActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
@@ -93,7 +93,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     
     private ParameterException onValidationErrors(OptionsParseResult optionsParseResult) {
         var errorsString = String.join("\n ", optionsParseResult.getValidationErrors());
-        var supportedOptionsString = ActionParameterHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
+        var supportedOptionsString = OldActionParameterHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
         var msg = String.format("Option errors:\n %s\nSupported options:\n%s\n", errorsString, supportedOptionsString);
         return new ParameterException(commandHelper.getCommandSpec().commandLine(), msg);
     }
