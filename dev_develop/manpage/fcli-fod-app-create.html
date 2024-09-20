@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240919.133936-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240920.124248-dev_develop" %}
 
 
 <div id="header">
@@ -73,11 +73,11 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[ATTR=VALUE]</em>[,<em>[ATTR=VALUE]</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Attribute id or name and its value to set on the application. For User attributes only userId is currently supported.</p>
+<p>Attribute id or name and its value to set. You can specify application and release attributes. Please note for user attributes only the userId is currently supported.</p>
 </dd>
 <dt class="hdlist1"><strong>--auto-required-attrs</strong></dt>
 <dd>
-<p>Automatically set a default value for required attributes.</p>
+<p>Automatically set a default value for required attributes. Please note for Picklist and User attributes this will set the value to the first item in the list, for Boolean attributes it will set the value to 'false' and for Text attributes it will fill with 'autofilled by fcli'.</p>
 </dd>
 <dt class="hdlist1"><strong>--criticality, --business-criticality</strong>=<em>&lt;criticalityType&gt;</em></dt>
 <dd>
@@ -199,7 +199,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-19 13:41:23 UTC
+Last updated 2024-09-20 12:44:36 UTC
 </div>
 </div>
 </body>
