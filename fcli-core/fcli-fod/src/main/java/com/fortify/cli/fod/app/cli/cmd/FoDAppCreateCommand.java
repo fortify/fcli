@@ -76,7 +76,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Mixin
     protected FoDCriticalityTypeOptions.RequiredOption criticalityType;
     @Mixin
-    protected FoDAttributeUpdateOptions.OptionalAttrOption appAttrs;
+    protected FoDAttributeUpdateOptions.OptionalAttrCreateOption appAttrs;
     @Mixin
     protected FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
@@ -101,7 +101,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .applicationType(appType.getAppType().getFoDValue())
                 .hasMicroservices(appType.getAppType().isMicroservice())
                 .microservices(FoDAppHelper.getMicroservicesNode(microservices))
-                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Application, 
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.All, 
                     appAttrs.getAttributes(), autoRequiredAttrs))
                 .userGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups)).build();
 

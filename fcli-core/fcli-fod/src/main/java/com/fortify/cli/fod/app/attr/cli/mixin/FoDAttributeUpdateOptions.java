@@ -27,6 +27,11 @@ public class FoDAttributeUpdateOptions {
         public abstract Map<String, String> getAttributes();
     }
 
+    public static class OptionalAttrCreateOption extends AbstractFoDAppAttributeUpdateMixin {
+        @Option(names = {"--attrs", "--attributes"}, required = false, split=",", paramLabel = PARAM_LABEL, descriptionKey = "fcli.fod.app.create.attr")
+        @Getter private Map<String, String> attributes;
+    }
+
     public static class OptionalAttrOption extends AbstractFoDAppAttributeUpdateMixin {
         @Option(names = {"--attrs", "--attributes"}, required = false, split=",", paramLabel = PARAM_LABEL, descriptionKey = "fcli.fod.app.update.attr")
         @Getter private Map<String, String> attributes;

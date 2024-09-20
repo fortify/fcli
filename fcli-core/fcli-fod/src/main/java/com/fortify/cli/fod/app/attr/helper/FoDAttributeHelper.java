@@ -70,7 +70,7 @@ public class FoDAttributeHelper {
         while (lookupIterator.hasNext()) {
             FoDAttributeDescriptor currentLookup = lookupIterator.next();
             // currentLookup.getAttributeTypeId() == 1 if "Application", 4 if "Release" - filter above does not support querying on this yet!
-            if (currentLookup.getIsRequired() && (currentLookup.getAttributeTypeId() == attrType.getValue())) {
+            if (currentLookup.getIsRequired() && (attrType.getValue() == 0 || currentLookup.getAttributeTypeId() == attrType.getValue())) {
                 switch (currentLookup.getAttributeDataType()) {
                     case "Text":
                         reqAttrs.put(currentLookup.getName(), "autofilled by fcli");
@@ -144,7 +144,7 @@ public class FoDAttributeHelper {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
             // filter out any attributes that aren't valid for the entity we are working on, e.g. Application or Release
-            if (attributeDescriptor.getAttributeTypeId() == attrType.getValue()) {
+            if (attrType.getValue() == 0 || attributeDescriptor.getAttributeTypeId() == attrType.getValue()) {
                 attrObj.put("id", attributeDescriptor.getId());
                 attrObj.put("value", attr.getValue());
                 attrArray.add(attrObj);

@@ -61,33 +61,32 @@ parameters:
   - group: sast_setup_opts
     required: false
     name: oss
-    description: "See `fcli fod sast-scan setup`"
-  - name: release-attributes
+    description: "See `fcli fod sast-scan setup`" 
+  - name: attributes
     required: false
-    type: array
-    cliAliases: rel-attrs
-    description: "Optional comma-separated list of attributes to set on the release"     
+    cliAliases: attrs
+    description: "Optional comma-separated list of attributes to set on the application and/or release"     
   
 steps:
   - progress: "Creating FoD application release if non-existing (profile: ${parameters.profile})"
-  - if: ${parameters['release-attributes']!=null}
+  - if: ${parameters['attributes']!=null}
     set:
-      - name: relAttrArgs
-        value: --attrs "${parameters['release-attributes']}"
-  - if: ${parameters['release-attributes']==null}
-    append:
-      - name: relAttrArgs
+      - name: customAttrArgs
+        value: --attrs "${parameters['attributes']}"
+  - if: ${parameters['attributes']==null}
+    set:
+      - name: customAttrArgs
         value: --auto-required-attrs  
   - if: ${parameters.profile=="default"}
     set:
       - name: relCreateArgs
-        value: --skip-if-exists ${#action.copyParametersFromGroup("rel_create_opts")} ${relAttrArgs}
+        value: --skip-if-exists ${#action.copyParametersFromGroup("rel_create_opts")} ${customAttrArgs}    
   # Custom actions can replace/repeat the above to define custom profiles.
   - if: ${relCreateArgs==null}
     throw: "Invalid profile: ${parameters.profile}"
   - fcli:
     - name: createRelease
-      args: fod release create "${parameters.release}" ${relCreateArgs} ${relAttrArgs}
+      args: fod release create "${parameters.release}" ${relCreateArgs}
   - write:
       - to: stdout
         value: |

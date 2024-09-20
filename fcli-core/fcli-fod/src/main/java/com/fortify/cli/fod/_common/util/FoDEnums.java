@@ -457,6 +457,7 @@ public class FoDEnums {
     }
 
     public enum AttributeTypes {
+        All(0),
         Application(1),
         Vulnerability(2),
         Microservice(3),
@@ -474,6 +475,8 @@ public class FoDEnums {
 
         public String toString() {
             switch (this._val) {
+                case 0:
+                    return "All";
                 case 1:
                     return "Application";
                 case 2:
@@ -488,6 +491,8 @@ public class FoDEnums {
 
         public static AttributeTypes fromInt(int val) {
             switch (val) {
+                case 0:
+                    return All;
                 case 1:
                     return Application;
                 case 2:
