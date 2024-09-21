@@ -49,23 +49,32 @@ public class ActionCommandLineFactory {
     }
     
     private final CommandSpec createCommandSpec() {
-        CommandSpec newRunCmd = createRunSpec();
-        CommandSpec actionCmd = CommandSpec.forAnnotatedObject(actionRunnerCommand);
+        var fullCmdName = String.format("%s %s [run-options]", runCmd, action.getMetadata().getName());
+        CommandSpec actionCmd = CommandSpec.forAnnotatedObject(actionRunnerCommand)
+                .name(fullCmdName)
+                .resourceBundleBaseName("com.fortify.cli.common.i18n.ActionMessages");
         addUsage(actionCmd);
         actionParameterHelper.addOptions(actionCmd);
-        newRunCmd.addSubcommand(action.getMetadata().getName(), actionCmd);
         return actionCmd;
     }
 
     private final void addUsage(CommandSpec actionCmd) {
         actionCmd.usageMessage().header(action.getUsage().getHeader());
-        actionCmd.usageMessage().description(getDescription());
+        actionCmd.usageMessage().description(getUsageDescription());
     }
 
-    private final String getDescription() {
-        // TODO Add signature metadata from action.getMetadata()
+    private final String getUsageDescription() {
+        return String.format("%s\n\n%s\n\n%s",
+                cleanWhitespace(action.getUsage().getDescription()),
+                "[run-options] in the synopsis above refers to options documented "+
+                "on the `"+runCmd+"` command, for example specifying where the "+
+                "action is loaded from, and signature verification options.",
+                getMetadataDescription().trim());
+    }
+
+    private Object cleanWhitespace(String s) {
         // TODO Improve formatting? Or just have yaml files provide string?
-        return action.getUsage().getDescription().trim()+"\n\n"+getMetadataDescription().trim();
+        return s.replaceAll("([^\\n])\\n([^\\n])", "$1 $2").replaceAll("[ ]+", " ").trim();
     }
 
     private final String getMetadataDescription() {
@@ -119,10 +128,6 @@ public class ActionCommandLineFactory {
         }
     }
 
-    private final CommandSpec createRunSpec() {
-        return CommandSpec.create().name(runCmd).resourceBundleBaseName("com.fortify.cli.common.i18n.ActionMessages");
-    }
-    
     @Command
     private static final class DummyCommand implements Callable<Integer> {
         @Override
