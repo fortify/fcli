@@ -1,6 +1,6 @@
 ---
 title: Fcli SSC Actions
-fcli_version: 0.20240920.124248-dev_develop
+fcli_version: 0.20240923.142554-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240920.124248-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240920.124248-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240923.142554-dev_develop" %}
 
 
 <div id="header">
 <h1>Fcli SSC Actions</h1>
 <div class="details">
-<span id="revnumber">version 0.20240920.124248-dev_develop</span>
+<span id="revnumber">version 0.20240923.142554-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -374,15 +374,26 @@ fcli actions, returning a non-zero exit code if any of the checks fail.</p>
 <p>This action adds review comments to a GitHub Pull Request. Currently
 this is marked as PREVIEW as we build out this functionality; later
 versions may have different behavior and/or require different action
-parameters. In particular, note that comments are generated based on
-current (latest) SSC application state, i.e., based on the last
-uploaded scan results. As such, to ensure the comments are accurate
-for the given PR/commit id, this action should be run immediately
-after scan results have been published (and approved if necessary),
-before any subsequent scans are being published. Also, for now this
-action doesn&#8217;t generate any source code annotations, as GitHub will
-return an error if vulnerability path &amp; file name don&#8217;t match exactly
-with repository path &amp; file name.</p>
+parameters.</p>
+</div>
+<div class="paragraph">
+<p>The current implementation simply compares current scan results
+against previous scan results in the given SSC application version,
+listing all new, re-introduced and removed issues in a new PR comment.</p>
+</div>
+<div class="paragraph">
+<p>For best results, this fcli action should only be run on GitHub
+pull_request triggers. Upon PR creation, a new SSC application version
+should be created, copying state from the SSC application version that
+represents the branch into which the PR will be merged, and a new scan
+hould be run on the current PR branch before invoking this fcli action.</p>
+</div>
+<div class="paragraph">
+<p>This will ensure that scan results for the current PR will be
+compared against the latest scan results for the target branch
+upon PR creation. Optionally, new scans can be run upon PR changes,
+creating new PR comments that show the issue delta compared to the
+previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect2">
@@ -415,7 +426,7 @@ with repository path &amp; file name.</p>
 </dd>
 <dt class="hdlist1">--pr</dt>
 <dd>
-<p>Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.</p>
+<p>Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable. Note that default value will only work on GitHub pull_request triggers; if this fcli action is invoked through any other GitHub trigger, it will fail unless an explicit PR number is passed through this option.</p>
 </dd>
 <dt class="hdlist1">--commit</dt>
 <dd>
@@ -712,15 +723,20 @@ reports. For more information about SARIF, please see
 <h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
 <div class="paragraph">
 <p>This action is primarily meant for use in CI/CD integrations, allowing users to
-provide a custom action with a customized application version setup process. For
-example, such a custom action could define standard profiles (based on team,
+provide a custom action with a customized application version setup process if
+necessary.</p>
+</div>
+<div class="paragraph">
+<p>For example, such a custom action could define standard profiles (based on team,
 business unit, application type/risk, &#8230;&#8203;) with predefined users, attributes or
 issue template to be set on newly created application versions. Of course, instead
 of having a single custom action that defines profiles, you could also provide
 multiple custom actions that users can select from, or you can use a combination;
 each business unit or team providing their own custom action, with each of these
-custom actions defining profiles for different application types/risk. This
-built-in action only provides a 'default' profile that simply invokes the
+custom actions defining profiles for different application types/risk.</p>
+</div>
+<div class="paragraph">
+<p>This built-in action only provides a 'default' profile that simply invokes the
 <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a> command, passing the following options by default:
 <code>--skip-if-exists</code>, <code>--auto-required-attrs</code>, <code>--refresh</code>, <code>--refresh-timeout 300s</code>.
 Additional creation options can be passed through the various action options, which
@@ -824,8 +840,8 @@ copying an existing application version).</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240920.124248-dev_develop<br>
-Last updated 2024-09-20 12:44:40 UTC
+Version 0.20240923.142554-dev_develop<br>
+Last updated 2024-09-23 14:27:41 UTC
 </div>
 </div>
 </body>
