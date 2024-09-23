@@ -12,15 +12,24 @@ usage:
     This action adds review comments to a GitHub Pull Request. Currently
     this is marked as PREVIEW as we build out this functionality; later
     versions may have different behavior and/or require different action
-    parameters. In particular, note that comments are generated based on
-    current (latest) FoD release state, i.e., based on the last uploaded 
-    scan results. As such, to ensure the comments are accurate for the 
-    given PR/commit id, this action should be run immediately after scan 
-    results have been published, before any subsequent scans are being 
-    published. Also, for now this action doesn't generate any source code 
-    annotations, as GitHub will return an error if vulnerability path & file 
-    name don't match exactly with repository path & file name.
-  
+    parameters. 
+    
+    The current implementation simply compares current scan results 
+    against previous scan results in the given FoD release, listing 
+    all new, re-introduced and removed issues in a new PR comment. 
+    
+    For best results, this fcli action should only be run on GitHub 
+    pull_request triggers. Upon PR creation, a new FoD release should 
+    be created, copying state from the FoD release that represents the 
+    branch into which the PR will be merged, and a new scan should be 
+    run on the current PR branch before invoking this fcli action.
+    
+    This will ensure that scan results for the current PR will be
+    compared against the latest scan results for the target branch
+    upon PR creation. Optionally, new scans can be run upon PR changes,
+    creating new PR comments that show the issue delta compared to the
+    previous scan for this PR.
+      
 parameters:
   - name: release
     cliAliases: rel
@@ -44,7 +53,7 @@ parameters:
     required: true
     defaultValue: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
   - name: pr
-    description: 'Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.'
+    description: "Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable. Note that default value will only work on GitHub pull_request triggers; if this fcli action is invoked through any other GitHub trigger, it will fail unless an explicit PR number is passed through this option." 
     required: true
     defaultValue: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
   - name: commit
@@ -125,9 +134,9 @@ valueTemplates:
       
   - name: reviewBody
     contents: |
-      ## Fortify vulnerability summary
+      ## Fortify vulnerability summary (PREVIEW)
       
-      Any issues listed below are based on comparing the latest scan results against the previous scan results for FoD release [${parameters.release.applicationName}${#isNotBlank(parameters.release.microserviceNae)?'- '+parameters.release.microserviceName:''} - ${parameters.release.releaseName}](${#fod.releaseBrowserUrl(parameters.release)}). To avoid interference from scans for other PR's or branches, it is recommended to track each PR/branch in a separate FoD release.
+      Any issues listed below are based on comparing the latest scan results against the previous scan results in FoD release [${parameters.release.applicationName}${#isNotBlank(parameters.release.microserviceNae)?'- '+parameters.release.microserviceName:''} - ${parameters.release.releaseName}](${#fod.releaseBrowserUrl(parameters.release)}). This is for informational purposes only and, depending on workflow, may not be an accurate representation of what issues will be introduced into or removed from the target branch when merging this PR.   
       
       ### New Issues
       

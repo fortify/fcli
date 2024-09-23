@@ -5,15 +5,18 @@ usage:
   header: (PREVIEW) Set up application version. 
   description: |
     This action is primarily meant for use in CI/CD integrations, allowing users to 
-    provide a custom action with a customized application version setup process. For 
-    example, such a custom action could define standard profiles (based on team,
+    provide a custom action with a customized application version setup process if
+    necessary. 
+    
+    For example, such a custom action could define standard profiles (based on team,
     business unit, application type/risk, ...) with predefined users, attributes or 
     issue template to be set on newly created application versions. Of course, instead
     of having a single custom action that defines profiles, you could also provide
     multiple custom actions that users can select from, or you can use a combination;
     each business unit or team providing their own custom action, with each of these
-    custom actions defining profiles for different application types/risk. This 
-    built-in action only provides a 'default' profile that simply invokes the 
+    custom actions defining profiles for different application types/risk. 
+    
+    This built-in action only provides a 'default' profile that simply invokes the 
     `fcli ssc appversion create` command, passing the following options by default: 
     `--skip-if-exists`, `--auto-required-attrs`, `--refresh`, `--refresh-timeout 300s`.
     Additional creation options can be passed through the various action options, which

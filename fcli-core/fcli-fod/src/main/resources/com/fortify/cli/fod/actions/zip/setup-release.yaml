@@ -4,15 +4,19 @@ author: Fortify
 usage:
   header: (PREVIEW) Set up application release. 
   description: |
-    This action is primarily meant for use in CI/CD integrations, allowing users to 
-    provide a custom action with a customized application release setup process. For 
-    example, such a custom action could define standard profiles (based on team,
-    business unit, application type/risk, ...) with predefined SDLC status and/or 
-    scan setup. Of course, instead of having a single custom action that defines 
-    profiles, you could also provide multiple custom actions that users can select 
-    from, or you can use a combination; each business unit or team providing their 
-    own custom action, with each of these custom actions defining profiles for 
-    different application types/risk. This built-in action only provides a 'default' 
+    his action is primarily meant for use in CI/CD integrations, allowing users to 
+    rovide a custom action with a customized application release setup process if
+    ecessary. 
+      
+    For example, such a custom action could define standard profiles (based on team,
+    business unit, application type/risk, ...) with predefined users, attributes or 
+    issue template to be set on newly created application releases. Of course, instead
+    of having a single custom action that defines profiles, you could also provide
+    multiple custom actions that users can select from, or you can use a combination;
+    each business unit or team providing their own custom action, with each of these
+    custom actions defining profiles for different application types/risk. 
+      
+    This built-in action only provides a 'default' 
     profile that simply invokes the `fcli fod release create` and optionally
     `fcli fod sast-scan setup` commands with some default options, amended with
     options passed to this action.
