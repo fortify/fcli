@@ -10,15 +10,17 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.runner;
+package com.fortify.cli.common.action.runner.n;
 
 import java.util.concurrent.Callable;
 
-import com.fortify.cli.common.action.helper.ActionParameterHelper;
+import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 
 import lombok.Builder;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
@@ -30,6 +32,12 @@ public class ActionRunnerCommand implements Callable<Integer> {
     /** ActionParameterHelper instance, configured through builder method */
     private final ActionParameterHelper actionParameterHelper;
     @Spec private CommandSpec spec;
+    // Not used, but duplicates command-line options from run command in action help/doc
+    // TODO We should probably have a single mixin that's shared between this and 
+    //      AbstractActionRunCommand, but it shouldn't include ActionResolverMixin
+    //      as this is handled separately.
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    @Mixin private ActionValidationMixin actionValidationMixin;
 
     public Integer call() {
         System.out.println(spec);

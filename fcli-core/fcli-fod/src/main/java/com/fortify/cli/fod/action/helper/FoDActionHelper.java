@@ -12,45 +12,14 @@
  */
 package com.fortify.cli.fod.action.helper;
 
-import com.fortify.cli.common.action.helper.ActionCommandLineFactory;
-import com.fortify.cli.common.action.helper.ActionParameterHelper;
-import com.fortify.cli.common.action.helper.ActionParameterHelper.OnUnknownParameterType;
-import com.fortify.cli.common.action.helper.ActionParameterHelper.ParameterValueSupplier;
-import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.runner.ActionRunnerCommand;
+import com.fortify.cli.common.action.runner.n.ActionParameterHelper.ParameterValueSupplier;
+import com.fortify.cli.common.action.runner.n.ActionRuntimeConfig;
 
-import lombok.Builder;
-import picocli.CommandLine;
-
-@Builder
 public final class FoDActionHelper {
-    private final Action action;
-    private final OnUnknownParameterType onUnknownParameterType;
-    
-    public final CommandLine createCommandLine() {
-        var actionParameterHelper = createActionParameterHelper();
-        return ActionCommandLineFactory.builder()
-            .action(action)
-            .actionParameterHelper(actionParameterHelper)
-            .actionRunnerCommand(createActionRunnerCommand(actionParameterHelper))
-            .runCmd("fcli fod action run")
-            .build()
-            .createCommandLine();
+    public static final ActionRuntimeConfig createActionRuntimeConfig() {
+        return ActionRuntimeConfig.builder()
+                .actionRunCommand("fcli fod action run")
+                .optionSpecTypeConfigurer("release_single", (b,p)->ParameterValueSupplier.configure(b, null))
+                .build();
     }
-    
-    private final ActionParameterHelper createActionParameterHelper() {
-        return ActionParameterHelper.builder()
-            .action(action)
-            .onUnknownParameterType(onUnknownParameterType)
-            .optionSpecTypeConfigurer("release_single", (b,p)->ParameterValueSupplier.configure(b, null)) //TODO
-            .build();
-    }
-    
-    private final ActionRunnerCommand createActionRunnerCommand(ActionParameterHelper actionParameterHelper) {
-        return ActionRunnerCommand.builder()
-            .action(action)
-            .actionParameterHelper(actionParameterHelper)
-            .build();
-    }
-
 }

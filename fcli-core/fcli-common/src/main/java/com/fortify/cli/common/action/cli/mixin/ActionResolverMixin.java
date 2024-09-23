@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.action.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
@@ -44,6 +46,20 @@ public class ActionResolverMixin {
         public String loadActionContents(String type, ActionValidationHandler actionValidationHandler) {
             return load(type, actionValidationHandler).getActionText();
         }
+        
+        public final String asArgsString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(getAction());
+            var actionSourceResolverArgsString = actionSourceResolver==null ? null : actionSourceResolver.asArgsString();
+            if ( StringUtils.isNotBlank(actionSourceResolverArgsString) ) { 
+                sb.append(" ").append(actionSourceResolverArgsString);
+            }
+            var publicKeyResolverArgsString = publicKeyResolver==null ? null : publicKeyResolver.asArgsString();
+            if ( StringUtils.isNotBlank(publicKeyResolverArgsString) ) { 
+                sb.append(" ").append(publicKeyResolverArgsString);
+            }
+            return sb.toString();
+        }
     }
     
     public static class RequiredParameter extends AbstractActionResolverMixin {
@@ -56,5 +72,9 @@ public class ActionResolverMixin {
     
     private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
         @Getter @Option(names={"--pubkey"}, required = false, descriptionKey = "fcli.action.resolver.pubkey", paramLabel = "source") private String textSource;
+
+        public String asArgsString() {
+            return StringUtils.isBlank(textSource) ? null : ("--pubkey "+textSource);
+        }
     }
 }

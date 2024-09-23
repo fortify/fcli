@@ -30,6 +30,11 @@ public class ActionSourceResolverMixin {
                     ? ActionSource.defaultActionSources(type)
                     : ActionSource.externalActionSources(source);
         }
+        
+        public final String asArgsString() {
+            var source = getSource();
+            return StringUtils.isBlank(source) ? null : ("--from-zip "+source);
+        }
     }
     
     public static class OptionalOption extends AbstractActionSourceResolverMixin {

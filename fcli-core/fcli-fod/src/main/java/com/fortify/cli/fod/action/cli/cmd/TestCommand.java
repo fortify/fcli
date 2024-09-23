@@ -12,35 +12,21 @@
  */
 package com.fortify.cli.fod.action.cli.cmd;
 
-import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
-import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
-import com.fortify.cli.common.action.helper.ActionParameterHelper.OnUnknownParameterType;
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.action.cli.cmd.AbstractActionNewRunCommand;
+import com.fortify.cli.common.action.runner.n.ActionRuntimeConfig;
 import com.fortify.cli.fod.action.helper.FoDActionHelper;
 
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Unmatched;
 
 @Command(name = "test")
-public class TestCommand extends AbstractRunnableCommand {
-    @Mixin private ActionResolverMixin.RequiredParameter actionResolver;
-    @Mixin private CommandHelperMixin commandHelper;
-    @Mixin private ActionValidationMixin actionValidationMixin;
-    @Unmatched private String[] actionArgs = new String[] {};
+public class TestCommand extends AbstractActionNewRunCommand {
+    @Override
+    protected String getType() {
+        return "FoD";
+    }
 
     @Override
-    public Integer call() throws Exception {
-        var validationHandler = actionValidationMixin.getActionValidationHandler();
-        var action = actionResolver.load("FoD", validationHandler).getAction();
-        return FoDActionHelper.builder()
-                .action(action)
-                .onUnknownParameterType(OnUnknownParameterType.WARN)
-                .build()
-                .createCommandLine()
-                .execute(actionArgs);
+    protected ActionRuntimeConfig createActionRuntimeConfig() {
+        return FoDActionHelper.createActionRuntimeConfig();
     }
-    
-
 }
