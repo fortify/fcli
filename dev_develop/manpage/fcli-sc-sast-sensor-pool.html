@@ -1,5 +1,5 @@
 ---
-title: fcli-sc-sast-session(1)
+title: fcli-sc-sast-sensor-pool(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-sc-sast-session(1)</title>
+<title>fcli-sc-sast-sensor-pool(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-sc-sast-session(1) Manual Page</h1>
+<h1>fcli-sc-sast-sensor-pool(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-session - Manage ScanCentral SAST sessions (start here).</p>
+<p>fcli-sc-sast-sensor-pool - Manage ScanCentral SAST sensor pools</p>
 </div>
 </div>
 <div id="content">
@@ -40,16 +40,14 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast session</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli sc-sast sensor-pool</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>The session commands allow for managing one or more ScanCentral SAST sessions used to connect to a particular SSC/ScanCentral SAST environment with particular credentials. Potentially you can have multiple open ScanCentral SAST sessions, for example connecting to different SSC/ScanCentral SAST environments like DEV and PROD, or connecting to the same SSC/ScanCentral SAST instance but with different credentials.</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -70,17 +68,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-sc-sast-session-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-sc-sast-sensor-pool-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
 <dd>
-<p>List active and expired ScanCentral SAST sessions.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-sc-sast-session-login.html"><strong>login</strong></a></dt>
-<dd>
-<p>Create a session for interacting with ScanCentral SAST.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-sc-sast-session-logout.html"><strong>logout</strong></a></dt>
-<dd>
-<p>Terminate ScanCentral SAST session.</p>
+<p>List ScanCentral SAST sensor pools</p>
 </dd>
 </dl>
 </div>
