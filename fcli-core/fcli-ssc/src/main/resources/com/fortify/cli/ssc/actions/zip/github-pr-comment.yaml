@@ -21,7 +21,7 @@ usage:
       pull_request triggers. Upon PR creation, a new SSC application version 
       should be created, copying state from the SSC application version that 
       represents the branch into which the PR will be merged, and a new scan 
-      hould be run on the current PR branch before invoking this fcli action.
+      should be run on the current PR branch before invoking this fcli action.
       
       This will ensure that scan results for the current PR will be
       compared against the latest scan results for the target branch
