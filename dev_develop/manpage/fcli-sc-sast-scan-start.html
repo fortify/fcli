@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240925.072938-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240925.074757-dev_develop" %}
 
 
 <div id="header">
@@ -45,8 +45,8 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli sc-sast scan start</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
+                        [<strong>--pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em>]
                         [<strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
-                        [<strong>--sensor-pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em>]
                         [<strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em>] [[<strong>-h</strong>]
                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -75,13 +75,13 @@ fcli_version:
 <dd>
 <p>Email address to which to send a scan completion notification.</p>
 </dd>
+<dt class="hdlist1"><strong>--pool, --sensor-pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em></dt>
+<dd>
+<p>Sensor pool Uuid or Name.</p>
+</dd>
 <dt class="hdlist1"><strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
 <dd>
 <p>Publish scan results to the given SSC application version once the scan has completed.</p>
-</dd>
-<dt class="hdlist1"><strong>--sensor-pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em></dt>
-<dd>
-<p>Sensor pool Uuid or Name</p>
 </dd>
 <dt class="hdlist1"><strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
 <dd>
@@ -197,7 +197,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-25 07:31:17 UTC
+Last updated 2024-09-25 07:49:36 UTC
 </div>
 </div>
 </body>
