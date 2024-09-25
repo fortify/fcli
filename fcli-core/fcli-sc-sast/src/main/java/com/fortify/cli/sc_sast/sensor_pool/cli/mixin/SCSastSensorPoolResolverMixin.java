@@ -12,9 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast.sensor_pool.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.sc_sast.sensor_pool.cli.helper.SCSastSensorPoolDescriptor;
 import com.fortify.cli.sc_sast.sensor_pool.cli.helper.SCSastSensorPoolHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -31,14 +34,21 @@ public class SCSastSensorPoolResolverMixin {
         public String getSensorPoolUuid(UnirestInstance unirest) {
             return getSensorPoolDescriptor(unirest).getUuid();
         }
+        
+        public final boolean hasValue() { return StringUtils.isNotBlank(getSensorPoolNameOrUuid()); }
     }
     
-    public static class RequiredOption extends AbstractSCSastSensorPoolResolverMixin {
-        @Option(names = {"--sensor-pool"}, required = true, descriptionKey = "fcli.sc-sast.sensor-pool.resolver.nameOrUuid")
+    public static final class OptionalOption extends AbstractSCSastSensorPoolResolverMixin {
+        @Option(names = {"--sensor-pool", "--pool"}, required = false, descriptionKey = "fcli.sc-sast.sensor-pool.resolver.nameOrUuid")
         @Getter private String sensorPoolNameOrUuid;
     }
     
-    public static class PositionalParameter extends AbstractSCSastSensorPoolResolverMixin {
+    public static final class RequiredOption extends AbstractSCSastSensorPoolResolverMixin {
+        @Option(names = {"--sensor-pool", "--pool"}, required = true, descriptionKey = "fcli.sc-sast.sensor-pool.resolver.nameOrUuid")
+        @Getter private String sensorPoolNameOrUuid;
+    }
+    
+    public static final class PositionalParameter extends AbstractSCSastSensorPoolResolverMixin {
         @EnvSuffix("SENSORPOOL") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-sast.sensor-pool.resolver.nameOrUuid")
         @Getter private String sensorPoolNameOrUuid;
     }

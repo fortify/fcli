@@ -17,6 +17,7 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "sensor-pool",
+        aliases = {"pool"},
         subcommands = {
                 SCSastSensorPoolListCommand.class,
         }

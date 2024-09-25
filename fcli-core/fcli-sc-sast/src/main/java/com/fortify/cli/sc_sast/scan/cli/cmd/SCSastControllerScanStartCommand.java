@@ -28,7 +28,7 @@ import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanStartOptionsArgGroup;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
-import com.fortify.cli.sc_sast.sensor_pool.cli.mixin.SCSastSensorPoolResolverMixin.AbstractSCSastSensorPoolResolverMixin;
+import com.fortify.cli.sc_sast.sensor_pool.cli.mixin.SCSastSensorPoolResolverMixin;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.AbstractSSCAppVersionResolverMixin;
 
@@ -47,7 +47,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
-    @Mixin private SensorPoolResolverMixin sensorPoolResolver;
+    @Mixin private SCSastSensorPoolResolverMixin.OptionalOption sensorPoolResolver;
     @Mixin private PublishToAppVersionResolverMixin sscAppVersionResolver;
     @Option(names = "--ssc-ci-token") private String ciToken;
     
@@ -168,11 +168,5 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         @Option(names = {"--publish-to"}, required = false)
         @Getter private String appVersionNameOrId;
         public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
-    }
-
-    private static final class SensorPoolResolverMixin extends AbstractSCSastSensorPoolResolverMixin {
-        @Option(names = {"--sensor-pool"}, required = false, descriptionKey = "fcli.sc-sast.sensor-pool.resolver.nameOrUuid")
-        @Getter private String sensorPoolNameOrUuid;
-        public final boolean hasValue() { return StringUtils.isNotBlank(sensorPoolNameOrUuid); }
     }
 }
