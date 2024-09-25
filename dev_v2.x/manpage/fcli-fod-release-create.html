@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.121819-dev_v2.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240925.083000-dev_v2.x" %}
 
 
 <div id="header">
@@ -27,15 +27,15 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_session_options">Session options:</a></li>
-<li><a href="#_output_options">Output options:</a></li>
-<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_session_options">Session options</a></li>
+<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
 <li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-release-create - Create a new application release.</p>
+<p>fcli-fod-release-create - Create a new application release. Please note some attributes might be mandatory depending on the configuration of your tenant. Please check the Fortify on Demand web portal first.</p>
 </div>
 </div>
 <div id="content">
@@ -43,10 +43,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod release create</strong> [<strong>--skip-if-exists</strong>] [<strong>--copy-from</strong>=<em>id|app[:ms]:rel</em>]
-                        [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                        <strong>--status</strong>=<em>&lt;sdlcStatusType&gt;</em> [[<strong>-h</strong>]
-                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+<p><strong>fcli fod release create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--skip-if-exists</strong>]
+                        [<strong>--copy-from</strong>=<em>id|app[:ms]:rel</em>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
+                        [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--status</strong>=<em>&lt;sdlcStatusType&gt;</em>
+                        <em class="<strong>--attrs</strong>=_[ATTR=VALUE">[,</em>[ATTR=VALUE]<em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                        [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
             _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>app[:ms]:</em>
@@ -65,6 +66,14 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[ATTR=VALUE]</em>[,<em>[ATTR=VALUE]</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Attribute id or name and its value to set. Please note for user attributes only the userId is currently supported.</p>
+</dd>
+<dt class="hdlist1"><strong>--auto-required-attrs</strong></dt>
+<dd>
+<p>Automatically set a default value for required attributes.</p>
+</dd>
 <dt class="hdlist1"><strong>--copy-from</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
 <p>The id or name of a release to copy existing state from.</p>
@@ -90,7 +99,7 @@ fcli_version:
 </div>
 </div>
 <div class="sect1">
-<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -103,7 +112,7 @@ fcli_version:
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -124,7 +133,7 @@ fcli_version:
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -165,7 +174,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-09 12:20:04 UTC
+Last updated 2024-09-25 08:31:38 UTC
 </div>
 </div>
 </body>

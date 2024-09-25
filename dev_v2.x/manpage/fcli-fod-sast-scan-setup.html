@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240909.121819-dev_v2.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240925.083000-dev_v2.x" %}
 
 
 <div id="header">
@@ -27,9 +27,9 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_session_options">Session options:</a></li>
-<li><a href="#_output_options">Output options:</a></li>
-<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_session_options">Session options</a></li>
+<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
 </ul>
 </div>
 <h2>Name</h2>
@@ -43,6 +43,7 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli fod sast-scan setup</strong> [<strong>--include-third-party-libs</strong>] [<strong>--oss</strong>]
+                         [<strong>--skip-if-exists</strong>] [<strong>--use-aviator</strong>]
                          [<strong>--use-source-control</strong>]
                          <strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em>
                          <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
@@ -51,7 +52,7 @@ fcli_version:
                          <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
                          [<strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                          <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
-                         <strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em> [[<strong>-h</strong>]
+                         [<strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em>] [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                          <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
@@ -97,7 +98,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 </dd>
 <dt class="hdlist1"><strong>--include-third-party-libs</strong></dt>
 <dd>
-<p>Indicates if third party libraries should be included.</p>
+<p>(LEGACY) Indicates if third party libraries should be included.</p>
 </dd>
 <dt class="hdlist1"><strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em></dt>
 <dd>
@@ -115,20 +116,28 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <dd>
 <p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
 </dd>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
+<dd>
+<p>Skip setup if a scan has already been set up. If not specified, any existing scan setup will be replaced based on the given setup options.</p>
+</dd>
 <dt class="hdlist1"><strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em></dt>
 <dd>
-<p>The technology stack of the application.</p>
+<p>The technology stack of the application. Default value: Auto Detect.</p>
+</dd>
+<dt class="hdlist1"><strong>--use-aviator</strong></dt>
+<dd>
+<p>Use Fortify Aviator to audit results and provide enhanced remediation guidance.</p>
 </dd>
 <dt class="hdlist1"><strong>--use-source-control</strong></dt>
 <dd>
-<p>Indicates if source control should be used.</p>
+<p>(LEGACY) Indicates if source control should be used.</p>
 </dd>
 </dl>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -141,7 +150,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -162,7 +171,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -190,7 +199,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-09 12:20:04 UTC
+Last updated 2024-09-25 08:31:38 UTC
 </div>
 </div>
 </body>
