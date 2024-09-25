@@ -1,0 +1,146 @@
+---
+title: fcli-ssc-alert-list-definitions(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-alert-list-definitions(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.7.0" %}
+
+
+<div id="header">
+<h1>fcli-ssc-alert-list-definitions(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_session_options">Session options</a></li>
+<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-alert-list-definitions - List alert definitions.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc alert list-definitions</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [[<strong>-h</strong>]
+                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                    _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dd>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+</dd>
+<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
+<dd>
+<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-09-25 08:43:07 UTC
+</div>
+</div>
+</body>
+</html>
