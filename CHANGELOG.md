@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.7.0](https://github.com/fortify/fcli/compare/v2.6.0...v2.7.0) (2024-09-25)
+
+
+### Features
+
+* `fcli fod release create`:  Support release attributes (fixes fortify[#592](https://github.com/fortify/fcli/issues/592)) ([3727329](https://github.com/fortify/fcli/commit/37273298d007a15c552ae308b77f59d5e744798a))
+* `fcli fod sast-scan setup`: Add `--skip-if-exists` option ([edcece5](https://github.com/fortify/fcli/commit/edcece5bf8b13aa5e79fd39ffa23ab7e03132781))
+* `fcli fod sast-scan setup`: Add `--use-aviator` option (fixes fortify[#594](https://github.com/fortify/fcli/issues/594)) ([013af6f](https://github.com/fortify/fcli/commit/013af6ff7d4a0f1a140764447a34556960b51df7))
+* `fcli fod sast-scan setup`: Set `--technology-stack` to `Auto Detect` by default (fixes [#595](https://github.com/fortify/fcli/issues/595)) ([852d7bf](https://github.com/fortify/fcli/commit/852d7bfa36af8a34c7eec768e2ddc6e81e33b2b1))
+* `fcli sc-sast scan start`: Add option to select sensor pool for the scan ([d071d25](https://github.com/fortify/fcli/commit/d071d25944fbd06b79bc622d323fa6d42b5d75ba))
+* `fcli ssc appversion copy-state`: Add `--refresh-timeout` option ([89cf435](https://github.com/fortify/fcli/commit/89cf4351ec3eb8fe9dfbdd682b8d485ee9bff07b))
+* `fcli ssc appversion create`: Add `--refresh-timeout` option ([89cf435](https://github.com/fortify/fcli/commit/89cf4351ec3eb8fe9dfbdd682b8d485ee9bff07b))
+* Add `fcli sc-sast sensor-pool list` command ([77fcc1c](https://github.com/fortify/fcli/commit/77fcc1c57f044aa99ba49e77710b98fd062593c0))
+* Add FoD setup-release action ([4ab86c0](https://github.com/fortify/fcli/commit/4ab86c066a730fa10c29d4ab18f4838e322c1327))
+* Add SSC setup-appversion action ([e3a273c](https://github.com/fortify/fcli/commit/e3a273c5ce489311f19f2355fde3f383bfac43a2))
+* FoD & SSC: Add aws-sast-report actions to enable integrating Fortify results with AWS Security Hub ([#559](https://github.com/fortify/fcli/issues/559)) ([dc79095](https://github.com/fortify/fcli/commit/dc790950794c976c5242fc44fffd2ad5c0f1c081))
+
+
+### Bug Fixes
+
+* `fcli fod app update`: Ignore release attributes if included in `--attrs` option (fixes fortify[#604](https://github.com/fortify/fcli/issues/604)) ([e2077b9](https://github.com/fortify/fcli/commit/e2077b942e413083707893cad9b2aff562b391c6))
+* `fcli fod release create`: Ignore application attributes if included in `--attrs` option (fixes fortify[#604](https://github.com/fortify/fcli/issues/604)) ([e2077b9](https://github.com/fortify/fcli/commit/e2077b942e413083707893cad9b2aff562b391c6))
+* `fcli fod release update`: Ignore application attributes if included in `--attrs` option (fixes fortify[#604](https://github.com/fortify/fcli/issues/604)) ([e2077b9](https://github.com/fortify/fcli/commit/e2077b942e413083707893cad9b2aff562b391c6))
+* `fcli ssc appversion refresh-metrics`: Allow for `fcli state wait-for-job ::var::` to be invoked without errors even if no refresh was required ([89cf435](https://github.com/fortify/fcli/commit/89cf4351ec3eb8fe9dfbdd682b8d485ee9bff07b))
+* Increase issue limit for `github-sast-report` to match current GitHub limits ([3a2d489](https://github.com/fortify/fcli/commit/3a2d48929a9978ab71f0e02d2d669b47686556ce))
+
 ## [2.6.0](https://github.com/fortify/fcli/compare/v2.5.3...v2.6.0) (2024-09-09)
 
 
