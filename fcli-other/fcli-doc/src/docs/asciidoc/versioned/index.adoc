@@ -495,6 +495,11 @@ Fci comes with various built-in actions, currently focused on providing the foll
 * Generating application version/release summaries in Markdown format, for example for use as pipeline summaries.
 * Evaluating security policy criteria, for example allowing to break a build if one or more checks are failing.
 
+Documentation for built-in actions can be found here:
+
+* link:fod-actions.html[FoD built-in actions documentation]
+* link:ssc-actions.html[SSC built-in actions documentation]
+
 Future fcli versions may introduce new built-in actions, enhance existing built-in actions, or provide enhanced action syntax, for example to allow for running pipeline-style actions that run a set of commands to package source code, submit a scan request, wait for scan completion, and perform post-scan activities like data export or policy checks.
 
 Action support is centralized into the `action` entity of the various product modules. For now, fcli supports `fcli fod action *` and `fcli ssc action *` commands. Based on user feedback, we may consider adding action support on other modules like `sc-sast` or `sc-dast` as well. The following commands may be used to manage and run built-in actions:

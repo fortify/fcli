@@ -10,24 +10,23 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod.action.cli.cmd;
+package com.fortify.cli.sc_sast.sensor_pool.cli.helper;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import picocli.CommandLine.Command;
+import java.util.Map;
 
-@Command(
-        name = "action",
-        subcommands = {
-                FoDActionAsciidocCommand.class,
-                FoDActionGetCommand.class,
-                FoDActionHelpCommand.class,
-                FoDActionImportCommand.class,
-                FoDActionListCommand.class,
-                FoDActionResetCommand.class,
-                FoDActionRunCommand.class,
-                FoDActionSignCommand.class,
-        }
-)
-public class FoDActionCommands extends AbstractContainerCommand {
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=true)
+public class SCSastSensorPoolDescriptor extends JsonNodeHolder {
+    private String uuid;
+    private String path;
+    private String name;
+    private String lastChangedOn;
 }

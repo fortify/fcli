@@ -20,4 +20,7 @@ public class SSCAppVersionRefreshOptions {
     @Option(names = "--refresh", negatable = true, descriptionKey = "fcli.ssc.appversion.create.refresh",
             defaultValue = "true", fallbackValue = "true")
     private boolean refresh;
+    @Option(names = "--refresh-timeout", paramLabel = "<timeoutPeriod>", descriptionKey = "fcli.ssc.appversion.create.refresh-timeout",
+            defaultValue = "60s")
+    private String refreshTimeout;
 }

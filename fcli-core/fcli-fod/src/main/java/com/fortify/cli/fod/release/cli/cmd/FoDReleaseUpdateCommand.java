@@ -13,13 +13,21 @@
 
 package com.fortify.cli.fod.release.cli.cmd;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.app.attr.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -36,6 +44,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
     @Option(names = {"--name", "-n"})
@@ -49,18 +58,29 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin
     private FoDSdlcStatusTypeOptions.OptionalOption sdlcStatus;
+    @Mixin 
+    private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+        ArrayList<FoDAttributeDescriptor> releaseAttrsCurrent = releaseDescriptor.getAttributes();
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
-
+        Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
+        JsonNode jsonAttrs = objectMapper.createArrayNode();
+        if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
+            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Release, 
+                releaseAttrsCurrent, attributeUpdates);
+        } else {
+            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Release, releaseAttrsCurrent);
+        }
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
                 .releaseName(StringUtils.isNotBlank(releaseName) ? getUnqualifiedReleaseName(releaseName, releaseDescriptor) : releaseDescriptor.getReleaseName())
                 .releaseDescription(StringUtils.isNotBlank(description) ? description : releaseDescriptor.getReleaseDescription())
                 .ownerId(StringUtils.isNotBlank(releaseOwner) ? Integer.valueOf(releaseOwner) : releaseDescriptor.getOwnerId())
                 .microserviceId(releaseDescriptor.getMicroserviceId())
-                .sdlcStatusType(sdlcStatusTypeNew != null ? String.valueOf(sdlcStatusTypeNew) : releaseDescriptor.getSdlcStatusType()).build();
+                .sdlcStatusType(sdlcStatusTypeNew != null ? String.valueOf(sdlcStatusTypeNew) : releaseDescriptor.getSdlcStatusType())
+                .attributes(jsonAttrs).build();
 
         return FoDReleaseHelper.updateRelease(unirest, releaseDescriptor.getReleaseId(), appRelUpdateRequest).asJsonNode();
     }

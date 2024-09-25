@@ -33,4 +33,5 @@ public class FoDScanConfigSastSetupRequest {
     private Boolean includeThirdPartyLibraries;
     private Boolean useSourceControl;
     private Boolean scanBinary;
+    private Boolean includeFortifyAviator;
 }

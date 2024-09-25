@@ -52,7 +52,7 @@ public class SSCAppVersionCopyFromMixin implements ISSCDelimiterMixinAware {
     private SSCAppVersionDescriptor refresh(UnirestInstance unirest, SSCAppVersionDescriptor copyFrom) {
         if (copyFrom!=null && copyFrom.isRefreshRequired() && refreshOptions.isRefresh() ) {
             var jobDescriptor = SSCAppVersionHelper.refreshMetrics(unirest, copyFrom);
-            SSCJobHelper.waitForJob(unirest, jobDescriptor);
+            SSCJobHelper.waitForJob(unirest, jobDescriptor, refreshOptions.getRefreshTimeout());
         }
         return copyFrom;
     }

@@ -52,8 +52,8 @@ steps:
       pagingProgress:
         postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
       onResponse:
-        - if: ${issues_raw.totalCount>1000}
-          throw: GitHub does not support importing more than 1000 vulnerabilities. Please clean the scan results or update vulnerability search criteria.
+        - if: ${issues_raw.totalCount>5000}
+          throw: GitHub does not support importing more than 5000 vulnerabilities. Please clean the scan results or update vulnerability search criteria.
       forEach:
         name: issue
         embed:

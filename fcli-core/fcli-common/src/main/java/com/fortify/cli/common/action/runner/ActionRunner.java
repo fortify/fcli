@@ -48,6 +48,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.AbstractActionStepForEach;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionParameter;
@@ -207,6 +208,29 @@ public class ActionRunner implements AutoCloseable {
     
     private final void configureSpelEvaluator(SimpleEvaluationContext context) {
         SpelHelper.registerFunctions(context, ActionSpelFunctions.class);
+        context.setVariable("action", new ActionUtil());
+    }
+    
+    @Reflectable
+    private final class ActionUtil {
+        @SuppressWarnings("unused")
+        public final String copyParametersFromGroup(String group) {
+            StringBuilder result = new StringBuilder();
+            for ( var p : action.getParameters() ) {
+                if ( group==null || group.equals(p.getGroup()) ) {
+                    var val = parameters.get(p.getName());
+                    if ( val!=null && StringUtils.isNotBlank(val.asText()) ) {
+                        result
+                          .append("\"--")
+                          .append(p.getName())
+                          .append("=")
+                          .append(val.asText())
+                          .append("\" ");
+                    }
+                }
+            }
+            return result.toString();
+        }
     }
     
     public final ActionRunner addParameterConverter(String type, BiFunction<String, ParameterTypeConverterArgs, JsonNode> converter) {
@@ -956,12 +980,16 @@ public class ActionRunner implements AutoCloseable {
     
     private static final Map<String, BiFunction<String, ParameterTypeConverterArgs, JsonNode>> createDefaultParameterConverters() {
         Map<String, BiFunction<String, ParameterTypeConverterArgs, JsonNode>> result = new HashMap<>();
+        // TODO Most of these will likely fail in case value is null or empty
         result.put("string",  (v,a)->new TextNode(v));
         result.put("boolean", (v,a)->BooleanNode.valueOf(Boolean.parseBoolean(v)));
         result.put("int",     (v,a)->IntNode.valueOf(Integer.parseInt(v)));
         result.put("long",    (v,a)->LongNode.valueOf(Long.parseLong(v)));
         result.put("double",  (v,a)->DoubleNode.valueOf(Double.parseDouble(v)));
         result.put("float",   (v,a)->FloatNode.valueOf(Float.parseFloat(v)));
+        result.put("array",   (v,a)->StringUtils.isBlank(v)
+                ? JsonHelper.toArrayNode(new String[] {}) 
+                : JsonHelper.toArrayNode(v.split(",")));
         // TODO Add BigIntegerNode/DecimalNode/ShortNode support?
         // TODO Add array support?
         return result;

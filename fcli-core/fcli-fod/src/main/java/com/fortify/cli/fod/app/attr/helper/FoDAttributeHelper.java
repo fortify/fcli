@@ -19,6 +19,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
+import com.fortify.cli.fod._common.util.FoDEnums;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -34,6 +38,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 
 public class FoDAttributeHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(FoDAttributeHelper.class);
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static final FoDAttributeDescriptor getAttributeDescriptor(UnirestInstance unirestInstance, String attrNameOrId, boolean failIfNotFound) {
@@ -52,7 +57,8 @@ public class FoDAttributeHelper {
     }
 
     @SneakyThrows
-    public static final Map<String, String> getRequiredAttributesDefaultValues(UnirestInstance unirestInstance) {
+    public static final Map<String, String> getRequiredAttributesDefaultValues(UnirestInstance unirestInstance,
+        FoDEnums.AttributeTypes attrType) {
         Map<String, String> reqAttrs = new HashMap<>();
         GetRequest request = unirestInstance.get(FoDUrls.ATTRIBUTES)
                 .queryString("filters", "isRequired:true");
@@ -63,8 +69,8 @@ public class FoDAttributeHelper {
         Iterator<FoDAttributeDescriptor> lookupIterator = lookupList.iterator();
         while (lookupIterator.hasNext()) {
             FoDAttributeDescriptor currentLookup = lookupIterator.next();
-            // currentLookup.getAttributeTypeId() == 1 is "Application" - filter above does not support querying on this yet!
-            if (currentLookup.getIsRequired() && currentLookup.getAttributeTypeId() == 1) {
+            // currentLookup.getAttributeTypeId() == 1 if "Application", 4 if "Release" - filter above does not support querying on this yet!
+            if (currentLookup.getIsRequired() && (attrType.getValue() == 0 || currentLookup.getAttributeTypeId() == attrType.getValue())) {
                 switch (currentLookup.getAttributeDataType()) {
                     case "Text":
                         reqAttrs.put(currentLookup.getName(), "autofilled by fcli");
@@ -88,7 +94,7 @@ public class FoDAttributeHelper {
         return reqAttrs;
     }
 
-    public static JsonNode mergeAttributesNode(UnirestInstance unirest,
+    public static JsonNode mergeAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType,
                                            ArrayList<FoDAttributeDescriptor> current,
                                            Map<String, String> updates) {
         ArrayNode attrArray = objectMapper.createArrayNode();
@@ -111,7 +117,7 @@ public class FoDAttributeHelper {
         return attrArray;
     }
 
-    public static JsonNode getAttributesNode(ArrayList<FoDAttributeDescriptor> attributes) {
+    public static JsonNode getAttributesNode(FoDEnums.AttributeTypes attrType, ArrayList<FoDAttributeDescriptor> attributes) {
         ArrayNode attrArray = objectMapper.createArrayNode();
         if (attributes == null || attributes.isEmpty()) return attrArray;
         for (FoDAttributeDescriptor attr : attributes) {
@@ -123,11 +129,12 @@ public class FoDAttributeHelper {
         return attrArray;
     }
 
-    public static JsonNode getAttributesNode(UnirestInstance unirest, Map<String, String> attributesMap, boolean autoReqdAttributes) {
+    public static JsonNode getAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType, 
+        Map<String, String> attributesMap, boolean autoReqdAttributes) {
         Map<String, String> combinedAttributesMap = new LinkedHashMap<>();
         if (autoReqdAttributes) {
             // find any required attributes
-            combinedAttributesMap.putAll(getRequiredAttributesDefaultValues(unirest));
+            combinedAttributesMap.putAll(getRequiredAttributesDefaultValues(unirest, attrType));
         }
         if ( attributesMap!=null && !attributesMap.isEmpty() ) {
             combinedAttributesMap.putAll(attributesMap);
@@ -136,9 +143,15 @@ public class FoDAttributeHelper {
         for (Map.Entry<String, String> attr : combinedAttributesMap.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
-            attrObj.put("id", attributeDescriptor.getId());
-            attrObj.put("value", attr.getValue());
-            attrArray.add(attrObj);
+            // filter out any attributes that aren't valid for the entity we are working on, e.g. Application or Release
+            if (attrType.getValue() == 0 || attributeDescriptor.getAttributeTypeId() == attrType.getValue()) {
+                attrObj.put("id", attributeDescriptor.getId());
+                attrObj.put("value", attr.getValue());
+                attrArray.add(attrObj);
+            } else {
+                LOG.debug("Skipping attribute '"+attributeDescriptor.getName()+"' as it is not a "+attrType.toString()+" attribute");
+
+            }   
         }
         return attrArray;
     }

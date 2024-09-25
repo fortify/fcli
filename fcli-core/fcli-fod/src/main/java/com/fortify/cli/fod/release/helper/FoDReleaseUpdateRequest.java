@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod.release.helper;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.AllArgsConstructor;
@@ -28,4 +29,5 @@ public class FoDReleaseUpdateRequest {
     private String sdlcStatusType;
     private Integer ownerId;
     private String microserviceId;
+    private JsonNode attributes;
 }

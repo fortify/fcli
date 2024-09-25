@@ -10,24 +10,18 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod.action.cli.cmd;
+package com.fortify.cli.sc_sast.sensor_pool.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "action",
+        name = "sensor-pool",
+        aliases = {"pool"},
         subcommands = {
-                FoDActionAsciidocCommand.class,
-                FoDActionGetCommand.class,
-                FoDActionHelpCommand.class,
-                FoDActionImportCommand.class,
-                FoDActionListCommand.class,
-                FoDActionResetCommand.class,
-                FoDActionRunCommand.class,
-                FoDActionSignCommand.class,
+                SCSastSensorPoolListCommand.class,
         }
 )
-public class FoDActionCommands extends AbstractContainerCommand {
+
+public class SCSastSensorPoolCommands extends AbstractContainerCommand {
 }
