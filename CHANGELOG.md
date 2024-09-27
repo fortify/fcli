@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.7.1](https://github.com/fortify/fcli/compare/v2.7.0...v2.7.1) (2024-09-27)
+
+
+### Bug Fixes
+
+* Fix fcli completion script sourcing error (fixes [#580](https://github.com/fortify/fcli/issues/580)) ([4ff86f4](https://github.com/fortify/fcli/commit/4ff86f46a25045cae6bec89cdb25815905db2ed6))
+* FoD `release-summary` action: Fix potential SpEL exception for releases with open-source scans enabled (fixes [#612](https://github.com/fortify/fcli/issues/612)) ([5260bc8](https://github.com/fortify/fcli/commit/5260bc89fd770a14fe435bd6a89f719011087f94))
+* Improve synopsis order (fixes [#133](https://github.com/fortify/fcli/issues/133)) ([78b530c](https://github.com/fortify/fcli/commit/78b530cde00e514be59377d2f80d6479a90d893b))
+* Show proper syntax for `--store` option in help output (fixes [#613](https://github.com/fortify/fcli/issues/613)) ([cac574d](https://github.com/fortify/fcli/commit/cac574da483908a393f747a82838070badc7675d))
+
 ## [2.7.0](https://github.com/fortify/fcli/compare/v2.6.0...v2.7.0) (2024-09-25)
 
 
