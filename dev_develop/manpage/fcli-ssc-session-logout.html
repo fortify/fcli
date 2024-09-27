@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240927.093059-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240927.093513-dev_develop" %}
 
 
 <div id="header">
@@ -44,7 +44,7 @@ fcli_version:
 <p><strong>fcli ssc session logout</strong> [<strong>--no-revoke-token</strong>] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] [[<strong>-h</strong>]
                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--store</strong>=_variableName[:&lt;propertyNames&gt;]</em>]
                         [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]]</p>
 </div>
 </div>
@@ -126,7 +126,7 @@ fcli_version:
 <dd>
 <p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
 </dd>
-<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
 <dd>
 <p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
 </dd>
@@ -167,7 +167,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-27 09:32:37 UTC
+Last updated 2024-09-27 09:36:55 UTC
 </div>
 </div>
 </body>
