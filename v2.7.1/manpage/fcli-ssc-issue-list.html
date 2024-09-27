@@ -1,0 +1,179 @@
+---
+title: fcli-ssc-issue-list(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-issue-list(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.7.1" %}
+
+
+<div id="header">
+<h1>fcli-ssc-issue-list(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_session_options">Session options</a></li>
+<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-issue-list - List application version vulnerabilities.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc issue list</strong> <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                    [<strong>--filter</strong>=<em>&lt;filter&gt;</em>] [<strong>--fs</strong>=<em>&lt;filterSetTitleOrId&gt;</em>]
+                    [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
+                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                    [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                    <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
+      _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+              _      expression&gt;</em>]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command allows for listing SSC vulnerability data for a given application version. By default, only visible issues will be returned; the --include option can be used to (also) include hidden, suppressed or removed issues. If any such issues are included, the default table output will show (H), (S), and/or &#174; for respectively hidden, suppressed and removed issues.</p>
+</div>
+<div class="paragraph">
+<p>Optionally, additional details may be included in the output using the --embed option, but please note that this may have some impact on performance as this will result in additional HTTP requests to SSC for every page of issues.</p>
+</div>
+<div class="paragraph">
+<p>In general, performance of this command is largely dependent on the number of issues being retrieved from SSC. The default table output collects all data in memory until all issues have been processed, so it may take a long time before you see any output, and there&#8217;s a small risk of running out of memory. Most other output formats (like json, yaml, or csv) output data immediately after each page of issues has been loaded from FoD, resulting in more immediate output.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--av, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Embed extra application version data. Allowed values: details, comments, auditHistory. Using the --output option, this extra data can be included in the output. Using the --query option, this extra data can be queried upon. To get an understanding of the structure and contents of the embedded data, use the --output json or --output yaml options.</p>
+</dd>
+<dt class="hdlist1"><strong>--filter</strong>=<em>&lt;filter&gt;</em></dt>
+<dd>
+<p>Filter issues using the given (friendly or technical) filter. See 'fcli ssc issue list-filters' for allowed values.</p>
+</dd>
+<dt class="hdlist1"><strong>--fs, --filterset</strong>=<em>&lt;filterSetTitleOrId&gt;</em></dt>
+<dd>
+<p>Filter set title (name) or id.</p>
+</dd>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--include</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>By default, only visible issues will be returned. This option accepts a comma-separated list to allow (also) removed, suppressed and/or hidden issues to be returned, for example <code>--include visible,removed</code> (to return both visible and removed issues) or <code>--include removed</code> (to return only removed issues). Allowed values: visible, hidden, removed, suppressed.</p>
+</dd>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dd>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+</dd>
+<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
+<dd>
+<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-09-27 11:02:44 UTC
+</div>
+</div>
+</body>
+</html>
