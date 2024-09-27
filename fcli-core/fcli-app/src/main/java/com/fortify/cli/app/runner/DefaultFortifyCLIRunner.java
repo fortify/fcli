@@ -23,6 +23,9 @@ import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import picocli.CommandLine;
+import picocli.CommandLine.Help.Ansi.Text;
+import picocli.CommandLine.Model.ArgGroupSpec;
+import picocli.CommandLine.Model.CommandSpec;
 
 public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
     // TODO See https://github.com/remkop/picocli/issues/2066
@@ -36,6 +39,7 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	    // See comments in I18nParameterExceptionHandler for more detail.
 	    //cl.setParameterExceptionHandler(new I18nParameterExceptionHandler(cl.getParameterExceptionHandler()));
 	    cl.setDefaultValueProvider(FortifyCLIDefaultValueProvider.getInstance());
+	    cl.setHelpFactory((commandSpec, colorScheme)->new FcliHelp(commandSpec, colorScheme));
 	    return cl;
     }
 	
@@ -69,5 +73,35 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	@Override
 	public void close() {
 	    GenericUnirestFactory.shutdown();
+	}
+	
+	private static final class FcliHelp extends CommandLine.Help {
+        public FcliHelp(CommandSpec commandSpec, ColorScheme colorScheme) {
+            super(commandSpec, colorScheme);
+        }
+
+        public FcliHelp(Object command, Ansi ansi) {
+            super(command, ansi);
+        }
+
+        public FcliHelp(Object command) {
+            super(command);
+        }
+	    
+        protected String makeSynopsisFromParts(int synopsisHeadingLength, Text optionText, Text groupsText, Text endOfOptionsText, Text positionalParamText, Text commandText) {
+            boolean positionalsOnly = true;
+            for (ArgGroupSpec group : commandSpec().argGroups()) {
+                if (group.validate()) { // non-validating groups are not shown in the synopsis
+                    positionalsOnly &= group.allOptionsNested().isEmpty();
+                }
+            }
+            Text text;
+            if (positionalsOnly) { // show end-of-options delimiter before the (all-positional params) groups
+                text = positionalParamText.concat(optionText).concat(endOfOptionsText).concat(groupsText).concat(commandText);
+            } else {
+                text = positionalParamText.concat(optionText).concat(groupsText).concat(endOfOptionsText).concat(commandText);
+            }
+            return insertSynopsisCommandName(synopsisHeadingLength, text);
+        }
 	}
 }

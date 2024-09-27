@@ -65,16 +65,16 @@ steps:
               value: ${issues_raw.totalCount}
           - set:
             - name: ossCritical
-              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.^[#this.value == "Critical"]?.count?:0}       
+              value: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "Critical"]?.count?:0}       
           - set:
             - name: ossHigh
-              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.^[#this.value == "High"]?.count?:0}   
+              value: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "High"]?.count?:0}   
           - set:
             - name: ossMedium
-              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.^[#this.value == "Medium"]?.count?:0}   
+              value: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "Medium"]?.count?:0}   
           - set:
             - name: ossLow
-              value: ${issues_raw.filters.?[#this.fieldName == 'severity'][0].fieldFilterValues.^[#this.value == "Low"]?.count?:0}                      
+              value: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "Low"]?.count?:0}                      
   # replace up to here
 
   - write:

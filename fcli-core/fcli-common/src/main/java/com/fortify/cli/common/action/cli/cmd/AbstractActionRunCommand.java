@@ -39,8 +39,8 @@ import picocli.CommandLine.Unmatched;
 
 public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Mixin private ActionResolverMixin.RequiredParameter actionResolver;
-    @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_LONG_NAME})
-    @Option(names="--<action-parameter>", paramLabel="<value>", descriptionKey="fcli.action.run.action-parameter") 
+    @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_LONG_NAME, TestType.OPT_LONG_NAME_COUNT, TestType.OPT_NAME_FORMAT, TestType.OPT_ARITY_PRESENT})
+    @Option(names="action-parameters", arity="0", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Mixin private CommandHelperMixin commandHelper;
