@@ -16,6 +16,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -50,21 +55,30 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     @Mixin private SCSastSensorPoolResolverMixin.OptionalOption sensorPoolResolver;
     @Mixin private PublishToAppVersionResolverMixin sscAppVersionResolver;
     @Option(names = "--ssc-ci-token") private String ciToken;
-    
+	@Option(names = { "--sargs", "--scan-args" }, description = "Runtime scan arguments to Source Analyzer.")
+	private String scanArguments = "";
+	
+	private Map<String, Set<String>> scanFileArgs = new HashMap<String, Set<String>>();
+	private Map<String, Set<String>> compressedFilesMap = new HashMap<String, Set<String>>();
+	private Set<ScanArgument> scanArgumentsSet;
+
     // TODO Add options for specifying (custom) rules file(s), filter file(s) and project template
     // TODO Add options for pool selection
     
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         String sensorVersion = normalizeSensorVersion(optionsProvider.getScanStartOptions().getSensorVersion());
+        
+        processScanArguments();
         MultipartBody body = unirest.post("/rest/v2/job")
             .multiPartContent()
             .field("zipFile", createZipFile(), "application/zip")
             .field("username", userName, "text/plain")
             .field("scaVersion", sensorVersion, "text/plain")
             .field("clientVersion", sensorVersion, "text/plain")
-            .field("scaRuntimeArgs", optionsProvider.getScanStartOptions().getScaRuntimeArgs(), "text/plain")
-            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain");
+            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain")
+            .field("scaRuntimeArgs", constructSCAArgs(), "text/plain");
+        
         body = updateBody(body, "email", email);
         body = updateBody(body, "buildId", optionsProvider.getScanStartOptions().getBuildId());
         body = updateBody(body, "pvId", getAppVersionId());
@@ -72,6 +86,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         body = updateBody(body, "uploadToken", getUploadToken());
         body = updateBody(body, "dotNetRequired", String.valueOf(optionsProvider.getScanStartOptions().isDotNetRequired()));
         body = updateBody(body, "dotNetFrameworkRequiredVersion", optionsProvider.getScanStartOptions().getDotNetVersion());
+
         JsonNode response = body.asObject(JsonNode.class).getBody();
         if ( !response.has("token") ) {
             throw new IllegalStateException("Unexpected response when submitting scan job: "+response);
@@ -80,7 +95,80 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, StatusEndpointVersion.v1).asJsonNode();
     }
 
-    @Override
+	private String constructSCAArgs() {
+		StringBuffer buffer = new StringBuffer();
+		for (ScanArgument scanArgument : scanArgumentsSet) {
+			String argKey = scanArgument.getArgKey();
+			String argValue = scanArgument.getArgValue();
+			boolean fileArgument = scanArgument.isFileArgument();
+			if (fileArgument) {
+				Set<String> scanArgFiles = compressedFilesMap.get(argKey);
+				if (null != scanArgFiles) {
+					int size = scanArgFiles.size();
+					for (String scanArgumentFileName : scanArgFiles) {
+						buffer.append(argKey);
+						buffer.append(" \'");
+						buffer.append(scanArgumentFileName);
+						buffer.append("\'");
+						if (size > 1) {
+							buffer.append(" ");
+							--size;
+						}
+					}
+				}
+				compressedFilesMap.remove(argKey);
+			} else {
+				buffer.append(argKey);
+				if (argValue!=null) {
+					buffer.append(" ");
+					buffer.append(argValue);
+				}
+			}
+			buffer.append(" ");
+		}
+		return buffer.toString().trim();
+	}
+	
+	private void processScanArguments() {
+		scanArgumentsSet = processScanRuntimeArgs();
+		for (ScanArgument scanArgument : scanArgumentsSet) {
+			if (scanArgument.isFileArgument()) {
+				String key = scanArgument.getArgKey();
+				String value = scanArgument.getArgValue();
+				scanFileArgs.computeIfAbsent(key, k -> new HashSet<>()).add(value);
+			}
+		}
+		updateFileNamesToUniqueName();
+	}
+
+	private Set<ScanArgument> processScanRuntimeArgs() {
+		Set<ScanArgument> scanArgsSet = new HashSet<ScanArgument>();
+		String[] parts = scanArguments.split(" (?=(?:[^\']*\'[^\']*\')*[^\']*$)");
+
+		ScanArgument scanArgument = null;
+		for (String part : parts) {
+			String key = null;
+			String value = null;
+			boolean isFileArg = false;
+			
+			if (part.startsWith("-")) {
+				key = part.trim();
+				scanArgument = new ScanArgument();
+				scanArgument.setArgKey(key);
+			} else {
+				if (part.startsWith("file:")) {
+					isFileArg = true;
+				}
+				value = part.replace("file:", "").replace("'", "");
+				scanArgument.setArgValue(value);
+				scanArgument.setFileArgument(isFileArg);
+			}
+			scanArgsSet.add(scanArgument);
+		}
+		return scanArgsSet;
+	}
+
+	@Override
     public final String getActionCommandResult() {
         return "SCAN_REQUESTED";
     }
@@ -144,7 +232,13 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
             try (FileOutputStream fout = new FileOutputStream(zipFile); ZipOutputStream zout = new ZipOutputStream(fout)) {
                 final String fileName = (optionsProvider.getScanStartOptions().getJobType() == SCSastControllerJobType.TRANSLATION_AND_SCAN_JOB) ? "translation.zip" : "session.mbs";
                 addFile( zout, fileName, optionsProvider.getScanStartOptions().getPayloadFile());
-                // TODO Add rule files, filter files, issue template
+                
+                for (Entry<String, Set<String>> fileArgsMap : compressedFilesMap.entrySet()) {
+                	Set<String> files = fileArgsMap.getValue();
+                	for (String file : files) {
+                		addFile(zout, file, optionsProvider.getScanStartOptions().getPayloadFile());
+                	}
+				}
             }
             return zipFile;
         } catch (IOException e) {
@@ -152,7 +246,25 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         }
     }
 
-    private void addFile(ZipOutputStream zout, String fileName, File file) throws IOException {
+	private void updateFileNamesToUniqueName() {
+		for (Entry<String, Set<String>> fileArg : scanFileArgs.entrySet()) {
+			String argName = fileArg.getKey();
+			Set<String> argValues = fileArg.getValue();
+			Set<String> compressedFileNames = new HashSet<String>();
+			for (String argValue : argValues) {
+				String uniqueFileName = constructUniqueFileName(argValue);
+				compressedFileNames.add(uniqueFileName);
+				
+			}
+			compressedFilesMap.put(argName, compressedFileNames);
+		}
+	}
+
+	private String constructUniqueFileName(String argValue) {
+		return argValue.replaceAll("[^A-Za-z0-9.]", "_");
+	}
+
+	private void addFile(ZipOutputStream zout, String fileName, File file) throws IOException {
         try ( FileInputStream in = new FileInputStream(file)) {
             zout.putNextEntry(new ZipEntry(fileName));
             byte[] buffer = new byte[1024];
@@ -169,4 +281,40 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         @Getter private String appVersionNameOrId;
         public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
     }
+}
+
+
+class ScanArgument {
+	private boolean isFileArgument;
+	private String argKey;
+	private String argValue;
+
+	public void setFileArgument(boolean isFileArgument) {
+		this.isFileArgument = isFileArgument;
+	}
+
+	public void setArgKey(String argKey) {
+		this.argKey = argKey;
+	}
+
+	public void setArgValue(String argValue) {
+		this.argValue = argValue;
+	}
+
+	public boolean isFileArgument() {
+		return isFileArgument;
+	}
+
+	public String getArgKey() {
+		return argKey;
+	}
+
+	public String getArgValue() {
+		return argValue;
+	}
+	
+	@Override
+	public String toString() {
+		return "Argument " + argKey + (isFileArgument? " is a file argument with value " : " is not a file argument with value ") + argValue;
+	}
 }

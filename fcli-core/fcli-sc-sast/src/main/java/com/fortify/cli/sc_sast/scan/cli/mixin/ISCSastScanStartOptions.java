@@ -18,7 +18,7 @@ import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 
 public interface ISCSastScanStartOptions {
     String getBuildId();
-    String getScaRuntimeArgs();
+//    String getScaRuntimeArgs();
     boolean isDotNetRequired();
     String getDotNetVersion();
     File getPayloadFile();
