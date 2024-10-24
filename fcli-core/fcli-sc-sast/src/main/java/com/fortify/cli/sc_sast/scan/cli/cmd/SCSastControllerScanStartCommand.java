@@ -70,15 +70,18 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         String sensorVersion = normalizeSensorVersion(optionsProvider.getScanStartOptions().getSensorVersion());
         
         processScanArguments();
-        MultipartBody body = unirest.post("/rest/v2/job")
+		MultipartBody body = unirest.post("/rest/v2/job")
             .multiPartContent()
             .field("zipFile", createZipFile(), "application/zip")
             .field("username", userName, "text/plain")
             .field("scaVersion", sensorVersion, "text/plain")
             .field("clientVersion", sensorVersion, "text/plain")
-            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain")
-            .field("scaRuntimeArgs", constructSCAArgs(), "text/plain");
+            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain");
         
+		String runtimeSCAArgs = constructSCAArgs();
+		if (null != runtimeSCAArgs && !runtimeSCAArgs.isEmpty()) {
+			body.field("scaRuntimeArgs", runtimeSCAArgs, "text/plain");
+		}
         body = updateBody(body, "email", email);
         body = updateBody(body, "buildId", optionsProvider.getScanStartOptions().getBuildId());
         body = updateBody(body, "pvId", getAppVersionId());
@@ -160,10 +163,14 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
 					isFileArg = true;
 				}
 				value = part.replace("file:", "").replace("'", "");
-				scanArgument.setArgValue(value);
-				scanArgument.setFileArgument(isFileArg);
+				if (null != scanArgument) {
+					scanArgument.setArgValue(value);
+					scanArgument.setFileArgument(isFileArg);
+				}
 			}
-			scanArgsSet.add(scanArgument);
+			if (null!=scanArgument) {
+				scanArgsSet.add(scanArgument);
+			}
 		}
 		return scanArgsSet;
 	}
