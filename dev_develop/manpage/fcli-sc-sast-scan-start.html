@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240927.110136-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241024.123435-dev_develop" %}
 
 
 <div id="header">
@@ -47,8 +47,8 @@ fcli_version:
 <p><strong>fcli sc-sast scan start</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
                         [<strong>--pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em>]
                         [<strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
-                        [<strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em>] [[<strong>-h</strong>]
-                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--sargs</strong>=<em>&lt;scanArguments&gt;</em>] [<strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em>]
+                        [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                         (<strong>-m</strong>=<em>&lt;mbsFile&gt;</em> | (<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em> <strong>-p</strong>=<em>&lt;packageFile&gt;</em>))
                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
@@ -82,6 +82,15 @@ fcli_version:
 <dt class="hdlist1"><strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
 <dd>
 <p>Publish scan results to the given SSC application version once the scan has completed.</p>
+</dd>
+<dt class="hdlist1"><strong>--sargs, --scan-args</strong>=<em>&lt;scanArguments&gt;</em></dt>
+<dd>
+<p>Fortify Static Code Analyzer scan arguments, see ScanCentral SAST documentation for supported scan arguments for your ScanCentral SAST version. Multiple scan arguments must be provided as a single option argument, arguments containing spaces must be embedded in single quotes, and local files must be referenced through the 'file:' prefix. Note that contrary to fcli, scan arguments usually start with a single dash, not double dashes. For example:</p>
+<div class="literalblock">
+<div class="content">
+<pre>--sargs "-quick -filter 'file:./my filters.txt'"</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
 <dd>
@@ -197,7 +206,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-09-27 11:03:17 UTC
+Last updated 2024-10-24 12:36:58 UTC
 </div>
 </div>
 </body>
