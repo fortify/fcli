@@ -32,7 +32,6 @@ public class SCSastScanStartMbsOptions implements ISCSastScanStartOptions {
     @Getter private String buildId;
     @Getter private final boolean dotNetRequired = false;
     @Getter private final String dotNetVersion = null;
-    @Getter private final String scaRuntimeArgs = ""; // TODO Provide options
     @Getter private SCSastControllerJobType jobType = SCSastControllerJobType.SCAN_JOB;
     
     @Option(names = {"-m", "--mbs-file"}, required= true)
@@ -40,7 +39,7 @@ public class SCSastScanStartMbsOptions implements ISCSastScanStartOptions {
         this.payloadFile = mbsFile;
         setMbsProperties(mbsFile);
     }
-
+    
     private void setMbsProperties(File mbsFile) {
         try ( FileSystem fs = FileSystems.newFileSystem(mbsFile.toPath()) ) {
             Path mbsManifest = fs.getPath("MobileBuildSession.manifest");

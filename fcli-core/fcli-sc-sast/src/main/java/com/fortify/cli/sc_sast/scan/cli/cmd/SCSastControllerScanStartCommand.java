@@ -16,6 +16,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -35,6 +40,7 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.Abstr
 import kong.unirest.MultipartBody;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -50,21 +56,22 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     @Mixin private SCSastSensorPoolResolverMixin.OptionalOption sensorPoolResolver;
     @Mixin private PublishToAppVersionResolverMixin sscAppVersionResolver;
     @Option(names = "--ssc-ci-token") private String ciToken;
-    
-    // TODO Add options for specifying (custom) rules file(s), filter file(s) and project template
-    // TODO Add options for pool selection
+	@Option(names = { "--sargs", "--scan-args" })
+	private String scanArguments = "";
     
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         String sensorVersion = normalizeSensorVersion(optionsProvider.getScanStartOptions().getSensorVersion());
+        var scanArgsHelper = ScanArgsHelper.parse(scanArguments);
         MultipartBody body = unirest.post("/rest/v2/job")
             .multiPartContent()
-            .field("zipFile", createZipFile(), "application/zip")
+            .field("zipFile", createZipFile(scanArgsHelper.getInputFileToZipEntryMap()), "application/zip")
             .field("username", userName, "text/plain")
             .field("scaVersion", sensorVersion, "text/plain")
             .field("clientVersion", sensorVersion, "text/plain")
-            .field("scaRuntimeArgs", optionsProvider.getScanStartOptions().getScaRuntimeArgs(), "text/plain")
-            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain");
+            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain")
+            .field("scaRuntimeArgs", scanArgsHelper.getScanArgs(), "text/plain");
+        
         body = updateBody(body, "email", email);
         body = updateBody(body, "buildId", optionsProvider.getScanStartOptions().getBuildId());
         body = updateBody(body, "pvId", getAppVersionId());
@@ -72,6 +79,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         body = updateBody(body, "uploadToken", getUploadToken());
         body = updateBody(body, "dotNetRequired", String.valueOf(optionsProvider.getScanStartOptions().isDotNetRequired()));
         body = updateBody(body, "dotNetFrameworkRequiredVersion", optionsProvider.getScanStartOptions().getDotNetVersion());
+
         JsonNode response = body.asObject(JsonNode.class).getBody();
         if ( !response.has("token") ) {
             throw new IllegalStateException("Unexpected response when submitting scan job: "+response);
@@ -80,7 +88,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, StatusEndpointVersion.v1).asJsonNode();
     }
 
-    @Override
+	@Override
     public final String getActionCommandResult() {
         return "SCAN_REQUESTED";
     }
@@ -137,14 +145,17 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         return StringUtils.isBlank(value) ? body : body.field(field, value, "text/plain");
     }
     
-    private File createZipFile() {
+    private File createZipFile(Map<File, String> extraFiles) {
         try {
             File zipFile = File.createTempFile("zip", ".zip");
             zipFile.deleteOnExit();
             try (FileOutputStream fout = new FileOutputStream(zipFile); ZipOutputStream zout = new ZipOutputStream(fout)) {
                 final String fileName = (optionsProvider.getScanStartOptions().getJobType() == SCSastControllerJobType.TRANSLATION_AND_SCAN_JOB) ? "translation.zip" : "session.mbs";
                 addFile( zout, fileName, optionsProvider.getScanStartOptions().getPayloadFile());
-                // TODO Add rule files, filter files, issue template
+                
+                for (var extraFile : extraFiles.entrySet() ) {
+                	addFile(zout, extraFile.getValue(), extraFile.getKey());
+				}
             }
             return zipFile;
         } catch (IOException e) {
@@ -152,7 +163,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         }
     }
 
-    private void addFile(ZipOutputStream zout, String fileName, File file) throws IOException {
+	private void addFile(ZipOutputStream zout, String fileName, File file) throws IOException {
         try ( FileInputStream in = new FileInputStream(file)) {
             zout.putNextEntry(new ZipEntry(fileName));
             byte[] buffer = new byte[1024];
@@ -168,5 +179,43 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         @Option(names = {"--publish-to"}, required = false)
         @Getter private String appVersionNameOrId;
         public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
+    }
+    
+    @RequiredArgsConstructor
+    private static final class ScanArgsHelper {
+        @Getter private final String scanArgs;
+        @Getter private final Map<File, String> inputFileToZipEntryMap;
+        
+        public static final ScanArgsHelper parse(String scanArgs) {
+            List<String> newArgs = new ArrayList<>();
+            Map<File, String> inputFileToZipEntryMap = new LinkedHashMap<>();
+            String[] parts = scanArgs.split(" (?=(?:[^\']*\'[^\']*\')*[^\']*$)");
+            for ( var part: parts ) {
+                var inputFileName = getInputFileName(part);
+                if ( inputFileName==null ) {
+                    newArgs.add(part.replace("'", "\""));
+                } else {
+                    var inputFile = new File(inputFileName);
+                    if ( !inputFile.canRead() ) {
+                        throw new IllegalArgumentException("Can't read file "+inputFileName+" as specified in --sargs");
+                    }
+                    // Re-use existing zip entry name if same file was processed before
+                    var zipEntryFileName = inputFileToZipEntryMap.getOrDefault(inputFile, getZipEntryFileName(inputFileName));
+                    newArgs.add("\""+zipEntryFileName+"\"");
+                    inputFileToZipEntryMap.put(inputFile, zipEntryFileName);
+                }
+            }
+            return new ScanArgsHelper(String.join(" ", newArgs), inputFileToZipEntryMap);
+        }
+        
+        private static final String getInputFileName(String part) {
+            var pattern = Pattern.compile("^'?file:'?([^\']*)'?$");
+            var matcher = pattern.matcher(part);
+            return matcher.matches() ? matcher.group(1) : null;
+        }
+        
+        private static final String getZipEntryFileName(String orgFileName) {
+            return orgFileName.replaceAll("[^A-Za-z0-9.]", "_");
+        }
     }
 }
