@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-report-wait-for(1)
+title: fcli-fod-release-wait-for(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-report-wait-for(1)</title>
+<title>fcli-fod-release-wait-for(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-fod-report-wait-for(1) Manual Page</h1>
+<h1>fcli-fod-release-wait-for(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-report-wait-for - Wait for report to reach or exit specified generation status.</p>
+<p>fcli-fod-release-wait-for - Wait for one or more scans to reach or exit suspended state.</p>
 </div>
 </div>
 <div id="content">
@@ -43,18 +43,18 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod report wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
-                         [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
-                         [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
-                         [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
-                         [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em>
-                         ] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [<strong>-s</strong>=<em>&lt;states&gt;</em>
-                         [,<em>&lt;states&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                         [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
-           _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                         [<strong>-u</strong>=<em>any-match|all-match</em> | <strong>-w</strong>=<em>any-match|all-match</em>]
-                         [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em>report-id&#8217;s</em>&#8230;&#8203;</p>
+<p><strong>fcli fod release wait-for</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+                          [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
+                          [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
+                          [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
+                          [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested</em>
+  _                        &gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-s</strong>=<em>true|false</em>]
+                          [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                          [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                          <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
+            _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                          [<strong>-u</strong>=<em>any-match|all-match</em> | <strong>-w</strong>=<em>any-match|all-match</em>]
+                          [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em>id|app[:ms]:rel</em>&#8230;&#8203;</p>
 </div>
 </div>
 </div>
@@ -62,11 +62,13 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Although this command offers a lot of options to cover many different use cases, you can simply pass a report id (possibly stored using --store on of the 'report create' command) to wait for report generation to complete. If any error state or unknown state is detected, an exception will be thrown.</p>
+<p>Although this command offers a lot of options to cover many different use cases, you can simply pass one or more release names or id&#8217;s to wait until those releases leave 'suspended' state.</p>
 </div>
 <div class="paragraph">
-<p>The following statuses are currently known by fcli:
-See fcli help output</p>
+<p>Most common use case is to invoke this wait-for command after creating a new release through the <code>fcli fod release create</code> command with the <code>--copy-from</code> option; FoD will put the newly created release in 'suspended' state until copying is completed, during which time scan requests and other operations may be rejected.</p>
+</div>
+<div class="paragraph">
+<p>Note that contrary to other fcli wait-for commands, any options related to unknown or failure state handling are not applicable to this wait-for command and will be ignored.</p>
 </div>
 </div>
 </div>
@@ -75,6 +77,10 @@ See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
 <p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
@@ -99,9 +105,9 @@ See fcli help output</p>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
-<dt class="hdlist1"><strong>-s</strong>, <strong>--any-state</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>-s</strong>, <strong>--suspended</strong>=<em>true|false</em></dt>
 <dd>
-<p>One or more scan states against which to match the report generation status.</p>
+<p>Suspended state against which to match the given releases; may be <code>false</code> (default) or <code>true</code>.</p>
 </dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
 <dd>
@@ -109,11 +115,11 @@ See fcli help output</p>
 </dd>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--until</strong>=<em>any-match|all-match</em></dt>
 <dd>
-<p>Wait until report generation status matches.</p>
+<p>Wait until either any or all releases match. If neither --until or --while are specified, default is to wait until all releases match.</p>
 </dd>
 <dt class="hdlist1"><strong>-w</strong>, <strong>--while</strong>=<em>any-match|all-match</em></dt>
 <dd>
-<p>Wait while report generation status matches.</p>
+<p>Wait while either any or all releases match.</p>
 </dd>
 </dl>
 </div>
@@ -183,9 +189,9 @@ See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>report-id&#8217;s</em>&#8230;&#8203;</dt>
+<dt class="hdlist1"><em>id|app[:ms]:rel</em>&#8230;&#8203;</dt>
 <dd>
-<p>Report id(s).</p>
+<p>One or more release id&#8217;s or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; names.</p>
 </dd>
 </dl>
 </div>

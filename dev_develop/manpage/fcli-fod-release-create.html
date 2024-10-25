@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241024.123435-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241025.105258-dev_develop" %}
 
 
 <div id="header">
@@ -75,7 +75,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--copy-from</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
-<p>The id or name of a release to copy existing state from.</p>
+<p>The id or name of a release to copy existing state from. Note that FoD will put the release in 'suspended' state until copying is complete, during which time scan requests and other operations may be rejected. If you want to run any other operations on the release, it is recommended to first invoke the <code>fcli fod release wait-for</code> command to wait until the release leaves suspended state.</p>
 </dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
@@ -173,7 +173,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-10-24 12:36:58 UTC
+Last updated 2024-10-25 10:54:37 UTC
 </div>
 </div>
 </body>
