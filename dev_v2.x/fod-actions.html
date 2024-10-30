@@ -1,6 +1,6 @@
 ---
 title: Fcli FoD Actions
-fcli_version: 0.20241025.145708-dev_v2.x
+fcli_version: 0.20241030.172335-dev_v2.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20241025.145708-dev_v2.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241025.145708-dev_v2.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241030.172335-dev_v2.x" %}
 
 
 <div id="header">
 <h1>Fcli FoD Actions</h1>
 <div class="details">
-<span id="revnumber">version 0.20241025.145708-dev_v2.x</span>
+<span id="revnumber">version 0.20241030.172335-dev_v2.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -555,7 +555,7 @@ reports. For more information about SARIF, please see
 <h2 id="_setup_release"><a class="anchor" href="#_setup_release"></a>setup-release</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Set up application release.</p>
+<p>Set up application release.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
@@ -566,24 +566,30 @@ reports. For more information about SARIF, please see
 <div class="sect2">
 <h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
 <div class="paragraph">
-<p>his action is primarily meant for use in CI/CD integrations, allowing users to
-rovide a custom action with a customized application release setup process if
-ecessary.</p>
+<p>This action allows for preparing an application release for running an application
+security scan. It will create the application and/or release if they do not exist
+yet, and optionally configure scan settings. For now, only static scan setup is
+supported, including optional software composition analysis. Support for other
+scan types like Dynamic or Mobile may be added in the future, or you may consider
+implementing a custom setup action to set up other scan types.</p>
 </div>
 <div class="paragraph">
-<p>For example, such a custom action could define standard profiles (based on team,
-business unit, application type/risk, &#8230;&#8203;) with predefined users, attributes or
-issue template to be set on newly created application releases. Of course, instead
-of having a single custom action that defines profiles, you could also provide
-multiple custom actions that users can select from, or you can use a combination;
-each business unit or team providing their own custom action, with each of these
-custom actions defining profiles for different application types/risk.</p>
+<p>Although the same functionality can be achieved by manually running the various
+fcli commands used by this action, like <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a> and
+<a href="manpage/fcli-fod-sast-scan-setup.html"><code>fcli fod sast-scan setup</code></a>, this action provides a convenient and standardized
+approach for running those commands, providing default values for many of the
+required options.</p>
 </div>
 <div class="paragraph">
-<p>This built-in action only provides a 'default'
-profile that simply invokes the <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a> and optionally
-<a href="manpage/fcli-fod-sast-scan-setup.html"><code>fcli fod sast-scan setup</code></a> commands with some default options, amended with
-options passed to this action.</p>
+<p>To provide even more consistency across CI/CD pipelines in your organization, it
+is recommended to implement one or more custom setup actions that provide suitable
+default values or even hard-coded, non-overridable values for the various options,
+for example based on business unit, team, and/or application type. Such custom
+actions could for example set standard application or release attributes for a
+particular type of application to be scanned. Alternative to implementing multiple
+custom actions, you may also consider implementing a single custom action that takes
+for example a --profile option to select between different profiles that each define
+appropriate option values and setup commands to run.</p>
 </div>
 </div>
 <div class="sect2">
@@ -594,13 +600,13 @@ options passed to this action.</p>
 <dd>
 <p>Required release name as &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt;</p>
 </dd>
-<dt class="hdlist1">--profile, -p</dt>
-<dd>
-<p>This built-in action only supports the 'default' profile, which is selected by default</p>
-</dd>
 <dt class="hdlist1">--scan-types, -t</dt>
 <dd>
 <p>Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported</p>
+</dd>
+<dt class="hdlist1">--attributes, --attrs</dt>
+<dd>
+<p>Optional comma-separated list of attributes to set on the application and/or release</p>
 </dd>
 <dt class="hdlist1">--copy-from</dt>
 <dd>
@@ -612,7 +618,31 @@ options passed to this action.</p>
 </dd>
 <dt class="hdlist1">--sdlc-status, --status</dt>
 <dd>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a>. Default value: Development</p>
+</dd>
+<dt class="hdlist1">--app-description</dt>
+<dd>
 <p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
+</dd>
+<dt class="hdlist1">--app-notify</dt>
+<dd>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
+</dd>
+<dt class="hdlist1">--app-owner</dt>
+<dd>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
+</dd>
+<dt class="hdlist1">--app-groups</dt>
+<dd>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a></p>
+</dd>
+<dt class="hdlist1">--app-type</dt>
+<dd>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a>. Default value: Web</p>
+</dd>
+<dt class="hdlist1">--app-criticality</dt>
+<dd>
+<p>See <a href="manpage/fcli-fod-release-create.html"><code>fcli fod release create</code></a>. Default value: Medium</p>
 </dd>
 <dt class="hdlist1">--assessment-type</dt>
 <dd>
@@ -625,10 +655,6 @@ options passed to this action.</p>
 <dt class="hdlist1">--oss</dt>
 <dd>
 <p>See <a href="manpage/fcli-fod-sast-scan-setup.html"><code>fcli fod sast-scan setup</code></a></p>
-</dd>
-<dt class="hdlist1">--attributes, --attrs</dt>
-<dd>
-<p>Optional comma-separated list of attributes to set on the application and/or release</p>
 </dd>
 </dl>
 </div>
@@ -678,8 +704,8 @@ options passed to this action.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20241025.145708-dev_v2.x<br>
-Last updated 2024-10-25 14:58:54 UTC
+Version 0.20241030.172335-dev_v2.x<br>
+Last updated 2024-10-30 17:25:28 UTC
 </div>
 </div>
 </body>

@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241025.145708-dev_v2.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241030.172335-dev_v2.x" %}
 
 
 <div id="header">
@@ -27,6 +27,7 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
+<li><a href="#_application_creation_options_ignored_if_application_exists">Application creation options (ignored if application exists)</a></li>
 <li><a href="#_session_options">Session options</a></li>
 <li><a href="#_output_options">Output options</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options</a></li>
@@ -35,7 +36,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-release-create - Create a new application release. Please note some attributes might be mandatory depending on the configuration of your tenant. Please check the Fortify on Demand web portal first.</p>
+<p>fcli-fod-release-create - Create a new application release.</p>
 </div>
 </div>
 <div id="content">
@@ -50,7 +51,13 @@ fcli_version:
                         [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
-          _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>app[:ms]:rel</em></p>
+          _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                        [[<strong>--app-description</strong>=<em>&lt;appDescription&gt;</em>]
+                        [<strong>--app-notify</strong>=<em>&lt;appNotifications&gt;</em>[,
+                        <em>&lt;appNotifications&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--app-owner</strong>=<em>&lt;appOwner&gt;</em>]
+                        [<strong>--app-groups</strong>=<em>&lt;appUserGroups&gt;</em>[,<em>&lt;appUserGroups&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                        [<strong>--app-type</strong>=<em>&lt;appType&gt;</em>]
+                        [<strong>--app-criticality</strong>=<em>&lt;criticalityType&gt;</em>]] <em>app[:ms]:rel</em></p>
 </div>
 </div>
 </div>
@@ -67,15 +74,15 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[ATTR=VALUE]</em>[,<em>[ATTR=VALUE]</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Attribute id or name and its value to set. Please note for user attributes only the userId is currently supported.</p>
+<p>Set of application &amp; release attribute id&#8217;s or names and corresponding values. Please note for user attributes only the userId is currently supported. Depending on FoD configuration, some attributes may be required and either need to be set explicitly or auto-filled through the --auto-required-attrs option. Application attributes will be applied when creating a new application and ignored if the application already exists. Similarly, release attributes will be ignored if the release already exists and --skip-if-exists is enabled.</p>
 </dd>
 <dt class="hdlist1"><strong>--auto-required-attrs</strong></dt>
 <dd>
-<p>Automatically set a default value for required attributes.</p>
+<p>Automatically set a default value for required application and release attributes.</p>
 </dd>
 <dt class="hdlist1"><strong>--copy-from</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
-<p>The id or name of a release to copy existing state from. Note that FoD will put the release in 'suspended' state until copying is complete, during which time scan requests and other operations may be rejected. If you want to run any other operations on the release, it is recommended to first invoke the <code>fcli fod release wait-for</code> command to wait until the release leaves suspended state.</p>
+<p>The id or name of a release to copy existing state from. Note that FoD will put the release in 'suspended' state until copying is complete, during which time scan requests and other operations may be rejected. If you want to run any other operations on the release, it is recommended to first invoke the <code>fcli fod release wait-for</code> command to wait until the release leaves suspended state. This option is ignored if the release name to be copied is equal to the release name to be created, or when creating the first release on a (new) application.</p>
 </dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
@@ -92,6 +99,39 @@ fcli_version:
 <dt class="hdlist1"><strong>--status, --sdlc-status</strong>=<em>&lt;sdlcStatusType&gt;</em></dt>
 <dd>
 <p>The SDLC lifecycle status of the release. Valid values: Development, QA, Production</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_application_creation_options_ignored_if_application_exists"><a class="anchor" href="#_application_creation_options_ignored_if_application_exists"></a>Application creation options (ignored if application exists)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--app-criticality</strong>=<em>&lt;criticalityType&gt;</em></dt>
+<dd>
+<p>Required application business criticality when creating a new application. Valid values: High, Medium, Low.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-description</strong>=<em>&lt;appDescription&gt;</em></dt>
+<dd>
+<p>Optional application description when creating a new application.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-groups</strong>=<em>&lt;appUserGroups&gt;</em>[,<em>&lt;appUserGroups&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Optional user group ids or names to give access to the application when creating a new application.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-notify</strong>=<em>&lt;appNotifications&gt;</em>[,<em>&lt;appNotifications&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Optional email address(es) when creating a new application to specify application user(s) to send notifications to.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-owner</strong>=<em>&lt;appOwner&gt;</em></dt>
+<dd>
+<p>Required application owner when creating a new application.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-type</strong>=<em>&lt;appType&gt;</em></dt>
+<dd>
+<p>Required application type when creating a new application. Valid values: Web, ThickClient, Mobile, Microservice.</p>
 </dd>
 </dl>
 </div>
@@ -173,7 +213,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-10-25 14:58:52 UTC
+Last updated 2024-10-30 17:25:26 UTC
 </div>
 </div>
 </body>
