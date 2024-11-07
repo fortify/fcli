@@ -20,9 +20,18 @@ import picocli.CommandLine.Option;
 
 public class SCSastUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
     @Option(names = {"--ssc-url"}, required = true, order=1)
-    @Getter private String url;
+    @Getter private String ssc_url;
+    
+    @Option(names = {"--ctrl-url", "-curl"}, required = false)
+    @Getter private String controllerUrl;
     
     public boolean hasUrlConfig() {
-        return url!=null;
+        return (ssc_url!=null) || (controllerUrl != null);
     }
+
+	@Override
+	public String getUrl() {
+		return ssc_url;
+	}
+	
 }

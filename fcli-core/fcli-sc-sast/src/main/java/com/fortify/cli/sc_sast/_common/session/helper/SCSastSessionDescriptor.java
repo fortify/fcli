@@ -30,6 +30,7 @@ import com.fortify.cli.common.session.helper.SessionSummary;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.sc_sast._common.session.cli.mixin.SCSastUrlConfigOptions;
 import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateRequest;
@@ -63,7 +64,19 @@ public class SCSastSessionDescriptor extends AbstractSessionDescriptor {
         this.scSastClientAuthToken = scSastClientAuthToken;
         this.cachedSscTokenResponse = getOrGenerateToken(sscUrlConfig, credentialsConfig);
         char[] activeToken = getActiveSSCToken();
-        this.scSastUrlConfig = activeToken==null ? null : buildScSastUrlConfig(sscUrlConfig, scSastUrlConfig, activeToken);
+        
+		if (sscUrlConfig instanceof SCSastUrlConfigOptions sastCtrlUrl) {
+			String controllerUrl = sastCtrlUrl.getControllerUrl();
+			
+			if (controllerUrl!=null) {
+				UrlConfig.UrlConfigBuilder builder = UrlConfig.builderFrom(sscUrlConfig, scSastUrlConfig);
+				builder.url(controllerUrl);
+				this.scSastUrlConfig = builder.build();
+			} else {
+				this.scSastUrlConfig = activeToken == null ? null
+						: buildScSastUrlConfig(sscUrlConfig, scSastUrlConfig, activeToken);
+			}
+		}
     }
 
     @JsonIgnore
