@@ -21,7 +21,7 @@ import picocli.CommandLine.Option;
 
 public class SCSastSessionLoginOptions {
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
-    @Getter private SCSastUrlConfigOptions urlConfigOptions = new SCSastUrlConfigOptions();
+    @Getter private SCSastAndSSCUrlConfigOptions urlConfigOptions = new SCSastAndSSCUrlConfigOptions();
     
     @Option(names = {"--client-auth-token", "-c"}, required = true, interactive = true, arity = "0..1", echo = false) 
     @Getter private char[] clientAuthToken;

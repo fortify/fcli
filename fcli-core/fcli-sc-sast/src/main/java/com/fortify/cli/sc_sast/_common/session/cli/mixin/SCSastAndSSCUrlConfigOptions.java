@@ -13,16 +13,19 @@
 package com.fortify.cli.sc_sast._common.session.cli.mixin;
 
 import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
-import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
+import com.fortify.cli.sc_sast._common.session.helper.ISCSastAndSSCUrlConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class SCSastUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
+public class SCSastAndSSCUrlConfigOptions extends ConnectionConfigOptions implements ISCSastAndSSCUrlConfig {
     @Option(names = {"--ssc-url"}, required = true, order=1)
-    @Getter private String url;
+    @Getter private String sscUrl;
     
-    public boolean hasUrlConfig() {
-        return url!=null;
-    }
+    @Option(names = {"--ctrl-url", "-curl"}, required = false, order=1)
+    @Getter private String controllerUrl;
+//    
+//    public boolean hasUrlConfig() {
+//        return controllerUrl!=null;
+//    }
 }

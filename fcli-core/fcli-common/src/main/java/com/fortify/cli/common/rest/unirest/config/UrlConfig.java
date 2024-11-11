@@ -35,15 +35,7 @@ public class UrlConfig implements IUrlConfig {
     }
     
     public static final UrlConfigBuilder builderFrom(IUrlConfig other) {
-        UrlConfigBuilder builder = UrlConfig.builder();
-        if ( other!=null ) {
-            builder = builder
-                .url(other.getUrl())
-                .insecureModeEnabled(other.isInsecureModeEnabled())
-                .connectTimeoutInMillis(other.getConnectTimeoutInMillis())
-                .socketTimeoutInMillis(other.getSocketTimeoutInMillis());
-        }
-        return builder;
+        return builderFrom(other);
     }
     
     public static final UrlConfigBuilder builderFrom(IUrlConfig other, IUrlConfig overrides) {
@@ -53,6 +45,17 @@ public class UrlConfig implements IUrlConfig {
             override(overrides.getInsecureModeEnabled(), builder::insecureModeEnabled);
             builder.connectTimeoutInMillis(overrides.getConnectTimeoutInMillis())
                 .socketTimeoutInMillis(overrides.getSocketTimeoutInMillis());
+        }
+        return builder;
+    }
+    
+    public static final UrlConfigBuilder builderFrom(IConnectionConfig other) {
+        UrlConfigBuilder builder = UrlConfig.builder();
+        if ( other!=null ) {
+            builder = builder
+                .insecureModeEnabled(other.isInsecureModeEnabled())
+                .connectTimeoutInMillis(other.getConnectTimeoutInMillis())
+                .socketTimeoutInMillis(other.getSocketTimeoutInMillis());
         }
         return builder;
     }

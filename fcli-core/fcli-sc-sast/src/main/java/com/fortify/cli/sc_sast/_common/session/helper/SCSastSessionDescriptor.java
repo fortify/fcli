@@ -34,8 +34,8 @@ import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse;
-import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse.SSCTokenData;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Data;
@@ -53,17 +53,14 @@ public class SCSastSessionDescriptor extends AbstractSessionDescriptor {
     private char[] predefinedSscToken;
     private SSCTokenGetOrCreateResponse cachedSscTokenResponse;
     
-    public SCSastSessionDescriptor(IUrlConfig sscUrlConfig, ISSCCredentialsConfig credentialsConfig, char[] scSastClientAuthToken) {
-        this(sscUrlConfig, null, credentialsConfig, scSastClientAuthToken);
-    }
     
-    public SCSastSessionDescriptor(IUrlConfig sscUrlConfig, IUrlConfig scSastUrlConfig, ISSCCredentialsConfig credentialsConfig, char[] scSastClientAuthToken) {
-        this.sscUrlConfig = sscUrlConfig;
+    public SCSastSessionDescriptor(ISCSastAndSSCUrlConfig scSastAndSscUrlConfig, ISSCCredentialsConfig credentialsConfig, char[] scSastClientAuthToken) {
+        this.sscUrlConfig = UrlConfig.builderFrom(scSastAndSscUrlConfig).url(scSastAndSscUrlConfig.getSscUrl()).build();
         this.predefinedSscToken = credentialsConfig.getPredefinedToken();
         this.scSastClientAuthToken = scSastClientAuthToken;
         this.cachedSscTokenResponse = getOrGenerateToken(sscUrlConfig, credentialsConfig);
         char[] activeToken = getActiveSSCToken();
-        this.scSastUrlConfig = activeToken==null ? null : buildScSastUrlConfig(sscUrlConfig, scSastUrlConfig, activeToken);
+        this.scSastUrlConfig = activeToken==null ? null : buildScSastUrlConfig(sscUrlConfig, scSastAndSscUrlConfig, activeToken);
     }
 
     @JsonIgnore
@@ -164,13 +161,12 @@ public class SCSastSessionDescriptor extends AbstractSessionDescriptor {
                 : cachedSscTokenResponse.getData();
     }
     
-    private static final IUrlConfig buildScSastUrlConfig(IUrlConfig sscUrlConfig, IUrlConfig scSastUrlConfig, char[] activeToken) {
-        String scSastUrl = scSastUrlConfig!=null && StringUtils.isNotBlank(scSastUrlConfig.getUrl())
-                ? scSastUrlConfig.getUrl()
-                : getScSastUrl(sscUrlConfig, activeToken);
-        UrlConfig.UrlConfigBuilder builder = UrlConfig.builderFrom(sscUrlConfig, scSastUrlConfig);
-        builder.url(scSastUrl);
-        return builder.build();
+    private static final IUrlConfig buildScSastUrlConfig(IUrlConfig sscUrlConfig, ISCSastAndSSCUrlConfig scSastAndSscUrlConfig, char[] activeToken) {
+        String controllerUrl = scSastAndSscUrlConfig.getControllerUrl();
+        if (null == controllerUrl || StringUtils.isBlank(controllerUrl)) {
+            controllerUrl = getScSastUrl(sscUrlConfig, activeToken);
+        }
+        return UrlConfig.builderFrom(scSastAndSscUrlConfig).url(controllerUrl).build();
     }
 
     private static String getScSastUrl(IUrlConfig sscUrlConfig, char[] activeToken) {

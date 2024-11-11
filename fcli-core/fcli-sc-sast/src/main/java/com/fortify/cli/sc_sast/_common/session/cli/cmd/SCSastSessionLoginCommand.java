@@ -15,10 +15,10 @@ package com.fortify.cli.sc_sast._common.session.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
-import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.cli.sc_sast._common.rest.helper.SCSastUnirestHelper;
 import com.fortify.cli.sc_sast._common.session.cli.mixin.SCSastSessionLoginOptions;
+import com.fortify.cli.sc_sast._common.session.helper.ISCSastAndSSCUrlConfig;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionDescriptor;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionHelper;
 import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
@@ -41,7 +41,7 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     
     @Override
     protected SCSastSessionDescriptor login(String sessionName) {
-        IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
+        ISCSastAndSSCUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
         ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
         return new SCSastSessionDescriptor(urlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken());
     }
