@@ -41,9 +41,9 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     
     @Override
     protected SCSastSessionDescriptor login(String sessionName) {
-        ISCSastAndSSCUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
+        ISCSastAndSSCUrlConfig scSastAndSscUrlConfig = sessionLoginOptions.getScSastAndSscUrlConfigOptions();
         ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
-        return new SCSastSessionDescriptor(urlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken());
+        return new SCSastSessionDescriptor(scSastAndSscUrlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken());
     }
     
     @Override

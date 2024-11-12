@@ -35,6 +35,9 @@ public class UrlConfig implements IUrlConfig {
     }
     
     public static final UrlConfigBuilder builderFrom(IUrlConfig other) {
+        if (null != other) {
+            return builderFrom(other).url(other.getUrl());
+        }
         return builderFrom(other);
     }
     
