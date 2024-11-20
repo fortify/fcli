@@ -60,7 +60,7 @@ public class SSCAppVersionHelper {
     }
 
     private static GetRequest getBaseRequest(UnirestInstance unirest, String... fields) {
-        GetRequest request = unirest.get("/api/v1/projectVersions?limit=2");
+        GetRequest request = unirest.get("/api/v1/projectVersions?includeInactive=true&limit=2");
         if ( fields!=null && fields.length>0 ) {
             request.queryString("fields", String.join(",", fields));
         }

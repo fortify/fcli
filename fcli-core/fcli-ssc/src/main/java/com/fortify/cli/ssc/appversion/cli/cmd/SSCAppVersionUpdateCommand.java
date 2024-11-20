@@ -53,6 +53,8 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     private String name;
     @Option(names={"--description","-d"}, required = false)
     private String description;
+    @Option(names={"--active"}, required = false, defaultValue=Option.NULL_VALUE, arity="1")
+    private Boolean active;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -100,6 +102,10 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
         boolean hasUpdate = optionalUpdate(updateData, "name", getUnqualifiedVersionName(name, descriptor));
         hasUpdate |= optionalUpdate(updateData, "description", description);
         hasUpdate |= optionalUpdate(updateData, issueTemplateResolver.getIssueTemplateDescriptor(unirest));
+        if (null != active) {
+            updateData.put("active", active);
+            hasUpdate |= true;
+        }
         return hasUpdate 
                 ? unirest.put(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).body(updateData)
                 : null;
