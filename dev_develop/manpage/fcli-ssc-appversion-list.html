@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241205.131816-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241211.120055-dev_develop" %}
 
 
 <div id="header">
@@ -42,8 +42,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion list</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
-                         <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+<p><strong>fcli ssc appversion list</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [<strong>-e</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                         [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                         [<strong>-i</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                          <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
@@ -95,9 +96,17 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-e</strong>, <strong>--exclude</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Exclude versions that either have no results, or no issues assigned to the current user. Allowed values: empty, no-assigned-issues.</p>
+</dd>
 <dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Embed extra application version data. Allowed values: attrs, attrValuesByName, attrValuesByGuid, bugtracker, customTags, filterSets, folders, resultProcessingRules.</p>
+</dd>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--include</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>List either active (default), inactive, or both active and inactive versions. Allowed values: active, inactive.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
@@ -174,7 +183,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-12-05 13:19:57 UTC
+Last updated 2024-12-11 12:02:33 UTC
 </div>
 </div>
 </body>
