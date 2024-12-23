@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241211.150136-dev_v2.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241223.123934-dev_v2.x" %}
 
 
 <div id="header">
@@ -63,8 +63,8 @@ fcli_version:
        _                          &gt;_] [<strong>-p</strong>=<em>&lt;password&gt;</em>] [<strong>--policy</strong>=<em>&lt;scanPolicy&gt;</em>]
                                  <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--timebox</strong>=<em>&lt;timebox&gt;</em>]
                                  [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>] [<strong>-u</strong>=<em>&lt;username&gt;</em>]
-                                 <strong>--url</strong>=<em>&lt;siteUrl&gt;</em> [<strong>-e</strong>=<em>&lt;exclusions&gt;</em>[,
-                                 <em>&lt;exclusions&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                                 <strong>--url</strong>=<em>&lt;siteUrl&gt;</em> [<strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em>]
+                                 [<strong>-e</strong>=<em>&lt;exclusions&gt;</em>[,<em>&lt;exclusions&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                                  [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                                  [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
@@ -186,6 +186,10 @@ If you wish to use a Login Macro for authentication then you can upload it direc
 <dd>
 <p>Base URL for accessing the remote system.</p>
 </dd>
+<dt class="hdlist1"><strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em></dt>
+<dd>
+<p>Fortify Connect network name to use for site-to-site VPN. If specified, environment will be set to Internal.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -253,7 +257,7 @@ If you wish to use a Login Macro for authentication then you can upload it direc
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-12-11 15:03:14 UTC
+Last updated 2024-12-23 12:41:12 UTC
 </div>
 </div>
 </body>
