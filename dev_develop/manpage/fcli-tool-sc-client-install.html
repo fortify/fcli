@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241217.141323-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20241223.120621-dev_develop" %}
 
 
 <div id="header">
@@ -41,7 +41,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool sc-client install</strong> [<strong>-y</strong>] [<strong>--[no-]global-bin</strong>]
+<p><strong>fcli tool sc-client install</strong> [<strong>-y</strong>] [<strong>--[no-]global-bin</strong>] [<strong>--with-jre</strong>]
+                            [<strong>--jre-platform</strong>=<em>&lt;jrePlatform&gt;</em>]
                             [<strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em>]
                             [<strong>-p</strong>=<em>&lt;platform&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                             [<strong>-t</strong>=<em>&lt;clientAuthToken&gt;</em>] [<strong>-v</strong>=<em>&lt;version&gt;</em>]
@@ -99,6 +100,10 @@ fcli_version:
 <dd>
 <p>Tool installation directory. Deprecated, use --base-dir instead.</p>
 </dd>
+<dt class="hdlist1"><strong>--jre-platform</strong>=<em>&lt;jrePlatform&gt;</em></dt>
+<dd>
+<p>(PREVIEW) Specify the platform for which to install the JRE, implies --with-jre. See <a href="https://github.com/fortify/tool-definitions/blob/main/v1/jre.yaml" class="bare">https://github.com/fortify/tool-definitions/blob/main/v1/jre.yaml</a> for available platforms. Default value: current platform.</p>
+</dd>
 <dt class="hdlist1"><strong>--[no-]global-bin</strong></dt>
 <dd>
 <p>By default, wrapper scripts will be installed to &lt;base-dir&gt;/bin; use --no-global-bin to skip installing/updating these wrapper scripts.</p>
@@ -126,6 +131,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;version&gt;</em></dt>
 <dd>
 <p>Tool version to install; see output of list command to view available versions. Default value: latest</p>
+</dd>
+<dt class="hdlist1"><strong>--with-jre</strong></dt>
+<dd>
+<p>(PREVIEW) Install compatible JRE into the ScanCentral Client JRE directory, allowing ScanCentral Client to run even if no (compatible) JRE is installed elsewhere on the system.</p>
 </dd>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
@@ -185,7 +194,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-12-17 14:15:04 UTC
+Last updated 2024-12-23 12:08:06 UTC
 </div>
 </div>
 </body>
