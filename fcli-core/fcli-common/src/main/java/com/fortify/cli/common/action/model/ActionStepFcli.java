@@ -22,8 +22,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * This class describes a forEach element, allowing iteration over the output of
- * a given input.
+ * This class describes an fcli element, allowing to invoke fcli and iterating over
+ * JSON output through the forEach property.
  */
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)

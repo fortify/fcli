@@ -1,5 +1,5 @@
 apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.gradleup.shadow'
 
 // Define dependencies on all fcli Gradle projects
 dependencies {
@@ -36,8 +36,33 @@ application {
     // fcliMainClassName is defined in top-level gradle.properties
     mainClass.set(fcliMainClassName)
 }
+jar {
+    dependsOn('generatePicocliReflectConfig')
+    archiveBaseName.set('fcli-app')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    from(["$generatedPicocliReflectConfigDir"])
+    manifest {
+        attributes(
+            'Implementation-Title': 'fcli',
+            'Implementation-Version': version,
+            'Main-Class': fcliMainClassName,
+            'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+        )
+    }
+}
+task individualJars(type: Copy) {
+    dependsOn 'jar'
+    from(configurations.runtimeClasspath) {
+        include "*.jar"
+    }
+    from("build/libs") {
+        include "fcli-app.jar"
+    }
+    into 'build/individualJars'
+}
 shadowJar {
-	mergeServiceFiles()
+    mergeServiceFiles()
     archiveBaseName.set('fcli')
     archiveClassifier.set('')
     archiveVersion.set('')
@@ -59,11 +84,22 @@ task distThirdPartyReleaseAsset {
 	}
 }
 
-task dist(type: Copy) {
-	dependsOn 'shadowJar'
+task distFcli(type: Copy) {
+    dependsOn 'shadowJar'
     dependsOn(createDistDir)
 	into "${releaseAssetsDir}"
 	from("${buildDir}/libs") {
         include "fcli.jar"
     }
+}
+task distIndividualJars(type: Copy) {
+    dependsOn 'individualJars'
+    dependsOn(createDistDir)
+    into "${distDir}/individualJars"
+    from "${buildDir}/individualJars"
+}
+
+task dist {
+    dependsOn 'distFcli'
+    dependsOn 'distIndividualJars'
 }

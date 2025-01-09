@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.runner;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +31,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.expression.spel.SpelEvaluationException;
@@ -60,6 +63,7 @@ import com.fortify.cli.common.action.model.ActionStepCheck.CheckStatus;
 import com.fortify.cli.common.action.model.ActionStepFcli;
 import com.fortify.cli.common.action.model.ActionStepForEach;
 import com.fortify.cli.common.action.model.ActionStepForEach.IActionStepForEachProcessor;
+import com.fortify.cli.common.action.model.ActionStepJS;
 import com.fortify.cli.common.action.model.ActionStepRequest;
 import com.fortify.cli.common.action.model.ActionStepRequest.ActionStepRequestForEachDescriptor;
 import com.fortify.cli.common.action.model.ActionStepRequest.ActionStepRequestPagingProgressDescriptor;
@@ -92,6 +96,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseC
 import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spring.expression.ISpelEvaluator;
 import com.fortify.cli.common.spring.expression.SpelEvaluator;
+import com.fortify.cli.common.spring.expression.SpelFunctionsStandard;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.JavaHelper;
@@ -104,6 +109,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import picocli.CommandLine;
 
 // TODO Move processing of each descriptor element into a separate class,
@@ -149,6 +155,8 @@ public class ActionRunner implements AutoCloseable {
     private final PrintStream stdout = System.out;
     /** Save original stderr for delayed output operations */
     private final PrintStream stderr = System.err;
+    /** Polyglot context for executing script sections */
+    private final PolyglotContextHolder polyglotContextHolder = new PolyglotContextHolder();
     @Builder.Default private int exitCode = 0;
     @Builder.Default private boolean exitRequested = false;
     
@@ -411,6 +419,7 @@ public class ActionRunner implements AutoCloseable {
                 processStepEntries(step::getCheck, this::processCheckStep);
                 processStepEntries(step::getWrite, this::processWriteStep);
                 processStepEntries(step::getSteps, this::processStep);
+                processStepEntries(step::getJs, this::processJSStep);
             }
         }
         
@@ -653,6 +662,25 @@ public class ActionRunner implements AutoCloseable {
                     : !spelEvaluator.evaluate(failIf, localData, Boolean.class);
             var currentStatus = pass ? CheckStatus.PASS : CheckStatus.FAIL;
             checkStatuses.compute(displayName, (name,oldStatus)->CheckStatus.combine(oldStatus, currentStatus));
+        }
+        
+        private void processJSStep(ActionStepJS script) {
+            var eval = script.getEval();
+            var ctx = polyglotContextHolder.getContext();
+            var value = ctx.eval("js", eval);
+            if ( value.canExecute() ) {
+                value.executeVoid(new JSData());
+            }
+        }
+        
+        @Reflectable
+        public final class JSData {
+            public Object eval(String expression) {
+                return spelEvaluator.evaluate(expression, localData, Object.class);
+            }
+            public void set(String name, Object value) {
+                setDataValue(name, objectMapper.convertValue(value, JsonNode.class));
+            }
         }
         
         private void processFcliStep(ActionStepFcli fcli) {
@@ -1033,6 +1061,73 @@ public class ActionRunner implements AutoCloseable {
 
         public StepProcessingException(Throwable cause) {
             super(cause);
+        }
+    }
+    
+    private final class PolyglotContextHolder implements AutoCloseable {
+        private Context context;
+        
+        public final Context getContext() {
+            if ( context==null ) {
+                context = createContext();
+            }
+            return context;
+        }
+        
+        private final Context createContext() {
+            var ctx = Context.newBuilder("js")
+                    .allowAllAccess(true)
+                    .allowHostClassLoading(false)
+                    .allowNativeAccess(false)
+                    .useSystemExit(false)
+                    .logHandler(System.out)
+                    .option("engine.WarnInterpreterOnly", "false")
+                    .build();
+            var result = ctx.eval("js", "new Object()");
+            registerStaticMembers(ctx, result, ActionSpelFunctions.class);
+            registerStaticMembers(ctx, result, SpelFunctionsStandard.class);
+            registerStaticMembers(ctx, result, StringUtils.class);
+            registerMembers(ctx, result, new JSUtil());
+            ctx.getBindings("js").putMember("_", result);
+            return ctx;
+        }
+
+        private void registerStaticMembers(Context ctx, Value result, Class<?> clazz) {
+            registerMembers(ctx, result, ctx.asValue(clazz).getMember("static"));
+        }
+
+        private void registerMembers(Context ctx, Value result, Object obj) {
+            var value = ctx.asValue(obj);
+            for ( var memberName : value.getMemberKeys() ) {
+                if ( !memberName.equals("class") ) {
+                    var member = value.getMember(memberName);
+                    var hostObject = value.asHostObject();
+                    result.putMember(memberName, member);
+                }
+            }
+        }
+        
+        @SneakyThrows
+        private static final Object invoke(Method m, Object[] args) {
+            return m.invoke(null, args);
+        }
+        
+        @Override
+        public void close() {
+            if ( context!=null ) {
+                context.close();
+            }
+        }
+    }
+    
+    @Reflectable
+    public final class JSUtil {
+        public Object eval(Object input, String expr) {
+            return spelEvaluator.evaluate(expr, input, Object.class);
+        }
+        public void fcli(String args, Value recordConsumer) {
+            var executor = new FcliCommandExecutor(rootCommandLine, args);
+            executor.execute(o->recordConsumer.executeVoid(o), true);
         }
     }
 }

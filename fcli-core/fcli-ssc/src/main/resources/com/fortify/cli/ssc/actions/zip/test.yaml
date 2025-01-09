@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+author: Fortify
+usage:
+  header: JavaScript test. 
+  description: |
+    This action is used to test JavaScript execution
+
+defaults:
+  requestTarget: ssc
+  
+parameters:
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  
+steps:
+  - js:
+    - eval: |
+        function logAppVersionId(data){
+            console.log('JS: Application version id:' + data.eval('parameters.appversion.id'));
+            data.set("sample", { 'a': 1, 'b': 2})
+        }
+        function logIssue(record) {
+            console.log('JS: Issue: ' + _.eval(record, 'primaryLocation+"("+lineNumber+"): "+issueName'))
+        }
+        function listIssues(data) {
+            _.fcli('ssc issue ls --av '+data.eval('parameters.appversion.id'), logIssue);
+        }
+        function listFunctions(data) {
+            for(var p in _){
+                console.log(p);
+            }
+        }
+        function t(data) {
+            console.log("PATH: "+_.env("PATH"))
+        }
+    - eval: |
+        (logAppVersionId)
+    - eval: (listIssues)
+    - eval: (listFunctions)
+    - eval: (t)
+  - progress: "Sample: ${sample.a}"

@@ -1,6 +1,6 @@
 plugins {
     id('com.github.jk1.dependency-license-report') version '2.6' apply false
-    id("com.github.johnrengelman.shadow") version "8.1.1" apply false
+    id("com.gradleup.shadow") version "8.3.5" apply false
     id "org.asciidoctor.jvm.convert" version "4.0.2" apply false
     //id "org.asciidoctor.jvm.convert" version "3.3.2" apply false
     id "io.freefair.lombok" version "8.6" apply false

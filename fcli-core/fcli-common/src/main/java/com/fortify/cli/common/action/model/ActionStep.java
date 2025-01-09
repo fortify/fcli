@@ -85,6 +85,9 @@ public final class ActionStep extends AbstractActionStep {
     @JsonPropertyDescription("Optional list: Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.")
     @JsonProperty(required = false) private List<ActionStep> steps;
     
+    @JsonPropertyDescription("Optional list: JavaScript scripts to be evaluated.")
+    @JsonProperty(required = false) private List<ActionStepJS> js;
+    
     /**
      * This method is invoked by the parent element (which may either be another
      * step element, or the top-level {@link Action} instance).

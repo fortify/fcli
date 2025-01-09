@@ -83,6 +83,10 @@ dependencies {
     
     // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
     implementation('org.jsoup:jsoup')
+    
+    // JavaScript engine
+    implementation('org.graalvm.polyglot:polyglot:24.1.1')
+    implementation('org.graalvm.polyglot:js-community:24.1.1')
 }
     
 compileJava {

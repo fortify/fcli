@@ -31,6 +31,7 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
 import org.jsoup.safety.Safelist;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.util.StringUtils;

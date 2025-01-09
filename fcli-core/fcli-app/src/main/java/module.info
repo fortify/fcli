@@ -1,0 +1,3 @@
+module com.fortify.cli.app {
+     requires org.graalvm.polyglot;
+ }

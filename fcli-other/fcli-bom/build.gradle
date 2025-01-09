@@ -58,5 +58,9 @@ dependencies {
         
         // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
         api('org.jsoup:jsoup:1.17.2')
+        
+        // JavaScript engine
+        api('org.graalvm.polyglot:polyglot-community:24.1.1')
+        api('org.graalvm.polyglot:js-community:24.1.1')
 	}
 }

@@ -58,4 +58,6 @@ public class FCLIRootCommands extends AbstractContainerCommand {
     @Option(names = {"-V", "--version"}, versionHelp = true, scope = ScopeType.LOCAL, order = -1002)
     @DisableTest(TestType.OPT_SHORT_NAME)
     boolean versionInfoRequested;
+
 }
+
