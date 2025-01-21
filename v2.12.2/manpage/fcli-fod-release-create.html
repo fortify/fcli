@@ -1,0 +1,220 @@
+---
+title: fcli-fod-release-create(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-fod-release-create(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="2.12.2" %}
+
+
+<div id="header">
+<h1>fcli-fod-release-create(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_application_creation_options_ignored_if_application_exists">Application creation options (ignored if application exists)</a></li>
+<li><a href="#_session_options">Session options</a></li>
+<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-fod-release-create - Create a new application release.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli fod release create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--skip-if-exists</strong>]
+                        [<strong>--copy-from</strong>=<em>id|app[:ms]:rel</em>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
+                        [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--status</strong>=<em>&lt;sdlcStatusType&gt;</em>
+                        <em class="<strong>--attrs</strong>=_[ATTR=VALUE">[,</em>[ATTR=VALUE]<em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                        [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                        <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
+          _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                        [[<strong>--app-description</strong>=<em>&lt;appDescription&gt;</em>]
+                        [<strong>--app-notify</strong>=<em>&lt;appNotifications&gt;</em>[,
+                        <em>&lt;appNotifications&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--app-owner</strong>=<em>&lt;appOwner&gt;</em>]
+                        [<strong>--app-groups</strong>=<em>&lt;appUserGroups&gt;</em>[,<em>&lt;appUserGroups&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                        [<strong>--app-type</strong>=<em>&lt;appType&gt;</em>]
+                        [<strong>--app-criticality</strong>=<em>&lt;criticalityType&gt;</em>]] <em>app[:ms]:rel</em></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[ATTR=VALUE]</em>[,<em>[ATTR=VALUE]</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Set of application &amp; release attribute id&#8217;s or names and corresponding values. Please note for user attributes only the userId is currently supported. Depending on FoD configuration, some attributes may be required and either need to be set explicitly or auto-filled through the --auto-required-attrs option. Application attributes will be applied when creating a new application and ignored if the application already exists. Similarly, release attributes will be ignored if the release already exists and --skip-if-exists is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--auto-required-attrs</strong></dt>
+<dd>
+<p>Automatically set a default value for required application and release attributes.</p>
+</dd>
+<dt class="hdlist1"><strong>--copy-from</strong>=<em>id|app[:ms]:rel</em></dt>
+<dd>
+<p>The id or name of a release to copy existing state from. Note that FoD will put the release in 'suspended' state until copying is complete, during which time scan requests and other operations may be rejected. If you want to run any other operations on the release, it is recommended to first invoke the <code>fcli fod release wait-for</code> command to wait until the release leaves suspended state. This option is ignored if the release name to be copied is equal to the release name to be created, or when creating the first release on a (new) application.</p>
+</dd>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
+<dd>
+<p>Description of the release.</p>
+</dd>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
+<dd>
+<p>Check to see if release already exists before creating.</p>
+</dd>
+<dt class="hdlist1"><strong>--status, --sdlc-status</strong>=<em>&lt;sdlcStatusType&gt;</em></dt>
+<dd>
+<p>The SDLC lifecycle status of the release. Valid values: Development, QA, Production, Retired</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_application_creation_options_ignored_if_application_exists"><a class="anchor" href="#_application_creation_options_ignored_if_application_exists"></a>Application creation options (ignored if application exists)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--app-criticality</strong>=<em>&lt;criticalityType&gt;</em></dt>
+<dd>
+<p>Required application business criticality when creating a new application. Valid values: High, Medium, Low.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-description</strong>=<em>&lt;appDescription&gt;</em></dt>
+<dd>
+<p>Optional application description when creating a new application.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-groups</strong>=<em>&lt;appUserGroups&gt;</em>[,<em>&lt;appUserGroups&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Optional user group ids or names to give access to the application when creating a new application.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-notify</strong>=<em>&lt;appNotifications&gt;</em>[,<em>&lt;appNotifications&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Optional email address(es) when creating a new application to specify application user(s) to send notifications to.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-owner</strong>=<em>&lt;appOwner&gt;</em></dt>
+<dd>
+<p>Required application owner when creating a new application.</p>
+</dd>
+<dt class="hdlist1"><strong>--app-type</strong>=<em>&lt;appType&gt;</em></dt>
+<dd>
+<p>Required application type when creating a new application. Valid values: Web, ThickClient, Mobile, Microservice.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the FoD session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>app[:ms]:rel</em></dt>
+<dd>
+<p>Release name in the format &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt;.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-01-21 15:06:53 UTC
+</div>
+</div>
+</body>
+</html>
