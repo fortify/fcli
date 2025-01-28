@@ -4,6 +4,30 @@
     "ActionStep" : {
       "type" : "object",
       "properties" : {
+        "addRequestTargets" : {
+          "description" : "Optional list: Add target URLs and related properties for REST requests.",
+          "type" : "array",
+          "items" : {
+            "type" : "object",
+            "properties" : {
+              "baseUrl" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
+                "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target."
+              },
+              "headers" : {
+                "$ref" : "#/$defs/Map(String,TemplateExpression)",
+                "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request."
+              },
+              "name" : {
+                "type" : "string",
+                "description" : "Required string: Request target name, referenceable from 'request' steps."
+              }
+            },
+            "required" : [ "baseUrl", "name" ],
+            "additionalProperties" : false
+          }
+        },
         "append" : {
           "description" : "Optional list: Append a data value for use in subsequent steps.",
           "type" : "array",
@@ -416,30 +440,6 @@
     "$schema" : {
       "type" : "string",
       "description" : "Required string unless `yaml-language-server` comment with schema location is provided: Schema location."
-    },
-    "addRequestTargets" : {
-      "description" : "Optional list: Add target URLs and related properties for REST requests.",
-      "type" : "array",
-      "items" : {
-        "type" : "object",
-        "properties" : {
-          "baseUrl" : {
-            "format" : "spelTemplateExpression",
-            "type" : [ "boolean", "integer", "string", "number" ],
-            "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target."
-          },
-          "headers" : {
-            "$ref" : "#/$defs/Map(String,TemplateExpression)",
-            "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request."
-          },
-          "name" : {
-            "type" : "string",
-            "description" : "Required string: Request target name, referenceable from 'request' steps."
-          }
-        },
-        "required" : [ "baseUrl", "name" ],
-        "additionalProperties" : false
-      }
     },
     "author" : {
       "type" : "string",
