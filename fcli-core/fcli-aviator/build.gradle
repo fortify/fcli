@@ -1,0 +1,69 @@
+plugins {
+    id 'java'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
+
+task zipResources_actions(type: Zip) {
+    destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/aviator")
+    archiveFileName = "actions.zip"
+    from("${projectDir}/src/main/resources/com/fortify/cli/aviator/actions/zip") {
+        // TODO We should also sign file; how do we invoke a sign operation from Gradle?
+        filter(line->project.version.startsWith('0.')
+                ? line
+                : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json",
+                "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"))
+    }
+    include '*.yaml'
+}
+
+tasks.withType(JavaCompile) {
+    dependsOn 'generateProto'
+}
+
+dependencies {
+    implementation(project(":fcli-core:fcli-common"))
+
+    implementation("args4j:args4j:2.37")
+    implementation("org.json:json:20231013")
+    implementation("org.yaml:snakeyaml:2.2")
+
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+
+    implementation("io.grpc:grpc-netty-shaded:1.69.0")
+    implementation("io.grpc:grpc-protobuf:1.69.0")
+    implementation("io.grpc:grpc-stub:1.69.0")
+    compileOnly("org.apache.tomcat:annotations-api:6.0.53")
+
+    implementation("com.google.protobuf:protobuf-java:4.28.3")
+    implementation(files(fileTree(protobuf.generatedFilesBaseDir).matching { include "**/*.java" }))
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.28.3"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.69.0"
+        }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins {
+                grpc {} // Enables gRPC stub generation
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += "${protobuf.generatedFilesBaseDir}/main/grpc"
+            srcDirs += "${protobuf.generatedFilesBaseDir}/main/java"
+        }
+    }
+}
