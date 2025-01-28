@@ -10,3 +10,7 @@ task zipResources_actions(type: Zip) {
     include '*.yaml'
 }
 apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
+
+dependencies {
+    implementation project("${fcliAviatorRef}")
+}

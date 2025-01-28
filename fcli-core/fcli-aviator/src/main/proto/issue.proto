@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.fortify.aviator.grpc";
+
+package issue;
+
+service AuditorService {
+  rpc ProcessStream (stream UserPromptRequest) returns (stream AuditorResponse);
+}
+
+message IssueData {
+  string accuracy = 1;
+  string analyzer_name = 2;
+  string class_id = 3;
+  string confidence = 4;
+  string default_severity = 5;
+  string impact = 6;
+  string instance_id = 7;
+  string instance_severity = 8;
+  string filetype = 9;
+  string kingdom = 10;
+  string likelihood = 11;
+  string priority = 12;
+  string probability = 13;
+  string sub_type = 14;
+  string type = 15;
+
+}
+
+message AnalysisInfo {
+  string shortDescription=1;
+  string  explanation=2;
+}
+
+message StackTraceElement {
+  string filename = 1;
+  int32 line = 2;
+  string code = 3;
+  string node_type = 4;
+  Fragment fragment = 5;
+  string additional_info = 6;
+  string taintflags = 7;
+  repeated StackTraceElement inner_stack_trace = 8;
+}
+message Fragment {
+  string content = 1;
+  int32 start_line = 2;
+  int32 end_line = 3;
+}
+// StreamInitRequest will be used for the first message
+message StreamInitRequest {
+  string tenantId = 1;
+  string tokenName = 2;
+  string projectId = 3;
+  string entitlementId = 4;
+  string streamId = 5;
+  string requestId = 6;
+}
+message UserPromptRequest {
+  oneof request_type {
+    StreamInitRequest init = 1;
+    AuditRequest audit = 2;
+  }
+}
+message AuditRequest {
+  IssueData issueData = 1;
+  AnalysisInfo analysisInfo = 2;
+  repeated StackTraceElementList stackTrace = 3;
+  repeated StackTraceElement firstStackTrace = 4;
+  repeated StackTraceElement longestStackTrace = 5;
+  repeated File files = 6;
+  StackTraceElement lastStackTraceElement = 7;
+  repeated string programmingLanguages = 8;
+  string fileExtension = 9;
+  string language = 10;
+  string category = 11;
+  string tier = 12;
+  StackTraceElement source = 13;
+  StackTraceElement sink = 14;
+  string categoryLevel = 15;
+  string requestId = 16;
+  string streamId = 17;
+
+  string tenantId = 18;
+  string tokenName = 19;
+  string projectId = 20;
+  string entitlementId = 21;
+}
+message File {
+  string name = 1;
+  string content = 2;
+  bool segment = 3;
+  int32 start_line = 4;
+  int32 end_line = 5;
+}
+message StackTraceElementList {
+  repeated StackTraceElement elements = 1;
+}
+
+message AuditorResponse {
+  AuditResult auditResult = 1;
+  int32 inputToken = 2;
+  int32 outputToken = 3;
+  string status = 4;
+  string statusMessage = 5;
+  string issueId = 6;
+  string tier = 7;
+  string aviatorPredictionTag = 8;
+  bool isAviatorProcessed = 9;
+  string userPrompt = 10;
+  string systemPrompt = 11;
+  string requestId = 12;
+  string streamId = 13;
+}
+
+message AuditResult {
+  string tagValue = 1;
+  string comment = 2;
+}
+message FinalSummary {
+  string summary = 1;
+  int32 total_messages = 2;
+  // Add any other summary fields needed
+}
