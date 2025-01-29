@@ -29,8 +29,8 @@ dependencies {
     implementation("org.json:json:20231013")
     implementation("org.yaml:snakeyaml:2.2")
 
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
-    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:2.3.3")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
 
     implementation("io.grpc:grpc-netty-shaded:1.69.0")
     implementation("io.grpc:grpc-protobuf:1.69.0")
