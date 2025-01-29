@@ -4,30 +4,6 @@
     "ActionStep" : {
       "type" : "object",
       "properties" : {
-        "addRequestTargets" : {
-          "description" : "Optional list: Add target URLs and related properties for REST requests.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "baseUrl" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target."
-              },
-              "headers" : {
-                "$ref" : "#/$defs/Map(String,TemplateExpression)",
-                "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request."
-              },
-              "name" : {
-                "type" : "string",
-                "description" : "Required string: Request target name, referenceable from 'request' steps."
-              }
-            },
-            "required" : [ "baseUrl", "name" ],
-            "additionalProperties" : false
-          }
-        },
         "append" : {
           "description" : "Optional list: Append a data value for use in subsequent steps.",
           "type" : "array",
@@ -441,30 +417,44 @@
       "type" : "string",
       "description" : "Required string unless `yaml-language-server` comment with schema location is provided: Schema location."
     },
+    "addRequestTargets" : {
+      "description" : "Optional list: Add target URLs and related properties for REST requests.",
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "baseUrl" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number" ],
+            "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target."
+          },
+          "headers" : {
+            "$ref" : "#/$defs/Map(String,TemplateExpression)",
+            "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request."
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Required string: Request target name, referenceable from 'request' steps."
+          }
+        },
+        "required" : [ "baseUrl", "name" ],
+        "additionalProperties" : false
+      }
+    },
     "author" : {
       "type" : "string",
       "description" : "Required string: Author of this action."
     },
-    "config" : {
+    "defaults" : {
       "type" : "object",
       "properties" : {
-        "defaultRequestTarget" : {
+        "requestTarget" : {
           "type" : "string",
-          "description" : "Optional string: Default request target to use for requests: steps."
-        },
-        "output" : {
-          "type" : "string",
-          "enum" : [ "immediate", "delayed" ],
-          "description" : "Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless set to 'none') to avoid such output from interfering with progress messages."
-        },
-        "sessionFromEnvOutput" : {
-          "type" : "string",
-          "enum" : [ "show", "suppress" ],
-          "description" : "Optional enum value: Whether to 'suppress' (default) or 'show' the output of the session login and logout commands when a session is created through --session from-env"
+          "description" : "Optional string: Default request target to use for REST requests."
         }
       },
       "additionalProperties" : false,
-      "description" : "Optional object: Action configuration properties."
+      "description" : "Optional object: Default values for some specific properties. Currently only used to set a default request target."
     },
     "parameters" : {
       "description" : "Optional list: Action parameters.",
