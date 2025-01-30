@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-plugin-get(1)
+title: fcli-tool-fcli-run(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-plugin-get(1)</title>
+<title>fcli-tool-fcli-run(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,21 +20,20 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-ssc-plugin-get(1) Manual Page</h1>
+<h1>fcli-tool-fcli-run(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_session_options">Session options</a></li>
-<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_options">Options</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options</a></li>
 <li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-plugin-get - Get plugin details.</p>
+<p>fcli-tool-fcli-run - Run fcli</p>
 </div>
 </div>
 <div id="content">
@@ -42,49 +41,36 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc plugin get</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                    <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName[:</em>
-      _              &lt;propertyNames&gt;]<em>] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                    <em>&lt;numericPluginId&gt;</em></p>
+<p><strong>fcli tool fcli run</strong> [<strong>-d</strong>=<em>&lt;workDir&gt;</em>] [<strong>--use-shell</strong>=<em>&lt;useShell&gt;</em>] [<strong>-v</strong>=<em>&lt;versionToRun&gt;</em>]
+                   [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<em>&lt;toolArgs&gt;</em>&#8230;&#8203;]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
-</div>
-</div>
-<div class="sect1">
-<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>Name of the SSC session to use for executing this command. Default value: default.</p>
-</dd>
-</dl>
+<div class="paragraph">
+<p>This command allows for running fcli as previously installed through the 'fcli tool fcli install' command. It is recommended to use double dashes to separate fcli options from the options to be passed to the fcli version being invoked, i.e., 'fcli tool fcli run &lt;fcli options&gt;&#8201;&#8212;&#8201;&lt;target fcli version options&gt;' to explicitly differentiate between those.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--workdir</strong>=<em>&lt;workDir&gt;</em></dt>
 <dd>
-<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+<p>The working directory from where the tool should be invoked. Default value: current working directory.</p>
 </dd>
-<dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
+<dt class="hdlist1"><strong>--use-shell</strong>=<em>&lt;useShell&gt;</em></dt>
 <dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+<p>Whether to use a shell to run the wrapper script provided by this tool, or to use a direct Java invocation. Using a shell provides the same behavior as manually invoking the wrapper script from the command line, but may cause issues if no (compatible) shell is available on the system or in a Docker container. Using a direct Java invocation may cause slightly different tool behavior, but will also work if no compatible shell is available and allows for consistent lookup of the appropriate JRE to use, independent of how the wrapper script performs such a JRE lookup. Allowed values: no, yes, auto. Default value: auto, which will first try to run the wrapper script, and fall back to direct Java invocation if shell invocation fails.</p>
 </dd>
-<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;versionToRun&gt;</em></dt>
 <dd>
-<p>Write command output to the specified file instead of stdout.</p>
+<p>Tool version to run. The specified tool version must have been previously installed using the 'install' command. Default value: the tool version that was last installed.</p>
 </dd>
 </dl>
 </div>
@@ -120,9 +106,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>&lt;numericPluginId&gt;</em></dt>
+<dt class="hdlist1">[<em>&lt;toolArgs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Numeric plugin id.</p>
+<p>The arguments to be passed to the tool.</p>
 </dd>
 </dl>
 </div>

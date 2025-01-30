@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250130.063521-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250130.092151-dev_v3.x-develop" %}
 
 
 <div id="header">
@@ -67,7 +67,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--use-shell</strong>=<em>&lt;useShell&gt;</em></dt>
 <dd>
-<p>Whether to use a shell to run this tool. Using a shell provides the same behavior as manually invoking the tool from the command line, but may cause issues if no (compatible) shell is available on the system or in a Docker container. Not using a shell may cause slightly different behavior, but will also work if no compatible shell is available, and in the case of Java-based tools, allows for consistent lookup of the appropriate JRE to use. Allowed values: no, yes, auto. Default value: auto, which will first try to run the tool through a shell, and fall back to not using a shell if shell invocation fails.</p>
+<p>Whether to use a shell to run the wrapper script provided by this tool, or to use a direct Java invocation. Using a shell provides the same behavior as manually invoking the wrapper script from the command line, but may cause issues if no (compatible) shell is available on the system or in a Docker container. Using a direct Java invocation may cause slightly different tool behavior, but will also work if no compatible shell is available and allows for consistent lookup of the appropriate JRE to use, independent of how the wrapper script performs such a JRE lookup. Allowed values: no, yes, auto. Default value: auto, which will first try to run the wrapper script, and fall back to direct Java invocation if shell invocation fails.</p>
 </dd>
 <dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;versionToRun&gt;</em></dt>
 <dd>
@@ -119,7 +119,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-01-30 06:37:02 UTC
+Last updated 2025-01-30 09:23:36 UTC
 </div>
 </div>
 </body>
