@@ -1,22 +1,13 @@
 [
   {
-    "condition": {
-      "typeReachable": "io.grpc.netty.NettyServer"
-    },
-    "name": "io.netty.buffer.AbstractByteBufAllocator",
-    "allDeclaredMethods": true
-  },
-  {
-    "condition": {
-      "typeReachable": "io.grpc.netty.NettyChannelBuilder"
-    },
-    "name": "io.netty.channel.socket.nio.NioSocketChannel",
+    "name": "io.grpc.netty.shaded.io.netty.buffer.AbstractByteBufAllocator",
     "methods": [
       {
-        "name": "<init>",
-        "parameterTypes": []
+        "name": "toLeakAwareBuffer",
+        "parameterTypes": [
+          "io.grpc.netty.shaded.io.netty.buffer.ByteBuf"
+        ]
       }
     ]
   }
-
 ]
