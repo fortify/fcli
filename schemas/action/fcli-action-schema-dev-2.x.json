@@ -28,40 +28,6 @@
             "additionalProperties" : false
           }
         },
-        "append" : {
-          "description" : "Optional list: Append a data value for use in subsequent steps.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-              },
-              "name" : {
-                "type" : "string",
-                "description" : "Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${[name]}."
-              },
-              "property" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Property name to be added or updated in the data object specified by 'name'. If specified, 'name' is considered to be an object, otherwise 'name' is considered to be an array."
-              },
-              "value" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression if 'valueTemplate' is not specified: Value to be assigned or appended to the given name."
-              },
-              "valueTemplate" : {
-                "type" : "string",
-                "description" : "Required string if 'value' is not specified: Name of a value template to be evaluated, assigning or appending the outcome of the value template to the given set/append name."
-              }
-            },
-            "required" : [ "name" ],
-            "additionalProperties" : false
-          }
-        },
         "check" : {
           "description" : "Optional list: Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.",
           "type" : "array",
@@ -105,7 +71,7 @@
         "exit" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "OptionalSpEL template expression: Terminate action execution and return the given exit code."
+          "description" : "Optional SpEL template expression: Terminate action execution and return the given exit code."
         },
         "fcli" : {
           "description" : "Optional list: Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.",
@@ -158,6 +124,36 @@
               }
             },
             "required" : [ "args" ],
+            "additionalProperties" : false
+          }
+        },
+        "file.write" : {
+          "description" : "Optional list: Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.",
+          "type" : "array",
+          "items" : {
+            "type" : "object",
+            "properties" : {
+              "fmt" : {
+                "type" : "string",
+                "description" : "Optional string: Format the value specified through 'value' using the given formatter."
+              },
+              "if" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
+                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
+              },
+              "to" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
+                "description" : "Required SpEL template expression: Specify where to write the given data; either 'stdout', 'stderr' or a filename."
+              },
+              "value" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
+                "description" : "SpEL template expression: Value to be written to the given output. Required if 'fmt' is not specified, otherwise defaults to '#root' to allow the formatter to access all action variables"
+              }
+            },
+            "required" : [ "to" ],
             "additionalProperties" : false
           }
         },
@@ -217,35 +213,6 @@
             "$ref" : "#/$defs/ActionStepRequest"
           }
         },
-        "set" : {
-          "description" : "Optional list: Set a data value for use in subsequent steps.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-              },
-              "name" : {
-                "type" : "string",
-                "description" : "Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${[name]}."
-              },
-              "value" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression if 'valueTemplate' is not specified: Value to be assigned or appended to the given name."
-              },
-              "valueTemplate" : {
-                "type" : "string",
-                "description" : "Required string if 'value' is not specified: Name of a value template to be evaluated, assigning or appending the outcome of the value template to the given set/append name."
-              }
-            },
-            "required" : [ "name" ],
-            "additionalProperties" : false
-          }
-        },
         "steps" : {
           "description" : "Optional list: Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.",
           "type" : "array",
@@ -258,60 +225,26 @@
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional SpEL template expression: Throw an exception, thereby terminating action execution."
         },
-        "unset" : {
-          "description" : "Optional list: Unset a data value for use in subsequent steps.",
+        "var.set" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number" ]
+          },
+          "description" : "    Optional map: Set variables for use in subsequent steps. Both keys and values may be     specified as SpEL template expressions. Variables can either contain a single value,     a set of properties, or an array, based on the following formats for the map keys:\n      <variable name> - Single value variable\n      <variable name>.<property name> - Variable containing a set of properties\n      <variable name>.. - Variable containing an array of values\n    For example:\n      var1: val1        # Set variable 'var1' to 'val1'\n      var2.prop1: val2  # Set 'prop1' in 'var2' to 'val2'\n      var2.prop2: val3  # Add second property in 'var2'\n      var3..: val3      # Append 'val3' to the 'var' array\n    Only a single format is supported for a given variable, for example the following fails:\n      var4.prop1: val1  # Defines 'var4' as a set of properties\n      var4..: val2      # Fails because var4 contains a set of properties, not an array\n    Variables are set in the order that they are declared, so the following is supported:\n      var.set:\n        var5: x         # Set variable `var5` to 'x'\n        var6.${var5}: y # Set property 'x' in 'var6' to 'y'\n        var7: ${var6.x} # Set variable 'var7' to 'y'\n"
+        },
+        "var.unset" : {
+          "description" : "Optional list: Unset variables, supports SpEL template expressions to specify the variable names to be unset.",
           "type" : "array",
           "items" : {
-            "type" : "object",
-            "properties" : {
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-              },
-              "name" : {
-                "type" : "string",
-                "description" : "Required string: Name to unset."
-              }
-            },
-            "required" : [ "name" ],
-            "additionalProperties" : false
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number" ]
           }
         },
         "warn" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional SpEL template expression: Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
-        },
-        "write" : {
-          "description" : "Optional list: Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-              },
-              "to" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression: Specify where to write the given data; either 'stdout', 'stderr' or a filename."
-              },
-              "value" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression if 'valueTemplate' is not specified: Value to be written to the given output."
-              },
-              "valueTemplate" : {
-                "type" : "string",
-                "description" : "Required string if 'value' is not specified: Name of a value template to be evaluated, writing the outcome of the value template to the given output."
-              }
-            },
-            "required" : [ "to" ],
-            "additionalProperties" : false
-          }
         }
       },
       "additionalProperties" : false
@@ -466,6 +399,26 @@
       "additionalProperties" : false,
       "description" : "Optional object: Action configuration properties."
     },
+    "formatters" : {
+      "description" : "Optional list: Formatters that can be referenced in action steps through TODO to format data.",
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "contents" : {
+            "additionalProperties" : true,
+            "type" : [ "object", "string" ],
+            "description" : "Required object|string: Text or structured JSON contents, where each text node is assumed to be a template expression."
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Required string: Name of this value template."
+          }
+        },
+        "required" : [ "contents", "name" ],
+        "additionalProperties" : false
+      }
+    },
     "parameters" : {
       "description" : "Optional list: Action parameters.",
       "type" : "array",
@@ -532,26 +485,6 @@
       "required" : [ "description", "header" ],
       "additionalProperties" : false,
       "description" : "Required object: Action usage help."
-    },
-    "valueTemplates" : {
-      "description" : "Optional list: Value templates used to format data.",
-      "type" : "array",
-      "items" : {
-        "type" : "object",
-        "properties" : {
-          "contents" : {
-            "additionalProperties" : true,
-            "type" : [ "object", "string" ],
-            "description" : "Required object|string: Text or structured JSON contents, where each text node is assumed to be a template expression."
-          },
-          "name" : {
-            "type" : "string",
-            "description" : "Required string: Name of this value template."
-          }
-        },
-        "required" : [ "contents", "name" ],
-        "additionalProperties" : false
-      }
     }
   },
   "required" : [ "author", "steps", "usage" ],
