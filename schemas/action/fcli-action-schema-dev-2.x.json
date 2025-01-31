@@ -427,10 +427,6 @@
       "required" : [ "name", "uri" ],
       "additionalProperties" : false
     },
-    "Entry(TemplateExpression,TemplateExpression)" : {
-      "type" : "object",
-      "additionalProperties" : false
-    },
     "Map(String,TemplateExpression)" : {
       "type" : "object",
       "additionalProperties" : {
@@ -521,50 +517,6 @@
         "$ref" : "#/$defs/ActionStep"
       }
     },
-    "testSteps" : {
-      "type" : "array",
-      "items" : {
-        "anyOf" : [ {
-          "type" : "object",
-          "properties" : {
-            "if" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-            },
-            "var.set" : {
-              "description" : "List of properties to set",
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/Entry(TemplateExpression,TemplateExpression)"
-              }
-            }
-          },
-          "required" : [ "var.set" ],
-          "description" : "Test1 Description",
-          "additionalProperties" : false
-        }, {
-          "type" : "object",
-          "properties" : {
-            "if" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-            },
-            "var.append" : {
-              "description" : "List of properties to append",
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/Entry(TemplateExpression,TemplateExpression)"
-              }
-            }
-          },
-          "required" : [ "var.append" ],
-          "description" : "Test2 Description",
-          "additionalProperties" : false
-        } ]
-      }
-    },
     "usage" : {
       "type" : "object",
       "properties" : {
@@ -602,7 +554,7 @@
       }
     }
   },
-  "required" : [ "author", "steps", "testSteps", "usage" ],
+  "required" : [ "author", "steps", "usage" ],
   "description" : "Fortify CLI action definition",
   "additionalProperties" : false
 }
