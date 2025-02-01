@@ -452,11 +452,7 @@
           },
           "type" : {
             "type" : "string",
-            "description" : "Optional string: Action parameter type. Supported types depends on the fcli module (SSC/FoD) from which the action is being run. See built-in actions for examples of supported types."
-          },
-          "typeParameters" : {
-            "$ref" : "#/$defs/Map(String,TemplateExpression)",
-            "description" : "Optional map(string,SpEL template expression): Action parameter type parameters to allow for additional configuration of the type converter configured through 'type'."
+            "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array."
           }
         },
         "required" : [ "description", "name" ],
