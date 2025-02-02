@@ -1,11 +1,43 @@
 {
   "$schema" : "https://json-schema.org/draft/2020-12/schema",
   "$defs" : {
+    "ActionCliOptions" : {
+      "type" : "object",
+      "properties" : {
+        "alias" : {
+          "type" : "string",
+          "description" : "Optional string: This will allow the action to also accept a CLI option named `--[alias]` or `-[alias]` for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
+        },
+        "defaultValue" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
+          "description" : "Optional SpEL template expression: Default value for this action parameter if no value is specified by the user."
+        },
+        "description" : {
+          "type" : "string",
+          "description" : "Required string: Action parameter description to be shown in action usage help."
+        },
+        "group" : {
+          "type" : "string",
+          "description" : "Optional string: Allows for defining groups of parameters"
+        },
+        "required" : {
+          "type" : "boolean",
+          "description" : "Optional boolean: All parameters are required by default, unless this property is set to false."
+        },
+        "type" : {
+          "type" : "string",
+          "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array."
+        }
+      },
+      "required" : [ "description" ],
+      "additionalProperties" : false
+    },
     "ActionStep" : {
       "type" : "object",
       "properties" : {
         "check" : {
-          "description" : "Optional list: Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.",
+          "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.",
           "type" : "array",
           "items" : {
             "type" : "object",
@@ -42,10 +74,10 @@
         "exit" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Terminate action execution and return the given exit code."
+          "description" : "Terminate action execution and return the given exit code."
         },
         "file.write" : {
-          "description" : "Optional list: Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.",
+          "description" : "Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.",
           "type" : "array",
           "items" : {
             "type" : "object",
@@ -111,7 +143,7 @@
           },
           "required" : [ "do", "name" ],
           "additionalProperties" : false,
-          "description" : "Optional object: Iterate over a given array of values."
+          "description" : "Iterate over a given array of values."
         },
         "if" : {
           "format" : "spelTemplateExpression",
@@ -121,27 +153,27 @@
         "log.debug" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Write a debug message to log file (if enabled)."
+          "description" : "Write a debug message to log file (if enabled)."
         },
         "log.progress" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Write a progress message."
+          "description" : "Write a progress message."
         },
         "log.warn" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
+          "description" : "Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
         },
         "rest.call" : {
-          "description" : "Optional list: Execute one or more REST requests.",
+          "description" : "Execute one or more REST requests.",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStepRestCall"
           }
         },
         "rest.target" : {
-          "description" : "Optional list: Add REST request targets for use in rest.request steps.",
+          "description" : "Add REST request targets for use in 'rest.request' steps.",
           "type" : "array",
           "items" : {
             "type" : "object",
@@ -165,7 +197,7 @@
           }
         },
         "run.fcli" : {
-          "description" : "Optional list: Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.",
+          "description" : "Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.",
           "type" : "array",
           "items" : {
             "type" : "object",
@@ -219,7 +251,7 @@
           }
         },
         "steps" : {
-          "description" : "Optional list: Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.",
+          "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -228,18 +260,18 @@
         "throw" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Throw an exception, thereby terminating action execution."
+          "description" : "Throw an exception, thereby terminating action execution."
+        },
+        "var.fmt" : {
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
+          "description" : "Set one or more variables for use in later action steps with the output of the given formatter. This step takes a map with keys specifying the variable to set or update, and values specifying the formatter to use as defined in the 'formatters' section. Both keys and values accept SpEL template expressions.\n\nThis step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. Following are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nWithin a single 'var.set' or 'var.fmt' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables that are declared later.\n"
         },
         "var.set" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "format" : "spelTemplateExpression",
-            "type" : [ "boolean", "integer", "string", "number" ]
-          },
-          "description" : "Optional map: Set variables for use in subsequent steps. Both keys and values may be specified as SpEL template expressions. Variables can either contain a single value, a set of properties, or an array, based on the following formats for the map keys:\n# Single value variable:\nvarName\n# Variable containing a set of properties\nvarName.propName\n# Variable containing an array of values (two trailing dots)\nvarName..\nFor example:\n# Set variable 'var1' to 'val1'\nvar1: val1\n# Set 'prop1' and 'prop2' in 'var2' to 'val2' and 'val3' respectively\nvar2.prop1: val2\nvar2.prop2: val3\n# Append 'val4' and 'val5' to the 'var3' array\nvar3..: val4\nvar3..: val5\nOnly a single format is supported for a given variable, for example the following would fails as 'var' is first defined as a set of properties, whereas the seond step tries to append an array entry:\nvar4.prop1: val1\nvar4..: val2\nVariables are set in the order that they are declared, so the following is supported within a single 'var.set' block:\nvar5: x\nvar6.${var5}: y\nvar7: ${var6.x}\n"
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
+          "description" : "Set one or more variables values for use in later action steps. This step takes a map with keys specifying the variable to set or update, and values specifying the value to set. Both keys and values accept SpEL template expressions. Note that there's also a 'var.fmt' step that allows for setting values generated by a formatter.\n\nThis step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. Following are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nWithin a single 'var.set' or 'var.fmt' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables that are declared later.\n"
         },
         "var.unset" : {
-          "description" : "Optional list: Unset variables, supports SpEL template expressions to specify the variable names to be unset.",
+          "description" : "Unset variables, supports SpEL template expressions to specify the variable names to be unset.",
           "type" : "array",
           "items" : {
             "format" : "spelTemplateExpression",
@@ -360,6 +392,13 @@
       "required" : [ "name", "uri" ],
       "additionalProperties" : false
     },
+    "LinkedHashMap(TemplateExpression,TemplateExpression)" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "format" : "spelTemplateExpression",
+        "type" : [ "boolean", "integer", "string", "number" ]
+      }
+    },
     "Map(String,TemplateExpression)" : {
       "type" : "object",
       "additionalProperties" : {
@@ -377,6 +416,13 @@
     "author" : {
       "type" : "string",
       "description" : "Required string: Author of this action."
+    },
+    "cli.options" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "$ref" : "#/$defs/ActionCliOptions"
+      },
+      "description" : "Optional map: CLI options accepted by this action. Map keys define option names, values define option definitions. Option values can be referenced by action steps through the 'cli' variable, for example ${cli.myOption} or ${cli['my-option']}.\n"
     },
     "config" : {
       "type" : "object",
@@ -400,64 +446,12 @@
       "description" : "Optional object: Action configuration properties."
     },
     "formatters" : {
-      "description" : "Optional list: Formatters that can be referenced in action steps through TODO to format data.",
-      "type" : "array",
-      "items" : {
-        "type" : "object",
-        "properties" : {
-          "contents" : {
-            "additionalProperties" : true,
-            "type" : [ "object", "string" ],
-            "description" : "Required object|string: Text or structured JSON contents, where each text node is assumed to be a template expression."
-          },
-          "name" : {
-            "type" : "string",
-            "description" : "Required string: Name of this value template."
-          }
-        },
-        "required" : [ "contents", "name" ],
-        "additionalProperties" : false
-      }
-    },
-    "parameters" : {
-      "description" : "Optional list: Action parameters.",
-      "type" : "array",
-      "items" : {
-        "type" : "object",
-        "properties" : {
-          "cliAliases" : {
-            "type" : "string",
-            "description" : "Optional string: Comma-separated CLI option aliases. This will allow the action to accept CLI options named `--[alias]` or `-[alias]` for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
-          },
-          "defaultValue" : {
-            "format" : "spelTemplateExpression",
-            "type" : [ "boolean", "integer", "string", "number" ],
-            "description" : "Optional SpEL template expression: Default value for this action parameter if no value is specified by the user."
-          },
-          "description" : {
-            "type" : "string",
-            "description" : "Required string: Action parameter description to be shown in action usage help."
-          },
-          "group" : {
-            "type" : "string",
-            "description" : "Optional string: Allows for defining groups of parameters"
-          },
-          "name" : {
-            "type" : "string",
-            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named `--[name]` or `-[name]` for single-letter names. Parameter value can be referenced through ${parameters.[name]} in SpEL template expressions."
-          },
-          "required" : {
-            "type" : "boolean",
-            "description" : "Optional boolean: All parameters are required by default, unless this property is set to false."
-          },
-          "type" : {
-            "type" : "string",
-            "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array."
-          }
-        },
-        "required" : [ "description", "name" ],
-        "additionalProperties" : false
-      }
+      "type" : "object",
+      "additionalProperties" : {
+        "additionalProperties" : { },
+        "type" : [ "object", "string" ]
+      },
+      "description" : "Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter name, map values define how the data should be formatted. The outcome of a formatter can either be a simple string, or a structured (JSON) object or array.\n"
     },
     "steps" : {
       "description" : "Required list: Steps to be executed when this action is being run.",
