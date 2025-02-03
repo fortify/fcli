@@ -138,11 +138,8 @@
           "description" : "Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
         },
         "rest.call" : {
-          "description" : "Execute one or more REST calls. This step takes a list, with entries defining the request data and how to process the response.\nNote that multiple REST calls defined within a single 'rest.call' instruction are executed independent of each other, so they cannot reference each other's output. For example, if the target system supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be invoked through separate 'rest.call' instructions.\n",
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/$defs/ActionStepRestCall"
-          }
+          "$ref" : "#/$defs/Map(String,ActionStepRestCall)",
+          "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier\nfor the REST call, and values defining the request data and how to process the response.\n\nNote that multiple REST calls defined within a single 'rest.call' instruction are executed independent of each other, so they cannot reference each other's output. For example, if the target system supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be invoked through separate 'rest.call' instructions.\n"
         },
         "rest.target" : {
           "type" : "object",
@@ -291,10 +288,7 @@
               }
             },
             "embed" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ActionStepRestCall"
-              }
+              "$ref" : "#/$defs/Map(String,ActionStepRestCall)"
             },
             "if" : {
               "format" : "spelTemplateExpression",
@@ -318,10 +312,6 @@
         "method" : {
           "type" : "string",
           "description" : "Optional string: HTTP method like GET or POST to use for this REST request. Defaults to 'GET'."
-        },
-        "name" : {
-          "type" : "string",
-          "description" : "Required string: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${[name]} to access transformed data (if applicable) or ${[name]_raw} to access raw, untransformed data."
         },
         "onFail" : {
           "description" : "Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure.",
@@ -375,7 +365,7 @@
           "description" : "Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${parameters.[name].id}' to be appended to the base URL as configured for the given 'target'."
         }
       },
-      "required" : [ "name", "uri" ],
+      "required" : [ "uri" ],
       "additionalProperties" : false
     },
     "ActionStepRestTarget" : {
@@ -399,6 +389,12 @@
       "additionalProperties" : {
         "format" : "spelTemplateExpression",
         "type" : [ "boolean", "integer", "string", "number" ]
+      }
+    },
+    "Map(String,ActionStepRestCall)" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "$ref" : "#/$defs/ActionStepRestCall"
       }
     },
     "Map(String,TemplateExpression)" : {
