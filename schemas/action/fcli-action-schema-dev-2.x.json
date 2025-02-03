@@ -37,39 +37,11 @@
       "type" : "object",
       "properties" : {
         "check" : {
-          "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "displayName" : {
-                "type" : "string",
-                "description" : "Required string: Display name of this check, to be displayed in PASS/FAIL messages."
-              },
-              "failIf" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression if 'passIf' not specified: The outcome of this check will be 'FAIL' if the given expression evaluates to 'true', outcome will be 'PASS' otherwise."
-              },
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-              },
-              "ifSkipped" : {
-                "type" : "string",
-                "enum" : [ "FAIL", "PASS", "SKIP", "HIDE" ],
-                "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks."
-              },
-              "passIf" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression if 'failIf' not specified: The outcome of this check will be 'SUCCESS' if the given expression evaluates to 'true', outcome will be 'FAIL' otherwise."
-              }
-            },
-            "required" : [ "displayName" ],
-            "additionalProperties" : false
-          }
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepCheck"
+          },
+          "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of one or more checks was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to conditionally execute additional checks based on earlier check outcome. Note that if the same check name (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} will contain the status of the last executed check for the given check name.\n"
         },
         "exit" : {
           "format" : "spelTemplateExpression",
@@ -262,6 +234,37 @@
           }
         }
       },
+      "additionalProperties" : false
+    },
+    "ActionStepCheck" : {
+      "type" : "object",
+      "properties" : {
+        "displayName" : {
+          "type" : "string",
+          "description" : "Optional string: Display name of this check, to be displayed in PASS/FAIL messages. If not defined, the display name will be set to the map key under which this check is defined.\n"
+        },
+        "failIf" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
+          "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
+        },
+        "if" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
+          "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
+        },
+        "ifSkipped" : {
+          "type" : "string",
+          "enum" : [ "FAIL", "PASS", "SKIP", "HIDE" ],
+          "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
+        },
+        "passIf" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
+          "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
+        }
+      },
+      "required" : [ "displayName" ],
       "additionalProperties" : false
     },
     "ActionStepRestCall" : {
