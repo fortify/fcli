@@ -6,28 +6,28 @@
       "properties" : {
         "alias" : {
           "type" : "string",
-          "description" : "Optional string: This will allow the action to also accept a CLI option named `--[alias]` or `-[alias]` for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
+          "description" : "Optional string: This will allow the action to also accept a CLI option named `--[alias]` or `-[alias]` for single-letter aliases. Note that only option name, not alias, may be referenced through ${cli.*} expressions.\n"
         },
-        "defaultValue" : {
+        "default" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Default value for this action parameter if no value is specified by the user."
+          "description" : "Optional SpEL template expression: Default value for this CLI option if no value is specified by the user. For example, this can be used to read a default value from an environment variable using ${#env('ENV_NAME')}\n"
         },
         "description" : {
           "type" : "string",
-          "description" : "Required string: Action parameter description to be shown in action usage help."
+          "description" : "Required string: Action parameter description to be shown in action usage help.\n"
         },
         "group" : {
           "type" : "string",
-          "description" : "Optional string: Allows for defining groups of parameters"
+          "description" : "Optional string: Allows for defining groups of parameters, which can for example be used with ${#action.copyParametersFromGroup(\"optionGroupName\")}\n"
         },
         "required" : {
           "type" : "boolean",
-          "description" : "Optional boolean: All parameters are required by default, unless this property is set to false."
+          "description" : "Optional boolean: All parameters are required by default, unless this property is set to false.\n"
         },
         "type" : {
           "type" : "string",
-          "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array."
+          "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array.\n"
         }
       },
       "required" : [ "description" ],
@@ -166,7 +166,7 @@
           "description" : "Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
         },
         "rest.call" : {
-          "description" : "Execute one or more REST requests.",
+          "description" : "Execute one or more REST calls. This step takes a list, with entries defining the request data and how to process the response.\nNote that multiple REST calls defined within a single 'rest.call' instruction are executed independent of each other, so they cannot reference each other's output. For example, if the target system supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be invoked through separate 'rest.call' instructions.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStepRestCall"
@@ -177,7 +177,7 @@
           "additionalProperties" : {
             "$ref" : "#/$defs/ActionStepRestTarget"
           },
-          "description" : "Add REST request targets for use in 'rest.request' steps. This step takes a map, with keys defining REST target names, and values defining the REST target definition.\n"
+          "description" : "Add REST request targets for use in 'rest.call' steps. This step takes a map, with keys defining REST target names, and values defining the REST target definition.\n"
         },
         "run.fcli" : {
           "description" : "Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.",
@@ -410,11 +410,11 @@
   "properties" : {
     "$schema" : {
       "type" : "string",
-      "description" : "Required string unless `yaml-language-server` comment with schema location is provided: Schema location."
+      "description" : "Required string unless `yaml-language-server` comment with schema location is provided: Defines the fcli action YAML schema version used by this action. When a user tries to run this action, fcli will check whether the current fcli version is compatible with the given action schema version.\n"
     },
     "author" : {
       "type" : "string",
-      "description" : "Required string: Author of this action."
+      "description" : "Required string: Author of this action. This is a free-format string, allowing action users to see who provided this action.\n"
     },
     "cli.options" : {
       "type" : "object",
@@ -429,20 +429,20 @@
         "output" : {
           "type" : "string",
           "enum" : [ "immediate", "delayed" ],
-          "description" : "Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless set to 'none') to avoid such output from interfering with progress messages."
+          "description" : "Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' is specified by the user) to avoid such output from interfering with progress messages.\n"
         },
         "rest.target.default" : {
           "type" : "string",
-          "description" : "Optional string: Default target to use for rest.call steps."
+          "description" : "Optional string: Default target to use for rest.call steps.\n"
         },
-        "sessionFromEnvOutput" : {
+        "session.from-env.output" : {
           "type" : "string",
           "enum" : [ "show", "suppress" ],
-          "description" : "Optional enum value: Whether to 'suppress' (default) or 'show' the output of the session login and logout commands when a session is created through --session from-env"
+          "description" : "Optional enum value: Whether to 'suppress' (default) or 'show' the output of the session login and logout commands when a session is created through --session from-env\n"
         }
       },
       "additionalProperties" : false,
-      "description" : "Optional object: Action configuration properties."
+      "description" : "Optional object: Action configuration properties. This includes configuration properties for setting default values to be used by some action steps, or how action output should be processed.\n"
     },
     "formatters" : {
       "type" : "object",
@@ -450,10 +450,10 @@
         "additionalProperties" : { },
         "type" : [ "object", "string" ]
       },
-      "description" : "Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter name, map values define how the data should be formatted. The outcome of a formatter can either be a simple string, or a structured (JSON) object or array.\n"
+      "description" : "Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter name, map values define how the data should be formatted. Each formatter can be defined as either a single string or a structured YAML object. Every string value in the formatter will be processed as a Spring Expression Language expression, allowing access to current action variables and SpEL functions. For example, if action variable 'name' is currently set to 'John Doe', a formatter node like 'hello: Hello ${name}' will set the property 'hello' to 'Hello John Doe'.\n"
     },
     "steps" : {
-      "description" : "Required list: Steps to be executed when this action is being run.",
+      "description" : "Required list: Steps to be executed when this action is being run. Each list item should consist of a single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional execution. Note that the YAML schema allows for multiple instructions to be present within a single list item, but this will result in an error.\n",
       "type" : "array",
       "items" : {
         "$ref" : "#/$defs/ActionStep"
@@ -473,7 +473,7 @@
       },
       "required" : [ "description", "header" ],
       "additionalProperties" : false,
-      "description" : "Required object: Action usage help."
+      "description" : "Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the 'fcli * action help' command.\n"
     }
   },
   "required" : [ "author", "steps", "usage" ],
