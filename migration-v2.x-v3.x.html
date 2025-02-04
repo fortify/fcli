@@ -1,0 +1,177 @@
+---
+title: Fortify CLI v2.x to v3.x migration guide
+fcli_version: none
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortify CLI v2.x to v3.x migration guide</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="[select]" %}
+
+
+<div id="header">
+<h1>Fortify CLI v2.x to v3.x migration guide</h1>
+<div class="details">
+<span id="revnumber">version none</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_fcli_sc_sastsc_dast_session_commands"><code>fcli sc-sast/sc-dast session</code> commands</a></li>
+<li><a href="#_fcli_ssc_appversion_create_copy_option"><code>fcli ssc appversion create --copy</code> option</a></li>
+<li><a href="#_fcli_action_syntax">Fcli action syntax</a>
+<ul class="sectlevel2">
+<li><a href="#_defaultsrequesttarget"><code>defaults:requestTarget</code></a></li>
+<li><a href="#_parameters"><code>parameters</code></a></li>
+<li><a href="#_stepsappend"><code>steps:append</code></a></li>
+<li><a href="#_steps"><code>steps:&#8230;&#8203;</code></a></li>
+<li><a href="#_valuetemplates"><code>valueTemplates</code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>For users that wish to migrate from fcli v2.x to v3.x, the sections below provide detailed migration instructions.</p>
+</div>
+<div class="paragraph">
+<p>TODO Review section headers; these might be too long to show in table of contents.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_sc_sastsc_dast_session_commands"><a class="anchor" href="#_fcli_sc_sastsc_dast_session_commands"></a><code>fcli sc-sast/sc-dast session</code> commands</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>With fcli v2.x, if you needed to interact with for example both <code>sc-sast</code> and <code>ssc</code> modules, you would need to run both <code>fcli sc-sast session login</code> and <code>fcli ssc session login</code> commands (and corresponding <code>logout</code> commands), repeating similar options on each of these commands to specify SSC URL, credentials, &#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>With fcli v3.x, the <code>sc-sast</code> and <code>sc-dast</code> modules share their sessions with the <code>ssc</code> module; running a single <code>fcli ssc session login</code> command allows for interacting with all three modules. As a consequence, the <code>fcli sc-sast session</code> and <code>fcli sc-dast session</code> commands have been removed.</p>
+</div>
+<div class="paragraph">
+<p>For interactive use, this means that running the <code>fcli ssc session login</code> command is sufficient to interact with all three modules. Before upgrading from fcli 2.x to 3.x, it is recommended to explicitly logout from any existing sessions through the <code>fcli ssc/sc-sast/sc-dast session logout</code> commands to clear any existing session files. Then, after upgrading to fcli 3.x, you can run <code>fcli ssc session login</code> to create a session that&#8217;s shared across all three modules.</p>
+</div>
+<div class="paragraph">
+<p>Pipelines and other automation workflows that run <code>fcli ssc/sc-sast/sc-dast session</code> commands will need to be updated to merge all <code>fcli ssc/sc-sast/sc-dast session login</code> invocations into a single <code>fcli ssc session login</code> invocation, and similarly for <code>logout</code> and any other <code>session</code> commands that are invoked by the workflow.</p>
+</div>
+<div class="paragraph">
+<p>TODO Add examples, both for workflows that already invoke <code>fcli ssc session login</code> and for workflows that only invoke <code>fcli sc-sast/sc-dast session</code> commands without existing <code>fcli ssc session</code> commands. Pay special attention to the fact that for SC SAST, the client-auth-token now needs to be specified on <code>fcli ssc session login</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_ssc_appversion_create_copy_option"><a class="anchor" href="#_fcli_ssc_appversion_create_copy_option"></a><code>fcli ssc appversion create --copy</code> option</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>TODO; deprecated option values removed</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_action_syntax"><a class="anchor" href="#_fcli_action_syntax"></a>Fcli action syntax</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>TODO; intro as to why action syntax has changed, old and new schema locations, and summary of high-level changes like 'most instructions have been renamed', 'most instructions now take a map instead of list', &#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>The following sections provide examples of old and new syntax for each of the action instructions.</p>
+</div>
+<div class="paragraph">
+<p>TODO Add sections for each of the changed instructions in alphabetical order, with each section providing a summary of changes and examples of old/new syntax.</p>
+</div>
+<div class="sect2">
+<h3 id="_defaultsrequesttarget"><a class="anchor" href="#_defaultsrequesttarget"></a><code>defaults:requestTarget</code></h3>
+<div class="paragraph">
+<p>TODO (now <code>config:rest.target.default</code>)</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_parameters"><a class="anchor" href="#_parameters"></a><code>parameters</code></h3>
+<div class="paragraph">
+<p>Summary of changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>parameters</code> renamed to <code>cli.options</code></p>
+</li>
+<li>
+<p><code>cli.options</code> takes a map, with option names as keys, and option definitions as values</p>
+</li>
+<li>
+<p><code>cliAliases</code> property renamed to <code>alias</code>, now supporting only single alias</p>
+</li>
+<li>
+<p><code>defaultValue</code> property renamed to <code>default</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>TODO; examples of old and new syntax</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_stepsappend"><a class="anchor" href="#_stepsappend"></a><code>steps:append</code></h3>
+<div class="paragraph">
+<p>Summary of changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>steps:append</code> functionality merged into new <code>var.set</code> &amp; <code>var.fmt</code> instructions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>TODO; examples of old and new syntax</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_steps"><a class="anchor" href="#_steps"></a><code>steps:&#8230;&#8203;</code></h3>
+<div class="paragraph">
+<p>TODO; list all other step changes</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_valuetemplates"><a class="anchor" href="#_valuetemplates"></a><code>valueTemplates</code></h3>
+<div class="paragraph">
+<p>Summary of changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>valueTemplates</code> renamed to <code>formatters</code></p>
+</li>
+<li>
+<p><code>formatters</code> takes a map, with formatter names as keys, and formatter definitions as values</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>TODO; examples of old and new syntax</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version none<br>
+Last updated 2025-02-04 09:50:00 UTC
+</div>
+</div>
+</body>
+</html>
