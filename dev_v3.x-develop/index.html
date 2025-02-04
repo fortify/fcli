@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20250203.161614-dev_v3.x-develop
+fcli_version: 0.20250204.092319-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -16,18 +16,19 @@ fcli_version: 0.20250203.161614-dev_v3.x-develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250203.161614-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250204.092319-dev_v3.x-develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20250203.161614-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250204.092319-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_introduction">Introduction</a></li>
+<li><a href="#_migration_from_v2_x">Migration from v2.x</a></li>
 <li><a href="#_release_assets">Release Assets</a></li>
 <li><a href="#_installation">Installation</a>
 <ul class="sectlevel2">
@@ -70,7 +71,6 @@ fcli_version: 0.20250203.161614-dev_v3.x-develop
 <ul class="sectlevel2">
 <li><a href="#_built_in_actions">Built-in Actions</a></li>
 <li><a href="#_custom_actions">Custom Actions</a></li>
-<li><a href="#_custom_action_development">Custom Action Development</a></li>
 <li><a href="#_security_considerations">Security Considerations</a></li>
 <li><a href="#_actions_in_cicd_pipelines">Actions in CI/CD pipelines</a></li>
 </ul>
@@ -210,6 +210,15 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </div>
 <div class="paragraph">
 <p>Hidden commands are not listed in fcli help output and not included in the <a href="#_manual_pages">Manual Pages</a>. If needed, you can view the list of hidden commands using the <code>fcli util all-commands list -q hidden</code> command.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_migration_from_v2_x"><a class="anchor" href="#_migration_from_v2_x"></a>Migration from v2.x</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
+custom fcli actions. Please see the <a href="../v2.x-v3.x-migration.html">migration guide</a> for details.</p>
 </div>
 </div>
 </div>
@@ -1183,11 +1192,32 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <div class="sect2">
 <h3 id="_custom_actions"><a class="anchor" href="#_custom_actions"></a>Custom Actions</h3>
 <div class="paragraph">
-<p>Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. Note that the ability to run custom actions is currently considered PREVIEW functionality; as fcli actions are a new functionality, we are collecting user feedback regarding action syntax, which could potentially result in breaking action syntax changes across minor fcli releases (although we&#8217;ll try to avoid this as much as possible).</p>
+<p>Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. The following sections provide more information on custom action usage and development.</p>
+</div>
+<div class="sect3">
+<h4 id="_compatibility"><a class="anchor" href="#_compatibility"></a>Compatibility</h4>
+<div class="paragraph">
+<p>Custom actions must specify a schema version, which is used to check compatibility between current fcli version and the provided custom action. Some examples:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Actions developed for fcli 2.x will fail to run on fcli 3.x (see <a href="../v2.x-v3.x-migration.html">migration guide</a>)</p>
+</li>
+<li>
+<p>Actions developed for fcli 3.0.0 can be run on any future fcli 3.x version, but may fail to run on future fcli 4.x versions</p>
+</li>
+<li>
+<p>Actions developed for a later fcli 3.x version may fail to run on earlier fcli 3.x versions</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
-<p>As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x.</p>
+<p>Note that the action schema is versioned independently of fcli. For example, fcli 2.x supports v1.x schema versions, and fcli 3.x supports v2.x schema versions. A future fcli 4.x version may support either v2.x or v3.x schema versions, depending on whether any breaking schema changes are being introduced for fcli 4.x.</p>
 </div>
+</div>
+<div class="sect3">
+<h4 id="_loading_custom_actions"><a class="anchor" href="#_loading_custom_actions"></a>Loading custom actions</h4>
 <div class="paragraph">
 <p>Custom actions can be loaded from various sources, like a local or remote YAML file, optionally embedded in a zip-file that contains multiple actions. Each of the fcli commands listed in the previous section also support custom actions:</p>
 </div>
@@ -1208,8 +1238,8 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>To allow for easy access, custom actions can also be imported into fcli using the <code>fcli * action import</code> command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the <code>fcli * action reset</code> command to remove all previously imported custom actions.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_custom_action_development"><a class="anchor" href="#_custom_action_development"></a>Custom Action Development</h3>
+<div class="sect3">
+<h4 id="_custom_action_development"><a class="anchor" href="#_custom_action_development"></a>Custom Action Development</h4>
 <div class="paragraph">
 <p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in <code>__sample__</code> action that explains various concepts and lists many of the supported action YAML elements together with a description. To view the sample action, use the <code>fcli ssc action get __sample__</code> or <code>fcli fod action get __sample__</code> command.</p>
 </div>
@@ -1253,7 +1283,8 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250203.161614-dev_v3.x-develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.0.0.json">2.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>As shown in the sample schema statements above, the current fcli version 0.20250204.092319-dev_v3.x-develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.0.0.json">2.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -1467,8 +1498,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250203.161614-dev_v3.x-develop<br>
-Last updated 2025-02-03 16:17:58 UTC
+Version 0.20250204.092319-dev_v3.x-develop<br>
+Last updated 2025-02-04 09:24:59 UTC
 </div>
 </div>
 </body>
