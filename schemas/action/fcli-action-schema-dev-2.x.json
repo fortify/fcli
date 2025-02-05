@@ -23,7 +23,7 @@
         },
         "required" : {
           "type" : "boolean",
-          "description" : "Optional boolean: All parameters are required by default, unless this property is set to false.\n"
+          "description" : "Optional boolean: CLI options are required by default, unless this property is set to false.\n"
         },
         "type" : {
           "type" : "string",
@@ -46,7 +46,7 @@
         "exit" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Terminate action execution and return the given exit code."
+          "description" : "Terminate action execution and return the given exit code.\n"
         },
         "file.write" : {
           "description" : "Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.",
@@ -61,7 +61,7 @@
               "if" : {
                 "format" : "spelTemplateExpression",
                 "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
+                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "to" : {
                 "format" : "spelTemplateExpression",
@@ -78,49 +78,10 @@
             "additionalProperties" : false
           }
         },
-        "for.each-record" : {
-          "type" : "object",
-          "properties" : {
-            "breakIf" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Optional SpEL template expression: Stop processing any further records if the breakIf expression evaluates to 'true'.\n"
-            },
-            "do" : {
-              "description" : "Required list: Steps to be executed for each individual record.\n",
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ActionStep"
-              }
-            },
-            "if" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-            },
-            "processor" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Required SpEL template expression if 'values' not specified: Reference to a processor that generates JSON records and executes the given steps for each record. For now, the only available processor is ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)} for processing rule descriptions from the current state FPR file, used by some built-in actions."
-            },
-            "values" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Required SpEL template expression if 'processor' not specified: Array of values to be iterated over."
-            },
-            "var.name" : {
-              "type" : "string",
-              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
-            }
-          },
-          "required" : [ "do", "var.name" ],
-          "additionalProperties" : false,
-          "description" : "Iterate over a given array of values."
-        },
         "if" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "log.debug" : {
           "format" : "spelTemplateExpression",
@@ -137,9 +98,46 @@
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
         },
+        "records.for-each" : {
+          "type" : "object",
+          "properties" : {
+            "breakIf" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+            },
+            "do" : {
+              "description" : "Required list: Steps to be executed for each individual record.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "from" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Required SpEL template expression, evaluating to either an array of values to be iterated over, or an IActionStepForEachProcessor instance like returned by ${#ssc.ruleDescriptionsProcessor(appVersionId)}. For each of the records in the given array or as produced by the IActionStepForEachProcessor, the steps given in the 'do' instruction will be executed until the breakIf condition (is specified) evaluates to true. The steps in the 'do' instruction may reference the current record through the action variable name specified through 'record.var-name'.\n"
+            },
+            "if" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "record.var-name" : {
+              "type" : "string",
+              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
+            }
+          },
+          "required" : [ "do", "from", "record.var-name" ],
+          "additionalProperties" : false,
+          "description" : "Execute the steps defined in the 'do' block for every record provided by the 'from' expression.\n"
+        },
         "rest.call" : {
-          "$ref" : "#/$defs/Map(String,ActionStepRestCall)",
-          "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier for the REST call, and values defining the request data and how to process the response. For paged REST requests, a single 'rest.call' instruction will execute multiple REST requests to load the individual pages. The response of each individual REST request will be stored as local action variables; the processed response is accessible through an action variable named after the map key/request indentifier, the raw response is accessible through the same name appended with '_raw'.\n\nNote that multiple REST calls defined within a single 'rest.call' instruction are executed independent of each other, so they cannot reference each other's output. For example, if the target system supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be invoked through separate 'rest.call' instructions.\n"
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepRestCall"
+          },
+          "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier for the REST call, and values defining the request data and how to process the response. For paged REST requests, a single 'rest.call' instruction will execute multiple REST requests to load the individual pages. The response of each individual REST request will be stored as local action variables. For example, given a rest.call identifier 'x' the following local action variables will be set:\n\nx: The processed response\nx_raw: The raw, unprocessed response\n\nThese variables can be referenced only within the current 'rest.call' map entry, for example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible\nby later steps or other map entries within the same 'rest.call' step. If you wish to make any data produced by the REST call available to later steps, you'll need to use 'var.*' steps in either 'on.success' or 'records.for-each' instructions.\n\nNote that multiple REST calls defined within a single 'rest.call' step will be executed in the specified order, but the requests are built independent of each other. As such, within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be accessed in the request definition (uri, query, body, ...) of another map entry. The reason is that for target systems that supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be defined in separate 'rest.call' steps.\n"
         },
         "rest.target" : {
           "type" : "object",
@@ -149,61 +147,14 @@
           "description" : "Add REST request targets for use in 'rest.call' steps. This step takes a map, with keys defining REST target names, and values defining the REST target definition.\n"
         },
         "run.fcli" : {
-          "description" : "Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "args" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression: Arguments to pass to the fcli command, for example 'ssc appversion list --embed=attrValuesByName'."
-              },
-              "for.each-fcli-record" : {
-                "type" : "object",
-                "properties" : {
-                  "breakIf" : {
-                    "format" : "spelTemplateExpression",
-                    "type" : [ "boolean", "integer", "string", "number" ],
-                    "description" : "Optional SpEL template expression: Stop processing any further records if the breakIf expression evaluates to 'true'.\n"
-                  },
-                  "do" : {
-                    "description" : "Required list: Steps to be executed for each individual record.\n",
-                    "type" : "array",
-                    "items" : {
-                      "$ref" : "#/$defs/ActionStep"
-                    }
-                  },
-                  "if" : {
-                    "format" : "spelTemplateExpression",
-                    "type" : [ "boolean", "integer", "string", "number" ],
-                    "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-                  },
-                  "var.name" : {
-                    "type" : "string",
-                    "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
-                  }
-                },
-                "required" : [ "do", "var.name" ],
-                "additionalProperties" : false,
-                "description" : "Optional object: Steps to be executed for each individual record generated by the given fcli invocation."
-              },
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-              },
-              "var.name" : {
-                "type" : "string",
-                "description" : "Optional string: Name to assign to the outcome of this fcli invocation. Can be referenced in subsequent steps using ${[name]}."
-              }
-            },
-            "required" : [ "args" ],
-            "additionalProperties" : false
-          }
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepRunFcli"
+          },
+          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx_stdout': Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx_stderr': Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx_exitCode': Exit code of the fcli invocation\n"
         },
         "steps" : {
-          "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.",
+          "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -212,7 +163,7 @@
         "throw" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Throw an exception, thereby terminating action execution."
+          "description" : "Throw an exception, thereby terminating action execution.\n"
         },
         "var.fmt" : {
           "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
@@ -236,11 +187,11 @@
     "ActionStepCheck" : {
       "type" : "object",
       "properties" : {
-        "displayName" : {
+        "display-name" : {
           "type" : "string",
           "description" : "Optional string: Display name of this check, to be displayed in PASS/FAIL messages. If not defined, the display name will be set to the map key under which this check is defined.\n"
         },
-        "failIf" : {
+        "fail.if" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
@@ -248,20 +199,20 @@
         "if" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "ifSkipped" : {
           "type" : "string",
           "enum" : [ "FAIL", "PASS", "SKIP", "HIDE" ],
           "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
         },
-        "passIf" : {
+        "pass.if" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
         }
       },
-      "required" : [ "displayName" ],
+      "required" : [ "display-name" ],
       "additionalProperties" : false
     },
     "ActionStepRestCall" : {
@@ -272,45 +223,12 @@
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional SpEL template expression: Request body to send with the REST request.\n"
         },
-        "for.each-response-record" : {
-          "type" : "object",
-          "properties" : {
-            "breakIf" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Optional SpEL template expression: Stop processing any further records if the breakIf expression evaluates to 'true'.\n"
-            },
-            "do" : {
-              "description" : "Required list: Steps to be executed for each individual record.\n",
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ActionStep"
-              }
-            },
-            "embed" : {
-              "$ref" : "#/$defs/Map(String,ActionStepRestCall)",
-              "description" : "Optional map: Allows for making additional REST calls for each individual record being processed. Map values define the REST call to be executed, map keys define under which property the response will be embedded into the variable specified through the 'set.record-var' instruction, with similar behavior as described for the rest.call step, i.e., processed data will be available through a property named after the map key, whereas raw response data will be available through a property named [map key]_raw.\n"
-            },
-            "if" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number" ],
-              "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
-            },
-            "var.name" : {
-              "type" : "string",
-              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
-            }
-          },
-          "required" : [ "do", "var.name" ],
-          "additionalProperties" : false,
-          "description" : "Optional object: If the processed (successfull) REST response provides an array of records, this instruction allows for executing the steps provided in the 'do' block for each individual record.\n"
-        },
         "if" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'"
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
-        "log.rest-progress" : {
+        "log.progress" : {
           "type" : "object",
           "properties" : {
             "page.post-load" : {
@@ -344,7 +262,7 @@
           }
         },
         "on.success" : {
-          "description" : "Optional list: Steps to be executed on each successfull REST response. For simple requests, these steps will be executed once. For paged requests, these steps will be executed after every individual page has been received. Steps can reference the [requestName] and [requestName]_raw variables to access processed and raw response data respectively. Any steps define in 'on.success' will be executed before processing individual response records through the 'for.each-response-record' instruction.\n",
+          "description" : "Optional list: Steps to be executed on each successfull REST response. For simple requests, these steps will be executed once. For paged requests, these steps will be executed after every individual page has been received. Steps can reference the [requestName] and [requestName]_raw variables to access processed and raw response data respectively. Any steps define in 'on.success' will be executed before processing individual response records through the 'records.for-each' instruction.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -353,6 +271,42 @@
         "query" : {
           "$ref" : "#/$defs/Map(String,TemplateExpression)",
           "description" : "Optional map: Query parameters to be added to the request. Map keys specify the query parameter name, map values specify the query parameter value. Keys must be plain strings, values are evaluated as SpEL template expressions, for example 'someParam: ${var1.prop1]}'.\n"
+        },
+        "records.for-each" : {
+          "type" : "object",
+          "properties" : {
+            "breakIf" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+            },
+            "do" : {
+              "description" : "Required list: Steps to be executed for each individual record.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "embed" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/$defs/ActionStepRestCall"
+              },
+              "description" : "Optional map: Allows for making additional REST calls for each individual record being processed. Map values define the REST call to be executed, map keys define under which property the response will be embedded into the variable specified through the 'set.record-var' instruction, with similar behavior as described for the rest.call step, i.e., processed data will be available through a property named after the map key, whereas raw response data will be available through a property named [map key]_raw.\n"
+            },
+            "if" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "record.var-name" : {
+              "type" : "string",
+              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
+            }
+          },
+          "required" : [ "do", "record.var-name" ],
+          "additionalProperties" : false,
+          "description" : "Optional object: If the processed (successfull) REST response provides an array of records, this instruction allows for executing the steps provided in the 'do' block for each individual record.\n"
         },
         "target" : {
           "type" : "string",
@@ -378,14 +332,72 @@
         "baseUrl" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target."
+          "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target.\n"
         },
         "headers" : {
           "$ref" : "#/$defs/Map(String,TemplateExpression)",
-          "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request."
+          "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.\n"
         }
       },
       "required" : [ "baseUrl" ],
+      "additionalProperties" : false
+    },
+    "ActionStepRunFcli" : {
+      "type" : "object",
+      "properties" : {
+        "cmd" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
+          "description" : "Required SpEL template expression: The fcli command to run. This can be specified with or without the 'fcli' command itself. Some examples:\n\nssc appversion get --av ${av.id} --embed=attrValuesByName\n\nfcli fod rel ls\n"
+        },
+        "if" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "records.collect" : {
+          "type" : "boolean",
+          "description" : "Optional boolean: If set to 'true', records produced by this fcli command will be collected and accessible through an action variable named after the 'run.fcli' identifier/map key.\n"
+        },
+        "records.for-each" : {
+          "type" : "object",
+          "properties" : {
+            "breakIf" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+            },
+            "do" : {
+              "description" : "Required list: Steps to be executed for each individual record.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "if" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
+              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "record.var-name" : {
+              "type" : "string",
+              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
+            }
+          },
+          "required" : [ "do", "record.var-name" ],
+          "additionalProperties" : false,
+          "description" : "Optional object: For fcli commands that produce records, this allows for running the steps specified in the 'do' instruction for each individual record.\n"
+        },
+        "stderr" : {
+          "$ref" : "#/$defs/OutputType",
+          "description" : "Optional enum value: Specify how to handle output written to stderr by this fcli command:\n\nsuppress: Suppress fcli output to stderr\ncollect:  Collect stderr output in an action variable, for example x_stderr\nshow:     Show fcli stderr output\n\nNote that depending on the config:output setting, 'show' will either show the output immediately, or output is delayed until action processing has completed.\n\nDefault value: 'show'\n"
+        },
+        "stdout" : {
+          "$ref" : "#/$defs/OutputType",
+          "description" : "Optional enum value: Specify how to handle output written to stdout by this fcli command:\n\nsuppress: Suppress fcli output to stdout\ncollect:  Collect stdout output in an action variable, for example x_stdout\nshow:     Show fcli stdout output.\n\nNote that depending on the config:output setting, 'show' will either show the output immediately, or output is delayed until action processing has completed.\n\nDefault: 'suppress' if 'records.for-each' is specified or 'records.collect' is 'true', 'show' otherwise\n"
+        }
+      },
+      "required" : [ "cmd" ],
       "additionalProperties" : false
     },
     "LinkedHashMap(TemplateExpression,TemplateExpression)" : {
@@ -395,18 +407,16 @@
         "type" : [ "boolean", "integer", "string", "number" ]
       }
     },
-    "Map(String,ActionStepRestCall)" : {
-      "type" : "object",
-      "additionalProperties" : {
-        "$ref" : "#/$defs/ActionStepRestCall"
-      }
-    },
     "Map(String,TemplateExpression)" : {
       "type" : "object",
       "additionalProperties" : {
         "format" : "spelTemplateExpression",
         "type" : [ "boolean", "integer", "string", "number" ]
       }
+    },
+    "OutputType" : {
+      "type" : "string",
+      "enum" : [ "show", "collect", "suppress" ]
     }
   },
   "type" : "object",
