@@ -48,36 +48,6 @@
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Terminate action execution and return the given exit code.\n"
         },
-        "file.write" : {
-          "description" : "Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.",
-          "type" : "array",
-          "items" : {
-            "type" : "object",
-            "properties" : {
-              "fmt" : {
-                "type" : "string",
-                "description" : "Optional string: Format the value specified through 'value' using the given formatter."
-              },
-              "if" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
-              },
-              "to" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "Required SpEL template expression: Specify where to write the given data; either 'stdout', 'stderr' or a filename."
-              },
-              "value" : {
-                "format" : "spelTemplateExpression",
-                "type" : [ "boolean", "integer", "string", "number" ],
-                "description" : "SpEL template expression: Value to be written to the given output. Required if 'fmt' is not specified, otherwise defaults to '#root' to allow the formatter to access all action variables"
-              }
-            },
-            "required" : [ "to" ],
-            "additionalProperties" : false
-          }
-        },
         "if" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
@@ -96,7 +66,15 @@
         "log.warn" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
+          "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
+        },
+        "out.fmt" : {
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
+          "description" : "Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, and map values defining a formatter to be used to generate the data to be written to the destination. Destination can be specified as either stdout, stderr, or a file name. If a file already exists, it will be overwritten. Both map keys and values can be specified as SpEL template expressions. Note that depending on the config:output setting, data written to stdout or stderr may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
+        },
+        "out.write" : {
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
+          "description" : "Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, and map values defining the data to write to the destination. Destination can be specified as either stdout, stderr, or a file name. If a file already exists, it will be overwritten. Both map keys and values can be specified as SpEL template expressions. Note that depending on the config:output setting, data written to stdout or stderr may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
         },
         "records.for-each" : {
           "type" : "object",
@@ -169,17 +147,17 @@
           "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
           "description" : "Set one or more variables for use in later action steps with the output of the given formatter. This step takes a map with keys specifying the variable to set or update, and values specifying the formatter to use as defined in the 'formatters' section. Both keys and values accept SpEL template expressions.\n\nThis step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. Following are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property name on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nWithin a single 'var.set' or 'var.fmt' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables or formatters that are declared later.\n"
         },
-        "var.set" : {
-          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
-          "description" : "Set one or more variables values for use in later action steps. This step takes a map with keys specifying the variable to set or update, and values specifying the value to set. Both keys and values accept SpEL template expressions. Note that there's also a 'var.fmt' step that allows for setting values generated by a formatter.\n\nThis step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. Following are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property name on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nWithin a single 'var.set' or 'var.fmt' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables or formatters that are declared later.\n"
-        },
-        "var.unset" : {
-          "description" : "Unset variables, supports SpEL template expressions to specify the variable names to be unset.",
+        "var.rm" : {
+          "description" : "Remove one or more variables. Variable names to remove can be provided as plain text or as a SpEL template expression.\n",
           "type" : "array",
           "items" : {
             "format" : "spelTemplateExpression",
             "type" : [ "boolean", "integer", "string", "number" ]
           }
+        },
+        "var.set" : {
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpression)",
+          "description" : "Set one or more variables values for use in later action steps. This step takes a map with keys specifying the variable to set or update, and values specifying the value to set. Both keys and values accept SpEL template expressions. Note that there's also a 'var.fmt' step that allows for setting values generated by a formatter.\n\nThis step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. Following are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property name on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nWithin a single 'var.set' or 'var.fmt' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables or formatters that are declared later.\n"
         }
       },
       "additionalProperties" : false
