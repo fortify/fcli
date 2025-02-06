@@ -115,7 +115,7 @@
           "additionalProperties" : {
             "$ref" : "#/$defs/ActionStepRestCall"
           },
-          "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier for the REST call, and values defining the request data and how to process the response. For paged REST requests, a single 'rest.call' instruction will execute multiple REST requests to load the individual pages. The response of each individual REST request will be stored as local action variables. For example, given a rest.call identifier 'x' the following local action variables will be set:\n\nx: The processed response\nx_raw: The raw, unprocessed response\n\nThese variables can be referenced only within the current 'rest.call' map entry, for example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible\nby later steps or other map entries within the same 'rest.call' step. If you wish to make any data produced by the REST call available to later steps, you'll need to use 'var.*' steps in either 'on.success' or 'records.for-each' instructions.\n\nNote that multiple REST calls defined within a single 'rest.call' step will be executed in the specified order, but the requests are built independent of each other. As such, within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be accessed in the request definition (uri, query, body, ...) of another map entry. The reason is that for target systems that supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be defined in separate 'rest.call' steps.\n"
+          "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier for the REST call, and values defining the request data and how to process the response. For paged REST requests, a single 'rest.call' instruction will execute multiple REST requests to load the individual pages. The response of each individual REST request will be stored as local action variables. For example, given a rest.call identifier 'x' the following local action variables will be set:\n\nx: The processed response\nx_raw: The raw, unprocessed response\nx_exception: Java Exception instance if the request failed\n\nThese variables can be referenced only within the current 'rest.call' map entry, for example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible\nby later steps or other map entries within the same 'rest.call' step. If you wish to make any data produced by the REST call available to later steps, you'll need to use 'var.*' steps in either 'on.success' or 'records.for-each' instructions.\n\nNote that multiple REST calls defined within a single 'rest.call' step will be executed in the specified order, but the requests are built independent of each other. As such, within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be accessed in the request definition (uri, query, body, ...) of another map entry. The reason is that for target systems that supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be defined in separate 'rest.call' steps.\n"
         },
         "rest.target" : {
           "type" : "object",
@@ -129,7 +129,7 @@
           "additionalProperties" : {
             "$ref" : "#/$defs/ActionStepRunFcli"
           },
-          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx_stdout': Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx_stderr': Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx_exitCode': Exit code of the fcli invocation\n"
+          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx_stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx_stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx_exitCode: Exit code of the fcli invocation\nx_exception: Java Exception instance if fcli invocation threw an exception\n"
         },
         "steps" : {
           "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
@@ -233,7 +233,7 @@
           "description" : "Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure. Steps can reference a variable named 'exception' to access the Java Exception object that represents the failure that occurred.\n",
+          "description" : "Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure. Steps can reference a variable named after the identifier for this REST call, for example 'x_exception', to access the Java Exception object that represents the failure that occurred.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -332,6 +332,20 @@
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "on.exception" : {
+          "description" : "Optional list: Steps to be executed if the fcli command throws an exception. If not specified, an exception will be thrown and action execution will terminate. Steps can reference a variable named after the identifier for this fcli invocation, for example 'x_exception', to access the Java Exception object that represents the failure that occurred.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.exit-fail" : {
+          "description" : "Optional list: Steps to be executed if the fcli command returns a non-zero exit code. If not specified, an exception will be thrown and action execution will terminate. Steps can reference the usual action variables generated by the fcli invocation to access any records, stdout/stderr output, and exit code produced by the fcli command.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
         },
         "records.collect" : {
           "type" : "boolean",
