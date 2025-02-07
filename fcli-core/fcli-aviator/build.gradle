@@ -5,19 +5,6 @@ plugins {
 
 apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
 
-task zipResources_actions(type: Zip) {
-    destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/aviator")
-    archiveFileName = "actions.zip"
-    from("${projectDir}/src/main/resources/com/fortify/cli/aviator/actions/zip") {
-        // TODO We should also sign file; how do we invoke a sign operation from Gradle?
-        filter(line->project.version.startsWith('0.')
-                ? line
-                : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json",
-                "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"))
-    }
-    include '*.yaml'
-}
-
 tasks.withType(JavaCompile) {
     dependsOn 'generateProto'
 }
@@ -25,8 +12,6 @@ tasks.withType(JavaCompile) {
 dependencies {
     implementation(project(":fcli-core:fcli-common"))
 
-    implementation("args4j:args4j:2.37")
-    implementation("org.json:json:20231013")
     implementation("org.yaml:snakeyaml:2.2")
 
     implementation("jakarta.xml.bind:jakarta.xml.bind-api:2.3.3")
