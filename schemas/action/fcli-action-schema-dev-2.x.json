@@ -6,7 +6,7 @@
       "properties" : {
         "alias" : {
           "type" : "string",
-          "description" : "Optional string: This will allow the action to also accept a CLI option named `--[alias]` or `-[alias]` for single-letter aliases. Note that only option name, not alias, may be referenced through ${cli.*} expressions.\n"
+          "description" : "Optional string: This will allow the action to also accept a CLI option named `--[alias]` (or `-[alias]` for single-letter aliases). Note that only option name, not alias, may be referenced through ${cli.*} expressions.\n"
         },
         "default" : {
           "format" : "spelTemplateExpression",
@@ -384,13 +384,25 @@
           "$ref" : "#/$defs/OutputType",
           "description" : "Optional enum value: Specify how to handle output written to stderr by this fcli command:\n\nsuppress: Suppress fcli output to stderr\ncollect:  Collect stderr output in an action variable, for example x_stderr\nshow:     Show fcli stderr output\n\nNote that depending on the config:output setting, 'show' will either show the output immediately, or output is delayed until action processing has completed.\n\nDefault value: 'show'\n"
         },
+        "stderr.parse" : {
+          "$ref" : "#/$defs/FcliOutputParser",
+          "description" : "Optional enum value: Allows for parsing fcli stderr output:\n\nnone:  Don't parse output (default)\njson:  Parse output as JSON\nlines: Parse output as an array of lines\n\nThis is only meant to be used for fcli commands that don't produce records, i.e., commands that don't provide the standard --output, --store, and --to-file options. For example, it can be used with 'fcli * action run' commands to parse JSON data produced by some fcli action, or with 'fcli tool * run' commands to allow for accessing the individual output lines produced by the tool. Note that any progress messages produced by the fcli command will be automatically suppressed if stdout is being parsed, to avoid progress messages from interfering with JSON parsing or appearing in the parsed lines.\n\nParsed output will be stored in action variables named after the 'run.fcli' identifier/map key, for example 'x_stdout_parsed' and 'x_stderr_parsed'. For convenience, if only one of stdout or stderr is being parsed, the parsed output will also be stored in an action variable without those suffixes, for example 'x'.\n"
+        },
         "stdout" : {
           "$ref" : "#/$defs/OutputType",
-          "description" : "Optional enum value: Specify how to handle output written to stdout by this fcli command:\n\nsuppress: Suppress fcli output to stdout\ncollect:  Collect stdout output in an action variable, for example x_stdout\nshow:     Show fcli stdout output.\n\nNote that depending on the config:output setting, 'show' will either show the output immediately, or output is delayed until action processing has completed.\n\nDefault: 'suppress' if 'records.for-each' is specified or 'records.collect' is 'true', 'show' otherwise\n"
+          "description" : "Optional enum value: Specify how to handle output written to stdout by this fcli command:\n\nsuppress: Suppress fcli output to stdout\ncollect:  Collect stdout output in an action variable, for example x_stdout\nshow:     Show fcli stdout output.\n\nNote that depending on the config:output setting, 'show' will either show the output immediately, or output is delayed until action processing has completed.\n\nDefault: 'suppress' if output is being processed through another instruction ('records.for-each', 'records.collect', 'stdout.parser'), 'show' otherwise.\n"
+        },
+        "stdout.parse" : {
+          "$ref" : "#/$defs/FcliOutputParser",
+          "description" : "Optional enum value: Allows for parsing fcli stdout output:\n\nnone:  Don't parse output (default)\njson:  Parse output as JSON\nlines: Parse output as an array of lines\n\nThis is only meant to be used for fcli commands that don't produce records, i.e., commands that don't provide the standard --output, --store, and --to-file options. For example, it can be used with 'fcli * action run' commands to parse JSON data produced by some fcli action, or with 'fcli tool * run' commands to allow for accessing the individual output lines produced by the tool. Note that any progress messages produced by the fcli command will be automatically suppressed if stdout is being parsed, to avoid progress messages from interfering with JSON parsing or appearing in the parsed lines.\n\nParsed output will be stored in action variables named after the 'run.fcli' identifier/map key, for example 'x_stdout_parsed' and 'x_stderr_parsed'. For convenience, if only one of stdout or stderr is being parsed, the parsed output will also be stored in an action variable without those suffixes, for example 'x'.\n"
         }
       },
       "required" : [ "cmd" ],
       "additionalProperties" : false
+    },
+    "FcliOutputParser" : {
+      "type" : "string",
+      "enum" : [ "none", "json", "lines" ]
     },
     "LinkedHashMap(TemplateExpression,TemplateExpression)" : {
       "type" : "object",
