@@ -1,13 +1,9 @@
 {
   "$schema" : "https://json-schema.org/draft/2020-12/schema",
   "$defs" : {
-    "ActionCliOptions" : {
+    "ActionCliOption" : {
       "type" : "object",
       "properties" : {
-        "alias" : {
-          "type" : "string",
-          "description" : "Optional string: This will allow the action to also accept a CLI option named `--[alias]` (or `-[alias]` for single-letter aliases). Note that only option name, not alias, may be referenced through ${cli.*} expressions.\n"
-        },
         "default" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
@@ -21,6 +17,13 @@
           "type" : "string",
           "description" : "Optional string: Allows for defining groups of parameters, which can for example be used with ${#action.copyParametersFromGroup(\"optionGroupName\")}\n"
         },
+        "key" : {
+          "type" : "string"
+        },
+        "names" : {
+          "type" : "string",
+          "description" : "Required string: The option names allowed on the command line to specify a value for this option. Multi-letter option names should be preceded by double dashes like --option-name, single-letter option names should be preceded by a single dash like-o. Multiple option names may be separated by a comma and optional whitespace, for example:\noptions: --option, -o\n"
+        },
         "required" : {
           "type" : "boolean",
           "description" : "Optional boolean: CLI options are required by default, unless this property is set to false.\n"
@@ -30,7 +33,7 @@
           "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array.\n"
         }
       },
-      "required" : [ "description" ],
+      "required" : [ "description", "names" ],
       "additionalProperties" : false
     },
     "ActionStep" : {
@@ -428,7 +431,7 @@
     "cli.options" : {
       "type" : "object",
       "additionalProperties" : {
-        "$ref" : "#/$defs/ActionCliOptions"
+        "$ref" : "#/$defs/ActionCliOption"
       },
       "description" : "Optional map: CLI options accepted by this action. Map keys define option names, values define option definitions. Option values can be referenced by action steps through the 'cli' variable, for example ${cli.myOption} or ${cli['my-option']}. Users can specify '--optionName value' on the 'fcli action * run' command line, or, if an alias is defined, through '--alias value'. For single-letter option names/aliases, the CLI option will be preceded by just a single dash, for example '-f' if the option name/alias is 'f'.\n"
     },
