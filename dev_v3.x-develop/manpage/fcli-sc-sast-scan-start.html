@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250212.065300-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250212.092213-dev_v3.x-develop" %}
 
 
 <div id="header">
@@ -102,10 +102,10 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--sargs, --scan-args</strong>=<em>&lt;scanArguments&gt;</em></dt>
 <dd>
-<p>Fortify Static Code Analyzer scan arguments, see ScanCentral SAST documentation for supported scan arguments for your ScanCentral SAST version. Multiple scan arguments must be provided as a single option argument, arguments containing spaces must be embedded in single quotes, and local files must be referenced through the 'file:' prefix. Note that contrary to fcli, scan arguments usually start with a single dash, not double dashes. For example:</p>
+<p>Fortify Static Code Analyzer scan arguments, see ScanCentral SAST documentation for supported scan arguments for your ScanCentral SAST version. Multiple scan arguments must be provided as a single option argument, arguments containing spaces or that conflict with fcli options like '-filter' must be embedded in single quotes, and local files must be referenced through the '@' prefix. Note that contrary to fcli, scan arguments usually start with a single dash, not double dashes. For example:</p>
 <div class="literalblock">
 <div class="content">
-<pre>--sargs "-quick -filter 'file:./my filters.txt'"</pre>
+<pre>--sargs "'-quick' '-filter' '@my filters.txt'"</pre>
 </div>
 </div>
 </dd>
@@ -188,7 +188,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-02-12 06:54:36 UTC
+Last updated 2025-02-12 09:24:06 UTC
 </div>
 </div>
 </body>
