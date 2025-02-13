@@ -343,13 +343,19 @@
           "type" : "string",
           "enum" : [ "show", "collect", "suppress" ]
         },
+        "on.success" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
         "on.exception" : {
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
           }
         },
-        "on.exit-fail" : {
+        "on.fail" : {
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"

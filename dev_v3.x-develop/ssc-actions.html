@@ -1,6 +1,6 @@
 ---
 title: Fcli SSC Actions
-fcli_version: 0.20250212.152625-dev_v3.x-develop
+fcli_version: 0.20250213.152315-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250212.152625-dev_v3.x-develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250212.152625-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250213.152315-dev_v3.x-develop" %}
 
 
 <div id="header">
 <h1>Fcli SSC Actions</h1>
 <div class="details">
-<span id="revnumber">version 0.20250212.152625-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250213.152315-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -380,12 +380,11 @@ following activities:
 <div class="sect2">
 <h3 id="_description_6"><a class="anchor" href="#_description_6"></a>Description</h3>
 <div class="paragraph">
-<p>This action collects CI-specific data, for example from CI-specific environment
-variables, and sets a CI-agnostic global variable named 'ci'. This is primarily
-used by the SSC/FoD-specific 'ci' actions, but may also be useful for other
-(custom) actions. Note though that available properties on the global 'ci'
-variable may change across fcli releases, potentially breaking any custom
-actions that depend on these properties.</p>
+<p>This action collects data used by the SSC &amp; FoD 'ci' actions, based on CI-specific
+data like CI-specific environment variables. Data is collected in a CI-agnostic
+global variable named 'ci'. Note that available properties on the global 'ci'
+variable may change across fcli releases, potentially breaking any custom actions
+that depend on these properties.</p>
 </div>
 </div>
 <div class="sect2">
@@ -966,8 +965,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250212.152625-dev_v3.x-develop<br>
-Last updated 2025-02-12 15:28:15 UTC
+Version 0.20250213.152315-dev_v3.x-develop<br>
+Last updated 2025-02-13 15:25:04 UTC
 </div>
 </div>
 </body>
