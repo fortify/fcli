@@ -27,9 +27,20 @@ fcli_version: none
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_fcli_sc_sastsc_dast_session_commands"><code>fcli sc-sast/sc-dast session</code> commands</a></li>
-<li><a href="#_fcli_ssc_appversion_create_copy_option"><code>fcli ssc appversion create --copy</code> option</a></li>
-<li><a href="#_fcli_action_syntax">Fcli action syntax</a>
+<li><a href="#_fcli_fod"><code>fcli fod</code></a></li>
+<li><a href="#_fcli_sc_sast"><code>fcli sc-sast</code></a>
+<ul class="sectlevel2">
+<li><a href="#_fcli_sc_sast_session"><code>fcli sc-sast session</code></a></li>
+<li><a href="#_fcli_sc_sast_scan_start"><code>fcli sc-sast scan start</code></a></li>
+</ul>
+</li>
+<li><a href="#_fcli_sc_dast"><code>fcli sc-dast</code></a>
+<ul class="sectlevel2">
+<li><a href="#_fcli_sc_dast_session"><code>fcli sc-dast session</code></a></li>
+</ul>
+</li>
+<li><a href="#_fcli_ssc"><code>fcli ssc</code></a></li>
+<li><a href="#_fcli_actions">Fcli actions</a>
 <ul class="sectlevel2">
 <li><a href="#_defaultsrequesttarget"><code>defaults:requestTarget</code></a></li>
 <li><a href="#_parameters"><code>parameters</code></a></li>
@@ -45,49 +56,96 @@ fcli_version: none
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>For users that wish to migrate from fcli v2.x to v3.x, the sections below provide detailed migration instructions.</p>
-</div>
-<div class="paragraph">
-<p>TODO Review section headers; these might be too long to show in table of contents.</p>
+<p>Upgrading from fcli v2.x to v3.x may require some changes to existing fcli command invocations, as some commands, options, or accepted option values have changed. This document describes those changes for each of the affected fcli modules. Note that this document only describes breaking changes, it doesn&#8217;t describe any new functionality. Please see the fcli change log for an overview of new features.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_fcli_sc_sastsc_dast_session_commands"><a class="anchor" href="#_fcli_sc_sastsc_dast_session_commands"></a><code>fcli sc-sast/sc-dast session</code> commands</h2>
+<h2 id="_fcli_fod"><a class="anchor" href="#_fcli_fod"></a><code>fcli fod</code></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>With fcli v2.x, if you needed to interact with for example both <code>sc-sast</code> and <code>ssc</code> modules, you would need to run both <code>fcli sc-sast session login</code> and <code>fcli ssc session login</code> commands (and corresponding <code>logout</code> commands), repeating similar options on each of these commands to specify SSC URL, credentials, &#8230;&#8203;</p>
-</div>
-<div class="paragraph">
-<p>With fcli v3.x, the <code>sc-sast</code> and <code>sc-dast</code> modules share their sessions with the <code>ssc</code> module; running a single <code>fcli ssc session login</code> command allows for interacting with all three modules. As a consequence, the <code>fcli sc-sast session</code> and <code>fcli sc-dast session</code> commands have been removed.</p>
-</div>
-<div class="paragraph">
-<p>For interactive use, this means that running the <code>fcli ssc session login</code> command is sufficient to interact with all three modules. Before upgrading from fcli 2.x to 3.x, it is recommended to explicitly logout from any existing sessions through the <code>fcli ssc/sc-sast/sc-dast session logout</code> commands to clear any existing session files. Then, after upgrading to fcli 3.x, you can run <code>fcli ssc session login</code> to create a session that&#8217;s shared across all three modules.</p>
-</div>
-<div class="paragraph">
-<p>Pipelines and other automation workflows that run <code>fcli ssc/sc-sast/sc-dast session</code> commands will need to be updated to merge all <code>fcli ssc/sc-sast/sc-dast session login</code> invocations into a single <code>fcli ssc session login</code> invocation, and similarly for <code>logout</code> and any other <code>session</code> commands that are invoked by the workflow.</p>
-</div>
-<div class="paragraph">
-<p>TODO Add examples, both for workflows that already invoke <code>fcli ssc session login</code> and for workflows that only invoke <code>fcli sc-sast/sc-dast session</code> commands without existing <code>fcli ssc session</code> commands. Pay special attention to the fact that for SC SAST, the client-auth-token now needs to be specified on <code>fcli ssc session login</code>.</p>
+<p>There are no breaking changes to the fcli command structure in the <code>fcli fod</code> module; existing fcli v2.x invocations of <code>fcli fod</code> commands can be used as-is with fcli 3.x. However, if you have developed any custom fcli actions for use with the <code>fcli fod action</code> commands, these custom actions will need to be updated to use the new fcli action yaml syntax. Please see the <a href="#_fcli_actions">Fcli Actions</a> section for details.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_fcli_ssc_appversion_create_copy_option"><a class="anchor" href="#_fcli_ssc_appversion_create_copy_option"></a><code>fcli ssc appversion create --copy</code> option</h2>
+<h2 id="_fcli_sc_sast"><a class="anchor" href="#_fcli_sc_sast"></a><code>fcli sc-sast</code></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>TODO; deprecated option values removed</p>
+<p>There are some breaking changes to the fcli command structure in the <code>fcli sc-sast</code> module; existing fcli v2.x invocations of <code>fcli sc-sast</code> commands may need to be updated when upgrading to fcli v3.x. Please see the following sections for details.</p>
+</div>
+<div class="sect2">
+<h3 id="_fcli_sc_sast_session"><a class="anchor" href="#_fcli_sc_sast_session"></a><code>fcli sc-sast session</code></h3>
+<div class="paragraph">
+<p>Previously, if you wanted to interact with <code>fcli ssc</code>, <code>fcli sc-sast</code>, or <code>sc-dast</code> modules, you would need to invoke the corresponding <code>session login/logout</code> commands to manage module-specific sessions. This often meant that you would need to run multiple <code>session login/logout</code> commands with mostly the same option values like SSC URL and credentials. This has been simplified with fcli v3.x; the <code>fcli sc-sast</code> and <code>fcli sc-dast</code> modules now share their sessions with the <code>fcli ssc</code> modules, so you only need to use the <code>fcli ssc session login/logout</code> commands for managing sessions that can be used by all three modules.</p>
+</div>
+<div class="paragraph">
+<p>As a consequence, you&#8217;ll need to remove all invocations of <code>fcli sc-sast session *</code> commands as these commands no longer exist in fcli v3.x. Instead, you&#8217;ll need to use the corresponding <code>fcli ssc session *</code> commands. The ScanCentral SAST <code>client-auth-token</code> will now need to be passed to the <code>fcli ssc session login</code> command using the <code>--client-auth-token</code> / <code>-c</code> option.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fcli_sc_sast_scan_start"><a class="anchor" href="#_fcli_sc_sast_scan_start"></a><code>fcli sc-sast scan start</code></h3>
+<div class="paragraph">
+<p>Apart from introducing new functionality and corresponding new options, some of the existing options have changed.</p>
+</div>
+<div class="paragraph">
+<p>With fcli v2.x, there were separate options for specifying either a package file or MBS file; fcli v3.x provides a single <code>--file</code> / <code>-f</code> option that auto-detects whether the given file is a package or MBS file. As a result, the <code>-m</code>, <code>--mbs-file</code>, <code>-p</code>, and <code>--package-file</code> options will need to be replaced with the <code>--file</code> / <code>-f</code> option.</p>
+</div>
+<div class="paragraph">
+<p>For packages generated with ScanCentral Client 24.2 or above, fcli v3.x will now auto-detect the ScanCentral Client version that was used to generate the package. By default, based on ScanCentral Controller configuration, this auto-detected ScanCentral Client version will be used to select an appropriate ScanCentral Sensor version that will be used to scan the package. As such, unless the package was generated with ScanCentral Client 24.1 or below, or if you wish to override the ScanCentral Sensor version that will be used to scan the package (which is not officially supported), the <code>--sensor-version</code> option should no longer be passed to the <code>fcli sc-sast scan start</code> command.</p>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_fcli_action_syntax"><a class="anchor" href="#_fcli_action_syntax"></a>Fcli action syntax</h2>
+<h2 id="_fcli_sc_dast"><a class="anchor" href="#_fcli_sc_dast"></a><code>fcli sc-dast</code></h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>TODO; intro as to why action syntax has changed, old and new schema locations, and summary of high-level changes like 'most instructions have been renamed', 'most instructions now take a map instead of list', &#8230;&#8203;</p>
+<p>There are some breaking changes to the fcli command structure in the <code>fcli sc-dast</code> module; existing fcli v2.x invocations of <code>fcli sc-dast</code> commands may need to be updated when upgrading to fcli v3.x. Please see the following sections for details.</p>
+</div>
+<div class="sect2">
+<h3 id="_fcli_sc_dast_session"><a class="anchor" href="#_fcli_sc_dast_session"></a><code>fcli sc-dast session</code></h3>
+<div class="paragraph">
+<p>Previously, if you wanted to interact with <code>fcli ssc</code>, <code>fcli sc-sast</code>, or <code>sc-dast</code> modules, you would need to invoke the corresponding <code>session login/logout</code> commands to manage module-specific sessions. This often meant that you would need to run multiple <code>session login/logout</code> commands with mostly the same option values like SSC URL and credentials. This has been simplified with fcli v3.x; the <code>fcli sc-sast</code> and <code>fcli sc-dast</code> modules now share their sessions with the <code>fcli ssc</code> modules, so you only need to use the <code>fcli ssc session login/logout</code> commands for managing sessions that can be used by all three modules.</p>
 </div>
 <div class="paragraph">
-<p>The following sections provide examples of old and new syntax for each of the action instructions.</p>
+<p>As a consequence, you&#8217;ll need to remove all invocations of <code>fcli sc-dast session *</code> commands as these commands no longer exist in fcli v3.x. Instead, you&#8217;ll need to use the corresponding <code>fcli ssc session *</code> commands.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_ssc"><a class="anchor" href="#_fcli_ssc"></a><code>fcli ssc</code></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are very little breaking changes to the fcli command structure in the <code>fcli ssc</code> module; most existing fcli v2.x invocations of <code>fcli ssc</code> commands can be used as-is with fcli 3.x, with these exceptions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli ssc appversion create</code>: Deprecated values for the <code>--copy</code> option have been removed; <code>AnalysisProcessingRules</code> will need to be replaced with <code>processing-rules</code>, and <code>BugTrackerConfiguration</code> will need to be replaced with <code>bugtracker</code>.</p>
+</li>
+<li>
+<p>If you have developed any custom fcli actions for use with the <code>fcli ssc action</code> commands, these custom actions will need to be updated to use the new fcli action yaml syntax. Please see the <a href="#_fcli_actions">Fcli Actions</a> section for details.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_actions"><a class="anchor" href="#_fcli_actions"></a>Fcli actions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There have been significant changes to the fcli action yaml syntax, both to make the syntax easier to use and understand, and to allow for new features. Built-in actions have been updated to the new syntax, so if you are running built-in actions only, these changes shouldn&#8217;t have any impact when upgrading from fcli v2.x to v3.x.</p>
+</div>
+<div class="paragraph">
+<p>However, any custom actions developed for fcli v2.x will not run on fcli v3.x (and vice versa). To allow custom actions developed for fcli v2.x to run on fcli v3.x, they will need to be updated to use the new fcli action yaml syntax. Given that the ability to run custom actions was documented as being preview functionality in fcli v2.x, this shouldn&#8217;t come as too much of a surprise.</p>
+</div>
+<div class="paragraph">
+<p>If, despite the preview warning, the updated fcli action yaml syntax poses major issues for your business, please discuss this with your OpenText Fortify representative to investigate options for assistance on migrating your fcli v2.x custom actions to fcli v3.x. Based on customer feedback, we may also investigate feasibility of providing an automated migration tool. Note though that even if we choose to do so, automatically migrated actions may still require manual review and changes to cater for any migration tasks that cannot be automated.</p>
+</div>
+<div class="paragraph">
+<p>To assist you with updating your fcli v2.x custom actions to allow them to run on fcli v3.x, the following sections provide an overview of fcli v2.x action instructions and their fcli v3.x equivalents.</p>
 </div>
 <div class="paragraph">
 <p>TODO Add sections for each of the changed instructions in alphabetical order, with each section providing a summary of changes and examples of old/new syntax.</p>
@@ -170,7 +228,7 @@ fcli_version: none
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2025-02-14 16:34:54 UTC
+Last updated 2025-02-15 15:59:30 UTC
 </div>
 </div>
 </body>

@@ -349,12 +349,6 @@
             "$ref" : "#/$defs/ActionStep"
           }
         },
-        "on.exception" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/$defs/ActionStep"
-          }
-        },
         "on.fail" : {
           "type" : "array",
           "items" : {
