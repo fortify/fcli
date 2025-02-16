@@ -165,6 +165,52 @@
         "var.set-global" : {
           "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)",
           "description" : "Set one or more global variables that can be accessed by both this action, and any other actions that are executed within the same fcli invocation. For example, if action 1 uses the 'run.fcli' step to run action 2, any global variables set by action 2 can also be accessed by later steps in action 1. Global variables can be accessed through ${global.varName}.\n\nThis step takes a list of variables to set, with each list item taking a single yaml property that represents the variable name to set, which may be specified as an SpEL template expression. Based on the format of the variable name, this step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. Following are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property name on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nValues may be specified as either an SpEL template expression, or as 'value' and 'fmt' properties. An 'if' property is also supported to conditionally set the variable. If formatter is specified, the given formatter from the 'formatters' section will be used to format the given value, or, if no value is given, the formatter will be evaluated against the set of all variables. Some examples:\n\nsimpleValue1: Hello ${name}\nformattedValue1: {fmt: myFormatter, if: \"${someExpression}\"}\nformatterValue2: {value: \"${myVar}\", fmt: \"${myVarFormatterExpression}\"}\n\nWithin a single 'var.set*' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables or formatters that are declared later in the same step.\n"
+        },
+        "with" : {
+          "type" : "object",
+          "properties" : {
+            "do" : {
+              "description" : "List of steps to be run within the context of the given configuration.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "if" : {
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
+              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "sessions" : {
+              "description" : "This instruction allows for setting up one or more sessions before running the steps specified in the do-block, and logging out of those sessions once the steps in the do-block have completed wither successfully or with failure.\n\nNote that for now, these sessions can only be referenced by explicitly specifying the --session option on 'run.fcli' instructions. The 'rest.call' instructions and any SpEL functions that are dependent on an fcli session will use the session that was specified through the --session option on the 'fcli * action run' command; they will ignore sessions created through the 'with:session' instruction.\n",
+              "type" : "array",
+              "items" : {
+                "type" : "object",
+                "properties" : {
+                  "if" : {
+                    "format" : "spelTemplateExpression",
+                    "type" : [ "boolean", "integer", "string", "number", "null" ],
+                    "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+                  },
+                  "login" : {
+                    "format" : "spelTemplateExpression",
+                    "type" : [ "boolean", "integer", "string", "number", "null" ],
+                    "description" : "The session login command to run before running the steps specified in the do-block.\n"
+                  },
+                  "logout" : {
+                    "format" : "spelTemplateExpression",
+                    "type" : [ "boolean", "integer", "string", "number", "null" ],
+                    "description" : "The session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
+                  }
+                },
+                "required" : [ "login", "logout" ],
+                "additionalProperties" : false
+              }
+            }
+          },
+          "required" : [ "do", "sessions" ],
+          "additionalProperties" : false,
+          "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block.\n"
         }
       },
       "additionalProperties" : false

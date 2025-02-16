@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250216.094217-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250216.160313-dev_v3.x-develop" %}
 
 
 <div id="header">
@@ -62,18 +62,6 @@ fcli_version:
 </div>
 <div class="paragraph">
 <p>The action can be specified as either a simple name or a local or remote action YAML file location. If specified as a simple name, the action will be loaded from the list of built-in and imported custom actions unless the <code>--from-zip</code> option is specified, in which case the action will be loaded from the given local or remote zip file. The <code>--from-zip</code> option will only be used if action is specified as a simple name, it will be ignored if the action is specified as a local or remote action YAML file location.</p>
-</div>
-<div class="paragraph">
-<p>By default, you&#8217;ll need to have an existing SSC session created through the 'fcli ssc session login' command in order to run any actions, just like any other 'fcli ssc' commands. However, the 'fcli ssc action run' command also supports the --session=from-env option to automatically initialize an SSC session before running the given action, and logging out of that session upon action termination. This allows for running SSC actions without explicitly calling 'fcli ssc session login/logout' commands, but note that it&#8217;s more efficient to explicitly call the 'fcli ssc session login/logout' commands if you need to run multiple fcli SSC actions.</p>
-</div>
-<div class="paragraph">
-<p>The following table shows the mapping between environment variables and corresponding 'fcli ssc session login' options supported by the --session=from-env option; please see the usage help for 'fcli ssc session login' for more information.
-  SSC_URL:              --url
-  SSC_USER:             --user
-  SSC_PASSWORD:         --password
-  SSC_TOKEN:            --token
-  SC_SAST_TOKEN:        --client-auth-token
-  SSC_LOGIN_EXTRA_OPTS: Any other 'fcli ssc session login' options</p>
 </div>
 </div>
 </div>
@@ -198,7 +186,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-02-16 09:43:58 UTC
+Last updated 2025-02-16 16:04:55 UTC
 </div>
 </div>
 </body>
