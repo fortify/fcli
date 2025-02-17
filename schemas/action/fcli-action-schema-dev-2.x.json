@@ -42,7 +42,7 @@
         "check" : {
           "type" : "object",
           "additionalProperties" : {
-            "$ref" : "#/$defs/ActionStepCheck"
+            "$ref" : "#/$defs/ActionStepCheckEntry"
           },
           "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of one or more checks was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to conditionally execute additional checks based on earlier check outcome. Note that if the same check name (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} will contain the status of the last executed check for the given check name.\n"
         },
@@ -112,21 +112,21 @@
         "rest.call" : {
           "type" : "object",
           "additionalProperties" : {
-            "$ref" : "#/$defs/ActionStepRestCall"
+            "$ref" : "#/$defs/ActionStepRestCallEntry"
           },
           "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier for the REST call, and values defining the request data and how to process the response. For paged REST requests, a single 'rest.call' instruction will execute multiple REST requests to load the individual pages. The response of each individual REST request will be stored as local action variables. For example, given a rest.call identifier 'x' the following local action variables will be set:\n\nx: The processed response\nx_raw: The raw, unprocessed response\nx_exception: Java Exception instance if the request failed\n\nThese variables can be referenced only within the current 'rest.call' map entry, for example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible\nby later steps or other map entries within the same 'rest.call' step. If you wish to make any data produced by the REST call available to later steps, you'll need to use 'var.*' steps in either 'on.success' or 'records.for-each' instructions.\n\nNote that multiple REST calls defined within a single 'rest.call' step will be executed in the specified order, but the requests are built independent of each other. As such, within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be accessed in the request definition (uri, query, body, ...) of another map entry. The reason is that for target systems that supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be defined in separate 'rest.call' steps.\n"
         },
         "rest.target" : {
           "type" : "object",
           "additionalProperties" : {
-            "$ref" : "#/$defs/ActionStepRestTarget"
+            "$ref" : "#/$defs/ActionStepRestTargetEntry"
           },
           "description" : "Add REST request targets for use in 'rest.call' steps. This step takes a map, with keys defining REST target names, and values defining the REST target definition.\n"
         },
         "run.fcli" : {
           "type" : "object",
           "additionalProperties" : {
-            "$ref" : "#/$defs/ActionStepRunFcli"
+            "$ref" : "#/$defs/ActionStepRunFcliEntry"
           },
           "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx_stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx_stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx_exitCode: Exit code of the fcli invocation\nx_exception: Java Exception instance if fcli invocation threw an exception\n"
         },
@@ -215,7 +215,7 @@
       },
       "additionalProperties" : false
     },
-    "ActionStepCheck" : {
+    "ActionStepCheckEntry" : {
       "type" : "object",
       "properties" : {
         "display-name" : {
@@ -246,7 +246,7 @@
       "required" : [ "display-name" ],
       "additionalProperties" : false
     },
-    "ActionStepRestCall" : {
+    "ActionStepRestCallEntry" : {
       "type" : "object",
       "properties" : {
         "body" : {
@@ -300,7 +300,11 @@
           }
         },
         "query" : {
-          "$ref" : "#/$defs/Map(String,TemplateExpression)",
+          "type" : "object",
+          "additionalProperties" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ]
+          },
           "description" : "Optional map: Query parameters to be added to the request. Map keys specify the query parameter name, map values specify the query parameter value. Keys must be plain strings, values are evaluated as SpEL template expressions, for example 'someParam: ${var1.prop1]}'.\n"
         },
         "records.for-each" : {
@@ -321,7 +325,7 @@
             "embed" : {
               "type" : "object",
               "additionalProperties" : {
-                "$ref" : "#/$defs/ActionStepRestCall"
+                "$ref" : "#/$defs/ActionStepRestCallEntry"
               },
               "description" : "Optional map: Allows for making additional REST calls for each individual record being processed. Map values define the REST call to be executed, map keys define under which property the response will be embedded into the variable specified through the 'set.record-var' instruction, with similar behavior as described for the rest.call step, i.e., processed data will be available through a property named after the map key, whereas raw response data will be available through a property named [map key]_raw.\n"
             },
@@ -357,7 +361,7 @@
       "required" : [ "uri" ],
       "additionalProperties" : false
     },
-    "ActionStepRestTarget" : {
+    "ActionStepRestTargetEntry" : {
       "type" : "object",
       "properties" : {
         "baseUrl" : {
@@ -366,14 +370,18 @@
           "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target.\n"
         },
         "headers" : {
-          "$ref" : "#/$defs/Map(String,TemplateExpression)",
+          "type" : "object",
+          "additionalProperties" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ]
+          },
           "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.\n"
         }
       },
       "required" : [ "baseUrl" ],
       "additionalProperties" : false
     },
-    "ActionStepRunFcli" : {
+    "ActionStepRunFcliEntry" : {
       "format" : "spelTemplateExpression or object",
       "type" : [ "object", "string" ],
       "properties" : {
@@ -439,13 +447,6 @@
       "type" : "object",
       "additionalProperties" : {
         "$ref" : "#/$defs/TemplateExpressionWithFormatter"
-      }
-    },
-    "Map(String,TemplateExpression)" : {
-      "type" : "object",
-      "additionalProperties" : {
-        "format" : "spelTemplateExpression",
-        "type" : [ "boolean", "integer", "string", "number", "null" ]
       }
     },
     "TemplateExpressionWithFormatter" : {
