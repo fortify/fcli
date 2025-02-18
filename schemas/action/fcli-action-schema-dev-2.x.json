@@ -170,7 +170,7 @@
           "type" : "object",
           "properties" : {
             "do" : {
-              "description" : "List of steps to be run within the context of the given configuration.\n",
+              "description" : "Required list of steps to be run within the context of the given configuration.\n",
               "type" : "array",
               "items" : {
                 "$ref" : "#/$defs/ActionStep"
@@ -187,30 +187,39 @@
               "items" : {
                 "type" : "object",
                 "properties" : {
-                  "if" : {
-                    "format" : "spelTemplateExpression",
-                    "type" : [ "boolean", "integer", "string", "number", "null" ],
-                    "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
-                  },
                   "login" : {
                     "format" : "spelTemplateExpression",
                     "type" : [ "boolean", "integer", "string", "number", "null" ],
-                    "description" : "The session login command to run before running the steps specified in the do-block.\n"
+                    "description" : "Required SpEL template expression; the session login command to run before running the steps specified in the do-block.\n"
                   },
                   "logout" : {
                     "format" : "spelTemplateExpression",
                     "type" : [ "boolean", "integer", "string", "number", "null" ],
-                    "description" : "The session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
+                    "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
                   }
                 },
                 "required" : [ "login", "logout" ],
                 "additionalProperties" : false
               }
+            },
+            "writers" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/$defs/ActionStepWithWriter"
+              },
+              "description" : "This instruction allows for setting up one or more record writers that can referenced by writer.append steps in the associated do-block. After all steps in the do-block have been executed, the writer will be closed. This instruction takes a map, with map keys defining writer identifiers, and map values defining the writer configurations.\n"
             }
           },
-          "required" : [ "do", "sessions" ],
+          "required" : [ "do" ],
           "additionalProperties" : false,
           "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block.\n"
+        },
+        "writer.append" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/TemplateExpressionWithFormatter"
+          },
+          "description" : "Append data to a writer as defined in the surrounding with-step.\n"
         }
       },
       "additionalProperties" : false
@@ -438,6 +447,31 @@
           "additionalProperties" : false
         }
       },
+      "additionalProperties" : false
+    },
+    "ActionStepWithWriter" : {
+      "type" : "object",
+      "properties" : {
+        "options" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ]
+          },
+          "description" : "Optional map defining options for the given writer type. Different writer types may support different configuration options. Following is a list of supported configuration options, together with the writer types on which the option is supported.\n"
+        },
+        "to" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified only as a file name for now. If a file already exists, it will be overwritten.\n"
+        },
+        "type" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Required SpEL template expression defining the writer type. The expression must evaluate to one of the following values: json, csv, ... TODO\n"
+        }
+      },
+      "required" : [ "to", "type" ],
       "additionalProperties" : false
     },
     "LinkedHashMap(String,TemplateExpression)" : {
