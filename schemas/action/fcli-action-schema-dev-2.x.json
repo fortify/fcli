@@ -300,11 +300,7 @@
           }
         },
         "query" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "format" : "spelTemplateExpression",
-            "type" : [ "boolean", "integer", "string", "number", "null" ]
-          },
+          "$ref" : "#/$defs/LinkedHashMap(String,TemplateExpression)",
           "description" : "Optional map: Query parameters to be added to the request. Map keys specify the query parameter name, map values specify the query parameter value. Keys must be plain strings, values are evaluated as SpEL template expressions, for example 'someParam: ${var1.prop1]}'.\n"
         },
         "records.for-each" : {
@@ -370,12 +366,13 @@
           "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target.\n"
         },
         "headers" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "format" : "spelTemplateExpression",
-            "type" : [ "boolean", "integer", "string", "number", "null" ]
-          },
+          "$ref" : "#/$defs/LinkedHashMap(String,TemplateExpression)",
           "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.\n"
+        },
+        "if" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         }
       },
       "required" : [ "baseUrl" ],
@@ -442,6 +439,13 @@
         }
       },
       "additionalProperties" : false
+    },
+    "LinkedHashMap(String,TemplateExpression)" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "format" : "spelTemplateExpression",
+        "type" : [ "boolean", "integer", "string", "number", "null" ]
+      }
     },
     "LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)" : {
       "type" : "object",
