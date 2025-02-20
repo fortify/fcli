@@ -38,7 +38,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 @Reflectable
 public final class SimpleExpressionSerializer extends StdSerializer<SimpleExpression> {
     private static final long serialVersionUID = 1L;
-    protected SimpleExpressionSerializer() {
+    public SimpleExpressionSerializer() {
         super(SimpleExpression.class);
     }
 
@@ -46,6 +46,4 @@ public final class SimpleExpressionSerializer extends StdSerializer<SimpleExpres
     public void serialize(SimpleExpression value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeString(value.getExpressionString());
     }
-    
-    
 }

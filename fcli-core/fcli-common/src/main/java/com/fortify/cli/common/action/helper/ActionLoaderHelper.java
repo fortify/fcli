@@ -42,7 +42,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionMetadata;
-import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation.AbortedByUserException;
+import com.fortify.cli.common.action.model.FcliActionValidationException;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation.FcliAbortedByUserException;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeySource;
@@ -52,6 +53,8 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpressionKeyDeserializer;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
@@ -102,7 +105,7 @@ public class ActionLoaderHelper {
         case UNSIGNED: return "Action "+name+" is not signed.";
         case NOT_VERIFIED: return "Signature verification skipped for action "+name+".";
         case VALID: return "Action "+name+" has a valid signature.";
-        default: throw new RuntimeException("Unknown signature status: "+signatureStatus);
+        default: throw new FcliBugException("Unknown signature status: "+signatureStatus);
         }
     }
     
@@ -123,7 +126,7 @@ public class ActionLoaderHelper {
             //      matches this regex.
             var result = loadFromZips(source);
             if ( result==null ) { result = loadFromFileOrUrl(source); }
-            if ( result==null ) { throw new IllegalArgumentException("Action not found: "+source); }
+            if ( result==null ) { throw new FcliSimpleException("Action not found: "+source); }
             return result;
         }
         
@@ -139,7 +142,7 @@ public class ActionLoaderHelper {
                     return load(is, metadata);
                 }
             } catch (Exception e) {
-                if ( e instanceof AbortedByUserException ) { throw (AbortedByUserException)e; }
+                if ( e instanceof FcliAbortedByUserException ) { throw (FcliAbortedByUserException)e; }
                 throw wrapException("Error loading action from "+source, e);
             }
             return null;
@@ -314,9 +317,9 @@ public class ActionLoaderHelper {
                 commentValue = getValue("# yaml-language-server $schema", matcher.group("schemaCommentValue"), commentValue);
             }
             if ( StringUtils.isAllBlank(propertyValue, commentValue) ) {
-                throw new IllegalStateException(getExceptionMessage("Either '$schema' property or '# yaml-language-server $schema' must be specified"));
+                throw new FcliActionValidationException(getExceptionMessage("Either '$schema' property or '# yaml-language-server $schema' must be specified"));
             } else if ( StringUtils.isNoneBlank(propertyValue, commentValue) && !propertyValue.equals(commentValue) ) {
-                throw new IllegalStateException(getExceptionMessage("If both '$schema' property and '# yaml-language-server $schema' are specified, the schema locations must be identical"));
+                throw new FcliActionValidationException(getExceptionMessage("If both '$schema' property and '# yaml-language-server $schema' are specified, the schema locations must be identical"));
             } else if ( StringUtils.isBlank(propertyValue) ) {
                 return commentValue;
             } else {
@@ -328,7 +331,7 @@ public class ActionLoaderHelper {
             if ( StringUtils.isBlank(oldValue) ) { 
                 return newValue; 
             } else if ( StringUtils.isNotBlank(newValue) ) {
-                throw new IllegalStateException(getExceptionMessage(type+" may only be specified once"));
+                throw new FcliActionValidationException(getExceptionMessage(type+" may only be specified once"));
             } else {
                 return oldValue;
             }
@@ -430,7 +433,7 @@ public class ActionLoaderHelper {
                 return Files.newInputStream(Path.of(source));
             } catch ( IOException ioe ) {
                 if ( failOnError ) {
-                    throw new IllegalArgumentException("Unable to read from "+source, ioe);
+                    throw new FcliSimpleException("Unable to read from "+source, ioe);
                 } else {
                     return null;
                 }
@@ -506,18 +509,18 @@ public class ActionLoaderHelper {
         }
         
         private static final void _warn(String msg) { LOG.warn("WARN: "+msg); }
-        private static final void _throw(String msg) { throw new IllegalStateException(msg); }
+        private static final void _throw(String msg) { throw new FcliSimpleException(msg); }
         private static final void _prompt(String msg) {
             if ( System.console()==null ) {
                 _throw(msg);
             } else if (!"Y".equalsIgnoreCase(System.console().readLine(String.format("WARN: %s\n  Do you want to continue? (Y/N) ", msg))) ) {
-                throw new AbortedByUserException("Aborting: operation aborted by user");
+                throw new FcliAbortedByUserException("Aborting: operation aborted by user");
             }
         }
     }
     
     private static final RuntimeException wrapException(String msg, Exception e) {
-        if ( e!=null && e instanceof AbortedByUserException ) { return (AbortedByUserException)e; }
+        if ( e!=null && e instanceof FcliAbortedByUserException ) { return (FcliAbortedByUserException)e; }
         return new IllegalStateException(msg, e);
     }
     

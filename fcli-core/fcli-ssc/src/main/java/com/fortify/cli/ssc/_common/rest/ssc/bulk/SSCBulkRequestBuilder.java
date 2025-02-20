@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.Body;
@@ -93,7 +94,7 @@ public class SSCBulkRequestBuilder {
     public SSCBulkRequestBuilder request(String name, HttpRequest<?> request) {
         if ( request==null ) { return this; }
         if ( nameToIndexMap.containsKey(name) ) {
-            throw new IllegalArgumentException(String.format("Request name '%s' was already added to bulk request", name));
+            throw new FcliTechnicalException(String.format("Request name '%s' was already added to bulk request", name));
         }
         String uri = request.getUrl();
         nameToIndexMap.put(name, requests.size());
@@ -103,7 +104,7 @@ public class SSCBulkRequestBuilder {
         Optional<Body> optionalBody = request.getBody();
         if ( optionalBody.isPresent() ) {
             Body body = optionalBody.get();
-            if ( body.isMultiPart() ) { throw new IllegalArgumentException("Multipart bodies are not supported for bulk requests"); }
+            if ( body.isMultiPart() ) { throw new FcliTechnicalException("Multipart bodies are not supported for bulk requests"); }
             Object bodyValue = body.uniPart().getValue();
             if ( bodyValue instanceof String ) {
                 // If bodyValue is a String, we expect this to be already serialized JSON

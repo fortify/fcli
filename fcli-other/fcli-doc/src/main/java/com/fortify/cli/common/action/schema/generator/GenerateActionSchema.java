@@ -19,15 +19,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeResolver;
+import com.fasterxml.classmate.members.RawField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ActionSchemaHelper;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
+import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
 import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
+import com.github.victools.jsonschema.generator.SchemaGenerationContext;
 import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
@@ -113,13 +121,7 @@ public class GenerateActionSchema {
         JacksonModule jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
         configBuilder.forTypesInGeneral().withCustomDefinitionProvider((type, context) -> {
             if (type.getErasedType() == TemplateExpression.class) {
-                var custom = context.getGeneratorConfig().createObjectNode();
-                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression")
-                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
-                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN))
-                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_INTEGER))
-                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING))
-                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NUMBER));
+                var custom = createTemplateExpressionDefinition(context);
                 return new CustomDefinition(custom, true);
             } else if (type.getErasedType() == JsonNode.class ) {
                 var custom = context.getGeneratorConfig().createObjectNode();
@@ -128,6 +130,30 @@ public class GenerateActionSchema {
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
                 return new CustomDefinition(custom, true);
+            } else if (type.getErasedType() == TemplateExpressionWithFormatter.class) {
+                var resolver = new TypeResolver();
+                var properties = getProperties(type, context, resolver);
+                var custom = context.getGeneratorConfig().createObjectNode();
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression or object")
+                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_INTEGER))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NUMBER))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NULL));
+                custom.set(context.getKeyword(SchemaKeyword.TAG_PROPERTIES), properties);
+                return new CustomDefinition(custom, false);
+            } else if (type.getErasedType() == ActionStepRunFcliEntry.class) {
+                var resolver = new TypeResolver();
+                var properties = getProperties(type, context, resolver);
+                var custom = context.getGeneratorConfig().createObjectNode();
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression or object")
+                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
+                custom.set(context.getKeyword(SchemaKeyword.TAG_PROPERTIES), properties);
+                return new CustomDefinition(custom, false);
             } else {
                 return null;
             }
@@ -140,5 +166,27 @@ public class GenerateActionSchema {
                 .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES)
                 .build();
         return config;
+    }
+
+    private static ObjectNode getProperties(ResolvedType type, SchemaGenerationContext context, TypeResolver resolver) {
+        var properties = context.getGeneratorConfig().createObjectNode();
+        type.getMemberFields().stream()
+            .map(RawField::getRawMember)
+            .filter(f->f.isAnnotationPresent(JsonProperty.class))
+            .forEach(f->properties.set(f.getAnnotation(JsonProperty.class).value(), context.createDefinition(
+            resolver.resolve(f.getGenericType()))));
+        return properties;
+    }
+
+    private static ObjectNode createTemplateExpressionDefinition(SchemaGenerationContext context) {
+        var custom = context.getGeneratorConfig().createObjectNode();
+        custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression")
+            .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN))
+                .add(context.getKeyword(SchemaKeyword.TAG_TYPE_INTEGER))
+                .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING))
+                .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NUMBER))
+                .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NULL));
+        return custom;
     }
 }

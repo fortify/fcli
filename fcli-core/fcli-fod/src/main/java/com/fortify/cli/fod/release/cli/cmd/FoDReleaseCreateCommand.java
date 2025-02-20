@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -135,7 +136,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
         if ( microserviceDescriptor==null && appDescriptor.isHasMicroservices() ) { 
             String microserviceName = releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName();
             if ( StringUtils.isBlank(microserviceName) ) {
-                throw new IllegalArgumentException("Microservice name must be specified for microservices application");
+                throw new FcliSimpleException("Microservice name must be specified for microservices application");
             }
             microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName());
             msCreated = true;
@@ -181,7 +182,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
         }
         var copyFromReleaseDescriptor = copyFromReleaseResolver.getReleaseDescriptor(unirest);
         if ( copyFromReleaseDescriptor!=null && !copyFromReleaseDescriptor.getApplicationId().equals(appDescriptor.getApplicationId()) ) {
-            throw new IllegalArgumentException("Copy release from different application is not allowed");
+            throw new FcliSimpleException("Copy release from different application is not allowed");
         }
         return copyFromReleaseDescriptor;
     }

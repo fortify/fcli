@@ -15,6 +15,7 @@ package com.fortify.cli.common.output.transform.single;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
 
 public class ToSingleObjectNodeTransformer extends AbstractJsonNodeTransformer {
@@ -35,7 +36,7 @@ public class ToSingleObjectNodeTransformer extends AbstractJsonNodeTransformer {
         if ( input==null || input.size()==0 ) {
             return null;
         } else if ( input.size()>1 && failOnMultiple ) {
-            throw new IllegalArgumentException("Expected single JSON object, received multiple");
+            throw new FcliTechnicalException("Expected single JSON object, received multiple");
         } else {
             return input.get(0);
         }

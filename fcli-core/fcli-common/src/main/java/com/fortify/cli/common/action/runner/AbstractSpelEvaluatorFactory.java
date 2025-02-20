@@ -17,6 +17,7 @@ import java.util.function.BiConsumer;
 
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spring.expression.SpelEvaluator;
 import com.fortify.cli.common.spring.expression.SpelHelper;
@@ -29,7 +30,7 @@ public abstract class AbstractSpelEvaluatorFactory {
     
     private final IConfigurableSpelEvaluator createSpelEvaluator() {
         if ( inConfigurationPhase ) {
-            throw new IllegalStateException(this.getClass().getSimpleName()+"::getSpelEvaluator may not be invoked during configuration phase");
+            throw new FcliBugException(this.getClass().getSimpleName()+"::getSpelEvaluator may not be invoked during configuration phase");
         }
         inConfigurationPhase = true;
         return SpelEvaluator.JSON_GENERIC.copy().configure(this::_configureSpelContext);

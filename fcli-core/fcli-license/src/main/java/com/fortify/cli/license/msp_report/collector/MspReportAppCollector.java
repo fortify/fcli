@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.util.Counter;
@@ -83,7 +84,7 @@ public final class MspReportAppCollector {
     
     private void increaseMspLicenseTypeAttrStatusCounts(MspReportLicenseType mspLicenseType) {
         if ( mspLicenseType==null ) {
-            throw new IllegalStateException("MSP license type not defined");
+            throw new FcliSimpleException("MSP license type not defined");
         } else {
             switch (mspLicenseType) {
             case Application: 

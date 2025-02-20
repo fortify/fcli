@@ -30,16 +30,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.cli.cmd.AbstractActionRunCommand;
-import com.fortify.cli.common.action.model.ActionStepForEach.IActionStepForEachProcessor;
+import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig.ActionRunnerConfigBuilder;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionSpelFunctions;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.spring.expression.SpelHelper;
-import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastProductHelper;
@@ -70,18 +70,9 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
     }
     
     @Override
-    protected String[] getSharedSessionModules() {
-        return new String[] {"ssc", "sc-sast", "sc-dast"}; 
-    }
-    
-    @Override
-    protected String getSessionName() {
-        return unirestInstanceSupplier.getSessionName();
-    }
-    
-    @Override
     protected void configure(ActionRunnerConfigBuilder configBuilder) {
        configBuilder
+            .requestedSessionName(unirestInstanceSupplier.getSessionName())
             .actionContextConfigurer(this::configureActionContext)
             .actionContextSpelEvaluatorConfigurer(this::configureSpelContext);
     }
@@ -94,34 +85,6 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
     
     protected void configureSpelContext(ActionRunnerContext actionRunnerContext, SimpleEvaluationContext spelContext) {
         spelContext.setVariable("ssc", new SSCSpelFunctions(actionRunnerContext));   
-    }
-    
-    @Override
-    protected String getSessionFromEnvLoginCommand() {
-        var sscUrl = EnvHelper.requiredEnv("SSC_URL");
-        var sscUser = EnvHelper.envOrDefault("SSC_USER", "");
-        var sscPwd = EnvHelper.envOrDefault("SSC_PASSWORD", "");
-        var sscToken = EnvHelper.envOrDefault("SSC_TOKEN", "");
-        var scSastToken = EnvHelper.envOrDefault("SC_SAST_TOKEN", "");
-        var extraOpts = EnvHelper.envOrDefault("SSC_LOGIN_EXTRA_OPTS", "");
-        String sscCredentialArgs;
-        if ( StringUtils.isNotBlank(sscUser) && StringUtils.isNotBlank(sscPwd) ) {
-            sscCredentialArgs = String.format("-u \"%s\" -p \"%s\"", sscUser, sscPwd);
-        } else if ( StringUtils.isNotBlank(sscToken) ) {
-            sscCredentialArgs = String.format("-t \"%s\"", sscToken);
-        } else {
-            throw new IllegalStateException("Either SSC_USER & SSC_PASSWORD, or SSC_TOKEN environment variables must be defined");
-        }
-        return String.format(
-                "ssc session login --url \"%s\" %s -c \"%s\" %s",
-                sscUrl, sscCredentialArgs, scSastToken, extraOpts);
-    }
-    
-    @Override
-    protected String getSessionFromEnvLogoutCommand() {
-        var sscUser = EnvHelper.envOrDefault("SSC_USER", "");
-        var sscPwd = EnvHelper.envOrDefault("SSC_PASSWORD", "");
-        return String.format("ssc session logout -u \"%s\" -p \"%s\"", sscUser, sscPwd);
     }
     
     @RequiredArgsConstructor @Reflectable
@@ -140,7 +103,7 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
             ctx.getProgressWriter().writeProgress(progressMessage);
             var filterSetDescriptor = new SSCIssueFilterSetHelper(unirestInstanceSupplier.getSscUnirestInstance(), appVersion.get("id").asText()).getDescriptorByTitleOrId(titleOrId, false);
             if ( filterSetDescriptor==null ) {
-                throw new IllegalArgumentException("Unknown filter set: "+titleOrId);
+                throw new FcliSimpleException("Unknown filter set: "+titleOrId);
             }
             return filterSetDescriptor.asJsonNode();
         }

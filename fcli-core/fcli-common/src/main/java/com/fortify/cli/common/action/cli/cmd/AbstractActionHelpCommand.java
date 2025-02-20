@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionParameterHelper;
+import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
@@ -54,7 +54,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
             "%s"+
             "\nAction options:\n"+
             "%s",
-            metadata.getName(), usage.getHeader(), usage.getDescription(), getMetadata(action), ActionParameterHelper.getSupportedOptionsTable(action));
+            metadata.getName(), usage.getHeader(), usage.getDescription(), getMetadata(action), ActionOptionHelper.getSupportedOptionsTable(action));
     }
     
     private final String getMetadata(Action action) {

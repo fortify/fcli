@@ -2,6 +2,7 @@ rootProject.name="fcli"
 // Include references are defined in gradle.properties
 include "$fcliBomRef"
 include "$fcliCommonRef"
+include "$fcliActionRef"
 include "$fcliConfigRef"
 include "$fcliSSCRef"
 include "$fcliFoDRef"

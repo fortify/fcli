@@ -16,6 +16,7 @@ package com.fortify.cli.fod._common.scan.helper.dast;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
@@ -48,7 +49,7 @@ public class FoDScanDastLegacyHelper extends FoDScanHelper {
                 .body(body).asObject(JsonNode.class).getBody();
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
-            throw new RuntimeException("Unable to retrieve scan id from response when starting Dynamic scan.");
+            throw new FcliSimpleException("Unable to retrieve scan id from response when starting Dynamic scan.");
         }
         JsonNode node = objectMapper.createObjectNode()
                 .put("scanId", startScanResponse.getScanId())

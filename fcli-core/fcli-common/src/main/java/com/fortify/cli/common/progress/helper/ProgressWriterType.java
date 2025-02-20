@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.fortify.cli.common.exception.FcliBugException;
+
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Help.Ansi;
 
@@ -74,6 +76,11 @@ public enum ProgressWriterType {
     
     private static final class NoProgressWriter extends AbstractProgressWriter {
         @Override
+        public String type() {
+            return "none";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return false;
         }
@@ -86,6 +93,11 @@ public enum ProgressWriterType {
     }
     
     private static final class SimpleProgressWriter extends AbstractProgressWriter {
+        @Override
+        public String type() {
+            return "simple";
+        }
+        
         @Override
         public boolean isMultiLineSupported() {
             return true;
@@ -106,6 +118,11 @@ public enum ProgressWriterType {
     }
     
     private static final class SimpleStdErrProgressWriter extends AbstractProgressWriter {
+        @Override
+        public String type() {
+            return "stderr";
+        }
+        
         @Override
         public boolean isMultiLineSupported() {
             return true;
@@ -130,6 +147,11 @@ public enum ProgressWriterType {
         private int lastNumberOfChars;
         
         @Override
+        public String type() {
+            return "single-line";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return false;
         }
@@ -137,7 +159,7 @@ public enum ProgressWriterType {
         @Override
         public void writeProgress(String message, Object... args) {
             String formattedMessage = format(message, args);
-            if ( formattedMessage.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
+            if ( formattedMessage.contains("\n") ) { throw new FcliBugException("Multiline status updates are not supported; please file a bug"); }
             clearProgress();
             System.out.print(formattedMessage);
             this.lastNumberOfChars = formattedMessage.length();
@@ -155,6 +177,11 @@ public enum ProgressWriterType {
         private static final String LINE_CLEAR = "\033[2K";
         private static final String LINE_START = "\r";
         private int lastNumberOfLines = 0;
+        
+        @Override
+        public String type() {
+            return "ansi";
+        }
         
         @Override
         public boolean isMultiLineSupported() {

@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.cli.common.rest.unirest.URIHelper;
@@ -43,7 +44,7 @@ public final class FoDFileTransferHelper {
     @SneakyThrows
     public static final JsonNode upload(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
         if (!f.exists() || !f.canRead()) {
-            throw new IllegalArgumentException("Could not read file: " + f.getPath());
+            throw new FcliSimpleException("Could not read file: " + f.getPath());
         }
         String body = null;
         try ( FoDProgressMonitor uploadMonitor = new FoDProgressMonitor("Upload") ) {
@@ -55,7 +56,7 @@ public final class FoDFileTransferHelper {
                     .asString()
                     .getBody();
         } catch (Exception e) {
-            throw new RuntimeException("Error uploading file", e);
+            throw new FcliSimpleException("Error uploading file", e);
         }
         return new ObjectMapper().readTree(body);
     }
@@ -63,7 +64,7 @@ public final class FoDFileTransferHelper {
     @SneakyThrows
     public static final JsonNode uploadChunked(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
         if (!f.exists() || !f.canRead()) {
-            throw new IllegalArgumentException("Could not read file: " + f.getPath());
+            throw new FcliSimpleException("Could not read file: " + f.getPath());
         }
         long fileLen = f.length();
         String lastBody = null;
@@ -97,7 +98,7 @@ public final class FoDFileTransferHelper {
             }
             progressMonitor.accept(baseRequest.getUrl(), f.getName(), offset, fileLen);
         } catch (Exception e) {
-            throw new RuntimeException("Error uploading file", e);
+            throw new FcliSimpleException("Error uploading file", e);
         }
 
         return new ObjectMapper().readTree(lastBody);

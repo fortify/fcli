@@ -12,23 +12,24 @@ config:
   
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: sq-fortify-sast.json"
     required: false
     default: sq-fortify-sast.json
   file-path-prefix:
-    alias: pfx
+    names: --file-path-prefix, --pfx
     description: "Optional prefix for issue file paths"
     required: false
     default: ""
   appversion:
-    alias: av
+    names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
   filterset:
-    alias: fs
+    names: --filterset, --fs
     description: "Optional filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
   page-size:
+    names: --page-size
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
     required: false
     default: "100"
@@ -50,10 +51,10 @@ steps:
         records.for-each:
           record.var-name: issue
           do:
-            - var.fmt:
-                sq_issues..: sq_issues
-  - out.fmt:
-      ${cli.file}: sq_output 
+            - var.set:
+                sq_issues..: {fmt: sq_issues}
+  - out.write:
+      ${cli.file}: {fmt: sq_output} 
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

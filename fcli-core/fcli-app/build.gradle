@@ -4,6 +4,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 // Define dependencies on all fcli Gradle projects
 dependencies {
 	implementation project("${fcliCommonRef}")
+	implementation project("${fcliActionRef}")
     implementation project("${fcliConfigRef}")
 	implementation project("${fcliFoDRef}")
     implementation project("${fcliSSCRef}")

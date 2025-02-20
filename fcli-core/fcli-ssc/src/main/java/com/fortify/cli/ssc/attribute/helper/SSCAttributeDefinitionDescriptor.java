@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.ssc.attribute.domain.SSCAttributeDefinitionType;
@@ -70,13 +71,13 @@ public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
     
     public void checkIsRequired() {
         if ( !required ) {
-            throw new IllegalStateException("SSC attribute "+name+" must be configured as required attribute");
+            throw new FcliSimpleException("SSC attribute "+name+" must be configured as required attribute");
         }
     }
     
     public void checkType(SSCAttributeDefinitionType requiredType) {
         if ( this.type!=requiredType ) {
-            throw new IllegalStateException("SSC attribute "+name+" must be configured as type "+requiredType.name());
+            throw new FcliSimpleException("SSC attribute "+name+" must be configured as type "+requiredType.name());
         }
     }
     
@@ -84,7 +85,7 @@ public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
         var names = optionsByName.keySet();
         var requiredNamesList = Arrays.asList(requiredNames);
         if ( optionsByName.keySet().size()!=requiredNames.length || !names.containsAll(requiredNamesList) ) {
-            throw new IllegalStateException("SSC attribute "+name+" must be configured to have exactly these options: "+requiredNamesList);
+            throw new FcliSimpleException("SSC attribute "+name+" must be configured to have exactly these options: "+requiredNamesList);
         }                
     }
     

@@ -21,6 +21,7 @@ import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.AbstractRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
@@ -44,7 +45,7 @@ public class ExprRecordWriter extends AbstractRecordWriter {
                     insertControlCharacters(expressionTemplate), 
                     new TemplateParserContext("{", "}"));
         } catch ( Exception e ) {
-            throw new IllegalArgumentException(String.format("Output expression template cannot be parsed; please check expression syntax\n\tMessage: %s\n\tTemplate expression: %s", e.getMessage(), expressionTemplate));
+            throw new FcliSimpleException(String.format("Output expression template cannot be parsed; please check expression syntax\n\tMessage: %s\n\tTemplate expression: %s", e.getMessage(), expressionTemplate));
         }
     }
 
@@ -58,7 +59,7 @@ public class ExprRecordWriter extends AbstractRecordWriter {
             var result = JsonHelper.evaluateSpelExpression(record, expression, String.class);
             return result==null ? "" : result;
         } catch ( Exception e ) {
-            throw new IllegalStateException(String.format("Error evaluating output expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", e.getMessage(), getConfig().getOptions(), record.toPrettyString().replace("\n", "\n\t\t")));
+            throw new FcliSimpleException(String.format("Error evaluating output expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", e.getMessage(), getConfig().getOptions(), record.toPrettyString().replace("\n", "\n\t\t")));
         }
     }
 

@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -50,7 +51,7 @@ public class SSCUserDeleteCommand extends AbstractSSCJsonNodeOutputCommand imple
                 .filter(new SSCUserSpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultiMatch))
                 .collect(JsonHelper.arrayNodeCollector());
         if ( authEntitiesToDelete.size()==0 ) {
-            throw new IllegalArgumentException("No matching users found for deletion");
+            throw new FcliSimpleException("No matching users found for deletion");
         }
         String authEntityIdsToDelete = JsonHelper.stream(authEntitiesToDelete).map(this::getAuthEntityId).collect(Collectors.joining(","));
         unirest.delete(SSCUrls.AUTH_ENTITIES).queryString("ids", authEntityIdsToDelete).asObject(JsonNode.class).getBody();

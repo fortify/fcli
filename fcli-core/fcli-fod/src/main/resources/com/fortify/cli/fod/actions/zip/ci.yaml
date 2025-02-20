@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Run FoD CI pipeline
+  description: |
+    (Work in progress)
+    This action can be used to run a full, standardized CI pipeline that performs the
+    following activities:
+    - Create & configure FoD application release if needed
+    - Package source code
+    - Submit SAST scan request
+    - Wait for SAST scan completion
+    - Perform post-scan activities, like checking policy outcome, exporting results, ...
+
+config:
+  output: immediate
+  rest.target.default: fod
+  session.from-env.output: show
+  
+steps:
+  - run.fcli:
+      ci-vars: ${#actionCmd('CI_VARS', 'fod', 'ci-vars')}
+  - out.write:
+      stdout: |
+        After running ci-vars action: global.ci.x: ${global.ci.x}
+      

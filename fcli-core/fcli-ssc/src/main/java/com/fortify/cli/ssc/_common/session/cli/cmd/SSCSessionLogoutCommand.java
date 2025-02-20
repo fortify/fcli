@@ -16,7 +16,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.common.session.helper.SessionLogoutException;
+import com.fortify.cli.common.session.helper.FcliSessionLogoutException;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLogoutOptions;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
@@ -39,7 +39,7 @@ public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCAnd
                 sessionDescriptor.logout(userCredentialOptions);
             } catch ( UnexpectedHttpResponseException e ) {
                 if ( e.getStatus()==403 && userCredentialOptions==null ) {
-                    throw new SessionLogoutException("SSC user credentials or --no-revoke-token option must be specified on SSC versions 23.2 or below", false);
+                    throw new FcliSessionLogoutException("SSC user credentials or --no-revoke-token option must be specified on SSC versions 23.2 or below", false);
                 } else {
                     throw e;
                 }

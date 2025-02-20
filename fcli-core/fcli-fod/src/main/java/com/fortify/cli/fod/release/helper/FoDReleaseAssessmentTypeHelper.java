@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
@@ -53,7 +54,7 @@ public final class FoDReleaseAssessmentTypeHelper {
                         .concat("+isRemediation:").concat(isRemediation.toString()));
         JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && assessmentTypes.size() == 0) {
-            throw new IllegalStateException("No assessment types found for release id: " + relId);
+            throw new FcliSimpleException("No assessment types found for release id: " + relId);
         }
         return JsonHelper.treeToValue(assessmentTypes, FoDReleaseAssessmentTypeDescriptor[].class);
     }
@@ -73,7 +74,7 @@ public final class FoDReleaseAssessmentTypeHelper {
     public final static void validateEntitlement(String relId,
                                                  FoDReleaseAssessmentTypeDescriptor atd) {
         if (atd == null || atd.getAssessmentTypeId() == null || atd.getAssessmentTypeId() <= 0) {
-            throw new IllegalStateException("Invalid or empty FODAssessmentTypeDescriptor.");
+            throw new FcliSimpleException("Invalid or empty FODAssessmentTypeDescriptor.");
         }
         // check entitlement has not expired
         if (atd.getSubscriptionEndDate() != null &&

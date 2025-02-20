@@ -26,18 +26,19 @@ config:
   
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif"
     required: false
     default: gh-fortify-sast.sarif
   appversion:
-    alias: av
+    names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
   filterset:
-    alias: fs
+    names: --filterset, --fs
     description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
   page-size:
+    names: --page-size
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
     required: false
     default: "100"
@@ -80,8 +81,7 @@ steps:
           do:
             - var.set:
                 ruleCategories.${issue.primaryRuleGuid}: ${issue.issueName}
-            - var.fmt:
-                results..: results
+                results..: {fmt: results}
   - log.progress: Processing rule data
   - records.for-each:
       if: ${ruleCategories!=null}
@@ -89,10 +89,10 @@ steps:
       record.var-name: rule
       do:
         - if: ${#isNotBlank(ruleCategories[rule.id])}
-          var.fmt:
-            rules..: rules
-  - out.fmt:
-      ${cli.file}: github-sast-report
+          var.set:
+            rules..: {fmt: rules}
+  - out.write:
+      ${cli.file}: {fmt: github-sast-report}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

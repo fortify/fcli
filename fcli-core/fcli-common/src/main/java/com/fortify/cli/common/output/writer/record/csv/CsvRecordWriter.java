@@ -62,8 +62,10 @@ public class CsvRecordWriter extends AbstractFormattedRecordWriter {
     
     @Override @SneakyThrows
     public void close() {
-        if ( !getConfig().isSingular() && generator!=null ) {
-            generator.writeEndArray();
+        if ( generator!=null ) {
+            if ( !getConfig().isSingular() ) {
+                generator.writeEndArray();
+            }
             generator.close();
         }
     }

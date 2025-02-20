@@ -12,7 +12,7 @@ config:
   
 cli.options:
   appversion:
-    alias: av
+    names: --appversion,--av
     description: "Required application version id or <appName>:<versionName>"
   
 steps:

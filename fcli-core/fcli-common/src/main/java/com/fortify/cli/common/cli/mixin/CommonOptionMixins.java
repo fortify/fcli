@@ -21,6 +21,8 @@ import java.util.function.Function;
 
 import org.apache.commons.io.IOUtils;
 
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
@@ -64,7 +66,7 @@ public class CommonOptionMixins {
                     if ( response.equalsIgnoreCase(expectedResponse) ) {
                         return;
                     } else {
-                        throw new AbortedByUserException("Aborting: operation aborted by user");
+                        throw new FcliAbortedByUserException("Aborting: operation aborted by user");
                     }
                 }
             }
@@ -81,16 +83,16 @@ public class CommonOptionMixins {
             if ( StringUtils.isBlank(prompt) ) {
                 String[] descriptionLines = spec.optionsMap().get("-y").description();
                 if ( descriptionLines==null || descriptionLines.length<1 ) {
-                    throw new RuntimeException("No proper description found for generating prompt for --confirm option");
+                    throw new FcliBugException("No proper description found for generating prompt for --confirm option");
                 }
                 prompt = spec.optionsMap().get("-y").description()[0].replaceAll("[. ]+$", "")+"?";
             }
             return prompt;
         }
         
-        public static final class AbortedByUserException extends IllegalStateException {
+        public static final class FcliAbortedByUserException extends FcliSimpleException {
             private static final long serialVersionUID = 1L;
-            public AbortedByUserException(String msg) { super(msg); }
+            public FcliAbortedByUserException(String msg) { super(msg); }
         }
     }
     

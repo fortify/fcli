@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -39,14 +40,14 @@ public class JsonNodeHolder implements IJsonNodeHolder {
     @Override @JsonIgnore
     public ObjectNode asObjectNode() {
         var node = asJsonNode();
-        if ( !(node instanceof ObjectNode) ) { throw new IllegalStateException("JsonNode is not an instance of ObjectNode"); }
+        if ( !(node instanceof ObjectNode) ) { throw new FcliTechnicalException("JsonNode is not an instance of ObjectNode"); }
         return (ObjectNode)node;
     }
     
     @Override @JsonIgnore
     public ArrayNode asArrayNode() {
         var node = asJsonNode();
-        if ( !(node instanceof ArrayNode) ) { throw new IllegalStateException("JsonNode is not an instance of ArrayNode"); }
+        if ( !(node instanceof ArrayNode) ) { throw new FcliTechnicalException("JsonNode is not an instance of ArrayNode"); }
         return (ArrayNode)node;
     }
     

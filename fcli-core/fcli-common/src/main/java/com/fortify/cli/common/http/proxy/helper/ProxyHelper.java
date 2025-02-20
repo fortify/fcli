@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -79,7 +80,7 @@ public final class ProxyHelper {
     private static void configureProxyFromNonUrlVar(UnirestInstance unirest, String envVarName, String proxyString) {
         var proxyElts = proxyString.split(":");
         if ( proxyElts.length>2 ) {
-            throw new IllegalStateException(String.format("Unexpected format for environment variable %s: %s", envVarName, proxyString));
+            throw new FcliSimpleException(String.format("Unexpected format for environment variable %s: %s", envVarName, proxyString));
         }
         var host = proxyElts[0];
         var port = proxyElts.length<2 ? -1 : Integer.parseInt(proxyElts[1]);
@@ -87,7 +88,7 @@ public final class ProxyHelper {
             var lowerEnvVarName = envVarName.toLowerCase(); 
             if ( lowerEnvVarName.startsWith("http_") ) { port = 80; }
             else if ( lowerEnvVarName.startsWith("https_") ) { port = 443; }
-            else { throw new IllegalStateException(String.format("Unable to determine proxy port from environment variable %s: %s", envVarName, proxyString)); }
+            else { throw new FcliSimpleException(String.format("Unable to determine proxy port from environment variable %s: %s", envVarName, proxyString)); }
         }
         unirest.config().proxy(host, port);
     }
@@ -109,7 +110,7 @@ public final class ProxyHelper {
     public static final ProxyDescriptor getProxy(String name) {
         Path proxyConfigPath = getProxyConfigPath(name);
         if ( !FcliDataHelper.exists(proxyConfigPath) ) {
-            throw new IllegalArgumentException("No proxy configuration found with name: "+name);
+            throw new FcliSimpleException("No proxy configuration found with name: "+name);
         }
         return getProxy(proxyConfigPath);
     }
@@ -117,7 +118,7 @@ public final class ProxyHelper {
     public static final ProxyDescriptor addProxy(ProxyDescriptor descriptor) {
         Path proxyConfigPath = getProxyConfigPath(descriptor);
         if ( FcliDataHelper.exists(proxyConfigPath) ) {
-            throw new IllegalArgumentException("proxy configuration with name "+descriptor.getName()+" already exists");
+            throw new FcliSimpleException("proxy configuration with name "+descriptor.getName()+" already exists");
         }
         FcliDataHelper.saveSecuredFile(proxyConfigPath, descriptor, true);
         return descriptor;

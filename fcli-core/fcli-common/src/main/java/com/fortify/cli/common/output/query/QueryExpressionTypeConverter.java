@@ -16,6 +16,7 @@ import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.spring.expression.validator.AbstractSimpleSpelNodeValidator;
 
 import picocli.CommandLine.ITypeConverter;
@@ -30,7 +31,7 @@ public class QueryExpressionTypeConverter implements ITypeConverter<QueryExpress
         try {
             expression = parser.parseExpression(value);
         } catch ( Exception e ) {
-            throw new TypeConversionException(String.format("Expression cannot be parsed; please check expression syntax\n\tMessage: %s\n\tSource: %s", e.getMessage(), value));
+            throw new FcliTechnicalException(String.format("Expression cannot be parsed; please check expression syntax\n\tMessage: %s\n\tSource: %s", e.getMessage(), value));
         }
         new QueryExpressionValidator(expression).visit();
         return new QueryExpression(expression); 

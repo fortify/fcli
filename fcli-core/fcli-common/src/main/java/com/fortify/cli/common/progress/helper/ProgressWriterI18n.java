@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.progress.helper;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 
 public final class ProgressWriterI18n extends AbstractProgressWriterWrapper implements IProgressWriterI18n {
@@ -33,7 +34,7 @@ public final class ProgressWriterI18n extends AbstractProgressWriterWrapper impl
     private String getMessageString(String keySuffix) {
         String messageFormat = messageResolver.getMessageString(keySuffix);
         if ( messageFormat==null ) {
-            throw new RuntimeException(String.format("No resource bundle entry found for entry; please file a bug mention this message: class: %s, keySuffix: %s", this.getClass().getName(), keySuffix));
+            throw new FcliBugException(String.format("No resource bundle entry found for entry; please file a bug mention this message: class: %s, keySuffix: %s", this.getClass().getName(), keySuffix));
         }
         return messageFormat;
     }

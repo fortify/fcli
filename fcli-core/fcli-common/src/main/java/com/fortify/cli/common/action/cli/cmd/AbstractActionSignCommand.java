@@ -27,6 +27,7 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
 import com.fortify.cli.common.crypto.helper.impl.TextSigner;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -128,7 +129,7 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
             return false;
         } else {
             if ( publicKeyPath==null ) {
-                throw new IllegalStateException("Private key file "+privateKeyPath+" doesn't exist, and not generating new key file as --pubOut hasn't been specified");
+                throw new FcliSimpleException("Private key file "+privateKeyPath+" doesn't exist, and not generating new key file as --pubOut hasn't been specified");
             } else {
                 SignatureHelper.keyPairGenerator(privateKeyPassword).writePem(privateKeyPath, publicKeyPath);
                 return true;

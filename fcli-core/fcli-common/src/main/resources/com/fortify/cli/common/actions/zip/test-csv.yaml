@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Test CSV
+  description: |
+    Test CSV output
+
+config:
+  output: immediate
+  
+steps:
+  - with:
+      writers:
+        myCsvWriter:
+          type: csv
+          to: var.text:csv
+          options:
+            headers: a, c=Column 2
+        myJsonWriter:
+          type: json
+          to: var.json:json
+      do:
+        - writer.append:
+            myCsvWriter: ${{a:'column 1 value 1', c:'column 2 value 1'}}
+            myJsonWriter: ${{a:'column 1 value 1', c:'column 2 value 1'}}
+        - writer.append:
+            myCsvWriter: ${{a:'column 1 value 2', c:'column 2 value 2'}}
+            myJsonWriter: ${{a:'column 1 value 2', c:'column 2 value 2'}}
+  - out.write: 
+      stdout: |
+        CSV:
+        ${csv}
+        
+        JSON property:
+        ${json[0].a}
+        
+        

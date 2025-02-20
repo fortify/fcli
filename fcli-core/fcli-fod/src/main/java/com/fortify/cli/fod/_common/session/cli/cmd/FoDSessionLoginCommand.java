@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.session.cli.cmd;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
@@ -47,7 +48,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
             FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getUserCredentialOptions(), loginOptions.getAuthOptions().getScopes());
             sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
         } else {
-            throw new IllegalArgumentException("Either FoD client or user credentials must be provided");
+            throw new FcliSimpleException("Either FoD client or user credentials must be provided");
         }
         return sessionDescriptor;
     }

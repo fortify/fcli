@@ -18,4 +18,5 @@ public interface IProgressWriter extends AutoCloseable {
     void writeWarning(String message, Object... args);
     void clearProgress();
     void close();
+    String type();
 }

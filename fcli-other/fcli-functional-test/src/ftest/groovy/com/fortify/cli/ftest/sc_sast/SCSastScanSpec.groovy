@@ -59,13 +59,13 @@ class SCSastScanSpec extends FcliBaseSpec {
     }
 	
 	def "startScanFilter"() {
-		def args = "sc-sast scan start -v ::highestSensor::get(0).scaVersion -p=$packageZip --sargs -quick\\ -filter\\ file:$fileFilter --store scanfilter"
+		def args = "sc-sast scan start -v ::highestSensor::get(0).scaVersion -f=$packageZip --sargs -quick\\ -filter\\ @$fileFilter --store scanfilter"
 		when:
 			def result = Fcli.run(args)
 		then:
 			verifyAll(result.stdout) {
 				size()==2
-				it[0].replace(' ', '').equals("JobtokenHasfilesScanstatePublishstateSscprocessingstateEndpointversionAction")
+				it[0].replace(' ', '').equals("JobtokenHasfilesScanstatePublishstateSSCprocessingstateEndpointversionAction")
 			}
 	}
 	

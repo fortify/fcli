@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
-import com.fortify.cli.common.session.helper.SessionLogoutException;
+import com.fortify.cli.common.session.helper.FcliSessionLogoutException;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -39,7 +39,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
                 logout(sessionName, sessionHelper.get(sessionName, false));
                 getSessionHelper().destroy(sessionName);
             } catch (Exception e) {
-                if ( e instanceof SessionLogoutException && !((SessionLogoutException)e).isDestroySession() ) {
+                if ( e instanceof FcliSessionLogoutException && !((FcliSessionLogoutException)e).isDestroySession() ) {
                     throw e;
                 } else {
                     LOG.warn("Logout failed");

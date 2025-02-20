@@ -13,7 +13,7 @@
 package com.fortify.cli.sc_sast._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.sc_sast.rest.cli.cmd.SCSastControllerRestCommands;
+import com.fortify.cli.sc_sast.rest.cli.cmd.SCSastRestCommands;
 import com.fortify.cli.sc_sast.scan.cli.cmd.SCSastScanCommands;
 import com.fortify.cli.sc_sast.sensor.cli.cmd.SCSastSensorCommands;
 import com.fortify.cli.sc_sast.sensor_pool.cli.cmd.SCSastSensorPoolCommands;
@@ -35,7 +35,7 @@ import picocli.CommandLine.Command;
                 SCSastScanCommands.class,
                 SCSastSensorCommands.class,
                 SCSastSensorPoolCommands.class,
-                SCSastControllerRestCommands.class,
+                SCSastRestCommands.class,
         }
 )
 public class SCSastCommands extends AbstractContainerCommand {}

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastInputTransformer;
 import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastPagingHelper;
@@ -43,9 +44,9 @@ public class SCDastSensorHelper {
                 .filter(j -> j.get("name").asText().equals(sensorNameOrId)) // TODO Add null checks?
                 .collect(Collectors.toList());
             if ( matchingSensors.isEmpty() ) {
-                throw new IllegalArgumentException("No sensor found with name "+sensorNameOrId);
+                throw new FcliSimpleException("No sensor found with name "+sensorNameOrId);
             } else if ( matchingSensors.size()>1 ) {
-                throw new IllegalArgumentException("Multiple sensors found with name "+sensorNameOrId);
+                throw new FcliSimpleException("Multiple sensors found with name "+sensorNameOrId);
             } else {
                 return getDescriptor(matchingSensors.get(0));
             }

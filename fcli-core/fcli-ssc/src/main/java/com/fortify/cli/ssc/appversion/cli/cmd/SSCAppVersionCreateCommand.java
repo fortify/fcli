@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -198,7 +199,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         }
         var issueTemplateDescriptor = new SSCIssueTemplateHelper(unirest).getIssueTemplateDescriptorOrDefault(issueTemplateNameOrId);
         if ( issueTemplateDescriptor==null ) {
-            throw new IllegalArgumentException("--issue-template is required, as no default template is configured on SSC");
+            throw new FcliSimpleException("--issue-template is required, as no default template is configured on SSC");
         }
         return issueTemplateDescriptor.getId();
     }

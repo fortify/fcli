@@ -13,11 +13,13 @@
 package com.fortify.cli.common.report.cli.cmd;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
@@ -59,11 +61,12 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
     protected final void generateReport(IReportWriter reportWriter) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             C config = getReportConfig();
-            reportWriter.copyTextFile(getConfigFile().toPath(), "report-config.yaml");
+            Path configFilePath = getConfigFile().toPath();
+            reportWriter.copyTextFile(configFilePath, "report-config.yaml");
             try ( var resultsCollector = createResultsCollector(config, reportWriter, progressWriter) ) {
                 var sourceConfigs = config.getSourceConfigs();
                 if ( sourceConfigs==null || sourceConfigs.isEmpty() ) {
-                    throw new IllegalArgumentException("Configuration file doesn't define any sources");
+                    throw new FcliSimpleException("Configuration file "+configFilePath.toString()+" doesn't define any sources");
                 }
                 sourceConfigs.forEach(c->runGenerator(c, resultsCollector));
             }
@@ -95,7 +98,7 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
             mapper.registerModule(new JavaTimeModule());
             result = mapper.readValue(configFile, getConfigType());
         } catch ( Exception e ) {
-            throw new IllegalStateException(String.format("Error processing configuration file %s:\n\tMessage: %s", configFile.getAbsolutePath(), e.getMessage()));
+            throw new FcliSimpleException(String.format("Error processing configuration file %s:\n\tMessage: %s", configFile.getAbsolutePath(), e.getMessage()));
         }
         updateConfig(result);
         return result;

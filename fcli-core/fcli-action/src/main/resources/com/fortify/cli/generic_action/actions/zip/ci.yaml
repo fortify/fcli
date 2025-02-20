@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Run CI pipeline
+  description: |
+    (Work in progress)
+    This action can be used to run a full, standardized CI pipeline that performs the
+    following activities:
+    - Create & configure SSC application version / FoD release if needed
+    - Package source code
+    - Submit SAST scan request
+    - Wait for SAST scan completion
+    - Perform post-scan activities, like checking policy outcome, exporting results, ...
+
+config:
+  output: immediate
+  
+steps:
+  - var.set:
+      run.fod_ci: ${#isNotBlank(#env('FOD_URL'))}
+      run.ssc_ci: ${#isNotBlank(#env('SSC_URL'))}
+  - if: ${!run.fod_ci && !run.ssc_ci}
+    throw: Either FOD_URL or SSC_URL environment variable needs to be set
+  - if: ${run.fod_ci && run.ssc_ci}
+    throw: Only one of FOD_URL or SSC_URL environment variables may be set
+  - if: ${run.fod_ci}
+    var.set:
+      module: fod
+      loginOpts: --url=FOD_URL -t=FOD_TENANT -u=FOD_USER -p=FOD_PASSWORD --client-id=FOD_CLIENT_ID --client-secret=FOD_CLIENT_SECRET
+      logoutOpts: ""
+  - if: ${run.ssc_ci}
+    var.set:
+      module: ssc
+      loginOpts: --url=SSC_URL -u=SSC_USER -p=SSC_PASSWORD -t=SSC_TOKEN -c=SC_SAST_TOKEN
+      logoutOpts: -u=SSC_USER -p=SSC_PASSWORD
+  - var.set:
+      sessionName: ci-${#uuid()}
+      loginCmd: fcli ${module} session login
+      logoutCmd: fcli ${module} session logout
+      moduleUpperCase: ${module.toUpperCase()}
+      loginEnvPrefix: ${moduleUpperCase}_LOGIN
+      logoutEnvPrefix: ${moduleUpperCase}_LOGOUT
+      ciEnvPrefix: ${moduleUpperCase}_CI
+  - with:
+      sessions:
+        - login: ${#fcliCmd(loginEnvPrefix, loginCmd)} --session ${sessionName} ${#optsFromEnv(loginOpts)}
+          logout: ${#fcliCmd(logoutEnvPrefix, logoutCmd)} --session ${sessionName} ${#optsFromEnv(logoutOpts)}
+      do:
+        - run.fcli: 
+            ci: ${#actionCmd(ciEnvPrefix, module, 'ci')} --session=${sessionName}
+      
+      

@@ -16,10 +16,10 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.ActionConfig.ActionConfigOutput;
-import com.fortify.cli.common.action.model.ActionStepCheck;
-import com.fortify.cli.common.action.model.ActionStepCheck.CheckStatus;
+import com.fortify.cli.common.action.model.ActionStepCheckEntry;
+import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor;
-import com.fortify.cli.common.action.runner.processor.ActionStepsProcessor;
+import com.fortify.cli.common.action.runner.processor.ActionStepProcessorSteps;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
@@ -42,11 +42,8 @@ public class ActionRunner {
             var parameterValues = getParameterValues(args);
             try ( var ctx = createContext(progressWriter, parameterValues) ) {
                 initializeCheckStatuses(ctx);
-                progressWriter.writeProgress("Processing action parameters");
                 ActionRunnerVars vars = new ActionRunnerVars(ctx.getSpelEvaluator(), ctx.getParameterValues());
-                progressWriter.writeProgress("Processing action steps");
-                new ActionStepsProcessor(ctx, vars).processSteps(config.getAction().getSteps());
-                progressWriter.writeProgress("Action processing finished");
+                new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();;
              
                 return ()->{
                     ctx.getDelayedConsoleWriterRunnables().forEach(Runnable::run);
@@ -87,21 +84,21 @@ public class ActionRunner {
                 .config(config)
                 .spelEvaluator(config.getSpelEvaluator())
                 .build()
-                .parseParameterValues(args);
+                .parseOptionValues(args);
         return parameterValues;
     }
     
     private static final void initializeCheckStatuses(ActionRunnerContext ctx) {
         for ( var elt : ctx.getConfig().getAction().getAllActionElements() ) {
-            if ( elt instanceof ActionStepCheck ) {
-                var checkStep = (ActionStepCheck)elt;
+            if ( elt instanceof ActionStepCheckEntry ) {
+                var checkStep = (ActionStepCheckEntry)elt;
                 var value = CheckStatus.combine(ctx.getCheckStatuses().get(checkStep), checkStep.getIfSkipped());
                 ctx.getCheckStatuses().put(checkStep, value);
             }
         }
     }
 
-    private static final void printCheckResult(ActionRunnerContext ctx, CheckStatus status, ActionStepCheck checkStep) {
+    private static final void printCheckResult(ActionRunnerContext ctx, CheckStatus status, ActionStepCheckEntry checkStep) {
         if ( status!=CheckStatus.HIDE ) {
             // Even when flushing, output may appear in incorrect order if some 
             // check statuses are written to stdout and others to stderr.

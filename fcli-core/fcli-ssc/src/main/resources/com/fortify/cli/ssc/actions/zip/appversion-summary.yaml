@@ -14,15 +14,15 @@ config:
   
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: stdout"
     required: false
     default: stdout
   appversion:
-    alias: av
+    names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
   filtersets:
-    alias: fs
+    names: --filtersets, --fs
     description: "Comma-separated list of filter set names, guid's or 'default' to display in the summary. If not specified, all filter sets will be included."
     required: false
   
@@ -198,8 +198,8 @@ steps:
               `*` The 'Removed' column shows the total number of removed issues for this application version, which includes issues removed in previous scans.
               
   # Write output based on data collected above, and value template defined below 
-  - out.fmt:
-      ${cli.file}: summary-md
+  - out.write:
+      ${cli.file}: {fmt: summary-md}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

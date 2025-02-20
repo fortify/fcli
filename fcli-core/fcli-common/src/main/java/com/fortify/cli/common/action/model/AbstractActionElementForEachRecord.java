@@ -53,7 +53,7 @@ public abstract class AbstractActionElementForEachRecord extends AbstractActionE
      * each sub-step.
      */
     public final void postLoad(Action action) {
-        Action.checkNotBlank("forEach name", varName, this);
+        Action.checkNotBlank("forEach record.var-name", varName, this);
         Action.checkNotNull("forEach do", _do, this);
     }
 }

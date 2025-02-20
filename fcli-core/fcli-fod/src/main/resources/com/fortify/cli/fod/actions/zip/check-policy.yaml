@@ -15,7 +15,7 @@ config:
       
 cli.options:
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   
 steps:

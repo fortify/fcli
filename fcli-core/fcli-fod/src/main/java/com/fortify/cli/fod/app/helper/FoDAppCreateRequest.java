@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -91,7 +92,7 @@ public class FoDAppCreateRequest {
     
     @JsonIgnore
     public final FoDAppCreateRequest validate() {
-        return validate(messages->{throw new IllegalArgumentException("Unable to create application:\n\t"+String.join("\n\t", messages)); });
+        return validate(messages->{throw new FcliSimpleException("Unable to create application:\n\t"+String.join("\n\t", messages)); });
     }
     
     @JsonIgnore

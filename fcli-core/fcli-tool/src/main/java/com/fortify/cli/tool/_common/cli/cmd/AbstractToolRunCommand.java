@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
@@ -68,7 +70,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
     }
     
     private final Integer call(List<String> baseCmd) throws Exception {
-        if ( baseCmd==null ) { throw new NullPointerException("Base command to execute may not be null"); }
+        if ( baseCmd==null ) { throw new FcliBugException("Base command to execute may not be null"); }
         var fullCmd = Stream.of(baseCmd, toolArgs)
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
@@ -95,7 +97,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
 
     private ToolInstallationDescriptor checkNotNull(ToolInstallationDescriptor descriptor, String msg) {
         if ( descriptor==null ) {
-            throw new IllegalStateException(msg);
+            throw new FcliSimpleException(msg);
         }
         return descriptor;
     }

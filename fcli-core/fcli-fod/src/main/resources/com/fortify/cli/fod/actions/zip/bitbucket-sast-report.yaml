@@ -12,17 +12,17 @@ config:
   
 cli.options:
   report-file:
-    alias: r
+    names: --report-file, -r
     description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json"
     required: false
     default: bb-fortify-report.json
   annotations-file:
-    alias: a
+    names: --annotations-file, -a
     description: "Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json"
     required: false
     default: bb-fortify-annotations.json
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   
 steps:
@@ -42,10 +42,10 @@ steps:
             details:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
           do:
-          - var.fmt:
-              annotations..: annotations
-  - var.fmt:
-      report: report
+          - var.set:
+              annotations..: {fmt: annotations}
+  - var.set:
+      report: {fmt: report}
   - out.write:
       ${cli['annotations-file']}: ${annotations?:{}}
       ${cli['report-file']}: ${report}

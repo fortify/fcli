@@ -29,8 +29,8 @@ import com.fortify.cli.common.i18n.helper.LanguageHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
-import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
-import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
+import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobArtifactState;
+import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobState;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
 
@@ -72,10 +72,10 @@ public final class FortifyCLIStaticInitializer {
     }
     
     private void initializeSCSastProperties() {
-        System.setProperty("fcli.sc-sast.scan.jobStates", getValueNamesString(SCSastControllerScanJobState.values()));
-        System.setProperty("fcli.sc-sast.scan.jobStates.complete", getValueNamesString(SCSastControllerScanJobState.getDefaultCompleteStates()));
-        System.setProperty("fcli.sc-sast.scan.jobArtifactStates", getValueNamesString(SCSastControllerScanJobArtifactState.values()));
-        System.setProperty("fcli.sc-sast.scan.jobArtifactStates.complete", getValueNamesString(SCSastControllerScanJobArtifactState.getDefaultCompleteStates()));
+        System.setProperty("fcli.sc-sast.scan.jobStates", getValueNamesString(SCSastScanJobState.values()));
+        System.setProperty("fcli.sc-sast.scan.jobStates.complete", getValueNamesString(SCSastScanJobState.getDefaultCompleteStates()));
+        System.setProperty("fcli.sc-sast.scan.jobArtifactStates", getValueNamesString(SCSastScanJobArtifactState.values()));
+        System.setProperty("fcli.sc-sast.scan.jobArtifactStates.complete", getValueNamesString(SCSastScanJobArtifactState.getDefaultCompleteStates()));
     }
     
     private void initializeSSCProperties() {

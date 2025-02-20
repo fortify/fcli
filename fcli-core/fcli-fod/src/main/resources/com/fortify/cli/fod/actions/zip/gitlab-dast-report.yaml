@@ -12,12 +12,12 @@ config:
 
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-dast.json"
     required: false
     default: gl-fortify-dast.json
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   
 steps:
@@ -51,10 +51,10 @@ steps:
             request_response:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/request-response 
           do:
-            - var.fmt:
-                vulnerabilities..: vulnerabilities
-  - out.fmt:
-      ${cli.file}: gitlab-dast-report
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-dast-report}
   - if: ${cli.file!='stdout'}
     out.write: 
       stdout: |

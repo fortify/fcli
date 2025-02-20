@@ -20,10 +20,12 @@ import picocli.CommandLine.Command;
 @Command(
         name = "scan",
         subcommands = {
-                SCSastControllerScanCancelCommand.class,
-                SCSastControllerScanStartCommand.class,
-                SCSastControllerScanStatusCommand.class,
-                SCSastControllerScanWaitForCommand.class
+                SCSastScanCancelCommand.class,
+                SCSastScanDownloadCommand.class,
+                SCSastScanListCommand.class,
+                SCSastScanStartCommand.class,
+                SCSastScanStatusCommand.class,
+                SCSastScanWaitForCommand.class
         }
 )
 @DefaultVariablePropertyName("jobToken")

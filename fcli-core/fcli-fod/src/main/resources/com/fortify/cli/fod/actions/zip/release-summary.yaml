@@ -13,12 +13,12 @@ config:
 
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: stdout"
     required: false
     default: stdout
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   
 steps:
@@ -44,8 +44,8 @@ steps:
                 scanType: ${scan.scanType}
                 ossScanDate: ${scan.completedDateTime} 
 
-  - out.fmt:
-      ${cli.file}: summary-md
+  - out.write:
+      ${cli.file}: {fmt: summary-md}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

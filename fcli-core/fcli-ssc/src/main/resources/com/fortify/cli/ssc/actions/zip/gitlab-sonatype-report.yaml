@@ -12,18 +12,19 @@ config:
   
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sonatype-depscan.json"
     required: false
     default: gl-fortify-sonatype-depscan.json
   appversion:
-    alias: av
+    names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
   filterset:
-    alias: fs
+    names: --filterset, --fs
     description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
   page-size:
+    names: --page-size
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
     required: false
     default: "100"
@@ -61,10 +62,10 @@ steps:
             details:
               uri: /api/v1/issueDetails/${issue.id}
           do:
-            - var.fmt:
-                vulnerabilities..: vulnerabilities
-  - out.fmt:
-      ${cli.file}: gitlab-sonatype-report
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-sonatype-report}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

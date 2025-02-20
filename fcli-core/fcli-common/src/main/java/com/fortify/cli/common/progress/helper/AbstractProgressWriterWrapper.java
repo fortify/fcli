@@ -20,6 +20,11 @@ public abstract class AbstractProgressWriterWrapper implements IProgressWriter {
     private IProgressWriter progressWriter;
     
     @Override
+    public String type() {
+        return getProgressWriter().type();
+    }
+    
+    @Override
     public final boolean isMultiLineSupported() {
         return getProgressWriter().isMultiLineSupported();
     }

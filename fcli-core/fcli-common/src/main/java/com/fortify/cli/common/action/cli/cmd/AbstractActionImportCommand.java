@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
 import com.fortify.cli.common.action.helper.ActionImportHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -38,7 +39,7 @@ public abstract class AbstractActionImportCommand extends AbstractOutputCommand 
             if ( zip!=null ) {
                 return ActionImportHelper.importZip(getType(), zip, actionValidationHandler);
             } else {
-                throw new IllegalArgumentException("Either action and/or --from-zip option must be specified");
+                throw new FcliSimpleException("Either action and/or --from-zip option must be specified");
             }
         }
     }

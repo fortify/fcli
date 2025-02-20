@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -50,7 +51,7 @@ public class FoDUserGroupHelper {
             result = FoDDataHelper.findUnique(request, String.format("name:%s", userGroupNameOrId));
         }
         if ( failIfNotFound && result==null ) {
-            throw new IllegalArgumentException("No user group found for name or id: " + userGroupNameOrId);
+            throw new FcliSimpleException("No user group found for name or id: " + userGroupNameOrId);
         }
         return result==null ? null : JsonHelper.treeToValue(result, FoDUserGroupDescriptor.class);
     }
@@ -59,7 +60,7 @@ public class FoDUserGroupHelper {
         GetRequest request = unirest.get(FoDUrls.USER_GROUP).routeParam("groupId", groupId);
         JsonNode group = request.asObject(ObjectNode.class).getBody();
         if (failIfNotFound && group.get("name").asText().isEmpty()) {
-            throw new IllegalArgumentException("No user group for id: " + groupId);
+            throw new FcliSimpleException("No user group for id: " + groupId);
         }
         return getDescriptor(group);
     }
@@ -137,7 +138,7 @@ public class FoDUserGroupHelper {
             userGroupMembersRequest.setRemoveUsers(userIds);
             userGroupMembersRequest.setAddUsers(new ArrayList<>());
         } else {
-            throw new IllegalArgumentException("Invalid action specified when updating users group membership");
+            throw new FcliSimpleException("Invalid action specified when updating users group membership");
         }
         ObjectNode body = objectMapper.valueToTree(userGroupMembersRequest);
         unirest.patch(FoDUrls.USER_GROUP_MEMBERS).routeParam("groupId", String.valueOf(userGroupDescriptor.getId()))
@@ -161,7 +162,7 @@ public class FoDUserGroupHelper {
                     .routeParam("applicationId", String.valueOf(appDescriptor.getApplicationId()))
                     .asEmpty();
         } else {
-            throw new IllegalArgumentException("Invalid action specified when updating user group application access");
+            throw new FcliSimpleException("Invalid action specified when updating user group application access");
         }
         return userGroupDescriptor;
     }

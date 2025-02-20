@@ -25,10 +25,4 @@ steps:
             target: sc-sast
     - out.write:
         stdout: ${ping}
-    - run.fcli:
-        ci:
-          cmd: fcli ssc action run test-ci
-          stdout.parse: json
-    - out.write:
-        stdout: 'ci.x: ${ci.x}'
       

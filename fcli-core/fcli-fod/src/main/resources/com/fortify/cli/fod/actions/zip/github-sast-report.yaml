@@ -26,12 +26,12 @@ config:
   
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif"
     required: false
     default: gh-fortify-sast.sarif
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
 
 steps:
@@ -65,15 +65,12 @@ steps:
             traces:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/traces 
           do:
-            - if: ${ruleCache==null || ruleCache[issue.checkId]==null}
-              var.fmt:
-                rules..: rules
-            - var.set: # TODO By defining a simple formatter that just returns 'true' we can combine this with the var.fmt step above/below
+            - var.set:
+                rules..: {fmt: rules, if: "${ruleCache==null || ruleCache[issue.checkId]==null}"}
                 ruleCache.${issue.checkId}: true
-            - var.fmt:
-                results..: results
-  - out.fmt:
-      ${cli.file}: github-sast-report
+                results..: {fmt: results}
+  - out.write:
+      ${cli.file}: {fmt: github-sast-report}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

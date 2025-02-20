@@ -7,6 +7,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME
 import java.lang.annotation.Retention
 import java.lang.annotation.Target
 
+import org.spockframework.runtime.model.SpecElementInfo
+
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Input
 
@@ -31,8 +33,7 @@ import com.fortify.cli.ftest._common.Input
         
         public interface ISessionHandler {
             String friendlyName();
-            boolean isEnabled();
-            boolean login();
+            void login();
             void logout();
             List<String> getMaskedProperties();
         }
@@ -41,10 +42,13 @@ import com.fortify.cli.ftest._common.Input
             def STD_LOGIN_ARGS = [module(), "session","login"]
             def STD_LOGOUT_ARGS = [module(), "session","logout"]
             private boolean loggedIn = false;
-            private boolean failed = false;
+            private Exception exception;
     
             @Override
-            public final boolean login() {
+            public final void login() {
+                if ( exception ) {
+                    throw new IllegalStateException("Failed due to earlier login failure", exception);
+                }
                 if ( !loggedIn && !failed ) {
                     println("Logging in to "+friendlyName())
                     try {
@@ -61,11 +65,10 @@ import com.fortify.cli.ftest._common.Input
                             
                         loggedIn = true
                     } catch ( Exception e ) {
-                        e.printStackTrace()
-                        failed = true
+                        this.exception = e
+                        throw e;
                     }
                 }
-                return !failed;
             }
     
             @Override
@@ -113,11 +116,6 @@ import com.fortify.cli.ftest._common.Input
         private static class SSCSessionHandler extends AbstractSessionHandler {
             @Override public String friendlyName() { "SSC" }
             @Override public String module() { "ssc" }
-            
-            @Override
-            public boolean isEnabled() {
-                has("url")
-            }
     
             @Override
             public List<String> loginOptions() {
@@ -145,11 +143,6 @@ import com.fortify.cli.ftest._common.Input
         private static class FoDSessionHandler extends AbstractSessionHandler {
             @Override public String friendlyName() { "FoD" }
             @Override public String module() { "fod" }
-            
-            @Override
-            public boolean isEnabled() {
-                has("url")
-            }
             
             @Override
             public List<String> loginOptions() {

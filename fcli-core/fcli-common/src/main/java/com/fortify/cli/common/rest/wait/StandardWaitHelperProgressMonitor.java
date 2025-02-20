@@ -18,6 +18,7 @@ import java.io.Writer;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.IMessageResolver;
@@ -50,7 +51,8 @@ public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMon
                 String output = sw.toString();
                 progressWriter.writeProgress(output);
             } catch ( IOException e ) {
-                throw new RuntimeException(e);
+                // TODO Which Fcli*Exception should we use, and can we add a useful message?
+                throw new FcliTechnicalException(e);
             }
         }
     }

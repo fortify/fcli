@@ -14,18 +14,20 @@ config:
 
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: aws-fortify-report.json"
     required: false
     default: aws-fortify-report.json
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   aws-region:
+    names: --aws-region
     description: 'Required AWS region. Default value: AWS_REGION environment variable.'
     required: true
     default: ${#env('AWS_REGION')}    
   aws-account:
+    names: --aws-account
     description: 'Required AWS account id. Default value: AWS_ACCOUNT_ID environment variable.'
     required: true
     default: ${#env('AWS_ACCOUNT_ID')}
@@ -54,10 +56,10 @@ steps:
             recommendations:
                 uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
           do:
-            - var.fmt:
-                vulnerabilities..: issues
-  - out.fmt:
-      ${cli['file']}: report
+            - var.set:
+                vulnerabilities..: {fmt: issues}
+  - out.write:
+      ${cli['file']}: {fmt: report}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |

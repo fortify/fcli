@@ -261,7 +261,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: ./artifacts
-          name: combined-artifacts  
+          name: combined-artifacts   
   
   # For now, we only publish fcli-scratch image, but we do build the other images just for testing
   docker-linux:
@@ -391,6 +391,22 @@ jobs:
         #  run: | 
         #    docker push --all-tags fortifydocker/fcli
   
+  ftest:
+    name: Trigger functional tests
+    needs: [build, native_linux, native_mac, native_win, combine-artifacts]
+    runs-on: ubuntu-latest
+    steps:
+      # Previously we had a workflow_run trigger on functional-tests.yaml, but:
+      #  - This approach allows for starting functional tests a bit earlier (no need to wait for Docker builds)
+      #  - The workflow_run trigger executes the workflow file from the default branch, whereas this approach
+      #    allows for running the workflow file from the same branch as the ci workflow.
+      - name: Check-out source code
+        uses: actions/checkout@v4
+      - run: | 
+          gh workflow run functional-tests.yml --ref ${GITHUB_REF} -f runId=${GITHUB_RUN_ID}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
   release:
     name: release
     if: needs.build.outputs.do_release

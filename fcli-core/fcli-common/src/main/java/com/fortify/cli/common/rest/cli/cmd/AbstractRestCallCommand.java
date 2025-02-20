@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
@@ -129,12 +130,12 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
         if ( StringUtils.isBlank(uri) ) {
-            throw new IllegalArgumentException("Uri must be specified");
+            throw new FcliSimpleException("Uri must be specified");
         }
         HttpRequest<?> request = unirest.request(httpMethod, uri);
         if ( StringUtils.isNotBlank(data) ) {
             if ( "GET".equals(httpMethod) || !(request instanceof HttpRequestWithBody) ) {
-                throw new IllegalArgumentException("Request body not supported for "+httpMethod+" requests");
+                throw new FcliSimpleException("Request body not supported for "+httpMethod+" requests");
             } else if ( data.startsWith("@") ) {
                 var path = Path.of(data.replaceAll("^@+", ""));
                 request = ((HttpRequestWithBody)request).body(Files.readString(path));

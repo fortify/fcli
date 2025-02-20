@@ -13,6 +13,7 @@
 package com.fortify.cli.common.spring.expression;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import org.springframework.expression.common.TemplateParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -33,7 +34,9 @@ public final class SpelHelper {
     }
     public static final void registerFunctions(SimpleEvaluationContext context, Class<?> clazz) {
         for ( Method m : clazz.getDeclaredMethods() ) {
-            context.setVariable(m.getName(), m);
+            if ( Modifier.isPublic(m.getModifiers()) ) {
+                context.setVariable(m.getName(), m);
+            }
         }
     }
 }

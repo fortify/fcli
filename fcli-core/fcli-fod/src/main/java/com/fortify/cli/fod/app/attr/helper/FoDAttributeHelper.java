@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
@@ -51,7 +52,7 @@ public class FoDAttributeHelper {
             result = FoDDataHelper.findUnique(request, String.format("name:%s", attrNameOrId));
         }
         if ( failIfNotFound && result==null ) {
-            throw new IllegalArgumentException("No attribute found for name or id: " + attrNameOrId);
+            throw new FcliSimpleException("No attribute found for name or id: " + attrNameOrId);
         }
         return result==null ? null : JsonHelper.treeToValue(result, FoDAttributeDescriptor.class);
     }

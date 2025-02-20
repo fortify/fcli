@@ -12,13 +12,17 @@
  */
 package com.fortify.cli.common.action.runner;
 
+import java.util.function.BiFunction;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
+import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +34,40 @@ public final class ActionRunnerHelper {
     public static final JsonNode fmt(ActionRunnerContext ctx, String formatterName, JsonNode input) {
         var format = ctx.getConfig().getAction().getFormatters().get(formatterName);
         return new JsonNodeSpelEvaluatorWalker(ctx, input).walk(format);
+    }
+     
+    public static final String getFormatterName(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+        var formatterExpression = templateExpressionWithFormatter==null ? null : templateExpressionWithFormatter.getFmt();
+        return formatterExpression==null ? null : vars.eval(formatterExpression, String.class);
+    }
+     
+    public static final Object getValueAsObject(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+        var valueExpression = templateExpressionWithFormatter==null ? null : templateExpressionWithFormatter.getValue();
+        return valueExpression==null ? null : vars.eval(valueExpression, Object.class);
+    }
+     
+    public static final JsonNode getValueAsJsonNode(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+        var rawValue = getValueAsObject(vars, templateExpressionWithFormatter);
+        return rawValue==null ? null : JsonHelper.getObjectMapper().valueToTree(rawValue);
+    }
+    
+    public static final Object formatValueAsObject(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+        return formatValue(ctx, vars, templateExpressionWithFormatter, ActionRunnerHelper::getValueAsObject);
+    }
+    
+    public static final JsonNode formatValueAsJsonNode(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+        return formatValue(ctx, vars, templateExpressionWithFormatter, ActionRunnerHelper::getValueAsJsonNode);
+    }
+    
+    @SuppressWarnings("unchecked") // BiFunction parameter must return either Object or JsonNode
+    public static final <T> T formatValue(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter, BiFunction<ActionRunnerVars, TemplateExpressionWithFormatter, T> nonFormattedValueProvider) {
+        var formatterName = getFormatterName(vars, templateExpressionWithFormatter);
+        if ( StringUtils.isBlank(formatterName) ) {
+            return nonFormattedValueProvider.apply(vars, templateExpressionWithFormatter);
+        } else {
+            var jsonValue = getValueAsJsonNode(vars, templateExpressionWithFormatter);
+            return (T)ActionRunnerHelper.fmt(ctx, formatterName, jsonValue!=null ? jsonValue : vars.getValues());
+        }
     }
     
     @RequiredArgsConstructor

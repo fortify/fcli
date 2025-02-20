@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 
@@ -52,7 +53,7 @@ public class FoDLookupHelper {
             }
         }
         if (currentLookup == null && failIfNotFound) {
-            throw new IllegalArgumentException("No value found for '" + text + "' in " + type.name());
+            throw new FcliSimpleException("No value found for '" + text + "' in " + type.name());
         }
         return currentLookup;
     }
@@ -74,7 +75,7 @@ public class FoDLookupHelper {
             }
         }
         if (currentLookup == null && failIfNotFound) {
-            throw new IllegalArgumentException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
+            throw new FcliSimpleException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
         }
         return currentLookup;
     }

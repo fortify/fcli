@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.report.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 
@@ -40,7 +41,7 @@ public final class SSCReportHelper {
     public static final SSCReportDescriptor getRequiredReportDescriptor(UnirestInstance unirest, String reportNameOrId) {
         SSCReportDescriptor descriptor = getOptionalReportDescriptor(unirest, reportNameOrId);
         if ( descriptor==null ) {
-            throw new IllegalArgumentException("No report found for name or id: "+reportNameOrId);
+            throw new FcliSimpleException("No report found for name or id: "+reportNameOrId);
         }
         return descriptor;
     }
@@ -73,7 +74,7 @@ public final class SSCReportHelper {
     private static final SSCReportDescriptor getOptionalDescriptor(GetRequest request) {
         JsonNode reports = request.asObject(ObjectNode.class).getBody().get("data");
         if ( reports.size()>1 ) {
-            throw new IllegalArgumentException("Multiple reports found, please specify id");
+            throw new FcliSimpleException("Multiple reports found, please specify id");
         }
         return reports.size()==0 ? null : JsonHelper.treeToValue(renameFields(reports.get(0)), SSCReportDescriptor.class);
     }

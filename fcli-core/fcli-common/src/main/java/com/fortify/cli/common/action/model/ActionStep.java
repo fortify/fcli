@@ -12,21 +12,29 @@
  */
 package com.fortify.cli.common.action.model;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -38,13 +46,33 @@ import lombok.SneakyThrows;
  */
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
+@JsonInclude(Include.NON_NULL)
 public final class ActionStep extends AbstractActionElementIf {
-    // Partial description for instructions that set variables like 'var.set' and 'var.fmt'
-    public static final String VAR_SET_NAME_FORMAT = """
-        This step can either set/replace a single-value variable, set/replace a property on \
-        a variable containing a set of properties, or append a value to an array-type variable. \
-        Following are some examples that show how to specify the operation to perform, and \
-        thereby implicitly declaring the variable type:
+    // Capture fields in this class annotated with @JsonProperty, indexed by JSON property name
+    // Only used to initialize getters and propertyTypes 
+    @JsonIgnore private static final Map<String, Field> fields = createFields();
+    // Capture getter MethodHandles for all fields captured above, indexed by JSON property name
+    @JsonIgnore private static final Map<String, MethodHandle> getters = createGetters(fields);
+    // Capture field types for all fields captured above, indexed by JSON property name
+    // Used by ActionStepProcessorSteps to look up the corresponding processor for each JSON property name
+    @JsonIgnore @Getter private static final Map<String, Class<?>> propertyTypes = createPropertyTypes(fields);
+    // Capture the single non-null property value, indexed by JSON property name
+    @JsonIgnore private Map.Entry<String, Object> stepValue;
+    
+    @JsonPropertyDescription("""
+        Set one or more variables values for use in later action steps. This step takes a list of variables to \
+        set, with each list item taking a single yaml property that represents the variable name to set, which \
+        may be specified as an SpEL template expression. 
+        
+        Based on the format of the variable name, this step can either set/replace a single-value variable, \
+        set/replace a property on a variable containing a set of properties, or append a value to an array-type \
+        variable. By default, variables are only accessible by the current fcli action, unless they are prefixed \
+        with 'global.', in which case they are also accessible by other actions that execute within the context \
+        of a single fcli command-line invocation. For example, if action 1 uses the run.fcli step to execute action \
+        2, any global variables set in action 1 will be accessibly by action 2, and vice versa. 
+        
+        Following are some examples that show how to specify the operation to perform, and thereby implicitly \
+        declaring the variable type:
         
         # Set/replace the single-value variable named 'var1'
         var1: ...
@@ -57,6 +85,13 @@ public final class ActionStep extends AbstractActionElementIf {
         var3..: ...
         var3..: ...
         
+        # Same as above, but setting global variables:
+        global.var1: ...
+        global.var2.prop1: ...
+        global.var2.prop2: ...
+        global.var3..: ...
+        global.var3..: ...
+        
         # The following would be illegal, as a variable cannot contain both
         # a set of properties and an array:
         var4.prop1: ...
@@ -66,32 +101,26 @@ public final class ActionStep extends AbstractActionElementIf {
         interpreted as a property name on the 'var' variable. Property names may contain dots \
         though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.
         
-        Within a single 'var.set' or 'var.fmt' step, variables are processed in the order that \
-        they are declared, allowing earlier declared variables to be referenced by variables or \
-        formatters that are declared later.
-        """;
-    
-    @JsonPropertyDescription("""
-        Set one or more variables values for use in later action steps. This step takes a map with keys \
-        specifying the variable to set or update, and values specifying the value to set. Both keys and \
-        values accept SpEL template expressions. Note that there's also a 'var.fmt' step that allows for \
-        setting values generated by a formatter.
+        Values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
+        properties. An 'if' property is also supported to conditionally set the variable. If \
+        formatter is specified, the given formatter from the 'formatters' section will be used to \
+        format the given value, or, if no value is given, the formatter will be evaluated against \
+        the set of all variables. Some examples:
         
-        """+VAR_SET_NAME_FORMAT)
-    @JsonProperty(value = "var.set", required = false) private LinkedHashMap<TemplateExpression,TemplateExpression> varSet;
+        global.name: John Doe
+        simpleValue1: Hello ${global.name}
+        formattedValue1: {fmt: myFormatter, if: "${someExpression}"}
+        formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}     
+        
+        Within a single 'var.set*' step, variables are processed in the order that they are \
+        declared, allowing earlier declared variables to be referenced by variables or \
+        formatters that are declared later in the same step.
+        """)
+    @JsonProperty(value = "var.set", required = false) private LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> varSet;
     
     @JsonPropertyDescription("""
-        Set one or more variables for use in later action steps with the output of the given formatter. \
-        This step takes a map with keys specifying the variable to set or update, and values specifying \
-        the formatter to use as defined in the 'formatters' section. Both keys and values accept SpEL \
-        template expressions.
-            
-        """+VAR_SET_NAME_FORMAT)
-    @JsonProperty(value = "var.fmt", required = false) private LinkedHashMap<TemplateExpression,TemplateExpression> varFmt;
-    
-    @JsonPropertyDescription("""
-        Remove one or more variables. Variable names to remove can be provided as plain text or \
-        as a SpEL template expression.
+        Remove one or more local or global variables. Variable names to remove can be provided as plain \
+        text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.
         """)
     @JsonProperty(value = "var.rm", required = false) private List<TemplateExpression> varRemove;
     
@@ -112,7 +141,7 @@ public final class ActionStep extends AbstractActionElementIf {
         Add REST request targets for use in 'rest.call' steps. This step takes a map, with \
         keys defining REST target names, and values defining the REST target definition. 
         """)
-    @JsonProperty(value = "rest.target", required = false) private Map<String, ActionStepRestTarget> restTargets;
+    @JsonProperty(value = "rest.target", required = false) private LinkedHashMap<String, ActionStepRestTargetEntry> restTargets;
     
     @JsonPropertyDescription("""
         Execute one or more REST calls. This step takes a map, with keys defining an indentifier \
@@ -142,7 +171,7 @@ public final class ActionStep extends AbstractActionElementIf {
         request. If you need to use the output from one REST call as input for another REST \
         call, these REST calls should be defined in separate 'rest.call' steps.
         """)
-    @JsonProperty(value = "rest.call", required = false) private LinkedHashMap<String, ActionStepRestCall> restCalls;
+    @JsonProperty(value = "rest.call", required = false) private LinkedHashMap<String, ActionStepRestCallEntry> restCalls;
     
     @JsonPropertyDescription("""
         Execute one or more fcli commands. This step takes a map, with map keys defining an identifier \
@@ -158,27 +187,26 @@ public final class ActionStep extends AbstractActionElementIf {
         x_exitCode: Exit code of the fcli invocation
         x_exception: Java Exception instance if fcli invocation threw an exception
         """)
-    @JsonProperty(value = "run.fcli", required = false) private LinkedHashMap<String, ActionStepRunFcli> runFcli;
+    @JsonProperty(value = "run.fcli", required = false) private LinkedHashMap<String, ActionStepRunFcliEntry> runFcli;
     
     @JsonPropertyDescription("""
         Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, \
         and map values defining the data to write to the destination. Destination can be specified as either \
-        stdout, stderr, or a file name. If a file already exists, it will be overwritten. Both map keys and \
-        values can be specified as SpEL template expressions. Note that depending on the config:output setting, \
-        data written to stdout or stderr may be shown either immediately, or only after all action steps have \
-        been executed, to not interfere with progress messages.
-        """)
-    @JsonProperty(value="out.write", required = false) private LinkedHashMap<TemplateExpression, TemplateExpression> outWrite;
-    
-    @JsonPropertyDescription("""
-        Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, \
-        and map values defining a formatter to be used to generate the data to be written to the destination. \
-        Destination can be specified as either stdout, stderr, or a file name. If a file already exists, it will \
-        be overwritten. Both map keys and values can be specified as SpEL template expressions. Note that depending \
+        stdout, stderr, or a file name. If a file already exists, it will be overwritten. Note that depending \
         on the config:output setting, data written to stdout or stderr may be shown either immediately, or only \
         after all action steps have been executed, to not interfere with progress messages.
+        
+        Map values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
+        properties. An 'if' property is also supported to conditionally write to the output. If \
+        formatter is specified, the given formatter from the 'formatters' section will be used to \
+        format the given value, or, if no value is given, the formatter will be evaluated against \
+        the set of all variables. Some examples:
+        
+        /path/to/myFile1: Hello ${name}
+        /path/to/myFile2: {fmt: myFormatter, if: "${someExpression}"}
+        /path/to/myFile3: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}     
         """)
-    @JsonProperty(value="out.fmt", required = false) private LinkedHashMap<TemplateExpression, TemplateExpression> outFmt;
+    @JsonProperty(value="out.write", required = false) private LinkedHashMap<TemplateExpression, TemplateExpressionWithFormatter> outWrite;
     
     @JsonPropertyDescription("""
         Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, \
@@ -189,12 +217,22 @@ public final class ActionStep extends AbstractActionElementIf {
         (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} \
         will contain the status of the last executed check for the given check name.
         """)
-    @JsonProperty(value = "check", required = false) private LinkedHashMap<String, ActionStepCheck> check;
+    @JsonProperty(value = "check", required = false) private LinkedHashMap<String, ActionStepCheckEntry> check;
     
     @JsonPropertyDescription("""
         Execute the steps defined in the 'do' block for every record provided by the 'from' expression.    
         """)
-    @JsonProperty(value = "records.for-each", required = false) private ActionStepForEach forEachRecord;
+    @JsonProperty(value = "records.for-each", required = false) private ActionStepRecordsForEach recordsForEach;
+    
+    @JsonPropertyDescription("""
+        This step allows for running initialization and cleanup steps around the steps listed in the 'do' block.
+        """)
+    @JsonProperty(value = "with", required = false) private ActionStepWith with;
+    
+    @JsonPropertyDescription("""
+        Append data to a writer as defined in the surrounding with-step. 
+        """)
+    @JsonProperty(value="writer.append", required = false) private LinkedHashMap<String, TemplateExpressionWithFormatter> writerAppend;
     
     @JsonPropertyDescription("""
         Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.    
@@ -217,36 +255,56 @@ public final class ActionStep extends AbstractActionElementIf {
      * It invokes the postLoad() method on each request descriptor.
      */
     public final void postLoad(Action action) {
-        checkInstructionCount();
-    }
-
-    private void checkInstructionCount() {
-        var nonNullInstructionNames = getNonNullInstructionNames();
-        if ( nonNullInstructionNames.size()==0 ) {
-            throw new ActionValidationException("Action step doesn't define any instruction");
+        HashMap<String, Object> values = getters.entrySet().stream().collect(
+                HashMap::new, this::putNonNullFieldValue, Map::putAll);
+        if ( values.size()==0 ) {
+            throw new FcliActionValidationException("Action step doesn't define any instruction");
         }
-        if ( nonNullInstructionNames.size()>1 ) {
-            throw new ActionValidationException("Action step contains multiple instructions: "+nonNullInstructionNames);
+        if ( values.size()>1 ) {
+            throw new FcliActionValidationException("Action step contains multiple instructions: "+values.keySet());
         }
+        this.stepValue = values.entrySet().iterator().next();
     }
 
     @SneakyThrows
-    private ArrayList<String> getNonNullInstructionNames() {
-        var nonNullInstructions = new ArrayList<String>(); 
-        // Note that 'if' is defined in parent class, so not included by getDeclaredFields()
-        for ( var f : this.getClass().getDeclaredFields() ) {
-            var jsonPropertyAnnotation = f.getAnnotation(JsonProperty.class);
-            if ( jsonPropertyAnnotation!=null && f.get(this)!=null ) {
-                nonNullInstructions.add(getInstructionName(f, jsonPropertyAnnotation));
+    private final void putNonNullFieldValue(HashMap<String, Object> map, Map.Entry<String, MethodHandle> e) {
+        var value=e.getValue().invokeExact(this);
+        if (value!=null) { map.put(e.getKey(), value); }
+    }
+    
+    // Collect all fields annotated with @JsonProperty, indexed by JSON property name
+    private static final Map<String, Field> createFields() {
+        var result = new HashMap<String, Field>();
+        for ( var f : ActionStep.class.getDeclaredFields() ) {
+            var jsonPropertyAnnotation = f.getAnnotation(JsonProperty.class); 
+            if ( jsonPropertyAnnotation!=null ) {
+                var jsonPropertyName = jsonPropertyAnnotation.value();
+                if ( StringUtils.isBlank(jsonPropertyName) ) {
+                    throw new FcliBugException("JSON properties in ActionStep must define explicit property name");
+                }
+                result.put(jsonPropertyName, f);
             }
         }
-        return nonNullInstructions;
+        return result;
     }
 
-    private String getInstructionName(Field field, JsonProperty jsonPropertyAnnotation) {
-        var nameFromAnnotation = jsonPropertyAnnotation.value();
-        return StringUtils.isBlank(nameFromAnnotation) ? field.getName() : nameFromAnnotation;
+    private static final HashMap<String, Class<?>> createPropertyTypes(Map<String, Field> fields) {
+        return fields.entrySet().stream().collect(
+                HashMap::new, (map,e)->map.put(e.getKey(), e.getValue().getType()), Map::putAll);
     }
     
+    @JsonIgnore
+    private static final Map<String, MethodHandle> createGetters(Map<String, Field> fields) {
+        return fields.entrySet().stream().collect(
+            HashMap::new, (map,e)->map.put(e.getKey(), createGetter(e.getValue())), Map::putAll);
+    }
     
+    @JsonIgnore
+    private static final MethodHandle createGetter(Field f) {
+        try {
+            return MethodHandles.lookup().unreflectGetter(f).asType(MethodType.methodType(Object.class, ActionStep.class));
+        } catch (IllegalAccessException e) {
+            throw new FcliBugException("Unable to create getter for field "+f.getName(), e);
+        }
+    }
 }

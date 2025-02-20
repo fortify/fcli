@@ -27,6 +27,9 @@ import java.util.function.Function;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.wait.WaitType.AnyOrAll;
@@ -75,10 +78,10 @@ public class WaitHelper {
     
     private final void wait(UnirestInstance unirest, StateEvaluator evaluator, AnyOrAll anyOrAll) {
         if ( currentState==null ) {
-            throw new RuntimeException("No currentState function or currentStateProperty set");
+            throw new FcliBugException("No currentState function or currentStateProperty set");
         }
         if ( result.size()>0 ) {
-            throw new RuntimeException("Only one of the public wait methods may be invoked with a non-empty set of states");
+            throw new FcliBugException("Only one of the public wait methods may be invoked with a non-empty set of states");
         }
         long intervalMillis = periodHelper.parsePeriodToMillis(intervalPeriod);
         OffsetDateTime timeout = periodHelper.getCurrentOffsetDateTimePlusPeriod(timeoutPeriod);
@@ -91,7 +94,7 @@ public class WaitHelper {
                 try {
                     Thread.sleep(intervalMillis);
                 } catch (InterruptedException e) {
-                    throw new RuntimeException("Wait operation interrupted", e);
+                    throw new FcliTechnicalException("Wait operation interrupted", e);
                 }
                 recordsWithCurrentState = getRecordsWithCurrentState(unirest);
                 recordsWithWaitStatus = evaluator.getWaitStatuses(recordsWithCurrentState);
@@ -99,7 +102,7 @@ public class WaitHelper {
             }
             if ( continueWait && onTimeout==WaitTimeoutAction.fail ) {
                 recordsWithWaitStatus.replaceAll((k,v)->v!=WaitStatus.WAITING ? v : WaitStatus.TIMEOUT);
-                throw new IllegalStateException("Time-out exceeded");
+                throw new FcliSimpleException("Time-out exceeded");
             }
         } finally {
             result.putAll(recordsWithWaitStatus);
@@ -117,26 +120,26 @@ public class WaitHelper {
     private final boolean continueWait(Map<ObjectNode, WaitStatus> waitStatuses, AnyOrAll anyOrAll) {
         boolean containsFailureState = waitStatuses.containsValue(WaitStatus.FAILURE_STATE_DETECTED);
         if ( onFailureState==WaitUnknownOrFailureStateAction.fail && containsFailureState ) {
-            throw new IllegalStateException("Failure state detected for one or more records");
+            throw new FcliSimpleException("Failure state detected for one or more records");
         } else if ( onFailureState==WaitUnknownOrFailureStateAction.terminate && containsFailureState ) {
             return false;
         }
         boolean containsUnknownState = waitStatuses.containsValue(WaitStatus.UNKNOWN_STATE_DETECTED);
         if ( onUnknownState==WaitUnknownOrFailureStateAction.fail && containsUnknownState ) {
-            throw new IllegalStateException("Failure state detected for one or more records");
+            throw new FcliSimpleException("Unknown state detected for one or more records");
         } else if ( onUnknownState==WaitUnknownOrFailureStateAction.terminate && containsUnknownState ) {
             return false;
         }
         switch (anyOrAll) {
         case any_match: return !waitStatuses.containsValue(WaitStatus.WAIT_COMPLETE);
         case all_match: return !waitStatuses.values().stream().allMatch(WaitStatus.WAIT_COMPLETE::equals);
-        default: throw new RuntimeException("This exception shouldn't occur; please submit a bug"); 
+        default: throw new FcliBugException("This exception shouldn't occur; please submit a bug"); 
         }
     }
     
     private final Map<ObjectNode, String> getRecordsWithCurrentState(UnirestInstance unirest) {
         if ( recordsSupplier==null ) {
-            throw new RuntimeException("No records supplier has been configured");
+            throw new FcliBugException("No records supplier has been configured");
         }
         Map<ObjectNode, String> nodesWithStatus = new LinkedHashMap<>();
         for ( JsonNode record : recordsSupplier.apply(unirest) ) {
@@ -158,7 +161,7 @@ public class WaitHelper {
             node = recordTransformer.apply(node);
         }
         if ( !(node instanceof ObjectNode) ) {
-            throw new RuntimeException("Cannot process node of type "+node.getClass().getName()+"; please report a bug");
+            throw new FcliBugException("Cannot process node of type "+node.getClass().getName()+"; please report a bug");
         }
         String status = currentState.apply(node);
         nodesWithStatus.put((ObjectNode)node, status);
@@ -189,7 +192,7 @@ public class WaitHelper {
         public StateEvaluator(Set<String> statesSet, LoopType evaluatorType) {
             this.statesSet = statesSet;
             if ( statesSet==null || statesSet.isEmpty() ) {
-                throw new IllegalStateException("No states to be matched have been specified");
+                throw new FcliSimpleException("No states to be matched have been specified");
             }
             this.evaluatorType = evaluatorType;
             this.knownStatesSet = knownStates==null ? null : new HashSet<>(Set.of(knownStates));
@@ -224,7 +227,7 @@ public class WaitHelper {
         private void checkRequestedStates() {
             if ( onUnknownStateRequested!=WaitUnknownStateRequestedAction.ignore || isEmpty(knownStatesSet) ) {
             } else if ( !knownStatesSet.containsAll(statesSet) ) {
-                throw new IllegalArgumentException("Unknown states specified in one of the --until* or --while* options: "+removeAll(statesSet, knownStatesSet));
+                throw new FcliSimpleException("Unknown states specified in one of the --until* or --while* options: "+removeAll(statesSet, knownStatesSet));
             }
         }
 

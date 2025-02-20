@@ -18,6 +18,8 @@ import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.ast.StringLiteral;
 import org.springframework.expression.spel.standard.SpelExpression;
 
+import com.fortify.cli.common.exception.FcliTechnicalException;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -41,7 +43,8 @@ public abstract class AbstractSpelNodeVisitor {
             var value = '"'+((LiteralExpression)expression).getValue()+'"';
             visit(new StringLiteral(value, 0, value.length(), value));
         } else {
-            throw new RuntimeException("Expression type not supported: "+expression.getClass().getSimpleName()); 
+            // TODO FcliTechnicalException or FcliBugException?
+            throw new FcliTechnicalException("Expression type not supported: "+expression.getClass().getSimpleName()); 
         }
     }
 

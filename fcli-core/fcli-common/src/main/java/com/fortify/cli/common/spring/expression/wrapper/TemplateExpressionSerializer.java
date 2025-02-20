@@ -38,7 +38,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 @Reflectable
 public final class TemplateExpressionSerializer extends StdSerializer<TemplateExpression> {
     private static final long serialVersionUID = 1L;
-    protected TemplateExpressionSerializer() {
+    public TemplateExpressionSerializer() {
         super(TemplateExpression.class);
     }
 

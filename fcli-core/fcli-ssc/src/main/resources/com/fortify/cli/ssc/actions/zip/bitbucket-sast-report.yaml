@@ -12,23 +12,24 @@ config:
   
 cli.options:
   report-file:
-    alias: r
+    names: --report-file, -r
     description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json"
     required: false
     default: bb-fortify-report.json
   annotations-file:
-    alias: a
+    names: --annotations-file, -a
     description: "Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json"
     required: false
     default: bb-fortify-annotations.json
   appversion:
-    alias: av
+    names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
   filterset:
-    alias: fs
+    names: --filterset, --fs
     description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
   page-size:
+    names: --page-size
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
     required: false
     default: "100"
@@ -80,10 +81,10 @@ steps:
             details:
               uri: /api/v1/issueDetails/${issue.id}
           do:
-            - var.fmt:
-                annotations..: annotations
-  - var.fmt:
-      report: report
+            - var.set:
+                annotations..: {fmt: annotations}
+  - var.set:
+      report: {fmt: report}
   - out.write:
       ${cli['annotations-file']}: ${annotations?:{}}
       ${cli['report-file']}: ${report}

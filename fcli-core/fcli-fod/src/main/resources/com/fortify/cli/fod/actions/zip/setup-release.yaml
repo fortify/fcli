@@ -34,73 +34,83 @@ config:
   
 cli.options:
   release:
-    alias: rel
+    names: --release, --rel
     required: true
     description: "Required release name as <application>[:<microservice>]:<release>"
   scan-types:
-    alias: t
+    names: --scan-types, -t
     required: false
     type: array
     description: "Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported"  
   attributes:
     group: rel_create_opts  
     required: false
-    alias: attrs
+    names: --attributes, --attrs
     description: "Optional comma-separated list of attributes to set on the application and/or release"
   copy-from:   
+    names: --copy-from
     group: rel_create_opts
     required: false
     description: "See `fcli fod release create`"
   description:
     group: rel_create_opts
     required: false
-    alias: d
+    names: --description, -d
     description: "See `fcli fod release create`"
   sdlc-status:
     group: rel_create_opts
     required: true
-    alias: status
+    names: --sdlc-status, --status
     description: "See `fcli fod release create`. Default value: Development"
     default: Development
   app-description:
     group: rel_create_opts
     required: false
+    names: --app-description
     description: "See `fcli fod release create`"
   app-notify:  
     group: rel_create_opts
     required: false
+    names: --app-notify
     description: "See `fcli fod release create`"
   app-owner:
     group: rel_create_opts
     required: false
+    names: --app-owner
     description: "See `fcli fod release create`"
   app-groups:
     group: rel_create_opts
     required: false
+    names: --app-groups
     description: "See `fcli fod release create`"
   app-type:
     group: rel_create_opts
     required: false
+    names: --app-type
     description: "See `fcli fod release create`. Default value: Web"
     default: Web
   app-criticality:
     group: rel_create_opts
     required: false
+    names: --app-criticality
     description: "See `fcli fod release create`. Default value: Medium"
     default: Medium
   assessment-type:
     group: sast_setup_opts
     required: false
+    names: --assessment-type
     default: "Static Assessment"
     description: "See `fcli fod sast-scan setup`"
   use-aviator:      
     group: sast_setup_opts
     required: false
+    names: --use-aviator
     description: "See `fcli fod sast-scan setup`"
     type: boolean  
   oss:    
     group: sast_setup_opts
     required: false
+    names: --oss
     description: "See `fcli fod sast-scan setup`" 
     type: boolean  
   

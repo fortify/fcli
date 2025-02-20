@@ -23,8 +23,6 @@ import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.Basic
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.spring.expression.SpelHelper;
-import com.fortify.cli.common.util.EnvHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
@@ -44,40 +42,9 @@ public class FoDActionRunCommand extends AbstractActionRunCommand {
     }
     
     @Override
-    protected String getSessionName() {
-        return unirestInstanceSupplier.getSessionName();
-    }
-    
-    @Override
-    protected String getSessionFromEnvLoginCommand() {
-        var fodUrl = EnvHelper.requiredEnv("FOD_URL");
-        var fodTenant = EnvHelper.envOrDefault("FOD_TENANT", "");
-        var fodUser = EnvHelper.envOrDefault("FOD_USER", "");
-        var fodPwd = EnvHelper.envOrDefault("FOD_PASSWORD", "");
-        var fodClientId = EnvHelper.envOrDefault("FOD_CLIENT_ID", "");
-        var fodClientSecret = EnvHelper.envOrDefault("FOD_CLIENT_SECRET", "");
-        var extraOpts = EnvHelper.envOrDefault("FOD_LOGIN_EXTRA_OPTS", "");
-        String fodCredentialArgs;
-        if ( StringUtils.isNotBlank(fodTenant) && StringUtils.isNotBlank(fodUser) && StringUtils.isNotBlank(fodPwd) ) {
-            fodCredentialArgs = String.format("-t \"%s\" -u \"%s\" -p \"%s\"", fodTenant, fodUser, fodPwd);
-        } else if ( StringUtils.isNotBlank(fodClientId) && StringUtils.isNotBlank(fodClientSecret) ) {
-            fodCredentialArgs = String.format("--client-id \"%s\" --client-secret \\\"%s\\\"", fodClientId, fodClientSecret);
-        } else {
-            throw new IllegalStateException("Either FOD_TENANT, FOD_USER, and FOD_PASSWORD, or FOD_CLIENT_ID and FOD_CLIENT_SECRET environment variables must be defined");
-        }
-        return String.format(
-                "fod session login --url \"%s\" %s -c \"%s\" %s",
-                fodUrl, fodCredentialArgs, extraOpts);
-    }
-    
-    @Override
-    protected String getSessionFromEnvLogoutCommand() {
-        return String.format("fod session logout");
-    }
-    
-    @Override
     protected void configure(ActionRunnerConfigBuilder configBuilder) {
        configBuilder
+            .requestedSessionName(unirestInstanceSupplier.getSessionName())
             .actionContextConfigurer(this::configureActionContext)
             .actionContextSpelEvaluatorConfigurer(this::configureSpelContext);
     }

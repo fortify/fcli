@@ -17,6 +17,7 @@ import java.lang.reflect.AccessibleObject;
 import java.util.ResourceBundle;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliBugException;
 
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
@@ -83,7 +84,7 @@ public class PicocliSpecHelper {
     public static final String getRequiredMessageString(CommandSpec commandSpec, String keySuffix, Object... args) {
         String result = getMessageString(commandSpec, keySuffix, args);
         if ( StringUtils.isBlank(result) ) {
-            throw new RuntimeException("No resource bundle entry found for required key suffix: "+keySuffix);
+            throw new FcliBugException("No resource bundle entry found for required key suffix: "+keySuffix);
         }
         return result;
     }

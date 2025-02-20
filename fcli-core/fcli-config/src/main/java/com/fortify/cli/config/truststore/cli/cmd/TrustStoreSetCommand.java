@@ -17,6 +17,7 @@ import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -47,7 +48,7 @@ public class TrustStoreSetCommand extends AbstractOutputCommand implements IJson
     public JsonNode getJsonNode() {
     	Path absolutePath = fileMixin.getFile().toPath().toAbsolutePath();
     	if ( !Files.exists(absolutePath) ) {
-    		throw new IllegalArgumentException("Trust store cannot be found: "+absolutePath);
+    		throw new FcliSimpleException("Trust store cannot be found: "+absolutePath);
     	}
 		String absolutePathString = absolutePath.toString();
     	TrustStoreConfigDescriptor descriptor = TrustStoreConfigDescriptor.builder()

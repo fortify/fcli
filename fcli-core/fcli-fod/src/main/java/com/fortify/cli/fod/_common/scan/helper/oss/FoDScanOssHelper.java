@@ -18,6 +18,7 @@ import java.io.File;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
@@ -48,7 +49,7 @@ public class FoDScanOssHelper extends FoDScanHelper {
         JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
-            throw new RuntimeException("Unable to retrieve scan id from response when starting OSS scan.");
+            throw new FcliSimpleException("Unable to retrieve scan id from response when starting OSS scan.");
         }
         JsonNode node = objectMapper.createObjectNode()
                 .put("scanId", startScanResponse.getScanId())

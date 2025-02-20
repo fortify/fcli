@@ -28,37 +28,41 @@ config:
   
 cli.options:
   appversion:
-    alias: av
+    names: --appversion, --av
     required: true
     description: "Required application version name as <appName>:<versionName>"
   add-users:
+    names: --add-users
     group: av_create_opts
     required: false
     description: "See `fcli ssc appversion create`"
   attrs:
+    names: --attrs, --attributes
     group: av_create_opts
     required: false
-    alias: attributes
     description: "See `fcli ssc appversion create`"
   copy:
+    names: --copy
     group: av_create_opts
     required: false 
     description: "See `fcli ssc appversion create`"
   description:
+    names: --description, -d
     group: av_create_opts
     required: false
-    alias: d
     description: "See `fcli ssc appversion create`"
   copy-from:
+    names: --copy-from, --from
     group: av_create_opts
     required: false
-    alias: from
     description: "See `fcli ssc appversion create`"
   issue-template:
+    names: --issue-template
     group: av_create_opts
     required: false
     description: "See `fcli ssc appversion create`"
   refresh-timeout:
+    names: --refresh-timeout
     group: av_create_opts
     required: false
     default: "300s"

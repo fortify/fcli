@@ -31,7 +31,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
-import picocli.CommandLine;
 
 /**
  * This class holds action runner configuration
@@ -41,8 +40,6 @@ import picocli.CommandLine;
 public class ActionRunnerConfig {
     /** Progress writer factory */
     @NonNull private final IProgressWriterFactory progressWriterFactory;
-    /** Root CommandLine object for executing fcli commands */
-    @NonNull private final CommandLine rootCommandLine;
     /** Data extract action */
     @NonNull private final Action action;
     /** Callback to handle validation errors */
@@ -59,6 +56,8 @@ public class ActionRunnerConfig {
      *  on {@link ActionRunnerContext} during the configuration phase, but they may call getSpelEvaluator()
      *  on the {@link ActionRunnerConfig} as returned by the {@link ActionRunnerContext#getConfig()} method. */
     @Singular private final Collection<BiConsumer<ActionRunnerContext, SimpleEvaluationContext>> actionContextSpelEvaluatorConfigurers;
+    /** Requested session name */
+    private final String requestedSessionName;
     
     /** Factory for creating the single {@link ISpelEvaluator} instance. By using a factory, we can
      *  check for illegal access to the {@link ISpelEvaluator} during configuration phase. */

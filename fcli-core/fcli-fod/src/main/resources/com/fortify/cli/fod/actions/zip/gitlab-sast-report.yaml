@@ -12,12 +12,12 @@ config:
   
 cli.options:
   file:
-    alias: f
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json"
     required: false
     default: gl-fortify-sast.json
   release:
-    alias: rel
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   
 steps:
@@ -46,10 +46,10 @@ steps:
             recommendations:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
           do:
-            - var.fmt:
-                vulnerabilities..: vulnerabilities
-  - out.fmt:
-      ${cli.file}: gitlab-sast-report
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-sast-report}
   - if: ${cli.file!='stdout'}
     out.write:
       stdout: |
@@ -83,7 +83,7 @@ formatters:
   vulnerabilities:
       category: sast
       confidence: ${(issue.severityString matches "(Critical|Medium)") ? "High":"Low" }
-      description: ${#abbreviate(#htmlToText(issue.details?.summary), 15000)}
+      description: ${#abbreviate(#htmlToText(issue.details?.summary?:""), 15000)}
       id: ${issue.vulnId}
       cve: 'N/A'
       identifiers: |-

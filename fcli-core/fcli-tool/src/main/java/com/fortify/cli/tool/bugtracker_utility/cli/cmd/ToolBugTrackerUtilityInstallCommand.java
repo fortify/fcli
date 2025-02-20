@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
@@ -48,7 +49,7 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
                 (p,a)->p.toFile().getName().matches("FortifyBugTrackerUtility.*\\.jar"))
             .toList();
         if ( jarFiles.size()!=1 ) {
-            throw new IllegalStateException("Unexpected number of files matching FortifyBugTrackerUtility*.jar: "+jarFiles.size());
+            throw new FcliSimpleException("Unexpected number of files matching FortifyBugTrackerUtility*.jar: "+jarFiles.size());
         }
         Files.move(jarFiles.get(0), targetPath.resolve("FortifyBugTrackerUtility.jar"));
     }

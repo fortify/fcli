@@ -27,6 +27,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
@@ -221,7 +223,7 @@ public class StandardOutputWriter implements IOutputWriter {
             } else if ( jsonNode.isObject() ) {
                 writeRecord(recordWriter, jsonNode);
             } else {
-                throw new IllegalStateException("Unsupported node type: "+jsonNode.getNodeType());
+                throw new FcliBugException("Unsupported node type: "+jsonNode.getNodeType());
             }
         }
     }
@@ -246,7 +248,7 @@ public class StandardOutputWriter implements IOutputWriter {
             case ARRAY: if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString())); break;
             case OBJECT: recordWriter.writeRecord((ObjectNode) record); break;
             case NULL: case MISSING: break;
-            default: throw new RuntimeException("Invalid node type: "+nodeType);
+            default: throw new FcliBugException("Invalid node type: "+nodeType);
             }
         }
     }
@@ -480,7 +482,7 @@ public class StandardOutputWriter implements IOutputWriter {
                         ? new PrintWriter(System.out)
                         : new BufferedWriter(new FileWriter(outputFile, false));
             } catch ( IOException e) {
-                throw new IllegalArgumentException("Output file "+outputFile+" cannot be accessed");
+                throw new FcliSimpleException("Output file "+outputFile+" cannot be accessed");
             }
         }
     }

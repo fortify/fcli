@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
@@ -242,7 +243,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         Object cmd = commandHelper.getCommand();
         return applyWithDefaultSupplier(cmd, 
                 IBasicOutputConfigSupplier.class, IBasicOutputConfigSupplier::getBasicOutputConfig,
-                ()->{throw new IllegalStateException(cmd.getClass().getName()+" must implement IBasicOutputConfigSupplier, or use an IOutputHelper implementation that provides a basic output configuration");});
+                ()->{throw new FcliBugException(cmd.getClass().getName()+" must implement IBasicOutputConfigSupplier, or use an IOutputHelper implementation that provides a basic output configuration");});
     }
     
     /**
@@ -260,7 +261,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         Object cmd = commandHelper.getCommand();
         return applyWithDefaultSupplier(cmd, 
                 IOutputWriterFactorySupplier.class, IOutputWriterFactorySupplier::getOutputWriterFactory,
-                ()->{throw new IllegalStateException(cmd.getClass().getName()+" must implement IOutputWriterFactorySupplier, or use an IOutputHelper implementation that provides an output factory");});
+                ()->{throw new FcliBugException(cmd.getClass().getName()+" must implement IOutputWriterFactorySupplier, or use an IOutputHelper implementation that provides an output factory");});
     }
 
     /**

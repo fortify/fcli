@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Run SSC CI pipeline
+  description: |
+    (Work in progress)
+    This action can be used to run a full, standardized CI pipeline that performs the
+    following activities:
+    - Create & configure SSC application version if needed
+    - Package source code
+    - Submit SAST scan request
+    - Wait for SAST scan completion
+    - Perform post-scan activities, like checking policy outcome, exporting results, ...
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  session.from-env.output: show
+  
+steps:
+  - run.fcli:
+      ci-vars: 
+        cmd: ${#actionCmd('CI_VARS', 'ssc', 'ci-vars')}
+        on.success:
+          - var.set:
+              global.ci.av: ${#env('SSC_APPVERSION')?:global.ci.defaultFortifyRepo}
+          - if: ${global.ci.av==null}
+            throw: SSC application version must be specified through SSC_APPVERSION environment variable
+      setup:
+        cmd: ${#actionCmd('SETUP', 'ssc', 'setup-appversion')} --av "${global.ci.av}"
+        if:  ${#skipIf(#env('DO_SETUP')=='false', 'Application version setup as DO_SETUP set to false')}
+      pkg: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')}
+      sast-request: 
+        cmd: >-
+          ${#fcliCmd('SC_SAST_SCAN', 'fcli sc-sast scan start')} -f "${global.package.output}"
+          --publish-to "${global.ci.av}" --store sc_sast_scan
+      sast-wait-for:
+        cmd: ${#fcliCmd('SC_SAST_PUBLISH', 'fcli sc-sast scan wait-for')} "::sc_sast_scan::"
+          
+  - out.write:
+      stdout: |
+        Package: ${global.package.output}
+      

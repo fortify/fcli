@@ -24,6 +24,8 @@ import java.util.function.BiFunction;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.util.Counter;
@@ -57,7 +59,7 @@ public class MspReportSSCAppDescriptor extends JsonNodeHolder {
     
     public void check(IReportLogger logger) {
         if ( mspLicenseType==null ) {
-            throw new IllegalStateException("Missing license type");
+            throw new FcliSimpleException("Missing license type");
         }
         
         if ( mspLicenseType!=MspReportLicenseType.Demo ) {
@@ -99,7 +101,7 @@ public class MspReportSSCAppDescriptor extends JsonNodeHolder {
             warn(logger, "%s, using %s", msg, value);
             return value;
         } else {
-            throw new IllegalStateException(msg);
+            throw new FcliTechnicalException(msg);
         }
     }
     

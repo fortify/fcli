@@ -18,6 +18,7 @@ import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVe
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.StringUtils;
@@ -173,14 +174,14 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     protected void configure(UnirestInstance unirest) {
         String tokenExpression = sourceConfig().getTokenExpression();
         if ( StringUtils.isBlank(tokenExpression) ) {
-            throw new IllegalArgumentException("SSC configuration requires tokenExpression property");
+            throw new FcliSimpleException("SSC configuration requires tokenExpression property");
         }
         // TODO Doesn't really make sense to use this method with null input object
         //      We should have a corresponding method in SpelHelper that doesn't take
         //      any input
         String token = JsonHelper.evaluateSpelExpression(null, tokenExpression, String.class);
         if ( StringUtils.isBlank(token) ) {
-            throw new IllegalStateException("No token found from expression: "+tokenExpression);
+            throw new FcliSimpleException("No token found from expression: "+tokenExpression);
         } else {
             unirest.config().setDefaultHeader("Authorization", "FortifyToken "+SSCTokenConverter.toRestToken(token));
         }

@@ -25,7 +25,7 @@ import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionParameterHelper;
+import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
@@ -103,13 +103,13 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     }
     
     private final String generateOptionsSection(Action action) {
-        return ActionParameterHelper.getOptionDescriptors(action)
+        return ActionOptionHelper.getOptionDescriptors(action)
             .stream().map(this::generateOptionDescription).collect(Collectors.joining("\n\n"));
     }
     
     private final String generateOptionDescription(IOptionDescriptor descriptor) {
         return String.format("%s::\n%s", 
-                descriptor.getOptionNamesAndAliasesString(", "), 
+                descriptor.getOptionNamesString(", "), 
                 StringUtils.indent(descriptor.getDescription(), "  "));
     }
     

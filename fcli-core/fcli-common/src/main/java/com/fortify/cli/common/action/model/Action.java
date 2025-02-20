@@ -94,13 +94,11 @@ public class Action implements IActionElement {
     @JsonProperty(value = "config", required = false) private ActionConfig config= new ActionConfig();
     
     @JsonPropertyDescription("""
-        Optional map: CLI options accepted by this action. Map keys define option names, values define option \
-        definitions. Option values can be referenced by action steps through the 'cli' variable, for example \
-        ${cli.myOption} or ${cli['my-option']}. Users can specify '--optionName value' on the 'fcli action * run' \
-        command line, or, if an alias is defined, through '--alias value'. For single-letter option names/aliases, \
-        the CLI option will be preceded by just a single dash, for example '-f' if the option name/alias is 'f'.
+        Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which \
+        can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values \
+        define option definitions like option names that can be specified on the command line, option description, ...
         """)
-    @JsonProperty(value = "cli.options", required = false) private Map<String, ActionCliOptions> cliOptions = Collections.emptyMap();
+    @JsonProperty(value = "cli.options", required = false) private Map<String, ActionCliOption> cliOptions = Collections.emptyMap();
     
     @JsonPropertyDescription("""
         Required list: Steps to be executed when this action is being run. Each list item should consist of a \
@@ -108,7 +106,7 @@ public class Action implements IActionElement {
         execution. Note that the YAML schema allows for multiple instructions to be present within a single list \
         item, but this will result in an error.
         """)
-    @JsonProperty(value = "steps", required = true) private List<ActionStep> steps;
+    @JsonProperty(value = "steps", required = true) private ArrayList<ActionStep> steps;
     
     @JsonPropertyDescription("""
         Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter \
@@ -172,7 +170,7 @@ public class Action implements IActionElement {
     }
     
     /**
-     * Utility method for throwing an {@link ActionValidationException}
+     * Utility method for throwing an {@link FcliActionValidationException}
      * if the given boolean value is true.
      * @param isFailure
      * @param entity
@@ -180,7 +178,7 @@ public class Action implements IActionElement {
      */
     static final void throwIf(boolean isFailure, Object entity, Supplier<String> msgSupplier) {
         if ( isFailure ) {
-            throw new ActionValidationException(msgSupplier.get(), entity);
+            throw new FcliActionValidationException(msgSupplier.get(), entity);
         }
     }
     
@@ -212,12 +210,10 @@ public class Action implements IActionElement {
      * tree proved to be too error-prone, often forgetting to handle newly added 
      * action element types.
      */
+    @SuppressWarnings("unchecked")
     private void initializeAllActionElements() {
         visit(this, this, elt->allActionElements.add(elt),
-        (k,v)->{
-            JavaHelper.as(v, IMapObjectKeyAware.class).ifPresent(e->e.setKey(k));
-            JavaHelper.as(v, IMapStringKeyAware.class).ifPresent(e->e.setKey((String)k));
-        });
+                (k,v)->JavaHelper.as(v, IMapKeyAware.class).ifPresent(e->e.setKey(k)));
     }
     
     /**
@@ -307,7 +303,7 @@ public class Action implements IActionElement {
                 try {
                     return new POJONode(SpelHelper.parseTemplateExpression(expr));
                 } catch (ParseException e) {
-                    throw new ActionValidationException(String.format("Error parsing template expression '%s'", expr), this, e);
+                    throw new FcliActionValidationException(String.format("Error parsing template expression '%s'", expr), this, e);
                 }
             } else {
                 return super.copyValue(state, path, parent, node);

@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
@@ -39,7 +40,7 @@ public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IR
         String[] tokenIds = Stream.of(tokenIdsOrValues).filter(this::isInteger).toArray(String[]::new);
         String[] tokenValues = Stream.of(tokenIdsOrValues).filter(Predicate.not(this::isInteger)).toArray(String[]::new);
         if ( tokenIds.length>0 && tokenValues.length>0 ) {
-            throw new IllegalArgumentException("Either token id's or token values need to be specified, not both");
+            throw new FcliSimpleException("Either token id's or token values need to be specified, not both");
         }
         return tokenIds.length>0 
                 ? SSCTokenHelper.deleteTokensById(urlConfig, userCredentialsConfig, tokenIds)
