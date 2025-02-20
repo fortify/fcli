@@ -1,11 +1,16 @@
 package com.fortify.cli.ssc.aviator.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.core.AuditFPR;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
@@ -18,73 +23,64 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Command;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
 
 @Command(name = "audit")
-@DefaultVariablePropertyName("id")
+@DefaultVariablePropertyName("artifactId")
 public class SSCAviatorAuditCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Option(names = {"-t", "--token"}, required = true) private String token;
-    @Option(names = {"--tenant"}, required = true) private String tenantName;
     @Option(names = {"-u", "--url"}, required = true) private String url;
-    private static final Logger logger = LoggerFactory.getLogger(SSCAviatorAuditCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SSCAviatorAuditCommand.class);
 
     @Override
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        Path tempDir = null;
-        File fprFile = null;
-        File processedFile = null;
-
         try (var progressWriter = progressWriterFactory.create()) {
             SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
-            tempDir = Files.createTempDirectory("ssc_aviator_");
+            File fprFile = File.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
+            fprFile.deleteOnExit();
 
-            fprFile = File.createTempFile(String.format("aviator_%s_%s_", av.getApplicationName(), av.getVersionName()), ".fpr", tempDir.toFile());
-
+            progressWriter.writeProgress("Status: Downloading FPR from SSC");
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), true),
                     fprFile,
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
-            progressWriter.writeProgress("Status: Processing FPR");
-            processedFile = AuditFPR.auditFpr(fprFile, token, tenantName, url);
+            progressWriter.writeProgress("Status: Processing FPR with Aviator");
+            File processedFile = AuditFPR.auditFPR(fprFile, token, url);
+            processedFile.deleteOnExit();
 
             progressWriter.writeProgress("Status: Uploading FPR to SSC");
             JsonNode uploadResponse = uploadFpr(unirest, processedFile, av);
             JsonNode dataNode = uploadResponse.get("data");
             String id = dataNode.has("id") ? dataNode.get("id").asText() : "";
 
-            return av.asObjectNode()
-                    .put("artifactId", id);
-        } catch (Exception e) {
-            logger.error("Error during Aviator audit process", e);
-            throw e;
-        } finally {
-            cleanupResources(tempDir);
+            return av.asObjectNode().put("artifactId", id);
+        } catch (AviatorSimpleException e) {
+            LOG.error("Aviator audit failed: {}", e.getMessage());
+            throw new FcliSimpleException(e.getMessage());
+        } catch (AviatorTechnicalException e) {
+            LOG.error("Technical error during Aviator audit: {}", e.getMessage(), e);
+            throw new FcliTechnicalException("Aviator audit failed due to a technical issue: " + e.getMessage(), e);
+        } catch (IOException e) {
+            LOG.error("I/O error during audit process: {}", e.getMessage(), e);
+            throw new FcliTechnicalException("Failed to process FPR file due to an I/O error.", e);
         }
     }
 
     @SneakyThrows
     private JsonNode uploadFpr(UnirestInstance unirest, File file, SSCAppVersionDescriptor av) {
-        return SSCFileTransferHelper.upload(
-                unirest,
-                SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()),
-                file,
-                SSCFileTransferHelper.ISSCAddUploadTokenFunction.QUERYSTRING_MAT,
-                JsonNode.class
-        );
+        return SSCFileTransferHelper.upload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), file,
+                SSCFileTransferHelper.ISSCAddUploadTokenFunction.QUERYSTRING_MAT, JsonNode.class);
     }
 
     @Override
@@ -100,24 +96,5 @@ public class SSCAviatorAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Override
     public boolean isSingular() {
         return true;
-    }
-
-    private void cleanupResources(Path tempDir) {
-        if (tempDir != null && Files.exists(tempDir)) {
-            try {
-                Files.walk(tempDir)
-                        .sorted(Comparator.reverseOrder())
-                        .forEach(path -> {
-                            try {
-                                Files.delete(path);
-                                logger.debug("Deleted path: {}", path);
-                            } catch (IOException e) {
-                                logger.warn("Failed to delete path: {}", path, e);
-                            }
-                        });
-            } catch (IOException e) {
-                logger.warn("Failed to clean up temporary directory: {}", tempDir, e);
-            }
-        }
     }
 }

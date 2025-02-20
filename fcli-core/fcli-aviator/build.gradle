@@ -16,6 +16,7 @@ dependencies {
 
     implementation("jakarta.xml.bind:jakarta.xml.bind-api:2.3.3")
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
+    implementation("com.auth0:java-jwt:4.4.0")
 
     implementation("io.grpc:grpc-netty-shaded:1.69.0")
     implementation("io.grpc:grpc-protobuf:1.69.0")
