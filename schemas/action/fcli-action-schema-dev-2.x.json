@@ -200,14 +200,14 @@
           },
           "required" : [ "do" ],
           "additionalProperties" : false,
-          "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block.\n"
+          "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. This includes the ability to run the do-block within the context of an fcli session, with the session being created before running the do-block and being terminated afterwards, and the ability to define writers than can output data in various formats like CSV, appending data to those writers in the do-block, and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, these writers support more output formats, and, depending on writer type and configuration, allows for streaming output, rather than having to collect all data in memory first.\n"
         },
         "writer.append" : {
           "type" : "object",
           "additionalProperties" : {
             "$ref" : "#/$defs/TemplateExpressionWithFormatter"
           },
-          "description" : "Append data to a writer as defined in the surrounding with-step.\n"
+          "description" : "This instruction may only be used from within a with:do, with the with:writers instruction defining the writers that the writer.append instruction can append data to. The given data will be formatted an written according to the corresponding writer configuration.\n"
         }
       },
       "additionalProperties" : false
@@ -446,17 +446,17 @@
             "format" : "spelTemplateExpression",
             "type" : [ "boolean", "integer", "string", "number", "null" ]
           },
-          "description" : "Optional map defining options for the given writer type. Different writer types may support different configuration options. Following is a list of supported configuration options, together with the writer types on which the option is supported.\n"
+          "description" : "Optional map defining options for the given writer type. Different writer types may support different configuration options.\n"
         },
         "to" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified only as a file name for now. If a file already exists, it will be overwritten.\n"
+          "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified as one of the following:\n\n- A file name to write the output to\n- 'stdout' to write the output to stdout\n- 'stderr' to write the output to stderr\n- 'var.text:varName' to write the output as text into the given 'varName' action variable\n- 'var.array:varName' to write the output as an array into the given 'varName' action variable\n\nWith 'var.text' and 'var.array', the output is available to steps after the current 'with' block has completed through ${varName}. Note that 'var.array' is only support for 'type: json'.\n"
         },
         "type" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression defining the writer type. The expression must evaluate to one of the following values: json, csv, ... TODO\n"
+          "description" : "Required SpEL template expression defining the writer type. The expression must evaluate to one of the following values:\n\n- csv: CSV output with header\n- csv-plain: CSV output without header\n- json: For now, only supported in combination with 'to: var.array:varName'\n"
         }
       },
       "required" : [ "to", "type" ],
