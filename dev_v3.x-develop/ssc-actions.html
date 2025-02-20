@@ -1,6 +1,6 @@
 ---
 title: Fcli SSC Actions
-fcli_version: 0.20250219.144241-dev_v3.x-develop
+fcli_version: 0.20250220.122346-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250219.144241-dev_v3.x-develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250219.144241-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250220.122346-dev_v3.x-develop" %}
 
 
 <div id="header">
 <h1>Fcli SSC Actions</h1>
 <div class="details">
-<span id="revnumber">version 0.20250219.144241-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250220.122346-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -125,32 +125,39 @@ fcli_version: 0.20250219.144241-dev_v3.x-develop
 <li><a href="#_options_14">Options</a></li>
 </ul>
 </li>
-<li><a href="#_setup_appversion">setup-appversion</a>
+<li><a href="#_servicenow_csv_report">servicenow-csv-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_15">Synopsis</a></li>
 <li><a href="#_description_15">Description</a></li>
 <li><a href="#_options_15">Options</a></li>
 </ul>
 </li>
-<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
+<li><a href="#_setup_appversion">setup-appversion</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_16">Synopsis</a></li>
 <li><a href="#_description_16">Description</a></li>
 <li><a href="#_options_16">Options</a></li>
 </ul>
 </li>
-<li><a href="#_test_csv">test-csv</a>
+<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_17">Synopsis</a></li>
 <li><a href="#_description_17">Description</a></li>
 <li><a href="#_options_17">Options</a></li>
 </ul>
 </li>
-<li><a href="#_test_sessions">test-sessions</a>
+<li><a href="#_test_csv">test-csv</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_18">Synopsis</a></li>
 <li><a href="#_description_18">Description</a></li>
 <li><a href="#_options_18">Options</a></li>
+</ul>
+</li>
+<li><a href="#_test_sessions">test-sessions</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_19">Synopsis</a></li>
+<li><a href="#_description_19">Description</a></li>
+<li><a href="#_options_19">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -335,6 +342,10 @@ fcli actions, returning a non-zero exit code if any of the checks fail.</p>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
 <p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
 </dd>
 </dl>
 </div>
@@ -821,19 +832,62 @@ reports. For more information about SARIF, please see
 </div>
 </div>
 <div class="sect1">
+<h2 id="_servicenow_csv_report"><a class="anchor" href="#_servicenow_csv_report"></a>servicenow-csv-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(PREVIEW) Generate ServiceNow CSV report</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> servicenow-csv-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
+<div class="paragraph">
+<p>This action generates a CSV report that can be imported into the ServiceNow
+Vulnerability Response module; please see the following link for details:
+<a href="https://www.servicenow.com/docs/bundle/xanadu-security-management/page/product/vulnerability-response/reference/manual-ingestion-template.html" class="bare">https://www.servicenow.com/docs/bundle/xanadu-security-management/page/product/vulnerability-response/reference/manual-ingestion-template.html</a>
+The CSV report includes all SAST, DAST, and 3rd-party issues available in
+the given SSC application version and filter set.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_15"><a class="anchor" href="#_options_15"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: servicenow-fortify.csv</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>Required application version id or &lt;appName&gt;:&lt;versionName&gt;</p>
+</dd>
+<dt class="hdlist1">--filterset, --fs</dt>
+<dd>
+<p>Filter set name or guid from which to load issue data. Default value: Default filter set for given application version</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_setup_appversion"><a class="anchor" href="#_setup_appversion"></a>setup-appversion</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Set up application version.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
+<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> setup-appversion [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
+<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
 <div class="paragraph">
 <p>This action allows for preparing an application version for running an application
 security scan, creating the application and/or release if they do not exist yet.</p>
@@ -857,7 +911,7 @@ appropriate option values and setup commands to run.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_15"><a class="anchor" href="#_options_15"></a>Options</h3>
+<h3 id="_options_16"><a class="anchor" href="#_options_16"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--appversion, --av</dt>
@@ -904,20 +958,20 @@ appropriate option values and setup commands to run.</p>
 <p>Generate a SonarQube External Issues report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
+<h3 id="_synopsis_17"><a class="anchor" href="#_synopsis_17"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sonarqube-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
+<h3 id="_description_17"><a class="anchor" href="#_description_17"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into SonarQube, see
 <a href="https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/" class="bare">https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/</a></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_16"><a class="anchor" href="#_options_16"></a>Options</h3>
+<h3 id="_options_17"><a class="anchor" href="#_options_17"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -952,19 +1006,19 @@ appropriate option values and setup commands to run.</p>
 <p>Test CSV</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_17"><a class="anchor" href="#_synopsis_17"></a>Synopsis</h3>
+<h3 id="_synopsis_18"><a class="anchor" href="#_synopsis_18"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> test-csv [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_17"><a class="anchor" href="#_description_17"></a>Description</h3>
+<h3 id="_description_18"><a class="anchor" href="#_description_18"></a>Description</h3>
 <div class="paragraph">
 <p>Test CSV output</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_17"><a class="anchor" href="#_options_17"></a>Options</h3>
+<h3 id="_options_18"><a class="anchor" href="#_options_18"></a>Options</h3>
 
 </div>
 </div>
@@ -976,19 +1030,19 @@ appropriate option values and setup commands to run.</p>
 <p>Test shared sessions</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_18"><a class="anchor" href="#_synopsis_18"></a>Synopsis</h3>
+<h3 id="_synopsis_19"><a class="anchor" href="#_synopsis_19"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> test-sessions [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_18"><a class="anchor" href="#_description_18"></a>Description</h3>
+<h3 id="_description_19"><a class="anchor" href="#_description_19"></a>Description</h3>
 <div class="paragraph">
 <p>TODO</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_18"><a class="anchor" href="#_options_18"></a>Options</h3>
+<h3 id="_options_19"><a class="anchor" href="#_options_19"></a>Options</h3>
 
 </div>
 </div>
@@ -996,8 +1050,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250219.144241-dev_v3.x-develop<br>
-Last updated 2025-02-19 14:44:28 UTC
+Version 0.20250220.122346-dev_v3.x-develop<br>
+Last updated 2025-02-20 12:25:34 UTC
 </div>
 </div>
 </body>
