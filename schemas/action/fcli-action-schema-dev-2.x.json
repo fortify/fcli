@@ -200,7 +200,7 @@
               "additionalProperties" : {
                 "$ref" : "#/$defs/ActionStepWithWriter"
               },
-              "description" : "This instruction allows for setting up one or more record writers that can referenced by writer.append steps in the associated do-block. After all steps in the do-block have been executed, the writer will be closed. This instruction takes a map, with map keys defining writer identifiers, and map values defining the writer configurations.\n"
+              "description" : "This instruction allows for setting up one or more record writers that can referenced by writer.append steps in the associated do-block. After all steps in the do-block have been executed, the writer will be closed. This instruction takes a map, with map keys defining writer identifiers, and map values defining the writer configurations. The number of records that have been appended to the current writer can be accessed through the 'writerId.count' variable.\n"
             }
           },
           "required" : [ "do" ],
@@ -461,7 +461,7 @@
         "type" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression defining the writer type. The expression must evaluate to one of the following values:\n\n- csv: CSV output with header\n- csv-plain: CSV output without header\n- json: For now, only supported in combination with 'to: var.array:varName'\n"
+          "description" : "Required SpEL template expression defining the writer type. The expression must evaluate to one of the following values:\n\n- csv: CSV output with header\n- csv-plain: CSV output without header\n- json: JSON output\n"
         }
       },
       "required" : [ "to", "type" ],
