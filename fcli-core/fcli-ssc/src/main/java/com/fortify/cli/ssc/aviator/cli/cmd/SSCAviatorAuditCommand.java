@@ -3,6 +3,7 @@ package com.fortify.cli.ssc.aviator.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.core.AuditFPR;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
@@ -10,7 +11,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
-import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
@@ -34,8 +35,8 @@ import java.io.IOException;
 @DefaultVariablePropertyName("artifactId")
 public class SSCAviatorAuditCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Option(names = {"-t", "--token"}, required = true) private String token;
     @Option(names = {"-u", "--url"}, required = true) private String url;
     private static final Logger LOG = LoggerFactory.getLogger(SSCAviatorAuditCommand.class);
@@ -43,11 +44,12 @@ public class SSCAviatorAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Override
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try (var progressWriter = progressWriterFactory.create()) {
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
+            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
+
             SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
             File fprFile = File.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
             fprFile.deleteOnExit();
-
             progressWriter.writeProgress("Status: Downloading FPR from SSC");
             SSCFileTransferHelper.download(
                     unirest,
@@ -56,7 +58,7 @@ public class SSCAviatorAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
             progressWriter.writeProgress("Status: Processing FPR with Aviator");
-            File processedFile = AuditFPR.auditFPR(fprFile, token, url);
+            File processedFile = AuditFPR.auditFPR(fprFile, token, url, logger);
             processedFile.deleteOnExit();
 
             progressWriter.writeProgress("Status: Uploading FPR to SSC");

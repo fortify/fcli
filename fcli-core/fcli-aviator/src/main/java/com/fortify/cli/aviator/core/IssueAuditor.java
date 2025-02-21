@@ -1,5 +1,6 @@
 package com.fortify.cli.aviator.core;
 
+import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.UserPrompt;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
@@ -41,8 +42,7 @@ import java.util.stream.Collectors;
 
 public class IssueAuditor {
 
-    static Logger logger = LoggerFactory.getLogger(IssueAuditor.class);
-
+    private static final Logger LOG = LoggerFactory.getLogger(IssueAuditor.class);
 
     public final int MAX_PER_CATEGORY;
     public final int MAX_TOTAL;
@@ -64,8 +64,10 @@ public class IssueAuditor {
 
     private final boolean isTestMode;
     private final AtomicInteger issuesSentToLLM;
+    private final IAviatorLogger logger;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, boolean isTestMode) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, boolean isTestMode, IAviatorLogger logger) {
+        this.logger = logger;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
         this.MAX_PER_CATEGORY_EXCEEDED = Constants.MAX_PER_CATEGORY_EXCEEDED;
@@ -128,21 +130,21 @@ public class IssueAuditor {
     }
 
     public void performAudit(Map<String, AuditResponse> auditResponses, String tenantId, String tenantName, String projectId, String url) {
-        logger.info("Starting audit performance for tenant: {}, project: {}", tenantId, projectId);
+        logger.progress("Starting audit performance for tenant: %s, project: %s", tenantId, projectId);
 
         aviatorPredictionTag = resolveAviatorPredictionTag();
         aviatorStatusTag = resolveAviatorStatusTag();
         humanAuditTag = resolveHumanAuditStatus();
-        logger.debug("Initialized tags - prediction: {}, status: {}, human: {}", aviatorPredictionTag, aviatorStatusTag, humanAuditTag);
+        LOG.debug("Initialized tags - prediction: {}, status: {}, human: {}", aviatorPredictionTag, aviatorStatusTag, humanAuditTag);
 
         if (fprInfo.getDefaultEnabledFilterSet() != null) {
             vulnerabilities = filterVulnerabilities(vulnerabilities, fprInfo.getDefaultEnabledFilterSet());
         }
 
         vulnerabilities.stream().map(IssueObjBuilder::buildIssueObj).forEach(userPrompts::add);
-        logger.info("Built {} user prompts from vulnerabilities", userPrompts.size());
+        LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
-        logger.info("Filtered issues count: {}", filteredUserPrompts.size());
+        logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
         try (AviatorGrpcClient client = createClientFromUrl(url)) {
             CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, tenantId, tenantName, projectId,"");
             try {
@@ -151,19 +153,19 @@ public class IssueAuditor {
                     auditResponses.put(response.getIssueId(), response);
                 });
             } catch (ExecutionException e) {
-                logger.error("Error executing requests: {} ", e.getCause());
+                LOG.error("Error executing requests: {} ", e.getCause());
             } catch (TimeoutException e) {
-                logger.error("Error executing requests:timeout {}", String.valueOf(e.getCause()));
+                LOG.error("Error executing requests:timeout {}", String.valueOf(e.getCause()));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.error("Error executing requests:interrupted {}", e.getCause());
+                LOG.error("Error executing requests:interrupted {}", e.getCause());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         fprInfo.setResultsTag(resultsTag.getId());
-        logger.info("Audit completed");
+        logger.progress("Audit completed");
     }
 
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
@@ -261,7 +263,7 @@ public class IssueAuditor {
     private boolean shouldInclude(UserPrompt userPrompt) {
 
         if (isAudited(userPrompt)) {
-            logger.debug("Skipping already audited issue ID: {}", userPrompt.getIssueData().getInstanceID());
+            LOG.debug("Skipping already audited issue ID: {}", userPrompt.getIssueData().getInstanceID());
             return false;
         }
 
@@ -269,7 +271,7 @@ public class IssueAuditor {
             String issueId = userPrompt.getIssueData().getInstanceID();
             String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a")).orElse(null);
             if (!StringUtil.isEmpty(status) && !Constants.PENDING_REVIEW.equalsIgnoreCase(status)) {
-                logger.debug("Skipping because already manually audited: {}", issueId);
+                LOG.debug("Skipping because already manually audited: {}", issueId);
                 return false;
             }
         }
@@ -278,7 +280,7 @@ public class IssueAuditor {
             String issueId = userPrompt.getIssueData().getInstanceID();
             String status = Optional.ofNullable(auditIssueMap.get(issueId)).map(AuditIssue::getTags).map(tags -> tags.get("FB7B0462-2C2E-46D9-811A-DCC1F3C83051")).orElse(null);
             if (!StringUtil.isEmpty(status) && Constants.PROCESSED_BY_AVIATOR.equalsIgnoreCase(status)) {
-                logger.debug("Skipping already PROCESSED_BY_AVIATOR: {}", issueId);
+                LOG.debug("Skipping already PROCESSED_BY_AVIATOR: {}", issueId);
                 return false;
             }
         }
@@ -568,7 +570,7 @@ public class IssueAuditor {
 
     private void writeLLMResponseToFile(AuditResponse response, String outputPath) {
         if (response == null || response.getIssueId() == null || response.getAuditResult() == null) {
-            logger.warn("Skipping LLM output write, no issue id or response");
+            LOG.warn("Skipping LLM output write, no issue id or response");
             return;
         }
 
@@ -597,9 +599,9 @@ public class IssueAuditor {
             StreamResult result = new StreamResult(outputFile.toFile());
             transformer.transform(source, result);
 
-            logger.info("LLM output written to: {}", outputFile);
+            LOG.info("LLM output written to: {}", outputFile);
         } catch (Exception e) {
-            logger.error("Error writing LLM output to file for issue: {}", response.getIssueId(), e);
+            LOG.error("Error writing LLM output to file for issue: {}", response.getIssueId(), e);
         }
     }
 
@@ -622,7 +624,7 @@ public class IssueAuditor {
         }
     }
 
-    public static AviatorGrpcClient createClientFromUrl(String url) {
+    public AviatorGrpcClient createClientFromUrl(String url) {
         try {
             String host;
             int port;
@@ -644,7 +646,7 @@ public class IssueAuditor {
                 throw new IllegalArgumentException("Invalid host in URL: " + url);
             }
 
-            return new AviatorGrpcClient(host, port, 10);
+            return new AviatorGrpcClient(host, port, 10, logger);
         } catch (URISyntaxException | NumberFormatException e) {
             throw new IllegalArgumentException("Invalid URL format: " + url, e);
         }
