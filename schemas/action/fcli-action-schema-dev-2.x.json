@@ -61,10 +61,15 @@
           "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Write a debug message to log file (if enabled)."
         },
+        "log.info" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
+        },
         "log.progress" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Write a progress message."
+          "description" : "Write a progress message. Progress messages are usually written to console and log file directly. Depending on progress writer configuration, progress messages may disappear when the next progress message is written, or after all action steps have been executed. If you need to write an information message that is always displayed to the end user, without the possibility of the message being removed, please use log.info instead.\n"
         },
         "log.warn" : {
           "format" : "spelTemplateExpression",
