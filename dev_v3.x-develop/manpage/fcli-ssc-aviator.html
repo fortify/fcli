@@ -1,5 +1,5 @@
 ---
-title: fcli-sc-sast-rest(1)
+title: fcli-ssc-aviator(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-sc-sast-rest(1)</title>
+<title>fcli-ssc-aviator(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-sc-sast-rest(1) Manual Page</h1>
+<h1>fcli-ssc-aviator(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-rest - Interact with ScanCentral SAST Controller REST API endpoints.</p>
+<p>fcli-ssc-aviator - Audit SSC artifacts using Fortify Aviator(LLM).</p>
 </div>
 </div>
 <div id="content">
@@ -40,16 +40,14 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast rest</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli ssc aviator</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>These commands allow for direct interaction with ScanCentral SAST Controller REST API endpoints, somewhat similar to using 'curl' but benefiting from standard fcli functionality like session management (no need to manually specify Authorization header), rich output formatting options, and query functionality.</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -70,9 +68,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-sc-sast-rest-call.html"><strong>call</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-aviator-audit.html"><strong>audit</strong></a></dt>
 <dd>
-<p>Call an individual ScanCentral SAST Controller REST API endpoint.</p>
+<p>(PREVIEW) Audit an application version using Fortify Aviator.</p>
 </dd>
 </dl>
 </div>
