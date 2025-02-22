@@ -456,7 +456,7 @@
         "to" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified as one of the following:\n\n- A file name to write the output to\n- 'stdout' to write the output to stdout\n- 'stderr' to write the output to stderr\n- 'var.text:varName' to write the output as text into the given 'varName' action variable\n- 'var.array:varName' to write the output as an array into the given 'varName' action variable\n\nWith 'var.text' and 'var.array', the output is available to steps after the current 'with' block has completed through ${varName}. Note that 'var.array' is only support for 'type: json'.\n"
+          "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified as one of the following:\n\n- A file name to write the output to\n- 'stdout' to write the output to stdout\n- 'stderr' to write the output to stderr\n- 'var:varName' to write the output as text into the given 'varName' action variable\n\nWith 'var:varName', the given variable name will be available to steps after the current 'with' block has completed.\n"
         },
         "type" : {
           "format" : "spelTemplateExpression",
