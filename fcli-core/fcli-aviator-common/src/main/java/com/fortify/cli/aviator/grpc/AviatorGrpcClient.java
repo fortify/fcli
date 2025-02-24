@@ -1,6 +1,14 @@
 package com.fortify.cli.aviator.grpc;
 
 import com.fortify.aviator.grpc.*;
+import com.fortify.aviator.project.CreateProjectRequest;
+import com.fortify.aviator.project.Project;
+import com.fortify.aviator.project.ProjectById;
+import com.fortify.aviator.project.ProjectByTenantName;
+import com.fortify.aviator.project.ProjectList;
+import com.fortify.aviator.project.ProjectResponseMessage;
+import com.fortify.aviator.project.ProjectServiceGrpc;
+import com.fortify.aviator.project.UpdateProjectRequest;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
@@ -9,6 +17,7 @@ import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +40,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final IAviatorLogger logger;
     private final ManagedChannel channel;
     private final AuditorServiceGrpc.AuditorServiceStub asyncStub;
+    private final ProjectServiceGrpc.ProjectServiceBlockingStub blockingStub;
     private final String streamId;
     private final long defaultTimeoutMinutes;
     private final ExecutorService processingExecutor;
@@ -47,6 +57,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().maxInboundMessageSize(MAX_MESSAGE_SIZE).keepAliveTime(30, TimeUnit.SECONDS).keepAliveTimeout(10, TimeUnit.SECONDS).keepAliveWithoutCalls(true).enableRetry().compressorRegistry(CompressorRegistry.getDefaultInstance()).decompressorRegistry(DecompressorRegistry.getDefaultInstance()).build();
 
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
+        this.blockingStub = ProjectServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
 
         this.defaultTimeoutMinutes = timeoutMinutes;
         this.processingExecutor = Executors.newFixedThreadPool(2);
@@ -364,5 +375,55 @@ public class AviatorGrpcClient implements AutoCloseable {
 //        auditResponse.setRequestId(response.getRequestId());
 //        auditResponse.setStreamId(response.getStreamId());
         return auditResponse;
+    }
+
+    public Project createProject(String name, String tenantName, String signature, String message) {
+        CreateProjectRequest request = CreateProjectRequest.newBuilder().setName(name).setTenantName(tenantName).setSignature(signature).setMessage(message).build();
+        try {
+            return blockingStub.createProject(request);
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error creating project: " + e.getStatus(), e);
+        }
+    }
+
+    public Project updateProject(String projectId, String newName, String signature, String message, String tenantName) {
+        UpdateProjectRequest request = UpdateProjectRequest.newBuilder()
+                .setId(Long.parseLong(projectId))
+                .setName(newName)
+                .setTenantName(tenantName)
+                .setSignature(signature)
+                .setMessage(message)
+                .build();
+        try {
+            return blockingStub.updateProject(request);
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error updating project: " + e.getStatus(), e);
+        }
+    }
+
+    public ProjectResponseMessage deleteProject(String projectId, String signature, String message, String tenantName) {
+        ProjectById request = ProjectById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
+        try {
+            return blockingStub.deleteProject(request);
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error deleting project: " + e.getStatus(), e);
+        }
+    }
+    public Project getProject(String projectId, String signature, String message, String tenantName) {
+        ProjectById request = ProjectById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build(); // Corrected to use ProjectById and parse the ID as a long
+        try {
+            return blockingStub.getProject(request);
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error getting project: " + e.getStatus(), e);
+        }
+    }
+    public List<Project> listProjects(String tenantName, String signature, String message) {
+        ProjectByTenantName request = ProjectByTenantName.newBuilder().setName(tenantName).setSignature(signature).setMessage(message).build();
+        try {
+            ProjectList projectList = blockingStub.listProjects(request);
+            return projectList.getProjectsList();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error listing projects: " + e.getStatus(), e);
+        }
     }
 }

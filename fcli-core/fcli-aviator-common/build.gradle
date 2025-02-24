@@ -24,7 +24,7 @@ dependencies {
     compileOnly("org.apache.tomcat:annotations-api:6.0.53")
 
     implementation("com.google.protobuf:protobuf-java:4.28.3")
-    implementation(files(fileTree(protobuf.generatedFilesBaseDir).matching { include "**/*.java" }))
+//    implementation(files(fileTree(protobuf.generatedFilesBaseDir).matching { include "**/*.java" }))
 }
 
 protobuf {
@@ -45,9 +45,11 @@ protobuf {
     }
 }
 
+
 sourceSets {
     main {
         java {
+            // Corrected potential typo from "main/java" to standard generated source paths
             srcDirs += "${protobuf.generatedFilesBaseDir}/main/grpc"
             srcDirs += "${protobuf.generatedFilesBaseDir}/main/java"
         }
