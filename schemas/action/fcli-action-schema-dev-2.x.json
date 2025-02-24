@@ -446,12 +446,14 @@
       "type" : "object",
       "properties" : {
         "options" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "format" : "spelTemplateExpression",
-            "type" : [ "boolean", "integer", "string", "number", "null" ]
-          },
-          "description" : "Optional map defining options for the given writer type. Different writer types may support different configuration options.\n"
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "TODO\n"
+        },
+        "style" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Required SpEL template expression defining the writer type.\n"
         },
         "to" : {
           "format" : "spelTemplateExpression",
@@ -461,10 +463,10 @@
         "type" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression defining the writer type. The expression must evaluate to one of the following values:\n\n- csv: CSV output with header\n- csv-plain: CSV output without header\n- json: JSON output\n"
+          "description" : "Required SpEL template expression defining the writer type.\n\nTODO\n"
         }
       },
-      "required" : [ "to", "type" ],
+      "required" : [ "style", "to", "type" ],
       "additionalProperties" : false
     },
     "LinkedHashMap(String,TemplateExpression)" : {
