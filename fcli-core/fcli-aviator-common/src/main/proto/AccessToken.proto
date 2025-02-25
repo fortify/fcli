@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.fortify.grpc.token";
+option java_outer_classname = "TokenServiceProto";
+
+package token;
+
+service TokenService {
+  rpc GenerateToken (TokenGenerationRequest) returns (TokenGenerationResponse) {}
+  rpc ValidateToken (TokenValidationRequest) returns (TokenValidationResponse) {}
+  rpc RevokeToken (RevokeTokenRequest) returns (RevokeTokenResponse) {}
+  rpc ListTokens (ListTokensRequest) returns (ListTokensResponse) {}
+  rpc DeleteToken (DeleteTokenRequest) returns (DeleteTokenResponse) {}
+}
+
+message TokenGenerationRequest {
+  string email = 1;
+  string custom_token_name = 2;
+  string request_signature = 3;
+  string message = 4;  // format: "email;tokenName;startDate;endDate;timestamp"
+  string tenant_name = 5;
+  string end_date = 6;  // Optional
+}
+
+message TokenGenerationResponse {
+  string token = 1;
+  string token_name = 2;
+  string start_date = 3;
+  string end_date = 4;
+  int64 expiry_date = 5;
+  bool success = 6;
+  string error_message = 7;
+}
+
+message TokenValidationRequest {
+  string token = 1;
+  string tenant_name = 2;
+  string request_signature = 3;
+  string message = 4;  // format: "token;tenantName;timestamp"
+}
+
+message TokenValidationResponse {
+  bool valid = 1;
+  string error_message = 2;
+}
+
+message RevokeTokenRequest {
+  string token = 1;
+  string email = 2;
+  string tenant_name = 3;
+  string request_signature = 4;
+  string message = 5;  // format: "token;email;tenantName;timestamp"
+}
+
+message RevokeTokenResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message ListTokensRequest {
+  string email = 1;
+  string tenant_name = 2;
+  string request_signature = 3;
+  string message = 4;  // format: "email;tenantName;timestamp"
+  int32 page_size = 5;
+  string page_token = 6;
+}
+
+message TokenInfo {
+  string token_name = 1;
+  string token = 2;
+  string start_date = 3;
+  string end_date = 4;
+  int64 expiry_date = 5;
+  bool revoked = 6;
+}
+
+message ListTokensResponse {
+  repeated TokenInfo tokens = 1;
+  string next_page_token = 2;
+  bool success = 3;
+  string error_message = 4;
+}
+
+message DeleteTokenRequest {
+  string token = 1;
+  string email = 2;
+  string tenant_name = 3;
+  string request_signature = 4;
+  string message = 5;  // format: "token;email;tenantName;timestamp"
+}
+
+message DeleteTokenResponse {
+  bool success = 1;
+  string error_message = 2;
+}

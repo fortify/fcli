@@ -13,6 +13,17 @@ import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
 import com.fortify.cli.aviator.core.model.UserPrompt;
+import com.fortify.grpc.token.DeleteTokenRequest;
+import com.fortify.grpc.token.DeleteTokenResponse;
+import com.fortify.grpc.token.ListTokensRequest;
+import com.fortify.grpc.token.ListTokensResponse;
+import com.fortify.grpc.token.RevokeTokenRequest;
+import com.fortify.grpc.token.RevokeTokenResponse;
+import com.fortify.grpc.token.TokenGenerationRequest;
+import com.fortify.grpc.token.TokenGenerationResponse;
+import com.fortify.grpc.token.TokenServiceGrpc;
+import com.fortify.grpc.token.TokenValidationRequest;
+import com.fortify.grpc.token.TokenValidationResponse;
 import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
@@ -41,6 +52,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final ManagedChannel channel;
     private final AuditorServiceGrpc.AuditorServiceStub asyncStub;
     private final ProjectServiceGrpc.ProjectServiceBlockingStub blockingStub;
+    private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
     private final String streamId;
     private final long defaultTimeoutMinutes;
     private final ExecutorService processingExecutor;
@@ -58,7 +70,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.blockingStub = ProjectServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
-
+        this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.defaultTimeoutMinutes = timeoutMinutes;
         this.processingExecutor = Executors.newFixedThreadPool(2);
         this.isShutdown = new AtomicBoolean(false);
@@ -424,6 +436,64 @@ public class AviatorGrpcClient implements AutoCloseable {
             return projectList.getProjectsList();
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("Error listing projects: " + e.getStatus(), e);
+        }
+    }
+    public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
+        TokenGenerationRequest.Builder requestBuilder = TokenGenerationRequest.newBuilder()
+                .setEmail(email != null ? email : "")
+                .setCustomTokenName(tokenName != null ? tokenName : "")
+                .setRequestSignature(signature)
+                .setMessage(message)
+                .setTenantName(tenantName);
+//        // Only set end date if it's not null
+//        if (endDate != null) {
+//            requestBuilder.setEndDate(endDate);
+//        }
+        try {
+            TokenGenerationResponse response = tokenServiceBlockingStub.generateToken(requestBuilder.build());
+            return response;
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error generating token " + e.getStatus(), e);
+        }
+    }
+
+    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int page_size, String pageToken) {
+        ListTokensRequest request = ListTokensRequest.newBuilder().setEmail(email).setRequestSignature(signature).setMessage(message).setTenantName(tenantName).setPageSize(page_size).setPageToken(pageToken).build();
+        try {
+            ListTokensResponse response = tokenServiceBlockingStub.listTokens(request);
+            return response;
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error listing tokens " + e.getStatus(), e);
+        }
+    }
+
+    public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
+        RevokeTokenRequest request = RevokeTokenRequest.newBuilder().setToken(token).setEmail(email).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
+        try {
+            RevokeTokenResponse response = tokenServiceBlockingStub.revokeToken(request);
+            return response;
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error revoking tokens " + e.getStatus(), e);
+        }
+    }
+
+    public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
+        DeleteTokenRequest request = DeleteTokenRequest.newBuilder().setToken(token).setEmail(email).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
+        try {
+            DeleteTokenResponse response = tokenServiceBlockingStub.deleteToken(request);
+            return response;
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error deleting tokens " + e.getStatus(), e);
+        }
+    }
+
+    public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {
+        TokenValidationRequest request = TokenValidationRequest.newBuilder().setToken(token).setTenantName(tenantName).setRequestSignature(signature).setMessage(message).build();
+        try {
+            TokenValidationResponse response = tokenServiceBlockingStub.validateToken(request);
+            return response;
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error validating token " + e.getStatus(), e);
         }
     }
 }
