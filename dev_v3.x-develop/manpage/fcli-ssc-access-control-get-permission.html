@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250225.115820-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250225.170339-dev_v3.x-develop" %}
 
 
 <div id="header">
@@ -47,8 +47,10 @@ fcli_version:
                                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                                        [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
                                        <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                                       [<strong>--store</strong>=_variableName[:&lt;propertyNames&gt;]</em>]
-                                       [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]
+                                       [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
+                                       <em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                       <em class="<strong>--store</strong>=_variableName[:&lt;propertyNames&gt;">]
+                                       [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
                                        <em>&lt;permissionNameOrId&gt;</em></p>
 </div>
 </div>
@@ -79,11 +81,15 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+<p>Specify output format and options. Available output formats: csv, table, expr, json, xml, yaml. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output.</p>
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
 <dd>
 <p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--style</strong>=<em>&lt;outputStyleElements&gt;</em>[,<em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of styles elements to apply to the selected output format. Allowed values: header, no-header, pretty, no-pretty, flat, no-flat, array, single.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -135,7 +141,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-02-25 12:00:17 UTC
+Last updated 2025-02-25 17:05:37 UTC
 </div>
 </div>
 </body>

@@ -453,7 +453,7 @@
         "style" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Optional SpEL template expression defining the writer style. If specified, the expression should evaluate to a comma-separated list of styles to be applied to the output. Supported styles:\nheader, no-header, pretty, no-pretty, flat, no-flat, array, single"
+          "description" : "Optional SpEL template expression defining the writer style. If specified, the expression should evaluate to a comma-separated list of style elements to be applied to the output. Supported style elements:\nheader, no-header, pretty, no-pretty, flat, no-flat, array, single"
         },
         "to" : {
           "format" : "spelTemplateExpression",
