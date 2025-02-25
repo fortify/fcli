@@ -27,6 +27,7 @@ fcli_version: none
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
+<li><a href="#_output_option"><code>--output</code> option</a></li>
 <li><a href="#_fcli_fod"><code>fcli fod</code></a></li>
 <li><a href="#_fcli_sc_sast"><code>fcli sc-sast</code></a></li>
 <li><a href="#_fcli_sc_dast"><code>fcli sc-dast</code></a></li>
@@ -48,6 +49,53 @@ fcli_version: none
 <div class="sectionbody">
 <div class="paragraph">
 <p>Upgrading from fcli v2.x to v3.x may require some changes to existing fcli command invocations, as some commands, options, or accepted option values have changed. This document describes those changes for each of the affected fcli modules. Note that this document only describes breaking changes, it doesn&#8217;t describe any new functionality. Please see the fcli change log for an overview of new features.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_option"><a class="anchor" href="#_output_option"></a><code>--output</code> option</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Breaking changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The following formats are no longer accepted by the <code>-o</code> / <code>--output</code> option:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>json-properties</code>; to view available properties, please use <code>json</code> format instead.</p>
+</li>
+<li>
+<p><code>tree</code> &amp; <code>tree-flat</code>; to get tree-like output, please use <code>yaml</code> format instead.</p>
+</li>
+<li>
+<p><code>csv-plain</code> &amp; <code>table-plain</code>; please use the new <code>--style=no-headers</code> option instead.</p>
+</li>
+<li>
+<p><code>json-flat</code>, <code>xml-flat</code> &amp; <code>yaml-flat</code>; please use the new <code>--style=flat</code> option instead.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>There may be subtle differences in the output produced by the various output formats. For example:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>csv</code> output will now by default use the original JSON property names as headers, instead of attempting to format these as human-readable text.</p>
+</li>
+<li>
+<p>Similarly, when specifying what properties to include in the <code>table</code> output, for example with <code>-o table=p1,p2</code>, the original property names will be used as table headers.</p>
+</li>
+<li>
+<p>Optionally, you can specify alternative header names, for example with <code>-o table=p1=First Property,p2=Second Property</code> or <code>-o csv=p3=Property 3,p4=Property 4</code></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -238,7 +286,7 @@ fcli_version: none
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2025-02-25 17:03:38 UTC
+Last updated 2025-02-25 17:22:41 UTC
 </div>
 </div>
 </body>
