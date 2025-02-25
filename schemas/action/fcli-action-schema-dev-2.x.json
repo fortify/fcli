@@ -448,12 +448,12 @@
         "options" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "TODO\n"
+          "description" : "Optional SpEL template expression defining options for the given writer type. In most cases, it's much easier to just pass an already formatted object to the 'writer.append' step; this 'options' instruction is just meant to provide feature parity with the fcli '--output type=options' command line option. See fcli documentation for details on supported options for the various writer types.\n"
         },
         "style" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression defining the writer type.\n"
+          "description" : "Optional SpEL template expression defining the writer style. If specified, the expression should evaluate to a comma-separated list of styles to be applied to the output. Supported styles:\nheader, no-header, pretty, no-pretty, flat, no-flat, array, single"
         },
         "to" : {
           "format" : "spelTemplateExpression",
@@ -463,10 +463,10 @@
         "type" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression defining the writer type.\n\nTODO\n"
+          "description" : "Required SpEL template expression defining the writer type. The evaluated expression must evaluate to one of the following types:\ncsv, table, expr, json, xml, yaml"
         }
       },
-      "required" : [ "style", "to", "type" ],
+      "required" : [ "to", "type" ],
       "additionalProperties" : false
     },
     "LinkedHashMap(String,TemplateExpression)" : {
