@@ -148,7 +148,7 @@ public class IssueAuditor {
         try (AviatorGrpcClient client = createClientFromUrl(url)) {
             CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, tenantId, tenantName, projectId,"");
             try {
-                Map<String, AuditResponse> responses = future.get(5, TimeUnit.MINUTES);
+                Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> {
                     auditResponses.put(response.getIssueId(), response);
                 });

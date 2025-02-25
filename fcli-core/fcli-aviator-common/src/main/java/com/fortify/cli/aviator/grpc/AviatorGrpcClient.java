@@ -46,13 +46,15 @@ import java.util.stream.Collectors;
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
 
-    private static final int MAX_MESSAGE_SIZE = 16 * 1024 * 1024; // 16MB
-    private static final int BATCH_SIZE = 3;
+    private final IAviatorLogger logger;
+    // Configuration constants
+    private static final int MAX_MESSAGE_SIZE = 16 * 1024 * 1024;
+    private static final int INITIAL_REQUEST_WINDOW = 20;
+    private static final int SUBSEQUENT_REQUEST_WINDOW = 200;
     private static final int MAX_RETRIES = 3;
     private static final long BASE_DELAY_MS = 500;
     private static final long MAX_DELAY_MS = 2000;
-
-    private final IAviatorLogger logger;
+    private final CountDownLatch latch = new CountDownLatch(1);
     private final ManagedChannel channel;
     private final AuditorServiceGrpc.AuditorServiceStub asyncStub;
     private final ProjectServiceGrpc.ProjectServiceBlockingStub blockingStub;
@@ -63,17 +65,34 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final ExecutorService processingExecutor;
     private final AtomicBoolean isShutdown;
     private final CountDownLatch initLatch = new CountDownLatch(1);
-    private final Semaphore requestSemaphore = new Semaphore(1);
+    private final Semaphore requestSemaphore = new Semaphore(INITIAL_REQUEST_WINDOW);
+    private final AtomicInteger outstandingRequests = new AtomicInteger(0);
     private volatile StreamObserver<UserPromptRequest> requestObserver;
+    private final AtomicBoolean streamCompleted = new AtomicBoolean(false);
+
 
     public AviatorGrpcClient(String host, int port, long timeoutMinutes, IAviatorLogger logger) {
-        LOG.info("Initializing ImprovedGrpcClient - Host: {}, Port: {}", host, port);
+        logger.info("Initializing ImprovedGrpcClient - Host: " + host + ", Port: " + port);
         this.logger = logger;
         this.streamId = UUID.randomUUID().toString();
 
-        this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().maxInboundMessageSize(MAX_MESSAGE_SIZE).keepAliveTime(30, TimeUnit.SECONDS).keepAliveTimeout(10, TimeUnit.SECONDS).keepAliveWithoutCalls(true).enableRetry().compressorRegistry(CompressorRegistry.getDefaultInstance()).decompressorRegistry(DecompressorRegistry.getDefaultInstance()).build();
+        this.channel = ManagedChannelBuilder.forAddress(host, port)
+                .usePlaintext()
+                .maxInboundMessageSize(MAX_MESSAGE_SIZE)
+                .keepAliveTime(30, TimeUnit.SECONDS)
+                .keepAliveTimeout(10, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true)
+                .enableRetry()
+                .compressorRegistry(CompressorRegistry.getDefaultInstance())
+                .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
+                .build();
 
-        this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
+        this.asyncStub = AuditorServiceGrpc.newStub(channel)
+                .withCompression("gzip")
+                .withMaxInboundMessageSize(MAX_MESSAGE_SIZE)
+                .withMaxOutboundMessageSize(MAX_MESSAGE_SIZE)
+                .withWaitForReady();
+
         this.blockingStub = ProjectServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
@@ -82,13 +101,13 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.isShutdown = new AtomicBoolean(false);
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String tenantId, String tokenName, String projectId, String entitlementId) {
-
+    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(
+            Queue<UserPrompt> requests, String tenantId, String tokenName, String projectId, String entitlementId) {
         if (requests == null || requests.isEmpty()) {
             return CompletableFuture.failedFuture(new IllegalArgumentException("Requests queue cannot be null or empty"));
         }
 
-        logger.info("Starting batch processing - Total requests: {}", requests.size());
+        logger.info("Starting processing - Total requests: " + requests.size());
         CompletableFuture<Map<String, AuditResponse>> resultFuture = new CompletableFuture<>();
         Map<String, AuditResponse> responses = new ConcurrentHashMap<>();
         AtomicInteger processedRequests = new AtomicInteger(0);
@@ -99,34 +118,39 @@ public class AviatorGrpcClient implements AutoCloseable {
 
             @Override
             public void onNext(AuditorResponse response) {
-                LOG.debug("Received response - Status: {}, RequestId: {}", response.getStatus(), response.getRequestId());
+                logger.progress("Received response - Status: " + response.getStatus() + ", RequestId: " + response.getRequestId());
 
                 if (!isInitialized.get()) {
                     if ("SUCCESS".equals(response.getStatus())) {
                         isInitialized.set(true);
                         initLatch.countDown();
-                        logger.progress("Stream initialized successfully");
+                        logger.info("Stream initialized successfully");
                     } else {
-                        logger.progress("Stream initialization failed: %s", response.getStatusMessage());
+                        logger.progress("Stream initialization failed: " + response.getStatusMessage());
                         resultFuture.completeExceptionally(new RuntimeException("Stream initialization failed: " + response.getStatusMessage()));
                     }
                 } else {
                     AuditResponse auditResponse = convertToAuditResponse(response);
                     responses.put(response.getRequestId(), auditResponse);
                     int completed = processedRequests.incrementAndGet();
-                    logger.progress("Processed %d out of %d requests", completed, totalRequests);
+                    outstandingRequests.decrementAndGet();
+                    requestSemaphore.release();
+
+                    logger.progress("Processed " + completed + " out of " + totalRequests + " requests");
 
                     if (completed >= totalRequests) {
-                        LOG.info("All requests processed, completing stream");
-                        requestObserver.onCompleted();
+                        logger.info("All requests processed, completing stream");
+                        if (streamCompleted.compareAndSet(false, true)) {
+                            requestObserver.onCompleted();
+                        }
                         if (!resultFuture.isDone()) {
                             resultFuture.complete(responses);
                         }
+                        latch.countDown();
                     }
                 }
             }
 
-            @Override
             public void onError(Throwable t) {
                 LOG.info("Stream error occurred: {}", t.getMessage());
                 t.printStackTrace();
@@ -135,7 +159,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
             @Override
             public void onCompleted() {
-                LOG.info("Stream completed");
+                logger.progress("Stream completed");
                 if (!resultFuture.isDone()) {
                     resultFuture.complete(responses);
                 }
@@ -147,7 +171,18 @@ public class AviatorGrpcClient implements AutoCloseable {
         try {
             LOG.info("Sending initialization request");
             String initRequestId = UUID.randomUUID().toString();
-            UserPromptRequest initRequest = UserPromptRequest.newBuilder().setInit(StreamInitRequest.newBuilder().setStreamId(streamId).setRequestId(initRequestId).setTenantId(tenantId).setTokenName(tokenName).setProjectId(projectId).setEntitlementId(entitlementId).build()).build();
+            UserPromptRequest initRequest = UserPromptRequest.newBuilder()
+                    .setInit(StreamInitRequest.newBuilder()
+                            .setStreamId(streamId)
+                            .setRequestId(initRequestId)
+                            .setTenantId(tenantId)
+                            .setTokenName(tokenName)
+                            .setProjectId(projectId)
+                            .setEntitlementId(entitlementId)
+                            .setTotalReportedIssues(totalRequests)
+                            .setTotalIssuesToPredict(totalRequests)
+                            .build())
+                    .build();
 
             requestObserver.onNext(initRequest);
 
@@ -156,10 +191,13 @@ public class AviatorGrpcClient implements AutoCloseable {
                     if (!initLatch.await(30, TimeUnit.SECONDS)) {
                         throw new TimeoutException("Stream initialization timed out");
                     }
-
                     processRequests(requests, requestObserver);
                 } catch (Exception e) {
-                    LOG.info("Error executing requests: {}", e.getMessage());
+                    logger.error("Error executing requests: " + e.getMessage());
+                    logger.error("error executing requests: " + e.getCause());
+                    logger.error("error executing requests: " + e.getStackTrace());
+                    logger.error("error executing requests: " + e);
+
                     e.printStackTrace();
                     resultFuture.completeExceptionally(e);
                     requestObserver.onCompleted();
@@ -167,76 +205,40 @@ public class AviatorGrpcClient implements AutoCloseable {
             });
 
         } catch (Exception e) {
-            LOG.info("Error during stream initialization: {}", e.getMessage());
+            logger.error("Error during stream initialization: " + e.getMessage());
             e.printStackTrace();
             resultFuture.completeExceptionally(e);
             requestObserver.onCompleted();
         }
 
-        scheduleTimeout(resultFuture);
         return resultFuture;
     }
 
-    private int calculateDynamicBatchSize(int messageSize) {
-        if (messageSize > 15000) {
-            return 3;  // For large messages
-        } else if (messageSize > 10000) {
-            return 4;  // For medium messages
-        } else {
-            return 5;  // For smaller messages
-        }
-    }
-
     private void processRequests(Queue<UserPrompt> requests, StreamObserver<UserPromptRequest> observer) {
-        LOG.info("Starting to process requests...");
+        logger.progress("Starting to process requests...");
         int totalProcessed = 0;
         AtomicInteger failedRequests = new AtomicInteger(0);
-        int currentBatchSize = BATCH_SIZE;
 
         while (!requests.isEmpty() && !isShutdown.get()) {
-            UserPrompt request = requests.peek();
-            if (request != null) {
-                AuditRequest testAuditRequest = convertToAuditRequest(request, streamId, UUID.randomUUID().toString());
-                UserPromptRequest testRequest = UserPromptRequest.newBuilder().setAudit(testAuditRequest).build();
-                int messageSize = testRequest.getSerializedSize();
-                currentBatchSize = calculateDynamicBatchSize(messageSize);
-            }
-
-            int batchSize = Math.min(currentBatchSize, requests.size());
-            LOG.debug("Processing batch with size {} (Remaining: {})", batchSize, requests.size());
-
-            processRequestBatch(requests, observer, batchSize, totalProcessed, failedRequests);
-
             try {
-                long delayMs = currentBatchSize < BATCH_SIZE ? MAX_DELAY_MS : BASE_DELAY_MS;
-                Thread.sleep(delayMs);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-    }
+                requestSemaphore.acquire(); // Acquire a permit for backpressure control
+                UserPrompt request = requests.poll();
+                if (request == null) break;
 
-    private void processRequestBatch(Queue<UserPrompt> requests, StreamObserver<UserPromptRequest> observer, int batchSize, int totalProcessed, AtomicInteger failedRequests) {
-        for (int i = 0; i < batchSize && !requests.isEmpty(); i++) {
-            UserPrompt request = requests.poll();
-            if (request == null) break;
-
-            try {
                 String requestId = UUID.randomUUID().toString();
                 AuditRequest auditRequest = convertToAuditRequest(request, streamId, requestId);
-                UserPromptRequest promptRequest = UserPromptRequest.newBuilder().setAudit(auditRequest).build();
+                UserPromptRequest promptRequest = UserPromptRequest.newBuilder()
+                        .setAudit(auditRequest)
+                        .build();
 
                 int messageSize = promptRequest.getSerializedSize();
                 LOG.debug("Request size: {} bytes", messageSize);
 
                 if (messageSize > MAX_MESSAGE_SIZE) {
-                    LOG.info("Request too large, skipping");
+                    logger.warn("Request too large, skipping");
+                    requestSemaphore.release();
                     continue;
                 }
-
-                long delayMs = messageSize > 10000 ? 750 : 500;
-                Thread.sleep(delayMs);
 
                 boolean sent = sendRequestWithRetry(promptRequest, MAX_RETRIES);
                 if (!sent) {
@@ -244,10 +246,12 @@ public class AviatorGrpcClient implements AutoCloseable {
                     if (failedRequests.get() > 10) {
                         throw new RuntimeException("Too many failed requests");
                     }
+                } else {
+                    outstandingRequests.incrementAndGet();
                 }
 
             } catch (Exception e) {
-                LOG.error("Error processing request: {}", e.getMessage());
+                LOG.error("Error processing request: " + e.getMessage());
                 failedRequests.incrementAndGet();
             }
         }
@@ -256,27 +260,21 @@ public class AviatorGrpcClient implements AutoCloseable {
     private boolean sendRequestWithRetry(UserPromptRequest request, int maxRetries) {
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                requestSemaphore.acquire();
-                try {
-                    if (requestObserver == null) {
-                        LOG.debug("Request observer is null, aborting send");
-                        return false;
-                    }
-
-                    int messageSize = request.getSerializedSize();
-                    if (messageSize > MAX_MESSAGE_SIZE) {
-                        LOG.debug("Message size too large: {} bytes", messageSize);
-                        return false;
-                    }
-
-
-                    requestObserver.onNext(request);
-                    return true;
-                } finally {
-                    requestSemaphore.release();
+                if (requestObserver == null) {
+                    LOG.error("Request observer is null, aborting send");
+                    return false;
                 }
+
+                int messageSize = request.getSerializedSize();
+                if (messageSize > MAX_MESSAGE_SIZE) {
+                    LOG.error("Message size too large: {} bytes", messageSize);
+                    return false;
+                }
+
+                requestObserver.onNext(request);
+                return true;
             } catch (Exception e) {
-                LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
+                logger.error("Error sending request (attempt " + (attempt + 1) + "): " + e.getMessage());
                 if (attempt == maxRetries - 1) {
                     return false;
                 }
@@ -293,42 +291,24 @@ public class AviatorGrpcClient implements AutoCloseable {
         return false;
     }
 
-    private void scheduleTimeout(CompletableFuture<Map<String, AuditResponse>> future) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                if (!future.isDone() && !future.get(defaultTimeoutMinutes, TimeUnit.MINUTES).isEmpty()) {
-                    String timeoutMsg = "Request processing timed out after " + defaultTimeoutMinutes + " minutes";
-                    LOG.info(timeoutMsg);
-                    future.completeExceptionally(new TimeoutException(timeoutMsg));
-                    if (requestObserver != null) {
-                        requestObserver.onCompleted();
-                    }
-                }
-            } catch (Exception e) {
-                LOG.error("Timeout or error occurred: {}", e.getMessage());
-                future.completeExceptionally(e);
-                if (requestObserver != null) {
-                    requestObserver.onCompleted();
-                }
-            }
-        }, processingExecutor);
-    }
-
     @Override
     public void close() {
-        LOG.info("Closing client...");
+        LOG.debug("Closing client...");
         isShutdown.set(true);
-
-        if (requestObserver != null) {
+        try {
+            if (!latch.await(10, TimeUnit.SECONDS)) {
+                logger.error("Timed out waiting for stream completion");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted while waiting for stream completion");
+        }
+        if (requestObserver != null && !streamCompleted.get()) {
             try {
-                requestSemaphore.acquire();
-                try {
-                    requestObserver.onCompleted();
-                } finally {
-                    requestSemaphore.release();
-                }
+                streamCompleted.set(true);
+                requestObserver.onCompleted();
             } catch (Exception e) {
-                LOG.error("Error closing request observer: {}", e.getMessage());
+                logger.error("Error closing request observer: " + e.getMessage());
             }
         }
 
@@ -338,7 +318,6 @@ public class AviatorGrpcClient implements AutoCloseable {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } finally {
-                channel.shutdownNow();
                 processingExecutor.shutdown();
                 try {
                     if (!processingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
@@ -350,7 +329,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 }
             }
         }
-        LOG.info("Client closed");
+        logger.progress("Client closed");
     }
 
     private AuditRequest convertToAuditRequest(UserPrompt userPrompt, String streamId, String requestId) {
@@ -360,7 +339,24 @@ public class AviatorGrpcClient implements AutoCloseable {
             StackTraceElementList stackTraceElementList = StackTraceElementList.newBuilder().addAllElements(innerList.stream().map(this::convertToStackTraceElement).collect(Collectors.toList())).build();
             stackTraceElementLists.add(stackTraceElementList);
         }
-        return AuditRequest.newBuilder().setIssueData(IssueData.newBuilder().setAccuracy(userPrompt.getIssueData().getAccuracy()).setAnalyzerName(userPrompt.getIssueData().getAnalyzerName()).setClassId(userPrompt.getIssueData().getClassID()).setConfidence(userPrompt.getIssueData().getConfidence()).setDefaultSeverity(userPrompt.getIssueData().getDefaultSeverity()).setImpact(userPrompt.getIssueData().getImpact()).setInstanceId(userPrompt.getIssueData().getInstanceID()).setInstanceSeverity(userPrompt.getIssueData().getInstanceSeverity()).setFiletype(userPrompt.getIssueData().getFiletype()).setKingdom(userPrompt.getIssueData().getKingdom()).setLikelihood(userPrompt.getIssueData().getLikelihood()).setPriority(userPrompt.getIssueData().getPriority()).setProbability(userPrompt.getIssueData().getProbability()).setSubType(userPrompt.getIssueData().getSubType()).setType(userPrompt.getIssueData().getType()).build()).setAnalysisInfo(AnalysisInfo.newBuilder().setShortDescription(userPrompt.getAnalysisInfo().getShortDescription()).setExplanation(userPrompt.getAnalysisInfo().getExplanation()).build()).addAllStackTrace(stackTraceElementLists).addAllFirstStackTrace(userPrompt.getFirstStackTrace().stream().map(this::convertToStackTraceElement).collect(Collectors.toList())).addAllLongestStackTrace(userPrompt.getLongestStackTrace().stream().map(this::convertToStackTraceElement).collect(Collectors.toList())).addAllFiles(userPrompt.getFiles().stream().map(file -> File.newBuilder().setName(file.getName()).setContent(file.getContent()).setSegment(file.isSegment()).setStartLine(file.getStartLine()).setEndLine(file.getEndLine()).build()).collect(Collectors.toList())).setLastStackTraceElement(convertToStackTraceElement(userPrompt.getLastStackTraceElement())).addAllProgrammingLanguages(userPrompt.getProgrammingLanguages()).setFileExtension(userPrompt.getFileExtension()).setLanguage(userPrompt.getLanguage()).setCategory(userPrompt.getCategory() == null ? "" : userPrompt.getCategory()).setSource(convertToStackTraceElement(userPrompt.getSource())).setSink(convertToStackTraceElement(userPrompt.getSink())).setCategoryLevel(userPrompt.getCategoryLevel() == null ? "" : userPrompt.getCategoryLevel()).setRequestId(requestId).setStreamId(streamId).build();
+        AuditRequest.Builder builder = AuditRequest.newBuilder();
+        builder.setIssueData(IssueData.newBuilder().setAccuracy(userPrompt.getIssueData().getAccuracy()).setAnalyzerName(userPrompt.getIssueData().getAnalyzerName()).setClassId(userPrompt.getIssueData().getClassID()).setConfidence(userPrompt.getIssueData().getConfidence()).setDefaultSeverity(userPrompt.getIssueData().getDefaultSeverity()).setImpact(userPrompt.getIssueData().getImpact()).setInstanceId(userPrompt.getIssueData().getInstanceID()).setInstanceSeverity(userPrompt.getIssueData().getInstanceSeverity()).setFiletype(userPrompt.getIssueData().getFiletype()).setKingdom(userPrompt.getIssueData().getKingdom()).setLikelihood(userPrompt.getIssueData().getLikelihood()).setPriority(userPrompt.getIssueData().getPriority()).setProbability(userPrompt.getIssueData().getProbability()).setSubType(userPrompt.getIssueData().getSubType()).setType(userPrompt.getIssueData().getType()).build());
+        builder.setAnalysisInfo(AnalysisInfo.newBuilder().setShortDescription(userPrompt.getAnalysisInfo().getShortDescription()).setExplanation(userPrompt.getAnalysisInfo().getExplanation()).build());
+        builder.addAllStackTrace(stackTraceElementLists);
+        builder.addAllFirstStackTrace(userPrompt.getFirstStackTrace().stream().map(this::convertToStackTraceElement).collect(Collectors.toList()));
+        builder.addAllLongestStackTrace(userPrompt.getLongestStackTrace().stream().map(this::convertToStackTraceElement).collect(Collectors.toList()));
+        builder.addAllFiles(userPrompt.getFiles().stream().map(file -> File.newBuilder().setName(file.getName()).setContent(file.getContent()).setSegment(file.isSegment()).setStartLine(file.getStartLine()).setEndLine(file.getEndLine()).build()).collect(Collectors.toList()));
+        builder.setLastStackTraceElement(convertToStackTraceElement(userPrompt.getLastStackTraceElement()));
+        builder.addAllProgrammingLanguages(userPrompt.getProgrammingLanguages());
+        builder.setFileExtension(userPrompt.getFileExtension());
+        builder.setLanguage(userPrompt.getLanguage());
+        builder.setCategory(userPrompt.getCategory() == null ? "" : userPrompt.getCategory());
+        builder.setSource(convertToStackTraceElement(userPrompt.getSource()));
+        builder.setSink(convertToStackTraceElement(userPrompt.getSink()));
+        builder.setCategoryLevel(userPrompt.getCategoryLevel() == null ? "" : userPrompt.getCategoryLevel());
+        builder.setRequestId(requestId);
+        builder.setStreamId(streamId);
+        return builder.build();
     }
 
 
@@ -368,10 +364,6 @@ public class AviatorGrpcClient implements AutoCloseable {
         if (element == null) return null;
 
         return com.fortify.aviator.grpc.StackTraceElement.newBuilder().setFilename(element.getFilename()).setLine(element.getLine()).setCode(element.getCode()).setNodeType(element.getNodeType()).setFragment(Fragment.newBuilder().setContent(element.getFragment().getContent()).setStartLine(element.getFragment().getStartLine()).setEndLine(element.getFragment().getEndLine()).build()).setAdditionalInfo(element.getAdditionalInfo()).setTaintflags(element.getTaintflags() == null ? "" : element.getTaintflags()).addAllInnerStackTrace(element.getInnerStackTrace().stream().map(this::convertToStackTraceElement).collect(Collectors.toList())).build();
-    }
-
-    private interface WindowProcessor {
-        void processNextWindow(Queue<UserPrompt> requests);
     }
 
     private AuditResponse convertToAuditResponse(AuditorResponse response) {
@@ -390,8 +382,6 @@ public class AviatorGrpcClient implements AutoCloseable {
         auditResponse.setIsAviatorProcessed(response.getIsAviatorProcessed());
         auditResponse.setUserPrompt(response.getUserPrompt());
         auditResponse.setSystemPrompt(response.getSystemPrompt());
-//        auditResponse.setRequestId(response.getRequestId());
-//        auditResponse.setStreamId(response.getStreamId());
         return auditResponse;
     }
 
@@ -427,6 +417,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             throw new RuntimeException("Error deleting project: " + e.getStatus(), e);
         }
     }
+
     public Project getProject(String projectId, String signature, String message, String tenantName) {
         ProjectById request = ProjectById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build(); // Corrected to use ProjectById and parse the ID as a long
         try {
@@ -435,6 +426,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             throw new RuntimeException("Error getting project: " + e.getStatus(), e);
         }
     }
+
     public List<Project> listProjects(String tenantName, String signature, String message) {
         ProjectByTenantName request = ProjectByTenantName.newBuilder().setName(tenantName).setSignature(signature).setMessage(message).build();
         try {
@@ -444,6 +436,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             throw new RuntimeException("Error listing projects: " + e.getStatus(), e);
         }
     }
+
     public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
         TokenGenerationRequest.Builder requestBuilder = TokenGenerationRequest.newBuilder()
                 .setEmail(email != null ? email : "")
@@ -451,10 +444,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName);
-//        // Only set end date if it's not null
-//        if (endDate != null) {
-//            requestBuilder.setEndDate(endDate);
-//        }
         try {
             TokenGenerationResponse response = tokenServiceBlockingStub.generateToken(requestBuilder.build());
             return response;

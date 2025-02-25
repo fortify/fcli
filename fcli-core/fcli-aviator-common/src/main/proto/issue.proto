@@ -56,6 +56,8 @@ message StreamInitRequest {
   string entitlementId = 4;
   string streamId = 5;
   string requestId = 6;
+  int32 totalReportedIssues=7;
+  int32 totalIssuesToPredict=8;
 }
 message UserPromptRequest {
   oneof request_type {
@@ -121,5 +123,4 @@ message AuditResult {
 message FinalSummary {
   string summary = 1;
   int32 total_messages = 2;
-  // Add any other summary fields needed
 }
