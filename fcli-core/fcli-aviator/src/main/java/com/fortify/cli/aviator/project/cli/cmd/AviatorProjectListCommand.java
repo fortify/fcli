@@ -54,8 +54,8 @@ public class AviatorProjectListCommand extends AbstractRunnableCommand implement
 
                         projectNode.put("id", project.getId());
                         projectNode.put("name", project.getName());
-                        projectNode.put("createdat", project.hasCreatedAt());
-                        projectNode.put("isdeleted", project.getIsDeleted());
+                        projectNode.put("createdAt", project.hasCreatedAt());
+                        projectNode.put("isDeleted", project.getIsDeleted());
 
                         projectsArray.add(projectNode);
                     }

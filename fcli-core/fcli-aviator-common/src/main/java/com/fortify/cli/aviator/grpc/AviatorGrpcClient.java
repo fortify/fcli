@@ -1,5 +1,9 @@
 package com.fortify.cli.aviator.grpc;
 
+import com.fortify.aviator.entitlement.Entitlement;
+import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
+import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
+import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
 import com.fortify.aviator.grpc.*;
 import com.fortify.aviator.project.CreateProjectRequest;
 import com.fortify.aviator.project.Project;
@@ -53,6 +57,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final AuditorServiceGrpc.AuditorServiceStub asyncStub;
     private final ProjectServiceGrpc.ProjectServiceBlockingStub blockingStub;
     private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
+    private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
     private final String streamId;
     private final long defaultTimeoutMinutes;
     private final ExecutorService processingExecutor;
@@ -71,6 +76,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.asyncStub = AuditorServiceGrpc.newStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.blockingStub = ProjectServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
+        this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(MAX_MESSAGE_SIZE).withWaitForReady();
         this.defaultTimeoutMinutes = timeoutMinutes;
         this.processingExecutor = Executors.newFixedThreadPool(2);
         this.isShutdown = new AtomicBoolean(false);
@@ -494,6 +500,20 @@ public class AviatorGrpcClient implements AutoCloseable {
             return response;
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("Error validating token " + e.getStatus(), e);
+        }
+    }
+
+    public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
+        ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder()
+                .setTenantName(tenantName)
+                .setSignature(signature)
+                .setMessage(message)
+                .build();
+        try {
+            ListEntitlementsByTenantResponse response = entitlementServiceBlockingStub.listEntitlementsByTenant(request);
+            return response.getEntitlementsList();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("Error listing entitlements: " + e.getStatus(), e);
         }
     }
 }

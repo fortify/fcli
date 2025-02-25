@@ -51,8 +51,8 @@ public class AviatorProjectCreateCommand extends AbstractRunnableCommand impleme
             ObjectNode projectNode = objectMapper.createObjectNode();
             projectNode.put("id", createdProject.getId());
             projectNode.put("name", createdProject.getName());
-            projectNode.put("createdat", createdProject.hasCreatedAt());
-            projectNode.put("isdeleted", createdProject.getIsDeleted());
+            projectNode.put("createdAt", createdProject.hasCreatedAt());
+            projectNode.put("isDeleted", createdProject.getIsDeleted());
             outputHelper.write(projectNode);
 
         } catch (Exception e) {

@@ -45,7 +45,7 @@ public class AviatorTokenValidateCommand extends AbstractRunnableCommand impleme
             if (response.getValid()) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 ObjectNode validTokenNode = objectMapper.createObjectNode();
-                validTokenNode.put("Message", "Token is Valid !");
+                validTokenNode.put("message", "Token is Valid !");
                 outputHelper.write(validTokenNode);
                 return 0;
             } else {

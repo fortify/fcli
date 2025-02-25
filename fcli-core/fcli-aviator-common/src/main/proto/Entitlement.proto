@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package com.fortify.aviator;
+
+option java_multiple_files = true;
+option java_package = "com.fortify.aviator.entitlement";
+option java_outer_classname = "EntitlementProto";
+
+import "google/protobuf/timestamp.proto";
+
+// Service definition for entitlement operations
+service EntitlementService {
+  // Lists entitlements for a given tenant name
+  rpc ListEntitlementsByTenant (ListEntitlementsByTenantRequest) returns (ListEntitlementsByTenantResponse) {}
+}
+
+
+// Request message for listing entitlements by tenant
+message ListEntitlementsByTenantRequest {
+  string tenant_name = 1;
+  string message=2;
+  string signature=3;//name;timestamp
+}
+
+// Response message containing a list of entitlements
+message ListEntitlementsByTenantResponse {
+  repeated Entitlement entitlements = 1;
+}
+
+// Entitlement message containing all relevant fields
+message Entitlement {
+  int64 id = 1;
+  string start_date = 2;  // ISO-8601 format
+  string end_date = 3;    // ISO-8601 format
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  int32 number_of_projects = 6;
+  int32 number_of_ncds = 7;
+  string contract_id = 8;
+  TenantInfo tenant = 9;
+  int32 currently_linked_projects = 10;
+  bool is_valid = 11;
+}
+
+// Tenant information message
+message TenantInfo {
+  int64 id = 1;
+  string name = 2;
+}
