@@ -109,3 +109,8 @@ supportedExtensions:
   ".bicep": "BICEP"
   ".template": "ARM"
   ".SqlLanguage": "TSQL"
+  ".c": "C"
+  ".cpp": "C++"
+  ".m": "OBJECTIVE_C"
+  ".key": "KEY_FILE"
+  ".md" : "MARKDOWN"
