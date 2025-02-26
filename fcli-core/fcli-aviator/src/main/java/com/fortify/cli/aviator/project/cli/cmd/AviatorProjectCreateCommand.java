@@ -18,8 +18,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
@@ -40,13 +38,10 @@ public class AviatorProjectCreateCommand extends AbstractRunnableCommand impleme
         initMixins();
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-
             String message = String.format("%s;%s;%s", sessionDescriptor.getTenant(), projectName, ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
-
-            String signature = SignatureHelper.signer(sessionDescriptor.getPrivateKeyFile(), (char[]) null).sign(message, StandardCharsets.UTF_8);
-
+            Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
+            String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
             Project createdProject = client.createProject(projectName, sessionDescriptor.getTenant(), signature, message);
-
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode projectNode = objectMapper.createObjectNode();
             projectNode.put("id", createdProject.getId());

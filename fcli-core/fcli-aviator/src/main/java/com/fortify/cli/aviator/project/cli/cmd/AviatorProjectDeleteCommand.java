@@ -37,11 +37,9 @@ public class AviatorProjectDeleteCommand extends AbstractRunnableCommand impleme
         initMixins();
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-
             String message = String.format("%s;%s;%s", sessionDescriptor.getTenant(), projectId, ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
             Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
             String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
-
             ProjectResponseMessage response = client.deleteProject(projectId, signature, message, sessionDescriptor.getTenant());
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode messageNode = objectMapper.createObjectNode();

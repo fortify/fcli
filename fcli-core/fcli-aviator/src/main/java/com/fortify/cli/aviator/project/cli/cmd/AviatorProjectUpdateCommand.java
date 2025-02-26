@@ -43,10 +43,7 @@ public class AviatorProjectUpdateCommand extends AbstractRunnableCommand impleme
             String message = String.format("%s;%s;%s;%s", sessionDescriptor.getTenant(), projectId, newName, ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
             Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
             String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
-
-            Project updatedProject = client.updateProject(projectId, newName, signature, message, sessionDescriptor.getTenant());
-
-            ObjectMapper objectMapper = new ObjectMapper();
+            Project updatedProject = client.updateProject(projectId, newName, signature, message, sessionDescriptor.getTenant());            ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode updateProjectNode = objectMapper.createObjectNode();
             updateProjectNode.put("id", updatedProject.getId());
             updateProjectNode.put("name",updatedProject.getName());

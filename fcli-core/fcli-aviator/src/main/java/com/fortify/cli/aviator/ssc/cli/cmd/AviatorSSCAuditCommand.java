@@ -60,7 +60,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
             progressWriter.writeProgress("Status: Processing FPR with Aviator");
-            File processedFile = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger);
+            File processedFile = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), av.getApplicationName(), logger);
             processedFile.deleteOnExit();
 
             progressWriter.writeProgress("Status: Uploading FPR to SSC");

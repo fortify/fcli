@@ -129,8 +129,9 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public void performAudit(Map<String, AuditResponse> auditResponses, String tenantId, String tenantName, String projectId, String url) {
-        logger.progress("Starting audit performance for tenant: %s, project: %s", tenantId, projectId);
+    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String appVersion,String projectBuildId, String url) {
+        String projectName = StringUtil.isEmpty(appVersion) ? projectBuildId : appVersion;
+        logger.progress("Starting audit for project: %s", projectName);
 
         aviatorPredictionTag = resolveAviatorPredictionTag();
         aviatorStatusTag = resolveAviatorStatusTag();
@@ -146,7 +147,7 @@ public class IssueAuditor {
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
         try (AviatorGrpcClient client = createClientFromUrl(url)) {
-            CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, tenantId, tenantName, projectId,"");
+            CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
             try {
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> {

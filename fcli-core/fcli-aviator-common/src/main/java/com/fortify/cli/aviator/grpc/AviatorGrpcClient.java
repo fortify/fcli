@@ -72,7 +72,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
 
     public AviatorGrpcClient(String host, int port, long timeoutMinutes, IAviatorLogger logger) {
-        logger.info("Initializing ImprovedGrpcClient - Host: " + host + ", Port: " + port);
+        LOG.info("Initializing ImprovedGrpcClient - Host: " + host + ", Port: " + port);
         this.logger = logger;
         this.streamId = UUID.randomUUID().toString();
 
@@ -102,7 +102,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(
-            Queue<UserPrompt> requests, String tenantId, String tokenName, String projectId, String entitlementId) {
+            Queue<UserPrompt> requests, String projectName, String token) {
         if (requests == null || requests.isEmpty()) {
             return CompletableFuture.failedFuture(new IllegalArgumentException("Requests queue cannot be null or empty"));
         }
@@ -128,6 +128,10 @@ public class AviatorGrpcClient implements AutoCloseable {
                     } else {
                         logger.progress("Stream initialization failed: " + response.getStatusMessage());
                         resultFuture.completeExceptionally(new RuntimeException("Stream initialization failed: " + response.getStatusMessage()));
+                        if (requestObserver != null) {
+                            requestObserver.onCompleted();
+                        }
+                        latch.countDown();
                     }
                 } else {
                     AuditResponse auditResponse = convertToAuditResponse(response);
@@ -140,7 +144,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
                     if (completed >= totalRequests) {
                         logger.info("All requests processed, completing stream");
-                        if (streamCompleted.compareAndSet(false, true)) {
+                        if (streamCompleted.compareAndSet(false, true) && requestObserver != null) {
                             requestObserver.onCompleted();
                         }
                         if (!resultFuture.isDone()) {
@@ -151,10 +155,14 @@ public class AviatorGrpcClient implements AutoCloseable {
                 }
             }
 
+            @Override
             public void onError(Throwable t) {
                 LOG.info("Stream error occurred: {}", t.getMessage());
                 t.printStackTrace();
-                resultFuture.completeExceptionally(t);
+                if (!resultFuture.isDone()) {
+                    resultFuture.completeExceptionally(t);
+                }
+                latch.countDown();
             }
 
             @Override
@@ -163,6 +171,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 if (!resultFuture.isDone()) {
                     resultFuture.complete(responses);
                 }
+                latch.countDown();
             }
         };
 
@@ -175,10 +184,8 @@ public class AviatorGrpcClient implements AutoCloseable {
                     .setInit(StreamInitRequest.newBuilder()
                             .setStreamId(streamId)
                             .setRequestId(initRequestId)
-                            .setTenantId(tenantId)
-                            .setTokenName(tokenName)
-                            .setProjectId(projectId)
-                            .setEntitlementId(entitlementId)
+                            .setToken(token)
+                            .setProjectName(projectName)
                             .setTotalReportedIssues(totalRequests)
                             .setTotalIssuesToPredict(totalRequests)
                             .build())
@@ -193,22 +200,24 @@ public class AviatorGrpcClient implements AutoCloseable {
                     }
                     processRequests(requests, requestObserver);
                 } catch (Exception e) {
-                    logger.error("Error executing requests: " + e.getMessage());
-                    logger.error("error executing requests: " + e.getCause());
-                    logger.error("error executing requests: " + e.getStackTrace());
-                    logger.error("error executing requests: " + e);
-
+                    LOG.error("Error executing requests: " + e.getMessage());
                     e.printStackTrace();
-                    resultFuture.completeExceptionally(e);
-                    requestObserver.onCompleted();
+                    if (!resultFuture.isDone()) {
+                        resultFuture.completeExceptionally(e);
+                    }
+                    if (requestObserver != null && !streamCompleted.get()) {
+                        requestObserver.onCompleted();
+                    }
                 }
             });
 
         } catch (Exception e) {
-            logger.error("Error during stream initialization: " + e.getMessage());
+            LOG.error("Error during stream initialization: {}", e.getMessage());
             e.printStackTrace();
             resultFuture.completeExceptionally(e);
-            requestObserver.onCompleted();
+            if (requestObserver != null) {
+                requestObserver.onCompleted();
+            }
         }
 
         return resultFuture;
@@ -235,7 +244,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 LOG.debug("Request size: {} bytes", messageSize);
 
                 if (messageSize > MAX_MESSAGE_SIZE) {
-                    logger.warn("Request too large, skipping");
+                    LOG.warn("Request too large, skipping");
                     requestSemaphore.release();
                     continue;
                 }
@@ -274,7 +283,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 requestObserver.onNext(request);
                 return true;
             } catch (Exception e) {
-                logger.error("Error sending request (attempt " + (attempt + 1) + "): " + e.getMessage());
+                LOG.error("Error sending request (attempt " + (attempt + 1) + "): " + e.getMessage());
                 if (attempt == maxRetries - 1) {
                     return false;
                 }
@@ -297,18 +306,18 @@ public class AviatorGrpcClient implements AutoCloseable {
         isShutdown.set(true);
         try {
             if (!latch.await(10, TimeUnit.SECONDS)) {
-                logger.error("Timed out waiting for stream completion");
+                LOG.error("Timed out waiting for stream completion");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("Interrupted while waiting for stream completion");
+            LOG.error("Interrupted while waiting for stream completion");
         }
         if (requestObserver != null && !streamCompleted.get()) {
             try {
                 streamCompleted.set(true);
                 requestObserver.onCompleted();
             } catch (Exception e) {
-                logger.error("Error closing request observer: " + e.getMessage());
+                LOG.error("Error closing request observer: " + e.getMessage());
             }
         }
 
@@ -329,7 +338,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 }
             }
         }
-        logger.progress("Client closed");
+        LOG.info("Client closed");
     }
 
     private AuditRequest convertToAuditRequest(UserPrompt userPrompt, String streamId, String requestId) {

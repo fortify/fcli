@@ -22,11 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
 
-    public static File auditFPR(File file, String token, String url, IAviatorLogger logger) throws AviatorSimpleException, AviatorTechnicalException, IOException {
+    public static File auditFPR(File file, String token, String url, String appVersion,IAviatorLogger logger) throws AviatorSimpleException, AviatorTechnicalException, IOException {
 
         LOG.info("Starting FPR audit process for file: {}", file.getPath());
-
-//        String tenantId = extractTenantIdFromToken(token);
 
         Path extractedPath;
         try {
@@ -74,7 +72,7 @@ public class AuditFPR {
             Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
             IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, false, logger);
 
-            issueAuditor.performAudit(auditResponses, "", token, fprInfo.getBuildId(), url);
+            issueAuditor.performAudit(auditResponses, token, appVersion,fprInfo.getBuildId(), url);
             LOG.info("Completed audit process, received {} responses", auditResponses.size());
 
             File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, fprInfo.getResultsTag());
@@ -83,21 +81,6 @@ public class AuditFPR {
         } catch (Exception e) {
             LOG.error("I/O error during FPR audit processing: {}", file.getPath(), e);
             throw new AviatorTechnicalException("Failed to process FPR file due to an I/O error.", e);
-        }
-    }
-
-    private static String extractTenantIdFromToken(String token) throws AviatorSimpleException {
-        try {
-            DecodedJWT jwt = JWT.decode(token);
-            String tenantId = jwt.getClaim("tenantId").asString();
-            if (tenantId == null || tenantId.isEmpty()) {
-                LOG.error("JWT token does not contain a 'tenantId' claim");
-                throw new AviatorSimpleException("JWT token does not contain a 'tenantId' claim.");
-            }
-            return tenantId;
-        } catch (JWTDecodeException e) {
-            LOG.error("Failed to parse JWT token: {}", e.getMessage());
-            throw new AviatorSimpleException("Unable to extract tenantId from token due to invalid JWT format.", e);
         }
     }
 }
