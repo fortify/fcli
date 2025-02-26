@@ -12,11 +12,13 @@
  */
 package com.fortify.cli.common.action.runner.processor.writer;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
@@ -40,17 +42,25 @@ public class ActionStepRecordWriterConfigFactory {
     
     @SneakyThrows
     public static final Writer createWriter(WithWriterConfig config) {
+        var id = config.getId();
         var to = config.getTo();
         var ctx = config.getCtx();
         var vars = config.getVars();
+        var filePathVarName = String.format("%s.filePath", id);
         if ( "stdout".equals(to) ) {
             return new OutputStreamWriter(ctx.getStdout());
         } else if ( "stderr".equals(to) ) {
             return new OutputStreamWriter(ctx.getStderr());
         } else if ( to.startsWith("var:") ) {
             return new FcliActionVariableWriter(vars, to.replaceAll("^var:", ""));
+        } else if ( "temp".equals(to) ) {
+            var f = File.createTempFile("fcli", "temp-writer");
+            f.deleteOnExit();
+            vars.set(filePathVarName, f.getAbsolutePath());
+            return new FileWriter(f, StandardCharsets.UTF_8, true);
         } else {
-            return new FileWriter(to);
+            vars.set(filePathVarName, new File(to).getAbsolutePath());
+            return new FileWriter(to, StandardCharsets.UTF_8, false);
         }
     }
     

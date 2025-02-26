@@ -12,12 +12,17 @@
  */
 package com.fortify.cli.common.action.runner.processor;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -30,6 +35,7 @@ import com.fortify.cli.common.action.model.IActionStepIfSupplier;
 import com.fortify.cli.common.action.model.IMapKeyAware;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
+import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpressionKeySerializer;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -49,7 +55,46 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
         } else {
             return o.toString();
         }
-    }  
+    }
+    
+    // The asString() method above would collect all contents in memory,
+    // including file contents inserted through InsertFileContentsPOJONode.
+    // This method will just stream such inserted file contents to the
+    // output, without collecting in memory first.
+    protected final void writeAsString(Object o, String destination) {
+        try ( var ps = createPrintStream(destination) ) {
+            if ( o instanceof TextNode ) {
+                writeString(ps, ((TextNode)o).asText());
+            } else if ( o instanceof JsonNode ) {
+                writeJsonNode(ps, (JsonNode)o);
+            } else {
+                writeString(ps, o.toString());
+            }
+        } catch ( IOException e ) {
+            throw new FcliActionStepException("Error writing action output to "+destination, e);
+        }
+    }
+
+    private void writeString(PrintStream ps, String s) {
+        ps.append(s);
+    }
+    
+    private void writeJsonNode(PrintStream ps, JsonNode o) throws IOException {
+        var om = JsonFactory.builder().
+            build().createGenerator(ps)
+            .setPrettyPrinter(new DefaultPrettyPrinter())
+            .setCodec(new ObjectMapper());
+        om.writeTree(o);
+        ps.print("\n");
+    }
+
+    protected final PrintStream createPrintStream(String destination) throws IOException {
+        switch (destination.toLowerCase()) {
+        case "stdout": return getCtx().getStdout();
+        case "stderr": return getCtx().getStderr();
+        default: return new PrintStream(destination, StandardCharsets.UTF_8);
+        }
+    }
     
     protected final void processSteps(List<ActionStep> steps) {
         new ActionStepProcessorSteps(getCtx(), getVars(), steps).process();

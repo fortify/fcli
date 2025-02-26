@@ -40,6 +40,7 @@ public final class ActionStepRecordWriterFactory {
     static final class WithWriterConfig {
         private final ActionRunnerContext ctx;
         private final ActionRunnerVars vars;
+        private final String id;
         private final RecordWriterFactory factory;
         private final String to;
         private final RecordWriterStyle style;
@@ -48,6 +49,7 @@ public final class ActionStepRecordWriterFactory {
         public WithWriterConfig(ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWithWriter withWriter) {
             this.ctx = ctx;
             this.vars = vars;
+            this.id = withWriter.getKey();
             this.factory = getFactory(vars.eval(withWriter.getType(), String.class));
             this.to = vars.eval(withWriter.getTo(), String.class);
             this.style = getStyle(vars, withWriter);
@@ -64,6 +66,6 @@ public final class ActionStepRecordWriterFactory {
                     .filter(e->e.toString().equalsIgnoreCase(type))
                     .findFirst()
                     .orElseThrow(()->new FcliActionStepException("Unknown writer type: "+type));
-        }   
+        }
     }
 }

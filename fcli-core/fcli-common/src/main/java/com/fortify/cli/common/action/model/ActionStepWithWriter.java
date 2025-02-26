@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -32,18 +33,27 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 @JsonInclude(Include.NON_NULL)
-public final class ActionStepWithWriter implements IActionElement {
+public final class ActionStepWithWriter implements IActionElement, IMapKeyAware<String> {
+    @JsonIgnore private String key;
+    
     @JsonPropertyDescription("""
         Required SpEL template expression; destination where to write the output of this writer. \
         Destination can be specified as one of the following: 
         
         - A file name to write the output to
+        - 'temp' to write the output to a temporary file that will be removed on exit
         - 'stdout' to write the output to stdout
         - 'stderr' to write the output to stderr
         - 'var:varName' to write the output as text into the given 'varName' action variable  
         
         With 'var:varName', the given variable name will be available to steps after the current \
         'with' block has completed. 
+        
+        With 'temp', the temporary file contents can be inserted into the output of an 'out.write' \
+        instruction (optionally through a formatter) using the ${#insertFile(writerName.filePath)} \
+        SpEL template expression. The contents of the temporary file will be streamed to the output, \
+        correctly embedded into a possibly larger object structure. This avoids having to collect a \
+        potentially large set of records in memory, and as such may significantly reduce memory consumption.
         """)
     @JsonProperty(value = "to", required = true) private TemplateExpression to;
     

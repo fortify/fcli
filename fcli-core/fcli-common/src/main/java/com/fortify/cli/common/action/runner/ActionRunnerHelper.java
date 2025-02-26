@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.POJONode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
+import com.fortify.cli.common.json.InsertFileContentsPOJONode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
@@ -76,12 +77,16 @@ public final class ActionRunnerHelper {
         private final JsonNode input;
         @Override
         protected JsonNode copyValue(JsonNode state, String path, JsonNode parent, ValueNode node) {
-            if ( node instanceof POJONode ) {
+            if ( node instanceof InsertFileContentsPOJONode ) {
+                return node;
+            } else if ( node instanceof POJONode ) {
                 var pojoValue = ((POJONode)node).getPojo();
                 if ( pojoValue instanceof TemplateExpression ) {
                     var rawResult = ctx.getSpelEvaluator().evaluate((TemplateExpression)pojoValue, input, Object.class);
                     if ( rawResult instanceof CharSequence ) {
                         rawResult = new TextNode(((String)rawResult).replace("\\n", "\n"));
+                    } else if ( rawResult instanceof InsertFileContentsPOJONode) {
+                        return (InsertFileContentsPOJONode)rawResult;
                     }
                     return JsonHelper.getObjectMapper().valueToTree(rawResult);
                 }

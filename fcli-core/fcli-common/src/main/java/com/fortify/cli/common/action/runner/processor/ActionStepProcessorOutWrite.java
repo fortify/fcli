@@ -11,10 +11,6 @@
  * without notice.
  */
 package com.fortify.cli.common.action.runner.processor;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -22,7 +18,6 @@ import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerHelper;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
-import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -42,21 +37,6 @@ public class ActionStepProcessorOutWrite extends AbstractActionStepProcessorMapE
     
     private final void write(TemplateExpression destinationExpression, Object valueObject) {
         var destination = vars.eval(destinationExpression, String.class);
-        var value = asString(valueObject);
-        try {
-            switch (destination.toLowerCase()) {
-            case "stdout": ctx.getStdout().print(value); break;
-            case "stderr": ctx.getStderr().print(value); break;
-            default: write(new File(destination), value);
-            }
-        } catch (IOException e) {
-            throw new FcliActionStepException("Error writing action output to "+destination);
-        }
-    }
-    
-    private final void write(File file, String output) throws IOException {
-        try ( var out = new PrintStream(file, StandardCharsets.UTF_8) ) {
-            out.println(output);
-        }
+        writeAsString(valueObject, destination);
     }
 }

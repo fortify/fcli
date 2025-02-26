@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.InsertFileContentsPOJONode;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.EnvHelper;
@@ -361,6 +362,10 @@ public class ActionSpelFunctions {
         o.properties().forEach(
                 p->result.add(mapper.createObjectNode().put("key", p.getKey()).set("value", p.getValue())));
         return result;
+    }
+    
+    public static final InsertFileContentsPOJONode insertFileContents(String filePath, String indent) {
+        return new InsertFileContentsPOJONode(filePath, indent);
     }
     
     public static final String copyright() {

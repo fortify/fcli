@@ -62,7 +62,7 @@ public final class ActionStepWith extends AbstractActionElementIf {
         executed, the writer will be closed. This instruction takes a map, with map keys defining \
         writer identifiers, and map values defining the writer configurations. The number of records \
         that have been appended to the current writer can be accessed through the 'writerId.count' \
-        variable.
+        variable, and the target file path can be accessed through the 'writerId.filePath' variable. 
         """)
     @JsonProperty(value = "writers", required = false) private Map<String, ActionStepWithWriter> writers;
     
