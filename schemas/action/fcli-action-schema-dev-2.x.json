@@ -445,11 +445,6 @@
     "ActionStepWithWriter" : {
       "type" : "object",
       "properties" : {
-        "options" : {
-          "format" : "spelTemplateExpression",
-          "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Optional SpEL template expression defining options for the given writer type. In most cases, it's much easier to just pass an already formatted object to the 'writer.append' step; this 'options' instruction is just meant to provide feature parity with the fcli '--output type=options' command line option. See fcli documentation for details on supported options for the various writer types.\n"
-        },
         "style" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
@@ -464,6 +459,11 @@
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Required SpEL template expression defining the writer type. The evaluated expression must evaluate to one of the following types:\ncsv, table, expr, json, xml, yaml"
+        },
+        "type-args" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Optional SpEL template expression defining arguments for the given writer type. In most cases, it's much easier to just pass an already formatted object to the 'writer.append' step; this 'type-args' instruction is just meant to provide feature parity with the fcli '--output type=args' command line option. See fcli documentation for details on supported options for the various writer types.\n"
         }
       },
       "required" : [ "to", "type" ],
