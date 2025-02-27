@@ -11,8 +11,6 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.TokenValidationResponse;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -22,7 +20,6 @@ public class AviatorTokenValidateCommand extends AbstractAviatorJsonNodeOutputCo
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Option(names = {"--token"}, description = "access token", required = true) private String token;
     @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenValidateCommand.class);
 
     @Override
     protected JsonNode getJsonNodeInternal() {
@@ -38,10 +35,8 @@ public class AviatorTokenValidateCommand extends AbstractAviatorJsonNodeOutputCo
 
             if (response.getValid()) {
                 tokenNode.put("message", "Token is Valid!");
-                LOG.info("Token validated successfully: {}", token);
             } else {
                 tokenNode.put("message", "Token is Invalid");
-                LOG.info("Token is invalid: {}", response.getErrorMessage());
             }
 
             return tokenNode;

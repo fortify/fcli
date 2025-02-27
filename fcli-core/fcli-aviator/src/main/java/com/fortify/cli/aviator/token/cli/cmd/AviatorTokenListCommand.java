@@ -1,11 +1,11 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -38,13 +38,16 @@ public class AviatorTokenListCommand extends AbstractAviatorJsonNodeOutputComman
     protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ArrayNode tokensArray = objectMapper.createArrayNode();
+            ArrayNode tokensArray = AviatorGrpcUtils.createArrayNode();
             String nextPageToken = "";
             boolean morePages = true;
 
             do {
-                String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier, email, sessionDescriptor.getTenant());
+                String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(
+                        sessionDescriptorSupplier,
+                        email,
+                        sessionDescriptor.getTenant()
+                );
                 String message = messageAndSignature[0];
                 String signature = messageAndSignature[1];
 
@@ -52,27 +55,24 @@ public class AviatorTokenListCommand extends AbstractAviatorJsonNodeOutputComman
 
                 if (!response.getSuccess()) {
                     LOG.error("Failed to list tokens: {}", response.getErrorMessage());
-                    throw new RuntimeException("Failed to list tokens: " + response.getErrorMessage());
+                    throw new FcliSimpleException("Failed to list tokens: " + response.getErrorMessage());
                 }
 
                 for (TokenInfo tokenInfo : response.getTokensList()) {
-                    ObjectNode tokenNode = objectMapper.createObjectNode();
-                    tokenNode.put("tokenName", tokenInfo.getTokenName());
-                    tokenNode.put("token", tokenInfo.getToken());
-                    tokenNode.put("startDate", tokenInfo.getStartDate());
-                    tokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate())
+                    JsonNode tokenNode = AviatorGrpcUtils.grpcToJsonNode(tokenInfo);
+                    ObjectNode mutableTokenNode = tokenNode.deepCopy();
+                    mutableTokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate())
                             .atZone(ZoneId.systemDefault())
                             .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                    tokenNode.put("revoked", tokenInfo.getRevoked());
-                    tokensArray.add(tokenNode);
+                    tokensArray.add(mutableTokenNode);
                 }
 
                 nextPageToken = response.getNextPageToken();
-                morePages = !nextPageToken.isEmpty() && fetchAllPages; // Only continue if --all-pages is set
+                morePages = !nextPageToken.isEmpty() && fetchAllPages;
                 LOG.debug("Fetched page with {} tokens, nextPageToken: {}", response.getTokensList().size(), nextPageToken);
             } while (morePages);
 
-            if (tokensArray.size() == 0) {
+            if (tokensArray.isEmpty()) {
                 LOG.info("No tokens found for email: {}", email);
             } else {
                 LOG.info("Successfully listed {} tokens for email: {}", tokensArray.size(), email);
@@ -80,7 +80,7 @@ public class AviatorTokenListCommand extends AbstractAviatorJsonNodeOutputComman
 
             return tokensArray;
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to list tokens", e.getMessage());
+            throw new FcliSimpleException("Failed to list tokens: " + e.getMessage());
         }
     }
 

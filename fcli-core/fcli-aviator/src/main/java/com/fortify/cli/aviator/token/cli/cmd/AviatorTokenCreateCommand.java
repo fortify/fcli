@@ -1,11 +1,10 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -42,13 +41,7 @@ public class AviatorTokenCreateCommand extends AbstractAviatorJsonNodeOutputComm
             TokenGenerationResponse response = client.generateToken(email, customTokenName, signature, message, sessionDescriptor.getTenant(), endDate);
 
             if (response.getSuccess()) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                ObjectNode createTokenNode = objectMapper.createObjectNode();
-                createTokenNode.put("token", response.getToken())
-                        .put("tokenName", response.getTokenName())
-                        .put("startDate", response.getStartDate())
-                        .put("expiryDate", response.getExpiryDate());
-                return createTokenNode;
+                return AviatorGrpcUtils.grpcToJsonNode(response);
             } else {
                 throw new AviatorTechnicalException("Failed to generate token: " + response.getErrorMessage());
             }

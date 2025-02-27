@@ -3,6 +3,4 @@ apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
 dependencies {
     implementation project("${fcliAviatorCommonRef}")
     implementation project("${fcliSSCRef}")
-
-    implementation 'com.google.protobuf:protobuf-java:4.29.3'
 }

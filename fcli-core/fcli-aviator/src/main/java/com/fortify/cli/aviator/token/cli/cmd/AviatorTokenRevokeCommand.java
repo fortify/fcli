@@ -13,8 +13,6 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.RevokeTokenResponse;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -25,7 +23,6 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorJsonNodeOutputComm
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"--token"}, required = true) private String token;
     @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenRevokeCommand.class);
 
     @Override
     protected JsonNode getJsonNodeInternal() {
@@ -40,10 +37,8 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorJsonNodeOutputComm
                 ObjectMapper objectMapper = new ObjectMapper();
                 ObjectNode revokeTokenNode = objectMapper.createObjectNode();
                 revokeTokenNode.put("message", "Token successfully revoked");
-                LOG.info("Token revoked successfully for email: {}", email);
                 return revokeTokenNode;
             } else {
-                LOG.error("Failed to revoke token: {}", response.getErrorMessage());
                 throw new AviatorSimpleException("Failed to revoke token: " + response.getErrorMessage());
             }
         } catch (Exception e) {
