@@ -255,21 +255,21 @@ public class AuditProcessor {
                     issueElement.setAttribute("suppressed", "true");
                 } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_REMEDIATION_REQUIRED);
-                    updateOrAddTag(issueElement, resultsTagId, Constants.REMEDIATION_REQUIRED);
+                    updateOrAddTag(issueElement, resultsTagId, Constants.EXPLOITABLE);
                 } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
-                    updateOrAddTag(issueElement, resultsTagId, Constants.UNSURE);
+                    updateOrAddTag(issueElement, resultsTagId, Constants.SUSPICIOUS);
                 }
             } else {
                 if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_LIKELY_FP);
-                    updateOrAddTag(issueElement, resultsTagId, Constants.PROPOSED_NOT_AN_ISSUE);
+                    updateOrAddTag(issueElement, resultsTagId, Constants.RELIABILITY_ISSUE);
                 } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_LIKELY_TP);
                     updateOrAddTag(issueElement, resultsTagId, Constants.SUSPICIOUS);
                 } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
-                    updateOrAddTag(issueElement, resultsTagId, Constants.UNSURE);
+                    updateOrAddTag(issueElement, resultsTagId, Constants.SUSPICIOUS);
                 }
             }
         }
@@ -294,21 +294,21 @@ public class AuditProcessor {
                     issueElement.setAttribute("suppressed", "true");
                 } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                     addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_REMEDIATION_REQUIRED);
-                    addTagHistory(clientAuditTrail, resultsTagId, Constants.REMEDIATION_REQUIRED);
+                    addTagHistory(clientAuditTrail, resultsTagId, Constants.EXPLOITABLE);
                 } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                     addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
-                    addTagHistory(clientAuditTrail, resultsTagId, Constants.UNSURE);
+                    addTagHistory(clientAuditTrail, resultsTagId, Constants.SUSPICIOUS);
                 }
             } else {
                 if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
                     addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_LIKELY_FP);
-                    addTagHistory(clientAuditTrail, resultsTagId, Constants.PROPOSED_NOT_AN_ISSUE);
+                    addTagHistory(clientAuditTrail, resultsTagId, Constants.RELIABILITY_ISSUE);
                 } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                     addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_LIKELY_TP);
                     addTagHistory(clientAuditTrail, resultsTagId, Constants.SUSPICIOUS);
                 } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                     addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
-                    addTagHistory(clientAuditTrail, resultsTagId, Constants.UNSURE);
+                    addTagHistory(clientAuditTrail, resultsTagId, Constants.SUSPICIOUS);
                 }
             }
         }
@@ -432,21 +432,21 @@ public class AuditProcessor {
                     newIssue.setAttribute("suppressed", "true");
                 } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_REMEDIATION_REQUIRED);
-                    updateOrAddTag(newIssue, resultsTagId, Constants.REMEDIATION_REQUIRED);
+                    updateOrAddTag(newIssue, resultsTagId, Constants.EXPLOITABLE);
                 } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
-                    updateOrAddTag(newIssue, resultsTagId, Constants.UNSURE);
+                    updateOrAddTag(newIssue, resultsTagId, Constants.SUSPICIOUS);
                 }
             } else {
                 if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_LIKELY_FP);
-                    updateOrAddTag(newIssue, resultsTagId, Constants.PROPOSED_NOT_AN_ISSUE);
+                    updateOrAddTag(newIssue, resultsTagId, Constants.RELIABILITY_ISSUE);
                 } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_LIKELY_TP);
                     updateOrAddTag(newIssue, resultsTagId, Constants.SUSPICIOUS);
                 } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                     updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
-                    updateOrAddTag(newIssue, resultsTagId, Constants.UNSURE);
+                    updateOrAddTag(newIssue, resultsTagId, Constants.SUSPICIOUS);
                 }
             }
         }

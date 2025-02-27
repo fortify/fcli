@@ -18,24 +18,24 @@ public class StackTraceElement {
     private int line;
     private final String code;
     private String nodeType;
-    private final List<StackTraceElement> innerStackTrace = new ArrayList<>();
+    private final List<StackTraceElement> innerStackTrace;
     private final Fragment fragment;
     private String additionalInfo;
     private String taintflags;
 
-    public StackTraceElement(String filename, int line, String code, String nodeType, Fragment fragment, String additionalInfo, String taintflags){
+    public StackTraceElement(String filename, int line, String code, String nodeType, List<StackTraceElement> innerStackTrace, Fragment fragment, String additionalInfo, String taintflags) {
         this.filename = filename;
         this.line = line;
         this.code = code;
         this.nodeType = nodeType == null ? "" : nodeType;
+        this.innerStackTrace = innerStackTrace != null ? innerStackTrace : new ArrayList<>();
         this.fragment = fragment;
         this.additionalInfo = additionalInfo;
         this.taintflags = taintflags;
     }
 
-    public void setInnerStackTrace(List<StackTraceElement> innerStackTrace){
+    public void setInnerStackTrace(List<StackTraceElement> innerStackTrace) {
         this.innerStackTrace.clear();
         this.innerStackTrace.addAll(innerStackTrace);
     }
-
 }

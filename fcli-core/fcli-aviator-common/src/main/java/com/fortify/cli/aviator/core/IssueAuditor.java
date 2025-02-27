@@ -205,8 +205,8 @@ public class IssueAuditor {
             }
         }
 
-        double auditFraction = ((double) MAX_TOTAL - (double) auditAllTotal) / (double) auditSomeTotal;
         ConcurrentLinkedDeque<UserPrompt> issuesToAudit = new ConcurrentLinkedDeque<>();
+        double auditFraction = ((double) MAX_TOTAL - (double) auditAllTotal) / (double) auditSomeTotal;
 
         for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
             String category = entry.getKey();
@@ -215,9 +215,7 @@ public class IssueAuditor {
             int i = 0;
 
             for (UserPrompt issue : issues) {
-                if (!shouldInclude(issue)) {
-                    updateSkippedIssue(issue, "Issue did not meet the filter criteria");
-                } else if (i >= MAX_PER_CATEGORY) {
+                if (i >= MAX_PER_CATEGORY) {
                     updateSkippedIssue(issue, MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalNewIssues);
                 } else if (i > auditAllThreshold && i >= totalLimitIndex) {
                     updateSkippedIssue(issue, MAX_TOTAL_EXCEEDED, issues.size(), totalNewIssues);
@@ -238,28 +236,20 @@ public class IssueAuditor {
             List<UserPrompt> issues = entry.getValue();
 
             if (issues.size() <= MAX_PER_CATEGORY) {
-                for (UserPrompt issue : issues) {
-                    if (shouldInclude(issue)) {
-                        issuesToAudit.add(issue);
-                    }
-                }
+                issuesToAudit.addAll(issues);
             } else {
-                for (int i = 0; i < MAX_PER_CATEGORY; i++) {
-                    UserPrompt issue = issues.get(i);
-                    if (shouldInclude(issue)) {
-                        issuesToAudit.add(issue);
-                    } else {
-                        updateSkippedIssue(issue, "Issue did not meet the filter criteria");
+                for (int i = 0; i < issues.size(); i++) {
+                    if (i < MAX_PER_CATEGORY){
+                        issuesToAudit.add(issues.get(i));
+                    } else{
+                        updateSkippedIssue(issues.get(i), MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalCount);
                     }
-                }
-                for (int i = MAX_PER_CATEGORY; i < issues.size(); i++) {
-                    updateSkippedIssue(issues.get(i), MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalCount);
                 }
             }
         }
-
         return issuesToAudit;
     }
+
 
     private boolean shouldInclude(UserPrompt userPrompt) {
 
@@ -415,7 +405,7 @@ public class IssueAuditor {
     }
 
     private void handleDefaultCase(List<Vulnerability> vulnerabilities, Set<Vulnerability> resultSet, boolean shouldAdd) {
-        vulnerabilities.stream().forEach(vuln -> {
+        vulnerabilities.forEach(vuln -> {
             if (shouldAdd) {
                 resultSet.add(vuln);
             } else {
@@ -531,18 +521,14 @@ public class IssueAuditor {
 
 
     private boolean checkFieldMatch(Vulnerability vuln, String field, String value) {
-        switch (field.toLowerCase()) {
-            case "audience":
-                return vuln.getAudience() != null && vuln.getAudience().toLowerCase().contains(value.toLowerCase());
-            case "analyzer":
-                return vuln.getAnalyzer() != null && vuln.getAnalyzer().toLowerCase().equalsIgnoreCase(value.toLowerCase());
-            case "category":
-                return vuln.getCategory() != null && vuln.getCategory().toLowerCase().equalsIgnoreCase(value.toLowerCase());
-            case "fortify priority order":
-                return vuln.getPriority() != null && vuln.getPriority().equalsIgnoreCase(value);
-            default:
-                return false;
-        }
+        return switch (field.toLowerCase()) {
+            case "audience" ->
+                    vuln.getAudience() != null && vuln.getAudience().toLowerCase().contains(value.toLowerCase());
+            case "analyzer" -> vuln.getAnalyzer() != null && vuln.getAnalyzer().equalsIgnoreCase(value.toLowerCase());
+            case "category" -> vuln.getCategory() != null && vuln.getCategory().equalsIgnoreCase(value.toLowerCase());
+            case "fortify priority order" -> vuln.getPriority() != null && vuln.getPriority().equalsIgnoreCase(value);
+            default -> false;
+        };
     }
 
     private void updateSkippedIssue(UserPrompt userPrompt, String reason, int... values) {
@@ -567,43 +553,6 @@ public class IssueAuditor {
             template = template.replace("{issues_new_in_category}", String.valueOf(values[0])).replace("{MAX_PER_CATEGORY}", String.valueOf(MAX_PER_CATEGORY)).replace("{issues_new_total}", String.valueOf(values[1])).replace("{MAX_TOTAL}", String.valueOf(MAX_TOTAL));
         }
         return template;
-    }
-
-    private void writeLLMResponseToFile(AuditResponse response, String outputPath) {
-        if (response == null || response.getIssueId() == null || response.getAuditResult() == null) {
-            LOG.warn("Skipping LLM output write, no issue id or response");
-            return;
-        }
-
-        try {
-            Path outputFile = Paths.get(outputPath, response.getIssueId() + "_output.xml");
-            Files.createDirectories(outputFile.getParent());
-            DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
-            Document document = documentBuilder.newDocument();
-            Element root = document.createElement("audit");
-            document.appendChild(root);
-
-            Element value = document.createElement("value");
-            value.setTextContent(response.getAuditResult().tagValue);
-            root.appendChild(value);
-
-            Element comment = document.createElement("comment");
-            comment.setTextContent(response.getAuditResult().comment);
-            root.appendChild(comment);
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(document);
-            StreamResult result = new StreamResult(outputFile.toFile());
-            transformer.transform(source, result);
-
-            LOG.info("LLM output written to: {}", outputFile);
-        } catch (Exception e) {
-            LOG.error("Error writing LLM output to file for issue: {}", response.getIssueId(), e);
-        }
     }
 
 
