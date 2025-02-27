@@ -1,0 +1,269 @@
+---
+title: Fcli generic_action Actions
+fcli_version: 0.20250227.122746-dev_v3.x-develop
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fcli generic_action Actions</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250227.122746-dev_v3.x-develop" %}
+
+
+<div id="header">
+<h1>Fcli generic_action Actions</h1>
+<div class="details">
+<span id="revnumber">version 0.20250227.122746-dev_v3.x-develop</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_ci">ci</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_fortify_on_demand">Fortify on Demand</a></li>
+<li><a href="#_fortify_software_security_center">Fortify Software Security Center</a></li>
+<li><a href="#_options">Options</a></li>
+</ul>
+</li>
+<li><a href="#_ci_vars">ci-vars</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_2">Synopsis</a></li>
+<li><a href="#_description_2">Description</a></li>
+<li><a href="#_options_2">Options</a></li>
+</ul>
+</li>
+<li><a href="#_package">package</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_3">Synopsis</a></li>
+<li><a href="#_description_3">Description</a></li>
+<li><a href="#_options_3">Options</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This manual page describes built-in fcli generic_action actions that can be run through
+the <code>fcli generic_action action run &lt;action-name&gt;</code> command.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ci"><a class="anchor" href="#_ci"></a>ci</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>(PREVIEW) Run CI pipeline</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong>fcli generic_action action run ci [fcli generic_action action run options] [action options, see below]</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description"><a class="anchor" href="#_description"></a>Description</h3>
+<div class="paragraph">
+<p>This action can be used to run a full, standardized CI pipeline that performs the
+following activities:
+- Create &amp; configure SSC application version / FoD release if needed
+- Install ScanCentral Client for packaging
+- Package source code using ScanCentral Client
+- Submit SAST scan request
+- Wait for SAST scan completion
+- Perform post-scan activities, like checking security policy outcome,
+  exporting results, &#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>Configuration for this fcli action is done through environment variables; the
+sections below list the environment variables supported by this top-level 'ci'
+action. Based on provided configuration, this top-level <code>ci</code> action will run
+either <code><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> ci</code> or <code><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> ci</code>; please see the
+documentation for these product-specific <code>ci</code> actions for a list of environment
+variables supported by them.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fortify_on_demand"><a class="anchor" href="#_fortify_on_demand"></a>Fortify on Demand</h3>
+<div class="sect3">
+<h4 id="_fod_url"><a class="anchor" href="#_fod_url"></a>FOD_URL</h4>
+<div class="paragraph">
+<p>URL for the FoD instance to use.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_fod_tenant_fod_user_fod_password"><a class="anchor" href="#_fod_tenant_fod_user_fod_password"></a>FOD_TENANT, FOD_USER, FOD_PASSWORD</h4>
+<div class="paragraph">
+<p>Authenticate with tenant and user credentials.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_fod_client_id_fod_client_secret"><a class="anchor" href="#_fod_client_id_fod_client_secret"></a>FOD_CLIENT_ID, FOD_CLIENT_SECRET</h4>
+<div class="paragraph">
+<p>Authenticate with an FoD API key.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_fod_login_extra_opts"><a class="anchor" href="#_fod_login_extra_opts"></a>FOD_LOGIN_EXTRA_OPTS:</h4>
+<div class="paragraph">
+<p>Optional extra options to pass to the <a href="manpage/fcli-fod-session-login.html"><code>fcli fod session login</code></a> command.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fortify_software_security_center"><a class="anchor" href="#_fortify_software_security_center"></a>Fortify Software Security Center</h3>
+<div class="sect3">
+<h4 id="_ssc_url"><a class="anchor" href="#_ssc_url"></a>SSC_URL</h4>
+<div class="paragraph">
+<p>URL for the SSC instance to use.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ssc_user_ssc_password"><a class="anchor" href="#_ssc_user_ssc_password"></a>SSC_USER, SSC_PASSWORD</h4>
+<div class="paragraph">
+<p>Authenticate with user credentials.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ssc_token"><a class="anchor" href="#_ssc_token"></a>SSC_TOKEN</h4>
+<div class="paragraph">
+<p>Authenticate with pre-generated SSC token.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_sc_sast_token"><a class="anchor" href="#_sc_sast_token"></a>SC_SAST_TOKEN</h4>
+<div class="paragraph">
+<p>ScanCentral SAST client-auth-token.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ssc_login_extra_opts"><a class="anchor" href="#_ssc_login_extra_opts"></a>SSC_LOGIN_EXTRA_OPTS</h4>
+<div class="paragraph">
+<p>Optional extra options to pass to the <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ci_vars"><a class="anchor" href="#_ci_vars"></a>ci-vars</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Collect CI-specific data</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong>fcli generic_action action run ci-vars [fcli generic_action action run options] [action options, see below]</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
+<div class="paragraph">
+<p>This action collects data used by the SSC &amp; FoD 'ci' actions, based on CI-specific
+data like CI-specific environment variables. Data is collected in a CI-agnostic
+global variable named 'ci'. Note that available properties on the global 'ci'
+variable may change across fcli releases, potentially breaking any custom actions
+that depend on these properties.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_package"><a class="anchor" href="#_package"></a>package</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Package source code</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong>fcli generic_action action run package [fcli generic_action action run options] [action options, see below]</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
+<div class="paragraph">
+<p>This action can be used to package source code using ScanCentral Client. It will
+take care of installing the specified ScanCentral Client version, followed by
+executing the 'scancentral package' command using the specified ScanCentral
+Client version.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_3"><a class="anchor" href="#_options_3"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--sc-client-version, -v</dt>
+<dd>
+<p>Specify the ScanCentral Client version to be used for packaging. Defaults to
+the value of the SC_CLIENT_VERSION environment variable, or 'latest' if not
+specified.</p>
+</dd>
+<dt class="hdlist1">--source-dir, -d</dt>
+<dd>
+<p>Specify the source directory to be packaged. Defaults to the value of the
+SOURCE_DIR environment variable, or current working directory if not specified.</p>
+</dd>
+<dt class="hdlist1">--debug</dt>
+<dd>
+<p>Add the -debug flag to the ScanCentral Client command. Defaults to the value of
+the DO_PACKAGE_DEBUG environment variable, or false if not specified.</p>
+</dd>
+<dt class="hdlist1">--tool-definitions</dt>
+<dd>
+<p>Custom tool definitions to use for identifying available ScanCentral Client versions
+and download URLs. Defaults to the value of the TOOL_DEFINITIONS environment variable,
+or the built-in default if not specified.</p>
+</dd>
+<dt class="hdlist1">--extra-opts</dt>
+<dd>
+<p>Extra options to be passed to the 'scancentral package' command. Defaults to the
+options specified in the EXTRA_PACKAGE_OPTS environment variable, or no extra
+options if not specified.</p>
+</dd>
+<dt class="hdlist1">--output, -o</dt>
+<dd>
+<p>Name of the zip file in which packaged source code should be stored. Defaults to
+package.zip in the current working directory.</p>
+</dd>
+<dt class="hdlist1">--use-package</dt>
+<dd>
+<p>Use an existing package file instead of trying to package the given source code
+directory. If specified, this ignores all other options.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.20250227.122746-dev_v3.x-develop<br>
+Last updated 2025-02-27 12:30:13 UTC
+</div>
+</div>
+</body>
+</html>
