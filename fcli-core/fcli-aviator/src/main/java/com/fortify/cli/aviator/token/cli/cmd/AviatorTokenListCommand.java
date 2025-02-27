@@ -1,16 +1,16 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
-import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
-import com.fortify.cli.aviator.core.IssueAuditor;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
-import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.aviator.project.cli.cmd.AviatorProjectListCommand;
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.crypto.helper.SignatureHelper;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
+import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.ListTokensResponse;
 import com.fortify.grpc.token.TokenInfo;
 import lombok.Getter;
@@ -20,79 +20,72 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import java.io.Console;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.Callable;
 
 @Command(name = "list")
-public class AviatorTokenListCommand extends AbstractRunnableCommand implements Callable<Integer> {
-
+public class AviatorTokenListCommand extends AbstractAviatorJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-p", "--page-size"}, defaultValue = "10") private int pageSize;
+    @Option(names = {"--all-pages"}, defaultValue = "false", description = "Fetch all pages automatically (non-interactive)")
+    private boolean fetchAllPages;
     @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenListCommand.class);
 
     @Override
-    public Integer call() throws Exception {
-        initMixins();
+    protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {            Console console = System.console();
-            if (console == null) {
-                System.err.println("No console available for interactive pagination. Consider redirecting output to a file, or using '-o json'.");
-                return 1;
-            }
-
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             ObjectMapper objectMapper = new ObjectMapper();
+            ArrayNode tokensArray = objectMapper.createArrayNode();
             String nextPageToken = "";
-            boolean more = true;
+            boolean morePages = true;
 
             do {
-                String message = String.format("%s;%s;%s", email, sessionDescriptor.getTenant(), ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT));
-                Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
-                String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
+                String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier, email, sessionDescriptor.getTenant());
+                String message = messageAndSignature[0];
+                String signature = messageAndSignature[1];
 
                 ListTokensResponse response = client.listTokens(email, sessionDescriptor.getTenant(), signature, message, pageSize, nextPageToken);
 
-                if (response.getSuccess()) {
-                    ArrayNode tokensArray = objectMapper.createArrayNode();
-                    for (TokenInfo tokenInfo : response.getTokensList()) {
-                        ObjectNode tokenNode = objectMapper.createObjectNode();
-                        tokenNode.put("tokenName", tokenInfo.getTokenName());
-                        tokenNode.put("token", tokenInfo.getToken());
-                        tokenNode.put("startDate", tokenInfo.getStartDate());
-                        tokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate())
-                                .atZone(ZoneId.systemDefault())
-                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                        tokenNode.put("revoked", tokenInfo.getRevoked());
-                        tokensArray.add(tokenNode);
-                    }
-
-                    outputHelper.write(tokensArray);
-
-                    nextPageToken = response.getNextPageToken();
-                    if (!nextPageToken.isEmpty()) {
-                        String input = console.readLine("Press Enter to load more results, or type 'q' and press Enter to stop: ").trim().toLowerCase();
-                        more = input.isEmpty();
-                    } else {
-                        more = false;
-                    }
-                } else {
-                    LOG.error("Error listing tokens: {}", response.getErrorMessage());
-                    return 1;
+                if (!response.getSuccess()) {
+                    LOG.error("Failed to list tokens: {}", response.getErrorMessage());
+                    throw new RuntimeException("Failed to list tokens: " + response.getErrorMessage());
                 }
-            } while (more);
 
-            return 0;
+                for (TokenInfo tokenInfo : response.getTokensList()) {
+                    ObjectNode tokenNode = objectMapper.createObjectNode();
+                    tokenNode.put("tokenName", tokenInfo.getTokenName());
+                    tokenNode.put("token", tokenInfo.getToken());
+                    tokenNode.put("startDate", tokenInfo.getStartDate());
+                    tokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate())
+                            .atZone(ZoneId.systemDefault())
+                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    tokenNode.put("revoked", tokenInfo.getRevoked());
+                    tokensArray.add(tokenNode);
+                }
+
+                nextPageToken = response.getNextPageToken();
+                morePages = !nextPageToken.isEmpty() && fetchAllPages; // Only continue if --all-pages is set
+                LOG.debug("Fetched page with {} tokens, nextPageToken: {}", response.getTokensList().size(), nextPageToken);
+            } while (morePages);
+
+            if (tokensArray.size() == 0) {
+                LOG.info("No tokens found for email: {}", email);
+            } else {
+                LOG.info("Successfully listed {} tokens for email: {}", tokensArray.size(), email);
+            }
+
+            return tokensArray;
         } catch (Exception e) {
-            LOG.error("An unexpected error occurred: {}", e.getMessage());
-            e.printStackTrace();
-            return 1;
+            throw new FcliSimpleException("Failed to list tokens", e.getMessage());
         }
+    }
+
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 }

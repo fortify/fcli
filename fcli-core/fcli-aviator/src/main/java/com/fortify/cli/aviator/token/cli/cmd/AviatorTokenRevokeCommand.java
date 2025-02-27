@@ -1,14 +1,15 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
-import com.fortify.cli.aviator.core.IssueAuditor;
+import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.aviator.project.cli.cmd.AviatorProjectListCommand;
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.RevokeTokenResponse;
 import lombok.Getter;
@@ -18,16 +19,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.concurrent.Callable;
-
 @Command(name = "revoke")
-public class AviatorTokenRevokeCommand extends AbstractRunnableCommand implements Callable<Integer> {
-
+public class AviatorTokenRevokeCommand extends AbstractAviatorJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"--token"}, required = true) private String token;
@@ -35,27 +28,31 @@ public class AviatorTokenRevokeCommand extends AbstractRunnableCommand implement
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenRevokeCommand.class);
 
     @Override
-    public Integer call() throws Exception {
-        initMixins();
+    protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String message = String.format("%s;%s;%s;%s", token, email, sessionDescriptor.getTenant(), ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT));
-            Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
-            String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
-
+            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier, token, email, sessionDescriptor.getTenant());
+            String message = messageAndSignature[0];
+            String signature = messageAndSignature[1];
             RevokeTokenResponse response = client.revokeToken(token, email, sessionDescriptor.getTenant(), signature, message);
 
             if (response.getSuccess()) {
                 ObjectMapper objectMapper = new ObjectMapper();
-                ObjectNode createTokenNode = objectMapper.createObjectNode();
-                createTokenNode.put("message","token successfully revoked");
-                outputHelper.write(createTokenNode);
-                return 0;
+                ObjectNode revokeTokenNode = objectMapper.createObjectNode();
+                revokeTokenNode.put("message", "Token successfully revoked");
+                LOG.info("Token revoked successfully for email: {}", email);
+                return revokeTokenNode;
             } else {
-                System.err.println("Error revoking token: " + response.getErrorMessage());
-                return 1;
+                LOG.error("Failed to revoke token: {}", response.getErrorMessage());
+                throw new AviatorSimpleException("Failed to revoke token: " + response.getErrorMessage());
             }
+        } catch (Exception e) {
+            throw new FcliSimpleException("Failed to revoke token", e.getMessage());
         }
     }
-}
 
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+}

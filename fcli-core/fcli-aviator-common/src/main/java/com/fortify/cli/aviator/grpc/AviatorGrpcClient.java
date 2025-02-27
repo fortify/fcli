@@ -69,6 +69,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final AtomicInteger outstandingRequests = new AtomicInteger(0);
     private volatile StreamObserver<UserPromptRequest> requestObserver;
     private final AtomicBoolean streamCompleted = new AtomicBoolean(false);
+    private volatile boolean isStreamActive = false;
 
 
     public AviatorGrpcClient(String host, int port, long timeoutMinutes, IAviatorLogger logger) {
@@ -103,6 +104,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(
             Queue<UserPrompt> requests, String projectName, String token) {
+        isStreamActive = true;
         if (requests == null || requests.isEmpty()) {
             return CompletableFuture.failedFuture(new IllegalArgumentException("Requests queue cannot be null or empty"));
         }
@@ -305,7 +307,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         LOG.debug("Closing client...");
         isShutdown.set(true);
         try {
-            if (!latch.await(10, TimeUnit.SECONDS)) {
+            if (isStreamActive && !latch.await(10, TimeUnit.SECONDS)) {
                 LOG.error("Timed out waiting for stream completion");
             }
         } catch (InterruptedException e) {

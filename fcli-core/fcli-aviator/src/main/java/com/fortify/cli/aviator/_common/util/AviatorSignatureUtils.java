@@ -1,0 +1,43 @@
+package com.fortify.cli.aviator._common.util;
+
+import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class AviatorSignatureUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorSignatureUtils.class);
+
+    public static String createMessage(String... params) {
+        String timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT);
+        String messageBody = String.join(";", params);
+        String message = messageBody + ";" + timestamp;
+        LOG.debug("Created message: {}", message);
+        return message;
+    }
+
+    public static String createSignature(String message, AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier) {
+        try {
+            var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+            Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
+            String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
+            LOG.debug("Generated signature for message: {}", message);
+            return signature;
+        } catch (Exception e) {
+            LOG.error("Error generating signature for message '{}': {}", message, e.getMessage(), e);
+            throw new RuntimeException("Failed to generate signature", e);
+        }
+    }
+
+    public static String[] createMessageAndSignature(AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier, String... params) {
+        String message = createMessage(params);
+        String signature = createSignature(message, sessionDescriptorSupplier);
+        return new String[]{message, signature};
+    }
+}

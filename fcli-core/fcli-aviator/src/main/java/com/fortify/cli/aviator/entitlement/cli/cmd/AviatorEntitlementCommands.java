@@ -1,6 +1,7 @@
 package com.fortify.cli.aviator.entitlement.cli.cmd;
 
 
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import picocli.CommandLine.Command;
 
 @Command(name = "entitlement",
@@ -8,5 +9,5 @@ import picocli.CommandLine.Command;
             AviatorEntitlementListCommand.class
         }
 )
-public class AviatorEntitlementCommands {
+public class AviatorEntitlementCommands extends AbstractContainerCommand {
 }

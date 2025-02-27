@@ -14,6 +14,7 @@ package com.fortify.cli.aviator._main.cli.cmd;
 
 import com.fortify.cli.aviator._common.session.admin.cli.cmd.AviatorAdminSessionCommands;
 import com.fortify.cli.aviator._common.session.user.cli.cmd.AviatorUserSessionCommands;
+import com.fortify.cli.aviator.entitlement.cli.cmd.AviatorEntitlementCommands;
 import com.fortify.cli.aviator.project.cli.cmd.AviatorProjectCommands;
 import com.fortify.cli.aviator.ssc.cli.cmd.AviatorSSCCommands;
 import com.fortify.cli.aviator.token.cli.cmd.AviatorTokenCommands;
@@ -35,9 +36,10 @@ import picocli.CommandLine.Command;
                 //   other commands ('Manage').
                 AviatorAdminSessionCommands.class,
                 AviatorUserSessionCommands.class,
-                AviatorSSCCommands.class,
+                AviatorEntitlementCommands.class,
                 AviatorProjectCommands.class,
-                AviatorTokenCommands.class
+                AviatorSSCCommands.class,
+                AviatorTokenCommands.class,
         }
 )
 public class AviatorCommands extends AbstractContainerCommand {}
