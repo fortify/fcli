@@ -384,6 +384,13 @@
       "format" : "spelTemplateExpression or object",
       "type" : [ "object", "string" ],
       "properties" : {
+        "skip.if" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ]
+          }
+        },
         "cmd" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ]
