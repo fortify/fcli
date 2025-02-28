@@ -464,7 +464,6 @@ public class AuditProcessor {
 
     public File updateAndSaveAuditXml(Map<String, AuditResponse> auditResponses, String resultsTagId) throws Exception {
         updateAuditXml(auditResponses,resultsTagId);
-        System.out.println("::: UPDATING :: " + auditResponses.size());
         File updatedFile = updateContentInOriginalFpr();
 
         return updatedFile;

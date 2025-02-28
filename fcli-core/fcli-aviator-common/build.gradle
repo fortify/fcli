@@ -25,7 +25,6 @@ dependencies {
 
     api("com.google.protobuf:protobuf-java:4.28.3")
     api("com.google.protobuf:protobuf-java-util:4.28.3")
-//    implementation(files(fileTree(protobuf.generatedFilesBaseDir).matching { include "**/*.java" }))
 }
 
 protobuf {
@@ -40,7 +39,7 @@ protobuf {
     generateProtoTasks {
         all().forEach { task ->
             task.plugins {
-                grpc {} // Enables gRPC stub generation
+                grpc {}
             }
         }
     }
@@ -50,7 +49,6 @@ protobuf {
 sourceSets {
     main {
         java {
-            // Corrected potential typo from "main/java" to standard generated source paths
             srcDirs += "${protobuf.generatedFilesBaseDir}/main/grpc"
             srcDirs += "${protobuf.generatedFilesBaseDir}/main/java"
         }

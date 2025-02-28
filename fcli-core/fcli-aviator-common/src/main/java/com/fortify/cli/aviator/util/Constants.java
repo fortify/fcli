@@ -10,7 +10,7 @@ public class Constants {
     public static final String SUSPICIOUS = "Suspicious";
     public static final String SANITIZED = "Sanitized";
     public static final String RELIABILITY_ISSUE = "Reliability Issue";
-    public static final String BAD_PRACTICE = "Reliability Issue";
+    public static final String BAD_PRACTICE = "Bad Practice";
 
     // Aviator Specific Audit Values
     public static final String AVIATOR_NOT_AN_ISSUE = "AVIATOR:Not an Issue";
