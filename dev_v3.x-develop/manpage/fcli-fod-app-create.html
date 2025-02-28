@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250228.135743-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250228.162503-dev_v3.x-develop" %}
 
 
 <div id="header">
@@ -43,9 +43,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod app create</strong> [<strong>--auto-required-attrs</strong>] <strong>--criticality</strong>=<em>&lt;criticalityType&gt;</em>
-                    [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--owner</strong>=<em>&lt;owner&gt;</em>
-                    <strong>--release</strong>=<em>[ms:]rel</em>
+<p><strong>fcli fod app create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--skip-if-exists</strong>]
+                    <strong>--criticality</strong>=<em>&lt;criticalityType&gt;</em> [<strong>-d</strong>=<em>&lt;description&gt;</em>]
+                    [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--owner</strong>=<em>&lt;owner&gt;</em>] <strong>--release</strong>=<em>[ms:]rel</em>
                     [<strong>--release-description</strong>=<em>&lt;releaseDescription&gt;</em>]
                     <strong>--status</strong>=<em>&lt;sdlcStatusType&gt;</em> <strong>--type</strong>=<em>&lt;appType&gt;</em> <em class="<strong>--attrs</strong>=
                     _[ATTR=VALUE">[,</em>[ATTR=VALUE]<em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--groups</strong>=</em>&lt;userGroups&gt;_[,
@@ -112,6 +112,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--release-description</strong>=<em>&lt;releaseDescription&gt;</em></dt>
 <dd>
 <p>Description of the release.</p>
+</dd>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
+<dd>
+<p>Check to see if application already exists before creating.</p>
 </dd>
 <dt class="hdlist1"><strong>--status, --sdlc-status</strong>=<em>&lt;sdlcStatusType&gt;</em></dt>
 <dd>
@@ -205,7 +209,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-02-28 13:59:42 UTC
+Last updated 2025-02-28 16:27:07 UTC
 </div>
 </div>
 </body>
