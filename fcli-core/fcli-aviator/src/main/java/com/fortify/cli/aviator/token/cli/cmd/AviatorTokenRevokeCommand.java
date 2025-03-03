@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -17,7 +18,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "revoke")
+@Command(name = OutputHelperMixins.Revoke.CMD_NAME)
 public class AviatorTokenRevokeCommand extends AbstractAviatorJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
@@ -28,21 +29,37 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorJsonNodeOutputComm
     protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier, token, email, sessionDescriptor.getTenant());
-            String message = messageAndSignature[0];
-            String signature = messageAndSignature[1];
-            RevokeTokenResponse response = client.revokeToken(token, email, sessionDescriptor.getTenant(), signature, message);
-
-            if (response.getSuccess()) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                ObjectNode revokeTokenNode = objectMapper.createObjectNode();
-                revokeTokenNode.put("message", "Token successfully revoked");
-                return revokeTokenNode;
-            } else {
-                throw new AviatorSimpleException("Failed to revoke token: " + response.getErrorMessage());
-            }
+            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
+            RevokeTokenResponse response = revokeToken(client, sessionDescriptor, messageAndSignature);
+            return processRevokeResponse(response);
         } catch (Exception e) {
             throw new FcliSimpleException("Failed to revoke token", e.getMessage());
+        }
+    }
+
+    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(
+                sessionDescriptor,
+                token,
+                email,
+                sessionDescriptor.getTenant()
+        );
+    }
+
+    private RevokeTokenResponse revokeToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+        String message = messageAndSignature[0];
+        String signature = messageAndSignature[1];
+        return client.revokeToken(token, email, sessionDescriptor.getTenant(), signature, message);
+    }
+
+    private JsonNode processRevokeResponse(RevokeTokenResponse response) throws AviatorSimpleException {
+        if (response.getSuccess()) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode revokeTokenNode = objectMapper.createObjectNode();
+            revokeTokenNode.put("message", "Token successfully revoked");
+            return revokeTokenNode;
+        } else {
+            throw new AviatorSimpleException("Failed to revoke token: " + response.getErrorMessage());
         }
     }
 

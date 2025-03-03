@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -25,22 +26,31 @@ public class AviatorTokenValidateCommand extends AbstractAviatorJsonNodeOutputCo
     protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier, token, sessionDescriptor.getTenant());
-            String message = messageAndSignature[0];
-            String signature = messageAndSignature[1];
-            TokenValidationResponse response = client.validateToken(token, sessionDescriptor.getTenant(), signature, message);
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode tokenNode = objectMapper.createObjectNode();
-
-            if (response.getValid()) {
-                tokenNode.put("message", "Token is Valid!");
-            } else {
-                tokenNode.put("message", "Token is Invalid");
-            }
-
-            return tokenNode;
+            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
+            TokenValidationResponse response = validateToken(client, sessionDescriptor, messageAndSignature);
+            return createResponseNode(response);
         }
+    }
+
+    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(
+                sessionDescriptor,
+                token,
+                sessionDescriptor.getTenant()
+        );
+    }
+
+    private TokenValidationResponse validateToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+        String message = messageAndSignature[0];
+        String signature = messageAndSignature[1];
+        return client.validateToken(token, sessionDescriptor.getTenant(), signature, message);
+    }
+
+    private JsonNode createResponseNode(TokenValidationResponse response) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode tokenNode = objectMapper.createObjectNode();
+        tokenNode.put("message", response.getValid() ? "Token is Valid!" : "Token is Invalid");
+        return tokenNode;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.fortify.cli.aviator._common.util;
 
-import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
 
 
@@ -19,9 +19,8 @@ public class AviatorSignatureUtils {
         return message;
     }
 
-    public static String createSignature(String message, AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier) {
+    public static String createSignature(String message, AviatorAdminSessionDescriptor sessionDescriptor) {
         try {
-            var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
             Path keyFile = Path.of(sessionDescriptor.getPrivateKeyFile());
             String signature = SignatureHelper.signer(keyFile, (char[]) null).sign(message, StandardCharsets.UTF_8);
             return signature;
@@ -30,9 +29,9 @@ public class AviatorSignatureUtils {
         }
     }
 
-    public static String[] createMessageAndSignature(AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier, String... params) {
+    public static String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor, String... params) {
         String message = createMessage(params);
-        String signature = createSignature(message, sessionDescriptorSupplier);
+        String signature = createSignature(message, sessionDescriptor);
         return new String[]{message, signature};
     }
 }

@@ -215,7 +215,7 @@ public class AuditProcessor {
 
             Element issueElement = findIssueElement(instanceId);
 
-            resultsTagId = StringUtil.isEmpty(resultsTagId) ? Constants.AUDITOR_STATUS_TAG_ID:resultsTagId;
+            resultsTagId = StringUtil.isEmpty(resultsTagId) ? Constants.AUDITOR_STATUS_TAG_ID : resultsTagId;
 
             if (response.getTier() != null) {
                 if (issueElement != null) {

@@ -17,21 +17,9 @@ import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +39,7 @@ public class IssueAuditor {
     private final TagDefinition resultsTag;
 
     private List<Vulnerability> vulnerabilities;
-    private final List<UserPrompt> userPrompts;
+    private List<UserPrompt> userPrompts;
     private final AuditProcessor auditProcessor;
     private final Map<String, AuditIssue> auditIssueMap;
     private final FPRInfo fprInfo;
@@ -78,7 +66,7 @@ public class IssueAuditor {
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
         this.isTestMode = isTestMode;
-        this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
+        this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
 
         issuesSentToLLM = new AtomicInteger(0);
@@ -129,8 +117,8 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String appVersion,String projectBuildId, String url) {
-        String projectName = StringUtil.isEmpty(appVersion) ? projectBuildId : appVersion;
+    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName,String projectBuildId, String url) {
+        projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
         aviatorPredictionTag = resolveAviatorPredictionTag();
@@ -165,11 +153,14 @@ public class IssueAuditor {
             throw new RuntimeException(e);
         }
 
+        System.out.println(":::::::::::::: result id "+resultsTag.getId());
+        logger.progress(":::::::::::::: result id "+resultsTag.getId());
         fprInfo.setResultsTag(resultsTag.getId());
         logger.progress("Audit completed");
     }
 
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
+        userPrompts = userPrompts.stream().filter(userPrompt -> shouldInclude(userPrompt)).collect(Collectors.toList());
         Map<String, List<UserPrompt>> issuesByCategory = userPrompts.stream().collect(Collectors.groupingBy(UserPrompt::getCategory));
 
         Map<String, Integer> newIssuesInCategoryCapped = new HashMap<>();
@@ -181,7 +172,8 @@ public class IssueAuditor {
             List<UserPrompt> issues = entry.getValue();
             issues.sort(new IssueOrderingComparator());
 
-            int newIssuesCount = (int) issues.stream().filter(this::shouldInclude).count();
+            issues = issues.stream().filter(issue -> shouldInclude(issue)).collect(Collectors.toList());
+            int newIssuesCount = issues.size();
             int cappedCount = Math.min(MAX_PER_CATEGORY, newIssuesCount);
 
             newIssuesInCategoryCapped.put(category, cappedCount);
@@ -289,12 +281,16 @@ public class IssueAuditor {
         String auditorStatusTag = Constants.AUDITOR_STATUS_TAG_ID;
         Boolean isAuditorStatusPopulated = tags.containsKey(auditorStatusTag) && tags.get(auditorStatusTag).equalsIgnoreCase("Pending Review");
         String aviatorExpectedOutcome = Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID;
+        String analysisTagS = Constants.ANALYSIS_TAG_ID;
 
         if (auditIssueMap.containsKey(issueId)) {
             if (isAuditorStatusPopulated || tags.containsKey(aviatorExpectedOutcome)) {
                 return true;
             }
             if (tags.containsKey(analysisTag.getId()) && !tags.get(analysisTag.getId()).equalsIgnoreCase("Not Set") && !tags.get(analysisTag.getId()).equalsIgnoreCase(Constants.PENDING_REVIEW) && !StringUtil.isEmpty(tags.get(analysisTag.getId()))) {
+                return true;
+            }
+            if (tags.containsKey(analysisTagS) && !tags.get(analysisTagS).equalsIgnoreCase("Not Set") && !StringUtil.isEmpty(tags.get(analysisTagS))) {
                 return true;
             }
         }

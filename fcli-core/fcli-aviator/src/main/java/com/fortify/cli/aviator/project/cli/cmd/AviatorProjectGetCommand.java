@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.aviator.project.Project;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -15,7 +16,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "get")
+@Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class AviatorProjectGetCommand extends AbstractAviatorJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
@@ -25,15 +26,26 @@ public class AviatorProjectGetCommand extends AbstractAviatorJsonNodeOutputComma
     protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier,sessionDescriptor.getTenant(), projectId);
-            String message = messageAndSignature[0];
-            String signature = messageAndSignature[1];
-            Project project = client.getProject(projectId, signature, message, sessionDescriptor.getTenant());
-
+            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
+            Project project = getProject(client, sessionDescriptor, messageAndSignature);
             return AviatorGrpcUtils.grpcToJsonNode(project);
         } catch (Exception e) {
             throw new FcliSimpleException("Failed to retrieve project", e);
         }
+    }
+
+    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(
+                sessionDescriptor,
+                sessionDescriptor.getTenant(),
+                projectId
+        );
+    }
+
+    private Project getProject(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+        String message = messageAndSignature[0];
+        String signature = messageAndSignature[1];
+        return client.getProject(projectId, signature, message, sessionDescriptor.getTenant());
     }
 
     @Override

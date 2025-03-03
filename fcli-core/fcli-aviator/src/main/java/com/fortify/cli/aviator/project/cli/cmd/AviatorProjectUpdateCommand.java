@@ -1,27 +1,23 @@
 package com.fortify.cli.aviator.project.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.project.Project;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "update")
+@Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class AviatorProjectUpdateCommand extends AbstractAviatorJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
@@ -32,15 +28,27 @@ public class AviatorProjectUpdateCommand extends AbstractAviatorJsonNodeOutputCo
     protected JsonNode getJsonNodeInternal() {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = AviatorSignatureUtils.createMessageAndSignature(sessionDescriptorSupplier,sessionDescriptor.getTenant(), projectId, newName);
-            String message = messageAndSignature[0];
-            String signature = messageAndSignature[1];
-            Project updatedProject = client.updateProject(projectId, newName, signature, message, sessionDescriptor.getTenant());
-
+            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
+            Project updatedProject = updateProject(client, sessionDescriptor, messageAndSignature);
             return AviatorGrpcUtils.grpcToJsonNode(updatedProject);
         } catch (Exception e) {
             throw new FcliSimpleException("Failed to update project", e);
         }
+    }
+
+    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(
+                sessionDescriptor,
+                sessionDescriptor.getTenant(),
+                projectId,
+                newName
+        );
+    }
+
+    private Project updateProject(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+        String message = messageAndSignature[0];
+        String signature = messageAndSignature[1];
+        return client.updateProject(projectId, newName, signature, message, sessionDescriptor.getTenant());
     }
 
     @Override
