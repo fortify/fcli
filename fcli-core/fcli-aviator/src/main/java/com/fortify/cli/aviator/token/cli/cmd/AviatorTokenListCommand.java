@@ -3,7 +3,7 @@ package com.fortify.cli.aviator.token.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
@@ -26,19 +26,17 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class AviatorTokenListCommand extends AbstractAviatorJsonNodeOutputCommand {
+public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-p", "--page-size"}, defaultValue = "10") private int pageSize;
     @Option(names = {"--all-pages"}, defaultValue = "false", description = "Fetch all pages automatically (non-interactive)")
     private boolean fetchAllPages;
-    @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenListCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     @Override
-    protected JsonNode getJsonNodeInternal() {
-        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             ArrayNode tokensArray = fetchAllTokens(client, sessionDescriptor);
             logTokenCount(tokensArray.size());

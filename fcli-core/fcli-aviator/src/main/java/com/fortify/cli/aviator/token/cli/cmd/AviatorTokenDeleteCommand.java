@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -19,15 +18,13 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
-public class AviatorTokenDeleteCommand extends AbstractAviatorJsonNodeOutputCommand {
+public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"--token"}, required = true) private String token;
-    @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
 
     @Override
-    protected JsonNode getJsonNodeInternal() {
-        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             DeleteTokenResponse response = deleteToken(client, sessionDescriptor, messageAndSignature);

@@ -2,8 +2,7 @@ package com.fortify.cli.aviator.project.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.aviator.project.Project;
-import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -18,15 +17,13 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
-public class AviatorProjectUpdateCommand extends AbstractAviatorJsonNodeOutputCommand {
+public class AviatorProjectUpdateCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
     @Parameters(index = "0", description = "Project ID") private String projectId;
     @Option(names = {"-n", "--name"}, required = true) private String newName;
 
     @Override
-    protected JsonNode getJsonNodeInternal() {
-        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             Project updatedProject = updateProject(client, sessionDescriptor, messageAndSignature);

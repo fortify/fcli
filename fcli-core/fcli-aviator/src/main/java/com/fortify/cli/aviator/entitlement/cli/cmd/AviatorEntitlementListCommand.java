@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.entitlement.Entitlement;
-import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
@@ -22,14 +22,12 @@ import picocli.CommandLine.Mixin;
 import java.util.List;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class AviatorEntitlementListCommand extends AbstractAviatorJsonNodeOutputCommand {
+public class AviatorEntitlementListCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorEntitlementListCommand.class);
 
     @Override
-    protected JsonNode getJsonNodeInternal() {
-        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             List<Entitlement> entitlements = fetchEntitlements(client, sessionDescriptor, messageAndSignature);

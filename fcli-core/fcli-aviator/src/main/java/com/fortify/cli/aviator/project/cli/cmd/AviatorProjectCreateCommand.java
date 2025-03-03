@@ -1,10 +1,8 @@
 package com.fortify.cli.aviator.project.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.aviator.entitlement.Entitlement;
 import com.fortify.aviator.project.Project;
-import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorJsonNodeOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.cli.mixin.AviatorAdminSessionDescriptorSupplier;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -13,24 +11,17 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import java.util.List;
-
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class AviatorProjectCreateCommand extends AbstractAviatorJsonNodeOutputCommand {
+public class AviatorProjectCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
-    @Mixin private AviatorAdminSessionDescriptorSupplier sessionDescriptorSupplier;
     @Option(names = {"-n", "--name"}, required = true) private String projectName;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorProjectCreateCommand.class);
 
     @Override
-    protected JsonNode getJsonNodeInternal() {
-        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             Project createdProject = createProject(client, sessionDescriptor, messageAndSignature);
