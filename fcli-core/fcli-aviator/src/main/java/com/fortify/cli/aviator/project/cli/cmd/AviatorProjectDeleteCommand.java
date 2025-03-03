@@ -17,7 +17,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "delete")
+@Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class AviatorProjectDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Parameters(index = "0", description = "Project ID") private String projectId;

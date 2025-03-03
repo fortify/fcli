@@ -41,7 +41,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
-    @Option(names = {"-n", "--name"}, required = false) private String projectName;
+    @Option(names = {"-p", "--project"}, required = false) private String projectName;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
