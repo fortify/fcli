@@ -17,9 +17,6 @@
           "type" : "string",
           "description" : "Optional string: Allows for defining groups of parameters, which can for example be used with ${#action.copyParametersFromGroup(\"optionGroupName\")}\n"
         },
-        "key" : {
-          "type" : "string"
-        },
         "names" : {
           "type" : "string",
           "description" : "Required string: The option names allowed on the command line to specify a value for this option. Multi-letter option names should be preceded by double dashes like --option-name, single-letter option names should be preceded by a single dash like-o. Multiple option names may be separated by a comma and optional whitespace, for example:\noptions: --option, -o\n"
@@ -133,7 +130,7 @@
           "additionalProperties" : {
             "$ref" : "#/$defs/ActionStepRunFcliEntry"
           },
-          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx_stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx_stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx_exitCode: Exit code of the fcli invocation\nx_exception: Java Exception instance if fcli invocation threw an exception\n"
+          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n"
         },
         "steps" : {
           "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
@@ -533,11 +530,6 @@
         "rest.target.default" : {
           "type" : "string",
           "description" : "Optional string: Default target to use for rest.call steps.\n"
-        },
-        "session.from-env.output" : {
-          "type" : "string",
-          "enum" : [ "show", "suppress" ],
-          "description" : "Optional enum value: Whether to 'suppress' (default) or 'show' the output of the session login and logout commands when a session is created through --session from-env\n"
         }
       },
       "additionalProperties" : false,
