@@ -88,22 +88,61 @@ public final class FortifyCLIStaticInitializer {
     }
     
     private void initializeTrustStore() {
+        String trustStorePropertyKey = "javax.net.ssl.trustStore";
+        String trustStoreTypePropertyKey = "javax.net.ssl.trustStoreType";
+        String trustStorePasswordPropertyKey = "javax.net.ssl.trustStorePassword";
+
         // First clear existing configuration
-        System.clearProperty("javax.net.ssl.trustStore");
-        System.clearProperty("avax.net.ssl.trustStorePassword");
+        System.clearProperty(trustStorePropertyKey);
+        System.clearProperty(trustStoreTypePropertyKey);
+        System.clearProperty(trustStorePasswordPropertyKey);
         TrustStoreConfigDescriptor descriptor = TrustStoreConfigHelper.getTrustStoreConfig();
-        if ( descriptor!=null && StringUtils.isNotBlank(descriptor.getPath()) ) {
-            Path absolutePath = Path.of(descriptor.getPath()).toAbsolutePath();
-            if ( !Files.exists(absolutePath) ) {
-                log.warn("WARN: Trust store cannot be found: "+absolutePath);
-            }
-            System.setProperty("javax.net.ssl.trustStore", descriptor.getPath());
-            if ( StringUtils.isNotBlank(descriptor.getType()) ) {
-                System.setProperty("javax.net.ssl.trustStoreType", descriptor.getType());
-            }
-            if ( StringUtils.isNotBlank(descriptor.getPassword()) ) {
-                System.setProperty("javax.net.ssl.trustStorePassword", descriptor.getPassword());
-            }
+        if (descriptor != null && StringUtils.isNotBlank(descriptor.getPath())) {
+            initializeTrustStoreFromConfig(descriptor, trustStorePropertyKey, trustStoreTypePropertyKey,
+                    trustStorePasswordPropertyKey);
+        } else {
+            initializeTrustStoreFromEnv(trustStorePropertyKey, trustStoreTypePropertyKey,
+                    trustStorePasswordPropertyKey);
+        }
+    }
+
+    private void initializeTrustStoreFromEnv(String trustStorePropertyKey, String trustStoreTypePropertyKey,
+            String trustStorePasswordPropertyKey) {
+        String trustStorePath = System.getenv("FCLI_TRUSTSTORE");
+        if (null != trustStorePath && Files.exists(Path.of(trustStorePath))) {
+            System.setProperty(trustStorePropertyKey, trustStorePath);
+            String fileName = Paths.get(trustStorePath).getFileName().toString();
+            int lastIndexOf = fileName.lastIndexOf(".");
+            String trustStoreType = "jks";
+            if (lastIndexOf > 0) {
+                String fileExtension = fileName.substring(lastIndexOf + 1);
+                if (fileExtension.equals("jks") || fileExtension.equals("p12") || fileExtension.equals("pfs"))
+                    trustStoreType = fileExtension;
+            } else if (null != System.getenv("FCLI_TRUSTSTORE_TYPE"))
+                trustStoreType = System.getenv("FCLI_TRUSTSTORE_TYPE");
+            System.setProperty(trustStoreTypePropertyKey, trustStoreType);
+
+            String trustStorePwd = "changeit";
+            if (null != System.getenv("FCLI_TRUSTSTORE_PWD"))
+                trustStorePwd = System.getenv("FCLI_TRUSTSTORE_PWD");
+            System.setProperty(trustStorePasswordPropertyKey, trustStorePwd);
+        } else {
+                log.warn("WARN: Either Trust store not defined or cannot be found at: " + trustStorePath);
+        }
+    }
+
+    private void initializeTrustStoreFromConfig(TrustStoreConfigDescriptor descriptor, String trustStorePropertyKey,
+            String trustStoreTypePropertyKey, String trustStorePasswordPropertyKey) {
+        Path absolutePath = Path.of(descriptor.getPath()).toAbsolutePath();
+        if (!Files.exists(absolutePath)) {
+            log.warn("WARN: Trust store cannot be found: " + absolutePath);
+        }
+        System.setProperty(trustStorePropertyKey, descriptor.getPath());
+        if (StringUtils.isNotBlank(descriptor.getType())) {
+            System.setProperty(trustStoreTypePropertyKey, descriptor.getType());
+        }
+        if (StringUtils.isNotBlank(descriptor.getPassword())) {
+            System.setProperty(trustStorePasswordPropertyKey, descriptor.getPassword());
         }
     }
     
