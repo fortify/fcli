@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.runner.processor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -29,6 +30,7 @@ import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
@@ -45,8 +47,9 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     
     @Override
     protected final void process(String name, ActionStepRunFcliEntry entry) {
+        if ( isSkipped(entry) ) { return; }
         var cmd = vars.eval(entry.getCmd(), String.class);
-        ctx.getProgressWriter().writeProgress("Executing fcli %s", cmd);
+        ctx.getProgressWriter().writeProgress("Executing fcli %s", cmd.replaceAll("^fcli ", ""));
         var recordConsumer = createFcliRecordConsumer(entry);
         var stdoutOutputType = getFcliOutputTypeOrDefault(entry.getStdoutOutputType(), recordConsumer==null ? OutputType.show : OutputType.suppress );
         var stderrOutputType = getFcliOutputTypeOrDefault(entry.getStderrOutputType(), OutputType.show );
@@ -67,6 +70,28 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
             throw new FcliActionValidationException("Can't use records.for-each on fcli command: "+cmd);
         }
         cmdExecutor.execute();
+    }
+
+    private final boolean isSkipped(ActionStepRunFcliEntry entry) {
+        var skipIf = entry.getSkipIf();
+        if ( skipIf==null ) { return false; }
+        var skipMessageExpression = skipIf.entrySet().stream()
+            .filter(this::isSkipped)
+            .findFirst()
+            .map(Map.Entry::getValue)
+            .orElse(null);
+        if ( skipMessageExpression!=null ) {
+            var skipMessage = vars.eval(skipMessageExpression, String.class);
+            var fullSkipMessage = String.format("SKIPPED: %s: %s", entry.getKey(), skipMessage.trim());
+            LOG.debug(fullSkipMessage);
+            ctx.getStdout().println(fullSkipMessage);
+            return true;
+        }
+        return false;
+    }
+    
+    private final boolean isSkipped(Map.Entry<TemplateExpression, TemplateExpression> entry) {
+        return vars.eval(entry.getKey(), Boolean.class);
     }
 
     private void onFcliSuccess(ActionStepRunFcliEntry fcli) {

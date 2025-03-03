@@ -13,12 +13,13 @@
 package com.fortify.cli.common.action.model;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
@@ -45,6 +46,14 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
     public ActionStepRunFcliEntry(TemplateExpression cmd) {
         this.cmd = cmd;
     }
+    
+    @JsonPropertyDescription("""
+        Optional map of SpEL template expression: Define conditions under which
+        this fcli invocation should be skipped. Map keys should evaluate to either
+        'true' (fcli invocation will be skipped) or 'false', map values define the
+        skip reason message.
+        """)
+    @JsonProperty(value = "skip.if", required = false) private LinkedHashMap<TemplateExpression,TemplateExpression> skipIf;
     
     @JsonPropertyDescription("""
         Required SpEL template expression: The fcli command to run. This can be \

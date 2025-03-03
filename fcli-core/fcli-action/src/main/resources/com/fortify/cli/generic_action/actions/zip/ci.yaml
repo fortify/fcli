@@ -2,21 +2,62 @@
 
 author: Fortify
 usage:
-  header: Run CI pipeline
+  header: (PREVIEW) Run CI pipeline
   description: |
-    (Work in progress)
     This action can be used to run a full, standardized CI pipeline that performs the
     following activities:
     - Create & configure SSC application version / FoD release if needed
-    - Package source code
+    - Install ScanCentral Client for packaging
+    - Package source code using ScanCentral Client
     - Submit SAST scan request
     - Wait for SAST scan completion
-    - Perform post-scan activities, like checking policy outcome, exporting results, ...
+    - Perform post-scan activities, like checking security policy outcome, 
+      exporting results, ...
+    
+    Configuration for this fcli action is done through environment variables; the
+    sections below list the environment variables supported by this top-level 'ci'
+    action. Based on provided configuration, this top-level `ci` action will run
+    either `fcli fod action run ci` or `fcli ssc action run ci`; please see the
+    documentation for these product-specific `ci` actions for a list of environment
+    variables supported by them. 
+        
+    === Fortify on Demand
+    
+    ==== FOD_URL
+    URL for the FoD instance to use.
+      
+    ==== FOD_TENANT, FOD_USER, FOD_PASSWORD
+    Authenticate with tenant and user credentials.
+      
+    ==== FOD_CLIENT_ID, FOD_CLIENT_SECRET
+    Authenticate with an FoD API key.
+      
+    ==== FOD_LOGIN_EXTRA_OPTS:
+    Optional extra options to pass to the `fcli fod session login` command.
+    
+    === Fortify Software Security Center
+    
+    ==== SSC_URL
+    URL for the SSC instance to use.
+      
+    ==== SSC_USER, SSC_PASSWORD
+    Authenticate with user credentials.
+      
+    ==== SSC_TOKEN
+    Authenticate with pre-generated SSC token.
+      
+    ==== SC_SAST_TOKEN
+    ScanCentral SAST client-auth-token.
+      
+    ==== SSC_LOGIN_EXTRA_OPTS
+    Optional extra options to pass to the `fcli ssc session login` command 
 
 config:
   output: immediate
   
 steps:
+  # Determine whether we need to run FoD or SSC scan, throwing exceptions if
+  # either none or both are specified.
   - var.set:
       run.fod_ci: ${#isNotBlank(#env('FOD_URL'))}
       run.ssc_ci: ${#isNotBlank(#env('SSC_URL'))}
@@ -24,16 +65,19 @@ steps:
     throw: Either FOD_URL or SSC_URL environment variable needs to be set
   - if: ${run.fod_ci && run.ssc_ci}
     throw: Only one of FOD_URL or SSC_URL environment variables may be set
+  # Define FoD session options
   - if: ${run.fod_ci}
     var.set:
       module: fod
       loginOpts: --url=FOD_URL -t=FOD_TENANT -u=FOD_USER -p=FOD_PASSWORD --client-id=FOD_CLIENT_ID --client-secret=FOD_CLIENT_SECRET
       logoutOpts: ""
+  # Define SSC session options    
   - if: ${run.ssc_ci}
     var.set:
       module: ssc
       loginOpts: --url=SSC_URL -u=SSC_USER -p=SSC_PASSWORD -t=SSC_TOKEN -c=SC_SAST_TOKEN
       logoutOpts: -u=SSC_USER -p=SSC_PASSWORD
+  # Define some common variables, based on the above
   - var.set:
       sessionName: ci-${#uuid()}
       loginCmd: fcli ${module} session login
@@ -42,6 +86,8 @@ steps:
       loginEnvPrefix: ${moduleUpperCase}_LOGIN
       logoutEnvPrefix: ${moduleUpperCase}_LOGOUT
       ciEnvPrefix: ${moduleUpperCase}_CI
+  # Run the 'fcli <module> action run ci' command within the context of a
+  # new, module-specific session.
   - with:
       sessions:
         - login: ${#fcliCmd(loginEnvPrefix, loginCmd)} --${module}-session ${sessionName} ${#optsFromEnv(loginOpts)}

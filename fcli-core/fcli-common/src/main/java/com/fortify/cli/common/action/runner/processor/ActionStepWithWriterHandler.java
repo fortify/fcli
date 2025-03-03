@@ -20,7 +20,7 @@ import com.fortify.cli.common.action.model.ActionStepWith;
 import com.fortify.cli.common.action.model.ActionStepWithWriter;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
-import com.fortify.cli.common.action.runner.processor.writer.ActionStepWriterFactory;
+import com.fortify.cli.common.action.runner.processor.writer.ActionStepRecordWriterFactory;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class ActionStepWithWriterHandler implements IActionStepWithHandler {
 
     @Override
     public final void doBefore() {
-        ctx.getWriters().put(id, ActionStepWriterFactory.createWriter(ctx, vars, withWriter));
+        ctx.getWriters().put(id, ActionStepRecordWriterFactory.createWriter(ctx, vars, withWriter));
         vars.set(String.format("%s.count", id), new IntNode(0));
     }
     

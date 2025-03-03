@@ -54,7 +54,7 @@ class SCSastScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it[0].replace(' ', '').equals("HostnameScaversion")
+                it[0].replace(' ', '').equals("hostNamescaVersion")
             }
     }
 	

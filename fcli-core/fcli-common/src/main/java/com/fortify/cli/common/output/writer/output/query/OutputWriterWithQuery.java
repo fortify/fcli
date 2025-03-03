@@ -13,7 +13,6 @@
 package com.fortify.cli.common.output.writer.output.query;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputWriterWithQueryFactoryMixin;
 import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
@@ -41,7 +40,7 @@ public class OutputWriterWithQuery extends StandardOutputWriter {
     }
     
     @Override
-    protected JsonNode applyRecordOutputFilters(OutputFormat outputFormat, JsonNode record) {
+    protected JsonNode applyRecordOutputFilters(JsonNode record) {
         QueryExpression queryExpression = queryExpressionSupplier.getQueryExpression();
         return queryExpression==null || queryExpression.matches(record)
                 ? record : null;

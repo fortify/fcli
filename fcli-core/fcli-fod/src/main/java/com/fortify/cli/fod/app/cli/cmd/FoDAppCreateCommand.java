@@ -16,7 +16,11 @@ import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_
 
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -43,6 +47,7 @@ import picocli.CommandLine.Spec;
 
 @CommandLine.Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+    private static final Logger LOG = LoggerFactory.getLogger(FoDAppCreateCommand.class);
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
 
@@ -51,13 +56,15 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
 
     @Option(names = {"--description", "-d"})
     protected String description;
+    @Option(names={"--skip-if-exists"})
+    private boolean skipIfExists = false;
     @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
     protected ArrayList<String> notifications;
     @Mixin private FoDMicroserviceAndReleaseNameResolverMixin.RequiredOption releaseNameResolverMixin;
     @Option(names = {"--release-description"})
     protected String releaseDescription;
-    @Option(names = {"--owner"}, required = true)
+    @Option(names = {"--owner"}, required = false)
     protected String owner;
     @Option(names = {"--groups"}, required = false, split=",")
     protected ArrayList<String> userGroups;
@@ -75,8 +82,17 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        boolean msCreated = false;
+        boolean relCreated = false;
+        if (skipIfExists) {
+            var descriptor = FoDAppHelper.getAppDescriptor(unirest, applicationName, false);
+            if (descriptor != null) {
+                return addActionCommandResult(descriptor.asObjectNode(), false, false, false);
+            }
+        }
         var releaseNameDescriptor = releaseNameResolverMixin.getMicroserviceAndReleaseNameDescriptor();
         var microserviceName = releaseNameDescriptor.getMicroserviceName();
+        var releaseName = releaseNameDescriptor.getMicroserviceName();
         validateMicroserviceName(microserviceName);
         FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
                 .applicationName(applicationName)
@@ -91,7 +107,10 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .autoAttributes(unirest, appAttrs.getAttributes(), autoRequiredAttrs)
                 .userGroups(unirest, userGroups)
                 .build().validate();
-        return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
+        msCreated = (microserviceName != null && StringUtils.isNotBlank(microserviceName));
+        relCreated = (releaseName != null && StringUtils.isNotBlank(releaseName));
+        var app = FoDAppHelper.createApp(unirest, appCreateRequest);
+        return addActionCommandResult(app.asObjectNode(), true, msCreated, relCreated);
     }
 
     protected void validateMicroserviceName(String microserviceName) {
@@ -119,6 +138,19 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Override
     public boolean isSingular() {
         return true;
+    }
+
+    private final ObjectNode addActionCommandResult(ObjectNode rel, boolean appCreated, boolean msCreated, boolean relCreated) {
+        var result = new ArrayList<String>();
+        addActionCommandResult(result, appCreated, "APP_CREATED");
+        addActionCommandResult(result, msCreated,  "MICROSERVICE_CREATED");
+        addActionCommandResult(result, relCreated, "RELEASE_CREATED");
+        if ( result.isEmpty() ) { result.add("SKIPPED_EXISTING"); }
+        return rel.put(IActionCommandResultSupplier.actionFieldName, String.join("\n", result));
+    }
+    
+    private final void addActionCommandResult(ArrayList<String> result, boolean add, String value) {
+        if ( add ) { result.add(value); }
     }
 
 }

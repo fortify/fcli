@@ -12,8 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.license.msp_report.writer;
 
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector.MspReportProcessedScanDescriptor;
 
@@ -23,23 +23,23 @@ public final class MspReportScansWriter implements IMspReportScansWriter {
     private final IRecordWriter scansConsumingEntitlementWriter;
     
     public MspReportScansWriter(IReportWriter reportWriter) {
-        this.processedArtifactsWriter = reportWriter.recordWriter(OutputFormat.csv, "details/scans.csv", false, null);
-        this.scansInReportingPeriodWriter = reportWriter.recordWriter(OutputFormat.csv, "details/scans-in-reporting-period.csv", false, null);
-        this.scansConsumingEntitlementWriter = reportWriter.recordWriter(OutputFormat.csv, "details/scans-consuming-entitlements.csv", false, null);
+        this.processedArtifactsWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/scans.csv", false, null);
+        this.scansInReportingPeriodWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/scans-in-reporting-period.csv", false, null);
+        this.scansConsumingEntitlementWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/scans-consuming-entitlements.csv", false, null);
     }
     
     @Override
     public void writeProcessed(MspReportProcessedScanDescriptor descriptor) {
-        processedArtifactsWriter.writeRecord(descriptor.getReportNode());
+        processedArtifactsWriter.append(descriptor.getReportNode());
     }
     
     @Override
     public void writeInReportingPeriod(MspReportProcessedScanDescriptor descriptor) {
-        scansInReportingPeriodWriter.writeRecord(descriptor.getReportNode());
+        scansInReportingPeriodWriter.append(descriptor.getReportNode());
     }
     
     @Override
     public void writeEntitlementConsuming(MspReportProcessedScanDescriptor descriptor) {
-        scansConsumingEntitlementWriter.writeRecord(descriptor.getReportNode());
+        scansConsumingEntitlementWriter.append(descriptor.getReportNode());
     }
 }

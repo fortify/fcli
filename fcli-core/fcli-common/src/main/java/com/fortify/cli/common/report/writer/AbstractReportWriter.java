@@ -22,10 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.IMessageResolver;
+import com.fortify.cli.common.output.writer.output.OutputRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
-import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
+import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -50,7 +52,7 @@ public abstract class AbstractReportWriter implements IReportWriter {
     public AbstractReportWriter(String outputPathName, IMessageResolver messageResolver) {
         this.absoluteOutputPath = Path.of(outputPathName).toAbsolutePath();
         this.messageResolver = messageResolver;
-        this.summaryWriter = recordWriter(OutputFormat.yaml, "summary.txt", true, null);
+        this.summaryWriter = recordWriter(RecordWriterFactory.yaml, "summary.txt", true, null);
         this.summary = JsonHelper.getObjectMapper().createObjectNode();
     }
     
@@ -64,8 +66,8 @@ public abstract class AbstractReportWriter implements IReportWriter {
     }
     
     @Override
-    public IRecordWriter recordWriter(OutputFormat format, String fileName, boolean singular, String options) {
-        return recordWriters.computeIfAbsent(fileName, f->newRecordWriter(format, fileName, singular, options));
+    public IRecordWriter recordWriter(RecordWriterFactory recordWriterFactory, String fileName, boolean singular, String recordWriterArgs) {
+        return recordWriters.computeIfAbsent(fileName, f->newRecordWriter(recordWriterFactory, fileName, singular, recordWriterArgs));
     }
 
     @Override @SneakyThrows
@@ -86,17 +88,17 @@ public abstract class AbstractReportWriter implements IReportWriter {
         closeReport();
     }
     
-    private IRecordWriter newRecordWriter(OutputFormat format, String fileName, boolean singular, String options) {
-        var config = RecordWriterConfig.builder()
+    private IRecordWriter newRecordWriter(RecordWriterFactory recordWriterFactory, String fileName, boolean singular, String recordWriterArgs) {
+        var outputRecordWriterFactory = OutputRecordWriterFactory.builder()
                 .addActionColumn(false)
                 .messageResolver(messageResolver)
-                .options(options)
-                .outputFormat(format)
-                .pretty(true)
+                .recordWriterArgs(recordWriterArgs)
+                .recordWriterFactory(recordWriterFactory)
+                .recordWriterStyle(RecordWriterStyle.apply(RecordWriterStyleElement.pretty))
                 .singular(singular)
-                .writer(bufferedWriter(fileName))
+                .writerSupplier(()->bufferedWriter(fileName))
                 .build();
-        return format.getRecordWriterFactory().createRecordWriter(config);
+        return outputRecordWriterFactory.createRecordWriter();
     }
     
     @SneakyThrows
@@ -106,7 +108,7 @@ public abstract class AbstractReportWriter implements IReportWriter {
     
     @SneakyThrows
     private void writeSummary() {
-        summaryWriter.writeRecord(summary);
+        summaryWriter.append(summary);
     }
     
     @SneakyThrows

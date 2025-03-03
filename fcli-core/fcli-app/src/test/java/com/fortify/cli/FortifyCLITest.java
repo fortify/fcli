@@ -82,14 +82,14 @@ public class FortifyCLITest {
     }
 
     private void checkLeafCommand(Results results, CommandSpec spec) {
-        checkDefaultTableOptionsPresent(results, spec);
+        checkDefaultTableArgsPresent(results, spec);
     }
     
-    private void checkDefaultTableOptionsPresent(Results results, CommandSpec spec) {
+    private void checkDefaultTableArgsPresent(Results results, CommandSpec spec) {
         if ( spec.mixins().containsKey("outputHelper") ) {
-            var tableOptions = new CommandSpecMessageResolver(spec).getMessageString("output.table.options");
+            var tableOptions = new CommandSpecMessageResolver(spec).getMessageString("output.table.args");
             if ( StringUtils.isBlank(tableOptions) ) {
-                results.add(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT, Level.ERROR, spec, getBundleName(spec)+": No *.output.table.options defined to specify default table output columns");
+                results.add(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT, Level.ERROR, spec, getBundleName(spec)+": No *.output.table.args defined to specify default table output columns");
             }
         }
     }

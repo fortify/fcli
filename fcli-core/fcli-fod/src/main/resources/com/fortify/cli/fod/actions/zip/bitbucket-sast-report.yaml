@@ -34,8 +34,6 @@ steps:
           annotations:
             to: ${cli['annotations-file']}
             type: json
-            options:
-              pretty: true
         do:
           - rest.call:
               issues:

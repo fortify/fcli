@@ -75,9 +75,11 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     private void validateScanSetup(UnirestInstance unirest, String relId) {
         // get current setup and check if its valid
         FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
-        if (currentSetup.getEntitlementId() == null || currentSetup.getEntitlementId() <= 0) {
-            throw new FcliSimpleException("The static scan configuration for release with id '" + relId +
-                    "' has not been setup correctly - 'Entitlement' is missing or empty.");
+        if (validateEntitlement) {
+            if (currentSetup.getEntitlementId() == null || currentSetup.getEntitlementId() <= 0) {
+                throw new FcliSimpleException("The static scan configuration for release with id '" + relId +
+                        "' has not been setup correctly - 'Entitlement' is missing or empty.");
+            }
         }
         if (StringUtils.isBlank(currentSetup.getTechnologyStack())) {
             throw new FcliSimpleException("The static scan configuration for release with id '" + relId +

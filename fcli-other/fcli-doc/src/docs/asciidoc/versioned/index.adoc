@@ -506,8 +506,9 @@ Fci comes with various built-in actions, currently focused on providing the foll
 
 Documentation for built-in actions can be found here:
 
-* link:fod-actions.html[FoD built-in actions documentation]
-* link:ssc-actions.html[SSC built-in actions documentation]
+* link:generic-actions.html[Documentation for `fcli action` built-in actions]
+* link:fod-actions.html[Documentation for `fcli fod action` built-in actions]
+* link:ssc-actions.html[Documentation for `fcli ssc action` built-in actions]
 
 Future fcli versions may introduce new built-in actions, enhance existing built-in actions, or provide enhanced action syntax, for example to allow for running pipeline-style actions that run a set of commands to package source code, submit a scan request, wait for scan completion, and perform post-scan activities like data export or policy checks.
 

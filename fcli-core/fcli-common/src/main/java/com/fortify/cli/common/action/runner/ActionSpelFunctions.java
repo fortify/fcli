@@ -21,9 +21,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,12 +37,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
 import org.jsoup.safety.Safelist;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.EnvHelper;
@@ -49,11 +53,12 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 public class ActionSpelFunctions {
-    private static final Logger LOG = LoggerFactory.getLogger(ActionSpelFunctions.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(ActionSpelFunctions.class);
     private static final String CODE_START = "\n===== CODE START =====\n";
     private static final String CODE_END   = "\n===== CODE END =====\n";
     private static final Pattern CODE_PATTERN = Pattern.compile(String.format("%s(.*?)%s", CODE_START, CODE_END), Pattern.DOTALL);
     private static final Pattern uriPartsPattern = Pattern.compile("^(?<serverUrl>(?:(?<protocol>[A-Za-z]+):)?(\\/{0,3})(?<host>[0-9.\\-A-Za-z]+)(?::(?<port>\\d+))?)(?<path>\\/(?<relativePath>[^?#]*))?(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$");
+    private static final Map<String,Set<String>> builtinActionNamesByModule = new HashMap<>();
     
     public static final String resolveAgainstCurrentWorkDir(String path) {
         return Path.of(".").resolve(path).toAbsolutePath().normalize().toString();
@@ -303,6 +308,28 @@ public class ActionSpelFunctions {
                 extraOpts(envPrefix));
     }
     
+    /**
+     * If a custom action has been configured through _ACTION env var, this method returns true.
+     * If no custom action has been configured, this method checks whether a built-in action
+     * exists with the given name.
+     */
+    public static final boolean hasAction(String envPrefix, String moduleName, String actionName) {
+        var envValue = _envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", null);
+        return StringUtils.isNotBlank(envValue) ? true : _hasBuiltInAction(moduleName, actionName);
+    }
+    
+    private static boolean _hasBuiltInAction(String moduleName, String actionName) {
+        return builtinActionNamesByModule
+                .computeIfAbsent(moduleName, ActionSpelFunctions::_getBuiltinActionNames)
+                .contains(actionName);
+    }
+    
+    private static final Set<String> _getBuiltinActionNames(String moduleName) {
+        return ActionLoaderHelper
+                    .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
+                    .collect(Collectors.toSet());
+    }
+
     public static final String fcliCmd(String envPrefix, String cmd) {
         return String.format("%s %s",
                 cmd,
@@ -345,14 +372,6 @@ public class ActionSpelFunctions {
         var envName = String.format("%s_%s", prefix, suffix).toUpperCase().replace('-', '_');
         var envValue = EnvHelper.env(envName);
         return StringUtils.isNotBlank(envValue) ? envValue : defaultValue; 
-    }
-    
-    public static final boolean skipIf(boolean skip, String skipMessage) {
-        if ( skip ) {
-            LOG.debug("SKIPPED: {}", skipMessage);
-            System.out.println("SKIPPED: "+skipMessage);
-        }
-        return !skip;
     }
     
     public static final ArrayNode properties(ObjectNode o) {

@@ -17,6 +17,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -45,21 +48,28 @@ public final class ActionStepWithWriter implements IActionElement {
     @JsonProperty(value = "to", required = true) private TemplateExpression to;
     
     @JsonPropertyDescription("""
-        Required SpEL template expression defining the writer type.
-        
-        TODO
+        Required SpEL template expression defining the writer type. The evaluated \
+        expression must evaluate to one of the following types:
         """)
+    @JsonPropertyDescriptionAppend(RecordWriterFactory.class)
     @JsonProperty(value = "type", required = true) private TemplateExpression type;
     
     @JsonPropertyDescription("""
-        Required SpEL template expression defining the writer type.
+        Optional SpEL template expression defining arguments for the given writer type. \
+        In most cases, it's much easier to just pass an already formatted object to \
+        the 'writer.append' step; this 'type-args' instruction is just meant to provide \
+        feature parity with the fcli '--output type=args' command line option. See \
+        fcli documentation for details on supported options for the various writer types.
         """)
-    @JsonProperty(value = "style", required = true) private TemplateExpression style;
+    @JsonProperty(value = "type-args", required = false) private TemplateExpression typeArgs;
     
     @JsonPropertyDescription("""
-        TODO
+        Optional SpEL template expression defining the writer style. If specified, \
+        the expression should evaluate to a comma-separated list of style elements \
+        to be applied to the output. Supported style elements:
         """)
-    @JsonProperty(value = "options", required = false) private TemplateExpression options;
+    @JsonPropertyDescriptionAppend(RecordWriterStyle.RecordWriterStyleElement.class)
+    @JsonProperty(value = "style", required = false) private TemplateExpression style;
     
     @Override
     public void postLoad(Action action) {

@@ -18,6 +18,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
@@ -30,9 +31,11 @@ import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
 import com.github.victools.jsonschema.generator.CustomDefinition;
+import com.github.victools.jsonschema.generator.MemberScope;
 import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
 import com.github.victools.jsonschema.generator.SchemaGenerationContext;
@@ -118,7 +121,7 @@ public class GenerateActionSchema {
 
     private static final SchemaGeneratorConfig createGeneratorConfig() {
         SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-        JacksonModule jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
+        JacksonModule jacksonModule = new CustomizedJacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
         configBuilder.forTypesInGeneral().withCustomDefinitionProvider((type, context) -> {
             if (type.getErasedType() == TemplateExpression.class) {
                 var custom = createTemplateExpressionDefinition(context);
@@ -188,5 +191,26 @@ public class GenerateActionSchema {
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NUMBER))
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NULL));
         return custom;
+    }
+    
+    private static final class CustomizedJacksonModule extends JacksonModule {
+        public CustomizedJacksonModule(JacksonOption... options) {
+            super(options);
+        }
+        
+        @Override
+        protected String resolveDescription(MemberScope<?, ?> member) {
+            var appendAnnotation = member.getAnnotationConsideringFieldAndGetterIfSupported(JsonPropertyDescriptionAppend.class);
+            var result = super.resolveDescription(member);
+            if ( result!=null && appendAnnotation!=null ) {
+                var clazz = appendAnnotation.value();
+                var values = new ArrayList<String>(); 
+                for (var e : clazz.getEnumConstants()) {
+                    values.add(e.toString());
+                }
+                result += String.join(", ", values);
+            }
+            return result;
+        }
     }
 }

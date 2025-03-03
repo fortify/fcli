@@ -64,8 +64,10 @@ public class ToolUninstaller {
     }
     
     public static final void deleteAllPending() {
-        var deleteOnStartArray = FcliDataHelper.readFile(deleteOnStartPath, ArrayNode.class, false);
-        if ( deleteOnStartArray!=null ) {
+        if ( !FcliDataHelper.exists(deleteOnStartPath) ) {
+            LOG.debug("{} not found; not deleting any files on start", deleteOnStartPath);
+        } else {
+            var deleteOnStartArray = FcliDataHelper.readFile(deleteOnStartPath, ArrayNode.class, true);
             var failingDirsArray = JsonHelper.stream(deleteOnStartArray)
                     .map(ToolUninstaller::deletePending)
                     .filter(Objects::nonNull)

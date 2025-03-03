@@ -24,11 +24,15 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @CommandGroup("*-scan-start")
 public abstract class AbstractFoDScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
+
+    @Option(names = {"--validate-entitlement"})
+    public final Boolean validateEntitlement = false;
 
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {

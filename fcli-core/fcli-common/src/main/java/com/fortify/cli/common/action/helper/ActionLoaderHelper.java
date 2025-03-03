@@ -86,6 +86,10 @@ public class ActionLoaderHelper {
         return _stream(sources, actionValidationHandler, ActionLoadResult::getSummaryObjectNode, o->o.get("name").asText());
     }
     
+    public static final Stream<String> streamAsNames(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
+        return streamAsJson(sources, actionValidationHandler).map(o->o.get("name").asText());
+    }
+    
     private static final <T> Stream<T> _stream(List<ActionSource> sources, ActionValidationHandler actionValidationHandler, Function<ActionLoadResult, T> asTypeFunction, Function<T, String> nameFunction) {
         Map<String, T> result = new HashMap<>();
         new ActionLoader(sources, actionValidationHandler)
