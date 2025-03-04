@@ -1,6 +1,6 @@
 ---
 title: Fcli generic_action Actions
-fcli_version: 0.20250304.093214-dev_v3.x-develop
+fcli_version: 0.20250304.141716-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250304.093214-dev_v3.x-develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250304.093214-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250304.141716-dev_v3.x-develop" %}
 
 
 <div id="header">
 <h1>Fcli generic_action Actions</h1>
 <div class="details">
-<span id="revnumber">version 0.20250304.093214-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250304.141716-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -89,70 +89,68 @@ following activities:
 </div>
 <div class="paragraph">
 <p>Configuration for this fcli action is done through environment variables; the
-sections below list the environment variables supported by this top-level 'ci'
-action. Based on provided configuration, this top-level <code>ci</code> action will run
-either <code><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> ci</code> or <code><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> ci</code>; please see the
-documentation for these product-specific <code>ci</code> actions for a list of environment
-variables supported by them.</p>
+sections below list the environment variables supported by this action.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_fortify_on_demand"><a class="anchor" href="#_fortify_on_demand"></a>Fortify on Demand</h3>
-<div class="sect3">
-<h4 id="_fod_url"><a class="anchor" href="#_fod_url"></a>FOD_URL</h4>
-<div class="paragraph">
-<p>URL for the FoD instance to use.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_fod_tenant_fod_user_fod_password"><a class="anchor" href="#_fod_tenant_fod_user_fod_password"></a>FOD_TENANT, FOD_USER, FOD_PASSWORD</h4>
-<div class="paragraph">
-<p>Authenticate with tenant and user credentials.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_fod_client_id_fod_client_secret"><a class="anchor" href="#_fod_client_id_fod_client_secret"></a>FOD_CLIENT_ID, FOD_CLIENT_SECRET</h4>
-<div class="paragraph">
-<p>Authenticate with an FoD API key.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_fod_login_extra_opts"><a class="anchor" href="#_fod_login_extra_opts"></a>FOD_LOGIN_EXTRA_OPTS:</h4>
-<div class="paragraph">
-<p>Optional extra options to pass to the <a href="manpage/fcli-fod-session-login.html"><code>fcli fod session login</code></a> command.</p>
+<div class="listingblock">
+<div class="content">
+<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+║ Environment variable │ Description                                                                    ║
+╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
+║ FOD_URL              │ Fortify on Demand URL, for example https://ams.fortify.com. This must be       ║
+║                      │ rendered by the CI/CD system as plain text, not as a masked secret/variable.   ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ FOD_CLIENT_ID        │ Required when authenticating with an API key: Fortify on Demand Client ID (API ║
+║ FOD_CLIENT_SECRET    │ key) and Secret (API secret).                                                  ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ FOD_TENANT           │ Required when authenticating with user credentials: Fortify on Demand tenant,  ║
+║ FOD_USER             │ user and password. It is recommended to use a Personal Access Token instead of ║
+║ FOD_PASSWORD         │ an actual user password.                                                       ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ FOD_LOGIN_EXTRA_OPTS │ Extra login options, for example for disabling SSL checks or changing          ║
+║                      │ connection time-outs; see  link:manpage/fcli-fod-session-login.html[`fcli fod session login`] documentation.             ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ FOD_RELEASE          │ Fortify on Demand release to use with this action. This should be specified as ║
+║                      │ `&lt;app-name&gt;:&lt;release-name&gt;` (for non-microservices applications) or            ║
+║                      │ `&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;` (for microservices             ║
+║                      │ applications). Default value is based on repository and branch name, for       ║
+║                      │ example myOrg/myRepo:myBranch. Note that you'll need to explicitly configure   ║
+║                      │ FOD_RELEASE for microservices applications, as the default value lacks a       ║
+║                      │ microservice name.                                                             ║
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_fortify_software_security_center"><a class="anchor" href="#_fortify_software_security_center"></a>Fortify Software Security Center</h3>
-<div class="sect3">
-<h4 id="_ssc_url"><a class="anchor" href="#_ssc_url"></a>SSC_URL</h4>
-<div class="paragraph">
-<p>URL for the SSC instance to use.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ssc_user_ssc_password"><a class="anchor" href="#_ssc_user_ssc_password"></a>SSC_USER, SSC_PASSWORD</h4>
-<div class="paragraph">
-<p>Authenticate with user credentials.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ssc_token"><a class="anchor" href="#_ssc_token"></a>SSC_TOKEN</h4>
-<div class="paragraph">
-<p>Authenticate with pre-generated SSC token.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_sc_sast_token"><a class="anchor" href="#_sc_sast_token"></a>SC_SAST_TOKEN</h4>
-<div class="paragraph">
-<p>ScanCentral SAST client-auth-token.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ssc_login_extra_opts"><a class="anchor" href="#_ssc_login_extra_opts"></a>SSC_LOGIN_EXTRA_OPTS</h4>
-<div class="paragraph">
-<p>Optional extra options to pass to the <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command</p>
+<div class="listingblock">
+<div class="content">
+<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+║ Environment variable │ Description                                                                    ║
+╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
+║ SSC_URL              │ Software Security Center (SSC) URL, for example                                ║
+║                      │ https://ssc.customer.fortifyhosted.net/. This must be  rendered by the CI/CD   ║
+║                      │ system as plain text, not as a masked secret/variable.                         ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ SSC_TOKEN            │ Required when authenticating with an SSC token (recommended). Most actions     ║
+║                      │ should work fine with a CIToken.                                               ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ SSC_USER             │ Required when authenticating with SSC user credentials.                        ║
+║ SSC_PASSWORD         │                                                                                ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ SC_SAST_TOKEN        │ ScanCentral SAST Client Authentication Token for authenticating with           ║
+║                      │ ScanCentral SAST Controller. This  environment variable is required when       ║
+║                      │ running a ScanCentral SAST scan.                                               ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ SSC_LOGIN_EXTRA_OPTS │ Extra SSC login options, for example for disabling SSL checks or changing      ║
+║                      │ connection time-outs;  see link:manpage/fcli-ssc-session-login.html[`fcli ssc session login`] documentation.             ║
+╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ SSC_APPVERSION       │ Fortify SSC application version to use with this action. This should be        ║
+║                      │ specified as `&lt;app-name&gt;:&lt;version-name&gt;`.  Default value is based on           ║
+║                      │ repository and branch name, for example myOrg/myRepo:myBranch.                 ║
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
 </div>
 </div>
 </div>
@@ -261,8 +259,8 @@ directory. If specified, this ignores all other options.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250304.093214-dev_v3.x-develop<br>
-Last updated 2025-03-04 09:34:22 UTC
+Version 0.20250304.141716-dev_v3.x-develop<br>
+Last updated 2025-03-04 14:19:23 UTC
 </div>
 </div>
 </body>
