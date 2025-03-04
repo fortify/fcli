@@ -14,6 +14,7 @@ package com.fortify.cli.app.runner.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -96,6 +97,7 @@ public final class FortifyCLIStaticInitializer {
         System.clearProperty(trustStorePropertyKey);
         System.clearProperty(trustStoreTypePropertyKey);
         System.clearProperty(trustStorePasswordPropertyKey);
+        
         TrustStoreConfigDescriptor descriptor = TrustStoreConfigHelper.getTrustStoreConfig();
         if (descriptor != null && StringUtils.isNotBlank(descriptor.getPath())) {
             initializeTrustStoreFromConfig(descriptor, trustStorePropertyKey, trustStoreTypePropertyKey,
@@ -104,6 +106,7 @@ public final class FortifyCLIStaticInitializer {
             initializeTrustStoreFromEnv(trustStorePropertyKey, trustStoreTypePropertyKey,
                     trustStorePasswordPropertyKey);
         }
+        log.debug("INFO: Trust store file: " + System.getProperty(trustStorePropertyKey, "NONE"));
     }
 
     private void initializeTrustStoreFromEnv(String trustStorePropertyKey, String trustStoreTypePropertyKey,
@@ -111,23 +114,24 @@ public final class FortifyCLIStaticInitializer {
         String trustStorePath = System.getenv("FCLI_TRUSTSTORE");
         if (null != trustStorePath && Files.exists(Path.of(trustStorePath))) {
             System.setProperty(trustStorePropertyKey, trustStorePath);
-            String fileName = Paths.get(trustStorePath).getFileName().toString();
-            int lastIndexOf = fileName.lastIndexOf(".");
+            
             String trustStoreType = "jks";
-            if (lastIndexOf > 0) {
-                String fileExtension = fileName.substring(lastIndexOf + 1);
-                if (fileExtension.equals("jks") || fileExtension.equals("p12") || fileExtension.equals("pfs"))
-                    trustStoreType = fileExtension;
-            } else if (null != System.getenv("FCLI_TRUSTSTORE_TYPE"))
+            if (null != System.getenv("FCLI_TRUSTSTORE_TYPE")) {
                 trustStoreType = System.getenv("FCLI_TRUSTSTORE_TYPE");
+            } else {
+                String fileName = Paths.get(trustStorePath).getFileName().toString();
+                String fileExtension = StringUtils.substringAfterLast(fileName, ".");
+                if (fileExtension.equals("jks") || fileExtension.equals("p12") || fileExtension.equals("pfx")) {
+                    trustStoreType = fileExtension;
+                }
+            }
             System.setProperty(trustStoreTypePropertyKey, trustStoreType);
 
             String trustStorePwd = "changeit";
-            if (null != System.getenv("FCLI_TRUSTSTORE_PWD"))
+            if (null != System.getenv("FCLI_TRUSTSTORE_PWD")) {
                 trustStorePwd = System.getenv("FCLI_TRUSTSTORE_PWD");
+            }
             System.setProperty(trustStorePasswordPropertyKey, trustStorePwd);
-        } else {
-                log.warn("WARN: Either Trust store not defined or cannot be found at: " + trustStorePath);
         }
     }
 
