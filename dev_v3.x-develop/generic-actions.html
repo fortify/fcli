@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli action</code>
-fcli_version: 0.20250305.125721-dev_v3.x-develop
+fcli_version: 0.20250305.130643-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250305.125721-dev_v3.x-develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.125721-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.130643-dev_v3.x-develop" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250305.125721-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250305.130643-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -92,13 +92,12 @@ sections below list the environment variables supported by this action.</p>
 </div>
 <div class="sect2">
 <h3 id="_fortify_on_demand"><a class="anchor" href="#_fortify_on_demand"></a>Fortify on Demand</h3>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
 ║ Environment variable │ Description                                                                    ║
 ╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
-║ FOD_URL              │ Fortify on Demand URL, for example <a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a>. This must be       ║
+║ FOD_URL              │ Fortify on Demand URL, for example https://ams.fortify.com. This must be       ║
 ║                      │ rendered by the CI/CD system as plain text, not as a masked secret/variable.   ║
 ╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
 ║ FOD_CLIENT_ID        │ Required when authenticating with an API key: Fortify on Demand Client ID (API ║
@@ -115,24 +114,22 @@ sections below list the environment variables supported by this action.</p>
 ║                      │ '&lt;app-name&gt;:&lt;release-name&gt;' (for non-microservices applications) or            ║
 ║                      │ '&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;' (for microservices             ║
 ║                      │ applications). Default value is based on repository and branch name, for       ║
-║                      │ example myOrg/myRepo:myBranch. Note that you&#8217;ll need to explicitly configure   ║
+║                      │ example myOrg/myRepo:myBranch. Note that you'll need to explicitly configure   ║
 ║                      │ FOD_RELEASE for microservices applications, as the default value lacks a       ║
 ║                      │ microservice name.                                                             ║
-╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</p>
-</div>
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_fortify_software_security_center"><a class="anchor" href="#_fortify_software_security_center"></a>Fortify Software Security Center</h3>
-<div class="exampleblock">
+<div class="listingblock">
 <div class="content">
-<div class="paragraph">
-<p>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
 ║ Environment variable │ Description                                                                    ║
 ╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
 ║ SSC_URL              │ Software Security Center (SSC) URL, for example                                ║
-║                      │ <a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a>. This must be  rendered by the CI/CD   ║
+║                      │ https://ssc.customer.fortifyhosted.net/. This must be  rendered by the CI/CD   ║
 ║                      │ system as plain text, not as a masked secret/variable.                         ║
 ╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
 ║ SSC_TOKEN            │ Required when authenticating with an SSC token (recommended). Most actions     ║
@@ -151,8 +148,7 @@ sections below list the environment variables supported by this action.</p>
 ║ SSC_APPVERSION       │ Fortify SSC application version to use with this action. This should be        ║
 ║                      │ specified as '&lt;app-name&gt;:&lt;version-name&gt;'.  Default value is based on           ║
 ║                      │ repository and branch name, for example myOrg/myRepo:myBranch.                 ║
-╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</p>
-</div>
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
 </div>
 </div>
 </div>
@@ -253,8 +249,8 @@ directory. If specified, this ignores all other options.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250305.125721-dev_v3.x-develop<br>
-Last updated 2025-03-05 12:59:26 UTC
+Version 0.20250305.130643-dev_v3.x-develop<br>
+Last updated 2025-03-05 13:08:52 UTC
 </div>
 </div>
 </body>
