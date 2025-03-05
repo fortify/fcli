@@ -1,6 +1,6 @@
 ---
-title: Fcli FoD Actions
-fcli_version: 0.20250305.113238-dev_v3.x-develop
+title: Action Documentation: <code>fcli fod action</code>
+fcli_version: 0.20250305.125721-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -9,20 +9,20 @@ fcli_version: 0.20250305.113238-dev_v3.x-develop
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fcli FoD Actions</title>
+<title>Action Documentation: fcli fod action</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.113238-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.125721-dev_v3.x-develop" %}
 
 
 <div id="header">
-<h1>Fcli FoD Actions</h1>
+<h1>Action Documentation: <code>fcli fod action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250305.113238-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250305.125721-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -52,77 +52,75 @@ fcli_version: 0.20250305.113238-dev_v3.x-develop
 <ul class="sectlevel2">
 <li><a href="#_synopsis_4">Synopsis</a></li>
 <li><a href="#_description_4">Description</a></li>
-<li><a href="#_options_4">Options</a></li>
 </ul>
 </li>
 <li><a href="#_ci_vars">ci-vars</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_5">Synopsis</a></li>
 <li><a href="#_description_5">Description</a></li>
-<li><a href="#_options_5">Options</a></li>
 </ul>
 </li>
 <li><a href="#_github_pr_comment">github-pr-comment</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_6">Synopsis</a></li>
 <li><a href="#_description_6">Description</a></li>
-<li><a href="#_options_6">Options</a></li>
+<li><a href="#_options_4">Options</a></li>
 </ul>
 </li>
 <li><a href="#_github_sast_report">github-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_7">Synopsis</a></li>
 <li><a href="#_description_7">Description</a></li>
-<li><a href="#_options_7">Options</a></li>
+<li><a href="#_options_5">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_8">Synopsis</a></li>
 <li><a href="#_description_8">Description</a></li>
-<li><a href="#_options_8">Options</a></li>
+<li><a href="#_options_6">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_9">Synopsis</a></li>
 <li><a href="#_description_9">Description</a></li>
-<li><a href="#_options_9">Options</a></li>
+<li><a href="#_options_7">Options</a></li>
 </ul>
 </li>
 <li><a href="#_package">package</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_10">Synopsis</a></li>
 <li><a href="#_description_10">Description</a></li>
-<li><a href="#_options_10">Options</a></li>
+<li><a href="#_options_8">Options</a></li>
 </ul>
 </li>
 <li><a href="#_release_summary">release-summary</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_11">Synopsis</a></li>
 <li><a href="#_description_11">Description</a></li>
-<li><a href="#_options_11">Options</a></li>
+<li><a href="#_options_9">Options</a></li>
 </ul>
 </li>
 <li><a href="#_sarif_sast_report">sarif-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_12">Synopsis</a></li>
 <li><a href="#_description_12">Description</a></li>
-<li><a href="#_options_12">Options</a></li>
+<li><a href="#_options_10">Options</a></li>
 </ul>
 </li>
 <li><a href="#_setup_release">setup-release</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_13">Synopsis</a></li>
 <li><a href="#_description_13">Description</a></li>
-<li><a href="#_options_13">Options</a></li>
+<li><a href="#_options_11">Options</a></li>
 </ul>
 </li>
 <li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_14">Synopsis</a></li>
 <li><a href="#_description_14">Description</a></li>
-<li><a href="#_options_14">Options</a></li>
+<li><a href="#_options_12">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -132,7 +130,7 @@ fcli_version: 0.20250305.113238-dev_v3.x-develop
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This manual page describes built-in fcli FoD actions that can be run through
+<p>This manual page describes built-in fcli actions that can be run through
 the <code><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> &lt;action-name&gt;</code> command.</p>
 </div>
 </div>
@@ -286,25 +284,23 @@ following activities:
 <p>Configuration for this fcli action is done through environment variables; the
 table below lists the environment variables supported by this action.</p>
 </div>
-<div class="listingblock">
+<div class="exampleblock">
 <div class="content">
-<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+<div class="paragraph">
+<p>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
 ║ Environment variable │ Description                                                                    ║
 ╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
 ║ FOD_RELEASE          │ Fortify on Demand release to use with this action. This should be specified as ║
 ║                      │ '&lt;app-name&gt;:&lt;release-name&gt;' (for non-microservices applications) or            ║
 ║                      │ '&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;' (for microservices             ║
 ║                      │ applications). Default value is based on repository and branch name, for       ║
-║                      │ example myOrg/myRepo:myBranch. Note that you'll need to explicitly configure   ║
+║                      │ example myOrg/myRepo:myBranch. Note that you&#8217;ll need to explicitly configure   ║
 ║                      │ FOD_RELEASE for microservices applications, as the default value lacks a       ║
 ║                      │ microservice name.                                                             ║
-╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</p>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_options_4"><a class="anchor" href="#_options_4"></a>Options</h3>
-
 </div>
 </div>
 </div>
@@ -329,10 +325,6 @@ global variable named 'ci'. Note that available properties on the global 'ci'
 variable may change across fcli releases, potentially breaking any custom actions
 that depend on these properties.</p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_options_5"><a class="anchor" href="#_options_5"></a>Options</h3>
-
 </div>
 </div>
 </div>
@@ -377,7 +369,7 @@ previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_6"><a class="anchor" href="#_options_6"></a>Options</h3>
+<h3 id="_options_4"><a class="anchor" href="#_options_4"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--release, --rel</dt>
@@ -441,7 +433,7 @@ previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
+<h3 id="_options_5"><a class="anchor" href="#_options_5"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -477,7 +469,7 @@ previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
+<h3 id="_options_6"><a class="anchor" href="#_options_6"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -513,7 +505,7 @@ previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
+<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -551,7 +543,7 @@ Client version.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
+<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--sc-client-version, -v</dt>
@@ -618,7 +610,7 @@ parameters and output of this action may change in the next couple of fcli relea
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
+<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -656,7 +648,7 @@ reports. For more information about SARIF, please see
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
+<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -714,7 +706,7 @@ appropriate option values and setup commands to run.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_13"><a class="anchor" href="#_options_13"></a>Options</h3>
+<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--release, --rel</dt>
@@ -810,7 +802,7 @@ appropriate option values and setup commands to run.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_14"><a class="anchor" href="#_options_14"></a>Options</h3>
+<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -833,8 +825,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250305.113238-dev_v3.x-develop<br>
-Last updated 2025-03-05 11:34:48 UTC
+Version 0.20250305.125721-dev_v3.x-develop<br>
+Last updated 2025-03-05 12:59:24 UTC
 </div>
 </div>
 </body>

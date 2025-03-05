@@ -1,6 +1,6 @@
 ---
-title: Fcli generic_action Actions
-fcli_version: 0.20250305.113238-dev_v3.x-develop
+title: Action Documentation: <code>fcli action</code>
+fcli_version: 0.20250305.125721-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -9,20 +9,20 @@ fcli_version: 0.20250305.113238-dev_v3.x-develop
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fcli generic_action Actions</title>
+<title>Action Documentation: fcli action</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.113238-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.125721-dev_v3.x-develop" %}
 
 
 <div id="header">
-<h1>Fcli generic_action Actions</h1>
+<h1>Action Documentation: <code>fcli action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250305.113238-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250305.125721-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -33,21 +33,19 @@ fcli_version: 0.20250305.113238-dev_v3.x-develop
 <li><a href="#_description">Description</a></li>
 <li><a href="#_fortify_on_demand">Fortify on Demand</a></li>
 <li><a href="#_fortify_software_security_center">Fortify Software Security Center</a></li>
-<li><a href="#_options">Options</a></li>
 </ul>
 </li>
 <li><a href="#_ci_vars">ci-vars</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_2">Synopsis</a></li>
 <li><a href="#_description_2">Description</a></li>
-<li><a href="#_options_2">Options</a></li>
 </ul>
 </li>
 <li><a href="#_package">package</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_3">Synopsis</a></li>
 <li><a href="#_description_3">Description</a></li>
-<li><a href="#_options_3">Options</a></li>
+<li><a href="#_options">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -57,8 +55,8 @@ fcli_version: 0.20250305.113238-dev_v3.x-develop
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This manual page describes built-in fcli generic_action actions that can be run through
-the <code>fcli generic_action action run &lt;action-name&gt;</code> command.</p>
+<p>This manual page describes built-in fcli actions that can be run through
+the <code>fcli action run &lt;action-name&gt;</code> command.</p>
 </div>
 </div>
 </div>
@@ -94,12 +92,13 @@ sections below list the environment variables supported by this action.</p>
 </div>
 <div class="sect2">
 <h3 id="_fortify_on_demand"><a class="anchor" href="#_fortify_on_demand"></a>Fortify on Demand</h3>
-<div class="listingblock">
+<div class="exampleblock">
 <div class="content">
-<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+<div class="paragraph">
+<p>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
 ║ Environment variable │ Description                                                                    ║
 ╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
-║ FOD_URL              │ Fortify on Demand URL, for example https://ams.fortify.com. This must be       ║
+║ FOD_URL              │ Fortify on Demand URL, for example <a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a>. This must be       ║
 ║                      │ rendered by the CI/CD system as plain text, not as a masked secret/variable.   ║
 ╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
 ║ FOD_CLIENT_ID        │ Required when authenticating with an API key: Fortify on Demand Client ID (API ║
@@ -116,22 +115,24 @@ sections below list the environment variables supported by this action.</p>
 ║                      │ '&lt;app-name&gt;:&lt;release-name&gt;' (for non-microservices applications) or            ║
 ║                      │ '&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;' (for microservices             ║
 ║                      │ applications). Default value is based on repository and branch name, for       ║
-║                      │ example myOrg/myRepo:myBranch. Note that you'll need to explicitly configure   ║
+║                      │ example myOrg/myRepo:myBranch. Note that you&#8217;ll need to explicitly configure   ║
 ║                      │ FOD_RELEASE for microservices applications, as the default value lacks a       ║
 ║                      │ microservice name.                                                             ║
-╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</p>
+</div>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_fortify_software_security_center"><a class="anchor" href="#_fortify_software_security_center"></a>Fortify Software Security Center</h3>
-<div class="listingblock">
+<div class="exampleblock">
 <div class="content">
-<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+<div class="paragraph">
+<p>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
 ║ Environment variable │ Description                                                                    ║
 ╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
 ║ SSC_URL              │ Software Security Center (SSC) URL, for example                                ║
-║                      │ https://ssc.customer.fortifyhosted.net/. This must be  rendered by the CI/CD   ║
+║                      │ <a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a>. This must be  rendered by the CI/CD   ║
 ║                      │ system as plain text, not as a masked secret/variable.                         ║
 ╟──────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
 ║ SSC_TOKEN            │ Required when authenticating with an SSC token (recommended). Most actions     ║
@@ -150,13 +151,10 @@ sections below list the environment variables supported by this action.</p>
 ║ SSC_APPVERSION       │ Fortify SSC application version to use with this action. This should be        ║
 ║                      │ specified as '&lt;app-name&gt;:&lt;version-name&gt;'.  Default value is based on           ║
 ║                      │ repository and branch name, for example myOrg/myRepo:myBranch.                 ║
-╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
+╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</p>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
-
 </div>
 </div>
 </div>
@@ -182,10 +180,6 @@ variable may change across fcli releases, potentially breaking any custom action
 that depend on these properties.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
-
-</div>
 </div>
 </div>
 <div class="sect1">
@@ -210,7 +204,7 @@ Client version.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_3"><a class="anchor" href="#_options_3"></a>Options</h3>
+<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--sc-client-version, -v</dt>
@@ -259,8 +253,8 @@ directory. If specified, this ignores all other options.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250305.113238-dev_v3.x-develop<br>
-Last updated 2025-03-05 11:34:50 UTC
+Version 0.20250305.125721-dev_v3.x-develop<br>
+Last updated 2025-03-05 12:59:26 UTC
 </div>
 </div>
 </body>
