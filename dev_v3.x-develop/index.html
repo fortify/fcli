@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20250304.234142-dev_v3.x-develop
+fcli_version: 0.20250305.113238-dev_v3.x-develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250304.234142-dev_v3.x-develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250304.234142-dev_v3.x-develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250305.113238-dev_v3.x-develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20250304.234142-dev_v3.x-develop</span>
+<span id="revnumber">version 0.20250305.113238-dev_v3.x-develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -45,6 +45,7 @@ fcli_version: 0.20250304.234142-dev_v3.x-develop
 <li><a href="#_log_level">--log-level</a></li>
 <li><a href="#_log_file">--log-file</a></li>
 <li><a href="#_o_output">-o | --output</a></li>
+<li><a href="#_style">--style</a></li>
 <li><a href="#_output_to_file">--output-to-file</a></li>
 <li><a href="#_progress">--progress</a></li>
 <li><a href="#_store">--store</a></li>
@@ -61,6 +62,8 @@ fcli_version: 0.20250304.234142-dev_v3.x-develop
 </li>
 <li><a href="#_environment_variables">Environment Variables</a>
 <ul class="sectlevel2">
+<li><a href="#_proxy_settings">Proxy Settings</a></li>
+<li><a href="#_trust_store_settings">Trust Store Settings</a></li>
 <li><a href="#_fcli_user_home_folder">Fcli User Home Folder</a></li>
 <li><a href="#_fcli_data_storage">Fcli Data Storage</a></li>
 <li><a href="#_default_values_for_cli_options">Default Values for CLI options</a></li>
@@ -90,8 +93,7 @@ fcli_version: 0.20250304.234142-dev_v3.x-develop
 <h2 id="_introduction"><a class="anchor" href="#_introduction"></a>Introduction</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the
-man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p>
+<p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p>
 </div>
 <div class="paragraph">
 <p>Some of the fcli highlights:</p>
@@ -563,22 +565,17 @@ location in the fcli data folder.</p>
 <div class="sect2">
 <h3 id="_o_output"><a class="anchor" href="#_o_output"></a>-o | --output</h3>
 <div class="paragraph">
-<p>Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like <code>table</code>, <code>csv</code>, <code>json</code>, <code>xml</code>, and <code>tree</code> formats, allowing for both human-readable output or output suitable for automations. The <code>csv-plain</code> and <code>table-plain</code> output formats produce CSV or table output without headers. The <code>*-flat</code>
-output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli
-version, please refer to the help output or <a href="#_manual_pages">Manual Pages</a>.</p>
+<p>Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like <code>table</code>, <code>csv</code>, <code>json</code>, <code>xml</code>, and <code>yaml</code>, allowing for both human-readable output or output suitable for automations. The style for each of these output formats can be controlled through the <code>--style</code> option, for example for controlling whether table or CSV output should include headers or not; see next section for details.</p>
 </div>
 <div class="paragraph">
-<p>Most output formats allow for specifying the JSON properties to be included in the output, for example <code>-o csv=id,name</code>. If no JSON properties are specified, most output formats will output all available
-JSON properties, except for table output, which usually outputs a predefined set of JSON properties.</p>
+<p>The output formats listed above optionally allow for specifying the JSON properties to be included in the output, for example <code>-o csv=id,name</code>. Optionally, properties can also be renamed, which for example may be used to define CSV or table header names, like <code>+-o "csv=id:Application Id,name:Application Name"</code>. If no JSON properties are specified, most output formats will output all available JSON properties, except for table output, which usually outputs a predefined set of JSON properties.</p>
 </div>
 <div class="paragraph">
-<p>There are two output formats that are somewhat special:</p>
+<p>Apart from the output formats listed above, fcli also supports the special <code>expr</code> output format that can be used for a variety of purposes, for example for generating output in a human-readable format, or for generating a list of commands to be run at a later stage. This output format takes a template expression as input, for example <code>-o 'expr=Text with {expression1} or {expression2}\n'</code>. In most cases, expressions will be simple JSON property references, i.e., <code>{property.subProperty}</code>.</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>-o 'expr=Text with {expression1} or {expression2}\n'</code><br>
-Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see <a href="#_option_expressions">Option Expressions</a> for details. In most cases, expressions will be simple property references, i.e., <code>{property.subProperty}</code>. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include <code>\n</code> to output a newline character. Also note that depending on your shell, the <code>expr</code> option must be properly quoted. For most shells, the <code>expr=...</code> value should be enclosed in single or double quotes. To demonstrate the power of this output format, following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
+<div class="paragraph">
+<p>Following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
@@ -589,24 +586,83 @@ Formats the output data based on the given template expression, which is a combi
 </li>
 </ul>
 </div>
-</li>
-<li>
-<p><code>-o json-properties</code><br>
-List all JSON properties returned by the current command, which can be used on options that take JSON properties as input, like output expressions (<code>-o expr={prop}</code>), properties to include in the output (<code>-o table=prop1,prop2</code>), queries (<code>-q 'prop1=="value1"'</code>), and fcli variables (<code>--store var:prop1,prop2</code> &amp; <code>::var::prop1}</code>). Two important notes about this output format:</p>
+<div class="paragraph">
+<p>Note that all output (for all records being processed) will be appended on a single line, unless the expression explicitly includes <code>\n</code> to output a newline character; notice the <code>\n</code> in the first example above to print each generated fcli command on a separate line, and the trailing space in the second example to list all id&#8217;s on a single line but separated by a space. Also note that depending on your shell, the <code>expr</code> option must be properly quoted. For most shells, the <code>expr=...</code> value should be enclosed in single or double quotes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_style"><a class="anchor" href="#_style"></a>--style</h3>
+<div class="paragraph">
+<p>The <code>--style=&lt;style element&gt;[,&lt;style element&gt;&#8230;&#8203;]</code> option can be used to control the output style for most of the output formats listed above, for example to control whether CSV or table headers should be included or not, or whether JSON or YAML output should be flattened. Note that the <code>--style</code> option will be ignored for the <code>expr</code> output format, and similarly, any style elements that are not applicable for the output format specified in the <code>-o</code> option will be ignored. Multiple style elements can be specified by separating them with comma&#8217;s.</p>
+</div>
+<div class="paragraph">
+<p>Some examples:</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p>The command will be executed as specified, so be careful when using this output option on any command
-that changes state (delete/update/create/…). In most cases, the <code>get</code> or <code>list</code> operations will return a similar set of properties, so you can use those commands to view available properties.</p>
+<p>Output a table with border and no headers: <code>-o table --style no-header,border</code></p>
 </li>
 <li>
-<p>On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then <code>-o json-properties</code> will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if <code>-o json-properties</code> is used in combination with these options that load additional data.</p>
+<p>Output non-pretty flattened JSON: <code>-o json --style no-pretty,flat</code></p>
 </li>
 </ul>
 </div>
-</li>
-</ul>
+<div class="paragraph">
+<p>A full list of style elements that can be applied to the output is available in fcli help output or manual pages; the following table lists the most commonly used style elements:</p>
 </div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 33.3333%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Style&nbsp;Element</th>
+<th class="tableblock halign-left valign-top">Applies&nbsp;To</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>header</code><br>
+<code>no-header</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>csv</code><br>
+<code>table</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, these output formats include headers; use the <code>no-header</code> style element to output table or CSV without headers.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>border</code><br>
+<code>no-border</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>table</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, tables are printed without borders; use <code>border</code> to output a table with borders.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pretty</code><br>
+<code>no-pretty</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>json</code><br>
+<code>yaml</code><br>
+<code>xml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, these output formats are pretty-printed; use the <code>no-pretty</code> style element to output condensed, non-pretty output.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>flat</code><br>
+<code>no-flat</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>json</code><br>
+<code>yaml</code><br>
+<code>xml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, these output formats will keep nested objects and arrays as returned by (for example) the server; use the <code>flat</code> style element to flatten any nested structures into top-level properties.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>array</code><br>
+<code>single</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>json</code><br>
+<code>yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether the output will be represented as an array or single object depends on the fcli command being run, for example <code>list</code> commands will output arrays, and <code>get</code> commands will output a single object. For commands that output a single object, you can use the <code>array</code> style element to output a single-element array instead of a single object. Using <code>single</code> on commands that output multiple records is not supported; this may lead to exceptions or unparsable output.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
 <h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>--output-to-file</h3>
@@ -941,6 +997,50 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>The sections below describe various environment variables that can be used to control fcli behavior. This includes environment variables for overriding some of the default directories used by fcli to store data, and for setting default values for command-line options.</p>
 </div>
 <div class="sect2">
+<h3 id="_proxy_settings"><a class="anchor" href="#_proxy_settings"></a>Proxy Settings</h3>
+<div class="paragraph">
+<p>Fcli allows for configuring proxy settings through the <code>fcli config proxy</code> commands, supporting a variety of configuration options. In many cases, for example when running fcli in CI/CD pipelines, it&#8217;s more convenient to configure a single proxy server to be used by all fcli commands through environment variables. For this purpose, fcli supports the following environment variables in either upper or lower (but not mixed) case:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>HTTP_PROXY</code>: Proxy to use for plain HTTP requests</p>
+</li>
+<li>
+<p><code>HTTPS_PROXY</code>: Proxy to use for HTTPS requests</p>
+</li>
+<li>
+<p><code>ALL_PROXY</code>: Proxy to use for all types of requests</p>
+</li>
+<li>
+<p><code>NO_PROXY</code>: Don&#8217;t use a proxy server for the hosts listed in this environment variable</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Proxy servers can be specified as either <code>&lt;host&gt;:&lt;port&gt;</code> or as a URL. Note that proxy settings configured through <code>fcli config proxy</code> take precedence over proxy settings configured through environment variables.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_trust_store_settings"><a class="anchor" href="#_trust_store_settings"></a>Trust Store Settings</h3>
+<div class="paragraph">
+<p>Fcli allows for configuring trust store settings through the <code>fcli config truststore</code> commands, supporting a variety of configuration options. In many cases, for example when running fcli in CI/CD pipelines, it&#8217;s more convenient to configure the trust store to be used through environment variables. For this purpose, fcli supports the following environment variables:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>FCLI_TRUSTSTORE</code>: Absolute path to the trust store file to use</p>
+</li>
+<li>
+<p><code>FCLI_TRUSTSTORE_TYPE</code>: Type of the trust store, usually JKS, which is the default type if not specified</p>
+</li>
+<li>
+<p><code>FCLI_TRUSTSTORE_PWD</code>: Trust store password</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_fcli_user_home_folder"><a class="anchor" href="#_fcli_user_home_folder"></a>Fcli User Home Folder</h3>
 <div class="paragraph">
 <p>By default, fcli will use the home directory of the current user for various operations, like storing fcli state and configuration (see next section) or for tool installations (see <code>fcli tool</code> manual pages). These locations can be individually overridden through environment variables or command-line options, but in some cases you may want to just specify an alternative 'user home directory' to have all fcli operations use this alternative directory by default, instead of having to override multiple individual directories.</p>
@@ -1244,10 +1344,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <div class="sect3">
 <h4 id="_custom_action_development"><a class="anchor" href="#_custom_action_development"></a>Custom Action Development</h4>
 <div class="paragraph">
-<p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in <code>__sample__</code> action that explains various concepts and lists many of the supported action YAML elements together with a description. To view the sample action, use the <code>fcli ssc action get __sample__</code> or <code>fcli fod action get __sample__</code> command.</p>
-</div>
-<div class="paragraph">
-<p>Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:</p>
+<p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1286,7 +1383,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250304.234142-dev_v3.x-develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.0.0.json">2.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>As shown in the sample schema statements above, the current fcli version 0.20250305.113238-dev_v3.x-develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.0.0.json">2.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 </div>
 </div>
@@ -1501,8 +1598,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250304.234142-dev_v3.x-develop<br>
-Last updated 2025-03-04 23:43:42 UTC
+Version 0.20250305.113238-dev_v3.x-develop<br>
+Last updated 2025-03-05 11:34:45 UTC
 </div>
 </div>
 </body>
