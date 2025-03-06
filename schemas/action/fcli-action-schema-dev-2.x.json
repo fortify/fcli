@@ -130,7 +130,7 @@
           "additionalProperties" : {
             "$ref" : "#/$defs/ActionStepRunFcliEntry"
           },
-          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n"
+          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\nx.skipped: Boolean value indicating whether execution was skipped due to skip.if configuration\nx.skipReason: Reason why execution was skipped; will be null if x.skipped==true\nx.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)\n"
         },
         "steps" : {
           "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
@@ -412,6 +412,12 @@
             "$ref" : "#/$defs/ActionStep"
           }
         },
+        "status.check" : {
+          "type" : "boolean"
+        },
+        "status.log" : {
+          "type" : "boolean"
+        },
         "records.collect" : {
           "type" : "boolean"
         },
@@ -530,6 +536,14 @@
         "rest.target.default" : {
           "type" : "string",
           "description" : "Optional string: Default target to use for rest.call steps.\n"
+        },
+        "run.fcli.status.check.default" : {
+          "type" : "boolean",
+          "description" : "    Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.\n"
+        },
+        "run.fcli.status.log.default" : {
+          "type" : "boolean",
+          "description" : "    Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.\n"
         }
       },
       "additionalProperties" : false,
