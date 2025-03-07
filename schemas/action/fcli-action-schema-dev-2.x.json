@@ -381,9 +381,9 @@
       "format" : "spelTemplateExpression or object",
       "type" : [ "object", "string" ],
       "properties" : {
-        "skip.if" : {
-          "type" : "object",
-          "additionalProperties" : {
+        "skip.if-reason" : {
+          "type" : "array",
+          "items" : {
             "format" : "spelTemplateExpression",
             "type" : [ "boolean", "integer", "string", "number", "null" ]
           }
