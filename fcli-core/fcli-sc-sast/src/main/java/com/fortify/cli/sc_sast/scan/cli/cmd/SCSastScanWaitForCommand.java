@@ -65,7 +65,7 @@ public class SCSastScanWaitForCommand extends AbstractWaitForCommand {
             scanStates = waitOptions.scanStates;
             publishStates = waitOptions.publishStates;
             sscStates = waitOptions.sscStates;
-        }else {
+        } else {
             SCSastScanJobDescriptor[] scanJobDescriptors = scanJobsResolver.getScanJobDescriptors(unirest);
             var allPublishRequested = Stream.of(scanJobDescriptors)
                     .allMatch(SCSastScanJobDescriptor::isPublishRequested);

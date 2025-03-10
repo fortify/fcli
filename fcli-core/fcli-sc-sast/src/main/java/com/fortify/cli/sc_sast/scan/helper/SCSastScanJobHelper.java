@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class SCSastScanJobHelper {
     @RequiredArgsConstructor
     public static enum StatusEndpointVersion {
+        v4(4, "/rest/v4/job/{token}/status"), 
         v3(3, "/rest/v3/job/{token}/status"), 
         v2(2, "/rest/v2/job/{token}/status"),
         v1(1, "/rest/job/{token}/status");
