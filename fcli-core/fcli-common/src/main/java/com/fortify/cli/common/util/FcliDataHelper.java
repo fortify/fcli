@@ -41,7 +41,7 @@ public class FcliDataHelper {
     private static final String ENVNAME_FCLI_CONFIG_DIR      = "FCLI_CONFIG_DIR";
     private static final String ENVNAME_FCLI_STATE_DIR       = "FCLI_STATE_DIR";
     private static final String DEFAULT_FORTIFY_DIR_NAME     = ".fortify";
-    private static final String DEFAULT_FCLI_DIR_NAME        = "fcli";
+    private static final String DEFAULT_FCLI_DIR_NAME        = "fcli/v3";
     private static final String DEFAULT_FCLI_CONFIG_DIR_NAME = "config";
     private static final String DEFAULT_FCLI_STATE_DIR_NAME  = "state";
     private static final Logger LOG = LoggerFactory.getLogger(FcliDataHelper.class);
