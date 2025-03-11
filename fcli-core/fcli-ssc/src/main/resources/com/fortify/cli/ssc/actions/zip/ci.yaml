@@ -135,15 +135,19 @@ steps:
           style: md-border
           to: var:ciSummary
       do:
+        - var.set:
+            exitCode: 0
         - records.for-each:
             from: ${#properties(ciGroup)}
             record.var-name: ciEntry
             do:
               - writer.append:
                   ciSummaryWriter: {fmt: ciEntry}
+              - var.set:
+                  exitCode: ${exitCode+(ciEntry.value.exitCode?:0)}
   - out.write:
       stdout: {fmt: summary}
-  # TODO Generate exit code if any of the above failed
+  - exit: ${exitCode}
 
 formatters:
   ciEntry:

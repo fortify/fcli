@@ -66,8 +66,7 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
         
         This can be used to iterate over all fcli invocations in a given group using 
         'records.for-each: from: ${#properties(myGroup)}', with the do-block for example referencing \
-        ${groupEntry.status}. There may also be some SpEL functions that take the group as input, like \
-        ${#fcliGroupExitCode(myGroup)} to generate a combined exit code.
+        ${groupEntry.status}.
             
         For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
         using this instruction may fail to run on other fcli 3.x versions.

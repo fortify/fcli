@@ -49,7 +49,12 @@ public class TemplateExpressionWithFormatter extends AbstractActionElementIf {
     public TemplateExpressionWithFormatter(boolean booleanValue) {
         this(String.format("${%s}", booleanValue));
     }
-    // TODO Add extra constructors, for example for numeric values?
+    
+    /** Allow for deserializing from integer rather than object */
+    public TemplateExpressionWithFormatter(int intValue) {
+        this(String.format("${%s}", intValue));
+    }
+    // TODO Add extra constructors, for example for other numeric types?
     
     @Override
     public void postLoad(Action action) {}
