@@ -12,8 +12,13 @@
  */
 package com.fortify.cli.common.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
 public abstract class AbstractFcliException extends RuntimeException {
     private static final long serialVersionUID = 1L;
+    @Getter @Setter @Accessors(fluent=true) private Integer exitCode;
 
     public AbstractFcliException() {}
 

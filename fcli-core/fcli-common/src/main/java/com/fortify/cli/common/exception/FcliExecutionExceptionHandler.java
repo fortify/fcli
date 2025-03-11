@@ -38,6 +38,16 @@ public class FcliExecutionExceptionHandler implements IExecutionExceptionHandler
             err.println(commandLine.getColorScheme().errorText(formattedException));
             err.flush();
         }
+        return getExitCode(ex, commandLine);
+    }
+
+    private int getExitCode(Exception ex, CommandLine commandLine) {
+        if ( ex instanceof AbstractFcliException ) {
+            var exitCode = ((AbstractFcliException)ex).exitCode();
+            if ( exitCode!=null ) {
+                return exitCode;
+            }
+        }
         return commandLine.getCommandSpec().exitCodeOnExecutionException();
     }
     

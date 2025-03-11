@@ -162,7 +162,7 @@ formatters:
     
     # Fcli Security Policy Status
     
-    ${POLICY_CHECK.dependencySkipReason?:POLICY_CHECK.stdout}
+    ${POLICY_CHECK.exitCode==0||POLICY_CHECK.exitCode==100?POLICY_CHECK.stdout:POLICY_CHECK.dependencySkipReason}
         
     ${APPVERSION_SUMMARY.stdout}
       

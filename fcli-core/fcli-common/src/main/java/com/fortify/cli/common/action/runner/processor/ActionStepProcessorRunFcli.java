@@ -127,7 +127,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         boolean statusCheckPrimitive = statusCheck==null ? onFail==null : statusCheck;
         if ( statusCheckPrimitive ) {
             throw new FcliActionStepException(String.format("'%s' returned non-zero exit code %s", 
-                    getFcliCmdWithoutOpts(fcli), result.getExitCode()));
+                    getFcliCmdWithoutOpts(fcli), result.getExitCode())).exitCode(result.getExitCode());
         }
     }
 
