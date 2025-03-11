@@ -47,12 +47,32 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
     }
     
     @JsonPropertyDescription("""
-        Optional list of SpEL template expression: List entries define optional \
-        skip reasons; if any of the given expressions evaluates to a non-blank \
-        string, this fcli invocation will be skipped and the (first) non-blank \
-        skip reason will be logged.
+        (PREVIEW) Optional list of SpEL template expression: List entries define optional \
+        skip reasons; if any of the given expressions evaluates to a non-blank string, this \
+        fcli invocation will be skipped and the (first) non-blank skip reason will be logged.
+        
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.
         """)
     @JsonProperty(value = "skip.if-reason", required = false) private ArrayList<TemplateExpression> skipIfReason;
+    
+    @JsonPropertyDescription("""
+        (PREVIEW) Optional string: Define a group name for this fcli invocation. If defined, the output variables \
+        for this fcli invocation will be added to an action variable named groupName.fcliIdentifier. For \
+        example, given fcli invocation identifiers (map keys) CMD1 and CMD2, both specifying 'group: myGroup', the \
+        myGroup.CMD1 action variable will contain the output variables (like skipped, exitCode, ...) for \
+        CMD1, and the myGroup.CMD2 action variable will contain the output variables for CMD2, independent of whether \
+        these fcli invocations were skipped, failed, or successful. 
+        
+        This can be used to iterate over all fcli invocations in a given group using 
+        'records.for-each: from: ${#properties(myGroup)}', with the do-block for example referencing \
+        ${groupEntry.status}. There may also be some SpEL functions that take the group as input, like \
+        ${#fcliGroupExitCode(myGroup)} to generate a combined exit code.
+            
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.
+        """)
+    @JsonProperty(value = "group", required = false) private String group;
     
     @JsonPropertyDescription("""
         Required SpEL template expression: The fcli command to run. This can be \
@@ -121,24 +141,30 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
     @JsonProperty(value = "on.fail", required = false) private ArrayList<ActionStep> onFail;  
     
     @JsonPropertyDescription("""
-        Optional boolean value, indicating whether exit status of the fcli command should be checked:
+        (PREVIEW) Optional boolean value, indicating whether exit status of the fcli command should be checked:
         
         true: Terminate action execution if the fcli command returned a non-zero exit code
         false: Continue action execution if the fcli command returned a non-zero exit code
         
         Default value is taken from 'config:run.fcli.status.status.check.default'. If not \
         specified, default value is 'false' if 'on.fail' is specified, 'true' otherwise.
+        
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.
         """)
     @JsonProperty(value = "status.check", required = false) private Boolean statusCheck; 
     
     @JsonPropertyDescription("""
-        Optional boolean value, indicating whether exit status of the fcli command should be logged:
+        (PREVIEW) Optional boolean value, indicating whether exit status of the fcli command should be logged:
         
         true: Output an informational message showing exit status
         false: Don't output an informational message showing exit status
         
         Default value is taken from 'config:run.fcli.status.status.log.default'. If not \
         specified, default value is 'false'.
+        
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.
         """)
     @JsonProperty(value = "status.log", required = false) private Boolean statusLog; 
     

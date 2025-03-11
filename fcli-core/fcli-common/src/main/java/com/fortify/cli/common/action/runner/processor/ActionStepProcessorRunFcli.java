@@ -92,6 +92,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
             vars.set(String.format("%s.skipReason", entry.getKey()), new TextNode(plainSkipMessage));
             vars.set(String.format("%s.status", entry.getKey()), new TextNode("SKIPPED"));
             vars.set(String.format("%s.dependencySkipReason", entry.getKey()), new TextNode(dependencySkipReason));
+            setGroupVars(entry);
             return true;
         }
     }
@@ -164,6 +165,17 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         vars.set(name+".success", BooleanNode.valueOf(result.getExitCode()==0));
         vars.set(name+".failed", BooleanNode.valueOf(result.getExitCode()!=0));
         vars.set(name+".dependencySkipReason", result.getExitCode()==0 ? NullNode.instance : new TextNode(String.format("%s failed", name)));
+        setGroupVars(fcli);
+    }
+    
+    private final void setGroupVars(ActionStepRunFcliEntry entry) {
+        var groupFromConfig = ctx.getConfig().getAction().getConfig().getRunFcliGroupDefault();
+        var group = entry.getGroup();
+        group = StringUtils.isNotBlank(group) ? group : groupFromConfig;
+        if ( StringUtils.isNotBlank(group) ) {
+            var key = entry.getKey();
+            vars.set(String.format("%s.%s", group, key), vars.eval(String.format("#root['%s']", key), ObjectNode.class));
+        }
     }
     
     private void logStatus(ActionStepRunFcliEntry fcli, Result result) {

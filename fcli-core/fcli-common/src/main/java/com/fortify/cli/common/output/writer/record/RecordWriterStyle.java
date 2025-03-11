@@ -82,6 +82,10 @@ public final class RecordWriterStyle {
         return getOrDefault(RecordWriterStyleElementGroup.BORDER)==RecordWriterStyleElement.border;
     }
     
+    public final boolean isMarkdownBorder() {
+        return getOrDefault(RecordWriterStyleElementGroup.BORDER)==RecordWriterStyleElement.md_border;
+    }
+    
     private final RecordWriterStyleElement getOrDefault(RecordWriterStyleElementGroup group) {
         return styleElementsByGroup.getOrDefault(group, group.defaultStyle());
     }
@@ -92,7 +96,8 @@ public final class RecordWriterStyle {
         pretty(RecordWriterStyleElementGroup.PRETTY), no_pretty(RecordWriterStyleElementGroup.PRETTY),
         flat(RecordWriterStyleElementGroup.FLAT), no_flat(RecordWriterStyleElementGroup.FLAT),
         array(RecordWriterStyleElementGroup.SINGULAR), single(RecordWriterStyleElementGroup.SINGULAR),
-        border(RecordWriterStyleElementGroup.BORDER), no_border(RecordWriterStyleElementGroup.BORDER)
+        border(RecordWriterStyleElementGroup.BORDER), no_border(RecordWriterStyleElementGroup.BORDER),
+        md_border(RecordWriterStyleElementGroup.BORDER)
         ;
         
         @Getter private final RecordWriterStyleElementGroup group;

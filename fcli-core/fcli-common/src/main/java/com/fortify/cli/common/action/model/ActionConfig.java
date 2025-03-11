@@ -31,14 +31,28 @@ public final class ActionConfig implements IActionElement {
     @JsonProperty(value = "rest.target.default", required = false) private String restTargetDefault;
     
     @JsonPropertyDescription("""
-        Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.    
+        (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.
+        
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.    
     """)
     @JsonProperty(value = "run.fcli.status.check.default", required = false) private Boolean runFcliStatusCheckDefault;
     
     @JsonPropertyDescription("""
-        Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.    
+        (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.
+        
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.    
     """)
     @JsonProperty(value = "run.fcli.status.log.default", required = false) private Boolean runFcliStatusLogDefault;
+    
+    @JsonPropertyDescription("""
+        (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.
+        
+        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+        using this instruction may fail to run on other fcli 3.x versions.    
+    """)
+    @JsonProperty(value = "run.fcli.group.default", required = false) private String runFcliGroupDefault;
     
     @JsonPropertyDescription("""
         Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress \

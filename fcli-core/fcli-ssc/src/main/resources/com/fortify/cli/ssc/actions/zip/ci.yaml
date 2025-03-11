@@ -22,6 +22,7 @@ config:
   rest.target.default: ssc
   run.fcli.status.log.default: true    # By default, we log all exit statuses
   run.fcli.status.check.default: false # By default, we want to continue on fcli failures
+  run.fcli.group.default: ciGroup
   
 steps:
   # Configure module; allows for copying/re-using similar #actionCmd invocations in FoD ci action
@@ -31,8 +32,9 @@ steps:
   # Run ci-vars action to obtain CI data
   - run.fcli:
       ci-vars: 
+        group: ci-vars
         cmd: ${#actionCmd('CI_VARS', module, 'ci-vars')}
-        status.check: true
+        status.check: true   # Fail immediately if this step fails, as it doesn't make sense to continue
         on.success:
           - var.set:
               global.ci.av: ${#env('SSC_APPVERSION')?:global.ci.defaultFortifyRepo}
@@ -74,7 +76,7 @@ steps:
   - run.fcli:
       SETUP:
         cmd: ${#actionCmd('SETUP', 'ssc', 'setup-appversion')} --av "${global.ci.av}"
-        status.check: true
+        status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
           
@@ -90,7 +92,7 @@ steps:
           - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
           
       SAST_WAIT:
-        cmd: "${#fcliCmd('SAST_WAIT', 'sc-sast scan wait-for')} ::sc_sast_scan::"
+        cmd: "${#fcliCmd('SAST_WAIT', 'sc-sast scan wait-for')} ::sc_sast_scan:: --store sc_sast_wait"
         skip.if-reason:
           - ${#fcliCmdSkipFromEnvReason('SAST_WAIT', false)} # Skip if DO_SAST_WAIT==false
           - ${SAST_SCAN.dependencySkipReason}                # Skip if SAST_SCAN was skipped or failed
@@ -117,32 +119,46 @@ steps:
           - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
           - ${postScan.skipReason}                             # Skip if no scans were run
           # TODO Check whether current run is for a PR
+          # TODO Skip if prCommentAction is null or doesn't exist
           
       SAST_EXPORT:
         cmd: ${#actionCmd('EXPORT', 'ssc', global.ssc.sastExportAction)} --av "${global.ci.av}"
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
           - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
+
           
+  - with:
+      writers:
+        ciSummaryWriter:
+          type: table
+          style: md-border
+          to: var:ciSummary
+      do:
+        - records.for-each:
+            from: ${#properties(ciGroup)}
+            record.var-name: ciEntry
+            do:
+              - writer.append:
+                  ciSummaryWriter: {fmt: ciEntry}
   - out.write:
       stdout: {fmt: summary}
   # TODO Generate exit code if any of the above failed
-   
-# TODO Only show policy status if not skipped? Or just show SKIPPED if skipped?
-# TODO Add info on what scans were run, and their status
-# TODO Improve formatting, ideally using Markdown that's not too distracting if viewed
-#      as plain text (for example in pipeline log), while also allowing proper rendering 
-#      in GitHub Job Summary for example. Potentially, we could have separate plain text
-#      and Markdown outputs.
+
 formatters:
+  ciEntry:
+    Step: ${ciEntry.key}
+    Status: ${ciEntry.value.status}
+    
   summary: |
   
-  
-    Fcli Security Policy status:
+    # Fcli CI Pipeline Summary
     
-    ${POLICY_CHECK.stdout}
+    ${ciSummary}
     
-    Application version summary:
+    # Fcli Security Policy Status
+    
+    ${POLICY_CHECK.dependencySkipReason?:POLICY_CHECK.stdout}
         
     ${APPVERSION_SUMMARY.stdout}
       

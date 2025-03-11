@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.runner;
 
+import java.io.OutputStreamWriter;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,6 +22,13 @@ import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor;
 import com.fortify.cli.common.action.runner.processor.ActionStepProcessorSteps;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
+import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
+import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
@@ -48,13 +57,7 @@ public class ActionRunner {
                 return ()->{
                     ctx.getDelayedConsoleWriterRunnables().forEach(Runnable::run);
                     if ( !ctx.getCheckStatuses().isEmpty() ) {
-                        ctx.getCheckStatuses().entrySet().forEach(
-                            e-> printCheckResult(ctx, e.getValue(), e.getKey()));
-                        var overallStatus = CheckStatus.combine(ctx.getCheckStatuses().values());
-                        System.out.println("Status: "+overallStatus);
-                        if ( ctx.getExitCode()==0 && overallStatus==CheckStatus.FAIL ) {
-                            ctx.setExitCode(100);
-                        }
+                        printCheckStatuses(ctx);
                     }
                     return ctx.getExitCode();
                 };
@@ -97,16 +100,37 @@ public class ActionRunner {
             }
         }
     }
-
-    private static final void printCheckResult(ActionRunnerContext ctx, CheckStatus status, ActionStepCheckEntry checkStep) {
-        if ( status!=CheckStatus.HIDE ) {
-            // Even when flushing, output may appear in incorrect order if some 
-            // check statuses are written to stdout and others to stderr, so we
-            // print everything to stdout. This also makes it easier to collect
-            // the output in ci-style actions.
-            //var out = status==CheckStatus.PASS?System.out:System.err;
-            System.out.println(String.format("%s: %s", status, checkStep.getDisplayName()));
-            //out.flush();
+    
+    private final void printCheckStatuses(ActionRunnerContext ctx) {
+        try ( var recordWriter = createCheckStatusWriter(); ) {
+            ctx.getCheckStatuses().entrySet().stream()
+                .filter(e->e.getValue()!=CheckStatus.HIDE)
+                .map(this::checkStatusAsObjectNode)
+                .forEach(recordWriter::append);
+            var overallStatus = CheckStatus.combine(ctx.getCheckStatuses().values());
+            recordWriter.append(checkStatusAsObjectNode("Overall Status", overallStatus));
+            if ( ctx.getExitCode()==0 && overallStatus==CheckStatus.FAIL ) {
+                ctx.setExitCode(100);
+            }
         }
+    }
+    
+    private final ObjectNode checkStatusAsObjectNode(Map.Entry<ActionStepCheckEntry, CheckStatus> e) {
+        return checkStatusAsObjectNode(e.getKey().getDisplayName(), e.getValue());
+    }
+    
+    private final ObjectNode checkStatusAsObjectNode(String displayName, CheckStatus status) {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put("Check", displayName)
+                .put("Status", status.toString());
+    }
+
+    private IRecordWriter createCheckStatusWriter() {
+        var recordWriterConfig = RecordWriterConfig.builder()
+                .style(RecordWriterStyle.apply(RecordWriterStyleElement.md_border))
+                .writerSupplier(()->new NonClosingWriterWrapper(new OutputStreamWriter(System.out)))
+                .build();
+        var recordWriter = RecordWriterFactory.table.createWriter(recordWriterConfig);
+        return recordWriter;
     }
 }

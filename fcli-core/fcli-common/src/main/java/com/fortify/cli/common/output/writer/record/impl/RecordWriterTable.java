@@ -111,12 +111,23 @@ public class RecordWriterTable extends AbstractRecordWriter<TableWriter> {
                             .headerAlign(HorizontalAlign.LEFT)
                             .header(config.getStyle().withHeaders() ? h : null))
                     .toArray(Column[]::new);
-                return AsciiTable.getTable(getBorders(), columns, rows.toArray(String[][]::new)); 
+                var result = AsciiTable.getTable(getBorders(), columns, rows.toArray(String[][]::new));
+                if ( config.getStyle().isMarkdownBorder() ) {
+                    result = result.replaceAll("(?m)^\\s+$", "").replaceAll("(?m)^\\n", ""); 
+                }
+                return result;
             }
         }
 
         private Character[] getBorders() {
-            return config.getStyle().isBorder() ? AsciiTable.FANCY_ASCII : AsciiTable.NO_BORDERS;
+            var style = config.getStyle();
+            if ( style.isMarkdownBorder() ) {
+                return "    ||||-|||||               ".chars().mapToObj(c -> (char)c).toArray(Character[]::new);
+            } else if ( style.isBorder() ) {
+                return AsciiTable.FANCY_ASCII;
+            } else {
+                return AsciiTable.NO_BORDERS;
+            }
         }
     }
 }

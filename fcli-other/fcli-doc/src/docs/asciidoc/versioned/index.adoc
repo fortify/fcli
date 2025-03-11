@@ -238,9 +238,10 @@ A full list of style elements that can be applied to the output is available in 
 |By default, these output formats include headers; use the `no-header` style element to output table or CSV without headers.
 
 |`+border+` +
+`+md-border+` +
 `+no-border+`
 |`+table+`
-|By default, tables are printed without borders; use `border` to output a table with borders.
+|By default, tables are printed without borders; use `border` to output a table with borders, or `md-border` to output a table with Markdown borders. Note that `md-border` is only meant for outputting simple, short property values. The output will not be a valid Markdown table if any of the output properties contains pipe or newline characters, or if contents are too long to be printed on a single line.
 
 |`+pretty+` +
 `+no-pretty+`
