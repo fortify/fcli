@@ -77,7 +77,7 @@ class SSCBuiltinActionRunSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>1
                 it.any { it.contains('PASS') || it.contains('FAIL') }
-                it.any { it.contains("Status: ") }
+                it.any { it.contains("Overall Status") }
             }
     }
 }
