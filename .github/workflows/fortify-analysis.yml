@@ -56,8 +56,6 @@ jobs:
     steps:
       - name: Check Out Source Code
         uses: actions/checkout@v4
-        with:
-          ref: develop
 
       - name: Setup Java
         uses: actions/setup-java@v4
