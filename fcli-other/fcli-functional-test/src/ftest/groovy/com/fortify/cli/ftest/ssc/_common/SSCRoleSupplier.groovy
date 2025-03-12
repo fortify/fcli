@@ -40,7 +40,7 @@ public class SSCRoleSupplier implements Closeable, AutoCloseable {
         public SSCRole create() {
             Fcli.run("ssc ac create-role $roleName" + 
                 " --description auto\\ created\\ by\\ test" + 
-                " --permission-ids user_view,user_manage" + 
+                " --permission-ids user_view,user_manage,projectversion_view" + 
                 " --store $fcliVariableName",
                 {it.expectSuccess(true, "Unable to create role")})
             return this
