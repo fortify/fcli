@@ -1,4 +1,4 @@
-name: Functional Tests
+name: Functional Tests (New)
 
 on:
   workflow_dispatch:
@@ -7,14 +7,9 @@ on:
         description: 'Required "Build and release"" workflow run id (see id in browser URL for selected run) from which to get artifacts to be tested'
         required: true
         type: number
-  workflow_run:
-    workflows: [Build and release]
-    types: [completed]
-        
 
 jobs:
   ft-core:
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -31,14 +26,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-      - name: Get artifacts from triggering workflow
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ github.event.workflow_run.id }}
-          name: combined-artifacts
-          path: ./artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
@@ -89,7 +76,6 @@ jobs:
           path: test-*.log
           
   ft-product:
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -105,14 +91,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-      - name: Get artifacts from triggering workflow
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ github.event.workflow_run.id }}
-          name: combined-artifacts
-          path: ./artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
