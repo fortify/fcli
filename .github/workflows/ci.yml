@@ -26,7 +26,7 @@ jobs:
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: googleapis/release-please-action@v4
-        if: contains('refs/heads/rel/'), github.ref)
+        if: contains('refs/heads/rel/', github.ref)
         with:
           skip-github-pull-request: true
           release-type: simple
@@ -424,7 +424,7 @@ jobs:
           name: combined-artifacts
           
       - name: PROD - Prepare release PR
-        if: contains('refs/heads/rel/'), github.ref)
+        if: contains('refs/heads/rel/', github.ref)
         uses: googleapis/release-please-action@v4
         with:
           skip-github-release: true
