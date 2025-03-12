@@ -21,14 +21,33 @@ name: Fortify on Demand Scan
 on:
   workflow_dispatch:
   push:
-    branches: [ develop ]
   pull_request:
   schedule:
     - cron: '16 0 * * 5'
 
 jobs:
+  checkSecrets:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Secrets
+      shell: bash
+      run: |
+        if [[ -z "${OSS_FOD_TENANT}" || -z "${OSS_FOD_USER}" || -z "${OSS_FOD_PASSWORD}" ]]; then
+          echo "::notice ::Not running FoD scan as OSS_FOD_TENANT, OSS_FOD_USER, and/or OSS_FOD_PASSWORD secrets haven't been defined"
+        else
+          echo DO_FOD_SCAN=true >> $GITHUB_ENV
+        fi
+      env:
+        OSS_FOD_TENANT: ${{secrets.OSS_FOD_TENANT}}
+        OSS_FOD_USER: ${{secrets.OSS_FOD_USER}}
+        OSS_FOD_PASSWORD: ${{secrets.OSS_FOD_PAT}}
+    outputs:
+      DO_FOD_SCAN: ${{ env.DO_FOD_SCAN }}
+              
   FoD-SAST-Scan:
     runs-on: ubuntu-latest
+    needs: checkSecrets
+    if: needs.checkSecrets.outputs.DO_FOD_SCAN
     permissions:
       actions: read
       contents: read
