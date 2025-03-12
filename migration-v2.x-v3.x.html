@@ -27,6 +27,7 @@ fcli_version: none
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
+<li><a href="#_fcli_default_environment_variables"><code>FCLI_DEFAULT_*</code> environment variables</a></li>
 <li><a href="#_output_option"><code>--output</code> option</a></li>
 <li><a href="#_fcli_fod"><code>fcli fod</code></a></li>
 <li><a href="#_fcli_sc_sast"><code>fcli sc-sast</code></a></li>
@@ -49,6 +50,14 @@ fcli_version: none
 <div class="sectionbody">
 <div class="paragraph">
 <p>Upgrading from fcli v2.x to v3.x may require some changes to existing fcli command invocations, as some commands, options, or accepted option values have changed. This document describes those changes for each of the affected fcli modules. Note that this document only describes breaking changes, it doesn&#8217;t describe any new functionality. Please see the fcli change log for an overview of new features.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_default_environment_variables"><a class="anchor" href="#_fcli_default_environment_variables"></a><code>FCLI_DEFAULT_*</code> environment variables</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you were previously using <code>FCLI_DEFAULT_*</code> environment variables, the environment variable names may need to be updated to reflect the updated fcli command structure and option names. As an example, with fcli 2.x, the environment variable <code>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</code> environment variable would define a default value for all <code>--client-auth-token</code> options within the <code>sc-sast</code> module, effectively specifying a default value for the <code>--client-auth-token</code> option on the <code>fcli sc-sast session login</code> command. Given that the <code>fcli sc-sast session</code> commands have been removed in fcli 3.x, and the <code>--client-auth-token</code> option now needs to be specified on the <code>fcli ssc session login</code> command, the environment variable name will need to be changed from <code>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</code> to <code>FCLI_DEFAULT_SSC_CLIENT_AUTH_TOKEN</code>.</p>
 </div>
 </div>
 </div>
@@ -286,7 +295,7 @@ fcli_version: none
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2025-03-12 16:45:59 UTC
+Last updated 2025-03-12 18:52:16 UTC
 </div>
 </div>
 </body>
