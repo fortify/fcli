@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.3](https://github.com/fortify/fcli/compare/v2.12.2...v2.12.3) (2025-03-12)
+
+
+### Bug Fixes
+
+* Refreshed build with updated tool definitions ([870e3cd](https://github.com/fortify/fcli/commit/870e3cd914a75ceb957c8573df979c00950533d4))
+
 ## [2.12.2](https://github.com/fortify/fcli/compare/v2.12.1...v2.12.2) (2025-01-21)
 
 
