@@ -26,10 +26,9 @@ jobs:
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: googleapis/release-please-action@v4
-        if: github.ref == 'refs/heads/v2.x'
+        if: contains('refs/heads/rel/'), github.ref)
         with:
           skip-github-pull-request: true
-          target-branch: v2.x
           release-type: simple
           
       - name: PROD - Define release info
@@ -54,6 +53,7 @@ jobs:
         run: |
           branch="${GITHUB_REF#refs/heads/}"
           tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
+          tag="${tag//dev_dev./dev_}" # Remove duplicate dev-prefix
           major="0"
           minor="$(date +'%Y%m%d')"
           patch="$(date +'%H%M%S')-$tag"
@@ -424,12 +424,11 @@ jobs:
           name: combined-artifacts
           
       - name: PROD - Prepare release PR
-        if: github.ref == 'refs/heads/v2.x'
+        if: contains('refs/heads/rel/'), github.ref)
         uses: googleapis/release-please-action@v4
         with:
           skip-github-release: true
           release-type: simple
-          target-branch: v2.x
           
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
