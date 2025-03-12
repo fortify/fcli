@@ -133,7 +133,7 @@ sourceSets.main.output.dir generatedActionOutputResourcesDir, builtBy: buildTime
 // Generate resource-config.json
 ext.generatedResourceConfigDir = "${buildDir}/generated-resource-config"
 tasks.register('generateResourceConfig') {
-    dependsOn = [generateZipResources]
+    dependsOn = [generateZipResources, buildTimeActions]
 	doLast {
 		def outputDir = "${generatedResourceConfigDir}/META-INF/native-image/fcli-generated/${project.name}";
 		mkdir "${outputDir}"

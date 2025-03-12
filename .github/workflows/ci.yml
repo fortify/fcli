@@ -138,7 +138,7 @@ jobs:
           files: fcli
 
       - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli get --help
+        run: ./fcli --help && ./fcli get --help && ./fcli action help ci
         
       - name: Check fcli version
         run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
@@ -183,7 +183,7 @@ jobs:
       #    files: fcli
 
       - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli get --help
+        run: ./fcli --help && ./fcli get --help && ./fcli action help ci
 
       - name: Package native fcli
         run: tar -zcvf ./artifacts/release-assets/fcli-mac.tgz fcli -C ./artifacts fcli_completion
@@ -229,6 +229,7 @@ jobs:
         run: |
           .\fcli.exe --help 
           .\fcli.exe get --help
+          .\fcli.exe action help ci
 
       - name: Package native fcli
         run: 7z a artifacts\release-assets\fcli-windows.zip fcli*.exe
