@@ -55,6 +55,7 @@ jobs:
           branch="${GITHUB_REF#refs/heads/}"
           tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
           tag="${tag//dev_dev./dev_}" # Remove duplicate dev-prefix
+          tag="${tag//dev_rel./dev_}" # Remove rel-prefix
           major="0"
           minor="$(date +'%Y%m%d')"
           patch="$(date +'%H%M%S')-$tag"
