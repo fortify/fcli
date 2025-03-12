@@ -57,7 +57,13 @@ fcli_version: none
 <h2 id="_fcli_default_environment_variables"><a class="anchor" href="#_fcli_default_environment_variables"></a><code>FCLI_DEFAULT_*</code> environment variables</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>If you were previously using <code>FCLI_DEFAULT_*</code> environment variables, the environment variable names may need to be updated to reflect the updated fcli command structure and option names. As an example, with fcli 2.x, the environment variable <code>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</code> environment variable would define a default value for all <code>--client-auth-token</code> options within the <code>sc-sast</code> module, effectively specifying a default value for the <code>--client-auth-token</code> option on the <code>fcli sc-sast session login</code> command. Given that the <code>fcli sc-sast session</code> commands have been removed in fcli 3.x, and the <code>--client-auth-token</code> option now needs to be specified on the <code>fcli ssc session login</code> command, the environment variable name will need to be changed from <code>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</code> to <code>FCLI_DEFAULT_SSC_CLIENT_AUTH_TOKEN</code>.</p>
+<p>If you were previously using <code>FCLI_DEFAULT_*</code> environment variables, the environment variable names may need to be updated to reflect the updated fcli command structure and option names.</p>
+</div>
+<div class="paragraph">
+<p>As an example, with fcli 2.x, the environment variable <code>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</code> environment variable would define a default value for all <code>--client-auth-token</code> options within the <code>sc-sast</code> module, effectively specifying a default value for the <code>--client-auth-token</code> option on the <code>fcli sc-sast session login</code> command. Given that the <code>fcli sc-sast session</code> commands have been removed in fcli 3.x, and the <code>--client-auth-token</code> option now needs to be specified on the <code>fcli ssc session login</code> command, the environment variable name will need to be changed from <code>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</code> to <code>FCLI_DEFAULT_SSC_CLIENT_AUTH_TOKEN</code>.</p>
+</div>
+<div class="paragraph">
+<p>Another example is the <code>FCLI_DEFAULT_SSC_CI_TOKEN</code> environment variable; as the <code>fcli ssc session login</code> command now only supports a <code>--token</code> option and no longer a <code>--ci-token</code> option, this environment variable will need to be renamed to <code>FCLI_DEFAULT_SSC_TOKEN</code>.</p>
 </div>
 </div>
 </div>
@@ -295,7 +301,7 @@ fcli_version: none
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2025-03-12 19:10:03 UTC
+Last updated 2025-03-12 19:29:58 UTC
 </div>
 </div>
 </body>
