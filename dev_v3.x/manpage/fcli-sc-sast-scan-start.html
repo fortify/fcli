@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250312.192958-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.100153-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,10 +47,11 @@ fcli_version:
                         [<strong>--pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em>]
                         [<strong>--publish-as</strong>=<em>&lt;fprFileName&gt;</em>]
                         [<strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                        [<strong>--publish-token</strong>=<em>&lt;publishToken&gt;</em>]
                         [<strong>--sargs</strong>=<em>&lt;scanArguments&gt;</em>]
-                        [<strong>--scan-timeout</strong>=<em>&lt;scanTimeout&gt;</em>] [<strong>-t</strong>=<em>&lt;ciToken&gt;</em>]
-                        [<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                        [<strong>--scan-timeout</strong>=<em>&lt;scanTimeout&gt;</em>] [<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em>]
+                        [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                         [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_type[=&lt;args&gt;">]
                         [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
                         <em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <em class="<strong>--store</strong>=_variableName[:_
@@ -101,6 +102,10 @@ fcli_version:
 <dd>
 <p>Publish scan results to the given SSC application version once the scan has completed.</p>
 </dd>
+<dt class="hdlist1"><strong>--publish-token</strong>=<em>&lt;publishToken&gt;</em></dt>
+<dd>
+<p>SSC token to be used to publish the scan results to SSC. If not specified, the current SSC session token will be used. Note that publishing may fail if the token expires or is revoked before publishing has completed. It is recommended to either use a pre-generated long-lived token, or, if you authenticated using SSC user name and password, to wait for scan completion before running the 'session logout' command.</p>
+</dd>
 <dt class="hdlist1"><strong>--sargs, --scan-args</strong>=<em>&lt;scanArguments&gt;</em></dt>
 <dd>
 <p>Fortify Static Code Analyzer scan arguments, see ScanCentral SAST documentation for supported scan arguments for your ScanCentral SAST version. Multiple scan arguments must be provided as a single option argument, arguments containing spaces or that conflict with fcli options like '-filter' must be embedded in single quotes, and local files must be referenced through the '@' prefix. Note that contrary to fcli, scan arguments usually start with a single dash, not double dashes. For example:</p>
@@ -113,10 +118,6 @@ fcli_version:
 <dt class="hdlist1"><strong>--scan-timeout</strong>=<em>&lt;scanTimeout&gt;</em></dt>
 <dd>
 <p>Specify scan time-out (in minutes) for this scan job. This overrides the default scan time-out configured on ScanCentral SAST.</p>
-</dd>
-<dt class="hdlist1"><strong>-t</strong>, <strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
-<dd>
-<p>SSC CI Token used to publish the scan to SSC on scan completion. By default, the current session token will be used.</p>
 </dd>
 <dt class="hdlist1"><strong>-v</strong>, <strong>--sensor-version</strong>=<em>&lt;sensorVersion&gt;</em></dt>
 <dd>
@@ -193,7 +194,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-03-12 19:32:00 UTC
+Last updated 2025-03-13 10:03:59 UTC
 </div>
 </div>
 </body>
