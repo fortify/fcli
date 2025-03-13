@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli ssc action</code>
-fcli_version: 0.20250313.100153-dev_v3.x
+fcli_version: 0.20250313.131531-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250313.100153-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.100153-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.131531-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli ssc action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250313.100153-dev_v3.x</span>
+<span id="revnumber">version 0.20250313.131531-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -358,13 +358,39 @@ table below lists the environment variables supported by this action.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>╔══════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
-║ Environment variable │ Description                                                                    ║
-╠══════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
-║ SSC_APPVERSION       │ Fortify SSC application version to use with this action. This should be        ║
-║                      │ specified as '&lt;app-name&gt;:&lt;version-name&gt;'.  Default value is based on           ║
-║                      │ repository and branch name, for example myOrg/myRepo:myBranch.                 ║
-╚══════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
+<pre>╔═══════════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
+║ Environment variable      │ Description                                                                    ║
+╠═══════════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
+║ SSC_APPVERSION            │ Fortify SSC application version to use with this action. This should be        ║
+║                           │ specified as '&lt;app-name&gt;:&lt;version-name&gt;'.  Default value is based on           ║
+║                           │ repository and branch name, for example myOrg/myRepo:myBranch.                 ║
+╟───────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ PACKAGE_ACTION            │ By default, the fcli 'package' action is used to (optionally) package the      ║
+║ PACKAGE_ACTION_EXTRA_OPTS │ source code to be scanned; see next entry for information on how to configure  ║
+║                           │ the packaging process. If the standard fcli 'package' action doesn't meet your ║
+║                           │ needs, for example if you want to perform a local translation using Fortify    ║
+║                           │ Static Code Analyzer, you can use PACKAGE_ACTION to use a custom action for    ║
+║                           │ packaging, optionally providing extra options to this custom action through    ║
+║                           │ the PACKAGE_ACTION_EXTRA_OPTS environment variable. Note that any custom       ║
+║                           │ action must set the global.package.output action variable, pointing to the     ║
+║                           │ package or MBS file to be scanned.                                             ║
+╟───────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
+║ USE_PACKAGE               │ These environment variables define packaging behavior. If USE_PACKAGE is       ║
+║ PACKAGE_EXTRA_OPTS        │ specified, packaging will be skipped and the given package or MBS file (which  ║
+║ SC_CLIENT_VERSION         │ must already exist) will be used. To pass additional options to the            ║
+║ SOURCE_DIR                │ 'scancentral package' command like '-bt' or '-bf', use PACKAGE_EXTRA_OPTS.     ║
+║ DO_PACKAGE_DEBUG          │ By default:                                                                    ║
+║ TOOL_DEFINITIONS          │  - Latest available ScanCentral Client version will be used for packaging; use ║
+║                           │ SC_CLIENT_VERSION to specify a different version.                              ║
+║                           │  - Current working directory will be packaged; use SOURCE_DIR to package a     ║
+║                           │ different directory.                                                           ║
+║                           │  - Debug logging for Scancentral Client is disabled; set DO_PACKAGE_DEBUG to   ║
+║                           │ true to enable debug logging.                                                  ║
+║                           │  - Tool definitions to identify available ScanCentral Client versions will be  ║
+║                           │ downloaded from the default location; use TOOL_DEFINITIONS to use customized   ║
+║                           │ tool definitions.                                                              ║
+║                           │                                                                                ║
+╚═══════════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
 </div>
 </div>
 </div>
@@ -728,6 +754,11 @@ Client version.</p>
 <h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
 <div class="dlist">
 <dl>
+<dt class="hdlist1">--use-package</dt>
+<dd>
+<p>Use an existing package file instead of trying to package the given source code
+directory. If specified, this ignores all other options.</p>
+</dd>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
 <p>Specify the ScanCentral Client version to be used for packaging. Defaults to
@@ -760,11 +791,6 @@ options if not specified.</p>
 <dd>
 <p>Name of the zip file in which packaged source code should be stored. Defaults to
 package.zip in the current working directory.</p>
-</dd>
-<dt class="hdlist1">--use-package</dt>
-<dd>
-<p>Use an existing package file instead of trying to package the given source code
-directory. If specified, this ignores all other options.</p>
 </dd>
 </dl>
 </div>
@@ -945,8 +971,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250313.100153-dev_v3.x<br>
-Last updated 2025-03-13 10:04:05 UTC
+Version 0.20250313.131531-dev_v3.x<br>
+Last updated 2025-03-13 13:17:52 UTC
 </div>
 </div>
 </body>
