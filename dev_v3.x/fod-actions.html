@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli fod action</code>
-fcli_version: 0.20250313.144714-dev_v3.x
+fcli_version: 0.20250313.153547-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250313.144714-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.144714-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.153547-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli fod action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250313.144714-dev_v3.x</span>
+<span id="revnumber">version 0.20250313.153547-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -284,83 +284,79 @@ following activities:
 <p>Configuration for this fcli action is done through environment variables; the
 table below lists the environment variables supported by this action.</p>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre>╔════════════════════════════╤════════════════════════════════════════════════════════════════════════════════╗
-║ Environment variable       │ Description                                                                    ║
-╠════════════════════════════╪════════════════════════════════════════════════════════════════════════════════╣
-║ FOD_RELEASE                │ Fortify on Demand release to use with this action. This should be specified as ║
-║                            │ '&lt;app-name&gt;:&lt;release-name&gt;' (for non-microservices applications) or            ║
-║                            │ '&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;' (for microservices             ║
-║                            │ applications). Default value is based on repository and branch name, for       ║
-║                            │ example myOrg/myRepo:myBranch. Note that you'll need to explicitly configure   ║
-║                            │ FOD_RELEASE for microservices applications, as the default value lacks a       ║
-║                            │ microservice name.                                                             ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ DO_SETUP                   │ If DO_SETUP is set to true (implied if any of the other two SETUP_*            ║
-║ SETUP_ACTION               │ environment variables are set), the application and/or release will be created ║
-║ SETUP_EXTRA_OPTS           │ if they do not yet exist, and static scan settings will be configured if not   ║
-║                            │ configured already, using the fcli-provided setup-release action, or, if       ║
-║                            │ specified, the custom fcli action specified through SETUP_ACTION. Extra        ║
-║                            │ options for the fcli action can be passed through the SETUP_EXTRA_OPTS         ║
-║                            │ environment variable. Depending on your Git workflow, it is recommended to     ║
-║                            │ have each newly created release copy state from the release representing your  ║
-║                            │ default branch by passing the --copy-from option through SETUP_EXTRA_OPTS. To  ║
-║                            │ allow this action to create new applications, depending on FoD version, you    ║
-║                            │ may (also) need to provide the --app-owner &lt;user&gt; option through               ║
-║                            │ SETUP_EXTRA_OPTS when authenticating with client credentials.                  ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ PACKAGE_ACTION             │ By default, if SAST scan is enabled, the fcli 'package' action is used to      ║
-║ PACKAGE_ACTION_EXTRA_OPTS  │ (optionally) package the source code to be scanned; see next entry for         ║
-║                            │ information on how to configure the default package action. If the standard    ║
-║                            │ fcli 'package' action doesn't meet your needs, for example if you want to      ║
-║                            │ perform a local translation using Fortify Static Code Analyzer, you can use    ║
-║                            │ PACKAGE_ACTION to use a custom action for packaging, optionally providing      ║
-║                            │ extra options to this custom action through the PACKAGE_ACTION_EXTRA_OPTS      ║
-║                            │ environment variable. Note that any custom action must set the                 ║
-║                            │ global.package.output action variable, pointing to the package or MBS file to  ║
-║                            │ be scanned.                                                                    ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ USE_PACKAGE                │ These environment variables define packaging behavior. If USE_PACKAGE is       ║
-║ PACKAGE_EXTRA_OPTS         │ specified, packaging will be skipped and the given package or MBS file (which  ║
-║ SC_CLIENT_VERSION          │ must already exist) will be used. To pass additional options to the            ║
-║ SOURCE_DIR                 │ 'scancentral package' command like '-bt' or '-bf', use PACKAGE_EXTRA_OPTS.     ║
-║ DO_PACKAGE_DEBUG           │ By default:                                                                    ║
-║ TOOL_DEFINITIONS           │  - Latest available ScanCentral Client version will be used for packaging; use ║
-║                            │ SC_CLIENT_VERSION to specify a different version.                              ║
-║                            │  - Current working directory will be packaged; use SOURCE_DIR to package a     ║
-║                            │ different directory.                                                           ║
-║                            │  - Debug logging for Scancentral Client is disabled; set DO_PACKAGE_DEBUG to   ║
-║                            │ true to enable debug logging.                                                  ║
-║                            │  - Tool definitions to identify available ScanCentral Client versions will be  ║
-║                            │ downloaded from the default location; use TOOL_DEFINITIONS to use customized   ║
-║                            │ tool definitions.                                                              ║
-║                            │                                                                                ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ DO_SAST_SCAN               │ For now, this fcli action only supports running a SAST scan, which is enabled  ║
-║ SAST_SCAN_EXTRA_OPTS       │ by default. The SAST_SCAN_EXTRA_OPTS environment variable can be used to pass  ║
-║ DO_SAST_WAIT               │ extra options to the 'fcli fod sast-scan start' command. By default, this      ║
-║                            │ action will wait until the scan has been completed, unless DO_SAST_WAIT is set ║
-║                            │ to 'false', in which case post-scan tasks will be skipped.                     ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ DO_POLICY_CHECK            │ TODO                                                                           ║
-║ CHECK_POLICY_ACTION        │                                                                                ║
-║ CHECK_POLICY_EXTRA_OPTS    │                                                                                ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ DO_RELEASE_SUMMARY         │ TODO                                                                           ║
-║ RELEASE_SUMMARY_ACTION     │                                                                                ║
-║ RELEASE_SUMMARY_EXTRA_OPTS │                                                                                ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ DO_PR_COMMENT              │ TODO                                                                           ║
-║ PR_COMMENT_ACTION          │                                                                                ║
-║ PR_COMMENT_EXTRA_OPTS      │                                                                                ║
-╟────────────────────────────┼────────────────────────────────────────────────────────────────────────────────╢
-║ DO_SAST_EXPORT             │ TODO                                                                           ║
-║ SAST_EXPORT_ACTION         │                                                                                ║
-║ SAST_EXPORT_EXTRA_OPTS     │                                                                                ║
-╚════════════════════════════╧════════════════════════════════════════════════════════════════════════════════╝</pre>
-</div>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Environment Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_RELEASE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fortify on Demand release to use with this action. This should be specified as '&lt;app-name&gt;:&lt;release-name&gt;' (for non-microservices applications) or '&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;' (for microservices  applications). Default value is based on repository and branch name, for example myOrg/myRepo:myBranch. Note that you&#8217;ll need to explicitly configure FOD_RELEASE for microservices applications, as the default value lacks a microservice name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP<br>
+SETUP_ACTION<br>
+SETUP_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If DO_SETUP is set to true (implied if any of the other two SETUP_* environment variables are set), the application and/or release will be created if they do not yet exist, and static scan settings will be configured if not configured already, using the fcli-provided setup-release action, or, if specified, the custom fcli action specified through SETUP_ACTION. Extra options for the fcli action can be passed through the SETUP_EXTRA_OPTS environment variable. Depending on your Git workflow, it is recommended to have each newly created release copy state from the release representing your default branch by passing the --copy-from option through SETUP_EXTRA_OPTS. To allow this action to create new applications, depending on FoD version, you may (also) need to provide the --app-owner &lt;user&gt; option through SETUP_EXTRA_OPTS when authenticating with client credentials.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PACKAGE_ACTION<br>
+PACKAGE_ACTION_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, if SAST scan is enabled, the fcli 'package' action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default package action. If the standard fcli 'package' action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use PACKAGE_ACTION to use a custom action for packaging, optionally providing extra options to this custom action through the PACKAGE_ACTION_EXTRA_OPTS environment variable. Note that any custom action must set the global.package.output action variable, pointing to the package or MBS file to be scanned.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE<br>
+PACKAGE_EXTRA_OPTS<br>
+SC_CLIENT_VERSION<br>
+SOURCE_DIR<br>
+DO_PACKAGE_DEBUG<br>
+TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">These environment variables define packaging behavior. If USE_PACKAGE is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the 'scancentral package' command like '-bt' or '-bf', use PACKAGE_EXTRA_OPTS.<br>
+By default:<br>
+ - Latest available ScanCentral Client version will be used for packaging; use SC_CLIENT_VERSION to specify a different version.<br>
+ - Current working directory will be packaged; use SOURCE_DIR to package a different directory.<br>
+ - Debug logging for Scancentral Client is disabled; set DO_PACKAGE_DEBUG to true to enable debug logging.<br>
+ - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use TOOL_DEFINITIONS to use customized tool definitions.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN<br>
+SAST_SCAN_EXTRA_OPTS<br>
+DO_SAST_WAIT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">For now, this fcli action only supports running a SAST scan, which is enabled by default. The SAST_SCAN_EXTRA_OPTS environment variable can be used to pass extra options to the 'fcli fod sast-scan start' command. By default, this action will wait until the scan has been completed, unless DO_SAST_WAIT is set to 'false', in which case post-scan tasks will be skipped.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_POLICY_CHECK<br>
+CHECK_POLICY_ACTION<br>
+CHECK_POLICY_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_RELEASE_SUMMARY<br>
+RELEASE_SUMMARY_ACTION<br>
+RELEASE_SUMMARY_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_PR_COMMENT<br>
+PR_COMMENT_ACTION<br>
+PR_COMMENT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_EXPORT<br>
+SAST_EXPORT_ACTION<br>
+SAST_EXPORT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TODO</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
@@ -885,8 +881,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250313.144714-dev_v3.x<br>
-Last updated 2025-03-13 14:49:23 UTC
+Version 0.20250313.153547-dev_v3.x<br>
+Last updated 2025-03-13 15:37:57 UTC
 </div>
 </div>
 </body>
