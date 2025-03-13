@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli action</code>
-fcli_version: 0.20250313.153547-dev_v3.x
+fcli_version: 0.20250313.155057-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250313.153547-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.153547-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250313.155057-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250313.153547-dev_v3.x</span>
+<span id="revnumber">version 0.20250313.155057-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -105,6 +105,25 @@ sections below list the environment variables supported by this action.</p>
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fortify on Demand URL, for example <a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a>. This must be rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_CLIENT_ID<br>
+FOD_CLIENT_SECRET</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with an API key: Fortify on Demand Client ID (API key) and Secret (API secret).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_TENANT<br>
+FOD_USER<br>
+FOD_PASSWORD</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with user credentials: Fortify on Demand tenant, user and password. It is recommended to use a Personal Access Token instead of an actual user password.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_LOGIN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extra login options, for example for disabling SSL checks or changing connection time-outs; see  'fcli fod session login' documentation.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FOD_RELEASE</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Fortify on Demand release to use with this action. This should be specified as '&lt;app-name&gt;:&lt;release-name&gt;' (for non-microservices applications) or '&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;' (for microservices  applications). Default value is based on repository and branch name, for example myOrg/myRepo:myBranch. Note that you&#8217;ll need to explicitly configure FOD_RELEASE for microservices applications, as the default value lacks a microservice name.</p></td>
 </tr>
@@ -180,6 +199,27 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Software Security Center (SSC) URL, for example <a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with an SSC token (recommended). Most actions should work fine with a CIToken.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_USER<br>
+SSC_PASSWORD</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with SSC user credentials.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SC_SAST_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ScanCentral SAST Client Authentication Token for authenticating with ScanCentral SAST Controller. This  environment variable is required when running a ScanCentral SAST scan.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_LOGIN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extra SSC login options, for example for disabling SSL checks or changing connection time-outs;  see 'fcli ssc session login' documentation.</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_APPVERSION</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Fortify SSC application version to use with this action. This should be specified as '&lt;app-name&gt;:&lt;version-name&gt;'.  Default value is based on repository and branch name, for example myOrg/myRepo:myBranch.</p></td>
@@ -339,8 +379,8 @@ package.zip in the current working directory.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250313.153547-dev_v3.x<br>
-Last updated 2025-03-13 15:37:59 UTC
+Version 0.20250313.155057-dev_v3.x<br>
+Last updated 2025-03-13 15:53:01 UTC
 </div>
 </div>
 </body>
