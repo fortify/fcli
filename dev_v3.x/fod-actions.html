@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli fod action</code>
-fcli_version: 0.20250314.004828-dev_v3.x
+fcli_version: 0.20250314.015149-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250314.004828-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250314.004828-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250314.015149-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli fod action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250314.004828-dev_v3.x</span>
+<span id="revnumber">version 0.20250314.015149-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -304,14 +304,14 @@ table below lists the environment variables supported by this action.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP<br>
 SETUP_ACTION<br>
 SETUP_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or release will be created if they do not yet exist, and static scan settings will be configured if not configured already, using the fcli-provided <code>setup-release</code> action, or, if specified, the custom fcli action specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the <code>SETUP_EXTRA_OPTS</code> environment variable.<br>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or release will be created if they do not yet exist, and static scan settings will be configured if not configured already, using the fcli-provided <a href="fod-actions.html#_setup_release">setup-release</a> action, or, if specified, the custom fcli action specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the <code>SETUP_EXTRA_OPTS</code> environment variable.<br>
 <br>
 Depending on your Git workflow, it is recommended to copy state from the release representing your default branch by passing the <code>--copy-from</code> option through <code>SETUP_EXTRA_OPTS</code>. To allow this action to create new applications, depending on FoD version, you may (also) need to provide the <code>--app-owner &lt;user id or name&gt;</code> option through <code>SETUP_EXTRA_OPTS</code>.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">PACKAGE_ACTION<br>
 PACKAGE_ACTION_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">By default, when running a SAST scan, the fcli <code>package</code> action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default <code>package</code> action. If the standard fcli <code>package</code> action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use <code>PACKAGE_ACTION</code> to use a custom action for packaging, optionally providing extra options to this custom action through the <code>PACKAGE_ACTION_EXTRA_OPTS</code> environment variable. Note that any custom action must set the <code>global.package.output</code> action variable, pointing to the package or MBS file to be scanned.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, when running a SAST scan, the fcli <a href="fod-actions.html#_package">package</a> action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default <a href="fod-actions.html#_package">package</a> action. If the standard fcli <a href="fod-actions.html#_package">package</a> action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use <code>PACKAGE_ACTION</code> to use a custom action for packaging, optionally providing extra options to this custom action through the <code>PACKAGE_ACTION_EXTRA_OPTS</code> environment variable. Note that any custom action must set the <code>global.package.output</code> action variable, pointing to the package or MBS file to be scanned.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE<br>
@@ -337,25 +337,25 @@ DO_SAST_WAIT</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_RELEASE_SUMMARY<br>
 RELEASE_SUMMARY_ACTION<br>
 RELEASE_SUMMARY_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_RELEASE_SUMMARY</code> is not set to <code>false</code>, a release summary will be generated using the fcli-provided <code>release-summary</code> action or, if specified, the custom fcli action specified through <code>RELEASE_SUMMARY_ACTION</code>. Extra options for the fcli action can be specified through the <code>RELEASE_SUMMARY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_RELEASE_SUMMARY</code> is not set to <code>false</code>, a release summary will be generated using the fcli-provided <a href="fod-actions.html#_release_summary">release-summary</a> action or, if specified, the custom fcli action specified through <code>RELEASE_SUMMARY_ACTION</code>. Extra options for the fcli action can be specified through the <code>RELEASE_SUMMARY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_CHECK_POLICY<br>
 CHECK_POLICY_ACTION<br>
 CHECK_POLICY_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_CHECK_POLICY</code> is set to true (implied if any of the other two <code>CHECK_POLICY_*</code> variables are set), a policy check will be run after scan completion using the fcli-provided <code>check-policy</code> action or, if specified, the custom fcli action specified through <code>CHECK_POLICY_ACTION</code>. Extra options for a custom fcli action can be passed through the <code>CHECK_POLICY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_CHECK_POLICY</code> is set to true (implied if any of the other two <code>CHECK_POLICY_*</code> variables are set), a policy check will be run after scan completion using the fcli-provided <a href="fod-actions.html#_check_policy">check-policy</a> action or, if specified, the custom fcli action specified through <code>CHECK_POLICY_ACTION</code>. Extra options for a custom fcli action can be passed through the <code>CHECK_POLICY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_PR_COMMENT<br>
 PR_COMMENT_ACTION<br>
 PR_COMMENT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <code>github-pr-comment</code> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="fod-actions.html#_github_pr_comment">github-pr-comment</a> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_EXPORT<br>
 SAST_EXPORT_ACTION<br>
 SAST_EXPORT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <code>github-sast-report</code> or <code>gitlab-sast-report</code>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="fod-actions.html#_github_sast_report">github-sast-report</a> or <a href="fod-actions.html#_gitlab_sast_report">gitlab-sast-report</a>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 </tbody>
 </table>
@@ -883,8 +883,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250314.004828-dev_v3.x<br>
-Last updated 2025-03-14 00:50:37 UTC
+Version 0.20250314.015149-dev_v3.x<br>
+Last updated 2025-03-14 01:53:53 UTC
 </div>
 </div>
 </body>
