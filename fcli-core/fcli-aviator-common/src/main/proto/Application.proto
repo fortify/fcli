@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package com.fortify.aviator;
+
+option java_multiple_files = true;
+option java_package = "com.fortify.aviator.application";
+option java_outer_classname = "ApplicationProto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+message Application {
+  int64 id = 1;
+  string name = 2;
+  int64 entitlement_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+  bool is_deleted = 6;
+}
+
+message CreateApplicationRequest {
+  string name = 1;
+  string tenantName = 2;
+  string signature = 3;
+  string message = 4;
+}
+
+message UpdateApplicationRequest {
+  int64 id = 1;
+  string name = 2;
+  string signature = 3;
+  string message = 4;
+  string tenantName = 5;
+}
+
+message ApplicationById {
+  int64 id = 1;
+  string signature = 2;
+  string message = 3;
+  string tenantName = 4;
+}
+
+message ApplicationByTenantName {
+  string name = 1;
+  string signature = 2;
+  string message = 3;
+}
+
+message ApplicationList {
+  repeated Application applications = 1;
+}
+
+message ApplicationResponseMessage {
+  string responseMessage = 1;
+}
+
+service ApplicationService {
+  rpc CreateApplication(CreateApplicationRequest) returns (Application) {}
+  rpc GetApplication(ApplicationById) returns (Application) {}
+  rpc UpdateApplication(UpdateApplicationRequest) returns (Application) {}
+  rpc DeleteApplication(ApplicationById) returns (ApplicationResponseMessage) {}
+  rpc ListApplications(ApplicationByTenantName) returns (ApplicationList) {}
+  rpc ListApplicationsByEntitlement(ApplicationById) returns (ApplicationList) {}
+}

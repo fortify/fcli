@@ -65,6 +65,7 @@ message ListTokensRequest {
   string message = 4;  // format: "email;tenantName;timestamp"
   int32 page_size = 5;
   string page_token = 6;
+  bool ignorePagination = 7;
 }
 
 message TokenInfo {

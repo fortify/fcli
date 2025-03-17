@@ -1,16 +1,16 @@
-package com.fortify.cli.aviator.project.cli.cmd;
+package com.fortify.cli.aviator.app.cli.cmd;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.fortify.aviator.application.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.aviator.project.Project;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
@@ -25,19 +25,19 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class AviatorProjectListCommand extends AbstractAviatorAdminSessionOutputCommand {
+public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorProjectListCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAppListCommand.class);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            List<Project> projects = listProjects(client, sessionDescriptor, messageAndSignature);
-            return formatProjectsArray(projects, sessionDescriptor.getTenant());
+            List<Application> applications = listApplications(client, sessionDescriptor, messageAndSignature);
+            return formatApplicationsArray(applications, sessionDescriptor.getTenant());
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to list projects: " + e.getMessage(), e);
+            throw new FcliSimpleException("Failed to list applications: " + e.getMessage(), e);
         }
     }
 
@@ -48,33 +48,33 @@ public class AviatorProjectListCommand extends AbstractAviatorAdminSessionOutput
         );
     }
 
-    private List<Project> listProjects(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private List<Application> listApplications(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.listProjects(sessionDescriptor.getTenant(), signature, message);
+        return client.listApplication(sessionDescriptor.getTenant(), signature, message);
     }
 
-    private JsonNode formatProjectsArray(List<Project> projects, String tenant) {
-        ArrayNode projectsArray = AviatorGrpcUtils.createArrayNode();
-        for (Project project : projects) {
-            JsonNode projectNode = AviatorGrpcUtils.grpcToJsonNode(project);
-            String createdAt = projectNode.get("createdAt") != null ? projectNode.get("createdAt").asText() : "N/A";
+    private JsonNode formatApplicationsArray(List<Application> applications, String tenant) {
+        ArrayNode applicationsArray = AviatorGrpcUtils.createArrayNode();
+        for (Application application : applications) {
+            JsonNode applicationNode = AviatorGrpcUtils.grpcToJsonNode(application);
+            String createdAt = applicationNode.get("createdAt") != null ? applicationNode.get("createdAt").asText() : "N/A";
             if (!"N/A".equals(createdAt)) {
                 createdAt = ZonedDateTime.parse(createdAt).format(FORMATTER);
             }
-            ((ObjectNode) projectNode).put("createdAt", createdAt);
-            projectsArray.add(projectNode);
+            ((ObjectNode) applicationNode).put("createdAt", createdAt);
+            applicationsArray.add(applicationNode);
         }
 
-        logProjectCount(projects.size(), tenant);
-        return projectsArray;
+        logProjectCount(applications.size(), tenant);
+        return applicationsArray;
     }
 
     private void logProjectCount(int projectCount, String tenant) {
         if (projectCount == 0) {
-            LOG.info("No projects found for tenant: {}", tenant);
+            LOG.info("No application found for tenant: {}", tenant);
         } else {
-            LOG.info("Successfully listed {} projects for tenant: {}", projectCount, tenant);
+            LOG.info("Successfully listed {} applications for tenant: {}", projectCount, tenant);
         }
     }
 

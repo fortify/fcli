@@ -1,7 +1,7 @@
-package com.fortify.cli.aviator.project.cli.cmd;
+package com.fortify.cli.aviator.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.aviator.project.Project;
+import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
@@ -15,20 +15,22 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-@Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class AviatorProjectCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
-    @Option(names = {"-n", "--name"}, required = true) private String projectName;
+@Command(name = OutputHelperMixins.Update.CMD_NAME)
+public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand {
+    @Getter @Mixin private OutputHelperMixins.Update outputHelper;
+    @Parameters(index = "0", description = "Application ID") private String applicationId;
+    @Option(names = {"-n", "--name"}, required = true) private String newName;
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            Project createdProject = createProject(client, sessionDescriptor, messageAndSignature);
-            return AviatorGrpcUtils.grpcToJsonNode(createdProject);
+            Application updatedProject = updateProject(client, sessionDescriptor, messageAndSignature);
+            return AviatorGrpcUtils.grpcToJsonNode(updatedProject);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to create project: " + e.getMessage());
+            throw new FcliSimpleException("Failed to update project", e);
         }
     }
 
@@ -36,15 +38,15 @@ public class AviatorProjectCreateCommand extends AbstractAviatorAdminSessionOutp
         return AviatorSignatureUtils.createMessageAndSignature(
                 sessionDescriptor,
                 sessionDescriptor.getTenant(),
-                projectName
+                applicationId,
+                newName
         );
     }
 
-    private Project createProject(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private Application updateProject(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.createProject(projectName, sessionDescriptor.getTenant(), signature, message);
-
+        return client.updateApplication(applicationId, newName, signature, message, sessionDescriptor.getTenant());
     }
 
     @Override

@@ -1,18 +1,18 @@
 package com.fortify.cli.aviator.grpc;
 
+import com.fortify.aviator.application.Application;
+import com.fortify.aviator.application.ApplicationById;
+import com.fortify.aviator.application.ApplicationByTenantName;
+import com.fortify.aviator.application.ApplicationList;
+import com.fortify.aviator.application.ApplicationResponseMessage;
+import com.fortify.aviator.application.ApplicationServiceGrpc;
+import com.fortify.aviator.application.CreateApplicationRequest;
+import com.fortify.aviator.application.UpdateApplicationRequest;
 import com.fortify.aviator.entitlement.Entitlement;
 import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
 import com.fortify.aviator.grpc.*;
-import com.fortify.aviator.project.CreateProjectRequest;
-import com.fortify.aviator.project.Project;
-import com.fortify.aviator.project.ProjectById;
-import com.fortify.aviator.project.ProjectByTenantName;
-import com.fortify.aviator.project.ProjectList;
-import com.fortify.aviator.project.ProjectResponseMessage;
-import com.fortify.aviator.project.ProjectServiceGrpc;
-import com.fortify.aviator.project.UpdateProjectRequest;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
@@ -33,10 +33,6 @@ import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
@@ -73,7 +69,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final CountDownLatch latch = new CountDownLatch(1);
     private final ManagedChannel channel;
     private final AuditorServiceGrpc.AuditorServiceStub asyncStub;
-    private final ProjectServiceGrpc.ProjectServiceBlockingStub blockingStub;
+    private final ApplicationServiceGrpc.ApplicationServiceBlockingStub blockingStub;
     private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
     private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
     private final String streamId;
@@ -128,7 +124,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .withMaxOutboundMessageSize(MAX_MESSAGE_SIZE)
                 .withWaitForReady();
 
-        this.blockingStub = ProjectServiceGrpc.newBlockingStub(channel)
+        this.blockingStub = ApplicationServiceGrpc.newBlockingStub(channel)
                 .withCompression("gzip")
                 .withMaxInboundMessageSize(MAX_MESSAGE_SIZE)
                 .withMaxOutboundMessageSize(MAX_MESSAGE_SIZE)
@@ -271,7 +267,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                             .setStreamId(streamId)
                             .setRequestId(initRequestId)
                             .setToken(token)
-                            .setProjectName(projectName)
+                            .setApplicationName(projectName)
                             .setTotalReportedIssues(totalRequests)
                             .setTotalIssuesToPredict(totalRequests)
                             .build())
@@ -612,22 +608,22 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     // All your other service methods (createProject, updateProject, etc.) remain unchanged
 
-    public Project createProject(String name, String tenantName, String signature, String message) {
-        CreateProjectRequest request = CreateProjectRequest.newBuilder()
+    public Application createApplication(String name, String tenantName, String signature, String message) {
+        CreateApplicationRequest request = CreateApplicationRequest.newBuilder()
                 .setName(name)
                 .setTenantName(tenantName)
                 .setSignature(signature)
                 .setMessage(message)
                 .build();
         try {
-            return blockingStub.createProject(request);
+            return blockingStub.createApplication(request);
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("Error creating project: " + e.getStatus(), e);
         }
     }
 
-    public Project updateProject(String projectId, String newName, String signature, String message, String tenantName) {
-        UpdateProjectRequest request = UpdateProjectRequest.newBuilder()
+    public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
+        UpdateApplicationRequest request = UpdateApplicationRequest.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setName(newName)
                 .setTenantName(tenantName)
@@ -635,51 +631,51 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setMessage(message)
                 .build();
         try {
-            return blockingStub.updateProject(request);
+            return blockingStub.updateApplication(request);
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("Error updating project: " + e.getStatus(), e);
         }
     }
 
-    public ProjectResponseMessage deleteProject(String projectId, String signature, String message, String tenantName) {
-        ProjectById request = ProjectById.newBuilder()
+    public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
+        ApplicationById request = ApplicationById.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName)
                 .build();
         try {
-            return blockingStub.deleteProject(request);
+            return blockingStub.deleteApplication(request);
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("Error deleting project: " + e.getStatus(), e);
         }
     }
 
-    public Project getProject(String projectId, String signature, String message, String tenantName) {
-        ProjectById request = ProjectById.newBuilder()
+    public Application getApplication(String projectId, String signature, String message, String tenantName) {
+        ApplicationById request = ApplicationById.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName)
                 .build();
         try {
-            return blockingStub.getProject(request);
+            return blockingStub.getApplication(request);
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("Error getting project: " + e.getStatus(), e);
         }
     }
 
-    public List<Project> listProjects(String tenantName, String signature, String message) {
-        ProjectByTenantName request = ProjectByTenantName.newBuilder()
+    public List<Application> listApplication(String tenantName, String signature, String message) {
+        ApplicationByTenantName request = ApplicationByTenantName.newBuilder()
                 .setName(tenantName)
                 .setSignature(signature)
                 .setMessage(message)
                 .build();
         try {
-            ProjectList projectList = blockingStub.listProjects(request);
-            return projectList.getProjectsList();
+            ApplicationList applicationList = blockingStub.listApplications(request);
+            return applicationList.getApplicationsList();
         } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error listing projects: " + e.getStatus(), e);
+            throw new RuntimeException("Error listing applications : " + e.getStatus(), e);
         }
     }
 
