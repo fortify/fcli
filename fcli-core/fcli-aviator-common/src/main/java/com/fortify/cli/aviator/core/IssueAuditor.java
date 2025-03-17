@@ -13,6 +13,7 @@ import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
 import com.fortify.cli.aviator.fpr.filter.TagValue;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
@@ -134,7 +135,7 @@ public class IssueAuditor {
         LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
-        try (AviatorGrpcClient client = createClientFromUrl(url)) {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url)) {
             CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
             try {
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
@@ -565,34 +566,6 @@ public class IssueAuditor {
             Integer secondLine = Optional.ofNullable(second.getLastStackTraceElement()).map(StackTraceElement::getLine).orElse(0);
 
             return Integer.compare(firstLine, secondLine);
-        }
-    }
-
-    public AviatorGrpcClient createClientFromUrl(String url) {
-        try {
-            String host;
-            int port;
-
-            if (!url.contains("://")) {
-                String[] parts = url.split(":");
-                host = parts[0];
-                port = parts.length > 1 ? Integer.parseInt(parts[1]) : 9090;
-            } else {
-                URI uri = new URI(url);
-                host = uri.getHost();
-                port = uri.getPort();
-                if (port == -1) {
-                    port = 9090;
-                }
-            }
-
-            if (host == null || host.trim().isEmpty()) {
-                throw new IllegalArgumentException("Invalid host in URL: " + url);
-            }
-
-            return new AviatorGrpcClient(host, port, 10, logger);
-        } catch (URISyntaxException | NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid URL format: " + url, e);
         }
     }
 }

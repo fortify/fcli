@@ -13,7 +13,6 @@ import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
 import com.fortify.aviator.grpc.*;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
@@ -105,21 +104,11 @@ public class AviatorGrpcClient implements AutoCloseable {
         }
     }
 
-    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger) {
-        LOG.info("Initializing AviatorGrpcClient - Host: {}, Port: {}", host, port);
+    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
+        LOG.info("Initializing AviatorGrpcClient with ManagedChannel");
         this.logger = logger;
         this.streamId = UUID.randomUUID().toString();
-
-        this.channel = ManagedChannelBuilder.forAddress(host, port)
-                .useTransportSecurity()
-                .maxInboundMessageSize(MAX_MESSAGE_SIZE)
-                .keepAliveTime(30, TimeUnit.SECONDS)
-                .keepAliveTimeout(10, TimeUnit.SECONDS)
-                .keepAliveWithoutCalls(true)
-                .enableRetry()
-                .compressorRegistry(CompressorRegistry.getDefaultInstance())
-                .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
-                .build();
+        this.channel = channel;
 
         this.asyncStub = AuditorServiceGrpc.newStub(channel)
                 .withCompression("gzip")
@@ -153,6 +142,22 @@ public class AviatorGrpcClient implements AutoCloseable {
         });
         this.isShutdown = new AtomicBoolean(false);
         this.requestSemaphore = new Semaphore(INITIAL_REQUEST_WINDOW);
+    }
+
+    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger) {
+        this(ManagedChannelBuilder.forAddress(host, port)
+                        .useTransportSecurity()
+                        .maxInboundMessageSize(MAX_MESSAGE_SIZE)
+                        .keepAliveTime(30, TimeUnit.SECONDS)
+                        .keepAliveTimeout(10, TimeUnit.SECONDS)
+                        .keepAliveWithoutCalls(true)
+                        .enableRetry()
+                        .compressorRegistry(CompressorRegistry.getDefaultInstance())
+                        .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
+                        .build(),
+                defaultTimeoutSeconds,
+                logger);
+        LOG.info("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(
@@ -688,6 +693,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setEmail(email != null ? email : "")
                 .setCustomTokenName(tokenName != null ? tokenName : "")
                 .setRequestSignature(signature)
+                .setEndDate(endDate)
                 .setMessage(message)
                 .setTenantName(tenantName)
                 .build();
