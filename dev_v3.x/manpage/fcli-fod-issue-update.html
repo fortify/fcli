@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250317.140207-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250317.153546-dev_v3.x" %}
 
 
 <div id="header">
@@ -45,8 +45,8 @@ fcli_version:
 <p><strong>fcli fod issue update</strong> [<strong>--auditor-status</strong>=<em>&lt;auditorStatus&gt;</em>] [<strong>--comment</strong>=<em>&lt;comment&gt;</em>]
                       [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--dev-status</strong>=<em>&lt;developerStatus&gt;</em>]
                       <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--severity</strong>=<em>&lt;severity&gt;</em>]
-                      <strong>--user</strong>=<em>&lt;user&gt;</em> <strong>--ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]
-                      [<strong>--ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                      <strong>--user</strong>=<em>&lt;user&gt;</em> <strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]
+                      [<strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                       [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
                       <em class="[<strong>-o</strong>=_type[=&lt;args&gt;">] [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
@@ -84,10 +84,6 @@ fcli_version:
 <dd>
 <p>The Developer Status to set for the vulnerabilities. Allowed values: Open, InRemediation, Remediated, WillNotFix, ThirdPartyComponent.</p>
 </dd>
-<dt class="hdlist1"><strong>--ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>Comma separate list of the vulnerability ids to be updated.</p>
-</dd>
 <dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
 <p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
@@ -99,6 +95,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--user</strong>=<em>&lt;user&gt;</em></dt>
 <dd>
 <p>The username or user id of the user the update will be recorded as.</p>
+</dd>
+<dt class="hdlist1"><strong>--vuln-ids</strong>=<em>&lt;vulnIds&gt;</em>[,<em>&lt;vulnIds&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma separate list of the vulnerability ids to be updated.</p>
 </dd>
 </dl>
 </div>
@@ -171,7 +171,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-03-17 14:04:08 UTC
+Last updated 2025-03-17 15:37:47 UTC
 </div>
 </div>
 </body>

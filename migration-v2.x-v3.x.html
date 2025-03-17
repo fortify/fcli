@@ -33,15 +33,7 @@ fcli_version: none
 <li><a href="#_fcli_sc_sast"><code>fcli sc-sast</code></a></li>
 <li><a href="#_fcli_sc_dast"><code>fcli sc-dast</code></a></li>
 <li><a href="#_fcli_ssc"><code>fcli ssc</code></a></li>
-<li><a href="#_fcli_actions">Fcli actions</a>
-<ul class="sectlevel2">
-<li><a href="#_defaultsrequesttarget"><code>defaults:requestTarget</code></a></li>
-<li><a href="#_parameters"><code>parameters</code></a></li>
-<li><a href="#_stepsappend"><code>steps:append</code></a></li>
-<li><a href="#_steps"><code>steps:&#8230;&#8203;</code></a></li>
-<li><a href="#_valuetemplates"><code>valueTemplates</code></a></li>
-</ul>
-</li>
+<li><a href="#_fcli_actions">Fcli actions</a></li>
 </ul>
 </div>
 </div>
@@ -218,90 +210,104 @@ fcli_version: none
 <p>If, despite the preview warning, the updated fcli action yaml syntax poses major issues for your business, please discuss this with your OpenText Fortify representative to investigate options for assistance on migrating your fcli v2.x custom actions to fcli v3.x. Based on customer feedback, we may also investigate feasibility of providing an automated migration tool. Note though that even if we choose to do so, automatically migrated actions may still require manual review and changes to cater for any migration tasks that cannot be automated.</p>
 </div>
 <div class="paragraph">
-<p>To assist you with updating your fcli v2.x custom actions to allow them to run on fcli v3.x, the following sections provide an overview of fcli v2.x action instructions and their fcli v3.x equivalents.</p>
+<p>To assist you with updating your fcli v2.x custom actions to allow them to run on fcli v3.x, the following table provides a summary of fcli v2.x action instructions and their fcli v3.x equivalents. Please note that the syntax for many of these instructions have changed, for example now taking a map instead of a list, with map keys defining identifiers. Please see the schema definition or the various built-in fcli actions for details and examples on new syntax. It is recommended to use IDE-provided schema-based code assistance when updating your custom actions.</p>
 </div>
-<div class="paragraph">
-<p>TODO Add sections for each of the changed instructions in alphabetical order, with each section providing a summary of changes and examples of old/new syntax.</p>
-</div>
-<div class="sect2">
-<h3 id="_defaultsrequesttarget"><a class="anchor" href="#_defaultsrequesttarget"></a><code>defaults:requestTarget</code></h3>
-<div class="paragraph">
-<p>TODO (now <code>config:rest.target.default</code>)</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_parameters"><a class="anchor" href="#_parameters"></a><code>parameters</code></h3>
-<div class="paragraph">
-<p>Summary of changes:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>parameters</code> renamed to <code>cli.options</code></p>
-</li>
-<li>
-<p><code>cli.options</code> takes a map, with option names as keys, and option definitions as values</p>
-</li>
-<li>
-<p><code>cliAliases</code> property renamed to <code>alias</code>, now supporting only single alias</p>
-</li>
-<li>
-<p><code>defaultValue</code> property renamed to <code>default</code></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>TODO; examples of old and new syntax</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_stepsappend"><a class="anchor" href="#_stepsappend"></a><code>steps:append</code></h3>
-<div class="paragraph">
-<p>Summary of changes:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>steps:append</code> functionality merged into new <code>var.set</code> &amp; <code>var.fmt</code> instructions</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>TODO; examples of old and new syntax</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_steps"><a class="anchor" href="#_steps"></a><code>steps:&#8230;&#8203;</code></h3>
-<div class="paragraph">
-<p>TODO; list all other step changes</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_valuetemplates"><a class="anchor" href="#_valuetemplates"></a><code>valueTemplates</code></h3>
-<div class="paragraph">
-<p>Summary of changes:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>valueTemplates</code> renamed to <code>formatters</code></p>
-</li>
-<li>
-<p><code>formatters</code> takes a map, with formatter names as keys, and formatter definitions as values</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>TODO; examples of old and new syntax</p>
-</div>
-</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>fcli 2.x</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>fcli 3.x</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Notes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>addRequestTargets</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:rest.target</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now takes map instead of list, moved to <code>steps</code> to allow for more flexibility</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>defaults:requestTarget</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>config:rest.target.default</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Moved to new <code>config</code> instruction</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>parameters</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cli.options</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now takes map instead of list, some property changes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:append</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:var.set</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use variable name with trailing <code>..</code> to append values to a variable</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:check</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:check</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Properties have been renamed for better consistency</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:debug</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:log.debug</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Renamed for better consistency</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:fcli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:run.fcli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now takes map instead of list, some property changes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:forEach</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:records.for-each</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Renamed, some property changes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:progress</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:log.progress</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Renamed for better consistency</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:requests</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:rest.call</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now takes map instead of list, many properties have been renamed for better consistency</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:set</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:var.set</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now takes map instead of list, new syntax for variable names to allow for composite &amp; array-style variables</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:unset</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:var.rm</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Renamed for better consistency</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:warn</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:log.warn</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Renamed for better consistency</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:write</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>steps:out.write</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Now takes map instead of list, with new syntax for map values</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>valueTemplates</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>formatters</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Renamed for better consistency</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2025-03-17 14:02:06 UTC
+Last updated 2025-03-17 15:35:46 UTC
 </div>
 </div>
 </body>
