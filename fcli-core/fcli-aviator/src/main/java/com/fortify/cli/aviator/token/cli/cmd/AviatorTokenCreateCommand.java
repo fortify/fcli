@@ -1,10 +1,12 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
@@ -27,7 +29,8 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter CURRENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
@@ -41,7 +44,7 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        String currentDate = DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
+        String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
         String safeCustomTokenName = customTokenName == null ? "" : customTokenName;
         String safeEndDate = endDate == null ? "" : endDate;
         return AviatorSignatureUtils.createMessageAndSignature(
@@ -61,7 +64,14 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
 
     private JsonNode processTokenResponse(TokenGenerationResponse response) throws AviatorSimpleException {
         if (response.getSuccess()) {
-            return AviatorGrpcUtils.grpcToJsonNode(response);
+            JsonNode jsonNode = AviatorGrpcUtils.grpcToJsonNode(response);
+            if (jsonNode.has("expiry_date")) {
+                long expiryDateEpoch = jsonNode.get("expiry_date").asLong();
+                Instant instant = Instant.ofEpochSecond(expiryDateEpoch);
+                String formattedDate = DATE_FORMATTER.format(instant.atZone(ZoneId.of("UTC")));
+                ((ObjectNode) jsonNode).put("expiry_date", formattedDate);
+            }
+            return jsonNode;
         } else {
             throw new AviatorSimpleException("Failed to generate token: " + response.getErrorMessage());
         }

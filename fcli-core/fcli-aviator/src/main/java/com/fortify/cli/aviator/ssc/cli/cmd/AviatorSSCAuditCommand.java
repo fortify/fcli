@@ -13,7 +13,6 @@ import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSession
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.core.AuditFPR;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -73,14 +72,12 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
             return av.asObjectNode().put("artifactId", id);
         } catch (AviatorSimpleException e) {
-            LOG.error("Aviator audit failed: {}", e.getMessage());
+            LOG.debug("Aviator audit failed: {}", e.getMessage(), e);
             throw new FcliSimpleException(e.getMessage());
         } catch (AviatorTechnicalException e) {
-            LOG.error("Technical error during Aviator audit: {}", e.getMessage(), e);
-            throw new FcliTechnicalException("Aviator audit failed due to a technical issue: " + e.getMessage(), e);
+            throw new FcliSimpleException("Aviator audit failed due to a technical issue: " + e.getMessage());
         } catch (IOException e) {
-            LOG.error("I/O error during audit process: {}", e.getMessage(), e);
-            throw new FcliTechnicalException("Failed to process FPR file due to an I/O error.", e);
+            throw new FcliSimpleException("Failed to process FPR file due to an I/O error.", e.getMessage());
         }
     }
 

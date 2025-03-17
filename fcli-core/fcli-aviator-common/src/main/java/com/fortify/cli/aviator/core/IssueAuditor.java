@@ -153,8 +153,6 @@ public class IssueAuditor {
             throw new RuntimeException(e);
         }
 
-        System.out.println(":::::::::::::: result id "+resultsTag.getId());
-        logger.progress(":::::::::::::: result id "+resultsTag.getId());
         fprInfo.setResultsTag(resultsTag.getId());
         logger.progress("Audit completed");
     }

@@ -43,15 +43,6 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLException;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,17 +54,17 @@ public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
 
     private final IAviatorLogger logger;
-    // Configuration constants
+
     private static final int MAX_MESSAGE_SIZE = 16 * 1024 * 1024;
-    private static final int INITIAL_REQUEST_WINDOW = 100; // Increased from 20
+    private static final int INITIAL_REQUEST_WINDOW = 100;
     private static final int MAX_RETRIES = 3;
     private static final long BASE_DELAY_MS = 500;
     private static final long MAX_DELAY_MS = 2000;
 
-    // For tracking request metrics
+
     private final Map<String, RequestMetrics> requestMetricsMap = new ConcurrentHashMap<>();
 
-    // For adaptive backpressure handling
+
     private final AtomicInteger consecutiveBackpressureViolations = new AtomicInteger(0);
     private final AtomicLong lastBackpressureViolation = new AtomicLong(0);
     private final AtomicInteger currentBackoff = new AtomicInteger(1);
@@ -156,7 +147,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .withWaitForReady();
 
         this.defaultTimeoutMinutes = timeoutMinutes;
-        // Increased from 2 to 4 threads
         this.processingExecutor = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r, "aviator-client-processing-" + r.hashCode());
             t.setDaemon(true);
@@ -170,16 +160,15 @@ public class AviatorGrpcClient implements AutoCloseable {
             Queue<UserPrompt> requests, String projectName, String token) {
         isStreamActive = true;
         if (requests == null || requests.isEmpty()) {
-            return CompletableFuture.failedFuture(new IllegalArgumentException("Requests queue cannot be null or empty"));
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Issue queue cannot be null or empty"));
         }
 
-        logger.info("Starting processing - Total requests: " + requests.size());
+        logger.info("Starting processing - Total Issues: " + requests.size());
         CompletableFuture<Map<String, AuditResponse>> resultFuture = new CompletableFuture<>();
         Map<String, AuditResponse> responses = new ConcurrentHashMap<>();
         AtomicInteger processedRequests = new AtomicInteger(0);
         int totalRequests = requests.size();
 
-        // Use ClientResponseObserver to set up handlers before the call starts
         ClientResponseObserver<UserPromptRequest, AuditorResponse> responseObserver =
                 new ClientResponseObserver<UserPromptRequest, AuditorResponse>() {
 
@@ -238,7 +227,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                             outstandingRequests.decrementAndGet();
                             requestSemaphore.release();
 
-                            logger.progress("Processed " + completed + " out of " + totalRequests + " requests");
+                            logger.progress("Processed " + completed + " out of " + totalRequests + " issues");
 
                             if (completed >= totalRequests) {
                                 logger.info("All requests processed, completing stream");
@@ -272,7 +261,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                     }
                 };
 
-        // This will call beforeStart before the stream is created
         asyncStub.processStream(responseObserver);
 
         try {
@@ -322,7 +310,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     private void processRequests(Queue<UserPrompt> requests, StreamObserver<UserPromptRequest> observer) {
-        logger.progress("Starting to process requests...");
+        logger.progress("Starting to process issues...");
         int totalProcessed = 0;
         AtomicInteger failedRequests = new AtomicInteger(0);
         AtomicInteger pendingRequests = new AtomicInteger(0);
@@ -376,7 +364,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                     outstandingRequests.incrementAndGet();
                 }
 
-                // Successfully sent
                 pendingRequests.decrementAndGet();
                 totalProcessed++;
 
@@ -430,7 +417,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                 }
 
                 try {
-                    // More sophisticated backoff based on current state and error type
                     long baseBackoff = BASE_DELAY_MS * Math.min(10, currentBackoff.get() * (attempt + 1));
                     long jitter = ThreadLocalRandom.current().nextLong(100);
                     long backoffMs = Math.min(MAX_DELAY_MS, baseBackoff) + jitter;
