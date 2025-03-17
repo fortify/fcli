@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20250317.153546-dev_v3.x
+fcli_version: 0.20250317.212329-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250317.153546-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250317.153546-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250317.212329-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20250317.153546-dev_v3.x</span>
+<span id="revnumber">version 0.20250317.212329-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -50,7 +50,6 @@ fcli_version: 0.20250317.153546-dev_v3.x
 <li><a href="#_progress">--progress</a></li>
 <li><a href="#_store">--store</a></li>
 <li><a href="#_q_query">-q | --query</a></li>
-<li><a href="#_session">--session</a></li>
 <li><a href="#_option_expressions">Option Expressions</a></li>
 </ul>
 </li>
@@ -568,7 +567,7 @@ location in the fcli data folder.</p>
 <p>Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like <code>table</code>, <code>csv</code>, <code>json</code>, <code>xml</code>, and <code>yaml</code>, allowing for both human-readable output or output suitable for automations. The style for each of these output formats can be controlled through the <code>--style</code> option, for example for controlling whether table or CSV output should include headers or not; see next section for details.</p>
 </div>
 <div class="paragraph">
-<p>The output formats listed above optionally allow for specifying the JSON properties to be included in the output, for example <code>-o csv=id,name</code>. Optionally, properties can also be renamed, which for example may be used to define CSV or table header names, like <code>+-o "csv=id:Application Id,name:Application Name"</code>. If no JSON properties are specified, most output formats will output all available JSON properties, except for table output, which usually outputs a predefined set of JSON properties.</p>
+<p>The output formats listed above optionally allow for specifying the JSON properties to be included in the output, for example <code>-o csv=id,name</code>. Optionally, properties can also be renamed, which for example may be used to define CSV or table header names, like <code>-o "csv=id:Application Id,name:Application Name"</code>. If no JSON properties are specified, most output formats will output all available JSON properties, except for table output, which usually outputs a predefined set of JSON properties.</p>
 </div>
 <div class="paragraph">
 <p>Apart from the output formats listed above, fcli also supports the special <code>expr</code> output format that can be used for a variety of purposes, for example for generating output in a human-readable format, or for generating a list of commands to be run at a later stage. This output format takes a template expression as input, for example <code>-o 'expr=Text with {expression1} or {expression2}\n'</code>. In most cases, expressions will be simple JSON property references, i.e., <code>{property.subProperty}</code>.</p>
@@ -593,7 +592,7 @@ location in the fcli data folder.</p>
 <div class="sect2">
 <h3 id="_style"><a class="anchor" href="#_style"></a>--style</h3>
 <div class="paragraph">
-<p>The <code>--style=&lt;style element&gt;[,&lt;style element&gt;&#8230;&#8203;]</code> option can be used to control the output style for most of the output formats listed above, for example to control whether CSV or table headers should be included or not, or whether JSON or YAML output should be flattened. Note that the <code>--style</code> option will be ignored for the <code>expr</code> output format, and similarly, any style elements that are not applicable for the output format specified in the <code>-o</code> option will be ignored. Multiple style elements can be specified by separating them with comma&#8217;s.</p>
+<p>The <code>--style=&lt;style element&gt;[,&lt;style element&gt;&#8230;&#8203;]</code> option can be used to control the output style for most of the output formats listed above, for example to control whether CSV or table headers should be included or not, or whether JSON or YAML output should be flattened. Note that the <code>--style</code> option will be ignored for the <code>expr</code> output format, and similarly, any style elements that are not applicable for the output format specified in the <code>-o</code> option will be ignored. Multiple style elements can be specified by separating them by comma&#8217;s.</p>
 </div>
 <div class="paragraph">
 <p>Some examples:</p>
@@ -813,12 +812,6 @@ All commands that automatically generate server-side queries provide the <code>-
 </div>
 </div>
 <div class="sect2">
-<h3 id="_session"><a class="anchor" href="#_session"></a>--session</h3>
-<div class="paragraph">
-<p>Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the <a href="#_session_management">Session Management</a> section.</p>
-</div>
-</div>
-<div class="sect2">
 <h3 id="_option_expressions"><a class="anchor" href="#_option_expressions"></a>Option Expressions</h3>
 <div class="paragraph">
 <p>Various fcli options take either plain expressions, like <a href="#-q--query">-q | --query</a>, or template expressions (plain text combined with expressions embedded between curly braces), like <a href="#-o--output">-o | –output expr=&#8230;&#8203;</a>. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the <a href="https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions">SpEL Documentation</a>.</p>
@@ -953,18 +946,18 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>For interactive use, you can choose to keep the session open until it expires (expiration period depends on target system and login method). For pipeline use or other automation scenarios, it is highly recommended to issue a <code>session logout</code> command when no further interaction with the target system is required, to allow for any client-side and server-side cleanup to be performed.</p>
 </div>
 <div class="paragraph">
-<p>For example, upon logging in to SSC with user credentials, fcli will generate a <code>UnifiedLoginToken</code>, which will be invalidated when the <code>ssc session logout</code> is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the <code>ssc session logout</code> command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the <code>logout</code> commands will perform client-side cleanup, like removing session details like URL and authentication tokens from the client system.</p>
+<p>For example, upon logging in to SSC with user credentials, fcli will generate a <code>AutomationToken</code>, which will be invalidated when the <code>ssc session logout</code> is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the <code>ssc session logout</code> command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the <code>logout</code> commands will perform client-side cleanup, like removing session details like URL and authentication tokens from the client system.</p>
 </div>
 <div class="paragraph">
-<p>For product modules that support it, like SSC or ScanCentral DAST, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password.</p>
+<p>For product modules that support it, like SSC, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password.</p>
 </div>
 <div class="paragraph">
-<p>Note however that depending on (personal access) token permissions, not all fcli functionality may be available. In particular, even the least restrictive SSC <code>CIToken</code> may not provide access to all endpoints covered by fcli. If you need access to functionality not covered by <code>CIToken</code>, you may need to define a custom token definition, but this can only be done on self-hosted SSC environments, not on Fortify Hosted. If all else fails, you may need to revert to username/password-based authentication to utilize the short-lived  <code>UnifiedLoginToken</code>.</p>
+<p>Note however that depending on (personal access) token permissions, not all fcli functionality may be available. For example, the commonly used SSC <code>CIToken</code> may not provide access to all endpoints covered by fcli. To allow fcli to access all SSC endpoints, you may want to use an <code>AutomationToken</code>, but please note its security implications as documented by SSC. Alternatively, for self-hosted SSC environments, you can also consider defining custom token definitions, but this functionality is not available on Fortify Hosted.</p>
 </div>
 <div class="sect2">
 <h3 id="_named_sessions"><a class="anchor" href="#_named_sessions"></a>Named Sessions</h3>
 <div class="paragraph">
-<p>Fcli supports named sessions, allowing you to have multiple open sessions for a single product. When issuing a <code>session login</code> command, you can optionally provide a session name as in <code>fcli ssc session login mySession ...</code>, and then use that session in other commands using the <code>--session mySession</code> command line option. If no session name is specified, a session named <code>default</code> will be created/used. Named sessions allow for a variety of use cases, for example:</p>
+<p>Fcli supports named sessions, allowing you to have multiple open sessions for a single product. When issuing a <code>session login</code> command, you can optionally provide a session name as in <code>fcli ssc session login --ssc-session mySession ...</code>, and then use that session in other commands using the <code>--ssc-session mySession</code> command line option. If no session name is specified, a session named <code>default</code> will be created/used. Named sessions allow for a variety of use cases, for example:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -981,6 +974,9 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>Run multiple pipelines or automation scripts simultaneously, each with their own session name, to reduce chances of these pipelines and scripts affecting each other (see <a href="#_fcli_data_folder">Fcli Data Folder</a> though for a potentially better solution for this scenario)</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>Each session-based product module provides a corresponding <code>--&lt;module&gt;-session</code> command line option on both the corresponding <code>fcli &lt;module&gt; session</code> commands, and all commands that utilize sessions to connect to a remote system.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1050,7 +1046,7 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>For this purpose, fcli will check for an environment variable named <code>FCLI_USER_HOME</code>; if defined, the value of this environment variable will be used instead of the actual user home directory for any fcli command that reads or writes data from/to the user home directory.</p>
 </div>
 <div class="paragraph">
-<p>Of course, even if this environment variable is set, you can still override individual directories through the applicable environment variables or command-line options. For example, if you set both <code>FCLI_USER_HOME</code> and <code>FCLI_CONFIG_DIR</code> (but not any of the other environment variables listed in the next section), then fcli configuration data will be stored in the directory specified through <code>FCLI_CONFIG_DIR</code>, whereas fcli state data will be stored in <code>&lt;FCLI_USER_HOME&gt;/.fortify/fcli/state</code>.</p>
+<p>Of course, even if this environment variable is set, you can still override individual directories through the applicable environment variables or command-line options. For example, if you set both <code>FCLI_USER_HOME</code> and <code>FCLI_CONFIG_DIR</code> (but not any of the other environment variables listed in the next section), then fcli configuration data will be stored in the directory specified through <code>FCLI_CONFIG_DIR</code>, whereas fcli state data will be stored in the default directory under <code>&lt;FCLI_USER_HOME&gt;</code>.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1073,7 +1069,7 @@ Default: <code>&lt;FCLI_DATA_DIR&gt;/config</code></p>
 </li>
 <li>
 <p><code>FCLI_DATA_DIR</code>: Default base directory for the two directories listed above.<br>
-Default: <code>&lt;FORTIFY_DATA_DIR&gt;/fcli</code></p>
+Default: <code>&lt;FORTIFY_DATA_DIR&gt;/fcli/v3</code></p>
 </li>
 <li>
 <p><code>FORTIFY_DATA_DIR</code>: Default base directory for the directories listed above.<br>
@@ -1082,7 +1078,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 </ul>
 </div>
 <div class="paragraph">
-<p>If none of these environment variables have been set, then state data will be stored in <code>&lt;user home directory&gt;/.fortify/fcli/state</code>, and configuration data will be stored in <code>&lt;user home directory&gt;/.fortify/fcli/config</code>.</p>
+<p>If none of these environment variables have been set, then state data will be stored in <code>&lt;user home directory&gt;/.fortify/fcli/v3/state</code>, and configuration data will be stored in <code>&lt;user home directory&gt;/.fortify/fcli/v3/config</code>.</p>
 </div>
 <div class="paragraph">
 <p>Note: earlier versions of fcli used different environment variable names, but this was causing issues (see <a href="https://github.com/fortify/fcli/issues/248">Issue 248</a>). If you are using an older fcli version, please refer to the corresponding documentation. When upgrading fcli from an older version, you may need to adjust the environment variable names.</p>
@@ -1133,7 +1129,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <p>Command aliases are not taken into account when looking for environment variables; suppose we have a <code>delete</code> command with alias <code>rm</code>, you will need to use <code>FCLI_DEFAULT_..._DELETE_...</code> and not <code>FCLI_DEFAULT_..._RM_...</code></p>
 </li>
 <li>
-<p>For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names <code>-a</code>, <code>--ab</code> and <code>--abc</code>, you will need to use <code>FCLI_DEFAULT_..._ABC</code> and not  <code>FCLI_DEFAULT_..._AB</code> or <code>FCLI_DEFAULT_..._A</code></p>
+<p>For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names <code>-a</code>, <code>--ab</code> and <code>--abc</code>, you will need to use <code>FCLI_DEFAULT_..._ABC</code> and not <code>FCLI_DEFAULT_..._AB</code> or <code>FCLI_DEFAULT_..._A</code></p>
 </li>
 <li>
 <p>For positional parameters, the environment variable name will be based on the parameter label, converted to <code>SNAKE_CASE</code> with all special characters replaced by an underscore. For example, <code>&lt;attributeDefinitionId&gt;</code> will become <code>ATTRIBUTE_DEFINITION_ID</code>, and <code>HOST:PORT</code> will become <code>HOST_PORT</code>.</p>
@@ -1167,9 +1163,6 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 </ul>
 </div>
 <div class="paragraph">
-<p>This means that defining a single <code>FCLI_DEFAULT_SSC_URL</code> environment variable, together with for example <code>FCLI_DEFAULT_SSC_USER</code> and <code>FCLI_DEFAULT_SSC_PASSWORD</code> environment variables, allows for applying these default values to all of the <code>fcli ssc session login</code>, <code>fcli sc-sast session login</code>, <code>fcli sc-dast session login</code>, and corresponding <code>logout</code> commands.</p>
-</div>
-<div class="paragraph">
 <p>Note that as described in the <a href="#_env_prefix">–env-prefix</a> section, you can override the <code>FCLI_DEFAULT</code> prefix. For example, with <code>--env-prefix MYPREFIX</code>, fcli will look for <code>MYPREFIX_*</code> environment variables instead of <code>FCLI_DEFAULT_*</code> environment variables.</p>
 </div>
 </div>
@@ -1185,7 +1178,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <p>Variables can be stored using the <code>--store myVarName[:prop1,prop2]</code> option on data output commands. If property names are specified, then only these property names will be stored. If no property names are provided, all available JSON properties will be stored.</p>
 </div>
 <div class="paragraph">
-<p>Variables can be referenced in subsequent fcli commands using the <code>::myVarName::prop</code> syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name.</p>
+<p>Variables can be referenced in subsequent fcli commands using the <code>::myVarName::prop</code> syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name. Note that such variable references will only be resolved when appearing as a separate command line argument. For example, <code>--my-opt ::myVarName::prop</code> will pass the contents of the <code>prop</code> property of <code>myVarName</code> as the value for <code>--my-opt</code>, but <code>--my-opt=::myVarName::prop</code> will pass the literal text <code>::myVarName::prop</code> as the value for <code>--my-opt</code>.</p>
 </div>
 <div class="paragraph">
 <p>Many (but not all) fcli commands will also store an entity-specific default property name when using the <code>--store</code> option. Whether a default property name has been stored can be seen in the output of the <code>fcli util variable list</code> command. If a default property name was stored, the <code>::myVarName::</code> syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.</p>
@@ -1201,10 +1194,10 @@ fcli ssc artifact upload myScan.fpr --appversion ::myVersion::
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
 fcli ssc artifact upload myScan.fpr --appversion ::myVersion::id
 
-fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
+fcli sc-sast scan start -f package.zip --publish-to test:1.0 --store x
 fcli sc-sast scan wait-for ::x::
 
-fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
+fcli sc-sast scan start -f package.zip --publish-to test:1.0 --store x
 fcli sc-sast scan wait-for ::x::jobToken</code></pre>
 </div>
 </div>
@@ -1223,7 +1216,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 </div>
 </div>
 <div class="paragraph">
-<p>Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x, you may need to update your fcli invocations to match the new syntax. See <a href="https://github.com/fortify/fcli/issues/160">Issue 160</a> for information on why syntax and behavior was changed.</p>
+<p>Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x or 3.x.x, you may need to update your fcli invocations to match the new syntax. See <a href="https://github.com/fortify/fcli/issues/160">Issue 160</a> for information on why syntax and behavior was changed.</p>
 </div>
 </div>
 </div>
@@ -1240,6 +1233,9 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 </div>
 <div class="ulist">
 <ul>
+<li>
+<p>Running a full scan pipeline initiated from various CI/CD systems.</p>
+</li>
 <li>
 <p>Vulnerability export to various third-party formats like SARIF or GitHub, GitLab, BitBucket, and SonarQube reports, as a replacement for <a href="https://github.com/fortify/FortifyVulnerabilityExporter">FortifyVulnerabilityExporter</a>.</p>
 </li>
@@ -1274,7 +1270,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Future fcli versions may introduce new built-in actions, enhance existing built-in actions, or provide enhanced action syntax, for example to allow for running pipeline-style actions that run a set of commands to package source code, submit a scan request, wait for scan completion, and perform post-scan activities like data export or policy checks.</p>
 </div>
 <div class="paragraph">
-<p>Action support is centralized into the <code>action</code> entity of the various product modules. For now, fcli supports <code>fcli fod action *</code> and <code>fcli ssc action *</code> commands. Based on user feedback, we may consider adding action support on other modules like <code>sc-sast</code> or <code>sc-dast</code> as well. The following commands may be used to manage and run built-in actions:</p>
+<p>Fcli provides product-agnostic or cross-product actions through the <code>fcli action *</code> commands, and FoD &amp; SSC-specific actions through respectively <code>fcli fod action *</code> and <code>fcli ssc action *</code> commands. Based on user feedback, we may consider adding action support on other modules like <code>sc-sast</code> or <code>sc-dast</code> as well. The following commands may be used to manage and run built-in actions:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1291,6 +1287,9 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p><code>fcli * action run &lt;action&gt;</code>: Run a given action.</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>Note that <code>fcli * action run &lt;action&gt; -h</code> will just output the usage help for the <code>run</code> command, not for the specified action. You&#8217;ll need to use the <code>fcli * action help &lt;action&gt;</code> command to see action usage help.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1384,7 +1383,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250317.153546-dev_v3.x supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.0.0.json">2.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>As shown in the sample schema statements above, the current fcli version 0.20250317.212329-dev_v3.x supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.0.0.json">2.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 </div>
 </div>
@@ -1412,7 +1411,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p><strong>Publishing</strong></p>
 </div>
 <div class="paragraph">
-<p>Fcli actions can be loaded from any URL, but for CI/CD integration you could consider hosting fcli actions in a shared source code repository like <code><a href="https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions" class="bare">https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions</a></code>. This allows for easy sharing and maintainance of fcli actions that are used across many CI/CD pipelines. This even allows for automatically signing those action using CI/CD pipelines on this shared repository.</p>
+<p>Fcli actions can be loaded from any URL, but for CI/CD integration you could consider hosting custom fcli actions in a shared source code repository like <code><a href="https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions" class="bare">https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions</a></code>. This allows for easy sharing and maintenance of fcli actions that are used across many CI/CD pipelines. This even allows for automatically signing those action using CI/CD pipelines on this shared repository.</p>
 </div>
 <div class="paragraph">
 <p><strong>Public &amp; private key management</strong></p>
@@ -1462,7 +1461,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>However, from a CI/CD perspective, this means that every pipeline must properly set these action parameters. Pipeline authors may copy existing pipelines or use pipeline templates to have these action parameters set to predefined values, but what if those parameters need to updated globally? Potentially, this means that you&#8217;d need to update thousands of pipelines to adjust action parameters.</p>
 </div>
 <div class="paragraph">
-<p>This is exactly the reason why we don&#8217;t provide a highly configurable <code>check-policy</code> action, but instead just provide an example that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:</p>
+<p>This is exactly the reason why we don&#8217;t provide highly configurable <code>check-policy</code> actions, but instead just provide a default implementation that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1599,8 +1598,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250317.153546-dev_v3.x<br>
-Last updated 2025-03-17 15:37:47 UTC
+Version 0.20250317.212329-dev_v3.x<br>
+Last updated 2025-03-17 21:25:34 UTC
 </div>
 </div>
 </body>
