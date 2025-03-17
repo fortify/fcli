@@ -29,8 +29,8 @@ message IssueData {
 }
 
 message AnalysisInfo {
-  string shortDescription=1;
-  string  explanation=2;
+  string shortDescription = 1;
+  string  explanation = 2;
 }
 
 message StackTraceElement {
@@ -48,16 +48,7 @@ message Fragment {
   int32 start_line = 2;
   int32 end_line = 3;
 }
-message StreamInitRequest {
-  string tenantId = 1;
-  string tokenName = 2;
-  string token=3;
-  string projectName=4;
-  string streamId = 5;
-  string requestId = 6;
-  int32 totalReportedIssues=7;
-  int32 totalIssuesToPredict=8;
-}
+message StreamInitRequest {string token = 1;  string projectName = 2;  string streamId = 3;  string requestId = 4;  int32 totalReportedIssues = 5;  int32 totalIssuesToPredict = 6;}
 message UserPromptRequest {
   oneof request_type {
     StreamInitRequest init = 1;
