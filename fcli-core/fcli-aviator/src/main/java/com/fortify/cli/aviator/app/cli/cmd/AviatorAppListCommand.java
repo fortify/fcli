@@ -37,7 +37,7 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
             List<Application> applications = listApplications(client, sessionDescriptor, messageAndSignature);
             return formatApplicationsArray(applications, sessionDescriptor.getTenant());
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to list applications: " + e.getMessage(), e);
+            throw new FcliSimpleException("Failed to list applications: " + e.getMessage());
         }
     }
 

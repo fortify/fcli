@@ -28,7 +28,7 @@ public class AviatorAppGetCommand extends AbstractAviatorAdminSessionOutputComma
             Application application = getApplication(client, sessionDescriptor, messageAndSignature);
             return AviatorGrpcUtils.grpcToJsonNode(application);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to retrieve application", e);
+            throw new FcliSimpleException("Failed to retrieve application", e.getMessage());
         }
     }
 

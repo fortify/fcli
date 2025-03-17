@@ -15,7 +15,7 @@ public class AviatorGrpcClientHelper {
             String host = parts[0];
             int port = parts.length > 1 ? Integer.parseInt(parts[1]) : DEFAULT_PORT;
             LOG.debug("Creating gRPC client for host: {}, port: {}", host, port);
-            return new AviatorGrpcClient(host, port, 10, null);
+            return new AviatorGrpcClient(host, port, 30, null);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid port in URL: " + url, e);
         }

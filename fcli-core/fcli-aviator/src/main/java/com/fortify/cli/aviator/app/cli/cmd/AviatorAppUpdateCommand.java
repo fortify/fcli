@@ -30,7 +30,7 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
             Application updatedProject = updateProject(client, sessionDescriptor, messageAndSignature);
             return AviatorGrpcUtils.grpcToJsonNode(updatedProject);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to update project", e);
+            throw new FcliSimpleException("Failed to update project", e.getMessage());
         }
     }
 

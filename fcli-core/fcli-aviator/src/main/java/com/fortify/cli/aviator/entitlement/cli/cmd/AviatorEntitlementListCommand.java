@@ -40,8 +40,7 @@ public class AviatorEntitlementListCommand extends AbstractAviatorAdminSessionOu
             }
             return entitlementsArray;
         } catch (Exception e) {
-            LOG.error("Error listing entitlements: {}", e.getMessage(), e);
-            throw new FcliSimpleException("Failed to list entitlements: " + e.getMessage(), e);
+            throw new FcliSimpleException("Failed to list entitlements: " + e.getMessage());
         }
     }
 

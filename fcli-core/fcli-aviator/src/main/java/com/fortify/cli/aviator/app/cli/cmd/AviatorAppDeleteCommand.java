@@ -31,7 +31,7 @@ public class AviatorAppDeleteCommand extends AbstractAviatorAdminSessionOutputCo
 
             return processDeleteResponse(response);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to delete application", e);
+            throw new FcliSimpleException("Failed to delete application", e.getMessage());
         }
     }
 

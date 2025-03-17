@@ -13,10 +13,12 @@ import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
 import com.fortify.aviator.grpc.*;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
 import com.fortify.cli.aviator.core.model.UserPrompt;
+import com.fortify.cli.aviator.util.Constants;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensRequest;
@@ -33,6 +35,7 @@ import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.AbstractBlockingStub;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
@@ -73,7 +76,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
     private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
     private final String streamId;
-    private final long defaultTimeoutMinutes;
+    private final long defaultTimeoutSeconds;
     private final ExecutorService processingExecutor;
     private final AtomicBoolean isShutdown;
     private final CountDownLatch initLatch = new CountDownLatch(1);
@@ -102,8 +105,8 @@ public class AviatorGrpcClient implements AutoCloseable {
         }
     }
 
-    public AviatorGrpcClient(String host, int port, long timeoutMinutes, IAviatorLogger logger) {
-        LOG.info("Initializing AviatorGrpcClient - Host: " + host + ", Port: " + port);
+    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger) {
+        LOG.info("Initializing AviatorGrpcClient - Host: {}, Port: {}", host, port);
         this.logger = logger;
         this.streamId = UUID.randomUUID().toString();
 
@@ -142,7 +145,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .withMaxOutboundMessageSize(MAX_MESSAGE_SIZE)
                 .withWaitForReady();
 
-        this.defaultTimeoutMinutes = timeoutMinutes;
+        this.defaultTimeoutSeconds = defaultTimeoutSeconds;
         this.processingExecutor = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r, "aviator-client-processing-" + r.hashCode());
             t.setDaemon(true);
@@ -282,8 +285,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                     }
                     processRequests(requests, requestObserver);
                 } catch (Exception e) {
-                    LOG.error("Error executing requests: " + e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Error executing requests: {}", e.getMessage());
                     if (!resultFuture.isDone()) {
                         resultFuture.completeExceptionally(e);
                     }
@@ -295,7 +297,6 @@ public class AviatorGrpcClient implements AutoCloseable {
 
         } catch (Exception e) {
             LOG.error("Error during stream initialization: {}", e.getMessage());
-            e.printStackTrace();
             resultFuture.completeExceptionally(e);
             if (requestObserver != null) {
                 requestObserver.onCompleted();
@@ -313,19 +314,17 @@ public class AviatorGrpcClient implements AutoCloseable {
 
         while (!requests.isEmpty() && !isShutdown.get()) {
             try {
-                // Apply backoff if needed
                 if (currentBackoff.get() > 1) {
                     int backoffMs = (int) (BASE_DELAY_MS * currentBackoff.get());
                     logger.info("Applying backoff delay of {}ms", backoffMs);
                     Thread.sleep(backoffMs);
                 }
 
-                // Don't overwhelm the server - wait if too many pending requests
                 while (pendingRequests.get() >= serverWindowSize.get() * 0.9 && !isShutdown.get()) {
-                    Thread.sleep(50); // Shorter sleep
+                    Thread.sleep(50);
                 }
 
-                requestSemaphore.acquire(); // Acquire a permit for backpressure control
+                requestSemaphore.acquire();
                 UserPrompt request = requests.poll();
                 if (request == null) break;
 
@@ -368,7 +367,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 LOG.error("Thread interrupted while processing requests");
                 break;
             } catch (Exception e) {
-                LOG.error("Error processing request: " + e.getMessage());
+                LOG.error("Error processing request: {}", e.getMessage());
                 failedRequests.incrementAndGet();
             }
         }
@@ -397,7 +396,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 requestObserver.onNext(request);
                 return true;
             } catch (Exception e) {
-                LOG.error("Error sending request (attempt " + (attempt + 1) + "): " + e.getMessage());
+                LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
 
                 // If stream is completed, stop trying
                 if (e instanceof IllegalStateException &&
@@ -474,7 +473,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 streamCompleted.set(true);
                 requestObserver.onCompleted();
             } catch (Exception e) {
-                LOG.error("Error closing request observer: " + e.getMessage());
+                LOG.error("Error closing request observer: {}", e.getMessage());
             }
         }
 
@@ -606,7 +605,32 @@ public class AviatorGrpcClient implements AutoCloseable {
         return auditResponse;
     }
 
-    // All your other service methods (createProject, updateProject, etc.) remain unchanged
+    @FunctionalInterface
+    interface GrpcCall<S, T, R> {
+        R call(S stub, T request) throws StatusRuntimeException;
+    }
+
+    private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
+        try {
+            // Apply deadline to the stub before making the call
+            S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
+            return call.call(stubWithDeadline, request);
+        } catch (StatusRuntimeException e) {
+            String errorMessage = getUserFriendlyErrorMessage(e, operation);
+            throw new StatusRuntimeException(e.getStatus().withDescription(errorMessage));
+        }
+    }
+
+    private String getUserFriendlyErrorMessage(StatusRuntimeException e, String operation) {
+        return switch (e.getStatus().getCode()) {
+            case DEADLINE_EXCEEDED -> "The " + operation + " timed out. Please try again later.";
+            case UNAVAILABLE -> "Server is unavailable for " + operation + ". Check your network connection.";
+            case INVALID_ARGUMENT -> "Invalid input for " + operation + ". Please check your parameters.";
+            case INTERNAL -> "A server error occurred during " + operation + ". Please try again later.";
+            case PERMISSION_DENIED -> "You do not have permission to perform " + operation + ".";
+            default -> "An unexpected error occurred during " + operation + ": " + e.getStatus().getCode();
+        };
+    }
 
     public Application createApplication(String name, String tenantName, String signature, String message) {
         CreateApplicationRequest request = CreateApplicationRequest.newBuilder()
@@ -615,11 +639,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            return blockingStub.createApplication(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error creating project: " + e.getStatus(), e);
-        }
+        return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
     }
 
     public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
@@ -630,11 +650,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            return blockingStub.updateApplication(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error updating project: " + e.getStatus(), e);
-        }
+        return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
     public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
@@ -644,11 +660,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setMessage(message)
                 .setTenantName(tenantName)
                 .build();
-        try {
-            return blockingStub.deleteApplication(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error deleting project: " + e.getStatus(), e);
-        }
+        return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
     }
 
     public Application getApplication(String projectId, String signature, String message, String tenantName) {
@@ -658,11 +670,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setMessage(message)
                 .setTenantName(tenantName)
                 .build();
-        try {
-            return blockingStub.getApplication(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error getting project: " + e.getStatus(), e);
-        }
+        return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
     }
 
     public List<Application> listApplication(String tenantName, String signature, String message) {
@@ -671,42 +679,31 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            ApplicationList applicationList = blockingStub.listApplications(request);
-            return applicationList.getApplicationsList();
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error listing applications : " + e.getStatus(), e);
-        }
+        ApplicationList applicationList = executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::listApplications, request, Constants.OP_LIST_APPS);
+        return applicationList.getApplicationsList();
     }
 
     public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
-        TokenGenerationRequest.Builder requestBuilder = TokenGenerationRequest.newBuilder()
+        TokenGenerationRequest request = TokenGenerationRequest.newBuilder()
                 .setEmail(email != null ? email : "")
                 .setCustomTokenName(tokenName != null ? tokenName : "")
                 .setRequestSignature(signature)
                 .setMessage(message)
-                .setTenantName(tenantName);
-        try {
-            return tokenServiceBlockingStub.generateToken(requestBuilder.build());
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error generating token " + e.getStatus(), e);
-        }
+                .setTenantName(tenantName)
+                .build();
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
-    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int page_size, String pageToken) {
+    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) {
         ListTokensRequest request = ListTokensRequest.newBuilder()
                 .setEmail(email)
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName)
-                .setPageSize(page_size)
+                .setPageSize(pageSize)
                 .setPageToken(pageToken)
                 .build();
-        try {
-            return tokenServiceBlockingStub.listTokens(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error listing tokens " + e.getStatus(), e);
-        }
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
 
     public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
@@ -717,11 +714,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            return tokenServiceBlockingStub.revokeToken(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error revoking tokens " + e.getStatus(), e);
-        }
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
     }
 
     public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
@@ -732,11 +725,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            return tokenServiceBlockingStub.deleteToken(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error deleting tokens " + e.getStatus(), e);
-        }
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
     }
 
     public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {
@@ -746,11 +735,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            return tokenServiceBlockingStub.validateToken(request);
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error validating token " + e.getStatus(), e);
-        }
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
     }
 
     public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
@@ -759,11 +744,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setSignature(signature)
                 .setMessage(message)
                 .build();
-        try {
-            ListEntitlementsByTenantResponse response = entitlementServiceBlockingStub.listEntitlementsByTenant(request);
-            return response.getEntitlementsList();
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("Error listing entitlements: " + e.getStatus(), e);
-        }
+        ListEntitlementsByTenantResponse response = executeGrpcCall(entitlementServiceBlockingStub, EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
+        return response.getEntitlementsList();
     }
 }
