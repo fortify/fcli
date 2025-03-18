@@ -63,21 +63,21 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
             progressWriter.writeProgress("Status: Processing FPR with Aviator");
             File processedFile = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), appName, logger);
-            processedFile.deleteOnExit();
 
-            progressWriter.writeProgress("Status: Uploading FPR to SSC");
-            JsonNode uploadResponse = uploadFpr(unirest, processedFile, av);
-            JsonNode dataNode = uploadResponse.get("data");
-            String id = dataNode.has("id") ? dataNode.get("id").asText() : "";
-
-            return av.asObjectNode().put("artifactId", id);
-        } catch (AviatorSimpleException e) {
+            if (processedFile != null) {
+                processedFile.deleteOnExit();
+                progressWriter.writeProgress("Status: Uploading FPR to SSC");
+                JsonNode uploadResponse = uploadFpr(unirest, processedFile, av);
+                JsonNode dataNode = uploadResponse.get("data");
+                String id = dataNode.has("id") ? dataNode.get("id").asText() : "";
+                return av.asObjectNode().put("artifactId", id);
+            } else {
+                progressWriter.writeProgress("No issues to audit, skipping upload");
+                return av.asObjectNode().put("artifactId", "No issues to audit");
+            }
+        } catch (AviatorSimpleException | AviatorTechnicalException | IOException e) {
             LOG.debug("Aviator audit failed: {}", e.getMessage(), e);
-            throw new FcliSimpleException(e.getMessage());
-        } catch (AviatorTechnicalException e) {
-            throw new FcliSimpleException("Aviator audit failed due to a technical issue: " + e.getMessage());
-        } catch (IOException e) {
-            throw new FcliSimpleException("Failed to process FPR file due to an I/O error.", e.getMessage());
+            throw new FcliSimpleException("Failed to process FPR: " + e.getMessage());
         }
     }
 

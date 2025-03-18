@@ -164,7 +164,8 @@ public class AviatorGrpcClient implements AutoCloseable {
             Queue<UserPrompt> requests, String projectName, String token) {
         isStreamActive = true;
         if (requests == null || requests.isEmpty()) {
-            return CompletableFuture.failedFuture(new IllegalArgumentException("Issue queue cannot be null or empty"));
+            LOG.info("No issues to process");
+            return CompletableFuture.completedFuture(new HashMap<>());
         }
 
         logger.info("Starting processing - Total Issues: " + requests.size());

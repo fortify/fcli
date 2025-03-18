@@ -135,7 +135,7 @@ public class IssueAuditor {
         LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url)) {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
             CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
             try {
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
@@ -156,6 +156,7 @@ public class IssueAuditor {
 
         fprInfo.setResultsTag(resultsTag.getId());
         logger.progress("Audit completed");
+        logger.info("Audit completed");
     }
 
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {

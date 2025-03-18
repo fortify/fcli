@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
 
-    public static File auditFPR(File file, String token, String url, String appVersion,IAviatorLogger logger) throws AviatorSimpleException, AviatorTechnicalException, IOException {
+    public static File auditFPR(File file, String token, String url, String appVersion,IAviatorLogger logger) throws Exception {
 
         LOG.info("Starting FPR audit process for file: {}", file.getPath());
 
@@ -61,26 +61,24 @@ public class AuditFPR {
 
         FileTypeLanguageMapperUtil.initializeConfig(extensionsConfig);
 
-        try {
-            AuditProcessor auditProcessor = new AuditProcessor(extractedPath, file.getPath());
-            Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
+        AuditProcessor auditProcessor = new AuditProcessor(extractedPath, file.getPath());
+        Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
+        FPRProcessor fprProcessor = new FPRProcessor(file.getPath(), extractedPath, auditIssueMap, auditProcessor);
+        List<Vulnerability> vulnerabilities = fprProcessor.process();
+        FPRInfo fprInfo = fprProcessor.getFprInfo();
 
-            FPRProcessor fprProcessor = new FPRProcessor(file.getPath(), extractedPath, auditIssueMap, auditProcessor);
-            List<Vulnerability> vulnerabilities = fprProcessor.process();
-            FPRInfo fprInfo = fprProcessor.getFprInfo();
+        Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
+        IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, false, logger);
+        issueAuditor.performAudit(auditResponses, token, appVersion, fprInfo.getBuildId(), url);
+        LOG.info("Completed audit process, received {} responses", auditResponses.size());
 
-            Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
-            IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, false, logger);
-
-            issueAuditor.performAudit(auditResponses, token, appVersion,fprInfo.getBuildId(), url);
-            LOG.info("Completed audit process, received {} responses", auditResponses.size());
-
+        if (auditResponses.isEmpty()) {
+            LOG.info("No issues were audited, skipping update and upload");
+            return null;
+        } else {
             File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, fprInfo.getResultsTag());
             LOG.info("FPR audit process completed successfully");
             return updatedFile;
-        } catch (Exception e) {
-            LOG.error("I/O error during FPR audit processing: {}", file.getPath(), e);
-            throw new AviatorTechnicalException("Failed to process FPR file due to an I/O error.", e);
         }
     }
 }
