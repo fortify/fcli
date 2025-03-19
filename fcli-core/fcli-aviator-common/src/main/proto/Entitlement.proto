@@ -35,7 +35,7 @@ message Entitlement {
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
   int32 number_of_applications = 6;
-  int32 number_of_ncds = 7;
+  int32 number_of_developers = 7;
   string contract_id = 8;
   TenantInfo tenant = 9;
   int32 currently_linked_applications = 10;
