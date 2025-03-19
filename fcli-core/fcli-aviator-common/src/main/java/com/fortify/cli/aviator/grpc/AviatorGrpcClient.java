@@ -18,6 +18,7 @@ import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
 import com.fortify.cli.aviator.core.model.UserPrompt;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.StringUtil;
 import com.fortify.grpc.token.DeleteTokenRequest;
 import com.fortify.grpc.token.DeleteTokenResponse;
 import com.fortify.grpc.token.ListTokensRequest;
@@ -694,7 +695,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 .setEmail(email != null ? email : "")
                 .setCustomTokenName(tokenName != null ? tokenName : "")
                 .setRequestSignature(signature)
-                .setEndDate(endDate)
+                .setEndDate(StringUtil.isEmpty(endDate) ? "" : endDate)
                 .setMessage(message)
                 .setTenantName(tenantName)
                 .build();

@@ -1,6 +1,7 @@
 package com.fortify.cli.aviator.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
@@ -17,20 +18,27 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Parameters(index = "0", description = "Application ID") private String applicationId;
     @Option(names = {"-n", "--name"}, required = true) private String newName;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            Application updatedProject = updateProject(client, sessionDescriptor, messageAndSignature);
-            return AviatorGrpcUtils.grpcToJsonNode(updatedProject);
+            Application updatedApplication = updateApplication(client, sessionDescriptor, messageAndSignature);
+            JsonNode response = AviatorGrpcUtils.grpcToJsonNode(updatedApplication);
+            return processUpdateApplicationResponse(response);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to update project", e.getMessage());
+            throw new FcliSimpleException("Failed to update application", e.getMessage());
         }
     }
 
@@ -43,7 +51,21 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
         );
     }
 
-    private Application updateProject(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private JsonNode processUpdateApplicationResponse(JsonNode jsonNode) {
+        if (jsonNode instanceof ObjectNode) {
+            ObjectNode objectNode = (ObjectNode) jsonNode;
+            if (objectNode.has("updated_at")) {
+                String updatedAtStr = objectNode.get("updated_at").asText();
+                Instant instant = Instant.parse(updatedAtStr);
+                ZonedDateTime zdt = instant.atZone(ZoneId.of("UTC"));
+                String formattedDate = DATE_FORMATTER.format(zdt);
+                objectNode.put("updated_at", formattedDate);
+            }
+        }
+        return jsonNode;
+    }
+
+    private Application updateApplication(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
         return client.updateApplication(applicationId, newName, signature, message, sessionDescriptor.getTenant());

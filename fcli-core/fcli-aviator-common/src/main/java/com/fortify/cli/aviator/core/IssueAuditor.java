@@ -139,7 +139,7 @@ public class IssueAuditor {
         if (filteredUserPrompts.isEmpty()) {
             LOG.info("No issues to audit");
             logger.progress("Audit skipped - no issues to process");
-            logger.info("Audit skipped - no issues to process");
+            logger.writeInfo("Audit skipped - no issues to process");
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
                 CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
@@ -157,7 +157,7 @@ public class IssueAuditor {
                     LOG.error("Error executing requests:interrupted {}", e.getCause());
                 }
                 logger.progress("Audit completed");
-                logger.info("Audit completed");
+                logger.writeInfo("Audit completed");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
