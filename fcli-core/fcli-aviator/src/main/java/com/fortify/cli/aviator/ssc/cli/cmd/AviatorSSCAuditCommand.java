@@ -73,7 +73,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                 return av.asObjectNode().put("artifactId", id);
             } else {
                 progressWriter.writeProgress("No issues to audit, skipping upload");
-                return av.asObjectNode().put("artifactId", "No issues to audit");
+                return av.asObjectNode().put("artifactId", "N/A").put("action","SKIPPED");
             }
         } catch (AviatorSimpleException | AviatorTechnicalException | IOException e) {
             LOG.debug("Aviator audit failed: {}", e.getMessage(), e);

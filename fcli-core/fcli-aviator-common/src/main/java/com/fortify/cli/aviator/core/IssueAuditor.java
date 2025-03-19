@@ -118,7 +118,7 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName,String projectBuildId, String url) {
+    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName, String projectBuildId, String url) {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
@@ -135,28 +135,35 @@ public class IssueAuditor {
         LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
-            CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
-            try {
-                Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
-                responses.forEach((requestId, response) -> {
-                    auditResponses.put(response.getIssueId(), response);
-                });
-            } catch (ExecutionException e) {
-                LOG.error("Error executing requests: {} ", e.getCause());
-            } catch (TimeoutException e) {
-                LOG.error("Error executing requests:timeout {}", String.valueOf(e.getCause()));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOG.error("Error executing requests:interrupted {}", e.getCause());
+
+        if (filteredUserPrompts.isEmpty()) {
+            LOG.info("No issues to audit");
+            logger.progress("Audit skipped - no issues to process");
+            logger.info("Audit skipped - no issues to process");
+        } else {
+            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
+                CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
+                try {
+                    Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
+                    responses.forEach((requestId, response) -> {
+                        auditResponses.put(response.getIssueId(), response);
+                    });
+                } catch (ExecutionException e) {
+                    LOG.error("Error executing requests: {} ", e.getCause());
+                } catch (TimeoutException e) {
+                    LOG.error("Error executing requests:timeout {}", String.valueOf(e.getCause()));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOG.error("Error executing requests:interrupted {}", e.getCause());
+                }
+                logger.progress("Audit completed");
+                logger.info("Audit completed");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
 
         fprInfo.setResultsTag(resultsTag.getId());
-        logger.progress("Audit completed");
-        logger.info("Audit completed");
     }
 
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
