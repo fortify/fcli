@@ -70,11 +70,10 @@ message ListTokensRequest {
 
 message TokenInfo {
   string token_name = 1;
-  string token = 2;
-  string start_date = 3;
-  string end_date = 4;
-  int64 expiry_date = 5;
-  bool revoked = 6;
+  string start_date = 2;
+  string end_date = 3;
+  int64 expiry_date = 4;
+  bool revoked = 5;
 }
 
 message ListTokensResponse {

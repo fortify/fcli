@@ -9,6 +9,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 AviatorTokenCreateCommand.class,
                 AviatorTokenDeleteCommand.class,
+                AviatorTokenListCommand.class,
                 AviatorTokenRevokeCommand.class,
                 AviatorTokenValidateCommand.class
         }
