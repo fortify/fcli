@@ -1,5 +1,7 @@
 package com.fortify.cli.aviator.core;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.UserPrompt;
@@ -118,7 +120,7 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName, String projectBuildId, String url) {
+    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName, String projectBuildId, String url) throws AviatorSimpleException, AviatorTechnicalException {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
@@ -137,7 +139,6 @@ public class IssueAuditor {
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
 
         if (filteredUserPrompts.isEmpty()) {
-            LOG.info("No issues to audit");
             logger.progress("Audit skipped - no issues to process");
             logger.writeInfo("Audit skipped - no issues to process");
         } else {
@@ -148,24 +149,32 @@ public class IssueAuditor {
                     responses.forEach((requestId, response) -> {
                         auditResponses.put(response.getIssueId(), response);
                     });
+                    logger.progress("Audit completed");
+                    logger.writeInfo("Audit completed");
                 } catch (ExecutionException e) {
-                    LOG.error("Error executing requests: {} ", e.getCause());
+                    if (e.getCause() instanceof AviatorSimpleException) {
+                        logger.progress("Audit failed");
+                        logger.writeInfo("Audit failed");
+                        throw (AviatorSimpleException) e.getCause(); // Rethrow simple exception
+                    }
+                    logger.progress("Audit failed due to unexpected error");
+                    logger.writeInfo("Audit failed due to unexpected error");
+                    throw new AviatorTechnicalException("Unexpected error during audit execution", e.getCause());
                 } catch (TimeoutException e) {
-                    LOG.error("Error executing requests:timeout {}", String.valueOf(e.getCause()));
+                    logger.progress("Audit failed due to timeout");
+                    logger.writeInfo("Audit failed due to timeout");
+                    throw new AviatorTechnicalException("Audit timed out", e);
                 } catch (InterruptedException e) {
+                    logger.progress("Audit failed due to interruption");
+                    logger.writeInfo("Audit failed due to interruption");
                     Thread.currentThread().interrupt();
-                    LOG.error("Error executing requests:interrupted {}", e.getCause());
+                    throw new AviatorTechnicalException("Audit interrupted", e);
                 }
-                logger.progress("Audit completed");
-                logger.writeInfo("Audit completed");
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
         }
 
         fprInfo.setResultsTag(resultsTag.getId());
     }
-
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
         userPrompts = userPrompts.stream().filter(userPrompt -> shouldInclude(userPrompt)).collect(Collectors.toList());
         Map<String, List<UserPrompt>> issuesByCategory = userPrompts.stream().collect(Collectors.groupingBy(UserPrompt::getCategory));
