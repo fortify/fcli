@@ -29,8 +29,12 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
-    private static final DateTimeFormatter CURRENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+    // Define formatters with explicit UTC timezone
+    private static final DateTimeFormatter CURRENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            .withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
+            .withZone(ZoneOffset.UTC);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
@@ -44,7 +48,8 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
+        // Get current date in UTC format
+        String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now());
         String safeCustomTokenName = customTokenName == null ? "" : customTokenName;
         String safeEndDate = endDate == null ? "" : endDate;
         return AviatorSignatureUtils.createMessageAndSignature(
@@ -68,7 +73,8 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
             if (jsonNode.has("expiry_date")) {
                 long expiryDateEpoch = jsonNode.get("expiry_date").asLong();
                 Instant instant = Instant.ofEpochSecond(expiryDateEpoch);
-                String formattedDate = DATE_FORMATTER.format(instant.atZone(ZoneId.of("UTC")));
+                // Format date in UTC (explicitly, not using local timezone)
+                String formattedDate = DATE_FORMATTER.format(instant);
                 ((ObjectNode) jsonNode).put("expiry_date", formattedDate);
             }
             return jsonNode;

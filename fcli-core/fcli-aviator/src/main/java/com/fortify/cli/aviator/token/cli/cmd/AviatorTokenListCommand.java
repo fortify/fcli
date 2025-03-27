@@ -2,6 +2,7 @@ package com.fortify.cli.aviator.token.cli.cmd;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import org.slf4j.Logger;
@@ -34,7 +35,10 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
     @Option(names = {"--all-pages"}, defaultValue = "false", description = "Fetch all pages automatically (non-interactive)")
     private boolean fetchAllPages;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenListCommand.class);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    // Use a formatter with explicit UTC timezone
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+            .withZone(ZoneOffset.UTC);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
@@ -88,9 +92,17 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
         for (TokenInfo tokenInfo : response.getTokensList()) {
             JsonNode tokenNode = AviatorGrpcUtils.grpcToJsonNode(tokenInfo);
             ObjectNode mutableTokenNode = tokenNode.deepCopy();
+
+            // Always format dates in UTC, not system default timezone
             mutableTokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate())
-                    .atZone(ZoneId.systemDefault())
+                    .atZone(ZoneOffset.UTC) // Use UTC consistently instead of system default
                     .format(DATE_FORMATTER));
+
+            // Also add a user-friendly display format with timezone indication
+            mutableTokenNode.put("expiryDateLocal", Instant.ofEpochSecond(tokenInfo.getExpiryDate())
+                    .atZone(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z")));
+
             tokensArray.add(mutableTokenNode);
         }
     }
