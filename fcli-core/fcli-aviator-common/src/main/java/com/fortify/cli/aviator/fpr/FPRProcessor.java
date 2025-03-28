@@ -1,19 +1,21 @@
 package com.fortify.cli.aviator.fpr;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException; // Import
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplateParser;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException; // Import
 
+import javax.xml.parsers.ParserConfigurationException; // Import
+import java.io.IOException; // Import
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-
 
 public class FPRProcessor {
 
@@ -32,28 +34,35 @@ public class FPRProcessor {
         this.auditProcessor = auditProcessor;
     }
 
-    public List<Vulnerability> process() throws Exception {
-
+    public List<Vulnerability> process() throws AviatorTechnicalException {
         logger.info("FPR Processing started");
 
-        fprInfo = new FPRInfo(extractedPath);
+        try {
+            fprInfo = new FPRInfo(extractedPath);
 
-        FilterTemplateParser filterTemplateParser = new FilterTemplateParser(extractedPath, auditProcessor);
-        Optional<FilterTemplate> filterTemplate = filterTemplateParser.parseFilterTemplate();
-        filterTemplate.ifPresent(ft -> fprInfo.setFilterTemplate(ft));
+            FilterTemplateParser filterTemplateParser = new FilterTemplateParser(extractedPath, auditProcessor);
+            Optional<FilterTemplate> filterTemplate = filterTemplateParser.parseFilterTemplate();
+            filterTemplate.ifPresent(ft -> fprInfo.setFilterTemplate(ft));
 
-        if (filterTemplate.isPresent()) {
-            filterTemplate.flatMap(f -> f.getFilterSets().stream().filter(FilterSet::isEnabled).findFirst()).ifPresent(fprInfo::setDefaultEnabledFilterSet);
+            if (filterTemplate.isPresent()) {
+                filterTemplate.flatMap(f -> f.getFilterSets().stream().filter(FilterSet::isEnabled).findFirst()).ifPresent(fprInfo::setDefaultEnabledFilterSet);
+            }
+
+            logger.debug("Audit.xml Issues: {}", auditIssueMap.keySet().size());
+
+            FVDLProcessor fvdlProcessor = new FVDLProcessor(extractedPath);
+            fvdlProcessor.processXML();
+
+            List<Vulnerability> vulnerabilities = fvdlProcessor.getVulnerabilities();
+            logger.debug("Number of Issues: {}", vulnerabilities.size());
+
+            return vulnerabilities;
+        } catch (IOException | AviatorTechnicalException e) {
+            logger.error("Error during FPR processing initialization or parsing: {}", e.getMessage(), e);
+            throw new AviatorTechnicalException("Error during FPR processing.", e);
+        } catch (Exception e) {
+            logger.error("Unexpected error during FPR processing: {}", e.getMessage(), e);
+            throw new AviatorTechnicalException("Unexpected error during FPR processing.", e);
         }
-
-        logger.debug("Audit.xml Issues: {}", auditIssueMap.keySet().size());
-
-        FVDLProcessor fvdlProcessor = new FVDLProcessor(extractedPath);
-        fvdlProcessor.processXML();
-
-        List<Vulnerability> vulnerabilities = fvdlProcessor.getVulnerabilities();
-        logger.debug("Number of Issues: {}", vulnerabilities.size());
-
-        return vulnerabilities;
     }
 }

@@ -3,13 +3,23 @@ package com.fortify.cli.aviator.token.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException; // Import needed if caught separately
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.common.exception.FcliSimpleException; // Import needed
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.TokenValidationResponse;
+
+// Add potential IO exception import
+import java.io.IOException;
+
+// Optional: Add logging imports
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -23,10 +33,14 @@ public class AviatorTokenValidateCommand extends AbstractAviatorAdminSessionOutp
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) { // Can throw AviatorSimpleException
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             TokenValidationResponse response = validateToken(client, sessionDescriptor, messageAndSignature);
             return createResponseNode(response);
+        } catch (AviatorSimpleException e) {
+            throw new FcliSimpleException("Token validation failed: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("An unexpected error occurred during token validation: " + e.getMessage(), e);
         }
     }
 
@@ -47,7 +61,14 @@ public class AviatorTokenValidateCommand extends AbstractAviatorAdminSessionOutp
     private JsonNode createResponseNode(TokenValidationResponse response) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode tokenNode = objectMapper.createObjectNode();
-        tokenNode.put("message", response.getValid() ? "Token is Valid!" : "Token is Invalid");
+        String message;
+        if (response.getValid()) {
+            message = "Token is valid";
+        } else {
+            String errorMessage = response.getErrorMessage();
+            message = (errorMessage == null || errorMessage.isBlank()) ? "Token is invalid" : errorMessage;
+        }
+        tokenNode.put("message", message);
         return tokenNode;
     }
 

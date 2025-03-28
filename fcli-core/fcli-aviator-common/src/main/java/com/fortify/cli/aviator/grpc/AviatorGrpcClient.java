@@ -615,24 +615,20 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
         try {
-            // Apply deadline to the stub before making the call
             S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
             return call.call(stubWithDeadline, request);
         } catch (StatusRuntimeException e) {
-            String errorMessage = getUserFriendlyErrorMessage(e, operation);
-            throw new StatusRuntimeException(e.getStatus().withDescription(errorMessage));
+            String serverMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error from server";
+            throw new StatusRuntimeException(e.getStatus().withDescription(serverMessage), e.getTrailers());
+        } catch (Exception e) {
+            String errorMessage = "Unexpected error during " + operation + ": " + e.getMessage();
+            throw new RuntimeException(errorMessage, e);
         }
     }
 
+    // Optional: Keep this for reference, but it’s not used directly now
     private String getUserFriendlyErrorMessage(StatusRuntimeException e, String operation) {
-        return switch (e.getStatus().getCode()) {
-            case DEADLINE_EXCEEDED -> "The " + operation + " timed out. Please try again later.";
-            case UNAVAILABLE -> "Server is unavailable for " + operation + ". Check your network connection.";
-            case INVALID_ARGUMENT -> "Invalid input for " + operation + ". Please check your parameters.";
-            case INTERNAL -> "A server error occurred during " + operation + ". Please try again later.";
-            case PERMISSION_DENIED -> "You do not have permission to perform " + operation + ".";
-            default -> "An unexpected error occurred during " + operation + ": " + e.getStatus().getCode();
-        };
+        return e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error";
     }
 
     public Application createApplication(String name, String tenantName, String signature, String message) {

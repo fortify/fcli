@@ -3,7 +3,6 @@ package com.fortify.cli.aviator.token.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -12,8 +11,10 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.DeleteTokenResponse;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -23,6 +24,7 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"--token"}, required = true) private String token;
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenDeleteCommand.class);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
@@ -30,18 +32,17 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             DeleteTokenResponse response = deleteToken(client, sessionDescriptor, messageAndSignature);
             return processDeleteResponse(response);
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while deleting token";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to delete token", e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while deleting token";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                token,
-                email,
-                sessionDescriptor.getTenant()
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, token, email, sessionDescriptor.getTenant());
     }
 
     private DeleteTokenResponse deleteToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
@@ -50,15 +51,16 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
         return client.deleteToken(token, email, sessionDescriptor.getTenant(), signature, message);
     }
 
-    private JsonNode processDeleteResponse(DeleteTokenResponse response) throws AviatorSimpleException {
-        if (response.getSuccess()) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode deleteTokenNode = objectMapper.createObjectNode();
-            deleteTokenNode.put("message", "Token Deleted Successfully");
-            return deleteTokenNode;
-        } else {
-            throw new AviatorSimpleException("Failed to delete token: " + response.getErrorMessage());
+    private JsonNode processDeleteResponse(DeleteTokenResponse response) {
+        if (!response.getSuccess()) {
+            String errorMessage = response.getErrorMessage().isBlank() ? "Token deletion failed" : response.getErrorMessage();
+            throw new FcliSimpleException(errorMessage);
         }
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode deleteTokenNode = objectMapper.createObjectNode();
+        deleteTokenNode.put("message", "Token deleted successfully");
+        LOG.info("Token '{}' deleted successfully for email: {}", token, email);
+        return deleteTokenNode;
     }
 
     @Override

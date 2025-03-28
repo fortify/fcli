@@ -20,7 +20,7 @@ dependencies {
 
     implementation("io.grpc:grpc-netty-shaded:1.69.0")
     implementation("io.grpc:grpc-protobuf:1.69.0")
-    implementation("io.grpc:grpc-stub:1.69.0")
+    api("io.grpc:grpc-stub:1.69.0")
     compileOnly("org.apache.tomcat:annotations-api:6.0.53")
 
     api("com.google.protobuf:protobuf-java:4.28.3")

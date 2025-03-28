@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.application.ApplicationResponseMessage;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
@@ -12,8 +11,10 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
@@ -22,25 +23,27 @@ import picocli.CommandLine.Parameters;
 public class AviatorAppDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Parameters(index = "0", description = "Application ID") private String applicationId;
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAppDeleteCommand.class);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             ApplicationResponseMessage response = deleteApplication(client, sessionDescriptor, messageAndSignature);
-
-            return processDeleteResponse(response);
+            JsonNode result = processDeleteResponse(response);
+            LOG.info("Application '{}' deleted successfully for tenant: {}", applicationId, sessionDescriptor.getTenant());
+            return result;
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while deleting application";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to delete application", e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while deleting application";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                sessionDescriptor.getTenant(),
-                applicationId
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant(), applicationId);
     }
 
     private ApplicationResponseMessage deleteApplication(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
@@ -49,7 +52,7 @@ public class AviatorAppDeleteCommand extends AbstractAviatorAdminSessionOutputCo
         return client.deleteApplication(applicationId, signature, message, sessionDescriptor.getTenant());
     }
 
-    private JsonNode processDeleteResponse(ApplicationResponseMessage response) throws AviatorSimpleException {
+    private JsonNode processDeleteResponse(ApplicationResponseMessage response) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode deleteProjectNode = objectMapper.createObjectNode();
         deleteProjectNode.put("message", response.getResponseMessage());

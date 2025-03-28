@@ -22,27 +22,20 @@ public class FPRLoadingUtil {
 
     public static boolean hasSource(File project) throws IOException {
         boolean foundSource = false;
-        ZipFile projectZip = null;
-
-        try {
-            projectZip = new ZipFile(project);
+        try (ZipFile projectZip = new ZipFile(project)) {
             Enumeration<? extends ZipEntry> entries = projectZip.entries();
 
             while (entries.hasMoreElements()) {
-                ZipEntry next = (ZipEntry) entries.nextElement();
-                if (next != null) {
+                ZipEntry next = entries.nextElement();
+                if (next != null && !next.isDirectory()) {
                     String nextName = next.getName();
-                    if (SRC_FILE_PATTERN.matcher(nextName).matches()) {
+                    if (nextName != null && SRC_FILE_PATTERN.matcher(nextName).matches()) {
                         foundSource = true;
                         break;
                     }
                 }
             }
-        } catch (Exception var9) {
-        } finally {
-            FileUtil.close(projectZip);
         }
-
         return foundSource;
     }
 

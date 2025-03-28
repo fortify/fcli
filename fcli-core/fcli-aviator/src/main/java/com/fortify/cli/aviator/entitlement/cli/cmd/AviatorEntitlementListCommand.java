@@ -17,7 +17,7 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -33,22 +33,19 @@ public class AviatorEntitlementListCommand extends AbstractAviatorAdminSessionOu
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             List<Entitlement> entitlements = fetchEntitlements(client, sessionDescriptor, messageAndSignature);
             ArrayNode entitlementsArray = formatEntitlements(entitlements);
-            if (entitlements.isEmpty()) {
-                LOG.info("No entitlements found for tenant: {}", sessionDescriptor.getTenant());
-            } else {
-                LOG.info("Successfully listed {} entitlements for tenant: {}", entitlements.size(), sessionDescriptor.getTenant());
-            }
+            logEntitlementCount(entitlements.size(), sessionDescriptor.getTenant());
             return entitlementsArray;
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while listing entitlements";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to list entitlements: " + e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while listing entitlements";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                sessionDescriptor.getTenant()
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant());
     }
 
     private List<Entitlement> fetchEntitlements(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
@@ -73,6 +70,14 @@ public class AviatorEntitlementListCommand extends AbstractAviatorAdminSessionOu
         if (tenantNode != null && tenantNode.has("name")) {
             formattedNode.put("tenant_name", tenantNode.get("name").asText());
             formattedNode.remove("tenant");
+        }
+    }
+
+    private void logEntitlementCount(int count, String tenant) {
+        if (count == 0) {
+            LOG.info("No entitlements found for tenant: {}", tenant);
+        } else {
+            LOG.info("Successfully listed {} entitlements for tenant: {}", count, tenant);
         }
     }
 

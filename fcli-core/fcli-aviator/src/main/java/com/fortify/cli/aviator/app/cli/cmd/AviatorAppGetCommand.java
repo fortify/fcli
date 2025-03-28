@@ -11,21 +11,23 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class AviatorAppGetCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Parameters(index = "0", description = "Application ID") private String applicationId;
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAppGetCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     @Override
@@ -33,31 +35,29 @@ public class AviatorAppGetCommand extends AbstractAviatorAdminSessionOutputComma
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             Application application = getApplication(client, sessionDescriptor, messageAndSignature);
-            JsonNode response = AviatorGrpcUtils.grpcToJsonNode(application);
-            return processGetApplicationResponse(response);
+            JsonNode response = processGetApplicationResponse(AviatorGrpcUtils.grpcToJsonNode(application));
+            LOG.info("Retrieved application '{}' for tenant: {}", applicationId, sessionDescriptor.getTenant());
+            return response;
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while retrieving application";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to retrieve application", e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while retrieving application";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                sessionDescriptor.getTenant(),
-                applicationId
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant(), applicationId);
     }
 
     private JsonNode processGetApplicationResponse(JsonNode jsonNode) {
-        if (jsonNode instanceof ObjectNode) {
+        if (jsonNode instanceof ObjectNode && jsonNode.has("updated_at")) {
             ObjectNode objectNode = (ObjectNode) jsonNode;
-            if (objectNode.has("updated_at")) {
-                String updatedAtStr = objectNode.get("updated_at").asText();
-                Instant instant = Instant.parse(updatedAtStr);
-                ZonedDateTime zdt = instant.atZone(ZoneId.of("UTC"));
-                String formattedDate = DATE_FORMATTER.format(zdt);
-                objectNode.put("updated_at", formattedDate);
-            }
+            String updatedAtStr = objectNode.get("updated_at").asText();
+            Instant instant = Instant.parse(updatedAtStr);
+            String formattedDate = DATE_FORMATTER.format(instant.atZone(ZoneId.of("UTC")));
+            objectNode.put("updated_at", formattedDate);
         }
         return jsonNode;
     }

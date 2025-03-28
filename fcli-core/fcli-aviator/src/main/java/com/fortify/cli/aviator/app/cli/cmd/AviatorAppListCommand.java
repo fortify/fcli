@@ -19,7 +19,7 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -36,16 +36,17 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             List<Application> applications = listApplications(client, sessionDescriptor, messageAndSignature);
             return formatApplicationsArray(applications, sessionDescriptor.getTenant());
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while listing applications";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to list applications: " + e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while listing applications";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                sessionDescriptor.getTenant()
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant());
     }
 
     private List<Application> listApplications(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
@@ -65,14 +66,13 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
             ((ObjectNode) applicationNode).put("createdAt", createdAt);
             applicationsArray.add(applicationNode);
         }
-
         logProjectCount(applications.size(), tenant);
         return applicationsArray;
     }
 
     private void logProjectCount(int projectCount, String tenant) {
         if (projectCount == 0) {
-            LOG.info("No application found for tenant: {}", tenant);
+            LOG.info("No applications found for tenant: {}", tenant);
         } else {
             LOG.info("Successfully listed {} applications for tenant: {}", projectCount, tenant);
         }

@@ -10,8 +10,10 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -20,31 +22,32 @@ import picocli.CommandLine.Option;
 public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Option(names = {"-n", "--name"}, required = true) private String applicationName;
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAppCreateCommand.class);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             Application createdApplication = createApplication(client, sessionDescriptor, messageAndSignature);
+            LOG.info("Application '{}' created successfully for tenant: {}", applicationName, sessionDescriptor.getTenant());
             return AviatorGrpcUtils.grpcToJsonNode(createdApplication);
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while creating application";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to create Application: " + e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while creating application";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                sessionDescriptor.getTenant(),
-                applicationName
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant(), applicationName);
     }
 
     private Application createApplication(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
         return client.createApplication(applicationName, sessionDescriptor.getTenant(), signature, message);
-
     }
 
     @Override

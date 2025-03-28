@@ -11,8 +11,10 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -28,6 +30,7 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Parameters(index = "0", description = "Application ID") private String applicationId;
     @Option(names = {"-n", "--name"}, required = true) private String newName;
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAppUpdateCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     @Override
@@ -35,32 +38,29 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             Application updatedApplication = updateApplication(client, sessionDescriptor, messageAndSignature);
-            JsonNode response = AviatorGrpcUtils.grpcToJsonNode(updatedApplication);
-            return processUpdateApplicationResponse(response);
+            JsonNode response = processUpdateApplicationResponse(AviatorGrpcUtils.grpcToJsonNode(updatedApplication));
+            LOG.info("Application '{}' updated to name '{}' for tenant: {}", applicationId, newName, sessionDescriptor.getTenant());
+            return response;
+        } catch (StatusRuntimeException e) {
+            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while updating application";
+            throw new FcliSimpleException(errorMessage);
         } catch (Exception e) {
-            throw new FcliSimpleException("Failed to update application", e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while updating application";
+            throw new FcliSimpleException(errorMessage);
         }
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(
-                sessionDescriptor,
-                sessionDescriptor.getTenant(),
-                applicationId,
-                newName
-        );
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant(), applicationId, newName);
     }
 
     private JsonNode processUpdateApplicationResponse(JsonNode jsonNode) {
-        if (jsonNode instanceof ObjectNode) {
+        if (jsonNode instanceof ObjectNode && jsonNode.has("updated_at")) {
             ObjectNode objectNode = (ObjectNode) jsonNode;
-            if (objectNode.has("updated_at")) {
-                String updatedAtStr = objectNode.get("updated_at").asText();
-                Instant instant = Instant.parse(updatedAtStr);
-                ZonedDateTime zdt = instant.atZone(ZoneId.of("UTC"));
-                String formattedDate = DATE_FORMATTER.format(zdt);
-                objectNode.put("updated_at", formattedDate);
-            }
+            String updatedAtStr = objectNode.get("updated_at").asText();
+            Instant instant = Instant.parse(updatedAtStr);
+            String formattedDate = DATE_FORMATTER.format(instant.atZone(ZoneId.of("UTC")));
+            objectNode.put("updated_at", formattedDate);
         }
         return jsonNode;
     }

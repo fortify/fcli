@@ -48,36 +48,50 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
 
             SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
             File fprFile = File.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
-            fprFile.deleteOnExit();
-            progressWriter.writeProgress("Status: Downloading FPR from SSC");
-            SSCFileTransferHelper.download(
-                    unirest,
-                    SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), true),
-                    fprFile,
-                    SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
-            progressWriter.writeProgress("Status: Processing FPR with Aviator");
-            File processedFile = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), appName, logger);
+            try {
+                progressWriter.writeProgress("Status: Downloading FPR from SSC");
+                SSCFileTransferHelper.download(
+                        unirest,
+                        SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), true),
+                        fprFile,
+                        SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
-            if (processedFile != null) {
-                processedFile.deleteOnExit();
-                progressWriter.writeProgress("Status: Uploading FPR to SSC");
-                JsonNode uploadResponse = uploadFpr(unirest, processedFile, av);
-                JsonNode dataNode = uploadResponse.get("data");
-                String id = dataNode.has("id") ? dataNode.get("id").asText() : "";
-                return av.asObjectNode().put("artifactId", id);
-            } else {
-                progressWriter.writeProgress("No issues to audit, skipping upload");
-                return av.asObjectNode().put("artifactId", "N/A").put("action","SKIPPED");
+                progressWriter.writeProgress("Status: Processing FPR with Aviator");
+                File processedFileResult = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), appName, logger);
+
+                if (processedFileResult != null) {
+                    progressWriter.writeProgress("Status: Uploading FPR to SSC");
+                    JsonNode uploadResponse = uploadFpr(unirest, processedFileResult, av);
+                    JsonNode dataNode = uploadResponse.path("data");
+                    String id = dataNode.path("id").asText("");
+                    return av.asObjectNode().put("artifactId", id);
+                } else {
+                    progressWriter.writeProgress("No issues to audit, skipping upload");
+                    return av.asObjectNode().put("artifactId", "N/A").put("action","SKIPPED");
+                }
+            } finally {
+                if (fprFile.exists()) {
+                    if (!fprFile.delete()) {
+                        LOG.warn("Failed to delete temporary downloaded FPR file: {}", fprFile.getAbsolutePath());
+                    }
+                }
             }
-        } catch (AviatorSimpleException | AviatorTechnicalException | IOException e) {
-            LOG.debug("Aviator audit failed: {}", e.getMessage(), e);
-            throw new FcliSimpleException("Failed to process FPR: " + e.getMessage());
+        } catch (AviatorSimpleException e) {
+            LOG.debug("Aviator processing failed with simple error: {}", e.getMessage());
+            throw new FcliSimpleException("Aviator processing failed: " + e.getMessage());
+        } catch (AviatorTechnicalException | IOException e) {
+            LOG.error("Aviator processing failed with technical/IO error: {}", e.getMessage(), e);
+            throw new RuntimeException("Aviator processing failed due to a technical or I/O error: " + e.getMessage(), e);
+        } catch (Exception e) {
+            LOG.error("An unexpected error occurred during Aviator SSC audit: {}", e.getMessage(), e);
+            throw new RuntimeException("An unexpected error occurred: " + e.getMessage(), e);
         }
     }
 
@@ -94,7 +108,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @Override
     public String getActionCommandResult() {
-        return "UPDATED";
+        return "PROCESSED";
     }
 
     @Override
