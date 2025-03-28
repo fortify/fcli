@@ -120,7 +120,9 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName, String projectBuildId, String url) throws AviatorSimpleException, AviatorTechnicalException {
+    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName, String projectBuildId, String url)
+            throws AviatorSimpleException, AviatorTechnicalException {
+
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
@@ -133,8 +135,10 @@ public class IssueAuditor {
             vulnerabilities = filterVulnerabilities(vulnerabilities, fprInfo.getDefaultEnabledFilterSet());
         }
 
+        userPrompts.clear();
         vulnerabilities.stream().map(IssueObjBuilder::buildIssueObj).forEach(userPrompts::add);
         LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
+
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
 
@@ -144,37 +148,36 @@ public class IssueAuditor {
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
                 CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
-                try {
-                    Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
-                    responses.forEach((requestId, response) -> {
-                        auditResponses.put(response.getIssueId(), response);
-                    });
-                    logger.progress("Audit completed");
-                    logger.writeInfo("Audit completed");
-                } catch (ExecutionException e) {
-                    if (e.getCause() instanceof AviatorSimpleException) {
-                        logger.progress("Audit failed");
-                        logger.writeInfo("Audit failed");
-                        throw (AviatorSimpleException) e.getCause(); // Rethrow simple exception
-                    }
-                    logger.progress("Audit failed due to unexpected error");
-                    logger.writeInfo("Audit failed due to unexpected error");
-                    throw new AviatorTechnicalException("Unexpected error during audit execution", e.getCause());
-                } catch (TimeoutException e) {
-                    logger.progress("Audit failed due to timeout");
-                    logger.writeInfo("Audit failed due to timeout");
-                    throw new AviatorTechnicalException("Audit timed out", e);
-                } catch (InterruptedException e) {
-                    logger.progress("Audit failed due to interruption");
-                    logger.writeInfo("Audit failed due to interruption");
-                    Thread.currentThread().interrupt();
-                    throw new AviatorTechnicalException("Audit interrupted", e);
+                Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
+                responses.forEach((requestId, response) -> {
+                    auditResponses.put(response.getIssueId(), response);
+                });
+                logger.progress("Audit completed");
+                logger.writeInfo("Audit completed");
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof AviatorSimpleException) {
+                    logger.progress("Audit failed");
+                    logger.writeInfo("Audit failed");
+                    throw (AviatorSimpleException) e.getCause();
                 }
+                logger.progress("Audit failed due to unexpected error");
+                logger.writeInfo("Audit failed due to unexpected error");
+                throw new AviatorTechnicalException("Unexpected error during audit execution", e.getCause());
+            } catch (TimeoutException e) {
+                logger.progress("Audit failed due to timeout");
+                logger.writeInfo("Audit failed due to timeout");
+                throw new AviatorTechnicalException("Audit timed out", e);
+            } catch (InterruptedException e) {
+                logger.progress("Audit failed due to interruption");
+                logger.writeInfo("Audit failed due to interruption");
+                Thread.currentThread().interrupt();
+                throw new AviatorTechnicalException("Audit interrupted", e);
             }
         }
 
         fprInfo.setResultsTag(resultsTag.getId());
     }
+
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
         userPrompts = userPrompts.stream().filter(userPrompt -> shouldInclude(userPrompt)).collect(Collectors.toList());
         Map<String, List<UserPrompt>> issuesByCategory = userPrompts.stream().collect(Collectors.groupingBy(UserPrompt::getCategory));
