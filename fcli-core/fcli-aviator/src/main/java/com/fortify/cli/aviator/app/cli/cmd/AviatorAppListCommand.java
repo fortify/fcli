@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.fortify.aviator.application.Application;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,9 +19,7 @@ import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -31,17 +31,11 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             List<Application> applications = listApplications(client, sessionDescriptor, messageAndSignature);
             return formatApplicationsArray(applications, sessionDescriptor.getTenant());
-        } catch (StatusRuntimeException e) {
-            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while listing applications";
-            throw new FcliSimpleException(errorMessage);
-        } catch (Exception e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while listing applications";
-            throw new FcliSimpleException(errorMessage);
         }
     }
 

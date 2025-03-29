@@ -14,6 +14,7 @@ import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
 import com.fortify.aviator.grpc.*;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
@@ -35,6 +36,7 @@ import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
 import io.grpc.stub.ClientCallStreamObserver;
@@ -295,24 +297,38 @@ public class AviatorGrpcClient implements AutoCloseable {
             processingExecutor.submit(() -> {
                 try {
                     if (!initLatch.await(30, TimeUnit.SECONDS)) {
-                        throw new TimeoutException("Stream initialization timed out");
+                        throw new AviatorTechnicalException("Stream initialization timed out");
                     }
                     processRequests(requests, requestObserver);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new AviatorTechnicalException("Interrupted during request processing", e);
                 } catch (Exception e) {
-                    if (!streamCompleted.get()) { // Only complete if not already done by INTERNAL_ERROR
-                        resultFuture.completeExceptionally(e);
+                    if (!streamCompleted.get()) {
+                        throw new AviatorTechnicalException("Error during request processing execution", e);
+                    }
+                    LOG.warn("Exception caught after stream completion during processing execution", e);
+                } finally {
+                    if (!resultFuture.isDone()) {
+                        resultFuture.completeExceptionally(new AviatorTechnicalException("Request processing task ended unexpectedly"));
                     }
                 }
             });
 
         } catch (Exception e) {
-            resultFuture.completeExceptionally(e);
             if (requestObserver != null) {
-                requestObserver.onCompleted();
+                requestObserver.onError(e);
             }
+            throw new AviatorTechnicalException("Error initiating batch processing", e);
         }
 
-        return resultFuture;
+
+        return resultFuture.exceptionally(ex -> {
+            Throwable cause = (ex instanceof CompletionException || ex instanceof ExecutionException) && ex.getCause() != null ? ex.getCause() : ex;
+            if (cause instanceof AviatorSimpleException) throw (AviatorSimpleException)cause;
+            if (cause instanceof AviatorTechnicalException) throw (AviatorTechnicalException)cause;
+            throw new AviatorTechnicalException("Batch processing failed", cause);
+        });
     }
 
     private void processRequests(Queue<UserPrompt> requests, StreamObserver<UserPromptRequest> observer) {
@@ -613,25 +629,48 @@ public class AviatorGrpcClient implements AutoCloseable {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
-    private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
-        try {
-            S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
-            return call.call(stubWithDeadline, request);
-        } catch (StatusRuntimeException e) {
-            String serverMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error from server";
-            throw new StatusRuntimeException(e.getStatus().withDescription(serverMessage), e.getTrailers());
-        } catch (Exception e) {
-            String errorMessage = "Unexpected error during " + operation + ": " + e.getMessage();
-            throw new RuntimeException(errorMessage, e);
+        private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation)
+                throws AviatorSimpleException, AviatorTechnicalException
+        {
+            try {
+                S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
+                return call.call(stubWithDeadline, request);
+            } catch (StatusRuntimeException e) {
+                Status status = e.getStatus();
+                String description = status.getDescription() != null ? status.getDescription() : "Unknown gRPC error from server";
+
+                switch (status.getCode()) {
+                    case INVALID_ARGUMENT:
+                    case NOT_FOUND:
+                    case ALREADY_EXISTS:
+                        String simpleMsg = String.format("Error during %s: %s", operation, description);
+                        throw new AviatorSimpleException(simpleMsg);
+                    case PERMISSION_DENIED:
+                        if (description.contains("Invalid signature")) {
+                            throw new AviatorSimpleException(
+                                    "Invalid signature. Please verify the private key configured for FCLI matches the public key registered for your user on the Aviator server for the current tenant.");
+                        } else {
+                            String permMsg = String.format("Permission denied during %s: %s", operation, description);
+                            throw new AviatorSimpleException(permMsg);
+                        }
+                    case INTERNAL:
+                    case UNAVAILABLE:
+                    case DEADLINE_EXCEEDED:
+                    case UNIMPLEMENTED:
+                    case DATA_LOSS:
+                    default:
+                        String techMessage = String.format("gRPC call for %s failed: %s (Status: %s)", operation, description, status.getCode());
+                        LOG.debug(techMessage, e);
+                        throw new AviatorTechnicalException(techMessage, e);
+                }
+            } catch (Exception e) {
+                String errorMessage = "Unexpected error during " + operation + ": " + e.getMessage();
+                LOG.error(errorMessage, e);
+                throw new AviatorTechnicalException(errorMessage, e);
+            }
         }
-    }
 
-    // Optional: Keep this for reference, but it’s not used directly now
-    private String getUserFriendlyErrorMessage(StatusRuntimeException e, String operation) {
-        return e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error";
-    }
-
-    public Application createApplication(String name, String tenantName, String signature, String message) {
+    public Application createApplication(String name, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
         CreateApplicationRequest request = CreateApplicationRequest.newBuilder()
                 .setName(name)
                 .setTenantName(tenantName)
@@ -641,7 +680,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
     }
 
-    public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
+    public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) throws AviatorSimpleException, AviatorTechnicalException  {
         UpdateApplicationRequest request = UpdateApplicationRequest.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setName(newName)
@@ -652,7 +691,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
-    public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
+    public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) throws AviatorSimpleException, AviatorTechnicalException {
         ApplicationById request = ApplicationById.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setSignature(signature)
@@ -662,7 +701,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
     }
 
-    public Application getApplication(String projectId, String signature, String message, String tenantName) {
+    public Application getApplication(String projectId, String signature, String message, String tenantName) throws AviatorSimpleException, AviatorTechnicalException {
         ApplicationById request = ApplicationById.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setSignature(signature)
@@ -672,7 +711,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
     }
 
-    public List<Application> listApplication(String tenantName, String signature, String message) {
+    public List<Application> listApplication(String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
         ApplicationByTenantName request = ApplicationByTenantName.newBuilder()
                 .setName(tenantName)
                 .setSignature(signature)
@@ -682,7 +721,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return applicationList.getApplicationsList();
     }
 
-    public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
+    public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) throws AviatorSimpleException, AviatorTechnicalException {
         TokenGenerationRequest request = TokenGenerationRequest.newBuilder()
                 .setEmail(email != null ? email : "")
                 .setCustomTokenName(tokenName != null ? tokenName : "")
@@ -694,7 +733,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
-    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) {
+    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) throws AviatorSimpleException, AviatorTechnicalException {
         ListTokensRequest request = ListTokensRequest.newBuilder()
                 .setEmail(email)
                 .setRequestSignature(signature)
@@ -706,7 +745,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
 
-    public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
+    public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
         RevokeTokenRequest request = RevokeTokenRequest.newBuilder()
                 .setToken(token)
                 .setEmail(email)
@@ -717,7 +756,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
     }
 
-    public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
+    public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
         DeleteTokenRequest request = DeleteTokenRequest.newBuilder()
                 .setToken(token)
                 .setEmail(email)
@@ -728,7 +767,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
     }
 
-    public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {
+    public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
         TokenValidationRequest request = TokenValidationRequest.newBuilder()
                 .setToken(token)
                 .setTenantName(tenantName)
@@ -738,7 +777,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
     }
 
-    public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
+    public List<Entitlement> listEntitlements(String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder()
                 .setTenantName(tenantName)
                 .setSignature(signature)

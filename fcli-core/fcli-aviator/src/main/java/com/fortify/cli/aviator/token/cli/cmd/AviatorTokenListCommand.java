@@ -5,6 +5,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +18,9 @@ import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.ListTokensResponse;
 import com.fortify.grpc.token.TokenInfo;
-import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -36,17 +36,11 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             ArrayNode tokensArray = fetchAllTokens(client, sessionDescriptor);
             logTokenCount(tokensArray.size());
             return tokensArray;
-        } catch (StatusRuntimeException e) {
-            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while listing tokens";
-            throw new FcliSimpleException(errorMessage);
-        } catch (Exception e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while listing tokens";
-            throw new FcliSimpleException(errorMessage);
         }
     }
 
@@ -75,7 +69,7 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
         ListTokensResponse response = client.listTokens(email, sessionDescriptor.getTenant(), signature, message, pageSize, nextPageToken);
         if (!response.getSuccess()) {
             String errorMessage = response.getErrorMessage().isBlank() ? "Failed to list tokens" : response.getErrorMessage();
-            throw new FcliSimpleException(errorMessage);
+            throw new AviatorSimpleException(errorMessage);
         }
         return response;
     }

@@ -3,15 +3,15 @@ package com.fortify.cli.aviator.token.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.DeleteTokenResponse;
-import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +27,11 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenDeleteCommand.class);
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             DeleteTokenResponse response = deleteToken(client, sessionDescriptor, messageAndSignature);
             return processDeleteResponse(response);
-        } catch (StatusRuntimeException e) {
-            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while deleting token";
-            throw new FcliSimpleException(errorMessage);
-        } catch (Exception e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while deleting token";
-            throw new FcliSimpleException(errorMessage);
         }
     }
 
@@ -54,7 +48,7 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
     private JsonNode processDeleteResponse(DeleteTokenResponse response) {
         if (!response.getSuccess()) {
             String errorMessage = response.getErrorMessage().isBlank() ? "Token deletion failed" : response.getErrorMessage();
-            throw new FcliSimpleException(errorMessage);
+            throw new AviatorSimpleException(errorMessage);
         }
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode deleteTokenNode = objectMapper.createObjectNode();

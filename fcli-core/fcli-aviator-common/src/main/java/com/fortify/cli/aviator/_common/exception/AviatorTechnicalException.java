@@ -1,6 +1,8 @@
 package com.fortify.cli.aviator._common.exception;
 
-public class AviatorTechnicalException extends RuntimeException {
+import com.fortify.cli.common.exception.FcliTechnicalException;
+
+public class AviatorTechnicalException extends FcliTechnicalException {
     public AviatorTechnicalException(String message) {
         super(message);
     }

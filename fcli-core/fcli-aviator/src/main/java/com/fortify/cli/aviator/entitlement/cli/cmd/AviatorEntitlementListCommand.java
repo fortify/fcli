@@ -2,6 +2,8 @@ package com.fortify.cli.aviator.entitlement.cli.cmd;
 
 import java.util.List;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +17,7 @@ import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -28,19 +28,13 @@ public class AviatorEntitlementListCommand extends AbstractAviatorAdminSessionOu
     private static final Logger LOG = LoggerFactory.getLogger(AviatorEntitlementListCommand.class);
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             List<Entitlement> entitlements = fetchEntitlements(client, sessionDescriptor, messageAndSignature);
             ArrayNode entitlementsArray = formatEntitlements(entitlements);
             logEntitlementCount(entitlements.size(), sessionDescriptor.getTenant());
             return entitlementsArray;
-        } catch (StatusRuntimeException e) {
-            String errorMessage = e.getStatus().getDescription() != null ? e.getStatus().getDescription() : "Unknown error occurred while listing entitlements";
-            throw new FcliSimpleException(errorMessage);
-        } catch (Exception e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error occurred while listing entitlements";
-            throw new FcliSimpleException(errorMessage);
         }
     }
 

@@ -1,18 +1,14 @@
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.core.AuditFPR;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -74,7 +70,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     return av.asObjectNode().put("artifactId", id);
                 } else {
                     progressWriter.writeProgress("No issues to audit, skipping upload");
-                    return av.asObjectNode().put("artifactId", "N/A").put("action","SKIPPED");
+                    return av.asObjectNode().put("artifactId", "N/A").put("action", "SKIPPED");
                 }
             } finally {
                 if (fprFile.exists()) {
@@ -83,15 +79,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     }
                 }
             }
-        } catch (AviatorSimpleException e) {
-            LOG.debug("Aviator processing failed with simple error: {}", e.getMessage());
-            throw new FcliSimpleException("Aviator processing failed: " + e.getMessage());
-        } catch (AviatorTechnicalException | IOException e) {
-            LOG.error("Aviator processing failed with technical/IO error: {}", e.getMessage(), e);
-            throw new RuntimeException("Aviator processing failed due to a technical or I/O error: " + e.getMessage(), e);
-        } catch (Exception e) {
-            LOG.error("An unexpected error occurred during Aviator SSC audit: {}", e.getMessage(), e);
-            throw new RuntimeException("An unexpected error occurred: " + e.getMessage(), e);
         }
     }
 

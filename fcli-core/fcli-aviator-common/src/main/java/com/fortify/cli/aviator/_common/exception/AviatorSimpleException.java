@@ -1,6 +1,8 @@
 package com.fortify.cli.aviator._common.exception;
 
-public class AviatorSimpleException extends Exception {
+import com.fortify.cli.common.exception.FcliSimpleException;
+
+public class AviatorSimpleException extends FcliSimpleException {
     public AviatorSimpleException(String message) {
         super(message);
     }

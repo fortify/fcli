@@ -10,16 +10,8 @@ import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionD
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.exception.FcliSimpleException; // Import needed
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.grpc.token.TokenValidationResponse;
-
-// Add potential IO exception import
-import java.io.IOException;
-
-// Optional: Add logging imports
-// import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -32,15 +24,11 @@ public class AviatorTokenValidateCommand extends AbstractAviatorAdminSessionOutp
     @Option(names = {"--token"}, description = "access token", required = true) private String token;
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) { // Can throw AviatorSimpleException
+    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
             TokenValidationResponse response = validateToken(client, sessionDescriptor, messageAndSignature);
             return createResponseNode(response);
-        } catch (AviatorSimpleException e) {
-            throw new FcliSimpleException("Token validation failed: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException("An unexpected error occurred during token validation: " + e.getMessage(), e);
         }
     }
 

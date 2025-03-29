@@ -155,18 +155,19 @@ public class IssueAuditor {
                 logger.progress("Audit completed");
                 logger.writeInfo("Audit completed");
             } catch (ExecutionException e) {
-                if (e.getCause() instanceof AviatorSimpleException) {
-                    logger.progress("Audit failed");
-                    logger.writeInfo("Audit failed");
-                    throw (AviatorSimpleException) e.getCause();
+                Throwable cause = e.getCause();
+                if (cause instanceof AviatorSimpleException) {
+                    logger.progress("Audit failed (user error)");
+                    logger.writeInfo("Audit failed: " + cause.getMessage());
+                    throw (AviatorSimpleException) cause;
                 }
-                logger.progress("Audit failed due to unexpected error");
+                logger.progress("Audit failed due to unexpected error during execution");
                 logger.writeInfo("Audit failed due to unexpected error");
-                throw new AviatorTechnicalException("Unexpected error during audit execution", e.getCause());
+                throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
             } catch (TimeoutException e) {
                 logger.progress("Audit failed due to timeout");
                 logger.writeInfo("Audit failed due to timeout");
-                throw new AviatorTechnicalException("Audit timed out", e);
+                throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
             } catch (InterruptedException e) {
                 logger.progress("Audit failed due to interruption");
                 logger.writeInfo("Audit failed due to interruption");

@@ -57,12 +57,10 @@ public class FPRProcessor {
             logger.debug("Number of Issues: {}", vulnerabilities.size());
 
             return vulnerabilities;
-        } catch (IOException | AviatorTechnicalException e) {
-            logger.error("Error during FPR processing initialization or parsing: {}", e.getMessage(), e);
-            throw new AviatorTechnicalException("Error during FPR processing.", e);
+        } catch (AviatorTechnicalException e) {
+            throw e;
         } catch (Exception e) {
-            logger.error("Unexpected error during FPR processing: {}", e.getMessage(), e);
+            logger.error("Unexpected error during FPR processing", e);
             throw new AviatorTechnicalException("Unexpected error during FPR processing.", e);
         }
-    }
-}
+    }}
