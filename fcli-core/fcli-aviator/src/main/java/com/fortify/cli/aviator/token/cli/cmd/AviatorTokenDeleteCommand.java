@@ -47,7 +47,9 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
 
     private JsonNode processDeleteResponse(DeleteTokenResponse response) {
         if (!response.getSuccess()) {
-            String errorMessage = response.getErrorMessage().isBlank() ? "Token deletion failed" : response.getErrorMessage();
+            String errorMessage = response.getErrorMessage().isBlank()
+                    ? "Token deletion failed: Unable to delete token '" + token + "' for email '" + email + "'. Please verify the provided token and email, and ensure you have the necessary permissions."
+                    : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
         ObjectMapper objectMapper = new ObjectMapper();

@@ -58,7 +58,9 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
 
     private JsonNode processTokenResponse(TokenGenerationResponse response) {
         if (!response.getSuccess()) {
-            String errorMessage = response.getErrorMessage().isBlank() ? "Token creation failed" : response.getErrorMessage();
+            String errorMessage = response.getErrorMessage().isBlank()
+                    ? "Token creation failed: Unable to generate token for email '" + email + "' with name '" + customTokenName + "'. Please verify the provided details and try again."
+                    : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
         JsonNode jsonNode = AviatorGrpcUtils.grpcToJsonNode(response);

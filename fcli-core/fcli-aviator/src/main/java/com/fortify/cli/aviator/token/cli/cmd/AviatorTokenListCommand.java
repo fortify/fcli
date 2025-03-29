@@ -68,7 +68,9 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
         String signature = messageAndSignature[1];
         ListTokensResponse response = client.listTokens(email, sessionDescriptor.getTenant(), signature, message, pageSize, nextPageToken);
         if (!response.getSuccess()) {
-            String errorMessage = response.getErrorMessage().isBlank() ? "Failed to list tokens" : response.getErrorMessage();
+            String errorMessage = response.getErrorMessage().isBlank()
+                    ? "Failed to list tokens: Unable to retrieve tokens for email '" + email + "'. Please verify the email and ensure you have the necessary permissions."
+                    : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
         return response;

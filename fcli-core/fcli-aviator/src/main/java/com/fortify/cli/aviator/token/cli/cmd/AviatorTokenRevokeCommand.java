@@ -47,7 +47,9 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorAdminSessionOutput
 
     private JsonNode processRevokeResponse(RevokeTokenResponse response) {
         if (!response.getSuccess()) {
-            String errorMessage = response.getErrorMessage().isBlank() ? "Token revocation failed" : response.getErrorMessage();
+            String errorMessage = response.getErrorMessage().isBlank()
+                    ? "Token revocation failed: Unable to revoke token '" + token + "' for email '" + email + "'. Please verify the token and email, and ensure you have the necessary permissions."
+                    : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
         ObjectMapper objectMapper = new ObjectMapper();
