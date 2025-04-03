@@ -5,12 +5,18 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.fpr.*;
-import com.fortify.cli.aviator.util.*;
+import com.fortify.cli.aviator.util.ExtensionsConfig;
+import com.fortify.cli.aviator.util.FPRLoadingUtil;
+import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.aviator.util.TagMappingConfig;
+import com.fortify.cli.aviator.util.ZipUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.yaml.snakeyaml.Yaml; // Explicitly use SnakeYAML
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
 
-    public static File auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger)
+    public static File auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger, String tagMappingFilePath)
             throws AviatorSimpleException, AviatorTechnicalException {
 
         LOG.info("Starting FPR audit process for file: {}", file.getPath());
@@ -42,7 +48,7 @@ public class AuditFPR {
                 LOG.error("FPR file does not contain source code: {}", file);
                 throw new AviatorSimpleException("FPR file does not contain source code.");
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             LOG.error("I/O error checking FPR source presence: {}", file.getPath(), e);
             throw new AviatorTechnicalException("I/O error checking FPR source presence.", e);
         }
@@ -50,14 +56,50 @@ public class AuditFPR {
 
         ExtensionsConfig extensionsConfig;
         try {
-            extensionsConfig = ResourceUtil.loadYamlConfig("extensions_config.yaml", ExtensionsConfig.class);
-            if (extensionsConfig == null) {
-                LOG.error("Failed to load extensions configuration (result was null)");
-                throw new AviatorTechnicalException("Failed to load required extensions configuration.");
+            Yaml yaml = new Yaml();
+            try (InputStream inputStream = AuditFPR.class.getClassLoader().getResourceAsStream("extensions_config.yaml")) {
+                if (inputStream == null) {
+                    throw new IOException("Resource not found: extensions_config.yaml");
+                }
+                extensionsConfig = yaml.loadAs(inputStream, ExtensionsConfig.class);
+                if (extensionsConfig == null) {
+                    LOG.error("Failed to load extensions configuration (result was null)");
+                    throw new AviatorTechnicalException("Failed to load required extensions configuration.");
+                }
             }
         } catch (IOException e) {
             LOG.error("Failed to load extensions configuration file: {}", e.getMessage(), e);
             throw new AviatorTechnicalException("Unable to load extensions configuration due to an I/O error.", e);
+        }
+
+        // Load tag mapping configuration using SnakeYAML
+        TagMappingConfig tagMappingConfig;
+        Yaml yaml = new Yaml();
+        try {
+            if (tagMappingFilePath != null && !tagMappingFilePath.trim().isEmpty()) {
+                try (FileInputStream fis = new FileInputStream(tagMappingFilePath)) {
+                    tagMappingConfig = yaml.loadAs(fis, TagMappingConfig.class);
+                    if (tagMappingConfig == null) {
+                        throw new AviatorSimpleException("Tag mapping file '" + tagMappingFilePath + "' is invalid or empty.");
+                    }
+                }
+            } else {
+                try (InputStream inputStream = AuditFPR.class.getClassLoader().getResourceAsStream("default_tag_mapping.yaml")) {
+                    if (inputStream == null) {
+                        throw new IOException("Resource not found: default_tag_mapping.yaml");
+                    }
+                    tagMappingConfig = yaml.loadAs(inputStream, TagMappingConfig.class);
+                    if (tagMappingConfig == null) {
+                        throw new AviatorTechnicalException("Default tag mapping configuration could not be loaded.");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOG.error("Failed to load tag mapping configuration: {}", e.getMessage(), e);
+            throw new AviatorTechnicalException("Failed to load tag mapping configuration due to an I/O error.", e);
+        } catch (Exception e) {
+            LOG.error("Invalid tag mapping file format in '{}': {}", tagMappingFilePath, e.getMessage(), e);
+            throw new AviatorSimpleException("Invalid tag mapping file format in '" + tagMappingFilePath + "': " + e.getMessage(), e);
         }
 
         try {
@@ -80,7 +122,7 @@ public class AuditFPR {
                 LOG.info("No issues were audited, skipping update and upload");
                 return null;
             } else {
-                File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, fprInfo.getResultsTag());
+                File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, tagMappingConfig);
                 LOG.info("FPR audit process completed successfully");
                 return updatedFile;
             }
@@ -88,5 +130,10 @@ public class AuditFPR {
             LOG.error("A technical error occurred during FPR processing: {}", e.getMessage(), e);
             throw e;
         }
+    }
+
+    public static File auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger)
+            throws AviatorSimpleException, AviatorTechnicalException {
+        return auditFPR(file, token, url, appVersion, logger, null);
     }
 }

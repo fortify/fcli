@@ -37,6 +37,8 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
     @Option(names = {"--app"}, required = false) private String appName;
+    @Option(names = {"--tag-mapping"}, required = false, description = "Tag Mapping") private String tagMapping;
+
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
@@ -60,7 +62,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                         SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
                 progressWriter.writeProgress("Status: Processing FPR with Aviator");
-                File processedFileResult = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), appName, logger);
+                File processedFileResult = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), appName, logger, tagMapping);
 
                 if (processedFileResult != null) {
                     progressWriter.writeProgress("Status: Uploading FPR to SSC");
