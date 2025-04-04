@@ -308,10 +308,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                         throw new AviatorTechnicalException("Error during request processing execution", e);
                     }
                     LOG.warn("Exception caught after stream completion during processing execution", e);
-                } finally {
-                    if (!resultFuture.isDone()) {
-                        resultFuture.completeExceptionally(new AviatorTechnicalException("Request processing task ended unexpectedly"));
-                    }
                 }
             });
 
