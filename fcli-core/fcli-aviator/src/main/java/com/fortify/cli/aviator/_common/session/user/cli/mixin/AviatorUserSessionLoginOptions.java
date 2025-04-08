@@ -18,7 +18,4 @@ import picocli.CommandLine.Option;
 public class AviatorUserSessionLoginOptions {
     @Option(names = {"--url"}, required = true, order=1)
     @Getter private String aviatorUrl;
-        
-    @Option(names = {"--token", "-t"}, required = false, order=1)
-    @Getter private String aviatorToken;
 }

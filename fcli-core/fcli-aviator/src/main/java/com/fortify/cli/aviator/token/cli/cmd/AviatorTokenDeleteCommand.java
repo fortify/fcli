@@ -7,6 +7,7 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -23,7 +24,7 @@ import picocli.CommandLine.Option;
 public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
-    @Option(names = {"--token"}, required = true) private String token;
+    @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenDeleteCommand.class);
 
     @Override
@@ -36,26 +37,26 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
     }
 
     private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, token, email, sessionDescriptor.getTenant());
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, tokenResolver.getToken(), email, sessionDescriptor.getTenant());
     }
 
     private DeleteTokenResponse deleteToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.deleteToken(token, email, sessionDescriptor.getTenant(), signature, message);
+        return client.deleteToken(tokenResolver.getToken(), email, sessionDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode processDeleteResponse(DeleteTokenResponse response) {
         if (!response.getSuccess()) {
             String errorMessage = response.getErrorMessage().isBlank()
-                    ? "Token deletion failed: Unable to delete token '" + token + "' for email '" + email + "'. Please verify the provided token and email, and ensure you have the necessary permissions."
+                    ? "Token deletion failed: Unable to delete token '" + tokenResolver.getToken() + "' for email '" + email + "'. Please verify the provided token and email, and ensure you have the necessary permissions."
                     : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode deleteTokenNode = objectMapper.createObjectNode();
         deleteTokenNode.put("message", "Token deleted successfully");
-        LOG.info("Token '{}' deleted successfully for email: {}", token, email);
+        LOG.info("Token '{}' deleted successfully for email: {}",  tokenResolver.getToken(), email);
         return deleteTokenNode;
     }
 

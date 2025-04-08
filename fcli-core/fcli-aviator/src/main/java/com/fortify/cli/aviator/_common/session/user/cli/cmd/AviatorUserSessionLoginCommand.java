@@ -14,6 +14,7 @@ package com.fortify.cli.aviator._common.session.user.cli.cmd;
 
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionLoginOptions;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionNameArgGroup;
+import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -28,17 +29,26 @@ import picocli.CommandLine.Mixin;
 public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<AviatorUserSessionDescriptor> {
     @Mixin @Getter private OutputHelperMixins.Login outputHelper;
     @Getter private AviatorUserSessionHelper sessionHelper = AviatorUserSessionHelper.instance();
+    @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
     @Mixin private AviatorUserSessionLoginOptions sessionLoginOptions = new AviatorUserSessionLoginOptions();
-    @Getter @ArgGroup(headingKey = "aviator.user-session.name.arggroup") 
+    @Getter @ArgGroup(headingKey = "aviator.user-session.name.arggroup")
     private AviatorUserSessionNameArgGroup sessionNameSupplier;
-    
+
     @Override
     protected void logoutBeforeNewLogin(String sessionName, AviatorUserSessionDescriptor sessionDescriptor) {
         // Nothing to do
     }
-    
+
     @Override
     protected AviatorUserSessionDescriptor login(String sessionName) {
-        return new AviatorUserSessionDescriptor(sessionLoginOptions.getAviatorUrl(), sessionLoginOptions.getAviatorToken());
+        String resolvedToken = tokenResolver.getToken();
+        if ( resolvedToken == null ) {
+            // Handle case where token is required but not provided/resolved
+            // This depends on whether the login *always* needs a token.
+            // If it's optional (e.g., other auth methods exist), this check might change.
+            // For now, let's assume it can be null/optional based on the original `required=false`.
+        }
+
+        return new AviatorUserSessionDescriptor(sessionLoginOptions.getAviatorUrl(), resolvedToken);
     }
 }
