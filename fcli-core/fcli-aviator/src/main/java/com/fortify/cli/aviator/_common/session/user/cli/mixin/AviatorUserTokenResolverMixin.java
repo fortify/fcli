@@ -12,7 +12,7 @@ import picocli.CommandLine.Option;
  */
 public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
     @Option(names = {"--token", "-t"}, descriptionKey = "fcli.aviator.session.login.token", paramLabel = "source", required = true, order = 1)
-    @Getter private String textSource;
+    private String textSource;
 
     @Override
     public String getTextSource() {

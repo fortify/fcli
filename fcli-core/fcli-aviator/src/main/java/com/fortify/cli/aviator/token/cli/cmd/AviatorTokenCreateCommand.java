@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -39,25 +39,25 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            TokenGenerationResponse response = generateToken(client, sessionDescriptor, messageAndSignature);
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
+            TokenGenerationResponse response = generateToken(client, configDescriptor, messageAndSignature);
             return processTokenResponse(response);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
         String currentDate = CURRENT_DATE_FORMATTER.format(Instant.now().atOffset(ZoneOffset.UTC));
         String safeCustomTokenName = customTokenName == null ? "" : customTokenName;
         String safeEndDate = endDate == null ? "" : endDate;
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, email, safeCustomTokenName, currentDate, safeEndDate);
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, email, safeCustomTokenName, currentDate, safeEndDate);
     }
 
-    private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private TokenGenerationResponse generateToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.generateToken(email, customTokenName, signature, message, sessionDescriptor.getTenant(), endDate);
+        return client.generateToken(email, customTokenName, signature, message, configDescriptor.getTenant(), endDate);
     }
 
     private JsonNode processTokenResponse(TokenGenerationResponse response) {

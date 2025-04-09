@@ -1,7 +1,6 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -14,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -37,21 +36,21 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            ArrayNode tokensArray = fetchAllTokens(client, sessionDescriptor);
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            ArrayNode tokensArray = fetchAllTokens(client, configDescriptor);
             logTokenCount(tokensArray.size());
             return tokensArray;
         }
     }
 
-    private ArrayNode fetchAllTokens(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor) {
+    private ArrayNode fetchAllTokens(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor) {
         ArrayNode tokensArray = AviatorGrpcUtils.createArrayNode();
         String nextPageToken = "";
         boolean morePages;
         do {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            ListTokensResponse response = listTokens(client, sessionDescriptor, messageAndSignature, nextPageToken);
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
+            ListTokensResponse response = listTokens(client, configDescriptor, messageAndSignature, nextPageToken);
             appendTokensToArray(response, tokensArray);
             nextPageToken = response.getNextPageToken();
             morePages = !nextPageToken.isEmpty() && fetchAllPages;
@@ -60,14 +59,14 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
         return tokensArray;
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, email, sessionDescriptor.getTenant());
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, email, configDescriptor.getTenant());
     }
 
-    private ListTokensResponse listTokens(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature, String nextPageToken) {
+    private ListTokensResponse listTokens(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String nextPageToken) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        ListTokensResponse response = client.listTokens(email, sessionDescriptor.getTenant(), signature, message, pageSize, nextPageToken);
+        ListTokensResponse response = client.listTokens(email, configDescriptor.getTenant(), signature, message, pageSize, nextPageToken);
         if (!response.getSuccess()) {
             String errorMessage = response.getErrorMessage().isBlank()
                     ? "Failed to list tokens: Unable to retrieve tokens for email '" + email + "'. Please verify the email and ensure you have the necessary permissions."

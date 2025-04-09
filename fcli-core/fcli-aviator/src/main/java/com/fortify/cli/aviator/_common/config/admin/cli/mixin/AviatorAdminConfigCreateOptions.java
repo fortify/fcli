@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+ * Copyright 2021, 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,19 +10,18 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.aviator._common.session.admin.cli.cmd;
+package com.fortify.cli.aviator._common.config.admin.cli.mixin;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import lombok.Getter;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
-import picocli.CommandLine.Command;
+public class AviatorAdminConfigCreateOptions {
+    @Option(names = {"--url", "-u"}, required = true, order=1)
+    @Getter private String aviatorUrl;
 
-@Command(
-        name = "admin-session",
-        subcommands = {
-                AviatorAdminSessionListCommand.class,
-                AviatorAdminSessionLoginCommand.class,
-                AviatorAdminSessionLogoutCommand.class 
-        }
-)
-public class AviatorAdminSessionCommands extends AbstractContainerCommand {
+    @Option(names = {"--tenant", "-t"}, required = true, order=2)
+    @Getter private String tenant;
+
+    @Mixin @Getter private AviatorAdminPrivateKeyResolverMixin privateKeyResolver;
 }

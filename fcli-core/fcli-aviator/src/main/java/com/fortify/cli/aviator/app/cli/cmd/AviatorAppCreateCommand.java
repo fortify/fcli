@@ -5,7 +5,7 @@ import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -25,23 +25,27 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppCreateCommand.class);
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            Application createdApplication = createApplication(client, sessionDescriptor, messageAndSignature);
-            LOG.info("Application '{}' created successfully for tenant: {}", applicationName, sessionDescriptor.getTenant());
+    // Method signature changed
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        // Variable name changed
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
+            Application createdApplication = createApplication(client, configDescriptor, messageAndSignature);
+            LOG.info("Application '{}' created successfully for tenant: {}", applicationName, configDescriptor.getTenant());
             return AviatorGrpcUtils.grpcToJsonNode(createdApplication);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant(), applicationName);
+    // Method signature changed
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant(), applicationName);
     }
 
-    private Application createApplication(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    // Method signature changed
+    private Application createApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.createApplication(applicationName, sessionDescriptor.getTenant(), signature, message);
+        return client.createApplication(applicationName, configDescriptor.getTenant(), signature, message);
     }
 
     @Override

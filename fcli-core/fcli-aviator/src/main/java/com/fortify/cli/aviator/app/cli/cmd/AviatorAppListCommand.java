@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -31,33 +31,33 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            List<Application> applications = listApplications(client, sessionDescriptor, messageAndSignature);
-            return formatApplicationsArray(applications, sessionDescriptor.getTenant());
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
+            List<Application> applications = listApplications(client, configDescriptor, messageAndSignature);
+            return formatApplicationsArray(applications, configDescriptor.getTenant());
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant());
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant());
     }
 
-    private List<Application> listApplications(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private List<Application> listApplications(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.listApplication(sessionDescriptor.getTenant(), signature, message);
+        return client.listApplication(configDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode formatApplicationsArray(List<Application> applications, String tenant) {
         ArrayNode applicationsArray = AviatorGrpcUtils.createArrayNode();
         for (Application application : applications) {
             JsonNode applicationNode = AviatorGrpcUtils.grpcToJsonNode(application);
-            String createdAt = applicationNode.get("createdAt") != null ? applicationNode.get("createdAt").asText() : "N/A";
+            String createdAt = applicationNode.get("created_at") != null ? applicationNode.get("created_at").asText() : "N/A"; // TODO check field name
             if (!"N/A".equals(createdAt)) {
                 createdAt = ZonedDateTime.parse(createdAt).format(FORMATTER);
             }
-            ((ObjectNode) applicationNode).put("createdAt", createdAt);
+            ((ObjectNode) applicationNode).put("created_at", createdAt); // TODO check field name
             applicationsArray.add(applicationNode);
         }
         logProjectCount(applications.size(), tenant);

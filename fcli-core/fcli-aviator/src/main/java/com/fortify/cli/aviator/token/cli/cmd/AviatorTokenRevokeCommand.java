@@ -6,8 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
-// Import the mixin
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -29,24 +28,24 @@ public class AviatorTokenRevokeCommand extends AbstractAviatorAdminSessionOutput
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenRevokeCommand.class);
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         String tokenToRevoke = tokenResolver.getToken();
 
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor, tokenToRevoke);
-            RevokeTokenResponse response = revokeToken(client, sessionDescriptor, messageAndSignature, tokenToRevoke);
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor, tokenToRevoke);
+            RevokeTokenResponse response = revokeToken(client, configDescriptor, messageAndSignature, tokenToRevoke);
             return processRevokeResponse(response, tokenToRevoke);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor, String tokenToRevoke) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, tokenToRevoke, email, sessionDescriptor.getTenant());
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor, String tokenToRevoke) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tokenToRevoke, email, configDescriptor.getTenant());
     }
 
-    private RevokeTokenResponse revokeToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature, String tokenToRevoke) {
+    private RevokeTokenResponse revokeToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String tokenToRevoke) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.revokeToken(tokenToRevoke, email, sessionDescriptor.getTenant(), signature, message);
+        return client.revokeToken(tokenToRevoke, email, configDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode processRevokeResponse(RevokeTokenResponse response, String tokenToRevoke) {

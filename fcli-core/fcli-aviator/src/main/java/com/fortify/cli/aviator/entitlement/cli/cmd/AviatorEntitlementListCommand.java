@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.entitlement.Entitlement;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -28,24 +28,24 @@ public class AviatorEntitlementListCommand extends AbstractAviatorAdminSessionOu
     private static final Logger LOG = LoggerFactory.getLogger(AviatorEntitlementListCommand.class);
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            List<Entitlement> entitlements = fetchEntitlements(client, sessionDescriptor, messageAndSignature);
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
+            List<Entitlement> entitlements = fetchEntitlements(client, configDescriptor, messageAndSignature);
             ArrayNode entitlementsArray = formatEntitlements(entitlements);
-            logEntitlementCount(entitlements.size(), sessionDescriptor.getTenant());
+            logEntitlementCount(entitlements.size(), configDescriptor.getTenant());
             return entitlementsArray;
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, sessionDescriptor.getTenant());
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant());
     }
 
-    private List<Entitlement> fetchEntitlements(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private List<Entitlement> fetchEntitlements(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.listEntitlements(sessionDescriptor.getTenant(), signature, message);
+        return client.listEntitlements(configDescriptor.getTenant(), signature, message);
     }
 
     private ArrayNode formatEntitlements(List<Entitlement> entitlements) {

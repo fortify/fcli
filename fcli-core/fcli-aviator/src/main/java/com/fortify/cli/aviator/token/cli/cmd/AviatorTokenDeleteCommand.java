@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
@@ -28,24 +28,24 @@ public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutput
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenDeleteCommand.class);
 
     @Override
-    protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
         String tokenToDelete = tokenResolver.getToken();
 
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor, tokenToDelete);
-            DeleteTokenResponse response = deleteToken(client, sessionDescriptor, messageAndSignature, tokenToDelete);
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor, tokenToDelete);
+            DeleteTokenResponse response = deleteToken(client, configDescriptor, messageAndSignature, tokenToDelete);
             return processDeleteResponse(response, tokenToDelete);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor, String tokenToDelete) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, tokenToDelete, email, sessionDescriptor.getTenant());
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor, String tokenToDelete) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, tokenToDelete, email, configDescriptor.getTenant());
     }
 
-    private DeleteTokenResponse deleteToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature, String tokenToDelete) {
+    private DeleteTokenResponse deleteToken(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature, String tokenToDelete) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.deleteToken(tokenToDelete, email, sessionDescriptor.getTenant(), signature, message);
+        return client.deleteToken(tokenToDelete, email, configDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode processDeleteResponse(DeleteTokenResponse response, String tokenToDelete) {
