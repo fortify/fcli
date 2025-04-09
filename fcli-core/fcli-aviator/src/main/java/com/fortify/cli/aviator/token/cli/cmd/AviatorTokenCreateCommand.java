@@ -1,5 +1,6 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
+import java.io.File;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -16,6 +17,7 @@ import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.grpc.token.TokenGenerationResponse;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -24,12 +26,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Create.CMD_NAME)
+@Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
 public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+    @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
+    @Option(names = {"--save-token"}, descriptionKey = "fcli.aviator.token.create.save-token", paramLabel = "<file>") private File saveTokenFile;
+
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenCreateCommand.class);
     private static final DateTimeFormatter CURRENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
@@ -63,6 +67,12 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
                     : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
+
+        String generatedToken = response.getToken();
+        if (saveTokenFile != null) {
+            saveTokenToFile(generatedToken, saveTokenFile);
+        }
+
         JsonNode jsonNode = AviatorGrpcUtils.grpcToJsonNode(response);
         if (jsonNode.has("expiry_date")) {
             long expiryDateEpoch = jsonNode.get("expiry_date").asLong();
@@ -71,6 +81,11 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
         }
         LOG.info("Token '{}' created successfully for email: {}", customTokenName, email);
         return jsonNode;
+    }
+
+    private void saveTokenToFile(String token, File file) {
+        FileUtil.writeStringToFile(file.toPath(), token, true);
+        LOG.info("Token saved to file: {}", file.toPath().toAbsolutePath());
     }
 
     @Override

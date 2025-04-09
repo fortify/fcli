@@ -82,7 +82,6 @@ public class FVDLProcessor {
     private void optimizedPopulateNodePool() {
         Element nodePoolElement = (Element) inputDoc.getElementsByTagName("UnifiedNodePool").item(0);
         if (nodePoolElement == null) {
-            logger.warn("No UnifiedNodePool found in the document");
             return;
         }
 

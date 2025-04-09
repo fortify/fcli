@@ -7,6 +7,8 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+// Import the mixin
+import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -21,41 +23,43 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Revoke.CMD_NAME)
 public class AviatorTokenRevokeCommand extends AbstractAviatorAdminSessionOutputCommand {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+    @Getter @Mixin private OutputHelperMixins.Revoke outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
-    @Option(names = {"--token"}, required = true) private String token;
+    @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenRevokeCommand.class);
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        String tokenToRevoke = tokenResolver.getToken();
+
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            RevokeTokenResponse response = revokeToken(client, sessionDescriptor, messageAndSignature);
-            return processRevokeResponse(response);
+            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor, tokenToRevoke);
+            RevokeTokenResponse response = revokeToken(client, sessionDescriptor, messageAndSignature, tokenToRevoke);
+            return processRevokeResponse(response, tokenToRevoke);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
-        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, token, email, sessionDescriptor.getTenant());
+    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor, String tokenToRevoke) {
+        return AviatorSignatureUtils.createMessageAndSignature(sessionDescriptor, tokenToRevoke, email, sessionDescriptor.getTenant());
     }
 
-    private RevokeTokenResponse revokeToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private RevokeTokenResponse revokeToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature, String tokenToRevoke) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.revokeToken(token, email, sessionDescriptor.getTenant(), signature, message);
+        return client.revokeToken(tokenToRevoke, email, sessionDescriptor.getTenant(), signature, message);
     }
 
-    private JsonNode processRevokeResponse(RevokeTokenResponse response) {
+    private JsonNode processRevokeResponse(RevokeTokenResponse response, String tokenToRevoke) {
         if (!response.getSuccess()) {
             String errorMessage = response.getErrorMessage().isBlank()
-                    ? "Token revocation failed: Unable to revoke token '" + token + "' for email '" + email + "'. Please verify the token and email, and ensure you have the necessary permissions."
+                    ? "Token revocation failed: Unable to revoke token '" + tokenToRevoke + "' for email '" + email + "'. Please verify the token and email, and ensure you have the necessary permissions."
                     : response.getErrorMessage();
             throw new AviatorSimpleException(errorMessage);
         }
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode revokeTokenNode = objectMapper.createObjectNode();
         revokeTokenNode.put("message", "Token successfully revoked");
-        LOG.info("Token '{}' revoked successfully for email: {}", token, email);
+        LOG.info("Token '{}' revoked successfully for email: {}", tokenToRevoke, email);
         return revokeTokenNode;
     }
 

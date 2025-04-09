@@ -1,14 +1,20 @@
 package com.fortify.cli.aviator.util;
 
-import java.io.*;
+import com.fortify.cli.common.exception.FcliTechnicalException;
+
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.nio.file.StandardOpenOption;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
+import java.util.Comparator;
 
 public final class FileUtil {
 
@@ -20,119 +26,92 @@ public final class FileUtil {
     }
 
     public static boolean isZipFile(File file) {
-        ZipInputStream zip = null;
-        FileInputStream stream = null;
-
-        boolean var4;
-        try {
-            stream = new FileInputStream(file);
-            zip = new ZipInputStream(stream);
-            ZipEntry zipEntry = zip.getNextEntry();
-            var4 = zipEntry != null;
-            return var4;
-        } catch (IOException var8) {
-            var4 = false;
-        } finally {
-            close((InputStream) zip);
-            close((InputStream) stream);
-        }
-
-        return var4;
-    }
-
-    public static boolean deleteDirectoryStructure(File directory) {
-        return directory.isDirectory() ? deleteDirStructHelper(directory, new HashSet(), (Pattern) null) : false;
-    }
-
-    public static boolean deleteDirectoryStructure(File directory, Pattern pattern) {
-        return directory.isDirectory() ? deleteDirStructHelper(directory, new HashSet(), pattern) : false;
-    }
-
-    private static boolean deleteDirStructHelper(File dir, HashSet<String> dirList, Pattern pattern) {
-        try {
-            String dirName = dir.getCanonicalPath();
-            if (dirList.contains(dirName)) {
-                return false;
-            }
-
-            dirList.add(dirName);
-        } catch (Exception var5) {
-        }
-
-        File[] files = dir.listFiles();
-        if (files == null) {
+        if (!file.exists() || !file.isFile() || !file.canRead()) {
             return false;
-        } else {
-            for (int i = 0; i < files.length; ++i) {
-                if (files[i].isDirectory()) {
-                    deleteDirStructHelper(files[i], dirList, pattern);
-                } else if (pattern == null || pattern.matcher(files[i].getName()).matches()) {
-                    files[i].delete();
-                }
-            }
+        }
+        try (FileInputStream fis = new FileInputStream(file);
+             ZipInputStream zis = new ZipInputStream(fis)) {
+            return zis.getNextEntry() != null;
+        } catch (IOException e) {
+            return false;
+        }
+    }
 
-            if (dir.listFiles() != null && dir.listFiles().length == 0) {
-                return dir.delete();
-            } else {
-                return false;
-            }
+    @Deprecated
+    public static boolean deleteDirectoryStructure(File directory) {
+        return directory.isDirectory() ? deleteDirectoryRecursive(directory) : false;
+    }
+
+    @Deprecated
+    public static boolean deleteDirectoryStructure(File directory, Pattern pattern) {
+        return deleteDirectoryRecursive(directory);
+    }
+
+    public static boolean deleteDirectoryRecursive(File directory) {
+        if (!directory.isDirectory()) {
+            return false;
+        }
+        Path path = directory.toPath();
+        try (Stream<Path> walk = Files.walk(path)) {
+            walk.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            return !Files.exists(path);
+        } catch (IOException e) {
+            System.err.println("Failed to delete directory: " + path + " - " + e.getMessage());
+            return false;
         }
     }
 
     public static String getFileExtension(String fileName) {
+        if (fileName == null) return "";
         int lastIndexOfDot = fileName.lastIndexOf('.');
-        if (lastIndexOfDot > 0) {
+        if (lastIndexOfDot > 0 && lastIndexOfDot < fileName.length() - 1) {
             return fileName.substring(lastIndexOfDot + 1);
         }
         return "";
     }
 
-    public static IOException close(InputStream in) {
-        if (in == null) {
-            return null;
-        } else {
-            try {
-                in.close();
-                return null;
-            } catch (IOException var2) {
-                IOException ex = var2;
-                return ex;
-            }
-        }
-    }
-
-    public static IOException close(Reader in) {
-        if (in == null) {
-            return null;
-        } else {
-            try {
-                in.close();
-                return null;
-            } catch (IOException var2) {
-                IOException ex = var2;
-                return ex;
-            }
-        }
-    }
-
-    public static IOException close(ZipFile zip) {
-        if (zip == null) {
-            return null;
-        } else {
-            try {
-                zip.close();
-                return null;
-            } catch (IOException var2) {
-                IOException ex = var2;
-                return ex;
-            }
-        }
-    }
-
     public static boolean isDirectory(String pathString) {
-        Path path = Paths.get(pathString);
-        return Files.isDirectory(path);
+        if (pathString == null) return false;
+        try {
+            Path path = Paths.get(pathString);
+            return Files.isDirectory(path);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
+    public static void writeStringToFile(Path filePath, String content, boolean overwrite) {
+        Path absolutePath = filePath.toAbsolutePath();
+        Path parentDir = absolutePath.getParent();
 
+        if (parentDir != null && !Files.exists(parentDir)) {
+            try {
+                Files.createDirectories(parentDir);
+            } catch (IOException e) {
+                throw new FcliTechnicalException("Error creating parent directories for " + absolutePath, e);
+            }
+        }
+
+        StandardOpenOption[] options;
+        if (overwrite) {
+            options = new StandardOpenOption[]{
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING
+            };
+        } else {
+            options = new StandardOpenOption[]{
+                    StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.WRITE
+            };
+        }
+
+        try {
+            Files.writeString(absolutePath, content, StandardCharsets.UTF_8, options);
+        } catch (IOException e) {
+            throw new FcliTechnicalException("Error writing to file " + absolutePath, e);
+        }
+    }
 }

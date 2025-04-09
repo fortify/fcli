@@ -3,6 +3,7 @@ package com.fortify.cli.aviator._common.session.user.cli.mixin;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.StringUtils;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -27,6 +28,10 @@ public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
         String source = getTextSource();
         if (source != null && source.toLowerCase().startsWith("url:")) {
             throw new FcliSimpleException("Providing Aviator tokens via URL ('url:' prefix) is not supported");
+        }
+        String resolvedToken = super.getText();
+        if (StringUtils.isBlank(resolvedToken)) {
+            throw new FcliSimpleException("Resolved token value for --token option is blank or empty.");
         }
         return super.getText();
     }

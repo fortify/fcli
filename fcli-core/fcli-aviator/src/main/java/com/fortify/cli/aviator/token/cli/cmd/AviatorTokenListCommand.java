@@ -2,6 +2,7 @@ package com.fortify.cli.aviator.token.cli.cmd;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -80,7 +81,7 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
         for (TokenInfo tokenInfo : response.getTokensList()) {
             JsonNode tokenNode = AviatorGrpcUtils.grpcToJsonNode(tokenInfo);
             ObjectNode mutableTokenNode = tokenNode.deepCopy();
-            mutableTokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate()).atZone(ZoneId.systemDefault()).format(DATE_FORMATTER));
+            mutableTokenNode.put("expiryDate", Instant.ofEpochSecond(tokenInfo.getExpiryDate()).atZone(ZoneOffset.UTC).format(DATE_FORMATTER));
             tokensArray.add(mutableTokenNode);
         }
     }

@@ -3,7 +3,6 @@ package com.fortify.cli.aviator.fpr;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.StringUtil;
 import com.fortify.cli.aviator.util.TagMappingConfig;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -270,34 +269,44 @@ public class AuditProcessor {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
 
-        String tagId = tagMappingConfig.getTagId();
-        TagMappingConfig.Tier tierConfig = response.getTier().equalsIgnoreCase("GOLD") ? tagMappingConfig.getMapping().getTier_1() : tagMappingConfig.getMapping().getTier_2();
-        TagMappingConfig.Result resultConfig;
-
-        if (response.getAuditResult() != null) {
+        if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
+            String tier = response.getTier();
+            TagMappingConfig.Tier tierConfig = tier != null && tier.equalsIgnoreCase("GOLD")
+                    ? tagMappingConfig.getMapping().getTier_1()
+                    : tagMappingConfig.getMapping().getTier_2();
+            TagMappingConfig.Result resultConfig;
+
             if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getFp();
+                updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP);
             } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getTp();
+                updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP);
             } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getUnsure();
+                updateOrAddTag(issueElement, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
             } else {
-                logger.warn("Unknown audit result value: {}", tagValue);
-                return;
+                resultConfig = null;
             }
 
-            if (resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                updateOrAddTag(issueElement, tagId, resultConfig.getValue());
+            if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
+                updateOrAddTag(issueElement, tagMappingConfig.getTagId(), resultConfig.getValue());
             }
-            if (resultConfig.getSuppress()) {
+            if (resultConfig != null && resultConfig.getSuppress()) {
                 issueElement.setAttribute("suppressed", "true");
             }
-
-            updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
-            updateOrAddComment(issueElement, response.getAuditResult().comment);
-            updateClientAuditTrail(issueElement, response, tagMappingConfig);
         }
+
+        updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+
+        if (response != null && response.getAuditResult() != null) {
+            updateOrAddComment(issueElement, response.getAuditResult().comment);
+        }
+
+        updateClientAuditTrail(issueElement, response, tagMappingConfig);
     }
 
     private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig) {
@@ -306,29 +315,34 @@ public class AuditProcessor {
         if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
             String tier = response.getTier();
-            TagMappingConfig.Tier tierConfig = tier.equalsIgnoreCase("GOLD")
+            TagMappingConfig.Tier tierConfig = tier != null && tier.equalsIgnoreCase("GOLD")
                     ? tagMappingConfig.getMapping().getTier_1()
                     : tagMappingConfig.getMapping().getTier_2();
             TagMappingConfig.Result resultConfig;
 
-            if ("NOT_AN_ISSUE".equalsIgnoreCase(tagValue)) {
+            if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getFp();
-            } else if ("EXPLOITABLE".equalsIgnoreCase(tagValue)) {
+                addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP);
+            } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getTp();
-            } else if ("UNSURE".equalsIgnoreCase(tagValue)) {
+                addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP);
+            } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getUnsure();
+                addTagHistory(clientAuditTrail, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
             } else {
-                return;
+                resultConfig = null;
             }
 
-            if (resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
+            if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 addTagHistory(clientAuditTrail, tagMappingConfig.getTagId(), resultConfig.getValue());
             }
-            if (resultConfig.getSuppress()) {
+            if (resultConfig != null && resultConfig.getSuppress()) {
                 issueElement.setAttribute("suppressed", "true");
             }
-            addTagHistory(clientAuditTrail,Constants.AUDITOR_STATUS_TAG_ID, "PROCESSED_BY_AVIATOR");
         }
+        addTagHistory(clientAuditTrail, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
     }
 
     private Element getClientAuditTrailElement(Element issueElement) {
@@ -438,32 +452,41 @@ public class AuditProcessor {
         if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
             String tier = response.getTier();
-            TagMappingConfig.Tier tierConfig = tier.equalsIgnoreCase("GOLD") ? tagMappingConfig.getMapping().getTier_1() : tagMappingConfig.getMapping().getTier_2();
+            TagMappingConfig.Tier tierConfig = tier != null && tier.equalsIgnoreCase("GOLD")
+                    ? tagMappingConfig.getMapping().getTier_1()
+                    : tagMappingConfig.getMapping().getTier_2();
             TagMappingConfig.Result resultConfig;
 
             if (Constants.NOT_AN_ISSUE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getFp();
+                updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_NOT_AN_ISSUE : Constants.AVIATOR_LIKELY_FP);
             } else if (Constants.EXPLOITABLE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getTp();
+                updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID,
+                        tier != null && tier.equalsIgnoreCase("GOLD") ? Constants.AVIATOR_REMEDIATION_REQUIRED : Constants.AVIATOR_LIKELY_TP);
             } else if (Constants.UNSURE.equalsIgnoreCase(tagValue)) {
                 resultConfig = tierConfig.getUnsure();
+                updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_UNSURE);
             } else {
-                return;
+                resultConfig = null;
             }
 
-            if (resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
+            if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
                 updateOrAddTag(newIssue, tagMappingConfig.getTagId(), resultConfig.getValue());
             }
-            if (resultConfig.getSuppress()) {
+            if (resultConfig != null && resultConfig.getSuppress()) {
                 newIssue.setAttribute("suppressed", "true");
             }
-            updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
-
-            if (response.getAuditResult() != null) {
-                updateOrAddComment(newIssue, response.getAuditResult().comment);
-            }
-            updateClientAuditTrail(newIssue, response, tagMappingConfig);
         }
+
+        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+
+        if (response != null && response.getAuditResult() != null) {
+            updateOrAddComment(newIssue, response.getAuditResult().comment);
+        }
+
+        updateClientAuditTrail(newIssue, response, tagMappingConfig);
 
         issueList.appendChild(newIssue);
     }

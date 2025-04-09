@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException; // Import needed if caught separately
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.session.admin.helper.AviatorAdminSessionDescriptor;
+import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
@@ -16,34 +17,35 @@ import com.fortify.grpc.token.TokenValidationResponse;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = "validate")
 public class AviatorTokenValidateCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
-    @Option(names = {"--token"}, description = "access token", required = true) private String token;
+    @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminSessionDescriptor sessionDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        String tokenToValidate = tokenResolver.getToken();
+
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionDescriptor.getAviatorUrl())) {
-            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor);
-            TokenValidationResponse response = validateToken(client, sessionDescriptor, messageAndSignature);
+            String[] messageAndSignature = createMessageAndSignature(sessionDescriptor, tokenToValidate);
+            TokenValidationResponse response = validateToken(client, sessionDescriptor, messageAndSignature, tokenToValidate);
             return createResponseNode(response);
         }
     }
 
-    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor) {
+    private String[] createMessageAndSignature(AviatorAdminSessionDescriptor sessionDescriptor, String tokenToValidate) {
         return AviatorSignatureUtils.createMessageAndSignature(
                 sessionDescriptor,
-                token,
+                tokenToValidate,
                 sessionDescriptor.getTenant()
         );
     }
 
-    private TokenValidationResponse validateToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature) {
+    private TokenValidationResponse validateToken(AviatorGrpcClient client, AviatorAdminSessionDescriptor sessionDescriptor, String[] messageAndSignature, String tokenToValidate) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
-        return client.validateToken(token, sessionDescriptor.getTenant(), signature, message);
+        return client.validateToken(tokenToValidate, sessionDescriptor.getTenant(), signature, message);
     }
 
     private JsonNode createResponseNode(TokenValidationResponse response) {
