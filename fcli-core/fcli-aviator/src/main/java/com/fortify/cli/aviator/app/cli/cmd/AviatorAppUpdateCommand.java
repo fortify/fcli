@@ -50,7 +50,7 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
     }
 
     private JsonNode processUpdateApplicationResponse(JsonNode jsonNode) {
-        if (jsonNode instanceof ObjectNode && jsonNode.has("updated_at")) { // TODO check field name in proto
+        if (jsonNode instanceof ObjectNode && jsonNode.has("updated_at")) {
             ObjectNode objectNode = (ObjectNode) jsonNode;
             String updatedAtStr = objectNode.get("updated_at").asText();
             Instant instant = Instant.parse(updatedAtStr);

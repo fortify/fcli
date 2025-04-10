@@ -53,11 +53,11 @@ public class AviatorAppListCommand extends AbstractAviatorAdminSessionOutputComm
         ArrayNode applicationsArray = AviatorGrpcUtils.createArrayNode();
         for (Application application : applications) {
             JsonNode applicationNode = AviatorGrpcUtils.grpcToJsonNode(application);
-            String createdAt = applicationNode.get("created_at") != null ? applicationNode.get("created_at").asText() : "N/A"; // TODO check field name
+            String createdAt = applicationNode.get("created_at") != null ? applicationNode.get("created_at").asText() : "N/A";
             if (!"N/A".equals(createdAt)) {
                 createdAt = ZonedDateTime.parse(createdAt).format(FORMATTER);
             }
-            ((ObjectNode) applicationNode).put("created_at", createdAt); // TODO check field name
+            ((ObjectNode) applicationNode).put("created_at", createdAt);
             applicationsArray.add(applicationNode);
         }
         logProjectCount(applications.size(), tenant);
