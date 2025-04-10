@@ -12,6 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.aviator._common.session.user.cli.cmd;
 
+import java.util.Base64;
+import java.util.Date;
+
+import com.fortify.cli.aviator._common.util.AviatorJwtUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionLoginOptions;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionNameArgGroup;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
@@ -34,21 +43,21 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
     @Getter @ArgGroup(headingKey = "aviator.user-session.name.arggroup")
     private AviatorUserSessionNameArgGroup sessionNameSupplier;
 
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorUserSessionLoginCommand.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
-    protected void logoutBeforeNewLogin(String sessionName, AviatorUserSessionDescriptor sessionDescriptor) {
-        // Nothing to do
-    }
+    protected void logoutBeforeNewLogin(String sessionName, AviatorUserSessionDescriptor sessionDescriptor) {}
 
     @Override
     protected AviatorUserSessionDescriptor login(String sessionName) {
         String resolvedToken = tokenResolver.getToken();
-        if ( resolvedToken == null ) {
-            // Handle case where token is required but not provided/resolved
-            // This depends on whether the login *always* needs a token.
-            // If it's optional (e.g., other auth methods exist), this check might change.
-            // For now, let's assume it can be null/optional based on the original `required=false`.
-        }
+        Date expiryDate = AviatorJwtUtils.extractExpiryDateFromToken(resolvedToken);
 
-        return new AviatorUserSessionDescriptor(sessionLoginOptions.getAviatorUrl(), resolvedToken);
+        return AviatorUserSessionDescriptor.builder()
+                .aviatorUrl(sessionLoginOptions.getAviatorUrl())
+                .aviatorToken(resolvedToken)
+                .expiryDate(expiryDate)
+                .build();
     }
 }

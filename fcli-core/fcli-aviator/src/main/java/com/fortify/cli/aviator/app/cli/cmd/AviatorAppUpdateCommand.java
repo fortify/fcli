@@ -33,9 +33,7 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     @Override
-    // Method signature changed
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        // Variable name changed
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor);
             Application updatedApplication = updateApplication(client, configDescriptor, messageAndSignature);

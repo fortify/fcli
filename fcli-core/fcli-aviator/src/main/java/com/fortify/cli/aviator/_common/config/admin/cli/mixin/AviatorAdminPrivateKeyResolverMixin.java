@@ -1,6 +1,7 @@
 package com.fortify.cli.aviator._common.config.admin.cli.mixin;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
@@ -26,9 +27,7 @@ public class AviatorAdminPrivateKeyResolverMixin extends AbstractTextResolverMix
     public String getPrivateKeyContents() {
         String resolvedKey = super.getText();
         if (StringUtils.isBlank(resolvedKey)) {
-            // Optionally throw an exception if blank keys are not allowed
-            // throw new FcliSimpleException("Resolved private key value for --private-key option is blank or empty.");
-            return null;
+            throw new FcliSimpleException("Resolved private key value for --private-key option is blank or empty.");
         }
         return resolvedKey;
     }

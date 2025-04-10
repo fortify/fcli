@@ -25,9 +25,7 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
     private static final Logger LOG = LoggerFactory.getLogger(AviatorAppCreateCommand.class);
 
     @Override
-    // Method signature changed
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
-        // Variable name changed
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor);
             Application createdApplication = createApplication(client, configDescriptor, messageAndSignature);
@@ -36,12 +34,10 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
         }
     }
 
-    // Method signature changed
     private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
         return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant(), applicationName);
     }
 
-    // Method signature changed
     private Application createApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];

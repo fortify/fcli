@@ -16,6 +16,7 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptor;
 
@@ -24,24 +25,29 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-@Data @EqualsAndHashCode(callSuper = true) 
+@Data @EqualsAndHashCode(callSuper = true) @ToString(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AviatorUserSessionDescriptor extends AbstractSessionDescriptor {
+    @JsonProperty
     private String aviatorUrl;
+    @JsonProperty
     private String aviatorToken;
-    
+    @JsonProperty
+    private Date expiryDate;
+
     @Override @JsonIgnore
     public String getUrlDescriptor() {
         return aviatorUrl;
     }
-    
+
     @Override @JsonIgnore
     public Date getExpiryDate() {
-        return null;
+        return expiryDate;
     }
-    
+
     @Override @JsonIgnore
     public String getType() {
         return AviatorUserSessionHelper.instance().getType();
