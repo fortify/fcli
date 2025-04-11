@@ -1,7 +1,9 @@
 package com.fortify.cli.aviator.fpr;
 
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.core.model.File;
 import com.fortify.cli.aviator.core.model.Fragment;
+import com.fortify.cli.aviator.fpr.filter.AnalyzerType;
 import com.fortify.cli.aviator.util.StringUtil;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
 import lombok.Getter;
@@ -13,9 +15,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -38,6 +42,8 @@ public class FVDLProcessor {
     private Map<String, Element> descriptionCache;
     private final Map<String, String> tagReplacementMap;
     private Map<String, Element> nodeElementMap = new HashMap<>();
+    private Map<String, Element> tracePool = new HashMap<>();
+    private static final Pattern IFDEF_PATTERN = Pattern.compile("(?s)<IfDef[^>]*>.*?</IfDef>\\r?\\n?");
 
     private static final List<Charset> CHARSETS = Arrays.asList(
             StandardCharsets.UTF_8,
@@ -54,7 +60,7 @@ public class FVDLProcessor {
         Path auditPath = extractedPath.resolve("audit.fvdl");
 
         if (!Files.exists(auditPath)) {
-            throw new IllegalStateException("audit.fvdl not found in " + extractedPath);
+            throw new AviatorSimpleException(" audit.fvdl not found in " + extractedPath);
         }
 
         loadSourceFileMap();
@@ -82,15 +88,26 @@ public class FVDLProcessor {
     private void optimizedPopulateNodePool() {
         Element nodePoolElement = (Element) inputDoc.getElementsByTagName("UnifiedNodePool").item(0);
         if (nodePoolElement == null) {
+            logger.warn("No UnifiedNodePool found in the document");
             return;
         }
 
         NodeList nodes = nodePoolElement.getElementsByTagName("Node");
-        logger.info("Processing {} nodes", nodes.getLength());
+        logger.debug("Processing {} nodes", nodes.getLength());
 
         for (int i = 0; i < nodes.getLength(); i++) {
             Element nodeElement = (Element) nodes.item(i);
             processNodeElement(nodeElement);
+        }
+
+        Element unifiedTracePoolElement = (Element) inputDoc.getElementsByTagName("UnifiedTracePool").item(0);
+        if (unifiedTracePoolElement != null) {
+            NodeList traceNodes = unifiedTracePoolElement.getElementsByTagName("Trace");
+            for (int i = 0; i < traceNodes.getLength(); i++) {
+                Element traceElement = (Element) traceNodes.item(i);
+                String id = traceElement.getAttribute("id");
+                tracePool.put(id, traceElement);
+            }
         }
     }
 
@@ -120,7 +137,7 @@ public class FVDLProcessor {
         int colEnd = parseInt(sourceLocation.getAttribute("colEnd"), 0);
         String contextId = sourceLocation.getAttribute("contextId");
         String snippet = sourceLocation.getAttribute("snippet");
-        String actionType = action.getAttribute("type");
+        String actionType = StringUtil.isEmpty(action.getAttribute("type")) ? "GENERIC" : action.getAttribute("type");
         String additionalInfo = action.getTextContent();
         String ruleId = extractRuleId(nodeElement);
 
@@ -161,13 +178,13 @@ public class FVDLProcessor {
     public Vulnerability processVulnerability(Element vulnerabilityElement) throws IOException {
         Vulnerability.VulnerabilityBuilder vulnerabilityBuilder = Vulnerability.builder();
 
-        // Process ClassInfo
         Optional.ofNullable(vulnerabilityElement.getElementsByTagName("ClassInfo").item(0))
                 .map(Element.class::cast)
                 .ifPresent(classInfo -> {
                     String classID = getFirstElementContent(classInfo, "ClassID", "").orElse(null);
                     vulnerabilityBuilder.classID(classID);
-                    vulnerabilityBuilder.analyzerName(getFirstElementContent(classInfo, "AnalyzerName", "Data Flow").orElse(null));
+                    String legacyAnalyzerName = getFirstElementContent(classInfo, "AnalyzerName", "").orElse(null);
+                    vulnerabilityBuilder.analyzerName(legacyAnalyzerName == null ? null : AnalyzerType.canonicalizeAnalyzerName(legacyAnalyzerName));
                     vulnerabilityBuilder.defaultSeverity(parseIntegerContent(getFirstElementContent(classInfo, "DefaultSeverity", "0").orElse("0")));
                     vulnerabilityBuilder.kingdom(getFirstElementContent(classInfo, "Kingdom", "").orElse(null));
                     String type = getFirstElementContent(classInfo, "Type", "").orElse(null);
@@ -176,7 +193,6 @@ public class FVDLProcessor {
                     vulnerabilityBuilder.subType(subType);
                 });
 
-        // Process InstanceInfo
         Optional.ofNullable(vulnerabilityElement.getElementsByTagName("InstanceInfo").item(0))
                 .map(Element.class::cast)
                 .ifPresent(instanceInfo -> {
@@ -191,7 +207,6 @@ public class FVDLProcessor {
         String subType = vulnerabilityBuilder.build().getSubType();
         Integer confidence = vulnerabilityBuilder.build().getConfidence();
 
-        // Process additional metadata
         String audience = processVulnerabilityAudience(vulnerabilityElement);
         String[] metaInfo = getMetaInfo(classID);
         Double accuracy = parseDoubleContent(metaInfo[0]);
@@ -203,7 +218,6 @@ public class FVDLProcessor {
         vulnerabilityBuilder.probability(probability);
         vulnerabilityBuilder.audience(audience);
 
-        // Calculate and set vulnerability attributes
         String category = getCategory(type, subType);
         Double likelihood = getLikelihood(accuracy, confidence, probability);
         String priority = getFriority(impact, likelihood);
@@ -212,7 +226,6 @@ public class FVDLProcessor {
         vulnerabilityBuilder.category(category);
         vulnerabilityBuilder.filetype("");
 
-        // Process AnalysisInfo and stack traces
         Optional.ofNullable(vulnerabilityElement.getElementsByTagName("AnalysisInfo").item(0))
                 .map(Element.class::cast)
                 .ifPresent(analysisInfo -> {
@@ -221,8 +234,14 @@ public class FVDLProcessor {
                         vulnerabilityBuilder.stackTrace(stackTraces);
 
                         Map<String, File> uniqueFiles = new LinkedHashMap<>();
+                        if (!stackTraces.isEmpty()) {
+                            List<StackTraceElement> firstStackTrace = stackTraces.get(0);
+                            if (!firstStackTrace.isEmpty()) {
+                                processFileForElement(firstStackTrace.get(0), uniqueFiles);
+                                processFileForElement(firstStackTrace.get(firstStackTrace.size() - 1), uniqueFiles);
+                            }
+                        }
                         processStackTraceElements(stackTraces, uniqueFiles);
-
                         vulnerabilityBuilder.files(new ArrayList<>(uniqueFiles.values()));
 
                         if (!stackTraces.isEmpty()) {
@@ -255,7 +274,7 @@ public class FVDLProcessor {
     }
 
     private void processInnerStackTraceElements(StackTraceElement element, Map<String, File> uniqueFiles) throws IOException {
-        if (element == null || element.getInnerStackTrace().isEmpty()) return;
+        if (element == null || element.getInnerStackTrace() == null || element.getInnerStackTrace().isEmpty()) return;
 
         for (StackTraceElement innerElement : element.getInnerStackTrace()) {
             processFileForElement(innerElement, uniqueFiles);
@@ -263,7 +282,7 @@ public class FVDLProcessor {
         }
     }
 
-    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles) throws IOException {
+    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles){
         if (element == null) return;
 
         String filename = element.getFilename();
@@ -271,27 +290,32 @@ public class FVDLProcessor {
             String sourceFilePath = sourceFileMap.get(filename);
             Path actualSourcePath = extractedPath.resolve(sourceFilePath);
 
-            File.FileBuilder fileBuilder = File.builder().name(filename);
-            fileBuilder.segment(false).startLine(1);
+            File file = new File();
+            file.setName(filename);
+            file.setSegment(false);
+            file.setStartLine(1);
 
             try {
                 if (Files.exists(actualSourcePath)) {
-                    byte[] encodedBytes = Files.readAllBytes(actualSourcePath);
-                    String content = new String(encodedBytes);
-                    fileBuilder.content(content);
-                    fileBuilder.endLine(countLines(actualSourcePath));
+                    byte[] encodedBytes = Files.readAllBytes(Paths.get(actualSourcePath.toUri()));
+                    file.setContent(new String(encodedBytes));
+                    file.setEndLine(countLines(actualSourcePath));
                 } else {
-                    logger.warn("Source file not found: {}", actualSourcePath);
-                    fileBuilder.content("");
-                    fileBuilder.endLine(0);
+                    logger.warn("Source file not found: " + actualSourcePath.toString());
+                    file.setContent("");
+                    file.setEndLine(0);
                 }
+            } catch (MalformedInputException e) {
+                logger.warn("Malformed input while reading file: " + filename, e);
+                file.setContent("");
+                file.setEndLine(0);
             } catch (IOException e) {
-                logger.warn("Error processing file: {}", filename, e);
-                fileBuilder.content("");
-                fileBuilder.endLine(0);
+                logger.warn("Error processing file: " + filename, e);
+                file.setContent("");
+                file.setEndLine(0);
             }
 
-            uniqueFiles.put(filename, fileBuilder.build());
+            uniqueFiles.put(filename, file);
         }
     }
 
@@ -329,104 +353,97 @@ public class FVDLProcessor {
 
         List<List<StackTraceElement>> stackTraces = new ArrayList<>();
         NodeList traceNodes = analysisInfoElement.getElementsByTagName("Trace");
+        if (traceNodes.getLength() == 0) {
+            logger.debug("No Trace elements found in AnalysisInfo");
+        }
 
         for (int i = 0; i < traceNodes.getLength(); i++) {
             Element traceElement = (Element) traceNodes.item(i);
-            if (traceElement == null) continue;
-
-            NodeList entryNodes = traceElement.getElementsByTagName("Entry");
-            List<StackTraceElement> stackTrace = new ArrayList<>();
-
-            for (int j = 0; j < entryNodes.getLength(); j++) {
-                Element entryElement = (Element) entryNodes.item(j);
-                if (entryElement == null) continue;
-
-                Element nodeRefElement = getFirstChildElement(entryElement, "NodeRef");
-                Element nodeElement = getFirstChildElement(entryElement, "Node");
-
-                if (nodeRefElement != null) {
-                    String nodeId = nodeRefElement.getAttribute("id");
-                    if (!StringUtil.isEmpty(nodeId)) {
-                        Node node = nodePool.get(nodeId);
-                        if (node != null) {
-                            stackTrace.add(createStackTraceElement(node));
-                        } else {
-                            logger.warn("Node ID {} not found in nodePool", nodeId);
-                        }
-                    }
-                } else if (nodeElement != null) {
-                    stackTrace.add(createStackTraceElementFromNode(nodeElement));
-                }
+            if (traceElement == null) {
+                logger.debug("Trace element at index {} is null; skipping", i);
+                continue;
             }
 
+            List<StackTraceElement> stackTrace = processTraceElement(traceElement);
             if (!stackTrace.isEmpty()) {
                 stackTraces.add(stackTrace);
+            } else {
+                logger.debug("Empty stack trace for Trace {}; omitted from result", i);
             }
         }
 
         return stackTraces;
     }
 
-    private StackTraceElement createStackTraceElement(Node node) throws IOException {
-        return createStackTraceElement(node, new HashSet<>());
+    private List<StackTraceElement> processTraceElement(Element traceElement) throws IOException {
+        List<StackTraceElement> stackTrace = new ArrayList<>();
+        NodeList entryNodes = traceElement.getElementsByTagName("Entry");
+        for (int i = 0; i < entryNodes.getLength(); i++) {
+            Element entryElement = (Element) entryNodes.item(i);
+            Element nodeRefElement = getFirstChildElement(entryElement, "NodeRef");
+            Element nodeElement = getFirstChildElement(entryElement, "Node");
+
+            if (nodeRefElement != null) {
+                String nodeId = nodeRefElement.getAttribute("id");
+                Node node = nodePool.get(nodeId);
+                if (node != null) {
+                    StackTraceElement ste = createStackTraceElement(node);
+                    stackTrace.add(ste);
+                } else {
+                    logger.warn("Node ID {} not found in nodePool", nodeId);
+                }
+            } else if (nodeElement != null) {
+                Element sourceLocation = getFirstChildElement(nodeElement, "SourceLocation");
+                if (sourceLocation != null) {
+                    StackTraceElement ste = createStackTraceElementFromNode(nodeElement);
+                    stackTrace.add(ste);
+                } else {
+                    logger.warn("SourceLocation missing in inline Node for Trace entry {}", i);
+                }
+            }
+        }
+        return stackTrace;
     }
 
-    private StackTraceElement createStackTraceElement(Node node, Set<String> visited) throws IOException {
-        if (visited.contains(node.getId())) {
-            logger.warn("Circular reference detected in node {}", node.getId());
-            return StackTraceElement.builder()
-                    .filename(node.getFilePath())
-                    .line(node.getLine())
-                    .code("")
-                    .nodeType(node.getActionType())
-                    .additionalInfo(node.getAdditionalInfo())
-                    .build();
-        }
-        visited.add(node.getId());
-
-        StackTraceElement.StackTraceElementBuilder builder = StackTraceElement.builder()
-                .filename(node.getFilePath())
-                .line(node.getLine())
-                .code(getCodeSnippet(node.getSnippet(), node.getFilePath()).orElse(""))
-                .nodeType(node.getActionType())
-                .fragment(getFragmentFromFile(node.getFilePath(), node.getLine(), 5, 2))
-                .additionalInfo(node.getAdditionalInfo());
+    private StackTraceElement createStackTraceElement(Node node) throws IOException {
+        String codeSnippet = getCodeSnippet(node.getSnippet(), node.getFilePath()).orElse("");
+        StackTraceElement element = new StackTraceElement(
+                node.getFilePath(),
+                node.getLine(),
+                codeSnippet,
+                node.getActionType(),
+                getFragmentFromFile(node.getFilePath(), node.getLine(), 5, 2),
+                node.getAdditionalInfo(),
+                null
+        );
 
         List<StackTraceElement> innerStackTrace = new ArrayList<>();
         Element nodeElement = nodeElementMap.get(node.getId());
         if (nodeElement != null) {
             Element reason = getFirstChildElement(nodeElement, "Reason");
             if (reason != null) {
-                Element trace = getFirstChildElement(reason, "Trace");
-                if (trace != null) {
-                    NodeList entries = trace.getElementsByTagName("Entry");
-                    for (int i = 0; i < entries.getLength(); i++) {
-                        Element entry = (Element) entries.item(i);
-                        NodeList nodeRefs = entry.getElementsByTagName("NodeRef");
-                        for (int j = 0; j < nodeRefs.getLength(); j++) {
-                            Element nodeRef = (Element) nodeRefs.item(j);
-                            String refId = nodeRef.getAttribute("id");
-                            if (!StringUtil.isEmpty(refId)) {
-                                Node refNode = nodePool.get(refId);
-                                if (refNode != null) {
-                                    innerStackTrace.add(createStackTraceElement(refNode, new HashSet<>(visited)));
-                                }
-                            }
-                        }
+                Element traceRef = getFirstChildElement(reason, "TraceRef");
+                if (traceRef != null) {
+                    String traceId = traceRef.getAttribute("id");
+                    Element traceElement = tracePool.get(traceId);
+                    if (traceElement != null) {
+                        innerStackTrace.addAll(processTraceElement(traceElement));
+                    } else {
+                        logger.warn("Trace ID " + traceId + " not found in UnifiedTracePool");
+                    }
+                } else {
+                    Element trace = getFirstChildElement(reason, "Trace");
+                    if (trace != null) {
+                        innerStackTrace.addAll(processTraceElement(trace));
                     }
                 }
             }
         }
-        builder.innerStackTrace(innerStackTrace);
-
-        return builder.build();
+        element.setInnerStackTrace(innerStackTrace);
+        return element;
     }
 
     private StackTraceElement createStackTraceElementFromNode(Element nodeElement) throws IOException {
-        return createStackTraceElementFromNode(nodeElement, new HashSet<>());
-    }
-
-    private StackTraceElement createStackTraceElementFromNode(Element nodeElement, Set<String> visited) throws IOException {
         Element sourceLocation = getFirstChildElement(nodeElement, "SourceLocation");
         Element action = getFirstChildElement(nodeElement, "Action");
         Element knowledge = getFirstChildElement(nodeElement, "Knowledge");
@@ -435,58 +452,42 @@ public class FVDLProcessor {
         String filePath = sourceLocation.getAttribute("path");
         int line = parseInt(sourceLocation.getAttribute("line"), 0);
         String codeSnippet = sourceLocation.getAttribute("snippet");
-        String actionType = action != null ? action.getAttribute("type") : "GENERIC";
-        String actionContent = action != null ? action.getTextContent() : "";
+        String actionType = (action != null && !StringUtil.isEmpty(action.getAttribute("type"))) ? action.getAttribute("type") : "GENERIC";
+        String actionContent = (action != null) ? action.getTextContent() : "";
 
-        String syntheticId = filePath + ":" + line;
-        if (visited.contains(syntheticId)) {
-            logger.warn("Circular reference detected in inline node {}", syntheticId);
-            return StackTraceElement.builder()
-                    .filename(filePath)
-                    .line(line)
-                    .code("")
-                    .nodeType(actionType)
-                    .additionalInfo(actionContent)
-                    .taintflags(taintFlags)
-                    .build();
-        }
-        visited.add(syntheticId);
-
-        StackTraceElement.StackTraceElementBuilder builder = StackTraceElement.builder()
-                .filename(filePath)
-                .line(line)
-                .code(getCodeSnippet(codeSnippet, filePath).orElse(""))
-                .nodeType(actionType)
-                .fragment(getFragmentFromFile(filePath, line, 5, 2))
-                .additionalInfo(actionContent)
-                .taintflags(taintFlags);
+        StackTraceElement element = new StackTraceElement(
+                filePath,
+                line,
+                getCodeSnippet(codeSnippet, filePath).orElse(""),
+                actionType,
+                getFragmentFromFile(filePath, line, 5, 2),
+                actionContent,
+                taintFlags
+        );
 
         List<StackTraceElement> innerStackTrace = new ArrayList<>();
         Element reason = getFirstChildElement(nodeElement, "Reason");
         if (reason != null) {
-            Element trace = getFirstChildElement(reason, "Trace");
-            if (trace != null) {
-                NodeList entries = trace.getElementsByTagName("Entry");
-                for (int i = 0; i < entries.getLength(); i++) {
-                    Element entry = (Element) entries.item(i);
-                    NodeList nodeRefs = entry.getElementsByTagName("NodeRef");
-                    for (int j = 0; j < nodeRefs.getLength(); j++) {
-                        Element nodeRef = (Element) nodeRefs.item(j);
-                        String refId = nodeRef.getAttribute("id");
-                        if (!StringUtil.isEmpty(refId)) {
-                            Node refNode = nodePool.get(refId);
-                            if (refNode != null) {
-                                innerStackTrace.add(createStackTraceElement(refNode, new HashSet<>(visited)));
-                            }
-                        }
-                    }
+            Element traceRef = getFirstChildElement(reason, "TraceRef");
+            if (traceRef != null) {
+                String traceId = traceRef.getAttribute("id");
+                Element traceElement = tracePool.get(traceId);
+                if (traceElement != null) {
+                    innerStackTrace.addAll(processTraceElement(traceElement));
+                } else {
+                    logger.warn("Trace ID " + traceId + " not found in UnifiedTracePool");
+                }
+            } else {
+                Element trace = getFirstChildElement(reason, "Trace");
+                if (trace != null) {
+                    innerStackTrace.addAll(processTraceElement(trace));
                 }
             }
         }
-        builder.innerStackTrace(innerStackTrace);
-
-        return builder.build();
+        element.setInnerStackTrace(innerStackTrace); // Assuming setter exists
+        return element;
     }
+
 
     private String getTaintFlags(Element knowledgeElement) {
         if (knowledgeElement != null) {
@@ -506,7 +507,7 @@ public class FVDLProcessor {
 
     private Optional<String> getCodeSnippet(String snippetId, String filePath) {
         try {
-            if (StringUtil.isEmpty(snippetId)) {
+            if (snippetId == null || snippetId.isEmpty()) { // Use isEmpty()
                 return Optional.empty();
             }
 
@@ -530,12 +531,13 @@ public class FVDLProcessor {
             }
 
             Path actualSourcePath = extractedPath.resolve(sourceFilePath);
-            List<String> lines = readFileWithFallback(actualSourcePath);
+            List<String> lines = readFileWithFallback(actualSourcePath); // Use updated readFile
 
             if (startLine > 0 && startLine <= lines.size()) {
                 return Optional.of(lines.get(startLine - 1));
+            } else {
+                return Optional.empty();
             }
-            return Optional.empty();
         } catch (Exception e) {
             logger.error("Error getting code snippet for snippet ID: {}, file path: {}", snippetId, filePath, e);
             return Optional.empty();
@@ -550,7 +552,7 @@ public class FVDLProcessor {
 
         Path actualSourcePath = extractedPath.resolve(sourceFilePath);
         if (!Files.exists(actualSourcePath)) {
-            logger.warn("Source file not found: {}", actualSourcePath);
+            logger.warn("Source file not found: " + actualSourcePath);
             return new Fragment("", 0, 0);
         }
 
@@ -558,16 +560,19 @@ public class FVDLProcessor {
             List<String> lines = readFileWithFallback(actualSourcePath);
             String[] linesArray = lines.toArray(new String[0]);
 
-            int first = Math.max(0, linenumber - maxBefore) + 1;
+            int first = Math.max(1, linenumber - maxBefore);
             int last = Math.min(linesArray.length, linenumber + maxAfter);
+
             StringBuilder sb = new StringBuilder();
-            for (int i = first - 1; i < last; i++) {
-                sb.append(linesArray[i]).append(System.lineSeparator());
+            for (int i = first; i <= last; i++) {
+                if (i >= 1 && i <= linesArray.length) {
+                    sb.append(linesArray[i - 1]).append(System.lineSeparator());
+                }
             }
 
             return new Fragment(sb.toString(), first, last);
         } catch (IOException e) {
-            logger.error("Error reading fragment from file: {}", actualSourcePath, e);
+            logger.error("Error reading fragment from file: " + actualSourcePath, e);
             return new Fragment("", 0, 0);
         }
     }
@@ -625,7 +630,7 @@ public class FVDLProcessor {
                 continue;
             }
             if (intersection == null) {
-                intersection = currentAudience;
+                intersection = new HashSet<>(currentAudience);
             } else {
                 intersection.retainAll(currentAudience);
             }
@@ -666,7 +671,7 @@ public class FVDLProcessor {
 
     private List<StackTraceElement> findLongestList(List<List<StackTraceElement>> listOfLists) {
         return listOfLists.stream()
-                .max(Comparator.comparingInt(List::size))
+                .max(Comparator.comparingInt(list -> list == null ? 0 : list.size())) // Add null check
                 .orElse(new ArrayList<>());
     }
 
@@ -687,17 +692,16 @@ public class FVDLProcessor {
 
     private List<String> readFileWithFallback(Path filePath) throws IOException {
         return fileContentCache.computeIfAbsent(filePath, path -> {
-            for (Charset charset : CHARSETS) {
-                try {
-                    return Files.readAllLines(path, charset);
-                } catch (IOException e) {
-                    logger.debug("Failed to read file with charset {}", charset);
-                }
-            }
             try {
-                throw new IOException("Unable to read file: " + filePath);
+                byte[] fileBytes = Files.readAllBytes(path);
+                String content = new String(fileBytes);
+                return Arrays.asList(content.split("\\r?\\n"));
+            } catch (MalformedInputException e) {
+                logger.error("Malformed input reading file: {}", path, e);
+                throw new RuntimeException(new IOException("Unable to read file due to encoding: " + path, e));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                logger.error("Failed to read file: {}", path, e);
+                throw new RuntimeException(new IOException("Unable to read file: " + path, e));
             }
         });
     }
@@ -803,13 +807,13 @@ public class FVDLProcessor {
 
         ReplacementData replacementData = computeReplacementsForVulnerability(vulnerabilityElement);
 
-        Element abstractElement = getFirstChildElement(descriptionElement, "Abstract");
+        Element abstractElement = (Element) descriptionElement.getElementsByTagName("Abstract").item(0);
         if (abstractElement != null) {
             String shortDescription = processText(abstractElement.getTextContent(), replacementData);
             vulnerabilityBuilder.shortDescription(shortDescription);
         }
 
-        Element explanationElement = getFirstChildElement(descriptionElement, "Explanation");
+        Element explanationElement = (Element) descriptionElement.getElementsByTagName("Explanation").item(0);
         if (explanationElement != null) {
             String explanation = processText(explanationElement.getTextContent(), replacementData);
             if (explanation.contains("Example")) {
@@ -818,9 +822,9 @@ public class FVDLProcessor {
                 for (String line : lines) {
                     if (line.matches(".*<b>Example\\s+\\d+:</b>.*") || line.matches(".*Example\\s+\\d+:.*")) {
                         if (formatted.length() > 0) {
-                            formatted.append("\n");
+                            // formatted.append("\n");
                         }
-                        String exampleLine = line.replaceAll("(<b>)?Example\\s+(\\d+):(\\s*</b>)?", "**Example $2:**");
+                        String exampleLine = line.replaceAll("(<b>)?Example\\s+(\\d+):(\\s*</b>)?", "Example $2:");
                         formatted.append(exampleLine).append("\n");
                     } else {
                         formatted.append(line).append("\n");
@@ -834,13 +838,20 @@ public class FVDLProcessor {
 
     private Element findDescriptionElement(String classId) {
         NodeList descriptions = inputDoc.getElementsByTagName("Description");
-        for (int i = 0; i < descriptions.getLength(); i++) {
+        int length = descriptions.getLength();
+        for (int i = 0; i < length; i++) {
             Element desc = (Element) descriptions.item(i);
             if (classId.equals(desc.getAttribute("classID"))) {
                 return desc;
             }
         }
         return null;
+    }
+
+    record Replacement(String value, String path, String line, String colStart, String colEnd) {
+        public boolean hasLocation() {
+            return path != null && line != null && colStart != null && colEnd != null;
+        }
     }
 
     private static class ReplacementData {
@@ -853,26 +864,20 @@ public class FVDLProcessor {
         }
     }
 
-    private record Replacement(String value, String path, String line, String colStart, String colEnd) {
-        public boolean hasLocation() {
-            return path != null && line != null && colStart != null && colEnd != null;
-        }
-    }
-
     private ReplacementData computeReplacementsForVulnerability(Element vulnerabilityElement) {
         Map<String, Replacement> replacements = new HashMap<>();
         Map<String, Map<String, String>> locationReplacements = new HashMap<>();
 
-        Element analysisInfoElement = getFirstChildElement(vulnerabilityElement, "AnalysisInfo");
+        Element analysisInfoElement = (Element) vulnerabilityElement.getElementsByTagName("AnalysisInfo").item(0);
         if (analysisInfoElement != null) {
-            Element replacementDefsElement = getFirstChildElement(analysisInfoElement, "ReplacementDefinitions");
+            Element replacementDefsElement = (Element) analysisInfoElement.getElementsByTagName("ReplacementDefinitions").item(0);
             if (replacementDefsElement != null) {
                 NodeList defNodes = replacementDefsElement.getElementsByTagName("Def");
                 for (int i = 0; i < defNodes.getLength(); i++) {
                     Element def = (Element) defNodes.item(i);
                     String key = def.getAttribute("key");
                     String value = def.getAttribute("value");
-                    Element sourceLocation = getFirstChildElement(def, "SourceLocation");
+                    Element sourceLocation = (Element) def.getElementsByTagName("SourceLocation").item(0);
                     if (sourceLocation != null) {
                         String path = sourceLocation.getAttribute("path");
                         String line = sourceLocation.getAttribute("line");
@@ -902,16 +907,63 @@ public class FVDLProcessor {
     }
 
     private String processText(String text, ReplacementData replacementData) {
-        if (StringUtil.isEmpty(text)) {
-            return text;
+        if (text == null || replacementData == null) {
+            return "";
         }
-        text = text.replaceAll("<AltParagraph>.*?</AltParagraph>", "");
-        text = replacePlaceholders(text, replacementData);
-        return stripTags(text);
+
+        text = IFDEF_PATTERN.matcher(text).replaceAll("");
+        StringBuilder processedText = new StringBuilder();
+        Pattern paragraphPattern = Pattern.compile("<Paragraph>(.*?)</Paragraph>", Pattern.DOTALL);
+        Matcher paragraphMatcher = paragraphPattern.matcher(text);
+        int lastEnd = 0;
+
+        while (paragraphMatcher.find()) {
+            processedText.append(text.substring(lastEnd, paragraphMatcher.start()));
+
+            String paragraphContent = paragraphMatcher.group(1);
+            String altParagraphContent = "";
+            Pattern altPattern = Pattern.compile("<AltParagraph>(.*?)</AltParagraph>", Pattern.DOTALL);
+            Matcher altMatcher = altPattern.matcher(paragraphContent);
+            if (altMatcher.find()) {
+                altParagraphContent = altMatcher.group(1);
+            }
+
+            Pattern replacePattern = Pattern.compile("<Replace\\s+key=\"([^\"]+)\"[^>]*>");
+            Matcher replaceMatcher = replacePattern.matcher(paragraphContent);
+            boolean allKeysDefined = true;
+            while (replaceMatcher.find()) {
+                String key = replaceMatcher.group(1);
+                if (!replacementData.replacements.containsKey(key)) {
+                    allKeysDefined = false;
+                    break;
+                }
+            }
+
+            if (allKeysDefined) {
+                String cleanedParagraph = paragraphContent.replaceAll("<AltParagraph>.*?</AltParagraph>", "");
+                processedText.append("<Paragraph>").append(cleanedParagraph).append("</Paragraph>");
+            } else if (!altParagraphContent.isEmpty()) {
+                processedText.append(altParagraphContent);
+            } else {
+
+            }
+
+            lastEnd = paragraphMatcher.end();
+        }
+        processedText.append(text.substring(lastEnd));
+
+        Map<String, String> replacementValues = replacementData.replacements.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> e.getValue().value()
+                ));
+
+        String result = replacePlaceholders(processedText.toString(), replacementValues);
+        return stripTags(result);
     }
 
     private String stripTags(String text) {
-        if (StringUtil.isEmpty(text)) {
+        if (text == null || text.isEmpty()) {
             return text;
         }
 
@@ -922,48 +974,20 @@ public class FVDLProcessor {
         return result.replace(" ", " ");
     }
 
-    private String replacePlaceholders(String text, ReplacementData replacementData) {
-        if (!text.contains("<Replace")) {
-            return text;
-        }
-
-        Pattern pattern = Pattern.compile("<Replace key=\"([^\"]+)\"(?: link=\"([^\"]+)\")?/>");
+    private String replacePlaceholders(String text, Map<String, String> replacements) {
+        Pattern pattern = Pattern.compile("\\{(\\w+)(?::(\\w+))?(?::(\\w+))?\\}");
         Matcher matcher = pattern.matcher(text);
-        StringBuffer sb = new StringBuffer();
-
+        StringBuilder result = new StringBuilder();
+        int lastEnd = 0;
         while (matcher.find()) {
+            result.append(text, lastEnd, matcher.start());
             String key = matcher.group(1);
-            String link = matcher.group(2);
-            Replacement replacement = replacementData.replacements.get(key);
-            if (replacement != null) {
-                String value = replacement.value();
-                Map<String, String> locAttrs = null;
-                if (link != null) {
-                    locAttrs = replacementData.locationReplacements.get(link);
-                } else if (replacement.hasLocation()) {
-                    locAttrs = Map.of(
-                            "path", replacement.path(),
-                            "line", replacement.line(),
-                            "colStart", replacement.colStart(),
-                            "colEnd", replacement.colEnd()
-                    );
-                }
-                if (locAttrs != null) {
-                    String href = String.format("location://%s###%s###%s###%s",
-                            locAttrs.get("path"),
-                            locAttrs.get("line"),
-                            locAttrs.get("colStart"),
-                            locAttrs.get("colEnd"));
-                    matcher.appendReplacement(sb, "<a href=\"" + href + "\">" + value + "</a>");
-                } else {
-                    matcher.appendReplacement(sb, value);
-                }
-            } else {
-                matcher.appendReplacement(sb, "");
-            }
+            String value = replacements.getOrDefault(key, "");
+            result.append(value);
+            lastEnd = matcher.end();
         }
-        matcher.appendTail(sb);
-        return sb.toString();
+        result.append(text, lastEnd, text.length());
+        return result.toString();
     }
 
     private void loadSourceFileMap() throws Exception {
