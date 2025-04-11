@@ -121,10 +121,10 @@ public class AuditFPR {
         if (auditResponses.isEmpty()) {
             if (totalIssuesToAudit == 0) {
                 LOG.info("No issues were audited, skipping update and upload");
-                return new FPRAuditResult(null, "SKIPPED", "No issues to audit");
+                return new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, totalIssuesToAudit);
             } else {
                 LOG.error("No audit responses received for {} issues", totalIssuesToAudit);
-                return new FPRAuditResult(null, "FAILED", "No audit responses received");
+                return new FPRAuditResult(null, "FAILED", "No audit responses received", 0, totalIssuesToAudit);
             }
         }
 
@@ -143,6 +143,11 @@ public class AuditFPR {
 
         File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, tagMappingConfig);
         LOG.info("FPR audit process completed with status: {}", status);
-        return new FPRAuditResult(updatedFile, status, null);
+        return new FPRAuditResult(updatedFile, status, null, issuesSuccessfullyAudited, totalIssuesToAudit);
+    }
+
+    public static FPRAuditResult auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger)
+            throws AviatorSimpleException, AviatorTechnicalException {
+        return auditFPR(file, token, url, appVersion, logger, null);
     }
 }
