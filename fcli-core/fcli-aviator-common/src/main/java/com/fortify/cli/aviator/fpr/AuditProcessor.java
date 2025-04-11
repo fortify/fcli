@@ -491,6 +491,114 @@ public class AuditProcessor {
         issueList.appendChild(newIssue);
     }
 
+    public void addCommentToIssueXml(String instanceId, String commentText, String username) {
+        if (auditDoc == null) {
+            logger.error("Cannot add comment, auditDoc is not initialized.");
+            return;
+        }
+        Element issueElement = findIssueElement(instanceId);
+        if (issueElement != null) {
+            addCommentToIssueElement(issueElement, commentText, username);
+            logger.debug("Added comment via XML update for issue: {}", instanceId);
+        } else {
+            logger.warn("Cannot add comment to XML, issue element not found for instance ID: {}. If this is a skipped new issue, addSkippedIssueElement should be used.", instanceId);
+        }
+    }
+
+    public void addSkippedIssueElement(String instanceId, String comment) {
+        if (auditDoc == null) {
+            logger.error("Cannot add skipped issue element, auditDoc is not initialized.");
+            return;
+        }
+        if (findIssueElement(instanceId) != null) {
+            logger.warn("Attempted to add skipped issue element for {}, but it already exists in audit.xml.", instanceId);
+            addCommentToIssueXml(instanceId, comment, Constants.USER_NAME);
+            return;
+        }
+
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            logger.error("Cannot add skipped issue element, <IssueList> not found in audit.xml.");
+            issueList = auditDoc.createElementNS(NAMESPACE_URI, "IssueList");
+            if (auditDoc.getDocumentElement() != null) {
+                auditDoc.getDocumentElement().appendChild(issueList);
+                logger.warn("Created missing <IssueList> element.");
+            } else {
+                logger.error("Cannot add skipped issue element, document root is null.");
+                return;
+            }
+        }
+
+        Element newIssue = auditDoc.createElementNS(NAMESPACE_URI, "Issue");
+        newIssue.setAttribute("instanceId", instanceId);
+        newIssue.setAttribute("revision", "0");
+        newIssue.setAttribute("suppressed", "false");
+
+        updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
+        updateOrAddTag(newIssue, Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW);
+
+        addCommentToIssueElement(newIssue, comment, Constants.USER_NAME);
+
+        issueList.appendChild(newIssue);
+        logger.debug("Added skipped issue element to audit.xml for instance ID: {}", instanceId);
+
+        if (!auditIssueMap.containsKey(instanceId)) {
+            AuditIssue skippedAuditIssue = AuditIssue.builder()
+                    .instanceId(instanceId)
+                    .revision(0)
+                    .suppressed(false)
+                    .tags(Map.of(
+                            Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
+                            Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW
+                    ))
+                    .threadedComments(List.of(
+                            AuditIssue.Comment.builder()
+                                    .content(comment)
+                                    .username(Constants.USER_NAME)
+                                    .timestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(new Date()))
+                                    .build()
+                    ))
+                    .build();
+            auditIssueMap.put(instanceId, skippedAuditIssue);
+            logger.debug("Added skipped issue {} to in-memory auditIssueMap.", instanceId);
+        }
+    }
+
+    private void addCommentToIssueElement(Element issueElement, String commentText, String username) {
+        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "ThreadedComments");
+        Element threadedCommentsElement;
+
+        if (threadedCommentsNodes.getLength() > 0) {
+            threadedCommentsElement = (Element) threadedCommentsNodes.item(0);
+        } else {
+            threadedCommentsElement = auditDoc.createElementNS(NAMESPACE_URI, "ThreadedComments");
+            issueElement.appendChild(threadedCommentsElement);
+        }
+
+        Element commentElement = auditDoc.createElementNS(NAMESPACE_URI, "Comment");
+
+        Element contentElement = auditDoc.createElementNS(NAMESPACE_URI, "Content");
+        contentElement.setTextContent(commentText != null ? commentText : "");
+        commentElement.appendChild(contentElement);
+
+        Element usernameElement = auditDoc.createElementNS(NAMESPACE_URI, "Username");
+        usernameElement.setTextContent(username != null ? username : "Unknown User");
+        commentElement.appendChild(usernameElement);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        Element timestampElement = auditDoc.createElementNS(NAMESPACE_URI, "Timestamp");
+        try {
+            timestampElement.setTextContent(dateFormat.format(new Date()));
+        } catch (Exception e) {
+            logger.warn("Could not format timestamp for comment: {}", e.getMessage());
+            timestampElement.setTextContent("");
+        }
+
+        commentElement.appendChild(timestampElement);
+
+        threadedCommentsElement.appendChild(commentElement);
+    }
+
     public File updateAndSaveAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
         updateAuditXml(auditResponses, tagMappingConfig);
         File updatedFile = updateContentInOriginalFpr();

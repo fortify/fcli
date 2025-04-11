@@ -178,19 +178,23 @@ public class IssueAuditor {
     }
 
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
-        userPrompts = userPrompts.stream().filter(userPrompt -> shouldInclude(userPrompt)).collect(Collectors.toList());
-        Map<String, List<UserPrompt>> issuesByCategory = userPrompts.stream().collect(Collectors.groupingBy(UserPrompt::getCategory));
+        List<UserPrompt> eligibleUserPrompts = userPrompts.stream()
+                .filter(this::shouldInclude)
+                .collect(Collectors.toList());
+
+        Map<String, List<UserPrompt>> issuesByCategory = eligibleUserPrompts.stream()
+                .collect(Collectors.groupingBy(UserPrompt::getCategory));
 
         Map<String, Integer> newIssuesInCategoryCapped = new HashMap<>();
         int totalNewIssues = 0;
         int totalNewIssuesCapped = 0;
 
-        for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
-            String category = entry.getKey();
-            List<UserPrompt> issues = entry.getValue();
+        List<String> categories = new ArrayList<>(issuesByCategory.keySet());
+        for (String category : categories) {
+            List<UserPrompt> issues = issuesByCategory.get(category);
             issues.sort(new IssueOrderingComparator());
+            issuesByCategory.put(category, issues);
 
-            issues = issues.stream().filter(issue -> shouldInclude(issue)).collect(Collectors.toList());
             int newIssuesCount = issues.size();
             int cappedCount = Math.min(MAX_PER_CATEGORY, newIssuesCount);
 
@@ -200,10 +204,13 @@ public class IssueAuditor {
         }
 
         if (totalNewIssuesCapped <= MAX_TOTAL) {
+            LOG.debug("Total capped issues ({}) is within the limit ({}), using simpler per-category limiting.", totalNewIssuesCapped, MAX_TOTAL);
             return getIssuesToAuditLimitedByCategoryCount(issuesByCategory, totalNewIssues);
         }
 
-        double auditAllThreshold = totalNewIssuesCapped / (2.0 * issuesByCategory.size());
+        LOG.debug("Total capped issues ({}) exceeds the limit ({}), applying proportional limiting.", totalNewIssuesCapped, MAX_TOTAL);
+
+        double auditAllThreshold = (issuesByCategory.isEmpty()) ? 0 : totalNewIssuesCapped / (2.0 * issuesByCategory.size());
         int auditAllTotal = 0;
         int auditSomeTotal = 0;
 
@@ -216,50 +223,52 @@ public class IssueAuditor {
         }
 
         ConcurrentLinkedDeque<UserPrompt> issuesToAudit = new ConcurrentLinkedDeque<>();
-        double auditFraction = ((double) MAX_TOTAL - (double) auditAllTotal) / (double) auditSomeTotal;
-
+        double auditFraction = (auditSomeTotal == 0) ? 0 : ((double) MAX_TOTAL - (double) auditAllTotal) / (double) auditSomeTotal;
+        auditFraction = Math.max(0.0, Math.min(1.0, auditFraction));
         for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
             String category = entry.getKey();
             List<UserPrompt> issues = entry.getValue();
             long totalLimitIndex = Math.round(auditFraction * newIssuesInCategoryCapped.get(category));
-            int i = 0;
 
-            for (UserPrompt issue : issues) {
+            for (int i = 0; i < issues.size(); i++) {
+                UserPrompt issue = issues.get(i);
+                String issueId = issue.getIssueData().getInstanceID();
+
                 if (i >= MAX_PER_CATEGORY) {
                     updateSkippedIssue(issue, MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalNewIssues);
-                } else if (i > auditAllThreshold && i >= totalLimitIndex) {
+                } else if (newIssuesInCategoryCapped.get(category) >= auditAllThreshold && i >= totalLimitIndex) {
                     updateSkippedIssue(issue, MAX_TOTAL_EXCEEDED, issues.size(), totalNewIssues);
                 } else {
                     issuesToAudit.add(issue);
                 }
-                i++;
             }
         }
 
         return issuesToAudit;
     }
 
-    private ConcurrentLinkedDeque<UserPrompt> getIssuesToAuditLimitedByCategoryCount(Map<String, List<UserPrompt>> allUnseenIssues, int totalCount) {
+    private ConcurrentLinkedDeque<UserPrompt> getIssuesToAuditLimitedByCategoryCount(Map<String, List<UserPrompt>> issuesByCategory, int totalCount) {
         ConcurrentLinkedDeque<UserPrompt> issuesToAudit = new ConcurrentLinkedDeque<>();
 
-        for (Map.Entry<String, List<UserPrompt>> entry : allUnseenIssues.entrySet()) {
+        for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
+            String category = entry.getKey();
             List<UserPrompt> issues = entry.getValue();
 
             if (issues.size() <= MAX_PER_CATEGORY) {
                 issuesToAudit.addAll(issues);
             } else {
                 for (int i = 0; i < issues.size(); i++) {
-                    if (i < MAX_PER_CATEGORY){
-                        issuesToAudit.add(issues.get(i));
-                    } else{
-                        updateSkippedIssue(issues.get(i), MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalCount);
+                    UserPrompt issue = issues.get(i);
+                    if (i < MAX_PER_CATEGORY) {
+                        issuesToAudit.add(issue);
+                    } else {
+                        updateSkippedIssue(issue, MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalCount);
                     }
                 }
             }
         }
         return issuesToAudit;
     }
-
 
     private boolean shouldInclude(UserPrompt userPrompt) {
 
@@ -545,20 +554,41 @@ public class IssueAuditor {
         };
     }
 
-    private void updateSkippedIssue(UserPrompt userPrompt, String reason, int... values) {
-        AuditIssue auditIssue = auditIssueMap.get(userPrompt.getIssueData().getInstanceID());
+    private void updateSkippedIssue(UserPrompt userPrompt, String reasonTemplate, int issuesInCategory, int totalIssues) {
+        if (userPrompt == null || userPrompt.getIssueData() == null) {
+            LOG.error("Cannot update skipped issue status for null userPrompt or issue data.");
+            return;
+        }
+        String instanceId = userPrompt.getIssueData().getInstanceID();
+        AuditIssue auditIssue = auditIssueMap.get(instanceId);
+
+        String comment = formatComment(reasonTemplate, issuesInCategory, totalIssues);
 
         if (auditIssue != null) {
-            String comment = formatComment(reason, values);
+            LOG.debug("Updating existing audit entry for skipped issue: {}", instanceId);
+            try {
+                auditProcessor.addCommentToIssueXml(instanceId, comment, Constants.USER_NAME);
+            } catch (Exception e) {
+                LOG.error("Failed to add comment to XML for skipped issue {}: {}", instanceId, e.getMessage());
+            }
 
-            AuditIssue.Comment skippedComment = AuditIssue.Comment.builder()
-                    .content(comment)
-                    .username(userName)
-                    .timestamp(new Date().toString())
-                    .build();
+            auditProcessor.updateIssueTag(auditIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
 
-            auditIssue.getThreadedComments().add(skippedComment);
-            auditProcessor.updateIssueTag(auditIssue, "FB7B0462-2C2E-46D9-811A-DCC1F3C83051", Constants.PROCESSED_BY_AVIATOR);
+            Map<String, String> tags = auditIssue.getTags();
+            String currentAnalysisStatus = tags.get(Constants.ANALYSIS_TAG_ID);
+            if (currentAnalysisStatus == null || currentAnalysisStatus.isEmpty() || "Not Set".equalsIgnoreCase(currentAnalysisStatus)) {
+                auditProcessor.updateIssueTag(auditIssue, Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW);
+                LOG.debug("Set Analysis tag to Pending Review for skipped issue: {}", instanceId);
+            } else {
+                LOG.debug("Skipped issue {} already has Analysis status '{}', not changing.", instanceId, currentAnalysisStatus);
+            }
+
+        } else {
+            try {
+                auditProcessor.addSkippedIssueElement(instanceId, comment);
+            } catch (Exception e) {
+                LOG.error("Failed to add skipped issue element to audit.xml for {}: {}", instanceId, e.getMessage());
+            }
         }
     }
 
