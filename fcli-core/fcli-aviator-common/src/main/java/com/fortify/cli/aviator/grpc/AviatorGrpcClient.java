@@ -641,6 +641,8 @@ public class AviatorGrpcClient implements AutoCloseable {
                     case ALREADY_EXISTS:
                         String simpleMsg = String.format("Error during %s: %s", operation, description);
                         throw new AviatorSimpleException(simpleMsg);
+                    case FAILED_PRECONDITION:
+                        throw new AviatorSimpleException(description);
                     case PERMISSION_DENIED:
                         if (description.contains("Invalid signature")) {
                             throw new AviatorSimpleException(

@@ -20,13 +20,6 @@ public class AviatorLoggerImpl implements IAviatorLogger {
     }
 
     @Override
-    public void writeInfo(String format, Object... args) {
-        String message = String.format(format, args);
-        progressWriter.writeInfo(message);
-        logger.info(message);
-    }
-
-    @Override
     public void info(String format, Object... args) {
         logger.info(format, args);
     }

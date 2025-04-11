@@ -97,7 +97,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @Override
     public String getActionCommandResult() {
-        return "UPDATED";
+        return "AUDITED";
     }
 
     @Override

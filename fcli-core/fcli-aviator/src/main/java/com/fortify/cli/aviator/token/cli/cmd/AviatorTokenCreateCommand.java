@@ -1,8 +1,10 @@
+// File: /fcli-aviator/src/main/java/com/fortify/cli/aviator/token/cli/cmd/AviatorTokenCreateCommand.java
 package com.fortify.cli.aviator.token.cli.cmd;
 
 import java.io.File;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.DateTimeException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -36,7 +38,7 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenCreateCommand.class);
     private static final DateTimeFormatter CURRENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
@@ -75,9 +77,13 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
 
         JsonNode jsonNode = AviatorGrpcUtils.grpcToJsonNode(response);
         if (jsonNode.has("expiry_date")) {
-            long expiryDateEpoch = jsonNode.get("expiry_date").asLong();
-            String formattedDate = DATE_FORMATTER.format(Instant.ofEpochSecond(expiryDateEpoch).atZone(ZoneId.of("UTC")));
-            ((ObjectNode) jsonNode).put("expiry_date", formattedDate);
+            try {
+                long expiryDateEpoch = jsonNode.get("expiry_date").asLong();
+                String formattedDate = DATE_FORMATTER.format(Instant.ofEpochSecond(expiryDateEpoch).atZone(ZoneId.of("UTC")));
+                ((ObjectNode) jsonNode).put("expiry_date", formattedDate);
+            } catch (DateTimeException | NumberFormatException e) {
+                LOG.warn("Could not format expiry_date from epoch seconds: {}", jsonNode.get("expiry_date").asText(), e);
+            }
         }
         LOG.info("Token '{}' created successfully for email: {}", customTokenName, email);
         return jsonNode;

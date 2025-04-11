@@ -144,7 +144,6 @@ public class IssueAuditor {
 
         if (filteredUserPrompts.isEmpty()) {
             logger.progress("Audit skipped - no issues to process");
-            logger.writeInfo("Audit skipped - no issues to process");
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
                 CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
@@ -153,24 +152,19 @@ public class IssueAuditor {
                     auditResponses.put(response.getIssueId(), response);
                 });
                 logger.progress("Audit completed");
-                logger.writeInfo("Audit completed");
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof AviatorSimpleException) {
                     logger.progress("Audit failed (user error)");
-                    logger.writeInfo("Audit failed: " + cause.getMessage());
                     throw (AviatorSimpleException) cause;
                 }
                 logger.progress("Audit failed due to unexpected error during execution");
-                logger.writeInfo("Audit failed due to unexpected error");
                 throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
             } catch (TimeoutException e) {
                 logger.progress("Audit failed due to timeout");
-                logger.writeInfo("Audit failed due to timeout");
                 throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
             } catch (InterruptedException e) {
                 logger.progress("Audit failed due to interruption");
-                logger.writeInfo("Audit failed due to interruption");
                 Thread.currentThread().interrupt();
                 throw new AviatorTechnicalException("Audit interrupted", e);
             }

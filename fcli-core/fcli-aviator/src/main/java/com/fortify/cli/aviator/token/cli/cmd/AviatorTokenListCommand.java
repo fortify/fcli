@@ -33,7 +33,7 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
     @Option(names = {"-p", "--page-size"}, defaultValue = "10") private int pageSize;
     @Option(names = {"--all-pages"}, defaultValue = "false", description = "Fetch all pages automatically (non-interactive)") private boolean fetchAllPages;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenListCommand.class);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
