@@ -2,6 +2,7 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import java.io.File;
 
+import com.fortify.cli.aviator.core.model.FPRAuditResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
     @Option(names = {"--app"}, required = false) private String appName;
     @Option(names = {"--tag-mapping"}, required = false, description = "Tag Mapping") private String tagMapping;
-
+    private String auditAction;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
@@ -62,17 +63,29 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                         SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
                 progressWriter.writeProgress("Status: Processing FPR with Aviator");
-                File processedFileResult = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), appName, logger, tagMapping);
+                FPRAuditResult auditResult = AuditFPR.auditFPR(fprFile, sessionDescriptor.getAviatorToken(),
+                        sessionDescriptor.getAviatorUrl(), appName, logger, tagMapping);
 
-                if (processedFileResult != null) {
-                    progressWriter.writeProgress("Status: Uploading FPR to SSC");
-                    JsonNode uploadResponse = uploadFpr(unirest, processedFileResult, av);
-                    JsonNode dataNode = uploadResponse.path("data");
-                    String id = dataNode.path("id").asText("");
-                    return av.asObjectNode().put("artifactId", id);
-                } else {
+                auditAction = auditResult.getStatus();
+
+                if ("SKIPPED".equals(auditResult.getStatus())) {
                     progressWriter.writeProgress("No issues to audit, skipping upload");
-                    return av.asObjectNode().put("artifactId", "N/A").put("action", "SKIPPED");
+                    return av.asObjectNode().put("artifactId", "N/A");
+                } else if ("FAILED".equals(auditResult.getStatus())) {
+                    progressWriter.writeProgress("Audit failed: " + auditResult.getMessage());
+                    return av.asObjectNode().put("artifactId", "N/A");
+                } else {
+                    File processedFileResult = auditResult.getUpdatedFile();
+                    if (processedFileResult != null) {
+                        progressWriter.writeProgress("Status: Uploading FPR to SSC");
+                        JsonNode uploadResponse = uploadFpr(unirest, processedFileResult, av);
+                        JsonNode dataNode = uploadResponse.path("data");
+                        String id = dataNode.path("id").asText("");
+                        return av.asObjectNode().put("artifactId", id);
+                    } else {
+                        progressWriter.writeProgress("Audit completed but no file updated");
+                        return av.asObjectNode().put("artifactId", "N/A");
+                    }
                 }
             } finally {
                 if (fprFile.exists()) {
@@ -97,7 +110,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @Override
     public String getActionCommandResult() {
-        return "AUDITED";
+        return auditAction != null ? auditAction : "FAILED";
     }
 
     @Override

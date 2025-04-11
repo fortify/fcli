@@ -625,9 +625,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
-        private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation)
-                throws AviatorSimpleException, AviatorTechnicalException
-        {
+        private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
             try {
                 S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
                 return call.call(stubWithDeadline, request);
@@ -668,7 +666,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             }
         }
 
-    public Application createApplication(String name, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
+    public Application createApplication(String name, String tenantName, String signature, String message) {
         CreateApplicationRequest request = CreateApplicationRequest.newBuilder()
                 .setName(name)
                 .setTenantName(tenantName)
@@ -678,7 +676,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::createApplication, request, Constants.OP_CREATE_APP);
     }
 
-    public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) throws AviatorSimpleException, AviatorTechnicalException  {
+    public Application updateApplication(String projectId, String newName, String signature, String message, String tenantName) {
         UpdateApplicationRequest request = UpdateApplicationRequest.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setName(newName)
@@ -689,7 +687,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::updateApplication, request, Constants.OP_UPDATE_APP);
     }
 
-    public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) throws AviatorSimpleException, AviatorTechnicalException {
+    public ApplicationResponseMessage deleteApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setSignature(signature)
@@ -699,7 +697,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::deleteApplication, request, Constants.OP_DELETE_APP);
     }
 
-    public Application getApplication(String projectId, String signature, String message, String tenantName) throws AviatorSimpleException, AviatorTechnicalException {
+    public Application getApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder()
                 .setId(Long.parseLong(projectId))
                 .setSignature(signature)
@@ -709,7 +707,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
     }
 
-    public List<Application> listApplication(String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
+    public List<Application> listApplication(String tenantName, String signature, String message) {
         ApplicationByTenantName request = ApplicationByTenantName.newBuilder()
                 .setName(tenantName)
                 .setSignature(signature)
@@ -719,7 +717,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return applicationList.getApplicationsList();
     }
 
-    public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) throws AviatorSimpleException, AviatorTechnicalException {
+    public TokenGenerationResponse generateToken(String email, String tokenName, String signature, String message, String tenantName, String endDate) {
         TokenGenerationRequest request = TokenGenerationRequest.newBuilder()
                 .setEmail(email != null ? email : "")
                 .setCustomTokenName(tokenName != null ? tokenName : "")
@@ -731,7 +729,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
-    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) throws AviatorSimpleException, AviatorTechnicalException {
+    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) {
         ListTokensRequest request = ListTokensRequest.newBuilder()
                 .setEmail(email)
                 .setRequestSignature(signature)
@@ -743,7 +741,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
 
-    public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
+    public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
         RevokeTokenRequest request = RevokeTokenRequest.newBuilder()
                 .setToken(token)
                 .setEmail(email)
@@ -754,7 +752,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::revokeToken, request, Constants.OP_REVOKE_TOKEN);
     }
 
-    public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
+    public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
         DeleteTokenRequest request = DeleteTokenRequest.newBuilder()
                 .setToken(token)
                 .setEmail(email)
@@ -765,7 +763,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::deleteToken, request, Constants.OP_DELETE_TOKEN);
     }
 
-    public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
+    public TokenValidationResponse validateToken(String token, String tenantName, String signature, String message) {
         TokenValidationRequest request = TokenValidationRequest.newBuilder()
                 .setToken(token)
                 .setTenantName(tenantName)
@@ -775,7 +773,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
     }
 
-    public List<Entitlement> listEntitlements(String tenantName, String signature, String message) throws AviatorSimpleException, AviatorTechnicalException {
+    public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder()
                 .setTenantName(tenantName)
                 .setSignature(signature)

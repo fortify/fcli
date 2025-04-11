@@ -3,6 +3,7 @@ package com.fortify.cli.aviator.core;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.core.model.AuditOutcome;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.UserPrompt;
 import com.fortify.cli.aviator.core.model.StackTraceElement;
@@ -120,16 +121,16 @@ public class IssueAuditor {
         return new TagDefinition(name, id, values, false);
     }
 
-    public void performAudit(Map<String, AuditResponse> auditResponses, String token, String projectName, String projectBuildId, String url)
-            throws AviatorSimpleException, AviatorTechnicalException {
-
+    public AuditOutcome performAudit(Map<String, AuditResponse> auditResponses, String token,
+                                     String projectName, String projectBuildId, String url) {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
         aviatorPredictionTag = resolveAviatorPredictionTag();
         aviatorStatusTag = resolveAviatorStatusTag();
         humanAuditTag = resolveHumanAuditStatus();
-        LOG.debug("Initialized tags - prediction: {}, status: {}, human: {}", aviatorPredictionTag, aviatorStatusTag, humanAuditTag);
+        LOG.debug("Initialized tags - prediction: {}, status: {}, human: {}",
+                aviatorPredictionTag, aviatorStatusTag, humanAuditTag);
 
         if (fprInfo.getDefaultEnabledFilterSet() != null) {
             vulnerabilities = filterVulnerabilities(vulnerabilities, fprInfo.getDefaultEnabledFilterSet());
@@ -139,6 +140,9 @@ public class IssueAuditor {
         vulnerabilities.stream().map(IssueObjBuilder::buildIssueObj).forEach(userPrompts::add);
         LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
 
+        userPrompts = userPrompts.stream().filter(this::shouldInclude).collect(Collectors.toList());
+        int totalIssuesToAudit = userPrompts.size();
+
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
 
@@ -146,11 +150,10 @@ public class IssueAuditor {
             logger.progress("Audit skipped - no issues to process");
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
-                CompletableFuture<Map<String, AuditResponse>> future = client.processBatchRequests(filteredUserPrompts, projectName, token);
+                CompletableFuture<Map<String, AuditResponse>> future =
+                        client.processBatchRequests(filteredUserPrompts, projectName, token);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
-                responses.forEach((requestId, response) -> {
-                    auditResponses.put(response.getIssueId(), response);
-                });
+                responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
                 logger.progress("Audit completed");
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
@@ -171,6 +174,7 @@ public class IssueAuditor {
         }
 
         fprInfo.setResultsTag(resultsTag.getId());
+        return new AuditOutcome(auditResponses, totalIssuesToAudit);
     }
 
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
