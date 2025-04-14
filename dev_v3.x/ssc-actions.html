@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli ssc action</code>
-fcli_version: 0.20250411.141305-dev_v3.x
+fcli_version: 0.20250414.120206-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250411.141305-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250411.141305-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250414.120206-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli ssc action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250411.141305-dev_v3.x</span>
+<span id="revnumber">version 0.20250414.120206-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -411,13 +411,12 @@ PACKAGE_ACTION_EXTRA_OPTS</p></td>
 PACKAGE_EXTRA_OPTS<br>
 SC_CLIENT_VERSION<br>
 SOURCE_DIR<br>
-DO_PACKAGE_DEBUG<br>
 TOOL_DEFINITIONS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.<br>
 By default:<br>
  - Latest available ScanCentral Client version will be used for packaging; use <code>SC_CLIENT_VERSION</code> to specify a different version.<br>
  - Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.<br>
- - Debug logging for Scancentral Client is disabled; set <code>DO_PACKAGE_DEBUG</code> to true to enable debug logging.<br>
+ - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.<br>
  - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br></p></td>
 </tr>
 <tr>
@@ -806,7 +805,9 @@ previous scan for this PR.</p>
 <p>This action can be used to package source code using ScanCentral Client. It will
 take care of installing the specified ScanCentral Client version, followed by
 executing the 'scancentral package' command using the specified ScanCentral
-Client version.</p>
+Client version. To enable debug logging on the scancentral command, use the
+fcli --debug option, optionally combined with --log-level=NONE to collect
+only ScanCentral logs, not fcli logs.</p>
 </div>
 </div>
 <div class="sect2">
@@ -815,41 +816,28 @@ Client version.</p>
 <dl>
 <dt class="hdlist1">--use-package</dt>
 <dd>
-<p>Use an existing package file instead of trying to package the given source code
-directory. If specified, this ignores all other options.</p>
+<p>Use an existing package file instead of trying to package the given source code directory. If specified, this ignores all other options.</p>
 </dd>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
-<p>Specify the ScanCentral Client version to be used for packaging. Defaults to
-the value of the SC_CLIENT_VERSION environment variable, or 'latest' if not
+<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'latest' if not
 specified.</p>
 </dd>
 <dt class="hdlist1">--source-dir, -d</dt>
 <dd>
-<p>Specify the source directory to be packaged. Defaults to the value of the
-SOURCE_DIR environment variable, or current working directory if not specified.</p>
-</dd>
-<dt class="hdlist1">--debug</dt>
-<dd>
-<p>Add the -debug flag to the ScanCentral Client command. Defaults to the value of
-the DO_PACKAGE_DEBUG environment variable, or false if not specified.</p>
+<p>Specify the source directory to be packaged. Defaults to the value of the SOURCE_DIR environment variable, or current working directory if not specified.</p>
 </dd>
 <dt class="hdlist1">--tool-definitions</dt>
 <dd>
-<p>Custom tool definitions to use for identifying available ScanCentral Client versions
-and download URLs. Defaults to the value of the TOOL_DEFINITIONS environment variable,
-or the built-in default if not specified.</p>
+<p>Custom tool definitions to use for identifying available ScanCentral Client versions and download URLs. Defaults to the value of the TOOL_DEFINITIONS environment variable, or the built-in default if not specified.</p>
 </dd>
 <dt class="hdlist1">--extra-opts</dt>
 <dd>
-<p>Extra options to be passed to the 'scancentral package' command. Defaults to the
-options specified in the EXTRA_PACKAGE_OPTS environment variable, or no extra
-options if not specified.</p>
+<p>Extra options to be passed to the 'scancentral package' command. Defaults to the options specified in the EXTRA_PACKAGE_OPTS environment variable, or no extra options if not specified.</p>
 </dd>
 <dt class="hdlist1">--output, -o</dt>
 <dd>
-<p>Name of the zip file in which packaged source code should be stored. Defaults to
-package.zip in the current working directory.</p>
+<p>Name of the zip file in which packaged source code should be stored. Defaults to package.zip in the current working directory.</p>
 </dd>
 </dl>
 </div>
@@ -1077,8 +1065,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250411.141305-dev_v3.x<br>
-Last updated 2025-04-11 14:15:15 UTC
+Version 0.20250414.120206-dev_v3.x<br>
+Last updated 2025-04-14 12:04:16 UTC
 </div>
 </div>
 </body>
