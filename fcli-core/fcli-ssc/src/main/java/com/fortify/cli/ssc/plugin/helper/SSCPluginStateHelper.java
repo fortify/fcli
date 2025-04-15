@@ -14,8 +14,8 @@ package com.fortify.cli.ssc.plugin.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
 
 import kong.unirest.UnirestInstance;
 import lombok.Data;

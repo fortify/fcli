@@ -10,6 +10,7 @@ import picocli.CommandLine.Command;
                 ToolFcliInstallCommand.class,
                 ToolFcliListCommand.class,
                 ToolFcliListPlatformsCommand.class,
+                ToolFcliRunCommand.class,
                 ToolFcliUninstallCommand.class
         }
 

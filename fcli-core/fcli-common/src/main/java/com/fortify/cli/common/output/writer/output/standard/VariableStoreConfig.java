@@ -17,5 +17,5 @@ import lombok.Data;
 @Data
 public final class VariableStoreConfig {
     private final String variableName;
-    private final String options;
+    private final String recordWriterArgs;
 }

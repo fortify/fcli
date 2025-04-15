@@ -12,17 +12,14 @@
  */
 package com.fortify.cli.ftest.sc_sast
 
-import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCSAST
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 
-import spock.lang.AutoCleanup
-import spock.lang.Shared
-
-@Prefix("sc-sast.rest.call") @FcliSession(SCSAST)
+@Prefix("sc-sast.rest.call") @FcliSession(SSC)
 class SCSastRestCallSpec extends FcliBaseSpec {
     def "ping"() {
         def args = ["sc-sast", "rest", "call", "/rest/v2/ping"]

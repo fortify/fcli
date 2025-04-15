@@ -7,6 +7,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME
 import java.lang.annotation.Retention
 import java.lang.annotation.Target
 
+import org.spockframework.runtime.model.SpecElementInfo
+
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Input
 
@@ -18,8 +20,6 @@ import com.fortify.cli.ftest._common.Input
     public static enum FcliSessionType {
         SSC(new SSCSessionHandler()),
         FOD(new FoDSessionHandler()),
-        SCSAST(new SCSastSessionHandler()),
-        SCDAST(new SCDastSessionHandler())
         
         final ISessionHandler handler
         
@@ -33,8 +33,7 @@ import com.fortify.cli.ftest._common.Input
         
         public interface ISessionHandler {
             String friendlyName();
-            boolean isEnabled();
-            boolean login();
+            void login();
             void logout();
             List<String> getMaskedProperties();
         }
@@ -43,10 +42,13 @@ import com.fortify.cli.ftest._common.Input
             def STD_LOGIN_ARGS = [module(), "session","login"]
             def STD_LOGOUT_ARGS = [module(), "session","logout"]
             private boolean loggedIn = false;
-            private boolean failed = false;
+            private Exception exception;
     
             @Override
-            public final boolean login() {
+            public final void login() {
+                if ( exception ) {
+                    throw new IllegalStateException("Failed due to earlier login failure", exception);
+                }
                 if ( !loggedIn && !failed ) {
                     println("Logging in to "+friendlyName())
                     try {
@@ -63,11 +65,10 @@ import com.fortify.cli.ftest._common.Input
                             
                         loggedIn = true
                     } catch ( Exception e ) {
-                        e.printStackTrace()
-                        failed = true
+                        this.exception = e
+                        throw e;
                     }
                 }
-                return !failed;
             }
     
             @Override
@@ -115,11 +116,6 @@ import com.fortify.cli.ftest._common.Input
         private static class SSCSessionHandler extends AbstractSessionHandler {
             @Override public String friendlyName() { "SSC" }
             @Override public String module() { "ssc" }
-            
-            @Override
-            public boolean isEnabled() {
-                has("url")
-            }
     
             @Override
             public List<String> loginOptions() {
@@ -128,7 +124,7 @@ import com.fortify.cli.ftest._common.Input
             
             @Override
             public List<String> loginCredentialOptions() {
-                options("user", "password")+options("token")+options("ci-token")
+                options("user", "password", "client-auth-token")+options("token", "client-auth-token")
             }
     
             @Override
@@ -139,7 +135,7 @@ import com.fortify.cli.ftest._common.Input
             
             @Override
             public List<String> getMaskedProperties() {
-                ["url", "user", "password", "token", "ci-token"]
+                ["url", "user", "password", "token", "client-auth-token"]
             }
             
         }
@@ -147,11 +143,6 @@ import com.fortify.cli.ftest._common.Input
         private static class FoDSessionHandler extends AbstractSessionHandler {
             @Override public String friendlyName() { "FoD" }
             @Override public String module() { "fod" }
-            
-            @Override
-            public boolean isEnabled() {
-                has("url")
-            }
             
             @Override
             public List<String> loginOptions() {
@@ -173,68 +164,5 @@ import com.fortify.cli.ftest._common.Input
                 ["url", "tenant", "user", "password", "client-id", "client-secret"]
             }
         }
-    
-        private static class SCSastSessionHandler extends AbstractSessionHandler {
-            @Override public String friendlyName() { "ScanCentral SAST" }
-            @Override public String module() { "sc-sast" }
-            
-            @Override
-            public boolean isEnabled() {
-                has("ssc-url")
-            }
-    
-            @Override
-            public List<String> loginOptions() {
-                option("ssc-url")
-            }
-            
-            @Override
-            public List<String> loginCredentialOptions() {
-                options("ssc-user", "ssc-password", "client-auth-token")+options("ssc-ci-token", "client-auth-token")
-            }
-    
-            @Override
-            public List<String> logoutOptions() {
-                def result = options("ssc-user", "ssc-password")
-                return result.size()==0 ? "--no-revoke-token" : result
-            }
-            
-            @Override
-            public List<String> getMaskedProperties() {
-                ["ssc-url", "ssc-user", "ssc-password", "ssc-ci-token", "client-auth-token"]
-            }
-        }
-        
-        private static class SCDastSessionHandler extends AbstractSessionHandler {
-            @Override public String friendlyName() { "ScanCentral DAST" }
-            @Override public String module() { "sc-dast" }
-            
-            @Override
-            public boolean isEnabled() {
-                has("ssc-url")
-            }
-    
-            @Override
-            public List<String> loginOptions() {
-                options("ssc-url")
-            }
-            
-            @Override
-            public List<String> loginCredentialOptions() {
-                options("ssc-user", "ssc-password")+options("ssc-ci-token")
-            }
-    
-            @Override
-            public List<String> logoutOptions() {
-                def result = options("ssc-user", "ssc-password")
-                return result.size()==0 ? "--no-revoke-token" : result
-            }
-            
-            @Override
-            public List<String> getMaskedProperties() {
-                ["ssc-url", "ssc-user", "ssc-password", "ssc-ci-token"]
-            }
-        }
-    
     }
 }

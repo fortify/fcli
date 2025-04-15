@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -128,7 +129,7 @@ public final class FcliVariableHelper {
             JsonNode contents = getVariableContents(variableName, true);
             String value = JsonHelper.evaluateSpelExpression(contents, propertyPath, String.class);
             if ( value==null ) {
-                throw new IllegalArgumentException(String.format("Property path '%s' for variable '%s' resolves to null", propertyPath, variableName));
+                throw new FcliSimpleException(String.format("Property path '%s' for variable '%s' resolves to null", propertyPath, variableName));
             }
             return matcher.group(1)!=null ? matcher.group(1)+value : value;
         }
@@ -139,7 +140,7 @@ public final class FcliVariableHelper {
         if ( StringUtils.isNotBlank(propertyPath) ) { return propertyPath; }
         String defaultPropertyName = getVariableDescriptor(variableName, true).getDefaultPropertyName();
         if ( StringUtils.isNotBlank(defaultPropertyName) ) { return defaultPropertyName; }
-        throw new IllegalArgumentException("No property name specified for variable "+variableName+", and no default property name available");
+        throw new FcliSimpleException("No property name specified for variable "+variableName+", and no default property name available");
     }
     
     private static final void checkVariableName(String variableName) {
@@ -231,7 +232,7 @@ public final class FcliVariableHelper {
     
     private static final Path getVariablePathIfExists(String variableName, Path path, boolean failIfUnavailable) {
         if ( failIfUnavailable && !FcliDataHelper.isReadable(path) ) {
-            throw new IllegalStateException("Variable "+variableName+" not found");
+            throw new FcliSimpleException("Variable "+variableName+" not found");
         }
         return path;
     }

@@ -16,10 +16,10 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc._common.rest.bulk.ISSCEntityEmbedder;
-import com.fortify.cli.ssc._common.rest.bulk.ISSCEntityEmbedderSupplier;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
-import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.ISSCEntityEmbedder;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.ISSCEntityEmbedderSupplier;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeHelper;
 
 import kong.unirest.HttpRequest;

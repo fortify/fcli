@@ -1,0 +1,77 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Generate ServiceNow CSV report
+  description: |
+    This action generates a CSV report that can be imported into the ServiceNow
+    Vulnerability Response module; please see the following link for details:
+    https://www.servicenow.com/docs/bundle/xanadu-security-management/page/product/vulnerability-response/reference/manual-ingestion-template.html
+    The CSV report includes all SAST, DAST, and SCA issues available in 
+    the given FoD release.
+
+config:
+  rest.target.default: fod
+  
+cli.options:
+  file:
+    names: --file, -f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: servicenow-fortify.csv"
+    default: servicenow-fortify.csv
+  release:
+    names: --release, --rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  severity:
+    names: --severity
+    description: "Comma-separated severity levels to include in the output; defaults to Critical,High"
+    default: Critical,High
+    type: array
+  
+steps:
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+      issueListQuery: severityString matches '${#join('|',cli.severity)}'
+  - with:
+      writers:
+        snWriter:
+          to: ${cli.file}
+          type: csv
+      do:
+        - run.fcli:
+            issues:
+              cmd: fod issue ls --rel=${rel.releaseId} --embed=details --include=visible,fixed,suppressed -q "${issueListQuery}"
+              records.for-each:
+                record.var-name: issue
+                do:
+                  - var.set:
+                      issue.analysisType: ${{'Static':'SAST','Dynamic':'DAST','Mobile':'MAST','Monitoring':'DAST','Network':'DAST','OpenSource':'SCA'}.get(issue.scantype)?:'OTHER'}
+                      sn: {fmt: sn}
+                  - writer.append:
+                      snWriter: {fmt: csvRow}
+                  - log.progress: Processed ${snWriter.count} issues
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
+                      
+formatters:
+  sn:
+    id: ${issue.analysisType+'/'+rel.releaseId+'/'+issue.vulnId}
+    fqdn: ${#fod.issueBrowserUrl(issue)}
+    summary: ${issue.category}
+    severity: ${{'Critical','High','Medium','Low'}.contains(issue.severityString)?issue.severityString:'Low'} # In case Info/Best Practice/... are included, these need to be mapped to Low
+    proof: "${'Location: '+issue.primaryLocation?.replaceAll('[^\\w\\s/\\-_.]','*')+'\n'+#htmlToText(issue.details?.summary?.trim()?:'')}"
+    state: "${issue.closedStatus||issue.isSuppressed?'fixed':'open'}"
+  csvRow:
+    asset_id: ${#abbreviate(sn.id,255)}
+    mac_address: ""
+    fqdn: ${#abbreviate(sn.fqdn,255)}
+    netbios: ""
+    ip_address: ""
+    hostname: ""
+    vulnerability_id: ${#abbreviate(sn.id,255)}
+    vulnerability_summary: ${#abbreviate(sn.summary,512)}
+    severity: ${sn.severity}
+    port: ""
+    protocol: ""
+    proof: ${#abbreviate(sn.proof,4000)}
+    state: ${sn.state}  
+        

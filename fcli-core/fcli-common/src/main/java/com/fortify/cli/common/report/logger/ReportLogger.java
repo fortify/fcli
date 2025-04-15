@@ -19,6 +19,7 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.report.writer.IReportWriter;
@@ -65,9 +66,9 @@ public final class ReportLogger implements IReportLogger {
     public final void error(String msg, Exception e, Object... msgArgs) {
         // We want to fail completely in case of IOExceptions as this likely
         // means we cannot write the report, so we rethrow as ReportWriterIOException
-        if ( e instanceof IOException ) { throw new ReportWriterIOException((IOException)e); }
+        if ( e instanceof IOException ) { throw new FcliReportWriterIOException((IOException)e); }
         // Rethrow previously thrown ReportWriterIOException
-        if ( e instanceof ReportWriterIOException ) { throw (ReportWriterIOException)e; }
+        if ( e instanceof FcliReportWriterIOException ) { throw (FcliReportWriterIOException)e; }
         write("ERROR", errorCounter, msg, e, msgArgs);
     }
     
@@ -94,10 +95,10 @@ public final class ReportLogger implements IReportLogger {
         }
     }
     
-    private static final class ReportWriterIOException extends IllegalStateException {
+    private static final class FcliReportWriterIOException extends FcliSimpleException {
         private static final long serialVersionUID = 1L;
 
-        public ReportWriterIOException(IOException cause) {
+        public FcliReportWriterIOException(IOException cause) {
             super("Error writing report; report contents may be incomplete", cause);
         }
     }

@@ -1,0 +1,146 @@
+= Fortify CLI v2.x to v3.x migration guide
+
+Upgrading from fcli v2.x to v3.x may require some changes to existing fcli command invocations, as some commands, options, or accepted option values have changed. This document describes those changes for each of the affected fcli modules. Note that this document only describes breaking changes, it doesn't describe any new functionality. Please see the fcli change log for an overview of new features.
+
+== Configuration & state data
+
+Configuration and state data for fcli 2.x was stored in `<user home>/.fortify/fcli/config` and `<user home>/.fortify/fcli/state` by default. As there have been some incompatible changes to the contents of some of these files, fcli 3.x uses `<user home>/.fortify/fcli/v3/config` and `<user home>/.fortify/fcli/v3/state` by default instead. This means that fcli 3.x will not be aware of any configuration or state data generated through fcli 2.x, like proxy or trust store configuration, sessions, or tool installations. 
+
+This allows for running fcli 2.x and 3.x side by side without any conflicts, but also means that you'll need to run `fcli config` commands again for fcli 3.x, use the `session login` commands to recreate any sessions, and/or re-do tool installations to make fcli 3.x aware of these installations.
+
+You may attempt to copy fcli 2.x configuration and state data to the fcli 3.x configuration and state directories to make fcli 3.x aware of this data; this will likely work for configuration data like proxy & trust store settings and tool installation state, but is not officially supported. You shouldn't copy SSC session state from fcli 2.x to the fcli 3.x state directory, as this is known to cause errors.
+
+== `FCLI_DEFAULT_*` environment variables
+
+If you were previously using `FCLI_DEFAULT_*` environment variables, the environment variable names may need to be updated to reflect the updated fcli command structure and option names. 
+
+As an example, with fcli 2.x, the environment variable `FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN` environment variable would define a default value for all `--client-auth-token` options within the `sc-sast` module, effectively specifying a default value for the `--client-auth-token` option on the `fcli sc-sast session login` command. Given that the `fcli sc-sast session` commands have been removed in fcli 3.x, and the `--client-auth-token` option now needs to be specified on the `fcli ssc session login` command, the environment variable name will need to be changed from `FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN` to `FCLI_DEFAULT_SSC_CLIENT_AUTH_TOKEN`.
+
+Another example is the `FCLI_DEFAULT_SSC_CI_TOKEN` environment variable; as the `fcli ssc session login` command now only supports a `--token` option and no longer a `--ci-token` option, this environment variable will need to be renamed to `FCLI_DEFAULT_SSC_TOKEN`.
+
+== `--output` option
+
+Breaking changes:
+
+* The following formats are no longer accepted by the `-o` / `--output` option:
+** `json-properties`; to view available properties, please use `json` format instead.
+** `tree` & `tree-flat`; to get tree-like output, please use `yaml` format instead.
+** `csv-plain` & `table-plain`; please use the new `--style=no-headers` option instead.
+** `json-flat`, `xml-flat` & `yaml-flat`; please use the new `--style=flat` option instead.
+* There may be subtle differences in the output produced by the various output formats. For example:
+** `csv` output will now by default use the original JSON property names as headers, instead of attempting to format these as human-readable text. 
+** Similarly, when specifying what properties to include in the `table` output, for example with `-o table=p1,p2`, the original property names will be used as table headers.
+** Optionally, you can specify alternative header names, for example with `-o table=p1:First Property,p2:Second Property` or `-o csv=p3:Property 3,p4:Property 4`
+
+== `fcli fod`
+
+Breaking changes:
+
+* The `--session` option has been renamed to `--fod-session`, to be more explicit and consistent with other fcli modules.
+* The fcli action syntax has changed significantly; custom fcli actions developed for fcli 2.x will require changes to allow them to run on fcli 3.x. Please review the link:#_fcli_actions[Fcli Actions] section for details.
+
+== `fcli sc-sast`
+
+Breaking changes:
+
+* The `fcli sc-sast session` commands have been removed; please use `fcli ssc session` commands instead to manage sessions that are shared across `fcli ssc`, `fcli sc-sast`, `fcli sc-dast`, and the new `fcli aviator` module. The ScanCentral SAST client-auth-token will now need to be passed to the `fcli ssc session login` command.
+* The `--session` option has been replaced with `--ssc-session` to explicitly refer to sessions managed through the `fcli ssc session` commands.
+* The options accepted by the `fcli sc-sast scan start` command have changed significantly:
+** The `-m`, `--mbs-file`, `-p`, and `--package-file` have been replaced by the new `--file` / `-f` option, which will auto-detect whether the given file is an MBS file or package file.
+** For packages generated by ScanCentral Client 24.2 or above, it is recommended to remove the `--sensor-version` / `-v` option as fcli will now auto-detect the proper sensor version to be used for the scan. For packages generated by ScanCentral Client 24.1 or below, the `--sensor-version` option is still required.
+
+== `fcli sc-dast`
+
+Breaking changes:
+
+* The `fcli sc-dast session` commands have been removed; please use `fcli ssc session` commands instead to manage sessions that are shared across `fcli ssc`, `fcli sc-sast`, `fcli sc-dast`, and the new `fcli aviator` module.
+* The `--session` option has been replaced with `--ssc-session` to explicitly refer to sessions managed through the `fcli ssc session` commands.
+
+== `fcli ssc`
+
+Breaking changes:
+
+* Sessions managed by `fcli ssc session` commands are now being shared across `fcli ssc`, `fcli sc-sast`, `fcli sc-dast`, and the new `fcli aviator` module. As a result, the `--client-auth-token` option will now need to be specified on the `fcli ssc session login` command if the session is to be used for invoking `fcli sc-sast` commands.
+* The `--session` option has been renamed to `--ssc-session`, to be more explicit and consistent with other fcli modules.
+* Deprecated option values for the `--copy` option on `fcli ssc appversion create` have been removed; any references to `AnalysisProcessingRules` will need to be replaced with `processing-rules`, and any references to `BugTrackerConfiguration` will need to be replaced with `bugtracker`.
+* The fcli action syntax has changed significantly; custom fcli actions developed for fcli 2.x will require changes to allow them to run on fcli 3.x. Please review the link:#_fcli_actions[Fcli Actions] section for details.
+
+== Fcli actions
+
+There have been significant changes to the fcli action yaml syntax, both to make the syntax easier to use and understand, and to allow for new features. Built-in actions have been updated to the new syntax, so if you are running built-in actions only, these changes shouldn't have any impact when upgrading from fcli v2.x to v3.x. 
+
+However, any custom actions developed for fcli v2.x will not run on fcli v3.x (and vice versa). To allow custom actions developed for fcli v2.x to run on fcli v3.x, they will need to be updated to use the new fcli action yaml syntax. Given that the ability to run custom actions was documented as being preview functionality in fcli v2.x, this shouldn't come as too much of a surprise. 
+
+If, despite the preview warning, the updated fcli action yaml syntax poses major issues for your business, please discuss this with your OpenText Fortify representative to investigate options for assistance on migrating your fcli v2.x custom actions to fcli v3.x. Based on customer feedback, we may also investigate feasibility of providing an automated migration tool. Note though that even if we choose to do so, automatically migrated actions may still require manual review and changes to cater for any migration tasks that cannot be automated.
+
+To assist you with updating your fcli v2.x custom actions to allow them to run on fcli v3.x, the following table provides a summary of fcli v2.x action instructions and their fcli v3.x equivalents. Please note that the syntax for many of these instructions have changed, for example now taking a map instead of a list, with map keys defining identifiers. Please see the schema definition or the various built-in fcli actions for details and examples on new syntax. It is recommended to use IDE-provided schema-based code assistance when updating your custom actions.
+
+[%autowidth,frame=all,grid=all,halign=left,valign=top,cols="<.<1,<.<1,<.<4"]
+|===
+|*fcli 2.x*
+|*fcli 3.x*
+|Notes
+
+|`addRequestTargets`
+|`steps:rest.target`
+|Now takes map instead of list, moved to `steps` to allow for more flexibility
+
+|`defaults:requestTarget`
+|`config:rest.target.default`
+|Moved to new `config` instruction
+
+|`parameters`
+|`cli.options`
+|Now takes map instead of list, some property changes
+
+|`steps:append`
+|`steps:var.set`
+|Use variable name with trailing `..` to append values to a variable
+
+|`steps:check`
+|`steps:check`
+|Properties have been renamed for better consistency
+
+|`steps:debug`
+|`steps:log.debug`
+|Renamed for better consistency
+
+|`steps:fcli`
+|`steps:run.fcli`
+|Now takes map instead of list, some property changes
+
+|`steps:forEach`
+|`steps:records.for-each`
+|Renamed, some property changes
+
+|`steps:progress`
+|`steps:log.progress`
+|Renamed for better consistency
+
+|`steps:requests`
+|`steps:rest.call`
+|Now takes map instead of list, many properties have been renamed for better consistency
+
+|`steps:set`
+|`steps:var.set`
+|Now takes map instead of list, new syntax for variable names to allow for composite & array-style variables
+
+|`steps:unset`
+|`steps:var.rm`
+|Renamed for better consistency
+
+|`steps:warn`
+|`steps:log.warn`
+|Renamed for better consistency
+
+|`steps:write`
+|`steps:out.write`
+|Now takes map instead of list, with new syntax for map values
+
+|`valueTemplates`
+|`formatters`
+|Renamed for better consistency
+
+|===
+
+

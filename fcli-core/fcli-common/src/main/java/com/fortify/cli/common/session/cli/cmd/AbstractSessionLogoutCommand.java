@@ -17,20 +17,17 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
+import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
+import com.fortify.cli.common.session.helper.FcliSessionLogoutException;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
-import com.fortify.cli.common.session.helper.SessionLogoutException;
-
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLogoutCommand.class);
-    @Getter @Mixin private SessionNameMixin.OptionalLogoutOption sessionNameMixin;
     
     @Override
     public JsonNode getJsonNode() {
-        String sessionName = sessionNameMixin.getSessionName();
+        var sessionNameSupplier = getSessionNameSupplier();
+        String sessionName = sessionNameSupplier==null?"default":sessionNameSupplier.getSessionName();
         JsonNode result = null;
         var sessionHelper = getSessionHelper();
         if ( sessionHelper.exists(sessionName) ) {
@@ -39,7 +36,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
                 logout(sessionName, sessionHelper.get(sessionName, false));
                 getSessionHelper().destroy(sessionName);
             } catch (Exception e) {
-                if ( e instanceof SessionLogoutException && !((SessionLogoutException)e).isDestroySession() ) {
+                if ( e instanceof FcliSessionLogoutException && !((FcliSessionLogoutException)e).isDestroySession() ) {
                     throw e;
                 } else {
                     LOG.warn("Logout failed");
@@ -61,6 +58,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
     	return false;
     }
 
+    public abstract ISessionNameSupplier getSessionNameSupplier();
     /*******************************************************************************
     * This method will always be invoked on existing sessions, independent of whether the session has expired
     * This is to ensure cleanup of the local session directory and tokens stored in ssc (if the token has already been cleaned up by ssc this should not result in an error)

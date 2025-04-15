@@ -18,9 +18,9 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper;
-import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 
 import kong.unirest.UnirestInstance;

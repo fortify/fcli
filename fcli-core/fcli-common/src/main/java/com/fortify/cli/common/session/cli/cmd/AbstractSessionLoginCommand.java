@@ -17,19 +17,16 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
+import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
-
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLoginCommand.class);
-    @Getter @Mixin private SessionNameMixin.OptionalLoginOption sessionNameMixin;
     
     @Override
     public JsonNode getJsonNode() {
-    	String sessionName = sessionNameMixin.getSessionName();
+        var sessionNameSupplier = getSessionNameSupplier();
+    	String sessionName = sessionNameSupplier==null?"default":sessionNameSupplier.getSessionName();
         var sessionHelper = getSessionHelper();
         logoutIfSessionExists(sessionName);
         D sessionDescriptor = login(sessionName);
@@ -62,6 +59,7 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
         }
     }
 
+    public abstract ISessionNameSupplier getSessionNameSupplier();
     protected abstract void logoutBeforeNewLogin(String sessionName, D sessionDescriptor);
     protected abstract D login(String sessionName);
     protected void testAuthenticatedConnection(String sessionName) {}

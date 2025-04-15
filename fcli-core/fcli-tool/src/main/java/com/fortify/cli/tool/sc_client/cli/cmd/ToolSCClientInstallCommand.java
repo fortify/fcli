@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
@@ -139,7 +140,7 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
             var toolDefinitions = ToolDefinitionsHelper.getToolDefinitionRootDescriptor("jre");
             var jreVersionDescriptor = toolDefinitions.getVersion(jreVersion);
             var jreBinaryDescriptor = jreVersionDescriptor.getBinaries().get(platform);
-            if ( jreBinaryDescriptor==null ) { throw new IllegalStateException("No JRE found for platform "+platform); }
+            if ( jreBinaryDescriptor==null ) { throw new FcliSimpleException("No JRE found for platform "+platform); }
             return jreBinaryDescriptor;
         }
 
@@ -148,7 +149,7 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
             var extraProperties = versionDescriptor.getExtraProperties(); 
             var jreVersion = extraProperties==null ? null : extraProperties.get("jre");
             if ( StringUtils.isBlank(jreVersion) ) {
-                throw new IllegalStateException("Tool definitions don't list JRE version for this ScanCentral Client version; cannot install JRE as requested");
+                throw new FcliSimpleException("Tool definitions don't list JRE version for this ScanCentral Client version; cannot install JRE as requested");
             }
             return jreVersion;
         }

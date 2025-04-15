@@ -15,6 +15,7 @@ package com.fortify.cli.common.output.query;
 import org.springframework.expression.Expression;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.spring.expression.SpelEvaluator;
 
 import lombok.Getter;
@@ -34,7 +35,7 @@ public class QueryExpression {
                 msg += "\n\t         Please check that the property exists. Note that literal values must be enclosed in single or double quotes."
                       +"\n\t         Potentially the quotes need to be escaped to avoid them from being removed by the shell.";
             }
-            throw new IllegalStateException(String.format("Error evaluating query expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", msg, expression.getExpressionString(), record.toPrettyString().replace("\n", "\n\t\t")), e);
+            throw new FcliTechnicalException(String.format("Error evaluating query expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", msg, expression.getExpressionString(), record.toPrettyString().replace("\n", "\n\t\t")), e);
         }
     }
 }

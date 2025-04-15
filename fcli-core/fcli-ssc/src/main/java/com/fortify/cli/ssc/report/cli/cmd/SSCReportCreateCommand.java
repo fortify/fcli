@@ -18,11 +18,12 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCDelimiterMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeDefinitionHelper;
@@ -115,7 +116,7 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
             case SINGLE_SELECT_DEFAULT: result = createSingleSelectDefaultInputParameter(param); break;
             case STRING: result = createStringInputParameter(param); break;
             
-            default: throw new RuntimeException(String.format("Unknown type %s for report parameter %s", param.getType(), param.getName()));
+            default: throw new FcliSimpleException(String.format("Unknown type %s for report parameter %s", param.getType(), param.getName()));
             }
             addCommonFields(param, result);
             return result;
@@ -134,14 +135,14 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
             } else if ( "false".equalsIgnoreCase(value) || "0".equals(value) ) {
                 return new SSCInputReportParameterSingleBoolean(true);
             }
-            throw new IllegalArgumentException(String.format("Value for boolean report parameter %s must be one of true|1|false|0", param.getName()));
+            throw new FcliSimpleException(String.format("Value for boolean report parameter %s must be one of true|1|false|0", param.getName()));
         }
         
         private AbstractSSCInputReportParameter createDateInputParameter(SSCReportTemplateParameter param) {
             var value = getValue(param, null);
             var matcher = DATE_PATTERN.matcher(value);
             if ( !matcher.matches() ) {
-                throw new IllegalArgumentException(String.format("Value for date report parameter %s must be specified as yyyy-MM-dd", param.getName()));
+                throw new FcliSimpleException(String.format("Value for date report parameter %s must be specified as yyyy-MM-dd", param.getName()));
             }
             var reportValue = String.format("%s/%s/%s", matcher.group(2), matcher.group(3), matcher.group(1));
             return new SSCInputReportParameterSingleString(reportValue);
@@ -215,7 +216,7 @@ public class SSCReportCreateCommand extends AbstractSSCJsonNodeOutputCommand imp
                 result = defaultValue;
             }
             if ( result==null ) {
-                throw new IllegalArgumentException("No value specified for required report parameter "+param.getName());
+                throw new FcliSimpleException("No value specified for required report parameter "+param.getName());
             }
             return result;
         }

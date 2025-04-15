@@ -22,4 +22,9 @@ public class SSCActionHelpCommand extends AbstractActionHelpCommand {
     protected final String getType() {
         return "SSC";
     }
+    
+    @Override
+    protected String getActionCmd() {
+        return "fcli ssc action";
+    }
 }

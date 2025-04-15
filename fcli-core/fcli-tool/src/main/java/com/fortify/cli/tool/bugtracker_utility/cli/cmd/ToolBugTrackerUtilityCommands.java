@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
                 ToolBugTrackerUtilityInstallCommand.class,
                 ToolBugTrackerUtilityListCommand.class,
                 ToolBugTrackerUtilityListPlatformsCommand.class,
+                ToolBugTrackerUtilityRunCommand.class,
                 ToolBugTrackerUtilityUninstallCommand.class
         }
 

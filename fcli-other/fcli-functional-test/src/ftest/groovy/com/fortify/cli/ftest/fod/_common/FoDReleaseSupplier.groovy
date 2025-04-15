@@ -99,6 +99,7 @@ public class FoDReleaseSupplier implements Closeable, AutoCloseable  {
             def varName = "global${this.class.simpleName}Fpr"
             Fcli.run("fod sast-scan import -f $fprPath --release ${release.variableRef} --store ${varName}")
             waitForScan(release)
+            Fcli.run("fod release wait-for ${release.variableRef}")
             return varName;
         }
         protected abstract void initRelease(WorkDirHelper workDirHelper, FoDRelease version);

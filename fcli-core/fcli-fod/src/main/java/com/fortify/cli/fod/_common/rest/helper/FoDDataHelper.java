@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.HttpRequest;
@@ -54,7 +55,7 @@ public class FoDDataHelper {
         switch (nodes.size()) {
         case 0: return null;
         case 1: return nodes.get(0);
-        default: throw new IllegalStateException("Multiple matches found");
+        default: throw new FcliTechnicalException("Multiple matches found");
         }
     }
 

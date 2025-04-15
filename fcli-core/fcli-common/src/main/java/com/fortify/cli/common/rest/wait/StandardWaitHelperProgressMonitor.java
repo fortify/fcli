@@ -18,16 +18,16 @@ import java.io.Writer;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.IMessageResolver;
+import com.fortify.cli.common.output.writer.output.OutputRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
-import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitStatus;
 
 public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMonitor {
-    private static final OutputFormat outputFormat = OutputFormat.table;
     private final IProgressWriterI18n progressWriter;
     private final IMessageResolver messageResolver;
     private final boolean writeFinalStatus;
@@ -50,7 +50,8 @@ public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMon
                 String output = sw.toString();
                 progressWriter.writeProgress(output);
             } catch ( IOException e ) {
-                throw new RuntimeException(e);
+                // TODO Which Fcli*Exception should we use, and can we add a useful message?
+                throw new FcliTechnicalException(e);
             }
         }
     }
@@ -65,9 +66,9 @@ public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMon
     }
 
     private void writeRecordsMultiLine(Map<ObjectNode, WaitStatus> recordsWithWaitStatus, StringWriter sw) {
-        try ( IRecordWriter recordWriter = createRecordWriter(sw, recordsWithWaitStatus.size()==1) ) {
+        try ( var recordWriter = createRecordWriter(sw, recordsWithWaitStatus.size()==1) ) {
             for ( Map.Entry<ObjectNode, WaitStatus> entry : recordsWithWaitStatus.entrySet() ) {
-                recordWriter.writeRecord(entry.getKey().put(IActionCommandResultSupplier.actionFieldName, entry.getValue().name()));
+                recordWriter.append(entry.getKey().put(IActionCommandResultSupplier.actionFieldName, entry.getValue().name()));
             }
         }
     }
@@ -80,18 +81,17 @@ public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMon
     }
 
     private IRecordWriter createRecordWriter(StringWriter sw, boolean singular) {
-        RecordWriterConfig recordWriterConfig = createRecordWriterConfig(sw, singular);
-        return outputFormat.getRecordWriterFactory().createRecordWriter(recordWriterConfig);
+        return createRecordWriterFactory(sw, singular).createRecordWriter();
     }
     
-    private RecordWriterConfig createRecordWriterConfig(Writer writer, boolean singular) {
-        return RecordWriterConfig.builder()
+    private OutputRecordWriterFactory createRecordWriterFactory(Writer writer, boolean singular) {
+        return OutputRecordWriterFactory.builder()
                 .singular(singular)
                 .messageResolver(messageResolver)
                 .addActionColumn(true)
-                .writer(writer)
-                .options(null)
-                .outputFormat(outputFormat)
+                .writerSupplier(()->writer)
+                .recordWriterArgs(null)
+                .recordWriterFactory(RecordWriterFactory.table)
                 .build();
     }
     

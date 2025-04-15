@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -22,54 +22,55 @@ usage:
       for example a --profile option to select between different profiles that each define 
       appropriate option values and setup commands to run.
 
-defaults:
-  requestTarget: ssc
+config:
+  rest.target.default: ssc
+  output: immediate
   
-parameters:
-  - name: appversion
-    cliAliases: av
+cli.options:
+  appversion:
+    names: --appversion, --av
     required: true
     description: "Required application version name as <appName>:<versionName>"
-  - group: av_create_opts
+  add-users:
+    names: --add-users
+    group: av_create_opts
     required: false
-    name: add-users
     description: "See `fcli ssc appversion create`"
-  - group: av_create_opts
+  attrs:
+    names: --attrs, --attributes
+    group: av_create_opts
     required: false
-    name: attrs
-    cliAliases: attributes
     description: "See `fcli ssc appversion create`"
-  - group: av_create_opts
-    required: false
-    name: copy
+  copy:
+    names: --copy
+    group: av_create_opts
+    required: false 
     description: "See `fcli ssc appversion create`"
-  - group: av_create_opts
+  description:
+    names: --description, -d
+    group: av_create_opts
     required: false
-    name: description
-    cliAliases: d
     description: "See `fcli ssc appversion create`"
-  - group: av_create_opts
+  copy-from:
+    names: --copy-from, --from
+    group: av_create_opts
     required: false
-    name: copy-from
-    cliAliases: from
     description: "See `fcli ssc appversion create`"
-  - group: av_create_opts
+  issue-template:
+    names: --issue-template
+    group: av_create_opts
     required: false
-    name: issue-template
     description: "See `fcli ssc appversion create`"
-  - group: av_create_opts
+  refresh-timeout:
+    names: --refresh-timeout
+    group: av_create_opts
     required: false
-    name: refresh-timeout
-    defaultValue: "300s"
+    default: "300s"
     description: "See 'fcli ssc av create'. Default value: 300s"
   
 steps:
-  - progress: "Creating SSC application version if non-existing"
-  - fcli:
-    - name: createAppVersion
-      args: ssc av create ${parameters.appversion} --skip-if-exists --auto-required-attrs --refresh ${#action.copyParametersFromGroup("av_create_opts")}
-  - write:
-      - to: stdout
-        value: |
-          Create application version ${parameters.appversion} (id ${createAppVersion[0].id}): ${createAppVersion[0].__action__}
+  - log.progress: "Creating SSC application version if non-existing"
+  - run.fcli:
+      createAppVersion:
+        cmd: ssc av create ${cli.appversion} --skip-if-exists --auto-required-attrs --refresh ${#action.copyParametersFromGroup("av_create_opts")}
       

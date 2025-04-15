@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -21,14 +22,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
+
 import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
+import com.fortify.cli.common.action.helper.ActionDescriptionRenderer;
+import com.fortify.cli.common.action.helper.ActionDescriptionRenderer.ActionDescriptionRendererType;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.runner.ActionParameterHelper;
+import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -37,6 +43,8 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractActionAsciidocCommand extends AbstractRunnableCommand {
+    private static final ActionDescriptionRenderer descriptionRenderer = 
+            ActionDescriptionRenderer.create(ActionDescriptionRendererType.ASCIIDOC);
     @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
     @Mixin private CommonOptionMixins.OptionalFile outputFileMixin;
     @Option(names= {"--manpage-dir", "-d"}, required = false, descriptionKey="fcli.action.asciidoc.manpage-dir")
@@ -68,13 +76,13 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     }
     
     private final String generateHeader() {
-        return replaceVariables("""
-                = Fcli ${type} Actions
+        return replaceVariables(String.format("""
+                = Action Documentation: `%s`
                 
-                This manual page describes built-in fcli ${type} actions that can be run through
-                the `fcli ${typeLower} action run <action-name>` command.
+                This manual page describes built-in fcli actions that can be run through
+                the `%s run <action-name>` command.
                 
-                """);
+                """, getActionCmd(), getActionCmd()));
     }
     
     private final String generateActionSection(Action action) {
@@ -82,7 +90,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
         //      ActionParameterHelper or other class for generating this, such that we can also
         //      show synopsis in `fcli * action help` output.
         String name = action.getMetadata().getName();
-        return replaceVariables(String.format("""
+        var result = replaceVariables(String.format("""
             == %s
             
             %s
@@ -95,21 +103,32 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
             
             %s
             
-            === Options
-            
-            %s
-            
-            """, name, action.getUsage().getHeader(), name, action.getUsage().getDescription(), generateOptionsSection(action)));
+            """
+            , name, action.getUsage().getHeader(), name, descriptionRenderer.render(action.getUsage().getDescription())));
+        var optionsSection = replaceVariables(generateOptionsSection(action));
+        if ( StringUtils.isNotBlank(optionsSection) ) {
+            result += String.format("=== Options\n\n%s\n\n", optionsSection);
+        }
+        return result;
+    }
+
+    @SneakyThrows
+    private String getClasspathResourceAsString(String path) {
+        var is = this.getClass().getResourceAsStream(path);
+        if ( is==null ) {
+            throw new FcliBugException(String.format("Class path resource %s not found", path));
+        }
+        return String.format("\n----\n%s\n----\n", IOUtils.toString(is, StandardCharsets.UTF_8));
     }
     
     private final String generateOptionsSection(Action action) {
-        return ActionParameterHelper.getOptionDescriptors(action)
+        return ActionOptionHelper.getOptionDescriptors(action)
             .stream().map(this::generateOptionDescription).collect(Collectors.joining("\n\n"));
     }
     
     private final String generateOptionDescription(IOptionDescriptor descriptor) {
         return String.format("%s::\n%s", 
-                descriptor.getOptionNamesAndAliasesString(", "), 
+                descriptor.getOptionNamesString(", "), 
                 StringUtils.indent(descriptor.getDescription(), "  "));
     }
     
@@ -135,7 +154,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
                 // See https://github.com/fortify/fcli/issues/622 for example. The backticks need to
                 // go into the link text (as otherwise link:... would be rendered literally), so we
                 // need to include the full text between the backticks in the link text.
-                contents = contents.replaceAll("(?<!\\[)(`"+pattern+".*`)", replacement);
+                contents = contents.replaceAll("(?<!\\[)(`"+pattern+"[^`]*`)", replacement);
             }
         }
         return contents;
@@ -154,6 +173,6 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     }
     
     protected abstract String getType();
-    
+    protected abstract String getActionCmd();
     
 }

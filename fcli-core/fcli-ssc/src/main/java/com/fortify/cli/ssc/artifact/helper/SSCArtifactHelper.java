@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
 import lombok.AllArgsConstructor;
@@ -106,6 +106,7 @@ public final class SSCArtifactHelper {
             String scanTypesString = "";
             if ( _embed.has("scans") ) {
                 // TODO Can we get rid of unchecked conversion warning?
+                @SuppressWarnings("unchecked")
                 ArrayList<String> scanTypes = JsonHelper.evaluateSpelExpression(_embed, "scans?.![type]", ArrayList.class);
                 scanTypesString = scanTypes.stream().collect(Collectors.joining(", "));   
             }

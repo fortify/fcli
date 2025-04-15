@@ -17,9 +17,10 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
 
@@ -55,7 +56,7 @@ public final class SSCPerformanceIndicatorHelper {
             descriptor = descriptorsByName.get(performanceIndicatorNameOrIdOrGuid);
         }
         if ( failIfNotFound && descriptor==null ) {
-            throw new IllegalArgumentException("No Performance Indicator found with name, id or guid "+performanceIndicatorNameOrIdOrGuid);
+            throw new FcliSimpleException("No Performance Indicator found with name, id or guid "+performanceIndicatorNameOrIdOrGuid);
         }
         return descriptor;
     }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IInputTransformer;
-import com.fortify.cli.sc_sast._common.output.cli.cmd.AbstractSCSastControllerBaseRequestOutputCommand;
+import com.fortify.cli.sc_sast._common.output.cli.cmd.AbstractSCSastBaseRequestOutputCommand;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -14,7 +14,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class SCSastSensorPoolListCommand extends AbstractSCSastControllerBaseRequestOutputCommand implements IInputTransformer {
+public class SCSastSensorPoolListCommand extends AbstractSCSastBaseRequestOutputCommand implements IInputTransformer {
 
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
     

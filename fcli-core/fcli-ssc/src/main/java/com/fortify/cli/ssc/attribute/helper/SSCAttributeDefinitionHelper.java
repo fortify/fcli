@@ -21,8 +21,9 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
+import com.fortify.cli.ssc._common.rest.ssc.helper.SSCInputTransformer;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -110,11 +111,11 @@ public final class SSCAttributeDefinitionHelper {
         SSCAttributeDefinitionDescriptor descriptor = descriptorsById.get(attributeIdOrGuidOrName);
         if ( descriptor==null ) { descriptor = descriptorsByGuid.get(attributeIdOrGuidOrName); } 
         if ( descriptor==null && attrDuplicateNames.contains(attributeIdOrGuidOrName) ) { 
-            throw new IllegalArgumentException("Attribute name '"+attributeIdOrGuidOrName+"' is not unique; either use the guid or <category>:<name>"); 
+            throw new FcliSimpleException("Attribute name '"+attributeIdOrGuidOrName+"' is not unique; either use the guid or <category>:<name>"); 
         }
         if ( descriptor==null ) { descriptor = descriptorsByName.get(attributeIdOrGuidOrName); }
         if ( descriptor==null ) {
-            throw new IllegalArgumentException("Attribute id, guid or name '"+attributeIdOrGuidOrName+"' does not exist");
+            throw new FcliSimpleException("Attribute id, guid or name '"+attributeIdOrGuidOrName+"' does not exist");
         }
         return descriptor;
     }
@@ -200,7 +201,7 @@ public final class SSCAttributeDefinitionHelper {
                 guid = optionGuidsByName.get(optionNameOrGuid);
             }
             if ( guid==null ) {
-                throw new IllegalArgumentException("Option name or guid '"+optionNameOrGuid+"' does not exist");
+                throw new FcliSimpleException("Option name or guid '"+optionNameOrGuid+"' does not exist");
             }
             return guid;
         }

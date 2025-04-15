@@ -12,23 +12,36 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.text.WordUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
+import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequestSummary;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestException;
+import kong.unirest.UnirestParsingException;
 import lombok.Getter;
 
 @Reflectable // Required for calling methods like getMessage() in fcli actions
 public final class UnexpectedHttpResponseException extends UnirestException {
     private static final long serialVersionUID = 1L;
-    @Getter private int status = 200;
+    private static final ObjectMapper yamlObjectMapper = createYamlObjectMapper();
+    @Getter private final int status;
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
         super(getMessage(failureResponse), getCause(failureResponse));
         this.status = failureResponse.getStatus();
     }
-    
+
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
         super(getMessage(failureResponse, requestSummary), getCause(failureResponse));
         this.status = failureResponse.getStatus();
@@ -37,26 +50,68 @@ public final class UnexpectedHttpResponseException extends UnirestException {
     private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
         var httpMethod = requestSummary.getHttpMethod().name();
         var url = requestSummary.getUrl();
-        return String.format("\nRequest: %s %s: %s", httpMethod, url, getMessage(failureResponse));
+        return StringUtils.indent(String.format("\nRequest: %s %s: %s", httpMethod, url, getMessage(failureResponse)), "  ");
     }
 
     private static final String getMessage(HttpResponse<?> failureResponse) {
+        var reason = getFailureReason(failureResponse);
+        var body = failureResponse.getParsingError()
+                .map(UnirestParsingException::getOriginalBody)
+                .map(UnexpectedHttpResponseException::formatBody)
+                .orElse(formatBody(failureResponse.getBody()));
+        return String.format("\nReason: %s\nBody: %s", reason, body);
+    }
+    
+    private static final String getFailureReason(HttpResponse<?> failureResponse) {
         if ( isHttpFailure(failureResponse) ) {
-            // TODO Better format response body if it's a standard XML or JSON response containing an msg property
-            return String.format("\nResponse: %d %s\nResponse Body:\n%s", failureResponse.getStatus(), failureResponse.getStatusText(), failureResponse.getBody());
+            return String.format("HTTP %d %s", failureResponse.getStatus(), failureResponse.getStatusText());
         } else if ( failureResponse.getParsingError().isPresent() ) {
             return "Error parsing response";
         } else {
-            return "Unknown error";
+            return "Unknown";
         }
     }
     
+    private static final String formatBody(Object body) {
+        if ( body==null || (body instanceof String && StringUtils.isBlank((String)body)) ) { 
+            return "<No Data>"; 
+        } else if ( body instanceof JsonNode ) {
+            try {
+                return "\n"+StringUtils.indent(yamlObjectMapper.writeValueAsString(new SplitLinesJsonNodeWalker().walk((JsonNode)body)), "  ");
+            } catch ( Exception ignore ) {} 
+        }
+        return "\n"+StringUtils.indent(StringUtils.abbreviate(body.toString().trim(), 255), "  ")+"\n----";
+    }
+
     private static final Throwable getCause(HttpResponse<?> failureResponse) {
-        return isHttpFailure(failureResponse) ? null : failureResponse.getParsingError().orElse(null);
+        if ( isHttpFailure(failureResponse) ) { return null; }
+        return failureResponse.getParsingError()
+            .map(ExceptionUtils::getRootCause)
+            .orElse(null);
     }
     
     private static final boolean isHttpFailure(HttpResponse<?> failureResponse) {
         int httpStatus = failureResponse.getStatus();
         return httpStatus < 200 || httpStatus >= 300;
+    }
+    
+    private static final ObjectMapper createYamlObjectMapper() {
+        return new ObjectMapper(new YAMLFactory()
+            .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES)
+            .enable(YAMLGenerator.Feature.SPLIT_LINES)
+            .enable(YAMLGenerator.Feature.LITERAL_BLOCK_STYLE)
+            .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+    }
+    
+    private static final class SplitLinesJsonNodeWalker extends JsonNodeDeepCopyWalker {
+        @SuppressWarnings("deprecation") // TODO Use non-deprecated class?
+        @Override
+        protected JsonNode copyValue(JsonNode state, String path, JsonNode parent, ValueNode node) {
+            if ( node instanceof TextNode ) {
+                return new TextNode(WordUtils.wrap(node.asText(), 80));
+            } else {
+                return super.copyValue(state, path, parent, node);
+            }
+        }
     }
 }

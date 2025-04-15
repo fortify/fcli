@@ -32,13 +32,13 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 /**
- * This Jackson deserializer allows parsing String values into an 
- * SpEL Expression object.
+ * This Jackson serializer allows for serializing {@link SimpleExpression} objects
+ * to expression strings
  */
 @Reflectable
 public final class SimpleExpressionSerializer extends StdSerializer<SimpleExpression> {
     private static final long serialVersionUID = 1L;
-    protected SimpleExpressionSerializer() {
+    public SimpleExpressionSerializer() {
         super(SimpleExpression.class);
     }
 
@@ -46,6 +46,4 @@ public final class SimpleExpressionSerializer extends StdSerializer<SimpleExpres
     public void serialize(SimpleExpression value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeString(value.getExpressionString());
     }
-    
-    
 }

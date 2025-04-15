@@ -13,8 +13,8 @@
 package com.fortify.cli.license.msp_report.writer;
 
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVersionDescriptor;
@@ -25,8 +25,8 @@ public final class MspReportArtifactsWriter implements IMspReportArtifactsWriter
     private final IRecordWriter artifactsWithoutScansRecordWriter;
     
     public MspReportArtifactsWriter(IReportWriter reportWriter) {
-        this.artifactsRecordWriter = reportWriter.recordWriter(OutputFormat.csv, "details/artifacts.csv", false, null);
-        this.artifactsWithoutScansRecordWriter = reportWriter.recordWriter(OutputFormat.csv, "details/artifacts-without-scans.csv", false, null);
+        this.artifactsRecordWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/artifacts.csv", false, null);
+        this.artifactsWithoutScansRecordWriter = reportWriter.recordWriter(RecordWriterFactory.csv, "details/artifacts-without-scans.csv", false, null);
     }
     
     @Override
@@ -36,9 +36,9 @@ public final class MspReportArtifactsWriter implements IMspReportArtifactsWriter
                     versionDescriptor.updateReportRecord(
                         JsonHelper.getObjectMapper().createObjectNode()
                         .put("url", urlConfig.getUrl())));
-        artifactsRecordWriter.writeRecord(record);
+        artifactsRecordWriter.append(record);
         if ( !artifactDescriptor.hasScans() ) {
-            artifactsWithoutScansRecordWriter.writeRecord(record);
+            artifactsWithoutScansRecordWriter.append(record);
         }
     }
 }

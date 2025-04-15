@@ -13,16 +13,34 @@
 
 package com.fortify.cli.fod._common.scan.helper;
 
+import static java.util.function.Predicate.not;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeanUtils;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod._common.scan.helper.dast.*;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupBaseRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupGraphQlRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupGrpcRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupOpenApiRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupPostmanRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
@@ -30,17 +48,11 @@ import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.BeanUtils;
-
-import java.util.*;
-
-import static java.util.function.Predicate.not;
 
 public class FoDScanHelper {
     @Getter
@@ -86,7 +98,7 @@ public class FoDScanHelper {
                         .getBody();
                 return getDescriptor(summaryResult);
             default:
-                throw new IllegalArgumentException("Scan must be specified in the format <release id>" + delimiter + "<scan id> or <scan id>");
+                throw new FcliSimpleException("Scan must be specified in the format <release id>" + delimiter + "<scan id> or <scan id>");
         }
     }
 
@@ -112,7 +124,7 @@ public class FoDScanHelper {
             try {
                 lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.TimeZones, timezone, false);
             } catch (JsonProcessingException ex) {
-                throw new IllegalStateException(ex.getMessage());
+                throw new FcliSimpleException(ex.getMessage());
             }
             return lookupDescriptor.getValue();
         } else {
@@ -126,7 +138,7 @@ public class FoDScanHelper {
         cal.add(Calendar.YEAR, -retentionPeriod);
         if (scanDescriptor.getCompletedDateTime() == null ||
                 scanDescriptor.getCompletedDateTime().before(cal.getTime())) {
-            throw new RuntimeException(
+            throw new FcliSimpleException(
                     String.format("The last scan date was over %d years ago and results are no longer available to be downloaded.", retentionPeriod));
         }
     }
@@ -152,7 +164,7 @@ public class FoDScanHelper {
                 ).filter(n -> n.getName().equals(assessmentType))
                 .findFirst();
         if (atd.isEmpty()) {
-            throw new IllegalArgumentException("Cannot find appropriate assessment type for specified options.");
+            throw new FcliSimpleException("Cannot find appropriate assessment type for specified options.");
         }
         assessmentTypeId = atd.get().getAssessmentTypeId();
         entitlementIdToUse = atd.get().getEntitlementId();
@@ -161,7 +173,7 @@ public class FoDScanHelper {
         if (entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found
             if (!Objects.equals(entitlementIdToUse, entitlementId)) {
-                throw new IllegalArgumentException("Cannot appropriate assessment type for use with entitlement: " + entitlementId);
+                throw new FcliSimpleException("Cannot appropriate assessment type for use with entitlement: " + entitlementId);
             }
             LOG.info("The 'entitlement-id' specified by user '" + entitlementId + "' is valid.");
         } else {
@@ -256,15 +268,6 @@ public class FoDScanHelper {
                 .routeParam("relId", releaseId)
                 .body(setupRequest);
     }
-
-    /*public Collection<JsonNode> getScanDescriptorJsonNodes(UnirestInstance unirest, String releaseId, String scanId) {
-        unirest.get(FoDUrls.SCAN_POLLING_SUMMARY)
-                .routeParam("relId", releaseId)
-                .routeParam("scanId", scanId);
-        return Stream.of(getScanDescriptors(unirest)).map(FoDScanPollingDescriptor::asJsonNode).collect(Collectors.toList());
-    }*/
-
-    //
 
     private static final FoDScanDescriptor getDescriptor(JsonNode node) {
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);

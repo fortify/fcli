@@ -37,11 +37,9 @@ public class FoDIssueListCommand extends AbstractFoDBaseRequestOutputCommand imp
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Mixin private FoDIssueEmbedMixin embedMixin;
     @Mixin private FoDIssueIncludeMixin includeMixin;
-    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator();
-    //        .add("id","applicationId")
-    //        .add("name","applicationName")
-    //        .add("criticality", "businessCriticalityType")
-    //        .add("type", "applicationType");
+    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
+            .add("severityString","severityString");
+            // TODO Add support for other properties 
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

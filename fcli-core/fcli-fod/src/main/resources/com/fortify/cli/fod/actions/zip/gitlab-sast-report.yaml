@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -7,64 +7,60 @@ usage:
     For information on how to import this report into GitLab, see 
     https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast
 
-defaults:
-  requestTarget: fod
+config:
+  rest.target.default: fod
   
-parameters:
-  - name: file
-    cliAliases: f
+cli.options:
+  file:
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json"
     required: false
-    defaultValue: gl-fortify-sast.json
-  - name: release
-    cliAliases: rel
+    default: gl-fortify-sast.json
+  release:
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
   
 steps:
-  - progress: Loading static scan summary
-  - requests:
-      - name: staticScanSummary
-        uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
-        if:   ${parameters.release.currentStaticScanId!=null}
-        onFail: 
-          - warn: Unable to load static scan summary, some scan metadata may be missing from the report
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-      query:
-        filters: scantype:Static
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-      forEach:
-        name: issue
-        embed:
-          - name: details
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-          - name: recommendations
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
-        do:
-          - append:
-            - name: vulnerabilities
-              valueTemplate: vulnerabilities
-  - write:
-    - to: ${parameters.file}
-      valueTemplate: gitlab-sast-report
-    - if: ${parameters.file!='stdout'}
-      to: stdout
-      value: |
-        Output written to ${parameters.file}
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+  - log.progress: Loading static scan summary
+  - rest.call:
+      staticScanSummary:
+        uri:  /api/v3/scans/${rel.currentStaticScanId}/summary
+        if:   ${rel.currentStaticScanId!=null}
+        on.fail: 
+          - log.warn: Unable to load static scan summary, some scan metadata may be missing from the report
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          filters: scantype:Static
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          embed:
+            details:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
+            recommendations:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+          do:
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-sast-report}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
 
-valueTemplates:
-  - name: gitlab-sast-report
-    contents:
+formatters:
+  gitlab-sast-report:
       schema: https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/raw/v15.0.0/dist/sast-report-format.json
       version: 15.0.0
       scan:
         start_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", staticScanSummary?.startedDateTime?:'1970-01-01T00:00:00')}
         end_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", staticScanSummary?.completedDateTime?:'1970-01-01T00:00:00')}
-        status: ${parameters.release.staticAnalysisStatusTypeId==2?'success':'failure'}
+        status: ${rel.staticAnalysisStatusTypeId==2?'success':'failure'}
         type: sast
         analyzer:
           id: FoD-SAST
@@ -82,11 +78,10 @@ valueTemplates:
             name: Fortify
       vulnerabilities: ${vulnerabilities?:{}} 
      
-  - name: vulnerabilities
-    contents:
+  vulnerabilities:
       category: sast
       confidence: ${(issue.severityString matches "(Critical|Medium)") ? "High":"Low" }
-      description: ${#abbreviate(#htmlToText(issue.details?.summary), 15000)}
+      description: ${#abbreviate(#htmlToText(issue.details?.summary?:""), 15000)}
       id: ${issue.vulnId}
       cve: 'N/A'
       identifiers: |-

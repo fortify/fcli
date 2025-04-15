@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -54,7 +55,7 @@ public class FoDUserHelper {
             result = FoDDataHelper.findUnique(request, String.format("userName:%s", userNameOrId));
         }
         if ( failIfNotFound && result==null ) {
-            throw new IllegalArgumentException("No user found for name or id: " + userNameOrId);
+            throw new FcliSimpleException("No user found for name or id: " + userNameOrId);
         }
         return result==null ? null : JsonHelper.treeToValue(result, FoDUserDescriptor.class);
     }
@@ -63,7 +64,7 @@ public class FoDUserHelper {
         GetRequest request = unirest.get(FoDUrls.USER).routeParam("userId", userId);
         JsonNode user = request.asObject(ObjectNode.class).getBody();
         if (failIfNotFound && user.get("userName").asText().isEmpty()) {
-            throw new IllegalArgumentException("No user found for id: " + userId);
+            throw new FcliSimpleException("No user found for id: " + userId);
         }
         return getDescriptor(user);
     }
@@ -149,7 +150,7 @@ public class FoDUserHelper {
                     .routeParam("applicationId", String.valueOf(appDescriptor.getApplicationId()))
                     .asEmpty();
         } else {
-            throw new IllegalArgumentException("Invalid action specified when updating users application access");
+            throw new FcliSimpleException("Invalid action specified when updating users application access");
         }
         return userDescriptor;
     }
@@ -163,7 +164,7 @@ public class FoDUserHelper {
                 FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.Roles, roleNameOrId, true);
                 roleId = Integer.valueOf(lookupDescriptor.getValue());
             } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Unable to find role with name: " + roleNameOrId);
+                throw new FcliSimpleException("Unable to find role with name: " + roleNameOrId);
             }
         }
         return roleId;

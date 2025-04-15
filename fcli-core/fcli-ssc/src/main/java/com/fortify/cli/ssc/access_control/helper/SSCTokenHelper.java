@@ -33,7 +33,8 @@ import com.fortify.cli.common.rest.unirest.config.UnirestBasicAuthConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse.SSCTokenData;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -95,7 +96,7 @@ public class SSCTokenHelper {
         }
     }
     
-    public static final SSCTokenGetOrCreateResponse getTokenData(IUrlConfig urlConfig, char[] token) {
+    public static final SSCTokenData getTokenData(IUrlConfig urlConfig, char[] token) {
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             return getTokenData(unirest, urlConfig, token);
         }
@@ -164,19 +165,22 @@ public class SSCTokenHelper {
                 .getBody();
     }
     
-    private static SSCTokenGetOrCreateResponse getTokenData(UnirestInstance unirest, IUrlConfig urlConfig, char[] token) {
+    private static SSCTokenData getTokenData(UnirestInstance unirest, IUrlConfig urlConfig, char[] token) {
         configureUnirest(unirest, urlConfig, token);
         try {
             var result = unirest.post("/api/v1/userSession/tokenData")
                     .body(JsonHelper.getObjectMapper().createObjectNode())
                     .asObject(SSCTokenGetOrCreateResponse.class)
-                    .getBody();
-            result.getData().setToken(token);
+                    .getBody().getData();
+            result.setToken(token);
             return result;
         } catch ( UnexpectedHttpResponseException e ) {
             if ( e.getStatus()==404 || e.getStatus()==401 ) {
-                // Older SSC versions don't support this endpoint, so we just return null
-                return null; 
+                // Older SSC versions don't support this endpoint, so we create an SSCTokenData instance
+                // containing just the token itself.
+                var result = new SSCTokenData();
+                result.setToken(token);
+                return result; 
             } else {
                 throw e;
             }

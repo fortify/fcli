@@ -15,6 +15,18 @@ public class ToolPlatformHelper {
         return String.format("%s/%s", getOSString(), getArchString());
     }
     
+    public static final boolean isWindows() {
+        return "windows".equals(getOSString());
+    }
+    
+    public static final boolean isLinux() {
+        return "linux".equals(getOSString());
+    }
+    
+    public static final boolean isMac() {
+        return "darwin".equals(getOSString());
+    }
+    
     private static String normalizeOs(String value) {
         value = normalize(value);
         if (value.startsWith("aix")) {

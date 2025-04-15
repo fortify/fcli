@@ -1,0 +1,86 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Collect CI-specific data
+  description: |
+    This action collects data used by the SSC & FoD 'ci' actions, based on CI-specific 
+    data like CI-specific environment variables. Data is collected in a CI-agnostic
+    global variable named 'ci'. Note that available properties on the global 'ci' 
+    variable may change across fcli releases, potentially breaking any custom actions
+    that depend on these properties.
+
+config:
+  output: immediate
+  
+steps:
+  # Set default ci values. Where possible, steps below should override these
+  # variables with CI-specific values
+  - var.set:
+      global.ci.name:               # Name of current CI system
+      global.ci.id:                 # Id of current CI system, used to look up <id>-* actions 
+      global.ci.qualifiedRepoName:  # Fully qualified repository name
+      global.ci.sourceBranch:       # The current branch being processed/scanned 
+      global.ci.commitSHA:          # Commit SHA for current commit
+      # The following are set by default at the end, but may be overridden by individual CI configurations
+      global.fod.prCommentAction:   # FoD PR comment action
+      global.ssc.prCommentAction:   # SSC PR comment action
+      global.fod.sastExportAction:  # FoD SAST export action
+      global.ssc.sastExportAction:  # SSC SAST export action
+      global.fod.dastExportAction:  # FoD DAST export action
+      global.ssc.dastExportAction:  # SSC DAST export action
+      global.fod.scaExportAction:   # FoD SCA (composition analysis) export action
+      global.ssc.scaExportAction:   # SSC SCA (composition analysis) export action
+  
+  # GitHub
+  - if: ${#isNotBlank(#env('GITHUB_REPOSITORY'))}
+    var.set:
+      global.ci.name:              GitHub
+      global.ci.id:                github
+      global.ci.qualifiedRepoName: ${#env('GITHUB_REPOSITORY')}
+      global.ci.sourceBranch:      ${#env('GITHUB_HEAD_REF')?:#env('GITHUB_REF_NAME')}
+      global.ci.commitSHA:         ${#env('GITHUB_SHA')}
+      
+  # GitLab
+  - if: ${#env('GITLAB_CI')=='true'}
+    var.set:
+      global.ci.name:              GitLab
+      global.ci.id:                gitlab
+      global.ci.qualifiedRepoName: ${#env('CI_REPOSITORY_URL').replaceAll('[^:]+://[^/]+/','').replaceAll('\.git$', '')}
+      global.ci.sourceBranch:      ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
+      global.ci.commitSHA:         ${#env('CI_COMMIT_SHA')}
+      
+  # Azure DevOps
+  - if: ${#isNotBlank(#env('Build.Repository.Name'))}
+    var.set:
+      global.ci.name:              Azure DevOps
+      global.ci.id:                ado
+      global.ci.qualifiedRepoName: ${#env('Build.Repository.Name')}
+      global.ci.sourceBranch:      # TODO ${#env('Build.SourceBranch') matches 'refs/pull/.*' ? }
+      global.ci.commitSHA:         ${#env('Build.SourceVersion')}
+
+  # Additional generic variables based on the output of the CI-specific sections above
+  - var.set:
+      # Set default Fortify repository name (SSC application version or FoD release),
+      # from a similarly named global variable set by one of the sections above, or 
+      # <qualifiedRepoName>:<sourceBranch>
+      global.ci.defaultFortifyRepo:  ${global.ci.av?:#joinOrNull(':', global.ci.qualifiedRepoName, global.ci.sourceBranch)}
+      # Set default reporting actions based on ci identifier. Note that FoD/SSC CI actions should check existence of these actions 
+      # TODO Only use default values if not explicitly defined in CI-specific sections above.
+      global.ci.fod_prCommentAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'pr-comment'))}
+      global.ci.ssc_prCommentAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'pr-comment'))}
+      global.ci.fod_sastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'sast-report'))}
+      global.ci.ssc_sastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'sast-report'))}
+      global.ci.fod_dastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'dast-report'))}
+      global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
+      global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+      global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+  - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
+  - records.for-each:
+      from: ${#properties(global.ci)}
+      record.var-name: p
+      do:
+        - log.info: "${'  '+p.key+': '+p.value}"
+  
+        
+        

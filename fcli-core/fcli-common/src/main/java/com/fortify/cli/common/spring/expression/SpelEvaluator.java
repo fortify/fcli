@@ -12,11 +12,14 @@
  */
 package com.fortify.cli.common.spring.expression;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
@@ -32,6 +35,7 @@ import org.springframework.integration.json.JsonPropertyAccessor.JsonNodeWrapper
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -41,6 +45,7 @@ public enum SpelEvaluator implements ISpelEvaluator {
     JSON_GENERIC(SpelEvaluator::createJsonGenericContext),
     JSON_QUERY(SpelEvaluator::createJsonQueryContext);
     
+    private static final Logger LOG = LoggerFactory.getLogger(SpelEvaluator.class);
     private static final SpelExpressionParser SPEL_PARSER = new SpelExpressionParser();
     private EvaluationContext context;
     private final Supplier<SimpleEvaluationContext> contextSupplier;
@@ -51,13 +56,21 @@ public enum SpelEvaluator implements ISpelEvaluator {
     }
 
     public final <R> R evaluate(Expression expression, Object input, Class<R> returnClass) {
-        return evaluate(context, expression, input, returnClass);
+        try {
+            return evaluate(context, expression, input, returnClass);
+        } catch (RuntimeException e) {
+            throw handleException(e);
+        }
     }
 
     public final <R> R evaluate(String expression, Object input, Class<R> returnClass) {
-        return evaluate(SPEL_PARSER.parseExpression(expression), input, returnClass);
+        try {
+            return evaluate(SPEL_PARSER.parseExpression(expression), input, returnClass);
+        } catch (RuntimeException e) {
+            throw handleException(e);
+        }
     } 
-    
+
     public final IConfigurableSpelEvaluator copy() {
         return new ConfigurableSpelEvaluator(contextSupplier.get());
     }
@@ -82,7 +95,11 @@ public enum SpelEvaluator implements ISpelEvaluator {
     }
     
     private static final <R> R evaluate(EvaluationContext context, Expression expression, Object input, Class<R> returnClass) {
-        return unwrapSpelExpressionResult(expression.getValue(context, input, returnClass), returnClass);
+        try {
+            return unwrapSpelExpressionResult(expression.getValue(context, input, returnClass), returnClass);
+        } catch (RuntimeException e) {
+            throw handleException(e);
+        }
     }
     
     @SuppressWarnings("unchecked")
@@ -91,6 +108,27 @@ public enum SpelEvaluator implements ISpelEvaluator {
             result = (R)((JsonNodeWrapper<?>)result).getRealNode();
         }
         return result;
+    }
+    
+    private static final RuntimeException handleException(RuntimeException e) {
+        return handleException(e, e.getCause());
+    }
+
+    private static final RuntimeException handleException(RuntimeException rootException, Throwable currentCause) {
+        // TODO Do we need full exception stack trace, or can we throw FcliSimpleExpression
+        //      that shows the failing expression and original message?
+        if ( currentCause==null ) { return rootException; }
+        // TODO Only handle FcliSimpleException, or all FcliExceptions?
+        // TODO Should we still wrap this in another FcliSimpleException that shows the failing expression?
+        if ( currentCause instanceof FcliSimpleException ) {
+            LOG.debug("Throwing FcliSimpleException only; original exception: ", rootException);
+            return (FcliSimpleException)currentCause;
+        } else if ( currentCause instanceof InvocationTargetException ) {
+            // TODO Should we also check InvocationTargetException::getCause? 
+            return handleException(rootException, ((InvocationTargetException)currentCause).getTargetException());
+        } else {
+            return handleException(rootException, currentCause.getCause());
+        }
     }
     
     private static final SimpleEvaluationContext createJsonGenericContext() {

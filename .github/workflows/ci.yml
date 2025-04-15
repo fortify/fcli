@@ -26,10 +26,10 @@ jobs:
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: googleapis/release-please-action@v4
-        if: github.ref == 'refs/heads/v2.x'
+        if: contains(github.ref, 'refs/heads/rel/')
         with:
           skip-github-pull-request: true
-          target-branch: v2.x
+          target-branch: ${{ github.ref_name }}
           release-type: simple
           
       - name: PROD - Define release info
@@ -54,6 +54,8 @@ jobs:
         run: |
           branch="${GITHUB_REF#refs/heads/}"
           tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
+          tag="${tag//dev_dev./dev_}" # Remove duplicate dev-prefix
+          tag="${tag//dev_rel./dev_}" # Remove rel-prefix
           major="0"
           minor="$(date +'%Y%m%d')"
           patch="$(date +'%H%M%S')-$tag"
@@ -138,7 +140,7 @@ jobs:
           files: fcli
 
       - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli get --help
+        run: ./fcli --help && ./fcli get --help && ./fcli action help ci
         
       - name: Check fcli version
         run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
@@ -183,7 +185,7 @@ jobs:
       #    files: fcli
 
       - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli get --help
+        run: ./fcli --help && ./fcli get --help && ./fcli action help ci
 
       - name: Package native fcli
         run: tar -zcvf ./artifacts/release-assets/fcli-mac.tgz fcli -C ./artifacts fcli_completion
@@ -229,6 +231,7 @@ jobs:
         run: |
           .\fcli.exe --help 
           .\fcli.exe get --help
+          .\fcli.exe action help ci
 
       - name: Package native fcli
         run: 7z a artifacts\release-assets\fcli-windows.zip fcli*.exe
@@ -261,136 +264,24 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: ./artifacts
-          name: combined-artifacts  
+          name: combined-artifacts
   
-  # For now, we only publish fcli-scratch image, but we do build the other images just for testing
-  docker-linux:
-    needs: [build, native_linux]
+  ftest:
+    name: Trigger functional tests
+    needs: [build, native_linux, native_mac, native_win, combine-artifacts]
     runs-on: ubuntu-latest
-    env:
-      DOCKER_SRC: fcli-other/fcli-docker/linux
     steps:
-        - name: Check-out source code
-          uses: actions/checkout@v4
-                
-        - name: Download artifacts
-          uses: actions/download-artifact@v4
-          with:
-            path: ./artifacts
-            name: fcli-linux
-            
-        - name: Set up Docker
-          uses: docker/setup-docker-action@v4
-          with:
-            daemon-config: |
-              {
-                  "debug": true,
-                  "features": {
-                    "containerd-snapshotter": true
-                  }
-              }
-    
-        - name: Build & test Linux images
-          shell: bash
-          run: |
-            tar -zxvf ./artifacts/release-assets/fcli-linux.tgz -C ${DOCKER_SRC}
-            cd ${DOCKER_SRC}
-            for i in scratch alpine ubi9
-            do
-              docker buildx build --target fcli-${i} -t fcli-${i} --attest type=provenance,mode=max --sbom=true .
-              mkdir ${PWD}/${i}
-              docker run --rm -u $(id -u):$(id -g) -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
-              test -f ${PWD}/${i}/fortify/tools/bin/scancentral
-            done
-            
-        - name: Docker Login
-          if: needs.build.outputs.do_release
-          uses: docker/login-action@v3
-          with:
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
+      # Previously we had a workflow_run trigger on functional-tests.yaml, but:
+      #  - This approach allows for starting functional tests a bit earlier (no need to wait for Docker builds)
+      #  - The workflow_run trigger executes the workflow file from the default branch, whereas this approach
+      #    allows for running the workflow file from the same branch as the ci workflow.
+      - name: Check-out source code
+        uses: actions/checkout@v4
+      - run: | 
+          gh workflow run functional-tests.yml --ref ${GITHUB_REF} -f runId=${GITHUB_RUN_ID}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-        - name: DEV - Tag Linux images
-          if: needs.build.outputs.do_dev_release
-          shell: bash
-          run: |
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.release_tag}}
-        
-        - name: PROD - Tag Linux images
-          if: needs.build.outputs.do_prod_release
-          shell: bash
-          run: |
-            docker tag fcli-scratch fortifydocker/fcli:latest
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.version_major}}
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
-            docker tag fcli-scratch fortifydocker/fcli:${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}.${{needs.build.outputs.version_patch}}
-        
-        # TODO Should we sign the images as well?
-        - name: Publish Linux Docker images
-          if: needs.build.outputs.do_release
-          shell: bash 
-          run: | 
-            docker push --all-tags fortifydocker/fcli
-  
-  # For now, we only publish fcli-scratch Linux image, but we do build the Windows images just for testing
-  docker-win:
-    needs: [build, native_win]
-    runs-on: windows-2022
-    env:
-      DOCKER_SRC: fcli-other/fcli-docker/windows
-    steps:
-        - name: Check-out source code
-          uses: actions/checkout@v4
-                
-        - name: Download artifacts
-          uses: actions/download-artifact@v4
-          with:
-            path: ./artifacts
-            name: fcli-windows
-    
-        - name: Build & test Windows images
-          shell: bash
-          run: |
-            unzip ./artifacts/release-assets/fcli-windows.zip -d ${DOCKER_SRC}
-            cd ${DOCKER_SRC}
-            for i in ltsc2022
-            do
-              docker build . --target fcli-${i} -t fcli-${i}
-              # Following doesn't work yet, hence the echo statements instead of actually running these.
-              # Likely, we need to pass Windows-style paths to volume mappings in docker run command 
-              mkdir ${PWD}/${i}
-              echo docker run --rm -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
-              echo test -f ${PWD}/${i}/fortify/tools/bin/scancentral
-            done
-        
-        - name: DEV - Tag Windows images
-          if: needs.build.outputs.do_dev_release
-          shell: bash
-          run: |
-            docker tag fcli-ltsc2022 fortifydocker/fcli:${{needs.build.outputs.release_tag}}
-                  
-        - name: PROD - Tag Windows images
-          if: needs.build.outputs.do_prod_release
-          shell: bash
-          run: |
-            docker tag fcli-ltsc2022 fortifydocker/fcli:ltsc2022-latest
-            docker tag fcli-ltsc2022 fortifydocker/fcli:ltsc2022-${{needs.build.outputs.version_major}}
-            docker tag fcli-ltsc2022 fortifydocker/fcli:ltsc2022-${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
-            docker tag fcli-ltsc2022 fortifydocker/fcli:ltsc2022-${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}.${{needs.build.outputs.version_patch}}
-        
-        #- name: Docker Login
-        #  if: needs.build.outputs.do_release
-        #  uses: docker/login-action@v3
-        #  with:
-        #    username: ${{ secrets.DOCKER_USERNAME }}
-        #    password: ${{ secrets.DOCKER_PASSWORD }}
-        # TODO Should we sign the images as well?
-        #- name: Publish Linux Docker images
-        #  if: needs.build.outputs.do_release
-        #  shell: bash 
-        #  run: | 
-        #    docker push --all-tags fortifydocker/fcli
-  
   release:
     name: release
     if: needs.build.outputs.do_release
@@ -407,12 +298,12 @@ jobs:
           name: combined-artifacts
           
       - name: PROD - Prepare release PR
-        if: github.ref == 'refs/heads/v2.x'
+        if: contains(github.ref, 'refs/heads/rel/')
         uses: googleapis/release-please-action@v4
         with:
           skip-github-release: true
+          target-branch: ${{ github.ref_name }}
           release-type: simple
-          target-branch: v2.x
           
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
@@ -430,6 +321,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
           
+      - name: Publish v{major}.{minor} tag
+        if: needs.build.outputs.do_prod_release
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: v${{steps.release_please.outputs.major}}.${{steps.release_please.outputs.minor}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+                    
+      - name: Publish v{major} tag
+        if: needs.build.outputs.do_prod_release
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: v${{steps.release_please.outputs.major}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # TODO If we publish a feature/patch for an older major version,
+      #      for example from the rel/v2.x branch,
+      #      this may cause the older major version to be tagged as 'latest'
+      - name: Publish latest tag
+        if: needs.build.outputs.do_prod_release
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Upload assets to release
         if: needs.build.outputs.do_release
         run: |
@@ -437,6 +354,18 @@ jobs:
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+  docker:
+    name: Trigger Docker builds
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check-out source code
+        uses: actions/checkout@v4
+      - run: | 
+          gh workflow run docker.yml --ref ${GITHUB_REF} -f "releaseTag=${{ needs.build.outputs.release_tag }}" -f doPublish=${{ needs.build.outputs.do_release }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
      
   publishPages:
     name: publishPages

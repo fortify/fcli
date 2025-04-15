@@ -16,8 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -52,7 +53,7 @@ public final class SSCIssueFilterSetHelper {
         SSCIssueFilterSetDescriptor descriptor = descriptorsByGuid.get(filterSetTitleOrId);
         descriptor = descriptor!=null ? descriptor : descriptorsByTitle.get(filterSetTitleOrId);
         if ( failIfNotFound && descriptor==null ) {
-            throw new IllegalArgumentException("No filter set found with title or id "+filterSetTitleOrId);
+            throw new FcliSimpleException("No filter set found with title or id "+filterSetTitleOrId);
         }
         return descriptor;
     }

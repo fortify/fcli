@@ -7,14 +7,9 @@ on:
         description: 'Required "Build and release"" workflow run id (see id in browser URL for selected run) from which to get artifacts to be tested'
         required: true
         type: number
-  workflow_run:
-    workflows: [Build and release]
-    types: [completed]
-        
 
 jobs:
   ft-core:
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -31,14 +26,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-      - name: Get artifacts from triggering workflow
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ github.event.workflow_run.id }}
-          name: combined-artifacts
-          path: ./artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
@@ -89,7 +76,6 @@ jobs:
           path: test-*.log
           
   ft-product:
-    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -105,14 +91,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
-      - name: Get artifacts from triggering workflow
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ github.event.workflow_run.id }}
-          name: combined-artifacts
-          path: ./artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
@@ -133,10 +111,7 @@ jobs:
           # require an SSC session.
           java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$type \
             -Dft.fod.url=$fod_url -Dft.fod.tenant=$fod_tenant -Dft.fod.user=$fod_user -Dft.fod.password=$fod_pwd \
-            -Dft.ssc.url=$ssc_url -Dft.ssc.user=$ssc_user -Dft.ssc.password=$ssc_pwd \
-            -Dft.sc-sast.ssc-url=$ssc_url -Dft.sc-sast.ssc-user=$ssc_user -Dft.sc-sast.ssc-password=$ssc_pwd \
-            -Dft.sc-dast.ssc-url=$ssc_url -Dft.sc-dast.ssc-user=$ssc_user -Dft.sc-dast.ssc-password=$ssc_pwd \
-            -Dft.sc-sast.client-auth-token=$scsast_token
+            -Dft.ssc.url=$ssc_url -Dft.ssc.user=$ssc_user -Dft.ssc.password=$ssc_pwd -Dft.ssc.client-auth-token=$scsast_token
         env:
           type: ${{ matrix.type }}
           fod_url: ${{ secrets.FCLI_FT_FOD_URL }}

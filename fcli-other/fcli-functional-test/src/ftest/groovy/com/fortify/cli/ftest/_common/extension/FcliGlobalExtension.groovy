@@ -66,9 +66,10 @@ public class FcliGlobalExtension implements IGlobalExtension {
         // TODO Add support for skipping features based on tag include/exclude
         //      expressions
         def run = Input.TestsToRun.get()?.split(",")
-        if (run) {
+        def requiresSession = spec.getAnnotation(FcliSession.class)!=null 
+        if (run || requiresSession ) {
             spec.allFeatures.each({ feature ->
-                if ( !run.any {feature.name.startsWith(it) && !feature.skipped } ) {
+                if ( (requiresSession && !run) || !run.any {feature.name.startsWith(it) && !feature.skipped } ) {
                     feature.skip "Not included in "+Input.TestsToRun.propertyName()+" property"
                 }
             })
@@ -99,13 +100,7 @@ public class FcliGlobalExtension implements IGlobalExtension {
             annotation.value().each {
                 def handler = it.handler
                 if ( !elt.excluded && !elt.skipped ) {
-                    if (handler.isEnabled() ) {
-                        if ( !handler.login() ) {
-                            elt.skip "Skipped due to "+handler.friendlyName()+" login failure"
-                        }
-                    } else {
-                        elt.skip "No "+handler.friendlyName()+ " session available";
-                    }
+                    handler.login()
                 }
             }
         }

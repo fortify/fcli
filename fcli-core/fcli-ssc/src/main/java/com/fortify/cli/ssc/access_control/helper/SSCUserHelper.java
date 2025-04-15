@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.access_control.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.access_control.helper.SSCUserSpecPredicate.MatchMode;
 
 import kong.unirest.UnirestInstance;

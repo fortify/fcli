@@ -14,6 +14,8 @@ package com.fortify.cli.common.util;
 
 import java.util.function.Supplier;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
+
 public final class EnvHelper {
     private static final String PFX = "FCLI";
     private EnvHelper() {}
@@ -24,7 +26,7 @@ public final class EnvHelper {
     
     public static final void checkSecondaryWithoutPrimary(String secondaryEnvName, String primaryEnvName) {
         if ( env(primaryEnvName)==null && env(secondaryEnvName)!=null ) {
-            throw new IllegalStateException("Environment variable "+secondaryEnvName+" requires "+primaryEnvName+" to be set as well");
+            throw new FcliSimpleException("Environment variable "+secondaryEnvName+" requires "+primaryEnvName+" to be set as well");
         }
     }
     
@@ -35,7 +37,7 @@ public final class EnvHelper {
     
     public static final void checkExclusive(String envName1, String envName2) {
         if ( env(envName1)!=null && env(envName2)!=null ) {
-            throw new IllegalStateException("Only one of "+envName1+" and "+envName2+" environment variables may be configured");
+            throw new FcliSimpleException("Only one of "+envName1+" and "+envName2+" environment variables may be configured");
         }
     }
     
@@ -60,6 +62,18 @@ public final class EnvHelper {
     public static final String envOrDefault(String name, Supplier<String> defaultSupplier) {
         var value = env(name);
         return StringUtils.isNotBlank(value) ? value : defaultSupplier.get();    
+    }
+    
+    public static final String envOrDefault(String name, String defaultValue) {
+        return envOrDefault(name, ()->defaultValue);    
+    }
+    
+    public static final String requiredEnv(String name, String message) {
+        return envOrDefault(name, ()->{throw new FcliSimpleException(message);});
+    }
+    
+    public static final String requiredEnv(String name) {
+        return requiredEnv(name, String.format("Required environment variable %s not defined", name));
     }
     
     /**

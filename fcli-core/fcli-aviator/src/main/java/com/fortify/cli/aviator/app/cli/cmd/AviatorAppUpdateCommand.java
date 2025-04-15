@@ -1,0 +1,71 @@
+package com.fortify.cli.aviator.app.cli.cmd;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.aviator.application.Application;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
+import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
+import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
+@Command(name = OutputHelperMixins.Update.CMD_NAME)
+public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand {
+    @Getter @Mixin private OutputHelperMixins.Update outputHelper;
+    @Parameters(index = "0", description = "Application ID") private String applicationId;
+    @Option(names = {"-n", "--name"}, required = true) private String newName;
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorAppUpdateCommand.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+    @Override
+    protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) throws AviatorSimpleException, AviatorTechnicalException {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
+            String[] messageAndSignature = createMessageAndSignature(configDescriptor);
+            Application updatedApplication = updateApplication(client, configDescriptor, messageAndSignature);
+            JsonNode response = processUpdateApplicationResponse(AviatorGrpcUtils.grpcToJsonNode(updatedApplication));
+            LOG.info("Application '{}' updated to name '{}' for tenant: {}", applicationId, newName, configDescriptor.getTenant());
+            return response;
+        }
+    }
+
+    private String[] createMessageAndSignature(AviatorAdminConfigDescriptor configDescriptor) {
+        return AviatorSignatureUtils.createMessageAndSignature(configDescriptor, configDescriptor.getTenant(), applicationId, newName);
+    }
+
+    private JsonNode processUpdateApplicationResponse(JsonNode jsonNode) {
+        if (jsonNode instanceof ObjectNode && jsonNode.has("updated_at")) {
+            ObjectNode objectNode = (ObjectNode) jsonNode;
+            String updatedAtStr = objectNode.get("updated_at").asText();
+            Instant instant = Instant.parse(updatedAtStr);
+            String formattedDate = DATE_FORMATTER.format(instant.atZone(ZoneId.of("UTC")));
+            objectNode.put("updated_at", formattedDate);
+        }
+        return jsonNode;
+    }
+
+    private Application updateApplication(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
+        String message = messageAndSignature[0];
+        String signature = messageAndSignature[1];
+        return client.updateApplication(applicationId, newName, signature, message, configDescriptor.getTenant());
+    }
+
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+}

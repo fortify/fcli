@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -10,17 +10,19 @@ usage:
     custom action, for example if they need more granuality than what's provided
     by the standard FoD Security Policy.
 
-defaults:
-  requestTarget: fod
-  
-parameters:
-  - name: release
-    cliAliases: rel
+config:
+  rest.target.default: fod
+      
+cli.options:
+  release:
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
   
 steps:
+  - var.set:
+      rel: ${#fod.release(cli.release)}
   - check:
-    - displayName: FoD Security Policy must Pass
-      passIf:      ${parameters.release.isPassed}
+      fodSecurityPolicy:
+        display-name: FoD Security Policy must Pass
+        pass.if:      ${rel.isPassed}
       

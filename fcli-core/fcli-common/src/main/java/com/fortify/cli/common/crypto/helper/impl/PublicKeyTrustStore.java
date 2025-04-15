@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeySource;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class PublicKeyTrustStore {
@@ -41,7 +42,7 @@ public final class PublicKeyTrustStore {
                     .findFirst()
                     .orElseGet(()->{
                         if ( !failIfNotFound ) { return null; }
-                        throw new IllegalArgumentException("No public key found with name or fingerprint "+nameOrFingerprint);
+                        throw new FcliSimpleException("No public key found with name or fingerprint "+nameOrFingerprint);
                     });
         }
         return result==null ? null : result.toBuilder().source(PublicKeySource.TRUSTSTORE).build();

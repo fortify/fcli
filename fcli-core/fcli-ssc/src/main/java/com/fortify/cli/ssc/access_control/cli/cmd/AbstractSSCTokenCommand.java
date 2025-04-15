@@ -19,7 +19,7 @@ import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
+import com.fortify.cli.ssc._common.rest.ssc.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.access_control.cli.mixin.SSCTokenCommandUrlConfigMixin;
 
 import picocli.CommandLine.Mixin;

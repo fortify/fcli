@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
@@ -107,7 +108,7 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
                     ).filter(n -> n.getName().equals(mobileAssessmentType))
                     .findFirst();
             if (atd.isEmpty()) {
-                throw new IllegalArgumentException("Cannot find appropriate assessment type for specified options.");
+                throw new FcliSimpleException("Cannot find appropriate assessment type for specified options.");
             }
             assessmentTypeId = atd.get().getAssessmentTypeId();
             entitlementIdToUse = atd.get().getEntitlementId();
@@ -116,7 +117,7 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
             if (entitlementId != null && entitlementId > 0) {
                 // check if "entitlement id" explicitly matches what has been found
                 if (!Objects.equals(entitlementIdToUse, entitlementId)) {
-                    throw new IllegalArgumentException("Cannot find appropriate assessment type with entitlement: " + entitlementId);
+                    throw new FcliSimpleException("Cannot find appropriate assessment type with entitlement: " + entitlementId);
                 }
             } else {
                 // NOTE: there is currently no GET method for retrieving scan setup so the following cannot be used:

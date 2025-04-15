@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.app.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.GetRequest;
@@ -34,9 +35,9 @@ public class SSCAppHelper {
         }
         JsonNode apps = request.asObject(ObjectNode.class).getBody().get("data");
         if ( failIfNotFound && apps.size()==0 ) {
-            throw new IllegalArgumentException("No application found for application name or id: "+appNameOrId);
+            throw new FcliSimpleException("No application found for application name or id: "+appNameOrId);
         } else if ( apps.size()>1 ) {
-            throw new IllegalArgumentException("Multiple applications found for application name or id: "+appNameOrId);
+            throw new FcliSimpleException("Multiple applications found for application name or id: "+appNameOrId);
         }
         return apps.size()==0 ? null : JsonHelper.treeToValue(apps.get(0), SSCAppDescriptor.class);
     }

@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Generate ServiceNow CSV report
+  description: |
+    This action generates a CSV report that can be imported into the ServiceNow
+    Vulnerability Response module; please see the following link for details:
+    https://www.servicenow.com/docs/bundle/xanadu-security-management/page/product/vulnerability-response/reference/manual-ingestion-template.html
+    The CSV report includes all SAST, DAST, and 3rd-party issues available in 
+    the given SSC application version and filter set.
+
+config:
+  rest.target.default: ssc
+  
+cli.options:
+  file:
+    names: --file, -f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: servicenow-fortify.csv"
+    default: servicenow-fortify.csv
+  appversion:
+    names: --appversion,--av
+    description: "Required application version id or <appName>:<versionName>"
+  filterset:
+    names: --filterset, --fs
+    description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+    required: false
+  friority:
+    names: --priority
+    description: "Comma-separated priority levels to include in the output; defaults to Critical,High"
+    default: Critical,High
+    type: array
+  
+steps:
+  - var.set:
+      av: ${#ssc.appVersion(cli.appversion)}
+      fs: ${#ssc.filterSet(av, cli.filterset)}
+      issueListQuery: friority matches '${#join('|',cli.friority)}'
+  - with:
+      writers:
+        snWriter:
+          to: ${cli.file}
+          type: csv
+      do:
+        - run.fcli:
+            issues:
+              cmd: ssc issue ls --av=${av.id} --embed=details --include=visible,suppressed,removed -q "${issueListQuery}"
+              records.for-each:
+                record.var-name: issue
+                do:
+                  - var.set:
+                      issue.analysisType: ${{'SCA':'SAST','SECURITYSCOPE':'SAST','WEBINSPECT':'DAST','SONATYPE':'SCA','DEBRICKED':'SCA','CYCLONEDX':'SCA'}.get(issue.engineType)?:'OTHER'}
+                      sn: {fmt: sn}
+                  - writer.append:
+                      snWriter: {fmt: csvRow}
+                  - log.progress: Processed ${snWriter.count} issues
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
+                      
+formatters:
+  sn:
+    id: ${issue.analysisType+'/'+av.id+'/'+issue.issueInstanceId}
+    fqdn: ${#ssc.issueBrowserUrl(issue,fs)}
+    summary: ${issue.issueName}
+    severity: ${issue.friority}
+    proof: "${'Location: '+issue.fullFileName?.replaceAll('[^\\w\\s/\\-_.]','*')+'\n'+#htmlToText(issue.details?.brief?.trim()?:'')}"
+    state: "${issue.removed||issue.suppressed||issue.primaryTag=='Not an Issue'?'fixed':'open'}"
+  csvRow:
+    asset_id: ${#abbreviate(sn.id,255)}
+    mac_address: ""
+    fqdn: ${#abbreviate(sn.fqdn,255)}
+    netbios: ""
+    ip_address: ""
+    hostname: ""
+    vulnerability_id: ${#abbreviate(sn.id,255)}
+    vulnerability_summary: ${#abbreviate(sn.summary,512)}
+    severity: ${sn.severity}
+    port: ""
+    protocol: ""
+    proof: ${#abbreviate(sn.proof,4000)}
+    state: ${sn.state}  
+        

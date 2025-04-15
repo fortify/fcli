@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest.config;
 
+import com.fortify.cli.common.exception.FcliTechnicalException;
+
 import kong.unirest.UnirestInstance;
 
 public final class UnirestUrlConfigConfigurer {
@@ -20,9 +22,10 @@ public final class UnirestUrlConfigConfigurer {
      * @param unirestInstance {@link UnirestInstance} to be configured
      * @param urlConfig used to configure the {@link UnirestInstance}
      */
+    // TODO Should we use FcliTechnicalException or FcliBugException?
     public static final void configure(UnirestInstance unirestInstance, IUrlConfig urlConfig) {
-        if ( unirestInstance==null ) { throw new IllegalArgumentException("Unirest instance may not be null"); }
-        if ( urlConfig==null ) { throw new IllegalArgumentException("URL configuration may not be null"); }
+        if ( unirestInstance==null ) { throw new FcliTechnicalException("Unirest instance may not be null"); }
+        if ( urlConfig==null ) { throw new FcliTechnicalException("URL configuration may not be null"); }
         unirestInstance.config()
             .defaultBaseUrl(normalizeUrl(urlConfig.getUrl()))
             .verifySsl(!urlConfig.isInsecureModeEnabled())
@@ -36,8 +39,9 @@ public final class UnirestUrlConfigConfigurer {
      * @param unirestInstance {@link UnirestInstance} to be configured
      * @param urlConfigSupplier used to configure the {@link UnirestInstance}
      */
+    // TODO Should we use FcliTechnicalException or FcliBugException?
     public static final void configure(UnirestInstance unirestInstance, IUrlConfigSupplier urlConfigSupplier) {
-        if ( urlConfigSupplier==null ) { throw new IllegalArgumentException("URL configuration provider may not be null"); }
+        if ( urlConfigSupplier==null ) { throw new FcliTechnicalException("URL configuration provider may not be null"); }
         configure(unirestInstance, urlConfigSupplier.getUrlConfig());
     }
     

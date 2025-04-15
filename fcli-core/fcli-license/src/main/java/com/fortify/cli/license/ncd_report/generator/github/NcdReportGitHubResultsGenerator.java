@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.github.GitHubPagingHelper;
 import com.fortify.cli.common.util.StringUtils;
@@ -213,7 +214,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
             //      any input
             String token = JsonHelper.evaluateSpelExpression(null, tokenExpression, String.class);
             if ( StringUtils.isBlank(token) ) {
-                throw new IllegalStateException("No token found from expression: "+tokenExpression);
+                throw new FcliSimpleException("No token found from expression: "+tokenExpression);
             } else {
                 unirest.config().setDefaultHeader("Authorization", "Bearer "+token);
             }

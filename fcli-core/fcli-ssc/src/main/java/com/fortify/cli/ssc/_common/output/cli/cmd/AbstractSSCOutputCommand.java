@@ -15,8 +15,8 @@ package com.fortify.cli.ssc._common.output.cli.cmd;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.ssc._common.rest.helper.SSCProductHelper;
-import com.fortify.cli.ssc._common.session.cli.mixin.SSCUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.ssc.cli.mixin.SSCUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.ssc.helper.SSCProductHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

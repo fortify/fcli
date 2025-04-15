@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -27,101 +27,115 @@ usage:
     for example a --profile option to select between different profiles that each define 
     appropriate option values and setup commands to run.
 
-defaults:
-  requestTarget: fod
+config:
+  rest.target.default: fod
+  output: immediate
+
   
-parameters:
-  - name: release
-    cliAliases: rel
+cli.options:
+  release:
+    names: --release, --rel
     required: true
     description: "Required release name as <application>[:<microservice>]:<release>"
-  - name: scan-types
-    cliAliases: t
+  scan-types:
+    names: --scan-types, -t
     required: false
     type: array
     description: "Optional comma-separated list of scan type(s) to set up; for now, only 'sast' is supported"  
-  - group: rel_create_opts
-    name: attributes
+  attributes:
+    group: rel_create_opts  
     required: false
-    cliAliases: attrs
-    description: "Optional comma-separated list of attributes to set on the application and/or release"   
-  - group: rel_create_opts
+    names: --attributes, --attrs
+    description: "Optional comma-separated list of attributes to set on the application and/or release"
+  copy-from:   
+    names: --copy-from
+    group: rel_create_opts
     required: false
-    name: copy-from
     description: "See `fcli fod release create`"
-  - group: rel_create_opts
+  description:
+    group: rel_create_opts
     required: false
-    name: description
-    cliAliases: d
+    names: --description, -d
     description: "See `fcli fod release create`"
-  - group: rel_create_opts
+  sdlc-status:
+    group: rel_create_opts
     required: true
-    name: sdlc-status
-    cliAliases: status
+    names: --sdlc-status, --status
     description: "See `fcli fod release create`. Default value: Development"
-    defaultValue: Development
-  - group: rel_create_opts
+    default: Development
+  app-description:
+    group: rel_create_opts
     required: false
-    name: app-description
+    names: --app-description
     description: "See `fcli fod release create`"
-  - group: rel_create_opts
+  app-notify:  
+    group: rel_create_opts
     required: false
-    name: app-notify
+    names: --app-notify
     description: "See `fcli fod release create`"
-  - group: rel_create_opts
+  app-owner:
+    group: rel_create_opts
     required: false
-    name: app-owner
+    names: --app-owner
     description: "See `fcli fod release create`"
-  - group: rel_create_opts
+  app-groups:
+    group: rel_create_opts
     required: false
-    name: app-groups
+    names: --app-groups
     description: "See `fcli fod release create`"
-  - group: rel_create_opts
+  app-type:
+    group: rel_create_opts
     required: false
-    name: app-type
+    names: --app-type
     description: "See `fcli fod release create`. Default value: Web"
-    defaultValue: Web
-  - group: rel_create_opts
+    default: Web
+  app-criticality:
+    group: rel_create_opts
     required: false
-    name: app-criticality
+    names: --app-criticality
     description: "See `fcli fod release create`. Default value: Medium"
-    defaultValue: Medium
-  - group: sast_setup_opts
-    name: assessment-type
+    default: Medium
+  assessment-type:
+    group: sast_setup_opts
     required: false
-    defaultValue: "Static Assessment"
-    description: "See `fcli fod sast-scan setup`"  
-  - group: sast_setup_opts
-    required: false
-    name: use-aviator
+    names: --assessment-type
+    default: "Static Assessment"
     description: "See `fcli fod sast-scan setup`"
-    type: boolean      
-  - group: sast_setup_opts
+  use-aviator:      
+    group: sast_setup_opts
     required: false
-    name: oss
+    names: --use-aviator
+    description: "See `fcli fod sast-scan setup`"
+    type: boolean  
+  oss:    
+    group: sast_setup_opts
+    required: false
+    names: --oss
     description: "See `fcli fod sast-scan setup`" 
     type: boolean  
+  technology-stack:      
+    group: sast_setup_opts
+    required: false
+    names: --technology-stack
+    description: "See `fcli fod sast-scan setup`"
+  language-level:    
+    group: sast_setup_opts
+    required: false
+    names: --language-level
+    description: "See `fcli fod sast-scan setup`" 
   
 steps:
-  - progress: "Creating FoD application & release if non-existing" 
-  - fcli:
-    - name: createRelease
-      args: fod release create "${parameters.release}" --skip-if-exists --auto-required-attrs ${#action.copyParametersFromGroup("rel_create_opts")}
-  - write:
-      - to: stdout
-        value: |
-          Create application release ${parameters.release} (id ${createRelease[0].releaseId}): ${createRelease[0].__action__.replaceAll('\n', ', ')}
-  - progress: "Waiting for release to leave suspended state"
-  - fcli:
-    - args: fod release wait-for "${parameters.release}" --progress=none
-  - if: ${parameters["scan-types"].contains("sast")}
+  - log.progress: "Creating FoD application & release if non-existing" 
+  - run.fcli:
+      createRelease:
+        cmd: fod release create "${cli.release}" --skip-if-exists --auto-required-attrs ${#action.copyParametersFromGroup("rel_create_opts")}
+  - log.progress: "Waiting for release to leave suspended state"
+  - run.fcli:
+      waitForRelease:
+        cmd: fod release wait-for "${cli.release}" --progress=none
+  - if: ${cli["scan-types"].contains("sast")}
     steps:        
-      - progress: "Configuring FoD application release ${parameters.release} for SAST scanning"
-      - fcli:
-        - name: setupSast
-          args: fod sast-scan setup --rel "${parameters.release}" --skip-if-exists --frequency "Subscription" --audit-preference Automated ${#action.copyParametersFromGroup("sast_setup_opts")}
-      - write:
-        - to: stdout
-          value: |
-            SAST scan setup status: ${setupSast[0].__action__}
-      
+      - log.progress: "Configuring FoD application release ${rel} for SAST scanning"
+      - run.fcli:
+          setupSast:
+            cmd: fod sast-scan setup --rel "${cli.release}" --skip-if-exists --frequency "Subscription" --audit-preference Automated ${#action.copyParametersFromGroup("sast_setup_opts")}

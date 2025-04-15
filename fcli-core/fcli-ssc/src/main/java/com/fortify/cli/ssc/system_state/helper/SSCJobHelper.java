@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.common.rest.wait.WaitType;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;

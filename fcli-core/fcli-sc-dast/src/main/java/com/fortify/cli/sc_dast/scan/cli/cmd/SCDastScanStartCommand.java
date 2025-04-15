@@ -18,6 +18,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -86,7 +87,7 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
             try {
                 overridesJson = objectMapper.readValue(overridesFile, ObjectNode.class);
             } catch (IOException e) {
-                throw new IllegalArgumentException("Unable to read "+overridesFile+" as valid JSON", e);
+                throw new FcliSimpleException("Unable to read "+overridesFile+" as valid JSON", e);
             }
         }
         if ( scanMode!=null ) { overridesJson.put("scanMode", scanMode.name()); }

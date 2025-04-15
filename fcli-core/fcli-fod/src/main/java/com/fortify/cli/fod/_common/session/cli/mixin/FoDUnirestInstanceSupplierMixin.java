@@ -15,10 +15,12 @@ package com.fortify.cli.fod._common.session.cli.mixin;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
+import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
-import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSupplierMixin;
+import com.fortify.cli.common.session.cli.mixin.AbstractSessionDescriptorSupplierMixin;
 import com.fortify.cli.fod._common.rest.helper.FoDRetryStrategy;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
@@ -26,15 +28,31 @@ import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
 import kong.unirest.Config;
 import kong.unirest.UnirestInstance;
 import kong.unirest.apache.ApacheClient;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 
-public final class FoDUnirestInstanceSupplierMixin extends AbstractSessionUnirestInstanceSupplierMixin<FoDSessionDescriptor>
+public final class FoDUnirestInstanceSupplierMixin extends AbstractSessionDescriptorSupplierMixin<FoDSessionDescriptor> implements IUnirestInstanceSupplier
 {   
+    @Getter @ArgGroup(headingKey = "fod.session.name.arggroup") 
+    private FoDSessionNameArgGroup sessionNameSupplier;
+    
     @Override
     protected final FoDSessionDescriptor getSessionDescriptor(String sessionName) {
         return FoDSessionHelper.instance().get(sessionName, true);
     }
-
+    
     @Override
+    public UnirestInstance getUnirestInstance() {
+        FoDSessionDescriptor sessionDescriptor = getSessionDescriptor();
+        String key = "fod/"+getSessionName();
+        return GenericUnirestFactory.getUnirestInstance(key, 
+                u->configure(u, sessionDescriptor));
+    }
+    
+    public static final void shutdownUnirestInstance(String sessionName) {
+        GenericUnirestFactory.shutdown("fod/"+sessionName);
+    }
+
     protected final void configure(UnirestInstance unirest, FoDSessionDescriptor sessionDescriptor) {
         // Ideally, we should be able to use unirest::config::retryAfter to handle FoD rate limits,
         // but this is not possible for various reasons (see https://github.com/Kong/unirest-java/issues/491).

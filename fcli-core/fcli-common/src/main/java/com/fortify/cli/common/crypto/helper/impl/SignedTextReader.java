@@ -23,6 +23,7 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FileUtils;
 
 import lombok.SneakyThrows;
@@ -63,7 +64,7 @@ public final class SignedTextReader {
     public final SignedTextDescriptor load(String signedOrUnsignedText, boolean evaluateSignature, String... extraPublicKeys) {
         var elts = signedOrUnsignedText.split(String.valueOf(InternalSignatureUtil.FILE_SEPARATOR));
         if ( elts.length>2 ) {
-            throw new IllegalStateException("Input may contain only single Unicode File Separator character");
+            throw new FcliSimpleException("Input may contain only single Unicode File Separator character");
         } else if ( elts.length==1) {
             return buildUnsignedDescriptor(elts[0]);
         } else {

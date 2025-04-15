@@ -12,12 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.writer.output.standard;
 
-import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 
 import lombok.Data;
 
 @Data
 public final class OutputFormatConfig {
-    private final OutputFormat outputFormat;
-    private final String options;
+    private final RecordWriterFactory recordWriterFactory;
+    private final String recordWriterArgs;
 }

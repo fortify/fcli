@@ -13,6 +13,7 @@
 package com.fortify.cli.common.progress.cli.mixin;
 
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterFactory;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
@@ -21,23 +22,20 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-public class ProgressWriterFactoryMixin {
+public class ProgressWriterFactoryMixin implements IProgressWriterFactory {
     @Mixin private CommandHelperMixin commandHelper;
     @Getter @Option(names="--progress", defaultValue = "auto") 
     private ProgressWriterType type;
     
+    /** Create a progress writer for the configured type */
+    @Override
     public final IProgressWriterI18n create() {
         return create(this.type);
     }
-    
-    public final IProgressWriterI18n overrideAutoIfNoConsole(ProgressWriterType overrideType) {
-        var newType = System.console()==null && type==ProgressWriterType.auto
-                ? overrideType
-                : this.type;
-        return create(newType);
-    }
 
-    private IProgressWriterI18n create(ProgressWriterType progressWriterType) {
+    /** Create a progress writer for the given type, ignoring the configured type */
+    @Override
+    public final IProgressWriterI18n create(ProgressWriterType progressWriterType) {
         return new ProgressWriterI18n(progressWriterType, commandHelper.getMessageResolver());
     }
 }

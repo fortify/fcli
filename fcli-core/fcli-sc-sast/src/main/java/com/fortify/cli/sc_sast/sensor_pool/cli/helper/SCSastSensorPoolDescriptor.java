@@ -12,15 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast.sensor_pool.cli.helper;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.Map;
 
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)

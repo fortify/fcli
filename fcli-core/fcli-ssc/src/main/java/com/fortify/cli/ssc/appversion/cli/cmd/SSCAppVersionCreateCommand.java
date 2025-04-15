@@ -25,14 +25,15 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
 import com.fortify.cli.ssc.access_control.cli.mixin.SSCAppVersionUserMixin;
 import com.fortify.cli.ssc.access_control.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
@@ -198,7 +199,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         }
         var issueTemplateDescriptor = new SSCIssueTemplateHelper(unirest).getIssueTemplateDescriptorOrDefault(issueTemplateNameOrId);
         if ( issueTemplateDescriptor==null ) {
-            throw new IllegalArgumentException("--issue-template is required, as no default template is configured on SSC");
+            throw new FcliSimpleException("--issue-template is required, as no default template is configured on SSC");
         }
         return issueTemplateDescriptor.getId();
     }

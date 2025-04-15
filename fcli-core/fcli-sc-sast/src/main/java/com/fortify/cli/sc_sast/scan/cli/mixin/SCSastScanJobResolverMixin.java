@@ -18,9 +18,9 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
-import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
-import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
-import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
+import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobDescriptor;
+import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobHelper;
+import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobHelper.StatusEndpointVersion;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -30,11 +30,11 @@ public class SCSastScanJobResolverMixin {
     public static abstract class AbstractSCSastScanJobResolverMixin {
         protected abstract String getScanJobToken();
         
-        public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
-            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, getScanJobToken(), minStatusEndpointVersion);
+        public SCSastScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
+            return SCSastScanJobHelper.getScanJobDescriptor(unirest, getScanJobToken(), minStatusEndpointVersion);
         }
 
-        public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest) {
+        public SCSastScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest) {
             return getScanJobDescriptor(unirest, null);
         }
     }
@@ -42,16 +42,16 @@ public class SCSastScanJobResolverMixin {
     public static abstract class AbstractSCSastMultiScanJobResolverMixin {
         protected abstract String[] getScanJobTokens();
         
-        public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
-            return Stream.of(getScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, id, minStatusEndpointVersion)).toArray(SCSastControllerScanJobDescriptor[]::new);
+        public SCSastScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
+            return Stream.of(getScanJobTokens()).map(id->SCSastScanJobHelper.getScanJobDescriptor(unirest, id, minStatusEndpointVersion)).toArray(SCSastScanJobDescriptor[]::new);
         }
 
-        public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest) {
+        public SCSastScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest) {
             return getScanJobDescriptors(unirest, null);
         }
         
         public Collection<JsonNode> getScanJobDescriptorJsonNodes(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion){
-            return Stream.of(getScanJobDescriptors(unirest, minStatusEndpointVersion)).map(SCSastControllerScanJobDescriptor::asJsonNode).collect(Collectors.toList());
+            return Stream.of(getScanJobDescriptors(unirest, minStatusEndpointVersion)).map(SCSastScanJobDescriptor::asJsonNode).collect(Collectors.toList());
         }
         
         public Collection<JsonNode> getScanJobDescriptorJsonNodes(UnirestInstance unirest){

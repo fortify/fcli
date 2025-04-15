@@ -13,11 +13,13 @@
 package com.fortify.cli.app._main.cli.cmd;
 
 import com.fortify.cli.app.FortifyCLIVersionProvider;
+import com.fortify.cli.aviator._main.cli.cmd.AviatorCommands;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
 import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
+import com.fortify.cli.generic_action._main.cli.cmd.GenericActionCommands;
 import com.fortify.cli.license._main.cli.cmd.LicenseCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;
@@ -43,6 +45,8 @@ import picocli.CommandLine.ScopeType;
     resourceBundle = "com.fortify.cli.common.i18n.FortifyCLIMessages",
     versionProvider = FortifyCLIVersionProvider.class,
     subcommands = {
+            GenericActionCommands.class,
+            AviatorCommands.class,
             ConfigCommands.class,
             FoDCommands.class,
             SCDastCommands.class,

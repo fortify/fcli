@@ -16,30 +16,36 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.common.session.helper.SessionLogoutException;
-import com.fortify.cli.ssc._common.session.cli.mixin.SSCSessionLogoutOptions;
-import com.fortify.cli.ssc._common.session.helper.SSCSessionDescriptor;
-import com.fortify.cli.ssc._common.session.helper.SSCSessionHelper;
+import com.fortify.cli.common.session.helper.FcliSessionLogoutException;
+import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLogoutOptions;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCSessionNameArgGroup;
+import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
+import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
-public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSessionDescriptor> {
+public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCAndScanCentralSessionDescriptor> {
     @Mixin @Getter private OutputHelperMixins.Logout outputHelper;
-    @Getter private SSCSessionHelper sessionHelper = SSCSessionHelper.instance();
-    @Mixin private SSCSessionLogoutOptions logoutOptions;
+    @Getter private SSCAndScanCentralSessionHelper sessionHelper = SSCAndScanCentralSessionHelper.instance();
+    @Mixin private SSCAndScanCentralSessionLogoutOptions logoutOptions;
+    @Getter @ArgGroup(headingKey = "ssc.session.name.arggroup") 
+    private SSCSessionNameArgGroup sessionNameSupplier;
     
     @Override
-    protected void logout(String sessionName, SSCSessionDescriptor sessionDescriptor) {
+    protected void logout(String sessionName, SSCAndScanCentralSessionDescriptor sessionDescriptor) {
+        SSCAndScanCentralUnirestInstanceSupplierMixin.shutdownUnirestInstance(sessionName);
         if ( !logoutOptions.isNoRevokeToken() ) {
             UserCredentialOptions userCredentialOptions = logoutOptions.getUserCredentialOptions();
             try {
                 sessionDescriptor.logout(userCredentialOptions);
             } catch ( UnexpectedHttpResponseException e ) {
                 if ( e.getStatus()==403 && userCredentialOptions==null ) {
-                    throw new SessionLogoutException("SSC user credentials or --no-revoke-token option must be specified on SSC versions 23.2 or below", false);
+                    throw new FcliSessionLogoutException("SSC user credentials or --no-revoke-token option must be specified on SSC versions 23.2 or below", false);
                 } else {
                     throw e;
                 }

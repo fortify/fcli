@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest.config;
 
+import com.fortify.cli.common.exception.FcliTechnicalException;
+
 import kong.unirest.UnirestInstance;
 
 public final class UnirestBasicAuthConfigurer {
@@ -21,9 +23,10 @@ public final class UnirestBasicAuthConfigurer {
      * @param unirestInstance {@link UnirestInstance} to be configured
      * @param userCredentialsConfig used to provide the basic authentication credentials {@link UnirestInstance}
      */
+    // TODO Should we use FcliTechnicalException or FcliBugException?
     public static final void configure(UnirestInstance unirestInstance, IUserCredentialsConfig userCredentialsConfig) {
-        if ( unirestInstance==null ) { throw new IllegalArgumentException("Unirest instance may not be null"); }
-        if ( userCredentialsConfig==null ) { throw new IllegalArgumentException("User credentials may not be null"); }
+        if ( unirestInstance==null ) { throw new FcliTechnicalException("Unirest instance may not be null"); }
+        if ( userCredentialsConfig==null ) { throw new FcliTechnicalException("User credentials may not be null"); }
         unirestInstance.config()
             .setDefaultBasicAuth(userCredentialsConfig.getUser(), new String(userCredentialsConfig.getPassword()));
     }

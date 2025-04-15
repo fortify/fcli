@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
                 ToolVulnExporterInstallCommand.class,
                 ToolVulnExporterListCommand.class,
                 ToolVulnExporterListPlatformsCommand.class,
+                ToolVulnExporterRunCommand.class,
                 ToolVulnExporterUninstallCommand.class
         }
 

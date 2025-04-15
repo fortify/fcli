@@ -14,11 +14,12 @@ package com.fortify.cli.ssc.access_control.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -65,7 +66,7 @@ public class SSCRolePermissionHelper {
         try{
             response = bulkRequest.execute(unirestInstance);
         }catch (UnexpectedHttpResponseException | NullPointerException e){
-            throw new IllegalArgumentException("Unable to find the specified role: " + rolePermissionNameOrId);
+            throw new FcliSimpleException("Unable to find the specified role: " + rolePermissionNameOrId);
         }
 
         JsonNode rolePermission = response.body("rolePermission").get("data");
@@ -77,11 +78,11 @@ public class SSCRolePermissionHelper {
 
         JsonNode rolePermissions = response.body("rolePermissions").get("data");
         if (rolePermissions == null){
-            throw new IllegalArgumentException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
+            throw new FcliSimpleException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
         } else if( rolePermissions.size()==0 ) {
-            throw new IllegalArgumentException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
+            throw new FcliSimpleException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
         } else if ( rolePermissions.size()>1 ) {
-            throw new IllegalArgumentException("Multiple role permissions found for the role permission name or id: " + rolePermissionNameOrId);
+            throw new FcliSimpleException("Multiple role permissions found for the role permission name or id: " + rolePermissionNameOrId);
         }
         return JsonHelper.treeToValue(rolePermissions.get(0), SSCRolePermissionDescriptor.class);
     }

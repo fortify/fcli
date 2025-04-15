@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
@@ -55,7 +56,7 @@ public class FoDAppHelper {
             result = FoDDataHelper.findUnique(request, String.format("applicationName:%s", appNameOrId));
         }
         if ( failIfNotFound && result==null ) {
-            throw new IllegalArgumentException("No application found for name or id: " + appNameOrId);
+            throw new FcliSimpleException("No application found for name or id: " + appNameOrId);
         }
         return getAppDescriptor(result);
     }

@@ -15,8 +15,8 @@ package com.fortify.cli.sc_dast._common.output.cli.cmd;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.sc_dast._common.rest.helper.SCDastProductHelper;
-import com.fortify.cli.sc_dast._common.session.cli.mixin.SCDastUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.sc_dast.cli.mixin.SCDastUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastProductHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -59,7 +60,7 @@ public class SSCPluginUninstallCommand extends AbstractSSCJsonNodeOutputCommand 
                 .asObject(JsonNode.class).getBody();
         if ("STARTED".equals(pluginData.get("data").get("pluginState").asText()) ) {
             if ( !autoDisable ) {
-                throw new IllegalStateException("Plugin cannot be deleted, as it is currently enabled, and --no-auto-disable has been specified");
+                throw new FcliSimpleException("Plugin cannot be deleted, as it is currently enabled, and --no-auto-disable has been specified");
             }
             SSCPluginStateHelper.disablePlugin(unirest, numericPluginId);
         }

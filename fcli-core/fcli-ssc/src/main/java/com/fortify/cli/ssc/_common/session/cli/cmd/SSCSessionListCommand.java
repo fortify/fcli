@@ -14,15 +14,15 @@ package com.fortify.cli.ssc._common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
-import com.fortify.cli.ssc._common.session.helper.SSCSessionDescriptor;
-import com.fortify.cli.ssc._common.session.helper.SSCSessionHelper;
+import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
+import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME, sortOptions = false)
-public class SSCSessionListCommand extends AbstractSessionListCommand<SSCSessionDescriptor> {
+public class SSCSessionListCommand extends AbstractSessionListCommand<SSCAndScanCentralSessionDescriptor> {
     @Mixin @Getter private OutputHelperMixins.List outputHelper;
-    @Getter private SSCSessionHelper sessionHelper = SSCSessionHelper.instance();
+    @Getter private SSCAndScanCentralSessionHelper sessionHelper = SSCAndScanCentralSessionHelper.instance();
 }

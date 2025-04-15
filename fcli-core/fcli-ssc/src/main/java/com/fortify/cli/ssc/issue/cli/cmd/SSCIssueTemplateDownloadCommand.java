@@ -20,8 +20,8 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper;
-import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
+import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
 

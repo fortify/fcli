@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
@@ -32,7 +33,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand impl
         } else if ( isInstance(IJsonNodeSupplier.class) ) {
             outputHelper.write(((IJsonNodeSupplier)this).getJsonNode());
         } else {
-            throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of "+supportedInterfaces);
+            throw new FcliBugException(this.getClass().getName()+" must implement exactly one of "+supportedInterfaces);
         }
         return 0;
     }

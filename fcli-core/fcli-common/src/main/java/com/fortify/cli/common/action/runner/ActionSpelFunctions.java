@@ -12,14 +12,21 @@
  *******************************************************************************/
 package com.fortify.cli.common.action.runner;
 
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -31,18 +38,32 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
 import org.jsoup.safety.Safelist;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 public class ActionSpelFunctions {
+    //private static final Logger LOG = LoggerFactory.getLogger(ActionSpelFunctions.class);
     private static final String CODE_START = "\n===== CODE START =====\n";
     private static final String CODE_END   = "\n===== CODE END =====\n";
     private static final Pattern CODE_PATTERN = Pattern.compile(String.format("%s(.*?)%s", CODE_START, CODE_END), Pattern.DOTALL);
     private static final Pattern uriPartsPattern = Pattern.compile("^(?<serverUrl>(?:(?<protocol>[A-Za-z]+):)?(\\/{0,3})(?<host>[0-9.\\-A-Za-z]+)(?::(?<port>\\d+))?)(?<path>\\/(?<relativePath>[^?#]*))?(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$");
+    private static final Map<String,Set<String>> builtinActionNamesByModule = new HashMap<>();
+    
+    public static final String resolveAgainstCurrentWorkDir(String path) {
+        return Path.of(".").resolve(path).toAbsolutePath().normalize().toString();
+    }
     
     public static final String join(String separator, List<Object> elts) {
         switch (separator) {
@@ -69,7 +90,7 @@ public class ActionSpelFunctions {
      */
     public static final boolean check(boolean throwError, String msg) {
         if ( throwError ) {
-            throw new IllegalStateException(msg);
+            throw new FcliActionStepException(msg);
         } else {
             return true;
         }
@@ -92,6 +113,11 @@ public class ActionSpelFunctions {
             sb.append(text);
         }
         return sb.toString();
+    }
+    
+    public static final String joinOrNull(String separator, String... parts) {
+        if ( parts==null || Arrays.asList(parts).stream().anyMatch(Objects::isNull) ) { return null; }
+        return String.join(separator, parts);
     }
     
     /**
@@ -117,9 +143,9 @@ public class ActionSpelFunctions {
         // Replace code blocks, either embedding in backticks if inline (no newline characters)
         // or indenting with 4 spaces and fencing with CODE_START and CODE_END, which will remain
         // in place when cleaning all HTML tags, and removed using pattern matching below.
-        document.select("span.code").forEach(ActionSpelFunctions::replaceCode);
-        document.select("code").forEach(ActionSpelFunctions::replaceCode);
-        document.select("pre").forEach(ActionSpelFunctions::replaceCode);
+        document.select("span.code").forEach(ActionSpelFunctions::_replaceCode);
+        document.select("code").forEach(ActionSpelFunctions::_replaceCode);
+        document.select("pre").forEach(ActionSpelFunctions::_replaceCode);
         
         // Remove all HTML tags. Note that for now, this keeps escaped characters like &gt;
         // We may want to have separate methods or method parameter to allow for escaped
@@ -142,7 +168,7 @@ public class ActionSpelFunctions {
         return sb.toString();
     }
     
-    private static final void replaceCode(Element e) {
+    private static final void _replaceCode(Element e) {
         var text = e.text();
         if ( text.contains("\n") ) {
             text = "\n\n"+CODE_START+StringUtils.indent(text.replaceAll("\t", "    "), "    ")+CODE_END+"\n\n";
@@ -258,6 +284,153 @@ public class ActionSpelFunctions {
     public static final <T> Iterable<T> asIterable(Iterator<T> iterator) { 
         return () -> iterator; 
     } 
+    
+    /**
+     * Given an environment variable prefix, module name, and built-in fcli action name, 
+     * this method returns the fcli command for running the action, allowing the action 
+     * name to overridden, and extra options to be specified, through environment variables
+     * that are based on the given environment variable prefix. Some examples:
+     * <ul>
+     * <li>If envPrefix is 'SETUP', we look for SETUP_ACTION and SETUP_EXTRA_OPTS</li>
+     * <li>If envPrefix is 'PACKAGE_ACTION', we look for PACKAGE_ACTION and PACKAGE_ACTION_EXTRA_OPTS</li>
+     * </ul> 
+     * As can be seen in the second example, if the given envPrefix already ends with _ACTION,
+     * we skip the extra _ACTION suffixes, to avoid looking for PACKAGE_ACTION_ACTION. However,
+     * we do keep _ACTION for the extra options environment variable, to allow for having both
+     * PACKAGE_EXTRA_OPTS (on the 'scancentral package' command), and PACKAGE_ACTION_EXTRA_OPTS
+     * (on the 'fcli * action run package' command).
+     */
+    public static final String actionCmd(String envPrefix, String moduleName, String actionName) {
+        return String.format("fcli %s action run \"%s\" %s",
+                moduleName,
+                // If envPrefix is <cmd>_ACTION, we remove want to avoid <cmd>_ACTION_ACTION,
+                // however we'd still use <cmd>_ACTION_EXTRA_OPTS
+                _envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", actionName),
+                extraOpts(envPrefix));
+    }
+    
+    public static final String fcliCmd(String envPrefix, String cmd) {
+        return String.format("%s %s",
+                cmd,
+                extraOpts(envPrefix));
+    }
+    
+    public static final String actionCmdSkipNoActionReason(String envPrefix, String moduleName, String actionName) {
+        var actionEnvValue = EnvHelper.env(String.format("%s_ACTION", envPrefix.replaceAll("_ACTION$", "")));
+        if ( StringUtils.isBlank(actionEnvValue) ) {
+            if ( StringUtils.isBlank(actionName) ) { return "No built-in action available"; }
+            if ( !_hasBuiltInAction(moduleName, actionName) ) { return String.format("Built-in %s action %s doesn't exist", moduleName, actionName); }
+        }
+        return null;
+    }
+    
+    public static final String actionCmdSkipFromEnvReason(String envPrefix, boolean skipByDefault) {
+        var doEnvName = String.format("DO_%s", envPrefix);
+        var doEnvValue = EnvHelper.env(doEnvName);
+        if ( StringUtils.isNotBlank(doEnvValue) ) {
+            switch (doEnvValue.toLowerCase()) {
+            case "true": return null;
+            case "false": return String.format("%s set to 'false'", doEnvName);
+            default: throw new FcliSimpleException(String.format("%s must be either blank, true, or false; current value: %s", doEnvName, doEnvValue));
+            }
+        }
+        var actionEnvValue = EnvHelper.env(String.format("%s_ACTION", envPrefix.replaceAll("_ACTION$", "")));
+        var extraOptsEnvValue = EnvHelper.env(String.format("%s_EXTRA_OPTS", envPrefix));
+        if ( StringUtils.isNotBlank(actionEnvValue) || StringUtils.isNotBlank(extraOptsEnvValue) ) {
+            return null;
+        }
+        return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
+    }
+    
+    public static final String fcliCmdSkipFromEnvReason(String envPrefix, boolean skipByDefault) {
+        var doEnvName = String.format("DO_%s", envPrefix);
+        var doEnvValue = EnvHelper.env(doEnvName);
+        if ( StringUtils.isNotBlank(doEnvValue) ) {
+            switch (doEnvValue.toLowerCase()) {
+            case "true": return null;
+            case "false": return String.format("%s set to 'false'", doEnvName);
+            default: throw new FcliSimpleException(String.format("%s must be either blank, true, or false; current value: %s", doEnvName, doEnvValue));
+            }
+        }
+        var extraOptsEnvValue = EnvHelper.env(String.format("%s_EXTRA_OPTS", envPrefix));
+        if ( StringUtils.isNotBlank(extraOptsEnvValue) ) {
+            return null;
+        }
+        return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
+    }
+    
+    /**
+     * If a custom action has been configured through _ACTION env var, this method returns true.
+     * If no custom action has been configured, this method checks whether a built-in action
+     * exists with the given name.
+     */
+    public static final boolean hasAction(String envPrefix, String moduleName, String actionName) {
+        var envValue = _envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", null);
+        return StringUtils.isNotBlank(envValue) ? true : _hasBuiltInAction(moduleName, actionName);
+    }
+    
+    public static final String actionOrNull(String moduleName, String actionName) {
+        return _hasBuiltInAction(moduleName, actionName) ? actionName : null;
+    }
+    
+    private static boolean _hasBuiltInAction(String moduleName, String actionName) {
+        if ( StringUtils.isBlank(actionName) ) { return false; }
+        return builtinActionNamesByModule
+                .computeIfAbsent(moduleName, ActionSpelFunctions::_getBuiltinActionNames)
+                .contains(actionName);
+    }
+    
+    private static final Set<String> _getBuiltinActionNames(String moduleName) {
+        return ActionLoaderHelper
+                    .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
+                    .collect(Collectors.toSet());
+    }
+    
+    /**
+     * This method takes a string in the format "--opt1=ENV1 -o=ENV2 ...", outputting a string
+     * with environment variable names replaced by the corresponding values. Options for which
+     * the environment variable value is null or empty will be removed.
+     */
+    public static final String optsFromEnv(String opts) {
+        if ( StringUtils.isBlank(opts) ) { return ""; }
+        var output = new ArrayList<String>();
+        var elts = opts.split(" ");
+        for ( var elt : elts ) {
+            var names = elt.split("=");
+            var envValue = EnvHelper.env(names[1]);
+            if ( StringUtils.isNotBlank(envValue) ) {
+                output.add(String.format("\"%s=%s\"", names[0], envValue));
+            }
+        }
+        return String.join(" ", output);
+    }
+
+    /**
+     * Given an environment variable prefix, this method returns the value of the 
+     * envPrefix_EXTRA_OPTS environment variable if defined, or an empty string if not.
+     */
+    public static final String extraOpts(String envPrefix) {
+        return _envOrDefault(envPrefix, "EXTRA_OPTS", "");
+    }
+    
+    /**
+     * Given an environment variable prefix and suffix, this method will return
+     * the value of the combined environment variable name, or the given default
+     * value if the combined environment variable is not defined. 
+     */
+    private static final String _envOrDefault(String prefix, String suffix, String defaultValue) {
+        var envName = String.format("%s_%s", prefix, suffix).toUpperCase().replace('-', '_');
+        var envValue = EnvHelper.env(envName);
+        return StringUtils.isNotBlank(envValue) ? envValue : defaultValue; 
+    }
+    
+    public static final ArrayNode properties(ObjectNode o) {
+        var mapper = JsonHelper.getObjectMapper();
+        var result = mapper.createArrayNode();
+        o.properties().forEach(
+                p->result.add(mapper.createObjectNode().put("key", p.getKey()).set("value", p.getValue())));
+        return result;
+    }
     
     public static final String copyright() {
         return String.format("Copyright (c) %s Open Text", Year.now().getValue());

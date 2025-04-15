@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -9,78 +9,75 @@ usage:
     For information on how to create or update findings into AWS Security Hub, see 
     https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-update-types.html
 
-parameters:
-  - name: file
-    cliAliases: f
+config:
+  rest.target.default: fod
+
+cli.options:
+  file:
+    names: --file, -f
     description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: aws-fortify-report.json"
     required: false
-    defaultValue: aws-fortify-report.json
-  - name: release
-    cliAliases: rel
+    default: aws-fortify-report.json
+  release:
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
-  - name: aws-region
+  aws-region:
+    names: --aws-region
     description: 'Required AWS region. Default value: AWS_REGION environment variable.'
     required: true
-    defaultValue: ${#env('AWS_REGION')}    
-  - name: aws-account
+    default: ${#env('AWS_REGION')}    
+  aws-account:
+    names: --aws-account
     description: 'Required AWS account id. Default value: AWS_ACCOUNT_ID environment variable.'
     required: true
-    defaultValue: ${#env('AWS_ACCOUNT_ID')}
-
-defaults:
-  requestTarget: fod
+    default: ${#env('AWS_ACCOUNT_ID')}
 
 steps:
-  - progress: Loading static scan summary
-  - requests:
-      - name: staticScanSummary
-        uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
-        if:   ${parameters.release.currentStaticScanId!=null}
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-      query:
-        filters: scantype:Static
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-      forEach:
-        name: issue
-        embed:
-          - name: details
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-          - name: recommendations
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
-        do:
-          - append:
-            - name: vulnerabilities
-              valueTemplate: issues
-  - write:
-    - to: ${parameters['file']}
-      valueTemplate: report
-    - if: ${parameters.file!='stdout'}
-      to: stdout
-      value: |
-        Report written to ${parameters['report-file']}
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+  - log.progress: Loading static scan summary
+  - rest.call:
+      staticScanSummary:
+        uri:  /api/v3/scans/${rel.currentStaticScanId}/summary
+        if:   ${rel.currentStaticScanId!=null}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          filters: scantype:Static
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          embed:
+            details:
+                uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
+            recommendations:
+                uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+          do:
+            - var.set:
+                vulnerabilities..: {fmt: issues}
+  - out.write:
+      ${cli['file']}: {fmt: report}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Report written to ${cli['report-file']}
 
-valueTemplates:
-  - name: report
-    contents:
+formatters:
+  report:
       issues: ${vulnerabilities?:{}} 
      
-  - name: issues
-    contents:
+  issues:
       SchemaVersion: 2018-10-08
-      Id: ${parameters.release.releaseId}-${issue.id}
-      ProductArn: "arn:aws:securityhub:${parameters['aws-region']}:${parameters['aws-account']}:product/${parameters['aws-account']}/default"
-      GeneratorId: "arn:aws:securityhub:${parameters['aws-region']}:${parameters['aws-account']}:product/${parameters['aws-account']}/default"
+      Id: ${rel.releaseId}-${issue.id}
+      ProductArn: "arn:aws:securityhub:${cli['aws-region']}:${cli['aws-account']}:product/${cli['aws-account']}/default"
+      GeneratorId: "arn:aws:securityhub:${cli['aws-region']}:${cli['aws-account']}:product/${cli['aws-account']}/default"
       ProductName: 'Fortify SAST'
       CompanyName: OpenText
       Types: 
         - Software and Configuration Checks/Vulnerabilities/CVE
-      CreatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss'Z'",parameters.release.staticScanDate?:'1970-01-01T00:00:00Z',parameters.release.serverZoneId)}
-      UpdatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss'Z'",parameters.release.staticScanSummary?.completedDateTime?:'1970-01-01T00:00:00Z',parameters.release.serverZoneId)}
+      CreatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss'Z'",rel.staticScanDate?:'1970-01-01T00:00:00Z',rel.serverZoneId)}
+      UpdatedAt: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss'Z'",rel.staticScanSummary?.completedDateTime?:'1970-01-01T00:00:00Z',rel.serverZoneId)}
       Severity: 
         Label: ${(issue.severityString matches "(Critical|High|Medium|Low)") ? issue.severityString.toUpperCase():"LOW"}
         Original: ${issue.severityString}
@@ -96,15 +93,15 @@ valueTemplates:
         'aws/securityhub/ProductName': 'Fortify SAST'
       Resources:
         - Type: Application
-          Id: ${parameters.release.releaseId}-${issue.id}
+          Id: ${rel.releaseId}-${issue.id}
           Partition: aws
-          Region: ${parameters['aws-region']}
+          Region: ${cli['aws-region']}
           Details:
             Other:
-                APPLICATION ID: ${parameters.release.applicationId+''}
-                APPLICATION NAME: ${parameters.release.applicationName}
-                RELEASE ID: ${parameters.release.releaseId+''}
-                RELEASE NAME: ${parameters.release.releaseName}
+                APPLICATION ID: ${rel.applicationId+''}
+                APPLICATION NAME: ${rel.applicationName}
+                RELEASE ID: ${rel.releaseId+''}
+                RELEASE NAME: ${rel.releaseName}
                 PRIMARY LOCATION: ${issue.primaryLocationFull}
                 LINE NUMBER: ${issue.lineNumber+''}
                 INSTANCE ID: ${issue.instanceId}

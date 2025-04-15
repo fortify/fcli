@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -38,6 +39,7 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
@@ -52,7 +54,7 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@CommandGroup("install")
+@CommandGroup("install") @DefaultVariablePropertyName("version")
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final ObjectMapper OBJECTMAPPER = JsonHelper.getObjectMapper();
     @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
@@ -90,7 +92,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     @Override
     public final boolean isSingular() {
-        return false;
+        return true;
     }
     
     protected abstract String getToolName();
@@ -189,19 +191,21 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         private final void addTargetDirPreparation(Map<String, Runnable> requiredPreparations) {
             var targetPath = installer.getTargetPath();
             if ( Files.exists(targetPath) ) {
-                var existingVersionsWithSameTargetPath = getVersionsStream()
-                            .filter(d->!isCandidateForUninstall(d))
-                            .filter(d->installer.hasMatchingTargetPath(d))
-                            .map(ToolDefinitionVersionDescriptor::getVersion)
+                if ( ToolInstallationDescriptor.optionalCopyFromToolInstallPath(targetPath, installer.getToolName(), installer.getVersionDescriptor())==null ) {
+                    var existingVersionsWithSameTargetPath = getVersionsStream()
+                                .filter(d->!isCandidateForUninstall(d))
+                                .filter(d->installer.hasMatchingTargetPath(d))
+                                .map(ToolDefinitionVersionDescriptor::getVersion)
+                                .collect(Collectors.toList());
+                    var otherVersionsWithSameTargetPath = existingVersionsWithSameTargetPath.stream()
+                            .filter(v->!v.equals(installer.getToolVersion()))
                             .collect(Collectors.toList());
-                var otherVersionsWithSameTargetPath = existingVersionsWithSameTargetPath.stream()
-                        .filter(v->!v.equals(installer.getToolVersion()))
-                        .collect(Collectors.toList());
-                if ( !otherVersionsWithSameTargetPath.isEmpty() ) {
-                    throw new IllegalStateException(String.format("Target path %s already in use for versions: %s\nUse --replace option to explicitly uninstall the existing versions", targetPath, String.join(", ", otherVersionsWithSameTargetPath)));
-                } else if ( existingVersionsWithSameTargetPath.isEmpty() ) {
-                    // Basically we're moving the tool installation to a different directory
-                    requiredPreparations.put("Clean target directory "+targetPath, ()->deleteRecursive(targetPath));
+                    if ( !otherVersionsWithSameTargetPath.isEmpty() ) {
+                        throw new FcliSimpleException(String.format("Target path %s already in use for versions: %s\nUse --replace option to explicitly uninstall the existing versions", targetPath, String.join(", ", otherVersionsWithSameTargetPath)));
+                    } else if ( existingVersionsWithSameTargetPath.isEmpty() ) {
+                        // Basically we're moving the tool installation to a different directory
+                        requiredPreparations.put("Clean target directory "+targetPath, ()->deleteRecursive(targetPath));
+                    }
                 }
             }
         }

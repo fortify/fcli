@@ -12,6 +12,7 @@ import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
 import com.fortify.cli.common.crypto.helper.impl.Signer;
 import com.fortify.cli.common.crypto.helper.impl.TextSigner;
 import com.fortify.cli.common.crypto.helper.impl.Verifier;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -118,7 +119,7 @@ public class SignatureHelper {
         
         public void throwIfNotValid(boolean throwIfNotValid) {
             if ( throwIfNotValid && this!=VALID ) {
-                throw new IllegalStateException("Signature is not valid: "+this);
+                throw new FcliSimpleException("Signature is not valid: "+this);
             }
         }
     }

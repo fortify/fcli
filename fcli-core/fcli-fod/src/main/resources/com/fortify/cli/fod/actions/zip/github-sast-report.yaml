@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 # For now, github-sast-report and sarif-sast-report actions are exactly the same, apart from the
 # following:
@@ -21,69 +21,61 @@ usage:
     For information on how to import this report into GitHub, see  
     https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
 
-defaults:
-  requestTarget: fod
+config:
+  rest.target.default: fod
   
-parameters:
-  - name: file
-    cliAliases: f
+cli.options:
+  file:
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif"
     required: false
-    defaultValue: gh-fortify-sast.sarif
-  - name: release
-    cliAliases: rel
+    default: gh-fortify-sast.sarif
+  release:
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
 
 steps:
-  - progress: Loading static scan summary
-  - requests:
-      - name: staticScanSummary
-        uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
-        if:   ${parameters.release.currentStaticScanId!=null}
-        onFail: 
-          - warn: Unable to load static scan summary, some scan metadata may be missing from the report
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-      query:
-        filters: scantype:Static
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-      onResponse:
-        - if: ${issues_raw.totalCount>5000}
-          throw: GitHub does not support importing more than 5000 vulnerabilities. Please clean the scan results or update vulnerability search criteria.
-      forEach:
-        name: issue
-        embed:
-          - name: details
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-          - name: recommendations
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
-          - name: traces
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/traces 
-        do:
-          - append:
-            - if: ${ruleCache==null || ruleCache[issue.checkId]==null}
-              name: rules
-              valueTemplate: rules
-            - name: ruleCache
-              property: ${issue.checkId}
-              value: true
-            - name: results
-              valueTemplate: results
-  - write:
-    - to: ${parameters.file}
-      valueTemplate: github-sast-report
-    - if: ${parameters.file!='stdout'}
-      to: stdout
-      value: |
-        Output written to ${parameters.file}
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+  - log.progress: Loading static scan summary
+  - rest.call:
+      staticScanSummary:
+        uri:  /api/v3/scans/${rel.currentStaticScanId}/summary
+        if:   ${rel.currentStaticScanId!=null}
+        on.fail: 
+          - log.warn: Unable to load static scan summary, some scan metadata may be missing from the report
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          filters: scantype:Static
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        on.success:
+          - if: ${issues_raw.totalCount>5000}
+            throw: GitHub does not support importing more than 5000 vulnerabilities. Please clean the scan results or update vulnerability search criteria.
+        records.for-each:
+          record.var-name: issue
+          embed:
+            details:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
+            recommendations:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+            traces:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/traces 
+          do:
+            - var.set:
+                rules..: {fmt: rules, if: "${ruleCache==null || ruleCache[issue.checkId]==null}"}
+                ruleCache.${issue.checkId}: true
+                results..: {fmt: results}
+  - out.write:
+      ${cli.file}: {fmt: github-sast-report}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
 
-valueTemplates:
-  - name: github-sast-report
-    contents:
+formatters:
+  github-sast-report:
       "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 
       version: '2.1.0'
       runs:
@@ -94,14 +86,13 @@ valueTemplates:
               rules: ${rules?:{}}
               properties:
                 copyright: ${#copyright()}
-                applicationName: ${parameters.release.applicationName}
-                applicationId: ${parameters.release.applicationId}
-                releaseName: ${parameters.release.releaseName}
-                releaseId: ${parameters.release.releaseId}
+                applicationName: ${rel.applicationName}
+                applicationId: ${rel.applicationId}
+                releaseName: ${rel.releaseName}
+                releaseId: ${rel.releaseId}
           results: ${results?:{}}
      
-  - name: rules
-    contents:
+  rules:
       id: ${issue.checkId}
       shortDescription:
         text: ${issue.category}
@@ -128,8 +119,7 @@ valueTemplates:
           
           ${#copyright()}
 
-  - name: results
-    contents:
+  results:
       ruleId: ${issue.checkId}
       message: 
         text: ${#cleanIssueDescription(issue.details?.summary)} [More information](${#fod.issueBrowserUrl(issue)})

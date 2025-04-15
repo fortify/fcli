@@ -14,7 +14,7 @@ package com.fortify.cli.ssc.issue.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueGroupResolverMixin;

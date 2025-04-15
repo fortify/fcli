@@ -16,8 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.ssc._common.rest.bulk.ISSCEntityEmbedderSupplier;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkEmbedder;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.ISSCEntityEmbedderSupplier;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkEmbedder;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;

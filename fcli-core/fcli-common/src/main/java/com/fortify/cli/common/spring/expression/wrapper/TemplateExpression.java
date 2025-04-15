@@ -43,7 +43,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(using = TemplateExpressionDeserializer.class)
 @JsonSerialize(using = TemplateExpressionSerializer.class)
 public class TemplateExpression extends WrappedExpression {
-	public TemplateExpression(Expression target) {
-		super(target);
+	public TemplateExpression(String originalExpressionString, Expression target) {
+		super(originalExpressionString, target);
 	}
 }

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -7,34 +7,46 @@ usage:
     This sample action demonstrates how to implement a security policy using
     fcli actions, returning a non-zero exit code if any of the checks fail.
 
-defaults:
-  requestTarget: ssc
+config:
+  rest.target.default: ssc
   
-parameters:
-  - name: appversion
-    cliAliases: av
+cli.options:
+  appversion:
+    names: --appversion,--av
     description: "Required application version id or <appName>:<versionName>"
-    type: appversion_single
+  filterset:
+    names: --filterset, --fs
+    description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+    required: false
   
 steps:
-  - fcli:
-    - name: countsByFolder
-      args: ssc issue count --av ${parameters.appversion.id} --by FOLDER
-  - fcli:
-    - name: countsByNewIssue
-      args: ssc issue count --av ${parameters.appversion.id} --by "New Issue"
+  - var.set:
+      av: ${#ssc.appVersion(cli.appversion)}
+      fs: ${#ssc.filterSet(av, cli.filterset)}
+  - run.fcli:
+      countsByFolder:
+        cmd: ssc issue count --av ${av.id} --by FOLDER
+        records.collect: true
+  - run.fcli:
+      countsByNewIssue:
+        cmd: ssc issue count --av ${av.id} --by "New Issue"
+        records.collect: true
   - check:
-    - displayName: No critical issues allowed
-      failIf:      ${countsByFolder.^[cleanName=='Critical']?.visibleCount>0}
-    - displayName: No new issues allowed
-      failIf:      ${countsByNewIssue.^[cleanName=='NEW']?.visibleCount>0}
-  - fcli:
-    - args: ssc issue ls --av ${parameters.appversion.id}
-      forEach:
-        name: issue
-        do:
-          - check:
-            - displayName: No new critical issues allowed
-              failIf:      ${issue.scanStatus=='NEW' && issue.friority=='Critical'}
-              ifSkipped:   PASS # If no issues
+      noCritical:
+        display-name: No critical issues allowed
+        fail.if:      ${countsByFolder.records.^[cleanName=='Critical']?.visibleCount>0}
+      noNew:
+        display-name: No new issues allowed
+        fail.if:      ${countsByNewIssue.records.^[cleanName=='NEW']?.visibleCount>0}
+  - run.fcli:
+      listIssues:
+        cmd: ssc issue ls --av ${av.id}
+        records.for-each:
+          record.var-name: issue
+          do:
+            - check:
+                noNewCritical:
+                  display-name: No new critical issues allowed
+                  fail.if:      ${issue.scanStatus=='NEW' && issue.friority=='Critical'}
+                  ifSkipped:    PASS # If no issues
       

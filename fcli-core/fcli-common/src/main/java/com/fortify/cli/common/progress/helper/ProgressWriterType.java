@@ -12,9 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.common.progress.helper;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.exception.FcliBugException;
 
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Help.Ansi;
@@ -27,6 +33,8 @@ public enum ProgressWriterType {
     stderr(SimpleStdErrProgressWriter::new),
     single_line(SingleLineProgressWriter::new), 
     ansi(AnsiProgressWriter::new);
+    
+    private static final Logger LOG = LoggerFactory.getLogger(ProgressWriterType.class);
     
     @Override
     public String toString() {
@@ -50,20 +58,51 @@ public enum ProgressWriterType {
     }
     
     private static abstract class AbstractProgressWriter implements IProgressWriter {
+        // Store original stdout/stderr, as these may be suppressed/delayed during fcli action execution 
+        protected final PrintStream stdout = System.out;
+        protected final PrintStream stderr = System.err;
         private final List<String> warnings = new ArrayList<>();
+        private final List<String> info = new ArrayList<>();
         
         @Override
-        public void writeWarning(String message, Object... args) {
-            warnings.add(String.format(message, args));
+        public final void writeWarning(String message, Object... args) {
+            var msg = format(message, args);
+            LOG.warn(msg);
+            writeWarning(msg);
+        }
+
+        protected void writeWarning(String message) {
+            warnings.add(message);
+        }
+        
+        @Override
+        public final void writeProgress(String message, Object... args) {
+            var msg = format(message, args);
+            LOG.info(msg);
+            writeProgress(msg);
+        }
+        
+        protected abstract void writeProgress(String message);
+        
+        @Override
+        public final void writeInfo(String message, Object... args) {
+            var msg = format(message, args);
+            LOG.info(msg);
+            writeInfo(msg);
+        }
+
+        protected void writeInfo(String message) {
+            info.add(message);
         }
         
         @Override
         public void close() {
             clearProgress();
-            warnings.forEach(System.err::println);
+            warnings.forEach(stderr::println);
+            info.forEach(stdout::println);
         }
         
-        protected final String format(String message, Object... args) {
+        private final String format(String message, Object... args) {
             if ( args==null || args.length==0 ) {
                 return message;
             } else {
@@ -74,12 +113,17 @@ public enum ProgressWriterType {
     
     private static final class NoProgressWriter extends AbstractProgressWriter {
         @Override
+        public String type() {
+            return "none";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return false;
         }
         
         @Override
-        public void writeProgress(String message, Object... args) {}
+        public void writeProgress(String message) {}
         
         @Override
         public void clearProgress() {}
@@ -87,18 +131,22 @@ public enum ProgressWriterType {
     
     private static final class SimpleProgressWriter extends AbstractProgressWriter {
         @Override
+        public String type() {
+            return "simple";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return true;
         }
         
         @Override
-        public void writeProgress(String message, Object... args) {
-            String formattedMessage = format(message, args);
-            if ( formattedMessage.indexOf('\n') > 0 ) {
+        public void writeProgress(String message) {
+            if ( message.indexOf('\n') > 0 ) {
                 // Add extra newline to separate multi-line blocks
-                formattedMessage += "\n";
+                message += "\n";
             }
-            System.out.println(formattedMessage);
+            stdout.println(message);
         }
         
         @Override
@@ -107,18 +155,22 @@ public enum ProgressWriterType {
     
     private static final class SimpleStdErrProgressWriter extends AbstractProgressWriter {
         @Override
+        public String type() {
+            return "stderr";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return true;
         }
         
         @Override
-        public void writeProgress(String message, Object... args) {
-            String formattedMessage = format(message, args);
-            if ( formattedMessage.indexOf('\n') > 0 ) {
+        public void writeProgress(String message) {
+            if ( message.indexOf('\n') > 0 ) {
                 // Add extra newline to separate multi-line blocks
-                formattedMessage += "\n";
+                message += "\n";
             }
-            System.err.println(formattedMessage);
+            stderr.println(message);
         }
         
         @Override
@@ -130,22 +182,26 @@ public enum ProgressWriterType {
         private int lastNumberOfChars;
         
         @Override
+        public String type() {
+            return "single-line";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return false;
         }
         
         @Override
-        public void writeProgress(String message, Object... args) {
-            String formattedMessage = format(message, args);
-            if ( formattedMessage.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
+        public void writeProgress(String message) {
+            if ( message.contains("\n") ) { throw new FcliBugException("Multiline status updates are not supported; please file a bug"); }
             clearProgress();
-            System.out.print(formattedMessage);
-            this.lastNumberOfChars = formattedMessage.length();
+            stdout.print(message);
+            this.lastNumberOfChars = message.length();
         }
         
         @Override
         public void clearProgress() {
-            System.out.print(LINE_START+" ".repeat(lastNumberOfChars)+LINE_START);
+            stdout.print(LINE_START+" ".repeat(lastNumberOfChars)+LINE_START);
         }
     }
     
@@ -157,23 +213,27 @@ public enum ProgressWriterType {
         private int lastNumberOfLines = 0;
         
         @Override
+        public String type() {
+            return "ansi";
+        }
+        
+        @Override
         public boolean isMultiLineSupported() {
             return true;
         }
         
         @Override
-        public void writeProgress(String message, Object... args) {
-            String formattedMessage = format(message, args);
+        public void writeProgress(String message) {
             clearProgress();
-            System.out.print(formattedMessage);
-            this.lastNumberOfLines = (int)formattedMessage.chars().filter(ch -> ch == '\n').count();
+            stdout.print(message);
+            this.lastNumberOfLines = (int)message.chars().filter(ch -> ch == '\n').count();
         }
         
         @Override
         public void clearProgress() {
             // TODO Any way we can use ESC[3J to clear all saved lines, instead of removing lines one-by-one?
             //      Not sure what escape code to use for 'start lines to be saved'...
-            System.out.print((LINE_CLEAR+LINE_UP).repeat(lastNumberOfLines)+LINE_CLEAR+LINE_START);
+            stdout.print((LINE_CLEAR+LINE_UP).repeat(lastNumberOfLines)+LINE_CLEAR+LINE_START);
             lastNumberOfLines = 0;
         }
     }

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -8,61 +8,50 @@ usage:
     for a given release. Based on user feedback on this initial version of this action, 
     parameters and output of this action may change in the next couple of fcli releases.
 
-defaults:
-  requestTarget: fod
-  
-parameters:
-  - name: file
-    cliAliases: f
+config:
+  rest.target.default: fod
+
+cli.options:
+  file:
+    names: --file, -f
     description: "Optional output file name (or 'stdout' / 'stderr'). Default value: stdout"
     required: false
-    defaultValue: stdout
-  - name: release
-    cliAliases: rel
+    default: stdout
+  release:
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
   
 steps:
-  - set: 
-      # Add short alias for release object, as we reference it a lot
-    - name: r 
-      value: ${parameters.release}
-      # Define output date format
-    - name: dateFmt
-      value: YYYY-MM-dd HH:mm
+  - var.set:
+      r: ${#fod.release(cli.release)}
+      dateFmt: YYYY-MM-dd HH:mm
   # Update Note: although open source counts are now available on the release object, the date of last open source scan is not so still need below 
-  - progress: Loading Scans
-  - requests:
-    - name: scans
-      # we can't filter on scan type so we have to trawl through scans to find "latest" open source scan :(
-      uri: /api/v3/releases/${r.releaseId}/scans?limit=50
-      query:
-        orderBy: completedDateTime
-        orderByDirection: DESC
-      type: paged
-      forEach:
-        name: scan
-        breakIf: ${ossScanDate!=null}
-        if: ${scan.scanType=='OpenSource'}
-        do:
-          - set:
-            - name: scanType
-              value: ${scan.scanType}
-            - name: ossScanDate
-              value: ${scan.completedDateTime} 
+  - log.progress: Loading Scans
+  - rest.call:
+      scans:
+        # we can't filter on scan type so we have to trawl through scans to find "latest" open source scan :(
+        uri: /api/v3/releases/${r.releaseId}/scans?limit=50
+        query:
+          orderBy: completedDateTime
+          orderByDirection: DESC
+        type: paged
+        records.for-each:
+          record.var-name: scan
+          breakIf: ${ossScanDate!=null}
+          if: ${scan.scanType=='OpenSource'}
+          do:
+            - var.set:
+                scanType: ${scan.scanType}
+                ossScanDate: ${scan.completedDateTime} 
 
-  - write:
-    - to: ${parameters.file}
-      valueTemplate: summary-md
-    - if: ${parameters.file!='stdout'}
-      to: stdout
-      value: |
-        Output written to ${parameters.file}
+  - out.write:
+      ${cli.file}: {fmt: summary-md}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
 
 # Note: update ossScanDate when it is available on release object ...
-valueTemplates:
-  - name: summary-md
-    contents: |
+formatters:
+  summary-md: |
       # Fortify on Demand Release Summary
       
       ## [${r.applicationName}${#isNotBlank(r.microserviceNae)?'- '+r.microserviceName:''} - ${r.releaseName}](${#fod.releaseBrowserUrl(r)})

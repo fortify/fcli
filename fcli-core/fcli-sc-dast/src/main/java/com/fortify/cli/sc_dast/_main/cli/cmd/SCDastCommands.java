@@ -13,7 +13,6 @@
 package com.fortify.cli.sc_dast._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.sc_dast._common.session.cli.cmd.SCDastSessionCommands;
 import com.fortify.cli.sc_dast.rest.cli.cmd.SCDastRestCommands;
 import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan_policy.cli.cmd.SCDastScanPolicyCommands;
@@ -34,7 +33,6 @@ import picocli.CommandLine.Command;
                 //   command and looks better in the usage command list, as usually 
                 //   'rest' has a different header ('Interact with' compared to most 
                 //   other commands ('Manage').
-                SCDastSessionCommands.class,
                 SCDastScanCommands.class,
                 SCDastScanPolicyCommands.class,
                 SCDastScanSettingsCommands.class,

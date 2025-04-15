@@ -15,12 +15,14 @@ package com.fortify.cli.fod.mast_scan.cli.cmd;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -31,13 +33,13 @@ import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileDescriptor;
+import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileHelper;
+import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileSetupRequest;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileDescriptor;
-import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileHelper;
-import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileSetupRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -119,7 +121,7 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found
             if (!Objects.equals(entitlementIdToUse, entitlementId)) {
-                throw new IllegalArgumentException("Cannot find appropriate assessment type for use with entitlement: " + entitlementId + "=" + entitlementIdToUse);
+                throw new FcliSimpleException("Cannot find appropriate assessment type for use with entitlement: " + entitlementId + "=" + entitlementIdToUse);
             }
         } else {
             if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {

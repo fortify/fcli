@@ -36,8 +36,8 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 /**
- * This Jackson deserializer allows parsing String values into an 
- * SpEL Expression object.
+ * This Jackson deserializer allows for parsing String values into 
+ * {@link SimpleExpression} objects
  */
 @Reflectable
 public final class SimpleExpressionDeserializer extends StdDeserializer<SimpleExpression> {
@@ -50,6 +50,6 @@ public final class SimpleExpressionDeserializer extends StdDeserializer<SimpleEx
     public SimpleExpression deserialize(JsonParser jp, DeserializationContext ctxt) 
       throws IOException, JsonProcessingException {
         JsonNode node = jp.getCodec().readTree(jp);
-        return node==null || node.isNull() ? null : new SimpleExpression(parser.parseExpression(node.asText()));
+        return node==null || node.isNull() ? null : new SimpleExpression(node.asText(), parser.parseExpression(node.asText()));
     }
 }

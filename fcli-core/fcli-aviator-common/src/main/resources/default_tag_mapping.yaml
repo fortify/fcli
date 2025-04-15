@@ -1,0 +1,26 @@
+# Set the SSC tag to use to store Aviator results. Optional.
+# If not set, defaults to "87f2364f-dcd4-49e6-861d-f8d3f351686b"
+tagId: "87f2364f-dcd4-49e6-861d-f8d3f351686b"
+# Map Aviator results to SSC tag values. “tier_1” are high-confidence cases
+# that by default are suppressed automatically. “tier_2” are the remaining issues.
+# “value” is a String attribute that maps to a tag value in SSC. It may be omitted.
+# “suppress” is a Boolean attribute that defaults to “false”
+mapping:
+  tier_1:
+    fp:
+      value: "Not an Issue"
+      suppress: true
+    tp:
+      value: "Exploitable"
+      suppress: false
+    unsure:
+      suppress: false
+  tier_2:
+    fp:
+      value: "Not an Issue"
+      suppress: false
+    tp:
+      value: "Suspicious"
+      suppress: false
+    unsure:
+      suppress: false

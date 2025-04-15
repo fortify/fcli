@@ -22,15 +22,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
+import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
+import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -72,7 +73,7 @@ public final class DebrickedHelper  {
 		} else if ( tokenOptions!=null && tokenOptions.getAccessToken()!=null ) {
 			return getDebrickedJwtToken(debrickedUnirest, tokenOptions);
 		} else {
-			throw new IllegalArgumentException("Either Debricked user credentials or access token need to be specified");
+			throw new FcliSimpleException("Either Debricked user credentials or access token need to be specified");
 		}
 	}
 
@@ -107,11 +108,12 @@ public final class DebrickedHelper  {
 				.getBody();
 			// TODO Improve this to properly handle generics
 			// TODO Get rid of appending empty string to id to convert int to string as expected by SpEL
-			List<String> repositoryIds = JsonHelper.evaluateSpelExpression(data, "?[name == '"+repository+"'].![id+'']", ArrayList.class);
+			@SuppressWarnings("unchecked")
+            List<String> repositoryIds = JsonHelper.evaluateSpelExpression(data, "?[name == '"+repository+"'].![id+'']", ArrayList.class);
 			switch ( repositoryIds.size() ) {
-				case 0: throw new IllegalArgumentException(String.format("Debricked repository with name %s not found; please use full repository name like <org>/<repo>", repository));
+				case 0: throw new FcliSimpleException(String.format("Debricked repository with name %s not found; please use full repository name like <org>/<repo>", repository));
 				case 1: return repositoryIds.get(0);
-				default: throw new IllegalArgumentException(String.format("Multiple debricked repositories with name %s found; please use repository id instead", repository));
+				default: throw new FcliSimpleException(String.format("Multiple debricked repositories with name %s found; please use repository id instead", repository));
 			}
 		}
 	}

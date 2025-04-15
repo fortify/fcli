@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 
@@ -31,9 +32,9 @@ public class SCDastScanPolicyHelper {
             .filter(record->matches(record, scanPolicyNameOrId))
             .collect(JsonHelper.arrayNodeCollector());
         if ( matchingPolicies.size()==0 ) {
-            throw new IllegalArgumentException("No scan policy found with name or id "+scanPolicyNameOrId);
+            throw new FcliSimpleException("No scan policy found with name or id "+scanPolicyNameOrId);
         } else if ( matchingPolicies.size()>1 ) {
-            throw new IllegalArgumentException("Multiple scan policies match name or id "+scanPolicyNameOrId);
+            throw new FcliSimpleException("Multiple scan policies match name or id "+scanPolicyNameOrId);
         }
         return getDescriptor(matchingPolicies.get(0));
     }

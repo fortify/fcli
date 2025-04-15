@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.expression.Expression;
 
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.cli.mixin.AbstractOutputHelperMixin;
 import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.output.query.QueryExpression;
@@ -69,7 +70,7 @@ public abstract class AbstractServerSideQueryMixin implements IHttpRequestUpdate
         CommandSpec spec = commandHelper.getCommandSpec();
         CommandSpec outputHelperMixin = spec.mixins().get("outputHelper");
         if ( outputHelperMixin==null ) {
-            throw new RuntimeException("Command must provide outputHelper mixin: "+spec.userObject().getClass().getName());
+            throw new FcliBugException("Command must provide outputHelper mixin: "+spec.userObject().getClass().getName());
         }
         var mixinInstance = (AbstractOutputHelperMixin)outputHelperMixin.userObject();
         var outputWriterFactory = mixinInstance.getOutputWriterFactory();

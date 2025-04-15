@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 
 public class FcliDataHelper {
@@ -39,7 +41,7 @@ public class FcliDataHelper {
     private static final String ENVNAME_FCLI_CONFIG_DIR      = "FCLI_CONFIG_DIR";
     private static final String ENVNAME_FCLI_STATE_DIR       = "FCLI_STATE_DIR";
     private static final String DEFAULT_FORTIFY_DIR_NAME     = ".fortify";
-    private static final String DEFAULT_FCLI_DIR_NAME        = "fcli";
+    private static final String DEFAULT_FCLI_DIR_NAME        = "fcli/v3";
     private static final String DEFAULT_FCLI_CONFIG_DIR_NAME = "config";
     private static final String DEFAULT_FCLI_STATE_DIR_NAME  = "state";
     private static final Logger LOG = LoggerFactory.getLogger(FcliDataHelper.class);
@@ -212,14 +214,14 @@ public class FcliDataHelper {
     
     public static Path resolveFcliHomePath(Path relativePath) {
         if ( relativePath.isAbsolute() && !relativePath.toAbsolutePath().startsWith(getFcliHomePath()) ) {
-            throw new IllegalArgumentException(String.format("Path %s is not within fcli home directory", relativePath));
+            throw new FcliBugException(String.format("Path %s is not within fcli home directory", relativePath));
         }
         return getFcliHomePath().resolve(relativePath);
     }
     
     private static final void throwOrLog(String msg, Exception e, boolean failOnError) {
         if ( failOnError ) {
-            throw new RuntimeException(msg, e);
+            throw new FcliTechnicalException(msg, e);
         } else {
             LOG.info(msg, e);
         }

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.app.runner.util;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.function.Consumer;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand.GenericOptionsArgGroup;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand.LogLevel;
+import com.fortify.cli.common.util.DebugHelper;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -68,12 +70,20 @@ public final class FortifyCLIDynamicInitializer {
     }
         
     public void initializeLogging(GenericOptionsArgGroup genericOptions) {
-        String logFile = genericOptions.getLogFile().getAbsolutePath();
+        boolean isDebugEnabled = genericOptions.isDebug();
+        File logFile = genericOptions.getLogFile();
         LogLevel logLevel = genericOptions.getLogLevel();
-        if ( logFile!=null || logLevel!=null ) {
+        if ( logLevel==null && isDebugEnabled ) {
+            // If no log level is specified and --debug is specified, set log level to TRACE
+            logLevel = LogLevel.TRACE;
+        }
+        DebugHelper.setDebugEnabled(isDebugEnabled);
+        if ( logLevel!=LogLevel.NONE && (logFile!=null || logLevel!=null) ) {
+            // Configure logging if logLevel is not set to NONE, and logFile and/or logLevel 
+            // have been specified
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
             Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-            configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
+            configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile.getAbsolutePath());
             configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
         }
     }

@@ -13,9 +13,6 @@
 
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
@@ -29,7 +26,6 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 
 import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -38,7 +34,7 @@ import picocli.CommandLine.Option;
 public abstract class AbstractFoDScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final Log LOG = LogFactory.getLog(AbstractFoDScanSetupCommand.class);
+    //private static final Log LOG = LogFactory.getLog(AbstractFoDScanSetupCommand.class);
 
 
     @Mixin protected FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -91,7 +87,7 @@ public abstract class AbstractFoDScanSetupCommand extends AbstractFoDJsonNodeOut
         var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         var releaseId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = getBaseRequest(unirest, releaseId);
-        HttpResponse<?> response = request.asString(); // successful invocation returns empty response
+        request.asString(); // successful invocation returns empty response
         return releaseDescriptor.asObjectNode()
                 .put("scanType", getScanType())
                 .put("setupType", getSetupType())

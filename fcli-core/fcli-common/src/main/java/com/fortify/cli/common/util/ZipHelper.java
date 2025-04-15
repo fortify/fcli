@@ -18,6 +18,8 @@ import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
+
 import lombok.SneakyThrows;
 
 public class ZipHelper {
@@ -41,7 +43,7 @@ public class ZipHelper {
                     if ( processor.process(zis, entry).doBreak() ) { return Break.TRUE; }
                 }
             } catch (IOException e) {
-                throw new RuntimeException("Error loading zip entry", e);
+                throw new FcliSimpleException("Error loading zip entry", e);
             }
         }
         return Break.FALSE;

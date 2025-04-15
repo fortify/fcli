@@ -29,6 +29,7 @@ import java.util.zip.ZipInputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -98,9 +99,9 @@ public final class ToolDefinitionsHelper {
                     return yamlObjectMapper.readValue(zis, ToolDefinitionRootDescriptor.class);
                 }
             }
-            throw new IllegalStateException("No tool definitions found for "+toolName);
+            throw new FcliSimpleException("No tool definitions found for "+toolName);
         } catch (IOException e) {
-            throw new RuntimeException("Error loading tool definitions", e);
+            throw new FcliSimpleException("Error loading tool definitions", e);
         }
     }
     
@@ -129,7 +130,7 @@ public final class ToolDefinitionsHelper {
                 result.add(new ToolDefinitionsOutputDescriptor(name, source, lastModified));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error loading tool definitions", e);
+            throw new FcliSimpleException("Error loading tool definitions", e);
         }
     }
     

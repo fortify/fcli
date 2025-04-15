@@ -17,7 +17,7 @@ import java.util.Set;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.ssc._common.session.cli.mixin.SSCUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.ssc.cli.mixin.SSCUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
 import com.fortify.cli.ssc.system_state.helper.SSCJobStatus;
 import com.fortify.cli.ssc.system_state.helper.SSCJobStatus.SSCJobStatusIterable;

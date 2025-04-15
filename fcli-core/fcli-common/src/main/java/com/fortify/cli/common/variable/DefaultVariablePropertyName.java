@@ -15,6 +15,7 @@ package com.fortify.cli.common.variable;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -34,6 +35,7 @@ import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter
  */
 @Retention(RUNTIME)
 @Target(TYPE)
+@Inherited
 public @interface DefaultVariablePropertyName {
     String value();
 }

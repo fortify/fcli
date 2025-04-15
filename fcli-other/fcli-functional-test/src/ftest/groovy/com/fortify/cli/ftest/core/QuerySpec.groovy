@@ -379,7 +379,7 @@ class QuerySpec extends FcliBaseSpec {
             def e = thrown(UnexpectedFcliResultException)
             verifyAll(e.result.stderr) {
                 it.any {it.contains('Property or field \'nonexistingvalue\' cannot be found on object of type \'com.fasterxml.jackson.databind.node.ObjectNode\' - maybe not public or not valid?')}
-                it.any {it.contains('java.lang.IllegalStateException: Error evaluating query expression:')}
+                it.any {it.contains('Error evaluating query expression:')}
             }
     }
     

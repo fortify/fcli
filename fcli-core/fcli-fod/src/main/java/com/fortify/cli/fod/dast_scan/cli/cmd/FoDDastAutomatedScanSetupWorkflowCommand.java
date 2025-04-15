@@ -15,6 +15,7 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 import java.util.ArrayList;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
@@ -117,17 +118,17 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
     private void validate() {
         // check we have a valid workflow file
         if (uploadFileMixin == null || uploadFileMixin.getFile() == null) {
-            throw new IllegalArgumentException("A valid workflow macro file needs to be provided.");
+            throw new FcliSimpleException("A valid workflow macro file needs to be provided.");
         } else {
             if (allowedHosts == null || allowedHosts.isEmpty()) {
-                throw new IllegalArgumentException("Please specify at least one '--allowed-hosts'.");
+                throw new FcliSimpleException("Please specify at least one '--allowed-hosts'.");
             }
         }
         // check allowed hosts is valid
         if (allowedHosts != null && !allowedHosts.isEmpty()) {
             allowedHosts.forEach((h) -> {
                 if (h.matches("^https?://.*")) {
-                    throw new IllegalArgumentException("The 'allowedHosts' options should not include 'http://' or 'https://'.");
+                    throw new FcliSimpleException("The 'allowedHosts' options should not include 'http://' or 'https://'.");
                 }
             });
         }

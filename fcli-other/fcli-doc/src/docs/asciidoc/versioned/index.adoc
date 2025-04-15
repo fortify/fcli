@@ -2,8 +2,7 @@
 
 == Introduction
 
-The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the
-man-pages as listed in the link:#_manual_pages[Manual Pages] section.
+The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages as listed in the link:#_manual_pages[Manual Pages] section.
 
 Some of the fcli highlights:
 
@@ -41,6 +40,11 @@ Some commands and options are either hidden or marked as `PREVIEW` or `LEGACY`; 
 * Commands for configuring and running FoD DAST & MAST scans will change significantly, based on upcoming FoD API changes & improvements
 
 Hidden commands are not listed in fcli help output and not included in the link:#_manual_pages[Manual Pages]. If needed, you can view the list of hidden commands using the `+fcli util all-commands list -q hidden+` command.
+
+== Migration from v2.x
+
+Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
+custom fcli actions. Please see the link:../migration-v2.x-v3.x.html[migration guide] for details.
 
 == Release Assets
 
@@ -199,24 +203,66 @@ location in the fcli data folder.
 
 === -o | --output
 
-Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like `+table+`, `+csv+`, `+json+`, `+xml+`, and `+tree+` formats, allowing for both human-readable output or output suitable for automations. The `+csv-plain+` and `+table-plain+` output formats produce CSV or table output without headers. The `+*-flat+`
-output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli
-version, please refer to the help output or link:#_manual_pages[Manual Pages].
+Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like `+table+`, `+csv+`, `+json+`, `+xml+`, and `+yaml+`, allowing for both human-readable output or output suitable for automations. The style for each of these output formats can be controlled through the `+--style+` option, for example for controlling whether table or CSV output should include headers or not; see next section for details.
 
-Most output formats allow for specifying the JSON properties to be included in the output, for example `+-o csv=id,name+`. If no JSON properties are specified, most output formats will output all available
-JSON properties, except for table output, which usually outputs a predefined set of JSON properties.
+The output formats listed above optionally allow for specifying the JSON properties to be included in the output, for example `+-o csv=id,name+`. Optionally, properties can also be renamed, which for example may be used to define CSV or table header names, like `+-o "csv=id:Application Id,name:Application Name"+`. If no JSON properties are specified, most output formats will output all available JSON properties, except for table output, which usually outputs a predefined set of JSON properties.
 
-There are two output formats that are somewhat special:
+Apart from the output formats listed above, fcli also supports the special `+expr+` output format that can be used for a variety of purposes, for example for generating output in a human-readable format, or for generating a list of commands to be run at a later stage. This output format takes a template expression as input, for example `+-o 'expr=Text with {expression1} or {expression2}\n'+`. In most cases, expressions will be simple JSON property references, i.e., `+{property.subProperty}+`.
 
-* `+-o 'expr=Text with {expression1} or {expression2}\n'+` +
- Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see link:#_option_expressions[Option Expressions] for details. In most cases, expressions will be simple property references, i.e., `+{property.subProperty}+`. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include `+\n+` to output a newline character. Also note that depending on your shell, the `+expr+` option must be properly quoted. For most shells, the `+expr=...+` value should be enclosed in single or double quotes. To demonstrate the power of this output format, following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria:
-** `+fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion purge-artifacts --older-than 30d {id}\n'+`
-** `+for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion purge-artifacts –older-than 30d ${id}'"; done+`
-* `+-o json-properties+` +
- List all JSON properties returned by the current command, which can be used on options that take JSON properties as input, like output expressions (`+-o expr={prop}+`), properties to include in the output (`+-o table=prop1,prop2+`), queries (`+-q 'prop1=="value1"'+`), and fcli variables (`+--store var:prop1,prop2+` & `+::var::prop1}+`). Two important notes about this output format:
-** The command will be executed as specified, so be careful when using this output option on any command
-that changes state (delete/update/create/…). In most cases, the `+get+` or `+list+` operations will return a similar set of properties, so you can use those commands to view available properties.
-** On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then `+-o json-properties+` will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if `+-o json-properties+` is used in combination with these options that load additional data.
+Following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria:
+
+* `+fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion purge-artifacts --older-than 30d {id}\n'+`
+* `+for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion purge-artifacts –older-than 30d ${id}'"; done+`  
+
+Note that all output (for all records being processed) will be appended on a single line, unless the expression explicitly includes `+\n+` to output a newline character; notice the `+\n+` in the first example above to print each generated fcli command on a separate line, and the trailing space in the second example to list all id's on a single line but separated by a space. Also note that depending on your shell, the `+expr+` option must be properly quoted. For most shells, the `+expr=...+` value should be enclosed in single or double quotes. 
+
+=== --style
+
+The `--style=<style element>[,<style element>...]` option can be used to control the output style for most of the output formats listed above, for example to control whether CSV or table headers should be included or not, or whether JSON or YAML output should be flattened. Note that the `--style` option will be ignored for the `expr` output format, and similarly, any style elements that are not applicable for the output format specified in the `-o` option will be ignored. Multiple style elements can be specified by separating them by comma's.
+
+Some examples:
+
+* Output a table with border and no headers: `-o table --style no-header,border`
+* Output non-pretty flattened JSON: `-o json --style no-pretty,flat`
+
+A full list of style elements that can be applied to the output is available in fcli help output or manual pages; the following table lists the most commonly used style elements:
+
+[cols="1,2,3"]
+|===
+|Style&nbsp;Element|Applies&nbsp;To|Description
+
+|`+header+` +
+`+no-header+`
+|`+csv+` +
+`+table+`
+|By default, these output formats include headers; use the `no-header` style element to output table or CSV without headers.
+
+|`+border+` +
+`+md-border+` +
+`+no-border+`
+|`+table+`
+|By default, tables are printed without borders; use `border` to output a table with borders, or `md-border` to output a table with Markdown borders. Note that `md-border` is only meant for outputting simple, short property values. The output will not be a valid Markdown table if any of the output properties contains pipe or newline characters, or if contents are too long to be printed on a single line.
+
+|`+pretty+` +
+`+no-pretty+`
+| `+json+` +
+`+yaml+` +
+`+xml+`
+|By default, these output formats are pretty-printed; use the `no-pretty` style element to output condensed, non-pretty output.
+
+|`+flat+` +
+`+no-flat+`
+| `+json+` +
+`+yaml+` +
+`+xml+`
+|By default, these output formats will keep nested objects and arrays as returned by (for example) the server; use the `flat` style element to flatten any nested structures into top-level properties.
+
+|`+array+` +
+`+single+`
+| `+json+` +
+`+yaml+`
+|Whether the output will be represented as an array or single object depends on the fcli command being run, for example `list` commands will output arrays, and `get` commands will output a single object. For commands that output a single object, you can use the `array` style element to output a single-element array instead of a single object. Using `single` on commands that output multiple records is not supported; this may lead to exceptions or unparsable output.
+|===
 
 === --output-to-file
 
@@ -288,10 +334,6 @@ All commands that automatically generate server-side queries also provide a dedi
 ** `prop1=='value'` (simple equals expressions)
 ** `prop1=='value' && prop2=='val2'` (and-expression containing simple equals expressions)
 
-=== --session
-
-Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the link:#_session_management[Session Management] section.
-
 === Option Expressions
 
 Various fcli options take either plain expressions, like link:++#-q--query++[-q | --query], or template expressions (plain text combined with expressions embedded between curly braces), like link:++#-o--output++[-o | –output expr=...]. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the link:https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions[SpEL Documentation].
@@ -356,20 +398,22 @@ fcli ssc session logout --user <user> --password <password>
 
 For interactive use, you can choose to keep the session open until it expires (expiration period depends on target system and login method). For pipeline use or other automation scenarios, it is highly recommended to issue a `+session logout+` command when no further interaction with the target system is required, to allow for any client-side and server-side cleanup to be performed.
 
-For example, upon logging in to SSC with user credentials, fcli will generate a `+UnifiedLoginToken+`, which will be invalidated when the `+ssc session logout+` is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the `+ssc session logout+` command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the `+logout+` commands will perform client-side cleanup, like removing session details like URL and authentication tokens from the client system.
+For example, upon logging in to SSC with user credentials, fcli will generate a `+AutomationToken+`, which will be invalidated when the `+ssc session logout+` is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the `+ssc session logout+` command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the `+logout+` commands will perform client-side cleanup, like removing session details like URL and authentication tokens from the client system.
 
-For product modules that support it, like SSC or ScanCentral DAST, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password.
+For product modules that support it, like SSC, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password.
 
-Note however that depending on (personal access) token permissions, not all fcli functionality may be available. In particular, even the least restrictive SSC `+CIToken+` may not provide access to all endpoints covered by fcli. If you need access to functionality not covered by `+CIToken+`, you may need to define a custom token definition, but this can only be done on self-hosted SSC environments, not on Fortify Hosted. If all else fails, you may need to revert to username/password-based authentication to utilize the short-lived  `+UnifiedLoginToken+`.
+Note however that depending on (personal access) token permissions, not all fcli functionality may be available. For example, the commonly used SSC `+CIToken+` may not provide access to all endpoints covered by fcli. To allow fcli to access all SSC endpoints, you may want to use an `+AutomationToken+`, but please note its security implications as documented by SSC. Alternatively, for self-hosted SSC environments, you can also consider defining custom token definitions, but this functionality is not available on Fortify Hosted.
 
 === Named Sessions
 
-Fcli supports named sessions, allowing you to have multiple open sessions for a single product. When issuing a `+session login+` command, you can optionally provide a session name as in `+fcli ssc session login mySession ...+`, and then use that session in other commands using the `+--session mySession+` command line option. If no session name is specified, a session named `+default+` will be created/used. Named sessions allow for a variety of use cases, for example:
+Fcli supports named sessions, allowing you to have multiple open sessions for a single product. When issuing a `+session login+` command, you can optionally provide a session name as in `+fcli ssc session login --ssc-session mySession ...+`, and then use that session in other commands using the `+--ssc-session mySession+` command line option. If no session name is specified, a session named `+default+` will be created/used. Named sessions allow for a variety of use cases, for example:
 
 * Run fcli commands against multiple instances of the same product, like DEV and PROD instances or an on-premise instance and a Fortify Hosted instance, without having to continuously login and logout from one instance to switch to another instance
 * Run fcli commands against a single instance of a product, but with alternating credentials, for example with one session providing admin rights and another session providing limited user rights
 * Run one session with username/password credentials to allow access to all fcli functionality (based on user permissions), and another session with token-based authentication with access to only a subset of fcli functionality
 * Run multiple pipelines or automation scripts simultaneously, each with their own session name, to reduce chances of these pipelines and scripts affecting each other (see link:#_fcli_data_folder[Fcli Data Folder] though for a potentially better solution for this scenario)
+
+Each session-based product module provides a corresponding `--<module>-session` command line option on both the corresponding `fcli <module> session` commands, and all commands that utilize sessions to connect to a remote system.
 
 === Session Storage
 
@@ -379,13 +423,32 @@ To keep session state between fcli invocations, fcli stores session data like UR
 
 The sections below describe various environment variables that can be used to control fcli behavior. This includes environment variables for overriding some of the default directories used by fcli to store data, and for setting default values for command-line options.
 
+=== Proxy Settings
+
+Fcli allows for configuring proxy settings through the `fcli config proxy` commands, supporting a variety of configuration options. In many cases, for example when running fcli in CI/CD pipelines, it's more convenient to configure a single proxy server to be used by all fcli commands through environment variables. For this purpose, fcli supports the following environment variables in either upper or lower (but not mixed) case:
+
+* `HTTP_PROXY`: Proxy to use for plain HTTP requests
+* `HTTPS_PROXY`: Proxy to use for HTTPS requests
+* `ALL_PROXY`: Proxy to use for all types of requests
+* `NO_PROXY`: Don't use a proxy server for the hosts listed in this environment variable
+
+Proxy servers can be specified as either `<host>:<port>` or as a URL. Note that proxy settings configured through `fcli config proxy` take precedence over proxy settings configured through environment variables.
+
+=== Trust Store Settings
+
+Fcli allows for configuring trust store settings through the `fcli config truststore` commands, supporting a variety of configuration options. In many cases, for example when running fcli in CI/CD pipelines, it's more convenient to configure the trust store to be used through environment variables. For this purpose, fcli supports the following environment variables:
+
+* `FCLI_TRUSTSTORE`: Absolute path to the trust store file to use
+* `FCLI_TRUSTSTORE_TYPE`: Type of the trust store, usually JKS, which is the default type if not specified
+* `FCLI_TRUSTSTORE_PWD`: Trust store password
+
 === Fcli User Home Folder
 
 By default, fcli will use the home directory of the current user for various operations, like storing fcli state and configuration (see next section) or for tool installations (see `fcli tool` manual pages). These locations can be individually overridden through environment variables or command-line options, but in some cases you may want to just specify an alternative 'user home directory' to have all fcli operations use this alternative directory by default, instead of having to override multiple individual directories.
 
 For this purpose, fcli will check for an environment variable named `+FCLI_USER_HOME+`; if defined, the value of this environment variable will be used instead of the actual user home directory for any fcli command that reads or writes data from/to the user home directory. 
 
-Of course, even if this environment variable is set, you can still override individual directories through the applicable environment variables or command-line options. For example, if you set both `+FCLI_USER_HOME+` and `+FCLI_CONFIG_DIR+` (but not any of the other environment variables listed in the next section), then fcli configuration data will be stored in the directory specified through `+FCLI_CONFIG_DIR+`, whereas fcli state data will be stored in `+<FCLI_USER_HOME>/.fortify/fcli/state+`.
+Of course, even if this environment variable is set, you can still override individual directories through the applicable environment variables or command-line options. For example, if you set both `+FCLI_USER_HOME+` and `+FCLI_CONFIG_DIR+` (but not any of the other environment variables listed in the next section), then fcli configuration data will be stored in the directory specified through `+FCLI_CONFIG_DIR+`, whereas fcli state data will be stored in the default directory under `+<FCLI_USER_HOME>+`.
 
 === Fcli Data Storage
 
@@ -398,11 +461,11 @@ The locations of these files can be controlled through the following environment
 * `+FCLI_CONFIG_DIR+`: Location of fcli configuration data like proxy and trust store settings. +
   Default: `+<FCLI_DATA_DIR>/config+`
 * `+FCLI_DATA_DIR+`: Default base directory for the two directories listed above. +
-  Default: `+<FORTIFY_DATA_DIR>/fcli+`
+  Default: `+<FORTIFY_DATA_DIR>/fcli/v3+`
 * `+FORTIFY_DATA_DIR+`: Default base directory for the directories listed above. +
   Default: `+<user home directory>/.fortify+`
 
-If none of these environment variables have been set, then state data will be stored in `+<user home directory>/.fortify/fcli/state+`, and configuration data will be stored in `+<user home directory>/.fortify/fcli/config+`.
+If none of these environment variables have been set, then state data will be stored in `+<user home directory>/.fortify/fcli/v3/state+`, and configuration data will be stored in `+<user home directory>/.fortify/fcli/v3/config+`.
 
 Note: earlier versions of fcli used different environment variable names, but this was causing issues (see link:https://github.com/fortify/fcli/issues/248[Issue 248]). If you are using an older fcli version, please refer to the corresponding documentation. When upgrading fcli from an older version, you may need to adjust the environment variable names.
 
@@ -428,7 +491,7 @@ Fcli walks the command tree to find an environment variable that matches a parti
 Environment variable lookups are based on the following rules:
 
 * Command aliases are not taken into account when looking for environment variables; suppose we have a `+delete+` command with alias `+rm+`, you will need to use `+FCLI_DEFAULT_..._DELETE_...+` and not `+FCLI_DEFAULT_..._RM_...+`
-* For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names `+-a+`, `+--ab+` and `+--abc+`, you will need to use `+FCLI_DEFAULT_..._ABC+` and not  `+FCLI_DEFAULT_..._AB+` or `+FCLI_DEFAULT_..._A+`
+* For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names `+-a+`, `+--ab+` and `+--abc+`, you will need to use `+FCLI_DEFAULT_..._ABC+` and not `+FCLI_DEFAULT_..._AB+` or `+FCLI_DEFAULT_..._A+`
 * For positional parameters, the environment variable name will be based on the parameter label, converted to `SNAKE_CASE` with all special characters replaced by an underscore. For example, `<attributeDefinitionId>` will become `ATTRIBUTE_DEFINITION_ID`, and `HOST:PORT` will become `HOST_PORT`.
 
 Although powerful, these environment variables for providing default option and parameter values should be used with some care to avoid unexpected results:
@@ -441,8 +504,6 @@ Despite #2 above, in some cases it may be useful to use less specific environmen
 * This variable value will be used as a default value for all `+--url+` options in the SSC module
 * This variable value will be used as a default value for all `+--ssc-url+` options in other product modules
 
-This means that defining a single `+FCLI_DEFAULT_SSC_URL+` environment variable, together with for example `+FCLI_DEFAULT_SSC_USER+` and `+FCLI_DEFAULT_SSC_PASSWORD+` environment variables, allows for applying these default values to all of the `+fcli ssc session login+`, `+fcli sc-sast session login+`, `+fcli sc-dast session login+`, and corresponding `+logout+` commands.
-
 Note that as described in the link:#_env_prefix[–env-prefix] section, you can override the `+FCLI_DEFAULT+` prefix. For example, with `+--env-prefix MYPREFIX+`, fcli will look for `+MYPREFIX_*+` environment variables instead of `+FCLI_DEFAULT_*+` environment variables.
 
 == Fcli Variables
@@ -451,7 +512,7 @@ Fcli allows for storing fcli output data in fcli variables for use by subsequent
 
 Variables can be stored using the `+--store myVarName[:prop1,prop2]+` option on data output commands. If property names are specified, then only these property names will be stored. If no property names are provided, all available JSON properties will be stored.
 
-Variables can be referenced in subsequent fcli commands using the `::myVarName::prop` syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name.
+Variables can be referenced in subsequent fcli commands using the `::myVarName::prop` syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name. Note that such variable references will only be resolved when appearing as a separate command line argument. For example, `--my-opt ::myVarName::prop` will pass the contents of the `prop` property of `myVarName` as the value for `--my-opt`, but `--my-opt=::myVarName::prop` will pass the literal text `::myVarName::prop` as the value for `--my-opt`.
 
 Many (but not all) fcli commands will also store an entity-specific default property name when using the `+--store+` option. Whether a default property name has been stored can be seen in the output of the `+fcli util variable list+` command. If a default property name was stored, the `::myVarName::` syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.
 
@@ -465,10 +526,10 @@ fcli ssc artifact upload myScan.fpr --appversion ::myVersion::
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
 fcli ssc artifact upload myScan.fpr --appversion ::myVersion::id
 
-fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
+fcli sc-sast scan start -f package.zip --publish-to test:1.0 --store x
 fcli sc-sast scan wait-for ::x::
 
-fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
+fcli sc-sast scan start -f package.zip --publish-to test:1.0 --store x
 fcli sc-sast scan wait-for ::x::jobToken
 ----
 
@@ -484,7 +545,7 @@ fcli util variable contents myVersions -o json -q createdBy=admin --output-to-fi
 fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt
 ----
 
-Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x, you may need to update your fcli invocations to match the new syntax. See link:https://github.com/fortify/fcli/issues/160[Issue 160] for information on why syntax and behavior was changed.
+Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x or 3.x.x, you may need to update your fcli invocations to match the new syntax. See link:https://github.com/fortify/fcli/issues/160[Issue 160] for information on why syntax and behavior was changed.
 
 == Actions
 
@@ -494,6 +555,7 @@ Fcli actions are a powerful feature that allows for rich integration and automat
 
 Fci comes with various built-in actions, currently focused on providing the following functionality:
 
+* Running a full scan pipeline initiated from various CI/CD systems.
 * Vulnerability export to various third-party formats like SARIF or GitHub, GitLab, BitBucket, and SonarQube reports, as a replacement for link:https://github.com/fortify/FortifyVulnerabilityExporter[FortifyVulnerabilityExporter].
 * Generating GitHub Pull Request comments, listing (re-)introduced and removed vulnerabilities.
 * Generating application version/release summaries in Markdown format, for example for use as pipeline summaries.
@@ -501,23 +563,36 @@ Fci comes with various built-in actions, currently focused on providing the foll
 
 Documentation for built-in actions can be found here:
 
-* link:fod-actions.html[FoD built-in actions documentation]
-* link:ssc-actions.html[SSC built-in actions documentation]
+* link:generic-actions.html[Documentation for `fcli action` built-in actions]
+* link:fod-actions.html[Documentation for `fcli fod action` built-in actions]
+* link:ssc-actions.html[Documentation for `fcli ssc action` built-in actions]
 
 Future fcli versions may introduce new built-in actions, enhance existing built-in actions, or provide enhanced action syntax, for example to allow for running pipeline-style actions that run a set of commands to package source code, submit a scan request, wait for scan completion, and perform post-scan activities like data export or policy checks.
 
-Action support is centralized into the `action` entity of the various product modules. For now, fcli supports `fcli fod action *` and `fcli ssc action *` commands. Based on user feedback, we may consider adding action support on other modules like `sc-sast` or `sc-dast` as well. The following commands may be used to manage and run built-in actions:
+Fcli provides product-agnostic or cross-product actions through the `fcli action *` commands, and FoD & SSC-specific actions through respectively `fcli fod action *` and `fcli ssc action *` commands. Based on user feedback, we may consider adding action support on other modules like `sc-sast` or `sc-dast` as well. The following commands may be used to manage and run built-in actions:
 
 * `fcli * action list`: List available built-in actions (and imported custom actions, see next section).
 * `fcli * action help <action>`: Display action usage information like description and list of action-specific command-line options.
 * `fcli * action get <action>`: Display action YAML contents.
 * `fcli * action run <action>`: Run a given action.
 
+Note that `fcli * action run <action> -h` will just output the usage help for the `run` command, not for the specified action. You'll need to use the `fcli * action help <action>` command to see action usage help.
+
 === Custom Actions
 
-Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. Note that the ability to run custom actions is currently considered PREVIEW functionality; as fcli actions are a new functionality, we are collecting user feedback regarding action syntax, which could potentially result in breaking action syntax changes across minor fcli releases (although we'll try to avoid this as much as possible). 
+Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. The following sections provide more information on custom action usage and development.
 
-As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x.
+==== Compatibility
+
+Custom actions must specify a schema version, which is used to check compatibility between current fcli version and the provided custom action. Some examples:
+
+* Actions developed for fcli 2.x will fail to run on fcli 3.x (see link:../migration-v2.x-v3.x.html[migration guide])
+* Actions developed for fcli 3.0.0 can be run on any future fcli 3.x version, but may fail to run on future fcli 4.x versions
+* Actions developed for a later fcli 3.x version may fail to run on earlier fcli 3.x versions
+
+Note that the action schema is versioned independently of fcli. For example, fcli 2.x supports v1.x schema versions, and fcli 3.x supports v2.x schema versions. A future fcli 4.x version may support either v2.x or v3.x schema versions, depending on whether any breaking schema changes are being introduced for fcli 4.x.
+
+==== Loading custom actions
 
 Custom actions can be loaded from various sources, like a local or remote YAML file, optionally embedded in a zip-file that contains multiple actions. Each of the fcli commands listed in the previous section also support custom actions:
 
@@ -527,11 +602,9 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 
 To allow for easy access, custom actions can also be imported into fcli using the `fcli * action import` command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the `fcli * action reset` command to remove all previously imported custom actions.
 
-=== Custom Action Development
+==== Custom Action Development
 
-There are several resources available to help you developing custom actions. To start with, you can use the `fcli * action get <action>` command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in `+__sample__+` action that explains various concepts and lists many of the supported action YAML elements together with a description. To view the sample action, use the `+fcli ssc action get __sample__+` or `+fcli fod action get __sample__+` command.
-
-Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:
+There are several resources available to help you developing custom actions. To start with, you can use the `fcli * action get <action>` command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:
 
 * Visual Studio Code: link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[Red Hat YAML plugin]
 * Eclipse: link:https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml[Wild Web Developer]
@@ -571,7 +644,7 @@ Fcli is commonly used in CI/CD pipelines to perform all sorts of Fortify-related
 
 *Publishing*
 
-Fcli actions can be loaded from any URL, but for CI/CD integration you could consider hosting fcli actions in a shared source code repository like `https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions`. This allows for easy sharing and maintainance of fcli actions that are used across many CI/CD pipelines. This even allows for automatically signing those action using CI/CD pipelines on this shared repository.
+Fcli actions can be loaded from any URL, but for CI/CD integration you could consider hosting custom fcli actions in a shared source code repository like `https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions`. This allows for easy sharing and maintenance of fcli actions that are used across many CI/CD pipelines. This even allows for automatically signing those action using CI/CD pipelines on this shared repository.
 
 *Public & private key management*
 
@@ -594,7 +667,7 @@ Given that actions can define and process arbitrary parameters, it may be tempti
 
 However, from a CI/CD perspective, this means that every pipeline must properly set these action parameters. Pipeline authors may copy existing pipelines or use pipeline templates to have these action parameters set to predefined values, but what if those parameters need to updated globally? Potentially, this means that you'd need to update thousands of pipelines to adjust action parameters. 
 
-This is exactly the reason why we don't provide a highly configurable `check-policy` action, but instead just provide an example that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:
+This is exactly the reason why we don't provide highly configurable `check-policy` actions, but instead just provide a default implementation that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:
 
 * Use SSC/FoD application version/release attributes like `Business Risk` or other characteristics to identify what criteria to apply. This is the preferred approach, to allow the criteria to be applied to automatically match the centrally maintained attributes/characteristics.
 * Have the action take one or more parameters that identify what criteria to apply. This could be a policy name, or a functional identifier like `--business-risk`.
@@ -630,7 +703,13 @@ If you encounter any of these issues, please submit a bug report as described in
 
 === Submitting a Bug Report
 
-After confirming that an issue cannot be resolved based on the information above, and is not caused by user error, please consider submitting a bug report on the https://github.com/fortify/fcli/issues[fcli issue tracker]. Before doing so, please verify that there is not already a bug report open for the issue that you are experiencing; in that case, feel free to leave a comment on the existing bug report to confirm the issue and/or provide additional details.
+After confirming that an issue cannot be resolved based on the information above, and is not caused by user error, please consider submitting a bug report. Before doing so, please verify that there is not already a bug report open for the issue that you are experiencing on the https://github.com/fortify/fcli/issues[fcli issue tracker on GitHub]. If an issue already exists, please consider posting a comment on the existing bug report to confirm the issue and/or provide additional details.
+
+If needed, you can submit a bug report through any of the following channels:
+
+* https://github.com/fortify/fcli/issues[fcli issue tracker on GitHub]; if you have a GitHub account, this is likely the easiest approach, and allows for all fcli contributors to review & comment on your bug report. Please note though that any information posted here is publicly accessible.
+* Through your OpenText Fortify Customer Success Manager or Technical Account Manager
+* Through the regular Fortify Support channels
 
 When opening a bug report, please include the following information:
 

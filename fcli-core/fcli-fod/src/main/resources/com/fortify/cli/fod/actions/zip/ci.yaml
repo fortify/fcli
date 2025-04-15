@@ -1,0 +1,167 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+author: Fortify
+usage:
+  header: (PREVIEW) Run FoD CI pipeline
+  description: |
+    This action can be used to run a full, standardized CI pipeline that performs the
+    following activities:
+
+    * Create & configure FoD application release if needed
+    * Package source code
+    * Submit SAST scan request
+    * Wait for SAST scan completion
+    * Perform post-scan activities, like checking policy outcome, exporting results, ...
+    
+    Configuration for this fcli action is done through environment variables; the
+    table below lists the environment variables supported by this action.
+                
+    ${#include('/ci-envvars-fod.ci'+(isAsciiDoc?'.adoc':'.txt'))}
+
+config:
+  output: immediate
+  rest.target.default: fod
+  run.fcli.status.log.default: true    # By default, we log all exit statuses
+  run.fcli.status.check.default: false # By default, we want to continue on fcli failures
+  run.fcli.group.default: ciGroup
+      
+steps:
+  # Configure module; allows for copying/re-using similar #actionCmd invocations in FoD ci action
+  - var.set:
+      module: fod
+
+  # Run ci-vars action to obtain CI data
+  - run.fcli:
+      ci-vars: 
+        group: ci-vars
+        cmd: ${#actionCmd('CI_VARS', module, 'ci-vars')}
+        status.check: true   # Fail immediately if this step fails, as it doesn't make sense to continue
+        on.success:
+          - var.set:
+              global.ci.rel: ${#env('FOD_RELEASE')?:global.ci.defaultFortifyRepo}
+          - if: ${global.ci.rel==null}
+            throw: FoD release must be specified through FOD_RELEASE environment variable
+            
+  - var.set:
+      # Configure scan types to run
+      sca.skipReason:   # TODO
+      sca.skip: true
+      dast.skipReason:  # TODO
+      dast.skip: true
+      sast.skipReason: > # Enabled by default, unless explicitly disabled or other scan type requested
+        ${#env('DO_SAST_SCAN')=='false' ? 'SAST scan disabled as DO_SAST_SCAN==false'
+          : #env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip) ? 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested'
+          : null
+        }
+      # Post-scan tasks will be skipped with the following reason, unless this variable is
+      # reset to null by one of the SAST/DAST/SCA/ scan/wait tasks in their on.success blocks
+      postScan.skipReason: No scans have been run because they failed or were skipped
+  # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
+  # continue to run on failures due to config:run.fcli.status.check.default being set to false.
+  #
+  # This extensively uses the following SpEL functions and action variables::
+  # - #actionCmd(envPrefix, module, action): 
+  #   Run <envPrefix>_ACTION if specified, otherwise the given <action>.
+  #   Append any options as specified in <envPrefix>_EXTRA_OPTS.
+  # - #fcliCmd(envPrefix, cmd):
+  #   Run the given <cmd>, appending any options specified in <envPrefix>_EXTRA_OPTS
+  # - #actionCmdSkipFromEnvReason(envPrefix, skipByDefault):
+  #   If skipByDefault==false, action will only be skipped if DO_<envPrefix>==false
+  #   Otherwise, action will be skipped unlesss DO_<envPrefix>==true, or <envPrefix>_ACTION or <envPrefix>_EXTRA_OPTS are specified
+  # - #fcliCmdSkipFromEnvReason(envPrefix, skipByDefault):
+  #   If skipByDefault==false, command will only be skipped if DO_<envPrefix>==false
+  #   Otherwise, action will be skipped unlesss DO_<envPrefix>==true, or <envPrefix>_EXTRA_OPTS is specified
+  # - <earlierStep>.dependencySkipReason:
+  #   Automatically set to an appropriate skip reason by fcli, if <earlierStep> was skipped or failed.
+  - run.fcli:
+      SETUP:
+        cmd: ${#actionCmd('SETUP', 'fod', 'setup-release')} --rel "${global.ci.rel}" --scan-types sast
+        status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
+        skip.if-reason:
+          - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
+          
+      PACKAGE_ACTION: 
+        cmd: ${#actionCmd('PACKAGE_ACTION', 'fod', 'package')}
+        skip.if-reason:
+          - ${sast.skipReason} # Skip if SAST scan is skipped
+          
+      SAST_SCAN: 
+        cmd: ${#fcliCmd('SAST_SCAN', 'fod sast-scan start')} --rel "${global.ci.rel}" --store fod_sast_scan -f "${global.package.output}"
+        skip.if-reason:
+          - ${sast.skipReason}                     # Skip if SAST scan is skipped
+          - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
+          
+      SAST_WAIT:
+        cmd: "${#fcliCmd('SAST_WAIT', 'fod sast-scan wait-for')} ::fod_sast_scan:: --store fod_sast_wait"
+        skip.if-reason:
+          - ${#fcliCmdSkipFromEnvReason('SAST_WAIT', false)} # Skip if DO_SAST_WAIT==false
+          - ${SAST_SCAN.dependencySkipReason}                # Skip if SAST_SCAN was skipped or failed
+        on.success:
+          - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
+             
+      CHECK_POLICY:
+        cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} --rel "${global.ci.rel}" --progress=none
+        stdout: collect
+        skip.if-reason:
+          - ${#actionCmdSkipFromEnvReason('CHECK_POLICY', true)} # Skip unless DO_CHECK_POLICY==true or CHECK_POLICY_ACTION/EXTRA_OPTS defined
+          - ${postScan.skipReason}                               # Skip if no scans were run
+          
+      RELEASE_SUMMARY:
+        cmd: ${#actionCmd('RELEASE_SUMMARY', 'fod', 'release-summary')} --rel "${global.ci.rel}" --progress=none
+        stdout: collect
+        skip.if-reason:
+          - ${#actionCmdSkipFromEnvReason('RELEASE_SUMMARY', false)} # Skip if DO_RELEASE_SUMMARY==false
+          - ${postScan.skipReason}                                   # Skip if no scans were run
+          
+      PR_COMMENT:
+        cmd: ${#actionCmd('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)} --rel "${global.ci.rel}"
+        skip.if-reason: 
+          - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
+          - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)}
+          - ${postScan.skipReason}                             # Skip if no scans were run
+          # TODO Check whether current run is for a PR
+          # TODO Skip if prCommentAction is null or doesn't exist
+          
+      SAST_EXPORT:
+        cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} --rel "${global.ci.rel}"
+        skip.if-reason:
+          - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
+          - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)}
+          - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
+              
+  - with:
+      writers:
+        ciSummaryWriter:
+          type: table
+          style: md-border
+          to: var:ciSummary
+      do:
+        - var.set:
+            exitCode: 0
+        - records.for-each:
+            from: ${#properties(ciGroup)}
+            record.var-name: ciEntry
+            do:
+              - writer.append:
+                  ciSummaryWriter: {fmt: ciEntry}
+              - var.set:
+                  exitCode: ${exitCode+(ciEntry.value.exitCode?:0)}
+  - out.write:
+      stdout: {fmt: summary}
+  - exit: ${exitCode}
+
+formatters:
+  ciEntry:
+    Step: ${ciEntry.key}
+    Status: ${ciEntry.value.status}
+        
+  summary: |
+  
+    # Fcli CI Pipeline Summary
+    
+    ${ciSummary}
+    
+    # Fcli Security Policy Status
+    
+    ${CHECK_POLICY.exitCode==0||CHECK_POLICY.exitCode==100?CHECK_POLICY.stdout:CHECK_POLICY.dependencySkipReason}
+        
+    ${RELEASE_SUMMARY.stdout}

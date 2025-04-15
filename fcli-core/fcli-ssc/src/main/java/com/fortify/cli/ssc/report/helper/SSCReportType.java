@@ -20,5 +20,10 @@ import lombok.NoArgsConstructor;
 public enum SSCReportType {
     ISSUE,
     PROJECT,
-    PORTFOLIO
+    PORTFOLIO,
+    // Legacy/less used report types, but may still appear in some SSC instances
+    SSA_PROJECT,
+    SSA_PORTFOLIO,
+    COMPLIANCE,
+    RUNTIME_REPORTS
 }

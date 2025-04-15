@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -53,13 +54,13 @@ public abstract class AbstractJsonNodeTransformer implements IJsonNodeTransforme
     
     protected JsonNode transformNestedArrayNode(ArrayNode input) {
         if ( !supportNestedArrays ) {
-            throw new IllegalArgumentException("Nested arrays are not supported");
+            throw new FcliTechnicalException("Nested arrays are not supported");
         }
         return transformArrayNode(input);
     }
     
     protected JsonNode transformNonObjectOrArrayNode(JsonNode input) {
-        throw new IllegalArgumentException("Unsupported input type: "+input.getClass().getName());
+        throw new FcliTechnicalException("Unsupported input type: "+input.getClass().getName());
     }
 
     protected abstract JsonNode transformObjectNode(ObjectNode input);

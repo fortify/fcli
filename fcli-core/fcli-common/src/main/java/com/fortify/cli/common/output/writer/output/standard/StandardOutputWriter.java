@@ -12,32 +12,30 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.writer.output.standard;
 
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.function.Consumer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
+import com.fortify.cli.common.output.writer.output.OutputRecordWriterFactory;
+import com.fortify.cli.common.output.writer.output.OutputRecordWriterFactory.OutputRecordWriterFactoryBuilder;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQuery;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
-import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
-import com.fortify.cli.common.output.writer.record.RecordWriterConfig.RecordWriterConfigBuilder;
+import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
+import com.fortify.cli.common.output.writer.record.util.AppendOnCloseWriterWrapper;
+import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
@@ -56,9 +54,9 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Model.CommandSpec;
 
 public class StandardOutputWriter implements IOutputWriter {
-    private static final Logger LOG = LoggerFactory.getLogger(StandardOutputWriter.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(StandardOutputWriter.class);
     private final StandardOutputConfig outputConfig;
-    private final OutputFormat outputFormat;
+    private final RecordWriterFactory recordWriterFactory;
     private final CommandSpec commandSpec;
     private final IOutputOptions outputOptions;
     private final IMessageResolver messageResolver;
@@ -71,7 +69,7 @@ public class StandardOutputWriter implements IOutputWriter {
         this.commandSpec = commandSpec.commandLine()==null ? commandSpec : commandSpec.commandLine().getCommandSpec();
         this.outputOptions = outputOptions;
         this.outputConfig = getOutputConfigOrDefault(commandSpec, defaultOutputConfig);
-        this.outputFormat = getOutputFormatOrDefault(outputConfig, outputOptions);
+        this.recordWriterFactory = getRecordWriterFactoryOrDefault(outputConfig, outputOptions);
         this.messageResolver = new CommandSpecMessageResolver(this.commandSpec);
     }
     
@@ -81,7 +79,7 @@ public class StandardOutputWriter implements IOutputWriter {
         StandardOutputWriter.suppressOutput = suppressOutput;
         StandardOutputWriter.recordCollector = new IRecordWriter() {  
             @Override
-            public void writeRecord(ObjectNode record) {
+            public void append(ObjectNode record) {
                 consumer.accept(record);
             }
             
@@ -214,14 +212,14 @@ public class StandardOutputWriter implements IOutputWriter {
      * @param jsonNode
      */
     private final void writeRecords(IRecordWriter recordWriter, JsonNode jsonNode) {
-        jsonNode = outputConfig.applyInputTransformations(outputFormat, jsonNode);
+        jsonNode = outputConfig.applyInputTransformations(jsonNode);
         if ( jsonNode!=null ) {
             if ( jsonNode.isArray() ) {
                 jsonNode.elements().forEachRemaining(record->writeRecord(recordWriter, record));
             } else if ( jsonNode.isObject() ) {
                 writeRecord(recordWriter, jsonNode);
             } else {
-                throw new IllegalStateException("Unsupported node type: "+jsonNode.getNodeType());
+                throw new FcliBugException("Unsupported node type: "+jsonNode.getNodeType());
             }
         }
     }
@@ -238,15 +236,15 @@ public class StandardOutputWriter implements IOutputWriter {
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     private final void writeRecord(IRecordWriter recordWriter, JsonNode record) {
         // TODO Add null checks in case any input or record transformation returns null?
-        record = record==null ? null : outputConfig.applyRecordTransformations(outputFormat, record);
-        record = record==null ? null : applyRecordOutputFilters(outputFormat, record);
+        record = record==null ? null : outputConfig.applyRecordTransformations(record);
+        record = record==null ? null : applyRecordOutputFilters(record);
         if ( record!=null ) {
             JsonNodeType nodeType = record.getNodeType();
             switch ( nodeType ) {
-            case ARRAY: if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString())); break;
-            case OBJECT: recordWriter.writeRecord((ObjectNode) record); break;
+            case ARRAY: if(record.size()>0) recordWriter.append((ObjectNode) new ObjectMapper().readTree(record.get(0).toString())); break;
+            case OBJECT: recordWriter.append((ObjectNode) record); break;
             case NULL: case MISSING: break;
-            default: throw new RuntimeException("Invalid node type: "+nodeType);
+            default: throw new FcliBugException("Invalid node type: "+nodeType);
             }
         }
     }
@@ -269,19 +267,19 @@ public class StandardOutputWriter implements IOutputWriter {
     }
     
     /**
-     * Return the {@link OutputFormat} from the given {@link IOutputOptions} if available,
-     * otherwise return the {@link OutputFormat} from the given {@link StandardOutputConfig}
-     * if available, otherwise return {@link OutputFormat#table} 
+     * Return the {@link OutputFormatConfig} from the given {@link IOutputOptions} if available,
+     * otherwise return the {@link OutputFormatConfig} from the given {@link StandardOutputConfig}
+     * if available, otherwise return {@link OutputFormatConfig#table} 
      * @param outputConfig
      * @param outputOptions
      * @return
      */
-    private static final OutputFormat getOutputFormatOrDefault(StandardOutputConfig outputConfig, IOutputOptions outputOptions) {
-        OutputFormat result = outputOptions==null || outputOptions.getOutputFormatConfig()==null 
+    private static final RecordWriterFactory getRecordWriterFactoryOrDefault(StandardOutputConfig outputConfig, IOutputOptions outputOptions) {
+        var result = outputOptions==null || outputOptions.getOutputFormatConfig()==null 
                 ? outputConfig.defaultFormat() 
-                : outputOptions.getOutputFormatConfig().getOutputFormat();
+                : outputOptions.getOutputFormatConfig().getRecordWriterFactory();
         if ( result == null ) {
-            result = OutputFormat.table;
+            result = RecordWriterFactory.table;
         }
         return result;
     }
@@ -294,7 +292,7 @@ public class StandardOutputWriter implements IOutputWriter {
      * @param data
      * @return
      */
-    protected JsonNode applyRecordOutputFilters(OutputFormat outputFormat, JsonNode record) {
+    protected JsonNode applyRecordOutputFilters(JsonNode record) {
         return record;
     }
     
@@ -315,11 +313,11 @@ public class StandardOutputWriter implements IOutputWriter {
          * to our {@link VariableRecordWriter} instance if it is enabled
          */
         @Override
-        public void writeRecord(ObjectNode record) {
-            if ( outputRecordWriter!=null ) {outputRecordWriter.writeRecord(record);}
-            if ( recordCollector!=null ) {recordCollector.writeRecord(record);}
+        public void append(ObjectNode record) {
+            if ( outputRecordWriter!=null ) {outputRecordWriter.append(record);}
+            if ( recordCollector!=null ) {recordCollector.append(record);}
             if ( variableRecordWriter.isEnabled() ) {
-                variableRecordWriter.writeRecord(record);
+                variableRecordWriter.append(record);
             }
         }
         
@@ -337,7 +335,33 @@ public class StandardOutputWriter implements IOutputWriter {
         }
         
         private final IRecordWriter createOutputRecordWriter() {
-            return StandardOutputWriter.suppressOutput ? null : new OutputRecordWriter();
+            return StandardOutputWriter.suppressOutput ? null : createUnsuppressedOutputRecordWriter();
+        }
+
+        private IRecordWriter createUnsuppressedOutputRecordWriter() {
+            Object cmd = commandSpec.userObject();
+            var recordWriterArgs = outputOptions==null || outputOptions.getOutputFormatConfig()==null
+                    ? null : outputOptions.getOutputFormatConfig().getRecordWriterArgs();
+            return OutputRecordWriterFactory.builder()
+                    .singular(isSingularOutput())
+                    .messageResolver(messageResolver)
+                    .addActionColumn(cmd!=null && cmd instanceof IActionCommandResultSupplier)
+                    .recordWriterArgs(recordWriterArgs)
+                    .recordWriterFactory(recordWriterFactory)
+                    .recordWriterStyle(RecordWriterStyle.apply(outputOptions.getOutputStyleElements()))
+                    .writerSupplier(()->createWriter())
+                    .build()
+                    .createRecordWriter();
+        }
+        
+        @SneakyThrows
+        private final Writer createWriter() {
+            var outputFile = outputOptions.getOutputFile();
+            if ( outputFile==null ) {
+                return new AppendOnCloseWriterWrapper("\n\n", new NonClosingWriterWrapper(new OutputStreamWriter(System.out)));
+            } else {
+                return new FileWriter(outputFile);
+            }
         }
     }
     
@@ -353,8 +377,8 @@ public class StandardOutputWriter implements IOutputWriter {
          * and write the given record to it.
          */
         @Override
-        public final void writeRecord(ObjectNode record) {
-            getWrappedRecordWriter().writeRecord(record);
+        public final void append(ObjectNode record) {
+            getWrappedRecordWriter().append(record);
         }
         
         /**
@@ -365,7 +389,6 @@ public class StandardOutputWriter implements IOutputWriter {
         @Override
         public final void close() {
             getWrappedRecordWriter().close();
-            closeOutput();
         }
         
         /**
@@ -373,9 +396,9 @@ public class StandardOutputWriter implements IOutputWriter {
          * properties pre-configured.
          * @return
          */
-        protected final RecordWriterConfigBuilder createRecordWriterConfigBuilder() {
+        protected final OutputRecordWriterFactoryBuilder createRecordWriterConfigBuilder() {
             Object cmd = commandSpec.userObject();
-            return RecordWriterConfig.builder()
+            return OutputRecordWriterFactory.builder()
                     .singular(isSingularOutput())
                     .messageResolver(messageResolver)
                     .addActionColumn(cmd!=null && cmd instanceof IActionCommandResultSupplier);
@@ -387,102 +410,19 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         protected abstract IRecordWriter getWrappedRecordWriter();
-        
-        /**
-         * Method to be implemented by subclasses to close any underlying resources.
-         */
-        protected abstract void closeOutput();
-        
-        /**
-         * If the command being invoked implements the {@link ISingularSupplier} interface,
-         * return the value returned by the {@link ISingularSupplier#isSingular()} method,
-         * otherwise return false.
-         * @return
-         */
-        protected boolean isSingularOutput() {
-            Object cmd = commandSpec.userObject();
-            return cmd instanceof ISingularSupplier
-                    ? ((ISingularSupplier)cmd).isSingular()
-                    : false;
-        }
     }
     
     /**
-     * This {@link AbstractRecordWriterWrapper} implementation handles writing records
-     * to the configured output.
-     * @author rsenden
-     *
+     * If the command being invoked implements the {@link ISingularSupplier} interface,
+     * return the value returned by the {@link ISingularSupplier#isSingular()} method,
+     * otherwise return false.
+     * @return
      */
-    private final class OutputRecordWriter extends AbstractRecordWriterWrapper {
-        private final Writer writer;
-        @Getter private final IRecordWriter wrappedRecordWriter;
-        
-        /**
-         * This constructor creates the wrapped {@link IRecordWriter} and its 
-         * underlying {@link Writer}.
-         */
-        public OutputRecordWriter() {
-            this.writer = createWriter();
-            this.wrappedRecordWriter = getRecordWriterFactory().createRecordWriter(createRecordWriterConfig());
-        }
-        
-        /**
-         * Flush the underlying writer, and close it if it doesn't represent System.out 
-         */
-        @Override
-        protected void closeOutput() {
-            try {
-                writer.write("\n\n");
-                writer.flush();
-                // Close output when writing to file; we don't want to close System.out
-                if ( writer instanceof BufferedWriter ) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-                LOG.warn("WARN: Error closing output");
-            }   
-        }
-        
-        /**
-         * Create a {@link RecordWriterConfig} instance based on output configuration
-         * @return
-         */
-        private RecordWriterConfig createRecordWriterConfig() {
-            String options = outputOptions==null || outputOptions.getOutputFormatConfig()==null
-                    ? null 
-                    : outputOptions.getOutputFormatConfig().getOptions();
-            return createRecordWriterConfigBuilder()
-                    .writer(writer)
-                    .options(options)
-                    .outputFormat(outputFormat)
-                    .build();
-        }
-        
-        /**
-         * Get the {@link IRecordWriterFactory} instance from the configured
-         * {@link OutputFormat}
-         * @return
-         */
-        private IRecordWriterFactory getRecordWriterFactory() {
-            return outputFormat.getRecordWriterFactory();
-        }
-        
-        /**
-         * Create the underlying writer; either a {@link PrintWriter} instance
-         * that wraps {@link System#out}, or a {@link BufferedWriter} when file
-         * output is enabled
-         * @return
-         */
-        private Writer createWriter() {
-            File outputFile = outputOptions.getOutputFile();
-            try {
-                return outputFile == null
-                        ? new PrintWriter(System.out)
-                        : new BufferedWriter(new FileWriter(outputFile, false));
-            } catch ( IOException e) {
-                throw new IllegalArgumentException("Output file "+outputFile+" cannot be accessed");
-            }
-        }
+    protected boolean isSingularOutput() {
+        Object cmd = commandSpec.userObject();
+        return cmd instanceof ISingularSupplier
+                ? ((ISingularSupplier)cmd).isSingular()
+                : false;
     }
     
     /**
@@ -494,7 +434,6 @@ public class StandardOutputWriter implements IOutputWriter {
      */
     private final class VariableRecordWriter extends AbstractRecordWriterWrapper {
         private final VariableDefinition variableDefinition;
-        private final Writer writer;
         @Getter private final IRecordWriter wrappedRecordWriter;
         
         /**
@@ -505,8 +444,7 @@ public class StandardOutputWriter implements IOutputWriter {
         public VariableRecordWriter() {
             VariableStoreConfig variableStoreConfig = outputOptions.getVariableStoreConfig();
             this.variableDefinition = variableStoreConfig==null ? null : createVariableDefinition(variableStoreConfig);
-            this.writer = variableStoreConfig==null ? null : createWriter(this.variableDefinition);
-            this.wrappedRecordWriter = variableStoreConfig==null ? null : getRecordWriterFactory().createRecordWriter(createRecordWriterConfig());
+            this.wrappedRecordWriter = variableStoreConfig==null ? null : createOutputRecordWriterFactory().createRecordWriter();
         }
         
         /**
@@ -518,39 +456,16 @@ public class StandardOutputWriter implements IOutputWriter {
         }
         
         /**
-         * Close the underlying writer. This method should only be called 
-         * if {@link #isEnabled()} returns true.
-         */
-        @Override
-        protected void closeOutput() {
-            try {
-                writer.flush();
-                writer.close();
-            } catch (IOException e) {
-                LOG.warn("Error closing output file", e);
-            }   
-        }
-        
-        /**
          * Create a {@link RecordWriterConfig} instance based on variable configuration.
          * This method should not be called if our {@link VariableDefinition} is null.
          * @return
          */
-        private RecordWriterConfig createRecordWriterConfig() {
+        private OutputRecordWriterFactory createOutputRecordWriterFactory() {
             return createRecordWriterConfigBuilder()
-                    .writer(writer)
-                    .options(variableDefinition.getVariableOptions())
-                    .outputFormat(OutputFormat.json)
+                    .writerSupplier(()->createWriter(variableDefinition))
+                    .recordWriterArgs(variableDefinition.getRecordWriterArgs())
+                    .recordWriterFactory(RecordWriterFactory.json)
                     .build();
-        }
-        
-        /**
-         * Return the {@link IRecordWriterFactory} instance provided by
-         * {@link OutputFormat#json}.
-         * @return
-         */
-        private IRecordWriterFactory getRecordWriterFactory() {
-            return OutputFormat.json.getRecordWriterFactory();
         }
         
         /**
@@ -560,7 +475,9 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         private Writer createWriter(VariableDefinition variableDefinition) {
-            return FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableName(), variableDefinition.getDefaultPropertyName(), variableDefinition.isSingular(), variableDefinition.encrypt);
+            return variableDefinition==null 
+                    ? null 
+                    : FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableName(), variableDefinition.getDefaultPropertyName(), variableDefinition.isSingular(), variableDefinition.encrypt);
         }
         
         /**
@@ -573,13 +490,13 @@ public class StandardOutputWriter implements IOutputWriter {
          */
         private VariableDefinition createVariableDefinition(VariableStoreConfig variableStoreConfig) {
             String variableName = variableStoreConfig.getVariableName();
-            String options = variableStoreConfig.getOptions();
+            String recordWriterArgs = variableStoreConfig.getRecordWriterArgs();
             DefaultVariablePropertyName defaultPropertyNameAnnotation = PicocliSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
             String defaultPropertyName = defaultPropertyNameAnnotation==null ? null : defaultPropertyNameAnnotation.value();
             boolean encrypt = PicocliSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
             return VariableDefinition.builder()
                     .variableName(variableName)
-                    .variableOptions(options)
+                    .recordWriterArgs(recordWriterArgs)
                     .singular(isSingularOutput())
                     .defaultPropertyName(defaultPropertyName)
                     .encrypt(encrypt).build();
@@ -592,7 +509,7 @@ public class StandardOutputWriter implements IOutputWriter {
     @Data @Builder
     private static final class VariableDefinition {
         private final String variableName;
-        private final String variableOptions;
+        private final String recordWriterArgs;
         private final String defaultPropertyName;
         private final boolean singular;
         private final boolean encrypt;

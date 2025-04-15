@@ -12,18 +12,14 @@
  */
 package com.fortify.cli.ftest.sc_dast
 
-import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCDAST
-import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCSAST
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 
-import spock.lang.AutoCleanup
-import spock.lang.Shared
-
-@Prefix("sc-dast.rest.call") @FcliSession(SCDAST)
+@Prefix("sc-dast.rest.call") @FcliSession(SSC)
 class SCDastRestCallSpec extends FcliBaseSpec {
     def "user-permissions"() {
         def args = "sc-dast rest call /api/v2/auth/user-permissions"

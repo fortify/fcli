@@ -27,6 +27,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
@@ -150,7 +151,7 @@ public final class ToolInstaller {
     public final void installJavaBinScripts(String scriptBaseName, String binScriptTargetJar) {
         var scriptTargetFilePath = getTargetPath().resolve(binScriptTargetJar);
         if ( !Files.exists(scriptTargetFilePath) ) {
-            throw new IllegalStateException("Cannot install bin scripts; target jar doesn't exist: "+scriptTargetFilePath);
+            throw new FcliSimpleException("Cannot install bin scripts; target jar doesn't exist: "+scriptTargetFilePath);
         }
         for ( var type : BinScriptType.values() ) {
             var resourceFile = ToolInstallationHelper.getResourcePath("extra-files/java-bin/"+type.name());
@@ -206,7 +207,7 @@ public final class ToolInstaller {
             writeInstallationInfo(result);
             return result;
         } catch ( IOException e ) {
-            throw new RuntimeException("Error installing "+toolName, e);
+            throw new FcliSimpleException("Error installing "+toolName, e);
         }
     }
 
@@ -281,7 +282,7 @@ public final class ToolInstaller {
     private final void checkEmptyTargetPath() throws IOException {
         var targetPath = getTargetPath();
         if ( Files.exists(targetPath) && Files.list(targetPath).findFirst().isPresent() ) {
-            throw new IllegalStateException("Non-empty target path "+targetPath+" already exists");
+            throw new FcliSimpleException("Non-empty target path "+targetPath+" already exists");
         }
     }
     

@@ -14,10 +14,13 @@ package com.fortify.cli.fod._common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
+import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionNameArgGroup;
+import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
 
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -25,9 +28,12 @@ import picocli.CommandLine.Mixin;
 public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand<FoDSessionDescriptor> {
     @Mixin @Getter private OutputHelperMixins.Logout outputHelper;
     @Getter private FoDSessionHelper sessionHelper = FoDSessionHelper.instance();
+    @Getter @ArgGroup(headingKey = "fod.session.name.arggroup") 
+    private FoDSessionNameArgGroup sessionNameSupplier;
     
     @Override
     protected void logout(String sessionName, FoDSessionDescriptor sessionDescriptor) {
+        FoDUnirestInstanceSupplierMixin.shutdownUnirestInstance(sessionName);
         // FoD provides an undocumented /oauth/retireToken endpoint that we could potentially 
         // call here. However, it's not documented and FoD dev stated that it's not necessary
         // to explicitly retire tokens as they expire in 6 hours anyway. See the following issue

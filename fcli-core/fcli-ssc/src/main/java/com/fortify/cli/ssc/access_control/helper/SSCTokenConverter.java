@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
+
 
 public final class SSCTokenConverter {
     private static Pattern applicationTokenPattern = Pattern.compile("^[\\da-f]{8}(?:-[\\da-f]{4}){3}-[\\da-f]{12}$");
@@ -52,7 +54,7 @@ public final class SSCTokenConverter {
     
     private static final String validateTokenFormat(String token) {
         if ( !isApplicationToken(token) && !isApplicationToken(decode(token)) ) {
-            throw new IllegalArgumentException("The provided token could not be decoded to a valid application token format");
+            throw new FcliSimpleException("The provided token could not be decoded to a valid application token format");
         }
         return token;
     }

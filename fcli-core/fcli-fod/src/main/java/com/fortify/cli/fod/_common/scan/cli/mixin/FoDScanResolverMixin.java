@@ -12,24 +12,26 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.scan.cli.mixin;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FoDScanResolverMixin {
 
@@ -47,7 +49,7 @@ public class FoDScanResolverMixin {
         public FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, FoDScanType scanType) {
             var result = getScanDescriptor(unirest);
             if ( scanType!=null && !scanType.name().equals(result.getScanType()) ) {
-                throw new IllegalArgumentException(String.format("Scan id %s (%s) doesn't match expected scan type %s", result.getScanId(), result.getScanType(), scanType.name()));
+                throw new FcliSimpleException(String.format("Scan id %s (%s) doesn't match expected scan type %s", result.getScanId(), result.getScanType(), scanType.name()));
             }
             return result;
         }

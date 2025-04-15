@@ -13,6 +13,7 @@ import com.fortify.cli.ftest._common.spec.Prefix
 // - Define methods for performing certain checks, i.e. hasAllWords(line, expectedWords), ... 
 // - Share all of the above between List/GetSpecs, for example through helper class, abstract base class,
 //   or combining both get and list tests in single spec? 
+// TODO Add/update tests for new fcli 3.x --style option
 @Prefix("core.output.get")
 class OutputOptionsGetSpec extends FcliBaseSpec {
     private static final FcliResult generate(String outputFormat) {
@@ -21,7 +22,7 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
         return Fcli.run(args)
     }
     
-    def "table.no-opts"() {
+    def "table"() {
         when:
             def result = generate("table")
         then:
@@ -32,41 +33,19 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
             }
     }
     
-    def "table-plain.no-opts"() {
-        def outputArg = "table-plain"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                size()==1
-                it[0].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
-            }
-    }
-    
-    def "csv.no-opts"() {
+    def "csv"() {
         def outputArg = "csv"
         when:
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
                 size()==2
-                it[0] == 'id,stringValue,longValue,doubleValue,booleanValue,dateValue,dateTimeValue,nestedObjectStringValue,nestedObjectBooleanValue,nestedStringArray'
+                it[0] == 'id,stringValue,longValue,doubleValue,booleanValue,dateValue,dateTimeValue,nestedObject.stringValue,"nestedObject.booleanValue",nestedStringArray'
                 it[1] == '0,value1,1000,0.7,true,2000-01-01,"2000-01-01T00:00:00+00:00",nestedObjectValue1,true,"nestedArrayValue3, nestedArrayValue4"'
             }
     }
     
-    def "csv-plain.no-opts"() {
-        def outputArg = "csv-plain"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                size()==1
-                it[0] == '0,value1,1000,0.7,true,2000-01-01,"2000-01-01T00:00:00+00:00",nestedObjectValue1,true,"nestedArrayValue3, nestedArrayValue4"'
-            }
-    }
-    
-    def "json.no-opts"() {
+    def "json"() {
         def outputArg = "json"
         when:
             def result = generate(outputArg)
@@ -76,37 +55,7 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
             }
     }
     
-    def "json-flat.no-opts"() {
-        def outputArg = "json-flat"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                // TODO Add expectations
-            }
-    }
-    
-    def "tree.no-opts"() {
-        def outputArg = "tree"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                // TODO Add expectations
-            }
-    }
-    
-    def "tree-flat.no-opts"() {
-        def outputArg = "tree-flat"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                // TODO Add expectations
-            }
-    }
-    
-    def "xml.no-opts"() {
+    def "xml"() {
         def outputArg = "xml"
         when:
             def result = generate(outputArg)
@@ -116,17 +65,7 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
             }
     }
     
-    def "xml-flat.no-opts"() {
-        def outputArg = "xml-flat"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                // TODO Add expectations
-            }
-    }
-    
-    def "yaml.no-opts"(String outputArg) {
+    def "yaml"(String outputArg) {
         // For now, Yaml is the default output for get operations; if this is ever 
         // changed (see comment at StandardOutputConfig#details), the where-block
         // below will need to be moved to the appropriate method in this spec.
@@ -142,16 +81,6 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
             null      | _
     }
     
-    def "yaml-flat.no-opts"() {
-        def outputArg = "table-plain"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                // TODO Add expectations
-            }
-    }
-    
     def "expr"() {
         def outputArg = "expr={id}: {stringValue}"
         when:
@@ -160,17 +89,6 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()==1
                 it[0] == '0: value1'
-            }
-    }
-    
-    def "json-properties"() {
-        def outputArg = "json-properties"
-        when:
-            def result = generate(outputArg)
-        then:
-            verifyAll(result.stdout) {
-                size()==20
-                // TODO Add expectations
             }
     }
 }

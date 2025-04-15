@@ -17,6 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportCommitDescriptor;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportBranchCommitDescriptor;
@@ -56,7 +57,7 @@ final class NcdReportRepositoryBranchCommitCollector implements INcdReportReposi
     @Override
     public void reportBranchCommit(NcdReportBranchCommitDescriptor branchCommitDescriptor) {
         if ( branchCommitDescriptor.getRepositoryDescriptor()!=repositoryDescriptor ) {
-            throw new IllegalStateException(String.format("Non-matching repository descriptor; please submit an fcli bug\n\trepositoryDescriptor: %s\n\tbranchCommitDescriptor.repositoryDescriptor: %s", repositoryDescriptor, branchCommitDescriptor.getRepositoryDescriptor()));
+            throw new FcliBugException(String.format("Non-matching repository descriptor; please submit an fcli bug\n\trepositoryDescriptor: %s\n\tbranchCommitDescriptor.repositoryDescriptor: %s", repositoryDescriptor, branchCommitDescriptor.getRepositoryDescriptor()));
         }
         var authorDescriptor = authorCollector.reportAuthor(branchCommitDescriptor.getAuthorDescriptor());
         branchCommitDescriptors.put(branchCommitDescriptor, authorDescriptor);

@@ -43,7 +43,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(using = SimpleExpressionDeserializer.class)
 @JsonSerialize(using = SimpleExpressionSerializer.class)
 public class SimpleExpression extends WrappedExpression {
-	public SimpleExpression(Expression target) {
-		super(target);
+	public SimpleExpression(String originalExpressionString, Expression target) {
+		super(originalExpressionString, target);
 	}
 }

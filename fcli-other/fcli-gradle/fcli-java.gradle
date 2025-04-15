@@ -66,7 +66,6 @@ dependencies {
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	
 	// Output formatting
-	implementation('hu.webarticum:tree-printer')
 	implementation('com.github.freva:ascii-table')
 	
 	// Encryption library
@@ -125,11 +124,15 @@ fileTree(dir: 'src/main/zipped-resources')
 */
 task generateZipResources(dependsOn: tasks.matching { Task task -> task.name.startsWith("zipResources_")})
 sourceSets.main.output.dir generatedZipResourcesDir, builtBy: generateZipResources
+
+ext.generatedActionOutputResourcesDir = "${buildDir}/generated-action-output-resources"
+task buildTimeActions(dependsOn: tasks.matching { Task task -> task.name.startsWith("buildTimeAction_")})
+sourceSets.main.output.dir generatedActionOutputResourcesDir, builtBy: buildTimeActions
     
 // Generate resource-config.json
 ext.generatedResourceConfigDir = "${buildDir}/generated-resource-config"
 tasks.register('generateResourceConfig') {
-    dependsOn = [generateZipResources]
+    dependsOn = [generateZipResources, buildTimeActions]
 	doLast {
 		def outputDir = "${generatedResourceConfigDir}/META-INF/native-image/fcli-generated/${project.name}";
 		mkdir "${outputDir}"
@@ -137,6 +140,8 @@ tasks.register('generateResourceConfig') {
 		fileTree(dir: 'src/main/resources', excludes: ['**/i18n/**', 'META-INF/**', '**/zip/**'])
 			.visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
         fileTree(dir: generatedZipResourcesDir)
+            .visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
+        fileTree(dir: generatedActionOutputResourcesDir)
             .visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
 		if ( entries.size>0 ) {
 			def contents = '{"resources":[' + entries.join(",") + '\n]}';

@@ -15,9 +15,10 @@ package com.fortify.cli.ssc.appversion.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
@@ -34,7 +35,7 @@ public class SSCAppVersionHelper {
     public static final SSCAppVersionDescriptor getRequiredAppVersion(UnirestInstance unirest, String appVersionNameOrId, String delimiter, String... fields) {
         SSCAppVersionDescriptor descriptor = getOptionalAppVersion(unirest, appVersionNameOrId, delimiter, fields);
         if ( descriptor==null ) {
-            throw new IllegalArgumentException("No application version found for application version name or id: "+appVersionNameOrId);
+            throw new FcliSimpleException("No application version found for application version name or id: "+appVersionNameOrId);
         }
         return descriptor;
     }
@@ -68,11 +69,12 @@ public class SSCAppVersionHelper {
     }
 
     private static final SSCAppVersionDescriptor getOptionalDescriptor(GetRequest request) {
-        JsonNode versions = request.asObject(ObjectNode.class).getBody().get("data");
+        ObjectNode body = request.asObject(ObjectNode.class).getBody();
+        JsonNode versions = body==null ? null : body.get("data");
         if ( versions.size()>1 ) {
-            throw new IllegalArgumentException("Multiple application versions found");
+            throw new FcliSimpleException("Multiple application versions found");
         }
-        return versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
+        return versions==null || versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
     }
     
     public static final JsonNode getAttributes(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {

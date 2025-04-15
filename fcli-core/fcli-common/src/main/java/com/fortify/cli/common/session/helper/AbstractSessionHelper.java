@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
 
@@ -127,13 +128,13 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
     private void checkNonExpiredSessionAvailable(String sessionName, boolean failIfUnavailable, T sessionDescriptor) {
         if ( failIfUnavailable && isExpiredOrUnavailable(sessionDescriptor) )
         {
-            throw new IllegalStateException(getType()+" session '"+sessionName+"' cannot be retrieved or has expired, please login again");
+            throw new FcliSimpleException(getType()+" session '"+sessionName+"' cannot be retrieved or has expired, please login again");
         }
     }
 
     private void checkSessionExists(String sessionName, boolean failIfUnavailable) {
         if ( failIfUnavailable && !exists(sessionName) ) {
-            throw new IllegalStateException(getType()+" session '"+sessionName+"' not found, please login first");
+            throw new FcliSimpleException(getType()+" session '"+sessionName+"' not found, please login first");
         }
     }
     

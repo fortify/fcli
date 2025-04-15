@@ -16,6 +16,7 @@ package com.fortify.cli.fod.sast_scan.cli.cmd;
 import java.util.Properties;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
@@ -74,12 +75,14 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     private void validateScanSetup(UnirestInstance unirest, String relId) {
         // get current setup and check if its valid
         FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
-        if (currentSetup.getEntitlementId() == null || currentSetup.getEntitlementId() <= 0) {
-            throw new IllegalStateException("The static scan configuration for release with id '" + relId +
-                    "' has not been setup correctly - 'Entitlement' is missing or empty.");
+        if (validateEntitlement) {
+            if (currentSetup.getEntitlementId() == null || currentSetup.getEntitlementId() <= 0) {
+                throw new FcliSimpleException("The static scan configuration for release with id '" + relId +
+                        "' has not been setup correctly - 'Entitlement' is missing or empty.");
+            }
         }
         if (StringUtils.isBlank(currentSetup.getTechnologyStack())) {
-            throw new IllegalStateException("The static scan configuration for release with id '" + relId +
+            throw new FcliSimpleException("The static scan configuration for release with id '" + relId +
                     "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
         }
     }

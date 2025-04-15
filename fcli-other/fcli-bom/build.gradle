@@ -9,8 +9,8 @@ javaPlatform {
 }
 
 dependencies {
-	api platform('com.fasterxml.jackson:jackson-bom:2.17.0')
-	api platform('org.springframework:spring-framework-bom:6.1.5')
+	api platform('com.fasterxml.jackson:jackson-bom:2.18.3')
+	api platform('org.springframework:spring-framework-bom:6.2.4')
 		
 	constraints {
 		// Picocli
@@ -24,7 +24,8 @@ dependencies {
         // ANSI support
         api("org.fusesource.jansi:jansi:2.4.1")
 		
-		// Logging
+		// Logging 
+		// TODO Upgrade to latest version, but this causes native-image errors
 		api('org.slf4j:slf4j-api:2.0.12')
 		api('org.slf4j:jcl-over-slf4j:2.0.12')
         api("ch.qos.logback:logback-classic:1.5.3")
@@ -39,7 +40,6 @@ dependencies {
         //api('org.springframework.integration:spring-integration-core:6.1.1')
 		
 		// Output formatting
-        api('hu.webarticum:tree-printer:3.2.0')
         api('com.github.freva:ascii-table:1.8.0')
         
 		// Remove annotation processor warning.
@@ -54,9 +54,9 @@ dependencies {
     	api 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 
         // Required for unpacking tar.gz (debricked cli)
-        api('org.apache.commons:commons-compress:1.26.1')
+        api('org.apache.commons:commons-compress:1.27.1')
         
         // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
-        api('org.jsoup:jsoup:1.17.2')
+        api('org.jsoup:jsoup:1.19.1')
 	}
 }

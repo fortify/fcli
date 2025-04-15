@@ -19,6 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
+import com.fortify.cli.common.exception.FcliBugException;
+
 public class FcliBuildPropertiesHelper {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final Properties buildProperties = loadProperties();
@@ -70,7 +72,7 @@ public class FcliBuildPropertiesHelper {
         try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/common/fcli-build.properties")) {
             if ( stream!=null ) { p.load(stream); }
         } catch ( IOException ioe ) {
-            throw new RuntimeException("Error reading fcli-build.properties from classpath", ioe);
+            throw new FcliBugException("Error reading fcli-build.properties from classpath", ioe);
         }
         return p;
     }

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -7,102 +7,105 @@ usage:
     For information on how to import this report into BitBucket, see 
     https://support.atlassian.com/bitbucket-cloud/docs/code-insights/
     
-defaults:
-  requestTarget: ssc
+config:
+  rest.target.default: ssc
   
-parameters:
-  - name: report-file
-    cliAliases: r
+cli.options:
+  report-file:
+    names: --report-file, -r
     description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json"
     required: false
-    defaultValue: bb-fortify-report.json
-  - name: annotations-file
-    cliAliases: a
+    default: bb-fortify-report.json
+  annotations-file:
+    names: --annotations-file, -a
     description: "Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json"
     required: false
-    defaultValue: bb-fortify-annotations.json
-  - name: appversion
-    cliAliases: av
+    default: bb-fortify-annotations.json
+  appversion:
+    names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
-    type: appversion_single
-  - name: filterset
-    cliAliases: fs
+  filterset:
+    names: --filterset, --fs
     description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
-    type: filterset
-  - name: page-size
+  page-size:
+    names: --page-size
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
     required: false
-    defaultValue: "100"
+    default: "100"
   
 steps:
-  - progress: Loading latest static scan
-  - requests:
-    - name: artifacts
-      uri:  /api/v1/projectVersions/${parameters.appversion.id}/artifacts
-      type: paged
-      query:
-        embed: scans
-      forEach:
-        name: artifact
-        breakIf: ${lastStaticScan!=null}
-        do:
-          - set:
-            - name: lastStaticScan
-              value: ${artifact._embed.scans?.^[type=='SCA']}
-  - progress: Loading issue counts
-  - requests:
-    - name: fpo_counts_sca
-      uri:  /api/v1/projectVersions/${parameters.appversion.id}/issueGroups
-      query:
-        filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
-        groupingtype: 11111111-1111-1111-1111-111111111150
-        filterset: ${parameters.filterset.guid}
-  - requests:
-    - name: fpo_counts_total
-      uri:  /api/v1/projectVersions/${parameters.appversion.id}/issueGroups
-      query:
-        groupingtype: 11111111-1111-1111-1111-111111111150
-        filterset: ${parameters.filterset.guid}      
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues
-      query:
-        filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
-        filterset: ${parameters.filterset.guid}
-        limit: ${parameters['page-size']}
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
-      forEach:
-        name: issue
-        embed:
-          - name: details
-            uri: /api/v1/issueDetails/${issue.id}
-        do:
-          - append:
-            - name: annotations
-              valueTemplate: annotations
-  - write:
-    - to: ${parameters['annotations-file']}
-      value: ${annotations?:{}}
-    - to: ${parameters['report-file']}
-      valueTemplate: report
-    - if: ${parameters['annotations-file']!='stdout' && parameters['report-file']!='stdout'}
-      to: stdout
-      value: |
-        Report written to ${parameters['report-file']}
-        Annotations written to ${parameters['annotations-file']}
+  - var.set:
+      av: ${#ssc.appVersion(cli.appversion)}
+      fs: ${#ssc.filterSet(av, cli.filterset)}
+  - log.progress: Loading latest static scan
+  - rest.call:
+      artifacts:
+        uri:  /api/v1/projectVersions/${av.id}/artifacts
+        type: paged
+        query:
+          embed: scans
+        records.for-each:
+          record.var-name: artifact
+          breakIf: ${lastStaticScan!=null}
+          do:
+            - var.set:
+                lastStaticScan: ${artifact._embed.scans?.^[type=='SCA']}
+  - log.progress: Loading issue counts
+  - rest.call:
+      fpo_counts_sca:
+        uri:  /api/v1/projectVersions/${av.id}/issueGroups
+        query:
+          filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
+          groupingtype: 11111111-1111-1111-1111-111111111150
+          filterset: ${fs.guid}
+  - rest.call: # TODO Can we merge this with rest.call above?
+      fpo_counts_total:
+        uri:  /api/v1/projectVersions/${av.id}/issueGroups
+        query:
+          groupingtype: 11111111-1111-1111-1111-111111111150
+          filterset: ${fs.guid}      
+  - log.progress: Processing issue data
+  - with:
+      writers:
+        annotations:
+          to: ${cli['annotations-file']}
+          type: json
+      do:
+        - rest.call:
+            issues:
+              uri: /api/v1/projectVersions/${av.id}/issues
+              query:
+                filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
+                filterset: ${fs.guid}
+                limit: ${cli['page-size']}
+              log.progress:
+                page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
+              records.for-each:
+                record.var-name: issue
+                embed:
+                  details:
+                    uri: /api/v1/issueDetails/${issue.id}
+                do: 
+                  - writer.append:
+                      annotations: {fmt: annotation}
+  - var.set:
+      report: {fmt: report}
+  - out.write:
+      ${cli['report-file']}: ${report}
+  - if: ${cli['annotations-file']!='stdout' && cli['report-file']!='stdout'}
+    log.info: |
+        Report written to ${cli['report-file']}
+        Annotations written to ${cli['annotations-file']}
 
-valueTemplates:
-  - name: report
-    contents:
+formatters:
+  report:
       # uuid:
       title: Fortify Scan Report
-      details: Fortify detected ${annotations?.size()?:0} static ${annotations?.size()==1 ? 'vulnerability':'vulnerabilities'}
+      details: Fortify detected ${annotations.count} static ${annotations.count==1 ? 'vulnerability':'vulnerabilities'}
       #external_id:
       reporter: Fortify Static Code Analyzer ${lastStaticScan?.engineVersion?:''}
-      link: ${#ssc.appversionBrowserUrl(parameters.appversion,parameters.filterset)}
+      link: ${#ssc.appversionBrowserUrl(av,fs)}
       # remote_link_enabled:
       logo_url: https://bitbucket.org/workspaces/fortifysoftware/avatar
       report_type: SECURITY
@@ -110,7 +113,7 @@ valueTemplates:
       data:
         - type: TEXT
           title: Application Version
-          value: ${parameters.appversion.project.name} - ${parameters.appversion.name}
+          value: ${av.project.name} - ${av.name}
         - type: DATE
           title: Last Static Scan
           value: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", lastStaticScan?.uploadDate?:'1970-01-01T00:00:00')}
@@ -139,8 +142,7 @@ valueTemplates:
           title: Low (Overall)
           value: ${fpo_counts_total.^[id=='Low']?.visibleCount?:0}
 
-  - name: annotations
-    contents:
+  annotation:
       external_id: FTFY-${issue.id}
       # uuid:
       annotation_type: VULNERABILITY
@@ -150,6 +152,6 @@ valueTemplates:
       details: ${issue.details?.brief}
       # result: PASSED|FAILED|SKIPPED|IGNORED
       severity: ${issue.friority.toUpperCase()} 
-      link: ${#ssc.issueBrowserUrl(issue,parameters.filterset)}
+      link: ${#ssc.issueBrowserUrl(issue,fs)}
       # created_on:
       # updated_on:

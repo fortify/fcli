@@ -22,4 +22,9 @@ public class FoDActionHelpCommand extends AbstractActionHelpCommand {
     protected final String getType() {
         return "FoD";
     }
+    
+    @Override
+    protected String getActionCmd() {
+        return "fcli fod action";
+    }
 }

@@ -49,14 +49,16 @@ public class FoDIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransfo
     
     @Override
     public JsonNode transformRecord(JsonNode record) {
+        var objectNode = (ObjectNode)record;
+        objectNode.put("location", JsonHelper.evaluateSpelExpression(record, "primaryLocation+(lineNumber==null?'':(':'+lineNumber))", String.class));
         // If includes doesn't include 'visible', we return null for any visible (non-suppressed
         // & non-fixed) issues. We don't need explicit handling for other cases, as suppressed or
         // fixed issues won't be returned by FoD if not explicitly specified through the --include
         // option.
         return !includes.contains(FoDIssueInclude.visible)
-                && JsonHelper.evaluateSpelExpression(record, "!isSuppressed && !closedStatus", Boolean.class)
+                && JsonHelper.evaluateSpelExpression(objectNode, "!isSuppressed && !closedStatus", Boolean.class)
                 ? null
-                : addVisibilityProperties((ObjectNode)record);
+                : addVisibilityProperties(objectNode);
     }
     
     private ObjectNode addVisibilityProperties(ObjectNode record) {

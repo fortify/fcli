@@ -13,11 +13,12 @@
 package com.fortify.cli.ssc.access_control.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -48,7 +49,7 @@ public class SSCRoleHelper {
         try{
             response = bulkRequest.execute(unirestInstance);
         }catch (UnexpectedHttpResponseException | NullPointerException e){
-            throw new IllegalArgumentException("Unable to find the specified role: " + roleNameOrId);
+            throw new FcliSimpleException("Unable to find the specified role: " + roleNameOrId);
         }
 
         JsonNode role = response.body("role").get("data");
@@ -60,11 +61,11 @@ public class SSCRoleHelper {
 
         JsonNode roles = response.body("roles").get("data");
         if (roles == null){
-            throw new IllegalArgumentException("No role found for the role name or id: " + roleNameOrId);
+            throw new FcliSimpleException("No role found for the role name or id: " + roleNameOrId);
         } else if( roles.size()==0 ) {
-            throw new IllegalArgumentException("No role found for the role name or id: " + roleNameOrId);
+            throw new FcliSimpleException("No role found for the role name or id: " + roleNameOrId);
         } else if ( roles.size()>1 ) {
-            throw new IllegalArgumentException("Multiple roles found for the role name or id: " + roleNameOrId);
+            throw new FcliSimpleException("Multiple roles found for the role name or id: " + roleNameOrId);
         }
         return JsonHelper.treeToValue(roles.get(0), SSCRoleDescriptor.class);
     }

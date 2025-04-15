@@ -35,7 +35,7 @@ class SSCBuiltinActionRunSpec extends FcliBaseSpec {
     def "runWithOutputFile"() {
         def random = System.currentTimeMillis()
         def outputFile = "${actionOutputDir}/output-${random}"
-        def args = "ssc action run ${action} -f ${outputFile} --av ${eightBallVersionSupplier.version.get("id")}"
+        def args = "ssc action run ${action} --progress=none -f ${outputFile} --av ${eightBallVersionSupplier.version.get("id")}"
         when:
             def result = Fcli.run(args)
         then:
@@ -58,7 +58,7 @@ class SSCBuiltinActionRunSpec extends FcliBaseSpec {
         def random = System.currentTimeMillis()
         def reportFile = "${actionOutputDir}/bb-report-${random}"
         def annotationsFile = "${actionOutputDir}/bb-annotations-${random}"
-        def args = "ssc action run bitbucket-sast-report -r ${reportFile} -a ${annotationsFile} --av ${eightBallVersionSupplier.version.get("id")}"
+        def args = "ssc action run bitbucket-sast-report --progress=none -r ${reportFile} -a ${annotationsFile} --av ${eightBallVersionSupplier.version.get("id")}"
         when:
             def result = Fcli.run(args)
         then:
@@ -70,14 +70,14 @@ class SSCBuiltinActionRunSpec extends FcliBaseSpec {
     }
     
     def "runCheckPolicy"() {
-        def args = "ssc action run check-policy --av ${eightBallVersionSupplier.version.get("id")}"
+        def args = "ssc action run check-policy --progress=none --av ${eightBallVersionSupplier.version.get("id")}"
         when:
             def result = Fcli.run(args, {})
         then:
             verifyAll(result.stdout) {
                 size()>1
                 it.any { it.contains('PASS') || it.contains('FAIL') }
-                it.any { it.contains("Status: ") }
+                it.any { it.contains("Overall Status") }
             }
     }
 }

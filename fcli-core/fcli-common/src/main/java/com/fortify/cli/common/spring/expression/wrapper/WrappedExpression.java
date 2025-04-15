@@ -29,19 +29,23 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
 
+import lombok.Getter;
+
 /**
  * <p>This is a simple wrapper class for a Spring {@link Expression}
  * instance. This class is used as a based class for both 
  * {@link SimpleExpression} and {@link TemplateExpression}.</p>
  */
 public class WrappedExpression implements Expression {
+    @Getter private final String originalExpressionString;
 	private final Expression target;
 	
 	/**
 	 * Constructor for configuring the expression to be wrapped
 	 * @param target {@link Expression} to be wrapped
 	 */
-	public WrappedExpression(Expression target) {
+	public WrappedExpression(String originalExpressionString, Expression target) {
+	    this.originalExpressionString = originalExpressionString;
 		this.target = target;
 	}
 	

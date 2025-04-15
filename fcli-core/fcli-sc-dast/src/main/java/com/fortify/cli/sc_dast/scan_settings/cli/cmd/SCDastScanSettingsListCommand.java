@@ -14,7 +14,7 @@ package com.fortify.cli.sc_dast.scan_settings.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastBaseRequestOutputCommand;
-import com.fortify.cli.sc_dast._common.rest.query.cli.mixin.SCDastQueryParamsMixin;
+import com.fortify.cli.ssc._common.rest.sc_dast.query.cli.mixin.SCDastQueryParamsMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

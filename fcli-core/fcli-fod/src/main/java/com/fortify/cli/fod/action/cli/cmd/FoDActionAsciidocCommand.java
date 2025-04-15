@@ -22,4 +22,9 @@ public class FoDActionAsciidocCommand extends AbstractActionAsciidocCommand {
     protected final String getType() {
         return "FoD";
     }
+    
+    @Override
+    protected String getActionCmd() {
+        return "fcli fod action";
+    }
 }

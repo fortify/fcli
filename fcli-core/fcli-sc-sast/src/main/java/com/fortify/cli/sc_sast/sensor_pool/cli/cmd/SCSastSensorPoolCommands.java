@@ -13,6 +13,7 @@
 package com.fortify.cli.sc_sast.sensor_pool.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+
 import picocli.CommandLine.Command;
 
 @Command(

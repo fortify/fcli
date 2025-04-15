@@ -13,23 +13,19 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-
-import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
-import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
+import com.fortify.cli.common.action.runner.ActionRunnerConfig;
+import com.fortify.cli.common.action.runner.ActionRunnerConfig.ActionRunnerConfigBuilder;
+import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
-import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.common.util.EnvHelper;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
@@ -50,55 +46,40 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Override @SneakyThrows
     public final Integer call() {
         initMixins();
-        var action = actionResolver.loadAction(getType(), actionValidationMixin.getActionValidationHandler());
-        Callable<Integer> delayedConsoleWriter = null;
-        try ( var progressWriter = progressWriterFactory.overrideAutoIfNoConsole(ProgressWriterType.none) ) {
-            try ( var actionRunner = ActionRunner.builder()
+        ActionRunnerConfig config;
+        try (var progressWriter = progressWriterFactory.create()) {
+            progressWriter.writeProgress("Loading action %s", actionResolver.getAction());
+            var action = actionResolver.loadAction(getType(), actionValidationMixin.getActionValidationHandler());
+            var configBuilder = ActionRunnerConfig.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(action)
-                .progressWriter(progressWriter)
-                .rootCommandLine(commandHelper.getRootCommandLine())
-                .build() ) 
-            {
-                delayedConsoleWriter = run(actionRunner, progressWriter);
-            }
+                .progressWriterFactory(progressWriterFactory);
+            configure(configBuilder);
+            config = configBuilder.build();
+            progressWriter.writeProgress("Executing action %s", config.getAction().getMetadata().getName());
         }
-        return delayedConsoleWriter.call();
+        return run(config, new ActionRunner(config));
     }
     
-    private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {
-        actionRunner.getSpelEvaluator().configure(context->configure(actionRunner, context));
-        progressWriter.writeProgress("Executing action %s", actionRunner.getAction().getMetadata().getName());
-        // We need to set the FCLI_DEFAULT_<module>_SESSION environment variable to allow fcli: statements to 
-        // pick up the current session name, and (although probably not needed currently), reset the default
-        // session name to the previous value once the action completes.
-        var sessionEnvName = String.format("%s_%s_SESSION", System.getProperty("fcli.env.default.prefix", "FCLI_DEFAULT"), getType().toUpperCase());
-        var sessionPropertyName = EnvHelper.envSystemPropertyName(sessionEnvName);
-        var sessionEnvOrgValue = EnvHelper.env(sessionEnvName);
+    private final Integer run(ActionRunnerConfig config, ActionRunner actionRunner) {
         try {
-            setOrClearSystemProperty(sessionPropertyName, getSessionName());
+            preRun(config);
             return actionRunner.run(actionArgs);
         } finally {
-            setOrClearSystemProperty(sessionPropertyName, sessionEnvOrgValue);
+            postRun(config);
         }
     }
 
-    private void setOrClearSystemProperty(String name, String value) {
-        if ( value==null ) {
-            System.clearProperty(name);
-        } else {
-            System.setProperty(name, value);
-        }
-    }
+    protected void preRun(ActionRunnerConfig config) {}
+    protected void postRun(ActionRunnerConfig config) {}
     
     private ParameterException onValidationErrors(OptionsParseResult optionsParseResult) {
         var errorsString = String.join("\n ", optionsParseResult.getValidationErrors());
-        var supportedOptionsString = ActionParameterHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
+        var supportedOptionsString = ActionOptionHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
         var msg = String.format("Option errors:\n %s\nSupported options:\n%s\n", errorsString, supportedOptionsString);
         return new ParameterException(commandHelper.getCommandSpec().commandLine(), msg);
     }
 
     protected abstract String getType();
-    protected abstract String getSessionName();
-    protected abstract void configure(ActionRunner actionRunner, SimpleEvaluationContext context);
+    protected abstract void configure(ActionRunnerConfigBuilder actionRunnerConfigBuilder);
 }

@@ -20,6 +20,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
@@ -95,7 +96,7 @@ public class FoDReleaseHelper {
     private static final FoDReleaseDescriptor getDescriptor(HttpRequest<?> request, String releaseNameOrId, boolean failIfNotFound, String... filters) {
         JsonNode result = FoDDataHelper.findUnique(request, filters);
         if ( failIfNotFound && result==null ) {
-            throw new IllegalArgumentException(String.format("Cannot find release %s", releaseNameOrId));
+            throw new FcliSimpleException(String.format("Cannot find release %s", releaseNameOrId));
         } else {
             return JsonHelper.treeToValue(result, FoDReleaseDescriptor.class);
         }

@@ -13,6 +13,7 @@
 package com.fortify.cli.common.spring.expression;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import org.springframework.expression.common.TemplateParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -26,14 +27,16 @@ public final class SpelHelper {
     private static final TemplateParserContext templateContext = new TemplateParserContext("${","}");
     
     public static final SimpleExpression parseSimpleExpression(String s) {
-        return new SimpleExpression(parser.parseExpression(s));
+        return new SimpleExpression(s, parser.parseExpression(s));
     }
     public static final TemplateExpression parseTemplateExpression(String s) {
-        return new TemplateExpression(parser.parseExpression(s, templateContext));
+        return new TemplateExpression(s, parser.parseExpression(s, templateContext));
     }
     public static final void registerFunctions(SimpleEvaluationContext context, Class<?> clazz) {
         for ( Method m : clazz.getDeclaredMethods() ) {
-            context.setVariable(m.getName(), m);
+            if ( Modifier.isPublic(m.getModifiers()) ) {
+                context.setVariable(m.getName(), m);
+            }
         }
     }
 }

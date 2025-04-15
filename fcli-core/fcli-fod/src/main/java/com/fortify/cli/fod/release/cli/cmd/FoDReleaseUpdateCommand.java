@@ -18,6 +18,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -93,7 +94,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
                 ? potentialQualifiedName
                 : potentialQualifiedName.substring(qualifierPrefix.length());
         if ( result.contains(delim) ) {
-            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s<new name>, current: %s", qualifierPrefix, potentialQualifiedName));
+            throw new FcliSimpleException(String.format("--name option must contain either a plain name or %s<new name>, current: %s", qualifierPrefix, potentialQualifiedName));
         }
         return result;
     }

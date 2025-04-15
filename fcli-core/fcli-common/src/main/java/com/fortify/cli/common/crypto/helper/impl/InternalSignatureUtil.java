@@ -66,7 +66,6 @@ final class InternalSignatureUtil {
     
     private static final String asPem(String type, byte[] key, char[] passPhrase) {
         if ( "PRIVATE KEY".equals(type) && passPhrase!=null ) {
-            //throw new RuntimeException("Generating password-protected private key not supported yet");
             return asPem("ENCRYPTED PRIVATE KEY", pemEncrypt(key, passPhrase));
         } else {
             return asPem(type, key);

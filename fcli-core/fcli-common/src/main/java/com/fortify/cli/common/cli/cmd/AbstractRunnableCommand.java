@@ -57,7 +57,8 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         DEBUG(Level.DEBUG),
         INFO(Level.INFO),
         WARN(Level.WARN),
-        ERROR(Level.ERROR);
+        ERROR(Level.ERROR),
+        NONE(null);
 
         @Getter private final Level logbackLevel;
         LogLevel(Level logbackLevel) {
@@ -111,5 +112,8 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         
         @Option(names = "--log-level")
         @Getter private LogLevel logLevel;
+        
+        @Option(names = "--debug")
+        @Getter private boolean debug;
     }
 }

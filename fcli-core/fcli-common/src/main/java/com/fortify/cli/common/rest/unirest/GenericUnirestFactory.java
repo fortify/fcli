@@ -63,8 +63,10 @@ public final class GenericUnirestFactory {
             instance = createUnirestInstance();
             if ( configurer!=null ) { configurer.accept(instance); }
             instances.put(key, instance);
+            LOG.debug(String.format("Created UnirestInstance: %s: %s", key, instance));
         }
-        return instance;
+        LOG.debug(String.format("getUnirestInstance: %s: %s", key, instance));
+        return new NonClosingUnirestInstanceWrapper(instance);
     }
     
     public static final void shutdown() {
@@ -75,6 +77,7 @@ public final class GenericUnirestFactory {
         UnirestInstance instance = instances.remove(key);
         if ( instance!=null ) {
             try {
+                LOG.debug(String.format("Shut down UnirestInstance: %s: %s", key, instance));
                 instance.shutDown(true);
             } catch ( Exception e ) {
                 String msg = "Error shutting down unirest instance"; 

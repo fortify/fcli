@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanAssessmentTypeDescriptor;
@@ -129,14 +130,14 @@ public class FoDDastAutomatedScanSetupApiCommand extends AbstractFoDScanSetupCom
         } else if (apiType.equals(FoDEnums.DastAutomatedApiTypes.GRPC)) {
             return FoDScanHelper.getGrpcSetupRequest(unirest, releaseId, setupBaseRequest, fileIdToUse, apiSchemeType, apiHost, apiServicePath);
         } else {
-            throw new IllegalArgumentException("Unexpected DAST Automated API type: " + apiType);
+            throw new FcliSimpleException("Unexpected DAST Automated API type: " + apiType);
         }
     }
 
     private void validate() {
         if (apiUrl != null && !apiUrl.isEmpty()) {
             if (!apiUrl.matches("^https://.*")) {
-                throw new IllegalArgumentException("The 'apiUrl' option must include SSL with hostname.");
+                throw new FcliSimpleException("The 'apiUrl' option must include SSL with hostname.");
             }
         }
     }

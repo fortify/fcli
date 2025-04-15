@@ -19,6 +19,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "issue",
         subcommands = {
                 FoDIssueListCommand.class,
+                FoDIssueUpdateCommand.class,
         }
 )
 //@DefaultVariablePropertyName("applicationId")

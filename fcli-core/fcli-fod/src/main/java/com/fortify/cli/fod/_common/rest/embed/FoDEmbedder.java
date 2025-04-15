@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliBugException;
 
 import kong.unirest.UnirestInstance;
 
@@ -42,7 +43,7 @@ public class FoDEmbedder {
     public JsonNode transformRecord(UnirestInstance unirest, JsonNode record) {
         if ( embedders!=null ) {
             if ( !(record instanceof ObjectNode) ) {
-                throw new RuntimeException("Can't embed data in records of type "+record.getNodeType());
+                throw new FcliBugException("Can't embed data in records of type "+record.getNodeType());
             }
             embedders.forEach(e->e.embed(unirest, (ObjectNode)record));
         }

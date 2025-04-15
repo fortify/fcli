@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.HttpRequest;
 import lombok.Getter;

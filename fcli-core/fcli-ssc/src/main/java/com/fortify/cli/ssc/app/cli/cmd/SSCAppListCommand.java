@@ -16,10 +16,10 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
-import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
-import com.fortify.cli.ssc._common.rest.query.cli.mixin.SSCQParamMixin;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
+import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
+import com.fortify.cli.ssc._common.rest.ssc.query.cli.mixin.SSCQParamMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

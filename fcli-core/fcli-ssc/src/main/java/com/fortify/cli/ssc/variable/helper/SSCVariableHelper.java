@@ -16,9 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
 
@@ -48,7 +49,7 @@ public final class SSCVariableHelper {
             descriptor = descriptorsByName.get(variableNameOrIdOrGuid);
         }
         if ( failIfNotFound && descriptor==null ) {
-            throw new IllegalArgumentException("No variable found with name, id or guid "+variableNameOrIdOrGuid);
+            throw new FcliSimpleException("No variable found with name, id or guid "+variableNameOrIdOrGuid);
         }
         return descriptor;
     }

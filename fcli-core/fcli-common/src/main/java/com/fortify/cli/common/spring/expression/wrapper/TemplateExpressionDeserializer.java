@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.spring.expression.wrapper;
 
-import java.beans.PropertyEditor;
 import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -36,8 +35,8 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 
 /**
- * This {@link PropertyEditor} allows parsing String values into a 
- * TemplateExpression object.
+ * This Jackson deserializer allows got parsing String values into 
+ * TemplateExpression objects.
  */
 @Reflectable
 public final class TemplateExpressionDeserializer extends StdDeserializer<TemplateExpression> {

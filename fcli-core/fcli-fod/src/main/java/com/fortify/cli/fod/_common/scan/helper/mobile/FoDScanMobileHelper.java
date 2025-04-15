@@ -17,6 +17,7 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -54,7 +55,7 @@ public class FoDScanMobileHelper extends FoDScanHelper {
         JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
-            throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
+            throw new FcliSimpleException("Unable to retrieve scan id from response when starting Static scan.");
         }
         JsonNode node = objectMapper.createObjectNode()
             .put("scanId", startScanResponse.getScanId())

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
@@ -63,7 +64,7 @@ public class FoDReportTemplateHelper {
                     .findFirst();
             result = (template.isEmpty() ? getEmptyDescriptor() : getDescriptor(template.get()));        }
         if ( failIfNotFound && result==null ) {
-            throw new IllegalArgumentException("No report template found for name or id: " + reportTemplateNameOrId);
+            throw new FcliSimpleException("No report template found for name or id: " + reportTemplateNameOrId);
         }
         return result;
     }

@@ -17,9 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.StringUtils;
@@ -88,17 +85,15 @@ public class SSCAppVersionCopyFromMixin implements ISSCDelimiterMixinAware {
      */
     @RequiredArgsConstructor @Getter
     public static enum SSCAppVersionCopyOption {
-        custom_tags("copyCustomTags", null),
-        bugtracker("copyBugTrackerConfiguration", null),
-        BugTrackerConfiguration("copyBugTrackerConfiguration", bugtracker), // Deprecated
-        processing_rules("copyAnalysisProcessingRules", null),
-        AnalysisProcessingRules("copyAnalysisProcessingRules", processing_rules), // Deprecated
+        custom_tags("copyCustomTags"),
+        bugtracker("copyBugTrackerConfiguration"),
+        processing_rules("copyAnalysisProcessingRules"),
         // Contrary to what's sent by SSC UI, attributes are not supported on COPY_FROM_PARTIAL
-        attributes(null, null),
+        attributes(null),
         // Contrary to what's sent by SSC UI, auth entities are not supported on COPY_FROM_PARTIAL
-        users(null, null),
+        users(null),
         // Requires separate call to COPY_CURRENT_STATE action
-        state(null, null);
+        state(null);
         
         @Override
         public String toString() {
@@ -107,27 +102,16 @@ public class SSCAppVersionCopyFromMixin implements ISSCDelimiterMixinAware {
             return name().replace('_', '-');
         }
 
-        private static final Logger LOG = LoggerFactory.getLogger(SSCAppVersionCopyOption.class);
         private final String copyFromPartialProperty;
-        private final SSCAppVersionCopyOption deprecatedReplacement;
         
         public static final Stream<SSCAppVersionCopyOption> getCopyOptionsOrDefaultStream(Collection<SSCAppVersionCopyOption> copyOptions) {
             return isCopyAll(copyOptions) 
                     ? Stream.of(SSCAppVersionCopyOption.values())
-                            .filter(o->o.getDeprecatedReplacement()==null)
-                    : copyOptions.stream()
-                            .peek(SSCAppVersionCopyOption::warnDeprecated);
+                    : copyOptions.stream();
         }
         
         public static final boolean isCopyAll(Collection<SSCAppVersionCopyOption> copyOptions) {
             return copyOptions==null || copyOptions.isEmpty();
-        }
-        
-        public static final void warnDeprecated(SSCAppVersionCopyOption o) {
-            var replacement = o.getDeprecatedReplacement();
-            if ( replacement!=null ) {
-                LOG.warn(String.format("WARN: %s is deprecated, please use %s", o.name(), replacement.name()));
-            }
         }
     }
 }

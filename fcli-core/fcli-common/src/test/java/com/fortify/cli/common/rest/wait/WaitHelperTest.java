@@ -14,12 +14,10 @@ package com.fortify.cli.common.rest.wait;
 
 import org.junit.jupiter.api.Timeout;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 // TODO Add multithreaded tests that emulate actual state changes
 @Timeout(value = 5)
 public class WaitHelperTest {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    //private static final ObjectMapper objectMapper = new ObjectMapper();
     /*
     @Test
     public void testNoRequests() {

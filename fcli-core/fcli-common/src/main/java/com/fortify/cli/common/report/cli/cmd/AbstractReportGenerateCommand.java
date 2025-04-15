@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -77,7 +78,7 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
             deleteExisting(outputArgGroup.reportDirName, this::deleteDirectory);
             return new ReportDirWriter(outputArgGroup.reportDirName, commandHelper.getMessageResolver());
         } else {
-            throw new IllegalArgumentException("Either --report-file or --report-dir must be specified");
+            throw new FcliSimpleException("Either --report-file or --report-dir must be specified");
         }
     }   
     

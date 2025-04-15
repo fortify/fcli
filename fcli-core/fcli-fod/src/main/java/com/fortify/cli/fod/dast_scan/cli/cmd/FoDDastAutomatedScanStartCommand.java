@@ -17,7 +17,6 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
@@ -34,7 +33,7 @@ public class FoDDastAutomatedScanStartCommand extends AbstractFoDScanStartComman
             String relId = releaseDescriptor.getReleaseId();
 
             // get current setup to ensure the scan has been configured
-            FoDScanConfigDastAutomatedDescriptor currentSetup = FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
+            FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
 
             return FoDScanDastAutomatedHelper.startScan(unirest, releaseDescriptor);
     }

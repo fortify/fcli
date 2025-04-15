@@ -22,8 +22,9 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -47,9 +48,9 @@ public final class SSCIssueFilterHelper {
         } else {
             var matchingFriendlyFilters = technicalFiltersByFriendlyFilter.get(technicalOrFriendlyFilter);
             if ( matchingFriendlyFilters==null || matchingFriendlyFilters.size()==0 ) {
-                throw new IllegalArgumentException(technicalOrFriendlyFilter+" is not a supported filter");
+                throw new FcliSimpleException(technicalOrFriendlyFilter+" is not a supported filter");
             } else if ( matchingFriendlyFilters.size()>1 ) {
-                throw new IllegalArgumentException(technicalOrFriendlyFilter+" is ambiguous.\n" +
+                throw new FcliSimpleException(technicalOrFriendlyFilter+" is ambiguous.\n" +
                     "please use one of the following filters:\n"+
                     matchingFriendlyFilters.stream().map(s->s.indent(2)).collect(Collectors.joining("\n")));
             } else {

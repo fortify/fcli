@@ -30,30 +30,31 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.cli.cmd.AbstractActionRunCommand;
-import com.fortify.cli.common.action.model.ActionValidationException;
-import com.fortify.cli.common.action.model.ActionStepForEach.IActionStepForEachProcessor;
-import com.fortify.cli.common.action.runner.ActionRunner;
+import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
+import com.fortify.cli.common.action.runner.ActionRunnerConfig.ActionRunnerConfigBuilder;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionSpelFunctions;
-import com.fortify.cli.common.action.runner.ActionRunner.ParameterTypeConverterArgs;
-import com.fortify.cli.common.action.runner.ActionRunner.IActionRequestHelper.BasicActionRequestHelper;
+import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
-import com.fortify.cli.ssc._common.rest.helper.SSCProductHelper;
-import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.SSCFileTransferTokenSupplier;
-import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.SSCFileTransferTokenType;
-import com.fortify.cli.ssc._common.session.cli.mixin.SSCUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastProductHelper;
+import com.fortify.cli.ssc._common.rest.sc_sast.helper.SCSastProductHelper;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc._common.rest.ssc.helper.SSCProductHelper;
+import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFileTransferTokenSupplier;
+import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFileTransferTokenType;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.RawResponse;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -61,7 +62,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = "run")
 public class SSCActionRunCommand extends AbstractActionRunCommand {
-    @Getter @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    @Mixin private SSCAndScanCentralUnirestInstanceSupplierMixin unirestInstanceSupplier;
     
     @Override
     protected final String getType() {
@@ -69,24 +70,45 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
     }
     
     @Override
-    protected String getSessionName() {
-        return unirestInstanceSupplier.getSessionName();
+    protected void configure(ActionRunnerConfigBuilder configBuilder) {
+       configBuilder
+            .defaultFcliRunOption("--ssc-session", unirestInstanceSupplier.getSessionName())
+            .actionContextConfigurer(this::configureActionContext)
+            .actionContextSpelEvaluatorConfigurer(this::configureSpelContext);
     }
     
-    @Override
-    protected void configure(ActionRunner templateRunner, SimpleEvaluationContext context) {
-        templateRunner
-            .addParameterConverter("appversion_single", this::loadAppVersion)
-            .addParameterConverter("filterset", this::loadFilterSet)
-            .addRequestHelper("ssc", new SSCActionRequestHelper(unirestInstanceSupplier::getUnirestInstance, SSCProductHelper.INSTANCE));
-        context.setVariable("ssc", new SSCSpelFunctions(templateRunner));
+    protected void configureActionContext(ActionRunnerContext ctx) {
+        ctx.addRequestHelper("ssc", new SSCActionRequestHelper(unirestInstanceSupplier::getSscUnirestInstance, SSCProductHelper.INSTANCE));
+        ctx.addRequestHelper("sc-sast", new SSCActionRequestHelper(unirestInstanceSupplier::getScSastUnirestInstance, SCSastProductHelper.INSTANCE));
+        ctx.addRequestHelper("sc-dast", new SSCActionRequestHelper(unirestInstanceSupplier::getScDastUnirestInstance, SCDastProductHelper.INSTANCE));
+    }
+    
+    protected void configureSpelContext(ActionRunnerContext actionRunnerContext, SimpleEvaluationContext spelContext) {
+        spelContext.setVariable("ssc", new SSCSpelFunctions(actionRunnerContext));   
     }
     
     @RequiredArgsConstructor @Reflectable
     public final class SSCSpelFunctions {
-        private final ActionRunner templateRunner;
+        private final ActionRunnerContext ctx;
+        public final ObjectNode appVersion(String nameOrId) {
+            ctx.getProgressWriter().writeProgress("Loading application version %s", nameOrId);
+            var result = SSCAppVersionHelper.getRequiredAppVersion(unirestInstanceSupplier.getSscUnirestInstance(), nameOrId, ":");
+            ctx.getProgressWriter().writeProgress("Loaded application version %s", result.getAppAndVersionName());
+            return result.asObjectNode();
+        }
+        public final JsonNode filterSet(ObjectNode appVersion, String titleOrId) {
+            var progressMessage = StringUtils.isBlank(titleOrId) 
+                    ? "Loading default filter set" 
+                    : String.format("Loading filter set %s", titleOrId);
+            ctx.getProgressWriter().writeProgress(progressMessage);
+            var filterSetDescriptor = new SSCIssueFilterSetHelper(unirestInstanceSupplier.getSscUnirestInstance(), appVersion.get("id").asText()).getDescriptorByTitleOrId(titleOrId, false);
+            if ( filterSetDescriptor==null ) {
+                throw new FcliSimpleException("Unknown filter set: "+titleOrId);
+            }
+            return filterSetDescriptor.asJsonNode();
+        }
         public IActionStepForEachProcessor ruleDescriptionsProcessor(String appVersionId) {
-            var unirest = templateRunner.getRequestHelper("ssc").getUnirestInstance();
+            var unirest = ctx.getRequestHelper("ssc").getUnirestInstance();
             return new SSCFPRRuleDescriptionProcessor(unirest, appVersionId)::process;
         }
         public String issueBrowserUrl(ObjectNode issue, ObjectNode filterset) {
@@ -95,7 +117,7 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
             if ( filterset!=null ) { 
                 deepLinkExpression+="&filterSet="+filterset.get("guid").asText();
             }
-            return templateRunner.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), issue, String.class);
+            return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), issue, String.class);
         }
         public String appversionBrowserUrl(ObjectNode appversion, ObjectNode filterset) {
             var deepLinkExpression = baseUrl()
@@ -103,42 +125,13 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
             if ( filterset!=null ) { 
                 deepLinkExpression+="?filterSet="+filterset.get("guid").asText();
             }
-            return templateRunner.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), appversion, String.class);
+            return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), appversion, String.class);
         }
         private String baseUrl() {
-            return unirestInstanceSupplier.getSessionDescriptor().getUrlConfig().getUrl()
+            return unirestInstanceSupplier.getSessionDescriptor().getSscUrlConfig().getUrl()
                     .replaceAll("/+$", "");
         }
         
-    }
-    
-    private final JsonNode loadAppVersion(String nameOrId, ParameterTypeConverterArgs args) {
-        args.getProgressWriter().writeProgress("Loading application version %s", nameOrId);
-        var result = SSCAppVersionHelper.getRequiredAppVersion(unirestInstanceSupplier.getUnirestInstance(), nameOrId, ":");
-        args.getProgressWriter().writeProgress("Loaded application version %s", result.getAppAndVersionName());
-        return result.asJsonNode();
-    }
-    
-    private final JsonNode loadFilterSet(String titleOrId, ParameterTypeConverterArgs args) {
-        var progressMessage = StringUtils.isBlank(titleOrId) 
-                ? "Loading default filter set" 
-                : String.format("Loading filter set %s", titleOrId);
-        args.getProgressWriter().writeProgress(progressMessage);
-        var parameter = args.getParameter();
-        var typeParameters = parameter.getTypeParameters();
-        var appVersionIdExpression = typeParameters==null ? null : typeParameters.get("appversion.id");
-        if ( appVersionIdExpression==null ) {
-            appVersionIdExpression = SpelHelper.parseTemplateExpression("${appversion?.id}");
-        }
-        var appVersionId = args.getSpelEvaluator().evaluate(appVersionIdExpression, args.getParameters(), String.class);
-        if ( StringUtils.isBlank(appVersionId) ) {
-            throw new ActionValidationException(String.format("Template parameter %s requires ${%s} to be available", parameter.getName(), appVersionIdExpression.getExpressionString()));
-        }
-        var filterSetDescriptor = new SSCIssueFilterSetHelper(unirestInstanceSupplier.getUnirestInstance(), appVersionId).getDescriptorByTitleOrId(titleOrId, false);
-        if ( filterSetDescriptor==null ) {
-            throw new IllegalArgumentException("Unknown filter set: "+titleOrId);
-        }
-        return filterSetDescriptor.asJsonNode();
     }
     
     private static final class SSCActionRequestHelper extends BasicActionRequestHelper {

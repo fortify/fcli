@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 # For now, this template uses latest release state to generate PR decorations.
 # See corresponding .bak file is SSC module for an example of how to better
@@ -12,7 +12,7 @@ usage:
     This action adds review comments to a GitHub Pull Request. Currently
     this is marked as PREVIEW as we build out this functionality; later
     versions may have different behavior and/or require different action
-    parameters. 
+    cli. 
     
     The current implementation simply compares current scan results 
     against previous scan results in the given FoD release, listing 
@@ -29,118 +29,116 @@ usage:
     upon PR creation. Optionally, new scans can be run upon PR changes,
     creating new PR comments that show the issue delta compared to the
     previous scan for this PR.
-      
-parameters:
-  - name: release
-    cliAliases: rel
+
+config:
+  rest.target.default: fod
+
+    
+cli.options:
+  release:
+    names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
-  - name: scan-type
-    cliAliases: t
+  scan-type:
+    names: --scan-type, -t
     description: "Scan type for which to list vulnerabilities. Default value: Static"
     required: true
-    defaultValue: Static
-  - name: github-api-url
+    default: Static
+  github-api-url:
+    names: --github-api-url
     description: 'Required GitHub API URL. Default value: GITHUB_API_URL environment variable.'
     required: true
-    defaultValue: ${#env('GITHUB_API_URL')}
-  - name: github-token
+    default: ${#env('GITHUB_API_URL')}
+  github-token:
+    names: --github-token
     description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
     required: true
-    defaultValue: ${#env('GITHUB_TOKEN')}
-  - name: github-owner
+    default: ${#env('GITHUB_TOKEN')}
+  github-owner:
+    names: --github-owner
     description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'
     required: true
-    defaultValue: ${#env('GITHUB_REPOSITORY_OWNER')}
-  - name: github-repo
+    default: ${#env('GITHUB_REPOSITORY_OWNER')}
+  github-repo:
+    names: --github-repo
     description: 'Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.'
     required: true
-    defaultValue: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
-  - name: pr
+    default: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
+  pr:
+    names: --pr
     description: "Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable. Note that default value will only work on GitHub pull_request triggers; if this fcli action is invoked through any other GitHub trigger, it will fail unless an explicit PR number is passed through this option." 
     required: true
-    defaultValue: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
-  - name: commit
+    default: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
+  commit:
+    names: --commit
     description: 'Required commit hash. Default value: GITHUB_SHA environment variable.'
     required: true
-    defaultValue: ${#env('GITHUB_SHA')}
-  - name: dryrun
+    default: ${#env('GITHUB_SHA')}
+  dryrun:
+    names: --dryrun
     description: "Set to true to just output PR decoration JSON; don't actually update any PR"
     type: boolean
     required: false
-    defaultValue: false
-    
-addRequestTargets:
-  - name: github
-    baseUrl: ${parameters['github-api-url']}
-    headers:
-      Authorization: Bearer ${parameters['github-token']}
-      'X-GitHub-Api-Version': '2022-11-28'
-    
-defaults:
-  requestTarget: fod
+    default: false
     
 steps:
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-      query:
-        includeFixed: true
-        filters: scantype:${parameters['scan-type']}
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-      forEach:
-        name: issue
-        if: ${issue.status!='Existing'}
-        embed:
-          - name: details
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-        do:
-          - append:
-            - if: ${issue.status=='Fix Validated'}
-              name: removedIssues
-              valueTemplate: mdIssueListItem
-            - if: ${(issue.status=='New' || issue.status=='Reopen')}
-              name: newIssues
-              valueTemplate: mdIssueListItem
+  - rest.target:
+      github:
+        baseUrl: ${cli['github-api-url']}
+        headers:
+          Authorization: Bearer ${cli['github-token']}
+          'X-GitHub-Api-Version': '2022-11-28'
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+          filters: scantype:${cli['scan-type']}
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.status!='Existing'}
+          embed:
+            details:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
+          do:
+            - var.set:
+                removedIssues..: {fmt: mdIssueListItem, if: "${issue.status=='Fix Validated'}"}
+                newIssues..: {fmt: mdIssueListItem, if: "${(issue.status=='New' || issue.status=='Reopen')}"}
           
-  - progress: Generating GitHub request
-  - set:
-      - name: reviewBody
-        valueTemplate: reviewBody
-      - name: reviewRequestBody
-        valueTemplate: reviewRequestBody
-  - if: ${parameters.dryrun}
-    write:
-      - to: stdout
-        value: ${reviewRequestBody}
-  - if: ${!parameters.dryrun}
-    requests:
-      - name:   GitHub PR review
-        method: POST
-        uri:    /repos/${parameters['github-owner']}/${parameters['github-repo']}/pulls/${parameters['pr']}/reviews
-        target: github
-        body:   ${reviewRequestBody}       
+  - log.progress: Generating GitHub request
+  - var.set:
+      reviewBody: {fmt: reviewBody}
+      reviewRequestBody: {fmt: reviewRequestBody}
+  - if: ${cli.dryrun}
+    log.info: ${reviewRequestBody}
+  - if: ${!cli.dryrun}
+    rest.call:
+        postPRComment:
+          method: POST
+          uri:    /repos/${cli['github-owner']}/${cli['github-repo']}/pulls/${cli['pr']}/reviews
+          target: github
+          body:   ${reviewRequestBody}       
 
-valueTemplates:
-  - name: reviewRequestBody
-    contents:
-      owner: ${parameters['github-owner']}
-      repo: ${parameters['github-repo']}
-      pull_number: ${parameters['pr']}
-      commit_id: ${parameters['commit']}
+formatters:
+  reviewRequestBody:
+      owner: ${cli['github-owner']}
+      repo: ${cli['github-repo']}
+      pull_number: ${cli['pr']}
+      commit_id: ${cli['commit']}
       body: ${reviewBody}
       event: COMMENT
       # For now, we don't include any source code comments, as this will cause
       # GitHub to return an error if the source file doesn't exist in the repo.
       comments: ${{}} 
       
-  - name: reviewBody
-    contents: |
+  reviewBody: |
       ## Fortify vulnerability summary
       
-      Any issues listed below are based on comparing the latest scan results against the previous scan results in FoD release [${parameters.release.applicationName}${#isNotBlank(parameters.release.microserviceNae)?'- '+parameters.release.microserviceName:''} - ${parameters.release.releaseName}](${#fod.releaseBrowserUrl(parameters.release)}). This is for informational purposes only and, depending on workflow, may not be an accurate representation of what issues will be introduced into or removed from the target branch when merging this PR.   
+      Any issues listed below are based on comparing the latest scan results against the previous scan results in FoD release [${rel.applicationName}${#isNotBlank(rel.microserviceNae)?'- '+rel.microserviceName:''} - ${rel.releaseName}](${#fod.releaseBrowserUrl(rel)}). This is for informational purposes only and, depending on workflow, may not be an accurate representation of what issues will be introduced into or removed from the target branch when merging this PR.   
       
       ### New Issues
       
@@ -154,8 +152,7 @@ valueTemplates:
         ? "* No removed issues were detected" 
         : ("* "+#join('\n* ',removedIssues))}
         
-  - name: mdIssueListItem
-    contents: "${issue.status} (${issue.scantype}) - ${issue.category}:    \n[${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber}](${#fod.issueBrowserUrl(issue)})"
+  mdIssueListItem: "${issue.status} (${issue.scantype}) - ${issue.category}:    \n[${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber}](${#fod.issueBrowserUrl(issue)})"
       
       
       

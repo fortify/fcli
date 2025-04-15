@@ -15,6 +15,7 @@ package com.fortify.cli.fod.microservice.helper;
 
 import java.util.regex.Pattern;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod.release.helper.FoDQualifiedReleaseNameDescriptor;
 
 import lombok.Data;
@@ -26,7 +27,7 @@ public final class FoDQualifiedMicroserviceNameDescriptor {
     public static final FoDQualifiedMicroserviceNameDescriptor fromCombinedAppAndMicroserviceName(String appAndMicroserviceName, String delimiter) {
         String[] appAndMicroserviceNameArray = appAndMicroserviceName.split(Pattern.quote(delimiter));
         if (appAndMicroserviceNameArray.length != 2) {
-            throw new IllegalArgumentException("Application and microservice name must be specified in the format <application name>"+delimiter+"<microservice name>");
+            throw new FcliSimpleException("Application and microservice name must be specified in the format <application name>"+delimiter+"<microservice name>");
         }
         return new FoDQualifiedMicroserviceNameDescriptor(appAndMicroserviceNameArray[0], appAndMicroserviceNameArray[1]);
     }

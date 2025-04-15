@@ -12,7 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.util;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 // TODO Any good reason for having one big class defining many enums? Was this somehow generated from FoD?
 // TODO Are all these enums actually used?
@@ -503,6 +510,82 @@ public class FoDEnums {
                 default:
                     return Release;
             }
+        }
+    }
+
+    public enum VulnerabilitySeverityType {
+        // use same integer values as FoD uses internally
+        Low(1),
+        Medium(2),
+        High(3),
+        Critical(4),
+        Info(-2),
+        BestPractice(-1);
+
+        private final int fodInternalValue;
+
+        VulnerabilitySeverityType(int fodInternalValue) {
+            this.fodInternalValue = fodInternalValue;
+        }
+
+        public int getFodInternalValue() {
+            return this.fodInternalValue;
+        }
+
+        public String toString() {
+            return StringUtils.join(
+                StringUtils.splitByCharacterTypeCamelCase(name()),
+                ' '
+            );
+        }
+
+        public static VulnerabilitySeverityType fromInt(int fodInternalValue) {
+            return Arrays.stream(values())
+                .filter(e->e.fodInternalValue==fodInternalValue)
+                .findFirst()
+                .orElseThrow();
+        }
+    }
+
+    public enum DeveloperStatusType {
+        // no internal integer id representation
+        Open("Open"),
+        InRemediation("In Remediation"),
+        Remediated("Remediated"),
+        WillNotFix("Will Not Fix"),
+        ThirdPartyComponent("Third Party Component");
+
+        public final String value;
+
+        DeveloperStatusType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+    }
+
+    public enum AuditorStatusType {
+        // no internal integer id representation
+        PendingReview("Pending Review"),
+        RemediationRequired("Remediation Required"),
+        RemediationDeferred("Remediation Deferred"),
+        RiskMitigated("Risk Mitigated"),
+        // the following are used by Aviator and should not be set by a user
+        //Suspicious("Suspicious"),
+        //ProposedNotAnIssue("Proposed Not an Issue"),
+        RiskAccepted("Risk Accepted"),
+        NotAnIssue("Not an Issues");
+
+        public final String value;
+
+        AuditorStatusType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return this.value;
         }
     }
 

@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -25,13 +27,11 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus.FoDScanStatusIterable;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.Arrays;
-import java.util.Set;
 
 @CommandGroup("*-scan-wait-for")
 public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForCommand implements IRecordTransformer {

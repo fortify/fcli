@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.attribute.domain.SSCAttributeDefinitionType;
@@ -114,7 +115,7 @@ public final class SSCAttributeUpdateBuilder {
     private static final void checkRequiredAttributesPresent(SSCAttributeDefinitionHelper helper, ArrayNode preparedAttributes) {
         Set<String> missingRequiredAttributes = getMissingRequiredAttributes(helper, preparedAttributes);
         if ( !missingRequiredAttributes.isEmpty() ) {
-            throw new IllegalArgumentException("The following required attributes must be provided: "+missingRequiredAttributes);
+            throw new FcliSimpleException("The following required attributes must be provided: "+missingRequiredAttributes);
         }
     }
     
@@ -181,14 +182,14 @@ public final class SSCAttributeUpdateBuilder {
         case DATE:
             attrUpdateNode.put("value", getOptionDateValue(descriptor, value)); break;
         default:
-            throw new IllegalStateException("Unknown attribute type "+type+" for attribute "+descriptor.getFullName());
+            throw new FcliSimpleException("Unknown attribute type "+type+" for attribute "+descriptor.getFullName());
         }
         return attrUpdateNode;
     }
 
     private static String getOptionDateValue(SSCAttributeDefinitionDescriptor descriptor, String value) {
         if ( !Pattern.matches("\\d{4}-\\d{2}-\\d{2}", value) ) {
-            throw new IllegalArgumentException("Value for attribute '"+descriptor.getFullName()+"' must be specified as yyyy-MM-dd");
+            throw new FcliSimpleException("Value for attribute '"+descriptor.getFullName()+"' must be specified as yyyy-MM-dd");
         }
         return value;
     }
@@ -197,7 +198,7 @@ public final class SSCAttributeUpdateBuilder {
         try {
             return Integer.parseInt(value);
         } catch ( NumberFormatException nfe ) {
-            throw new IllegalArgumentException("Value for attribute '"+descriptor.getFullName()+"' must be an integer");
+            throw new FcliSimpleException("Value for attribute '"+descriptor.getFullName()+"' must be an integer");
         }
     }
 
@@ -205,7 +206,7 @@ public final class SSCAttributeUpdateBuilder {
         if ( "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value) ) {
             return Boolean.parseBoolean(value);
         } else {
-            throw new IllegalArgumentException("Value for attribute '"+descriptor.getFullName()+"' must be 'true' or 'false'");
+            throw new FcliSimpleException("Value for attribute '"+descriptor.getFullName()+"' must be 'true' or 'false'");
         }
     }
     
@@ -216,7 +217,7 @@ public final class SSCAttributeUpdateBuilder {
     private static final ArrayNode getOptionSingleValue(SSCAttributeDefinitionHelper helper, SSCAttributeDefinitionDescriptor descriptor, String value) {
         ArrayNode optionValues = getOptionValues(helper, descriptor, value);
         if ( optionValues.size()>1 ) {
-            throw new IllegalArgumentException("Attribute '"+descriptor.getFullName()+"' can only contain a single value");
+            throw new FcliSimpleException("Attribute '"+descriptor.getFullName()+"' can only contain a single value");
         }
         return optionValues;
     }

@@ -16,8 +16,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.sc_dast._common.rest.helper.SCDastProductHelper;
-import com.fortify.cli.sc_dast._common.session.cli.mixin.SCDastUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.sc_dast.cli.mixin.SCDastUnirestInstanceSupplierMixin;
+import com.fortify.cli.ssc._common.rest.sc_dast.helper.SCDastProductHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
