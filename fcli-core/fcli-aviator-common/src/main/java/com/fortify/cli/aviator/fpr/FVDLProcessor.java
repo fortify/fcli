@@ -14,9 +14,7 @@ import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,7 +32,6 @@ public class FVDLProcessor {
     private final List<Vulnerability> vulnerabilities = new ArrayList<>();
     private static Map<String, String> sourceFileMap;
     private Map<String, Node> nodePool = new HashMap<>();
-    private Set<String> processedFiles;
     private Document inputDoc;
     private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
     private final Map<String, Element> ruleInfoCache = new HashMap<>();
@@ -45,13 +42,8 @@ public class FVDLProcessor {
     private Map<String, Element> tracePool = new HashMap<>();
     private static final Pattern IFDEF_PATTERN = Pattern.compile("(?s)<IfDef[^>]*>.*?</IfDef>\\r?\\n?");
 
-    private static final List<Charset> CHARSETS = Arrays.asList(
-            StandardCharsets.UTF_8,
-            StandardCharsets.ISO_8859_1
-    );
-
     public FVDLProcessor(Path extractedPath) {
-        this.extractedPath = extractedPath;
+        FVDLProcessor.extractedPath = extractedPath;
         this.descriptionCache = new HashMap<>();
         this.tagReplacementMap = initializeTagReplacementMap();
     }
@@ -70,8 +62,6 @@ public class FVDLProcessor {
         factory.setFeature("http://xml.org/sax/features/validation", false);
         DocumentBuilder builder = factory.newDocumentBuilder();
         inputDoc = builder.parse(auditPath.toFile());
-
-        processedFiles = new HashSet<>();
 
         optimizedPopulateNodePool();
 
@@ -175,7 +165,7 @@ public class FVDLProcessor {
         }
     }
 
-    public Vulnerability processVulnerability(Element vulnerabilityElement) throws IOException {
+    public Vulnerability processVulnerability(Element vulnerabilityElement) {
         Vulnerability.VulnerabilityBuilder vulnerabilityBuilder = Vulnerability.builder();
 
         Optional.ofNullable(vulnerabilityElement.getElementsByTagName("ClassInfo").item(0))
@@ -262,7 +252,7 @@ public class FVDLProcessor {
         return vulnerabilityBuilder.build();
     }
 
-    private void processStackTraceElements(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) throws IOException {
+    private void processStackTraceElements(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) {
         for (List<StackTraceElement> stackTrace : stackTraces) {
             if (stackTrace == null) continue;
 
@@ -273,7 +263,7 @@ public class FVDLProcessor {
         }
     }
 
-    private void processInnerStackTraceElements(StackTraceElement element, Map<String, File> uniqueFiles) throws IOException {
+    private void processInnerStackTraceElements(StackTraceElement element, Map<String, File> uniqueFiles) {
         if (element == null || element.getInnerStackTrace() == null || element.getInnerStackTrace().isEmpty()) return;
 
         for (StackTraceElement innerElement : element.getInnerStackTrace()) {
@@ -301,16 +291,16 @@ public class FVDLProcessor {
                     file.setContent(new String(encodedBytes));
                     file.setEndLine(countLines(actualSourcePath));
                 } else {
-                    logger.warn("Source file not found: " + actualSourcePath.toString());
+                    logger.warn("Source file not found: {}", actualSourcePath);
                     file.setContent("");
                     file.setEndLine(0);
                 }
             } catch (MalformedInputException e) {
-                logger.warn("Malformed input while reading file: " + filename, e);
+                logger.warn("Malformed input while reading file: {}", filename, e);
                 file.setContent("");
                 file.setEndLine(0);
             } catch (IOException e) {
-                logger.warn("Error processing file: " + filename, e);
+                logger.warn("Error processing file: {}", filename, e);
                 file.setContent("");
                 file.setEndLine(0);
             }
@@ -429,7 +419,7 @@ public class FVDLProcessor {
                     if (traceElement != null) {
                         innerStackTrace.addAll(processTraceElement(traceElement));
                     } else {
-                        logger.warn("Trace ID " + traceId + " not found in UnifiedTracePool");
+                        logger.warn("Trace ID {} not found in UnifiedTracePool", traceId);
                     }
                 } else {
                     Element trace = getFirstChildElement(reason, "Trace");
@@ -475,7 +465,7 @@ public class FVDLProcessor {
                 if (traceElement != null) {
                     innerStackTrace.addAll(processTraceElement(traceElement));
                 } else {
-                    logger.warn("Trace ID " + traceId + " not found in UnifiedTracePool");
+                    logger.warn("Trace ID {} not found in UnifiedTracePool", traceId);
                 }
             } else {
                 Element trace = getFirstChildElement(reason, "Trace");
@@ -544,7 +534,7 @@ public class FVDLProcessor {
         }
     }
 
-    private Fragment getFragmentFromFile(String filename, int linenumber, int maxBefore, int maxAfter) throws IOException {
+    private Fragment getFragmentFromFile(String filename, int linenumber, int maxBefore, int maxAfter) {
         String sourceFilePath = sourceFileMap.get(filename);
         if (sourceFilePath == null) {
             return new Fragment("", 0, 0);
@@ -572,7 +562,7 @@ public class FVDLProcessor {
 
             return new Fragment(sb.toString(), first, last);
         } catch (IOException e) {
-            logger.error("Error reading fragment from file: " + actualSourcePath, e);
+            logger.error("Error reading fragment from file: {}", actualSourcePath, e);
             return new Fragment("", 0, 0);
         }
     }
@@ -802,6 +792,8 @@ public class FVDLProcessor {
     private void addDescriptionElements(Vulnerability.VulnerabilityBuilder vulnerabilityBuilder, String classId, Element vulnerabilityElement) {
         Element descriptionElement = descriptionCache.computeIfAbsent(classId, this::findDescriptionElement);
         if (descriptionElement == null) {
+            vulnerabilityBuilder.shortDescription(" ");
+            vulnerabilityBuilder.explanation(" ");
             return;
         }
 
@@ -821,9 +813,6 @@ public class FVDLProcessor {
                 StringBuilder formatted = new StringBuilder();
                 for (String line : lines) {
                     if (line.matches(".*<b>Example\\s+\\d+:</b>.*") || line.matches(".*Example\\s+\\d+:.*")) {
-                        if (formatted.length() > 0) {
-                            // formatted.append("\n");
-                        }
                         String exampleLine = line.replaceAll("(<b>)?Example\\s+(\\d+):(\\s*</b>)?", "Example $2:");
                         formatted.append(exampleLine).append("\n");
                     } else {
@@ -944,21 +933,13 @@ public class FVDLProcessor {
                 processedText.append("<Paragraph>").append(cleanedParagraph).append("</Paragraph>");
             } else if (!altParagraphContent.isEmpty()) {
                 processedText.append(altParagraphContent);
-            } else {
-
             }
 
             lastEnd = paragraphMatcher.end();
         }
         processedText.append(text.substring(lastEnd));
 
-        Map<String, String> replacementValues = replacementData.replacements.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().value()
-                ));
-
-        String result = replacePlaceholders(processedText.toString(), replacementValues);
+        String result = replacePlaceholders(processedText.toString(), replacementData);
         return stripTags(result);
     }
 
@@ -974,20 +955,49 @@ public class FVDLProcessor {
         return result.replace(" ", " ");
     }
 
-    private String replacePlaceholders(String text, Map<String, String> replacements) {
-        Pattern pattern = Pattern.compile("\\{(\\w+)(?::(\\w+))?(?::(\\w+))?\\}");
-        Matcher matcher = pattern.matcher(text);
-        StringBuilder result = new StringBuilder();
-        int lastEnd = 0;
-        while (matcher.find()) {
-            result.append(text, lastEnd, matcher.start());
-            String key = matcher.group(1);
-            String value = replacements.getOrDefault(key, "");
-            result.append(value);
-            lastEnd = matcher.end();
+    private String replacePlaceholders(String text, ReplacementData replacementData) {
+        if (!text.contains("<Replace")) {
+            return text;
         }
-        result.append(text, lastEnd, text.length());
-        return result.toString();
+
+        Pattern pattern = Pattern.compile("<Replace key=\"([^\"]+)\"(?: link=\"([^\"]+)\")?/>");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            String link = matcher.group(2);
+            Replacement replacement = replacementData.replacements.get(key);
+            if (replacement != null) {
+                String value = replacement.value();
+                Map<String, String> locAttrs = null;
+                if (link != null) {
+                    locAttrs = replacementData.locationReplacements.get(link);
+                } else if (replacement.hasLocation()) {
+                    locAttrs = Map.of(
+                            "path", replacement.path(),
+                            "line", replacement.line(),
+                            "colStart", replacement.colStart(),
+                            "colEnd", replacement.colEnd()
+                    );
+                }
+                if (locAttrs != null) {
+                    String href = String.format("location://%s###%s###%s###%s",
+                            locAttrs.get("path"),
+                            locAttrs.get("colStart"),
+                            locAttrs.get("colEnd")
+                    );
+                    String linkHtml = "<a href=\"" + href + "\">" + Matcher.quoteReplacement(value) + "</a>";
+                    matcher.appendReplacement(sb, linkHtml);
+                } else {
+                    matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
+                }
+            } else {
+                matcher.appendReplacement(sb, "");
+            }
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     private void loadSourceFileMap() throws Exception {

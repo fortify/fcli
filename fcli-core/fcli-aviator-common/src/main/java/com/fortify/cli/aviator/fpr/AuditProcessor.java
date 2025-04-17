@@ -61,18 +61,6 @@ public class AuditProcessor {
     @Getter
     private Path extractedPath;
 
-    public void saveFilterTemplateXml(Document doc) throws Exception {
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-        DOMSource source = new DOMSource(doc);
-        Path filterTemplatePath = extractedPath.resolve("filtertemplate.xml");
-        StreamResult result = new StreamResult(filterTemplatePath.toFile());
-        transformer.transform(source, result);
-        logger.debug("Updated filtertemplate.xml saved to: {}", filterTemplatePath);
-    }
-
     public Map<String, AuditIssue> processAuditXML() throws AviatorTechnicalException {
         Path auditPath = extractedPath.resolve("audit.xml");
 
@@ -535,7 +523,7 @@ public class AuditProcessor {
         newIssue.setAttribute("suppressed", "false");
 
         updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
-        updateOrAddTag(newIssue, Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW);
+        updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED);
 
         addCommentToIssueElement(newIssue, comment, Constants.USER_NAME);
 
@@ -549,7 +537,7 @@ public class AuditProcessor {
                     .suppressed(false)
                     .tags(Map.of(
                             Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
-                            Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW
+                            Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED
                     ))
                     .threadedComments(List.of(
                             AuditIssue.Comment.builder()

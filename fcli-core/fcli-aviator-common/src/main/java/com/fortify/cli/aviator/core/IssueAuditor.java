@@ -10,6 +10,7 @@ import com.fortify.cli.aviator.core.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.AuditIssue;
 import com.fortify.cli.aviator.fpr.AuditProcessor;
 import com.fortify.cli.aviator.fpr.FPRInfo;
+import com.fortify.cli.aviator.fpr.IssueOrderingComparator;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
@@ -597,24 +598,5 @@ public class IssueAuditor {
             template = template.replace("{issues_new_in_category}", String.valueOf(values[0])).replace("{MAX_PER_CATEGORY}", String.valueOf(MAX_PER_CATEGORY)).replace("{issues_new_total}", String.valueOf(values[1])).replace("{MAX_TOTAL}", String.valueOf(MAX_TOTAL));
         }
         return template;
-    }
-
-
-    private class IssueOrderingComparator implements Comparator<UserPrompt> {
-        @Override
-        public int compare(UserPrompt first, UserPrompt second) {
-            String firstFilename = Optional.ofNullable(first.getLastStackTraceElement()).map(StackTraceElement::getFilename).orElse("");
-            String secondFilename = Optional.ofNullable(second.getLastStackTraceElement()).map(StackTraceElement::getFilename).orElse("");
-
-            int filenameComparison = firstFilename.compareTo(secondFilename);
-            if (filenameComparison != 0) {
-                return filenameComparison;
-            }
-
-            Integer firstLine = Optional.ofNullable(first.getLastStackTraceElement()).map(StackTraceElement::getLine).orElse(0);
-            Integer secondLine = Optional.ofNullable(second.getLastStackTraceElement()).map(StackTraceElement::getLine).orElse(0);
-
-            return Integer.compare(firstLine, secondLine);
-        }
     }
 }
