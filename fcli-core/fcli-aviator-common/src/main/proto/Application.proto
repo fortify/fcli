@@ -16,6 +16,7 @@ message Application {
   google.protobuf.Timestamp created_at = 4;
   google.protobuf.Timestamp updated_at = 5;
   bool is_deleted = 6;
+  string legalTermsOfService=7;
 }
 
 message CreateApplicationRequest {
