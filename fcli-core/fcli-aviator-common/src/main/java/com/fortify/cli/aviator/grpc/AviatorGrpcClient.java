@@ -750,14 +750,13 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
-    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) {
+    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message) {
         ListTokensRequest request = ListTokensRequest.newBuilder()
                 .setEmail(email)
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName)
-                .setPageSize(pageSize)
-                .setPageToken(pageToken)
+                .setIgnorePagination(true)
                 .build();
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
