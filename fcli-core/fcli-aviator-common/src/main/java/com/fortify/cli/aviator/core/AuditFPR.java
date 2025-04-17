@@ -111,7 +111,7 @@ public class AuditFPR {
         FPRInfo fprInfo = fprProcessor.getFprInfo();
 
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
-        IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, false, logger);
+        IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, logger);
         AuditOutcome outcome = issueAuditor.performAudit(auditResponses, token, appVersion, fprInfo.getBuildId(), url);
 
         LOG.info("Completed audit process, received {} responses", auditResponses.size());

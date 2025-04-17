@@ -6,7 +6,6 @@ import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditOutcome;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.UserPrompt;
-import com.fortify.cli.aviator.core.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.AuditIssue;
 import com.fortify.cli.aviator.fpr.AuditProcessor;
 import com.fortify.cli.aviator.fpr.FPRInfo;
@@ -23,8 +22,6 @@ import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,18 +45,16 @@ public class IssueAuditor {
     private final AuditProcessor auditProcessor;
     private final Map<String, AuditIssue> auditIssueMap;
     private final FPRInfo fprInfo;
-    private final String userName = Constants.USER_NAME;
 
     private final TagDefinition analysisTag;
     private TagDefinition humanAuditTag;
     private TagDefinition aviatorPredictionTag;
     private TagDefinition aviatorStatusTag;
 
-    private final boolean isTestMode;
     private final AtomicInteger issuesSentToLLM;
     private final IAviatorLogger logger;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, boolean isTestMode, IAviatorLogger logger) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, IAviatorLogger logger) {
         this.logger = logger;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
@@ -70,7 +65,6 @@ public class IssueAuditor {
         this.auditProcessor = auditProcessor;
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
-        this.isTestMode = isTestMode;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
 
@@ -110,7 +104,7 @@ public class IssueAuditor {
         String name = "Aviator status";
         String id = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
 
-        List<String> values = Arrays.asList(Constants.PROCESSED_BY_AVIATOR);
+        List<String> values = List.of(Constants.PROCESSED_BY_AVIATOR);
         return new TagDefinition(name, id, values, false);
     }
 
@@ -159,16 +153,17 @@ public class IssueAuditor {
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof AviatorSimpleException) {
-                    logger.progress("Audit failed (user error)");
                     throw (AviatorSimpleException) cause;
+                } else if (cause instanceof AviatorTechnicalException) {
+                    throw (AviatorTechnicalException) cause;
+                } else {
+                    throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
                 }
-                logger.progress("Audit failed due to unexpected error during execution");
-                throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
             } catch (TimeoutException e) {
-                logger.progress("Audit failed due to timeout");
+                logger.error("Audit failed due to timeout after 500 minutes");
                 throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
             } catch (InterruptedException e) {
-                logger.progress("Audit failed due to interruption");
+                logger.error("Audit failed due to interruption");
                 Thread.currentThread().interrupt();
                 throw new AviatorTechnicalException("Audit interrupted", e);
             }
