@@ -1,5 +1,6 @@
 package com.fortify.cli.aviator.core;
 
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
@@ -60,17 +61,15 @@ public class AuditFPR {
             Yaml yaml = new Yaml();
             try (InputStream inputStream = AuditFPR.class.getClassLoader().getResourceAsStream("extensions_config.yaml")) {
                 if (inputStream == null) {
-                    throw new AviatorSimpleException("Resource not found: extensions_config.yaml");
+                    throw new AviatorBugException ("Resource not found: extensions_config.yaml");
                 }
                 extensionsConfig = yaml.loadAs(inputStream, ExtensionsConfig.class);
                 if (extensionsConfig == null) {
-                    LOG.error("Failed to load extensions configuration (result was null)");
-                    throw new AviatorTechnicalException("Failed to load required extensions configuration.");
+                    throw new AviatorBugException ("Failed to load required extensions configuration.");
                 }
             }
         } catch (IOException e) {
-            LOG.error("Failed to load extensions configuration file: {}", e.getMessage(), e);
-            throw new AviatorTechnicalException("Unable to load extensions configuration due to an I/O error.", e);
+            throw new AviatorBugException ("Unable to load extensions configuration due to an I/O error.", e);
         }
 
         TagMappingConfig tagMappingConfig;
@@ -144,10 +143,5 @@ public class AuditFPR {
         File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, tagMappingConfig);
         LOG.info("FPR audit process completed with status: {}", status);
         return new FPRAuditResult(updatedFile, status, null, issuesSuccessfullyAudited, totalIssuesToAudit);
-    }
-
-    public static FPRAuditResult auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger)
-            throws AviatorSimpleException, AviatorTechnicalException {
-        return auditFPR(file, token, url, appVersion, logger, null);
     }
 }
