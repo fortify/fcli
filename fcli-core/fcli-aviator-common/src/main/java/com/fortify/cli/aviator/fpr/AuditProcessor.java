@@ -228,7 +228,7 @@ public class AuditProcessor {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
             Element issueElement = findIssueElement(instanceId);
-            String tagId = tagMappingConfig.getTagId();
+            String tagId = tagMappingConfig.getTag_id();
 
             if (response.getTier() != null) {
                 if (issueElement != null) {
@@ -281,7 +281,7 @@ public class AuditProcessor {
             }
 
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                updateOrAddTag(issueElement, tagMappingConfig.getTagId(), resultConfig.getValue());
+                updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
             if (resultConfig != null && resultConfig.getSuppress()) {
                 issueElement.setAttribute("suppressed", "true");
@@ -324,7 +324,7 @@ public class AuditProcessor {
             }
 
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                addTagHistory(clientAuditTrail, tagMappingConfig.getTagId(), resultConfig.getValue());
+                addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
             if (resultConfig != null && resultConfig.getSuppress()) {
                 issueElement.setAttribute("suppressed", "true");
@@ -461,7 +461,7 @@ public class AuditProcessor {
             }
 
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                updateOrAddTag(newIssue, tagMappingConfig.getTagId(), resultConfig.getValue());
+                updateOrAddTag(newIssue, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
             if (resultConfig != null && resultConfig.getSuppress()) {
                 newIssue.setAttribute("suppressed", "true");

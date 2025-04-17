@@ -984,6 +984,7 @@ public class FVDLProcessor {
                 if (locAttrs != null) {
                     String href = String.format("location://%s###%s###%s###%s",
                             locAttrs.get("path"),
+                            locAttrs.get("line"),
                             locAttrs.get("colStart"),
                             locAttrs.get("colEnd")
                     );

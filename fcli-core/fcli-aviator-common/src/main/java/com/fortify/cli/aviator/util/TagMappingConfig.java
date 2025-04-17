@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class TagMappingConfig {
-    private String tagId = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
+    private String tag_id = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
     private Mapping mapping;
 
     @Data
