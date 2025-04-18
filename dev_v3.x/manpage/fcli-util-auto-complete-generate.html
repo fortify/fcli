@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250416.103214-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250418.150500-dev_v3.x" %}
 
 
 <div id="header">
@@ -41,7 +41,8 @@ fcli_version:
 <div class="paragraph">
 <p><strong>fcli util auto-complete generate</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                                  [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--debug</strong>]]</p>
+                                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                 [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]]</p>
 </div>
 </div>
 </div>
@@ -66,7 +67,7 @@ Run the following command to give <code>fcli</code> TAB completion in the curren
 </dd>
 <dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
 <dd>
-<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+<p>Environment variable prefix for resolving default option and parameter values. Default value: FCLI_DEFAULT.</p>
 </dd>
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
@@ -80,6 +81,10 @@ Run the following command to give <code>fcli</code> TAB completion in the curren
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
 </dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em></dt>
+<dd>
+<p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -88,7 +93,7 @@ Run the following command to give <code>fcli</code> TAB completion in the curren
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-04-16 10:34:13 UTC
+Last updated 2025-04-18 15:07:07 UTC
 </div>
 </div>
 </body>
