@@ -15,7 +15,11 @@
         },
         "group" : {
           "type" : "string",
-          "description" : "Optional string: Allows for defining groups of parameters, which can for example be used with ${#action.copyParametersFromGroup(\"optionGroupName\")}\n"
+          "description" : "Optional string: Allows for defining groups of options, which can for example be used with ${#action.copyParametersFromGroup(\"optionGroupName\")}\n"
+        },
+        "mask" : {
+          "$ref" : "#/$defs/ActionInputMask",
+          "description" : "Optional object: Mask option value in the fcli log file using the given mask configuration.\n"
         },
         "names" : {
           "type" : "string",
@@ -31,6 +35,25 @@
         }
       },
       "required" : [ "description", "names" ],
+      "additionalProperties" : false
+    },
+    "ActionInputMask" : {
+      "type" : "object",
+      "properties" : {
+        "description" : {
+          "type" : "string",
+          "description" : "Optional string: Mask description, used to generate the masked output.\n"
+        },
+        "pattern" : {
+          "type" : "string",
+          "description" : "Optional string: Pattern for fine-tuning which option value contents should be\nmasked. Every matching regex group will be masked using the given description.\nIf no pattern is defined, or if the pattern doesn't contain any groups, the\nfull option value will be masked.\n"
+        },
+        "sensitivity" : {
+          "type" : "string",
+          "enum" : [ "high", "medium", "low" ],
+          "description" : "Optional enum value: Option sensitivity; high/medium/low. Default value: high\n"
+        }
+      },
       "additionalProperties" : false
     },
     "ActionStep" : {
@@ -531,6 +554,13 @@
     "config" : {
       "type" : "object",
       "properties" : {
+        "mask.env-vars" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionInputMask"
+          },
+          "description" : "Optional map: Environment variables used by this action for which values should be masked in the fcli log file. Map keys define environment variables names, map values define masking configuration.\n"
+        },
         "output" : {
           "type" : "string",
           "enum" : [ "immediate", "delayed" ],
