@@ -20,6 +20,7 @@ import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.aviator.util.FileUtil;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.grpc.token.TokenGenerationResponse;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
-public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
+public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
@@ -97,5 +98,10 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     @Override
     public boolean isSingular() {
         return true;
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "CREATED";
     }
 }

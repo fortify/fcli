@@ -12,6 +12,7 @@ import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
-public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand {
+public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Parameters(index = "0", description = "Application ID") private String applicationId;
     @Option(names = {"-n", "--name"}, required = true) private String newName;
@@ -67,5 +68,10 @@ public class AviatorAppUpdateCommand extends AbstractAviatorAdminSessionOutputCo
     @Override
     public boolean isSingular() {
         return true;
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "UPDATED";
     }
 }

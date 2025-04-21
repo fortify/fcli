@@ -9,6 +9,7 @@ import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import lombok.Getter;
@@ -19,7 +20,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
+public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Parameters(index = "0", description = "Name of the application to create") private String applicationName;
@@ -50,5 +51,10 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
     @Override
     public boolean isSingular() {
         return true;
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "CREATED";
     }
 }
