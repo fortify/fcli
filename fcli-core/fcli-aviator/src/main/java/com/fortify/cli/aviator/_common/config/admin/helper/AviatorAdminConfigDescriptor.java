@@ -17,6 +17,8 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptor;
 
 import lombok.AllArgsConstructor;
@@ -29,8 +31,12 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor @AllArgsConstructor @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AviatorAdminConfigDescriptor extends AbstractSessionDescriptor {
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "AVIATOR HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
     private String aviatorUrl;
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "AVIATOR TENANT")
     private String tenant;
+    // TODO Test masking of multi-line values
+    // @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR PRIVATE KEY")
     private String privateKeyContents;
 
     @Override @JsonIgnore

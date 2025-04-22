@@ -21,7 +21,7 @@ import com.fortify.cli.common.output.writer.ISingularSupplier;
 public abstract class AbstractCheckCommand extends AbstractRunnableCommand implements ISingularSupplier {
     @Override
     public final Integer call() {
-        initMixins();
+        initialize();
         IOutputHelper outputHelper = getOutputHelper();
         if ( isPass() ) {
             outputHelper.write(getPassResult());

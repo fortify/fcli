@@ -15,6 +15,8 @@ package com.fortify.cli.common.rest.unirest.config;
 import java.util.function.Consumer;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AllArgsConstructor;
@@ -25,6 +27,7 @@ import lombok.NoArgsConstructor;
 @Data @Builder
 @Reflectable @NoArgsConstructor @AllArgsConstructor 
 public class UrlConfig implements IUrlConfig {
+    @MaskValue(sensitivity = LogSensitivityLevel.low, description = "HOST NAME", pattern = MaskValue.URL_HOSTNAME_PATTERN)
     private String  url;
     private int     socketTimeoutInMillis;
     private int     connectTimeoutInMillis;

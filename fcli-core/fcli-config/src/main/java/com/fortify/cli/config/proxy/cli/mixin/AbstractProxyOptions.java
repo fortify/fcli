@@ -18,15 +18,19 @@ import java.util.function.Function;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor.ProxyDescriptorBuilder;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor.ProxyMatchMode;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractProxyOptions {
-    @Option(names = {"--user", "-u"}, descriptionKey = "fcli.config.proxy.user") 
+    @Option(names = {"--user", "-u"}, descriptionKey = "fcli.config.proxy.user")
+    @MaskValue(sensitivity = LogSensitivityLevel.medium, description = "PROXY USER")
     private String proxyUser;
-    @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", descriptionKey = "fcli.config.proxy.password") 
+    @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", descriptionKey = "fcli.config.proxy.password")
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "PROXY PASSWORD")
     private char[] proxyPassword;
     @Option(names = {"--priority"}, descriptionKey = "fcli.config.proxy.priority") 
     private Integer priority;

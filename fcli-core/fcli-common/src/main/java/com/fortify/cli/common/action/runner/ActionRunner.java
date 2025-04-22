@@ -17,11 +17,14 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.ActionConfig.ActionConfigOutput;
+import com.fortify.cli.common.action.model.ActionInputMask;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor;
 import com.fortify.cli.common.action.runner.processor.ActionStepProcessorSteps;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
@@ -30,6 +33,7 @@ import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWrite
 import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
+import com.fortify.cli.common.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +46,7 @@ public class ActionRunner {
     private final ActionRunnerConfig config;
     
     public final Integer run(String[] args) {
+        maskEnvVars();
         return _run(args);
     }
     
@@ -131,5 +136,23 @@ public class ActionRunner {
                 .build();
         var recordWriter = RecordWriterFactory.table.createWriter(recordWriterConfig);
         return recordWriter;
+    }
+    
+    private final void maskEnvVars() {
+        var envVarMasks = config.getAction().getConfig().getEnvVarMasks();
+        if ( envVarMasks!=null ) {
+            envVarMasks.forEach(this::maskEnvVar);
+        }
+    }
+
+    private void maskEnvVar(String envVar, ActionInputMask maskConfig) {
+        var value = System.getenv(envVar);
+        if ( StringUtils.isNotBlank(value) ) {
+            var description = maskConfig.getDescription();
+            if ( StringUtils.isBlank(description)) {
+                description = envVar;
+            }
+            LogMaskHelper.INSTANCE.registerValue(maskConfig.getSensitivityLevel(), LogMaskSource.ENV_VAR, description, value, maskConfig.getPattern());
+        }
     }
 }

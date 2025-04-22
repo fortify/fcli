@@ -160,6 +160,7 @@ public class SSCTokenHelper {
     private static final <T> T createToken(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
         configureUnirest(unirest, urlConfig, uc);
         return unirest.post("/api/v1/tokens")
+                .header("accept-encoding", null)
                 .body(tokenCreateRequest)
                 .asObject(returnType)
                 .getBody();

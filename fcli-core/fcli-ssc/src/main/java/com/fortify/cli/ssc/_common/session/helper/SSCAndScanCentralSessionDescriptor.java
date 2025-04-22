@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
@@ -49,6 +51,7 @@ public class SSCAndScanCentralSessionDescriptor extends AbstractSessionDescripto
     @JsonDeserialize(as = UrlConfig.class) private IUrlConfig scDastUrlConfig;
     private SSCTokenData sscTokenData;
     private boolean revokeTokenOnLogout;
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "SC SAST TOKEN")
     private char[] scSastClientAuthToken;
     private String scSastDisabledReason;
     private String scDastDisabledReason;

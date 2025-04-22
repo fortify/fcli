@@ -27,6 +27,33 @@ usage:
     
 config:
   output: immediate
+  mask.env-vars:
+    FOD_URL:
+      description: FOD HOST NAME
+      pattern: https?://([^/]+).*
+      sensitivity: low
+    FOD_TENANT:
+      sensitivity: low
+    FOD_USER:
+      sensitivity: medium
+    FOD_PASSWORD:
+      sensitivity: high
+    FOD_CLIENT_ID:
+      sensitivity: medium
+    FOD_CLIENT_SECRET:
+      sensitivity: high  
+    SSC_URL:
+      description: SSC HOST NAME
+      pattern: https?://([^/]+).*
+      sensitivity: low
+    SSC_USER:
+      sensitivity: medium
+    SSC_PASSWORD:
+      sensitivity: high
+    SSC_TOKEN:
+      sensitivity: high
+    SC_SAST_TOKEN:
+      sensitivity: high
   
 steps:
   # Determine whether we need to run FoD or SSC scan, throwing exceptions if

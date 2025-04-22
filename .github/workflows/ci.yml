@@ -416,45 +416,49 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-          path: docs
         
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: ./tmp
           name: build-output
           
       - name: Update documentation from artifact
         run: |
-          # Delete all Git-related files
-          rm -rf docs/.git*
-          
           # Extract top-level documentation resources
-          # TODO Should we do this only when building a release, or also for dev_v2.x,
+          # TODO Should we do this only when building a release, or also for dev_v3.x,
           #      or for all (dev & release) versions like we do now?
-          unzip -o artifacts/docs-gh-pages.zip -d "docs"
+          unzip -o tmp/docs-gh-pages.zip -d "."
           
           # Define the output directory, based on tag/branch name
-          versionDir=docs/${{ needs.build.outputs.release_tag }}
+          versionDir=${{ needs.build.outputs.release_tag }}
           
           # Delete, recreate and fill the directory for the current tag/branch name,
           # while leaving documentation for other tags/branches intact (as checked out above)
           rm -rf "${versionDir}"
           mkdir -p "${versionDir}"
-          unzip artifacts/docs-jekyll.zip -d "${versionDir}"
+          unzip tmp/docs-jekyll.zip -d "${versionDir}"
           
           # Recreate version data files, which may be empty if no versions available
-          cd docs
           mkdir -p _data/versions
           touch _data/versions/release.yml
           touch _data/versions/dev.yml
           ls -d v*.*.* | sort -rV | while read line; do echo "- '$line'"; done > _data/versions/release.yml
           ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
           
-      - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          enable_jekyll: true
+          # Update symlinks based on available versions, processing versions in ascending order
+          # to replace previous links with a newer version if appropriate. For example, 'latest'
+          # will first point to the oldest version, then replaced with second-oldest version, ...,
+          # until it points to the latest version.
+          ls -d v*.*.* | sort -V | while read line; do
+            ln -sfT $line latest
+            ln -sfT $line $(echo "$line" | cut -d. -f 1)   # v<major>
+            ln -sfT $line $(echo "$line" | cut -d. -f 1,2) # v<major>.<minor>
+          done
+          
+          git config user.name github-actions
+          git config user.email github-actions@fortify.com
+          git add .
+          git commit -m "Update documentation for ${{ needs.build.outputs.release_tag }}"
+          git push
           

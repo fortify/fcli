@@ -23,6 +23,9 @@ import org.apache.commons.io.IOUtils;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMaskSource;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
@@ -142,7 +145,13 @@ public class CommonOptionMixins {
         }
         
         public final String getText() {
-            return TextSources.resolve(getTextSource());
+            return mask(TextSources.resolve(getTextSource()));
         }
+
+        private String mask(String value) {
+            LogMaskHelper.INSTANCE.registerValue(this.getClass().getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
+            return value;
+        }
+        
     }
 }

@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 
 import lombok.Getter;
@@ -19,8 +21,10 @@ import picocli.CommandLine.Option;
 
 public class UserCredentialOptions implements IUserCredentialsConfig {
     @Option(names = {"--user", "-u"}, required = true)
+    @MaskValue(sensitivity = LogSensitivityLevel.medium, description = "USER")
     @Getter private String user;
     
     @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "PASSWORD")
     @Getter private char[] password;
 }

@@ -18,6 +18,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +27,7 @@ import lombok.NoArgsConstructor;
 @Data @JsonIgnoreProperties(ignoreUnknown = true)
 @Reflectable @NoArgsConstructor 
 public final class FoDTokenCreateResponse {
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "FOD ACCESS TOKEN")
     @JsonProperty("access_token") private String accessToken;
     @JsonProperty("expires_at") private long expiresAt;
 

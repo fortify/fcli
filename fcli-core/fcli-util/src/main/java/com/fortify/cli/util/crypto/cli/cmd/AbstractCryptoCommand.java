@@ -25,7 +25,7 @@ public abstract class AbstractCryptoCommand extends AbstractRunnableCommand {
     
     @Override @SneakyThrows
     public final Integer call() {
-        initMixins();
+        initialize();
         String prompt = commandHelper.getMessageResolver().getMessageString("prompt")+" ";
         String value;
         if ( System.console()!=null ) {
