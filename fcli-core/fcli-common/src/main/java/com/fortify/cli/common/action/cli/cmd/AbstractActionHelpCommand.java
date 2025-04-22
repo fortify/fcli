@@ -46,7 +46,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
     
     @Override
     public final Integer call() {
-        initMixins();
+        initialize();
         var action = actionResolver.loadAction(getType(), ActionValidationHandler.WARN);
         System.out.println(getActionHelp(action));
         return 0;

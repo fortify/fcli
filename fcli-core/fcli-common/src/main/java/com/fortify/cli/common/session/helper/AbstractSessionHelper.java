@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.session.helper;
 
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMaskSource;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 import lombok.SneakyThrows;
@@ -46,13 +51,44 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
             String sessionDescriptorJson = FcliDataHelper.readSecuredFile(sessionDescriptorPath, failIfUnavailable);
             T sessionDescriptor = sessionDescriptorJson==null ? null : objectMapper.readValue(sessionDescriptorJson, getSessionDescriptorType());
             checkNonExpiredSessionAvailable(sessionName, failIfUnavailable, sessionDescriptor);
-            return sessionDescriptor;
+            return registerLogMasks(sessionDescriptor);
         } catch ( Exception e ) {
             FcliDataHelper.deleteFile(sessionDescriptorPath, false);
             conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading session descriptor, please try logging in again", e));
             LOG.warn("Error reading session descriptor from {}; session descriptor has been deleted", sessionDescriptorPath);
             LOG.warn("Exception details: ", e);
             return null;
+        }
+    }
+    
+    private final T registerLogMasks(T sessionDescriptor) {
+        visitFields(sessionDescriptor.getClass(), sessionDescriptor);
+        return sessionDescriptor;
+    }
+    
+    // TODO Remove code duplication in Action::visitFields?
+    // TODO Ideally, this should be done during descriptor deserialization instead
+    private void visitFields(Class<?> clazz, Object o) {
+        if ( clazz!=null && o!=null ) {
+            // Visit fields provided by any superclasses of the given class.
+            visitFields(clazz.getSuperclass(), o);
+            // Iterate over all declared fields
+            Stream.of(clazz.getDeclaredFields())
+                .peek(f->f.setAccessible(true))
+                .forEach(f->visitField(f, o));
+        }
+    }
+
+    @SneakyThrows
+    private void visitField(Field f, Object o) {
+        var value = f.get(o);
+        if ( value!=null ) {
+            var maskAnnotation = f.getAnnotation(MaskValue.class);
+            if ( maskAnnotation!=null ) {
+                LogMaskHelper.INSTANCE.registerValue(maskAnnotation, LogMaskSource.SESSION, value);
+            } else if ( f.getType().getPackageName().startsWith("com.fortify") ) {
+                visitFields(value.getClass(), value);
+            }
         }
     }
 

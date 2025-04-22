@@ -19,7 +19,7 @@ public abstract class AbstractSessionDescriptorSupplierMixin<D extends ISessionD
     public final D getSessionDescriptor() {
         return getSessionDescriptor(getSessionName());
     }
-    
+
     public final String getSessionName() {
         var sessionNameSupplier = getSessionNameSupplier();
         return sessionNameSupplier==null?"default":sessionNameSupplier.getSessionName();

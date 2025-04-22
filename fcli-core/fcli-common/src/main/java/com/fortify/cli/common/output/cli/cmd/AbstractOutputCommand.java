@@ -26,7 +26,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand impl
             IJsonNodeSupplier.class);
     @Override
     public final Integer call() {
-        initMixins();
+        initialize();
         IOutputHelper outputHelper = getOutputHelper();
         if ( isInstance(IBaseRequestSupplier.class) ) {
             outputHelper.write(((IBaseRequestSupplier)this).getBaseRequest());

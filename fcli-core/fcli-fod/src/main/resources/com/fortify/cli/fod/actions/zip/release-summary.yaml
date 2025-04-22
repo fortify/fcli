@@ -42,19 +42,35 @@ steps:
           do:
             - var.set:
                 scanType: ${scan.scanType}
-                ossScanDate: ${scan.completedDateTime} 
-
+                ossScanDate: ${scan.completedDateTime}
+###                
+# Note: reverted to retrieving OSS counts from the Vulnerabilities API to support prior FoD releases prior to 24.4                
+###
+  - log.progress: Loading Vulnerabilities
+  - rest.call:
+      issues:
+        if: ${ossScanDate!=null}
+        uri: /api/v3/releases/${r.releaseId}/vulnerabilities?limit=1 
+        query:
+          filters: category:Open Source
+        on.success:
+          - var.set:
+              ossTotal: ${issues_raw.totalCount}
+              ossCritical: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "Critical"]?.count?:0}       
+              ossHigh: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "High"]?.count?:0}   
+              ossMedium: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "Medium"]?.count?:0}   
+              ossLow: ${issues_raw.filters.^[#this.fieldName == 'severity']?.fieldFilterValues?.^[#this.value == "Low"]?.count?:0}                      
+  ### 
   - out.write:
       ${cli.file}: {fmt: summary-md}
   - if: ${!{'stdout','stderr'}.contains(cli.file)}
     log.info: Output written to ${cli.file}
 
-# Note: update ossScanDate when it is available on release object ...
 formatters:
   summary-md: |
       # Fortify on Demand Release Summary
       
-      ## [${r.applicationName}${#isNotBlank(r.microserviceNae)?'- '+r.microserviceName:''} - ${r.releaseName}](${#fod.releaseBrowserUrl(r)})
+      ## [${r.applicationName}${#isNotBlank(r.microserviceName)?'- '+r.microserviceName:''} - ${r.releaseName}](${#fod.releaseBrowserUrl(r)})
       
       Summary generated on: ${#formatDateTime(dateFmt)}
       
@@ -68,7 +84,9 @@ formatters:
       | **Static**      | ${(#isBlank(r.staticScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.staticScanDate))  +' | '+#fmt('%8s', r.staticCritical)                                   +' | '+#fmt('%8s', r.staticHigh)                           +' | '+#fmt('%8s', r.staticMedium)                               +' | '+#fmt('%8s', r.staticLow)                         +' |'}
       | **Dynamic**     | ${(#isBlank(r.dynamicScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.dynamicScanDate))+' | '+#fmt('%8s', r.dynamicCritical)                                  +' | '+#fmt('%8s', r.dynamicHigh)                          +' | '+#fmt('%8s', r.dynamicMedium)                              +' | '+#fmt('%8s', r.dynamicLow)                        +' |'}
       | **Mobile**      | ${(#isBlank(r.mobileScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.mobileScanDate))  +' | '+#fmt('%8s', r.mobileCritical)                                   +' | '+#fmt('%8s', r.mobileHigh)                           +' | '+#fmt('%8s', r.mobileMedium)                               +' | '+#fmt('%8s', r.mobileLow)                         +' |'}
-      | **Open Source** | ${(#isBlank(ossScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, ossScanDate))  +' | '+#fmt('%8s', r.openSourceCritical)                                   +' | '+#fmt('%8s', r.openSourceHigh)                           +' | '+#fmt('%8s', r.openSourceMedium)                               +' | '+#fmt('%8s', r.openSourceLow)                         +' |'}
-      | **Total**       |                  | ${#fmt('%8s', r.staticCritical+r.dynamicCritical+r.mobileCritical+r.openSourceCritical)+' | '+#fmt('%8s', r.staticHigh+r.dynamicHigh+r.mobileHigh+r.openSourceHigh)+' | '+#fmt('%8s', r.staticMedium+r.dynamicMedium+r.mobileMedium+r.openSourceMedium)+' | '+#fmt('%8s', r.staticLow+r.dynamicLow+r.mobileLow+r.openSourceLow)+' |'}
-      
-      
+      | **Open Source** | ${(#isBlank(ossScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, ossScanDate))  +' | '+#fmt('%8s', (ossCritical!=null?ossCritical:0))                                   +' | '+#fmt('%8s', (ossHigh!=null?ossHigh:0))                           +' | '+#fmt('%8s', (ossMedium!=null?ossMedium:0))                               +' | '+#fmt('%8s', (ossLow!=null?ossLow:0))                         +' |'}
+      | **Total**       |                  | ${#fmt('%8s', r.staticCritical+r.dynamicCritical+r.mobileCritical+(ossCritical!=null?ossCritical:0))+' | '+#fmt('%8s', r.staticHigh+r.dynamicHigh+r.mobileHigh+(ossHigh!=null?ossHigh:0))+' | '+#fmt('%8s', r.staticMedium+r.dynamicMedium+r.mobileMedium+(ossMedium!=null?ossMedium:0))+' | '+#fmt('%8s', r.staticLow+r.dynamicLow+r.mobileLow+(ossLow!=null?ossLow:0))+' |'}
+#     | **Open Source** | ${(#isBlank(ossScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, ossScanDate))  +' | '+#fmt('%8s', r.openSourceCritical)                                   +' | '+#fmt('%8s', r.openSourceHigh)                           +' | '+#fmt('%8s', r.openSourceMedium)                               +' | '+#fmt('%8s', r.openSourceLow)                         +' |'}
+#     | **Total**       |                  | ${#fmt('%8s', r.staticCritical+r.dynamicCritical+r.mobileCritical+r.openSourceCritical)+' | '+#fmt('%8s', r.staticHigh+r.dynamicHigh+r.mobileHigh+r.openSourceHigh)+' | '+#fmt('%8s', r.staticMedium+r.dynamicMedium+r.mobileMedium+r.openSourceMedium)+' | '+#fmt('%8s', r.staticLow+r.dynamicLow+r.mobileLow+r.openSourceLow)+' |'}
+# Note: reverted to retrieving OSS counts from the Vulnerabilities API to support prior FoD releases prior to 24.4 - uncomment last two lines when this has been done                
+# Note: update ossScanDate when it is available on release object ...

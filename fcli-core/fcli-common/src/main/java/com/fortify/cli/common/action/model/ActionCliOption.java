@@ -63,7 +63,12 @@ public final class ActionCliOption implements IActionElement, IMapKeyAware<Strin
     @JsonProperty(value = "required", required = false, defaultValue = "true") private boolean required = true;
     
     @JsonPropertyDescription("""
-        Optional string: Allows for defining groups of parameters, which can for example be used with \
+        Optional object: Mask option value in the fcli log file using the given mask configuration.
+        """)
+    @JsonProperty(value = "mask", required = false) private ActionInputMask mask;
+    
+    @JsonPropertyDescription("""
+        Optional string: Allows for defining groups of options, which can for example be used with \
         ${#action.copyParametersFromGroup("optionGroupName")} 
         """)
     @JsonProperty(value = "group", required = false) private String group;

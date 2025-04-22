@@ -1,8 +1,10 @@
 #!/bin/sh
 set -o errexit
-if [ "true" = "${CI_DEBUG_TRACE}" ]; then
+if [ "true" = "${CI_DEBUG_SERVICES}" ]; then
   set -x
 fi
-WORKDIR=${CI_BUILDS_DIR:-/builds}/fortify
-mkdir -p "${WORKDIR}"
-entrypoint.sh "${WORKDIR}" 2>&1 | tee "${WORKDIR}/fcli-install.log"
+if [ -z "${FCLI_INSTALL_DIR}" ]; then
+  FCLI_INSTALL_DIR=${CI_BUILDS_DIR:-/builds}/fortify
+fi
+mkdir -p "${FCLI_INSTALL_DIR}"
+entrypoint.sh "${FCLI_INSTALL_DIR}" 2>&1 | tee "${FCLI_INSTALL_DIR}/fcli-install.log"

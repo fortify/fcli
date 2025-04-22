@@ -35,7 +35,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     
     @Override
     public Integer call() {
-        initMixins();
+        initialize();
         wait(getUnirestInstance());
         return 0;
     }

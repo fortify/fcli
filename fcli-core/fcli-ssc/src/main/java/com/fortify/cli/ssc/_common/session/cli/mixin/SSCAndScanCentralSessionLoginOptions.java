@@ -14,6 +14,8 @@ package com.fortify.cli.ssc._common.session.cli.mixin;
 
 import java.time.OffsetDateTime;
 
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
@@ -40,9 +42,11 @@ public class SSCAndScanCentralSessionLoginOptions {
     
     public static class SSCAndScanCentralUrlConfigOptions extends ConnectionConfigOptions implements ISSCAndScanCentralUrlConfig {
         @Option(names = {"--url"}, required = true, order=1)
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "SSC HOST", pattern = MaskValue.URL_HOSTNAME_PATTERN)
         @Getter private String sscUrl;
         
         @Option(names = {"--sc-sast-url"}, required = false, order=1)
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "SC-SAST CONTROLLER URL")
         @Getter private String scSastControllerUrl;
     }
     
@@ -50,6 +54,7 @@ public class SSCAndScanCentralSessionLoginOptions {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 1) 
         private  SSCCredentialOptions sscCredentialOptions = new SSCCredentialOptions();
         @Option(names = {"--client-auth-token", "-c"}, required = false, interactive = true, arity = "0..1", echo = false) 
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "SC-SAST CLIENT AUTH TOKEN")
         @Getter private char[] scSastClientAuthToken;
         
         public ISSCUserCredentialsConfig getSscUserCredentialsConfig() {
@@ -84,6 +89,7 @@ public class SSCAndScanCentralSessionLoginOptions {
     
     public static class SSCTokenCredentialOptions {
         @Option(names = {"--token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "SSC TOKEN")
         @Getter private char[] token;
     }
     

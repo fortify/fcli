@@ -16,6 +16,8 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,7 +34,8 @@ public final class SSCTokenGetOrCreateResponse {
         private Date terminalDate;
         private Date creationDate;
         private String type;
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "SSC TOKEN")
         private char[] token;
-        private String _href;
+        //private String _href;
     }
 }

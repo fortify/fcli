@@ -13,10 +13,16 @@
 package com.fortify.cli.common.cli.cmd;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogMaskLevel;
+import com.fortify.cli.common.log.LogMaskSource;
+import com.fortify.cli.common.log.MaskValue;
+import com.fortify.cli.common.util.JavaHelper;
 
 import ch.qos.logback.classic.Level;
 import lombok.Getter;
@@ -43,7 +49,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
     
     // Boolean indicating whether mixins have already been initialized by
     // the initMixins() method
-    private boolean mixinsInitialized = false;
+    private boolean initialized = false;
     
     // ArgGroup for generic options like --help
     @ArgGroup(exclusive = false, headingKey = "fcli.genericOptions.heading", order = 50) 
@@ -73,13 +79,29 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * already been initialized for this command; if not, the {@link #initMixins(CommandSpec, Map)}
      * method will be invoked to initialize the mixins.
      */
-    protected final void initMixins() {
-        if ( !mixinsInitialized ) {
+    protected final void initialize() {
+        if ( !initialized ) {
+            registerLogMasks(commandSpec);
             initMixins(commandSpec, commandSpec.mixins());
-            mixinsInitialized = true;
+            initialized = true;
         }
     }
     
+    private void registerLogMasks(CommandSpec commandSpec) {
+        for ( var option : commandSpec.options() ) {
+            var value = option.getValue();
+            if ( value!=null ) {
+                JavaHelper.as(option.userObject(), Field.class)
+                    .ifPresent(field->registerLogMask(field, value));
+            }
+        }
+    }
+    
+    private void registerLogMask(Field field, Object value) {
+        LogMaskHelper.INSTANCE.registerValue(field.getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
+    }
+        
+
     /**
      * This method recursively iterates over all given mixins to inject our {@link CommandSpec} 
      * into any mixins implementing the {@link ICommandAware} interface.
@@ -112,6 +134,9 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         
         @Option(names = "--log-level")
         @Getter private LogLevel logLevel;
+        
+        @Option(names = "--log-mask", defaultValue = "medium")
+        @Getter private LogMaskLevel logMaskLevel;
         
         @Option(names = "--debug")
         @Getter private boolean debug;

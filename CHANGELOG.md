@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.2.1](https://github.com/fortify/fcli/compare/v3.2.0...v3.2.1) (2025-04-15)
+
+
+### Bug Fixes
+
+* `fcli * action run`: Apply generic fcli `--debug` option on transitive fcli invocations ([af20495](https://github.com/fortify/fcli/commit/af204952351c8c50c46e53f0fa4552dd61c571b3))
+* `fcli sc action run ci`: Download server-side logs & FPR file if generic fcli `--debug` option is specified ([af20495](https://github.com/fortify/fcli/commit/af204952351c8c50c46e53f0fa4552dd61c571b3))
+* `fcli sc-sast scan start`: Re-add separate option for enabling server-side diagnostics collection, independent of generic fcli `--debug` option ([af20495](https://github.com/fortify/fcli/commit/af204952351c8c50c46e53f0fa4552dd61c571b3))
+* `fcli tool sc-client run`: Respect generic fcli `--debug` option to add ScanCentral Client `-debug` option ([af20495](https://github.com/fortify/fcli/commit/af204952351c8c50c46e53f0fa4552dd61c571b3))
+
 ## [3.2.0](https://github.com/fortify/fcli/compare/v3.1.1...v3.2.0) (2025-04-14)
 
 

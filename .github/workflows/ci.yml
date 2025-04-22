@@ -321,32 +321,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
           
-      - name: Publish v{major}.{minor} tag
-        if: needs.build.outputs.do_prod_release
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: v${{steps.release_please.outputs.major}}.${{steps.release_please.outputs.minor}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-                    
-      - name: Publish v{major} tag
-        if: needs.build.outputs.do_prod_release
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: v${{steps.release_please.outputs.major}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # TODO If we publish a feature/patch for an older major version,
-      #      for example from the rel/v2.x branch,
-      #      this may cause the older major version to be tagged as 'latest'
-      - name: Publish latest tag
-        if: needs.build.outputs.do_prod_release
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
       - name: Upload assets to release
         if: needs.build.outputs.do_release
         run: |
@@ -355,9 +329,74 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
+      - name: PROD - Publish v{major}.{minor} tag
+        if: needs.build.outputs.do_prod_release
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: v${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+                              
+      - name: PROD - Publish v{major} tag
+        if: needs.build.outputs.do_prod_release
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: v${{needs.build.outputs.version_major}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # TODO If we publish a feature/patch for an older major version,
+        #      for example from the rel/v2.x branch,
+        #      this may cause the older major version to be tagged as 'latest'
+      - name: PROD - Publish latest tag
+        if: needs.build.outputs.do_prod_release
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+  semantic_versions:
+    name: Publish semantic versions
+    if: needs.build.outputs.do_prod_release
+    needs: [build, native_linux, native_mac, native_win, combine-artifacts, release]
+    strategy:
+      matrix: 
+        semantic_version: 
+          - v${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
+          - v${{needs.build.outputs.version_major}}
+          - latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check-out source code
+        uses: actions/checkout@v4
+            
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          name: combined-artifacts
+    
+      - name: PROD - Publish ${{ matrix.semantic_version }} tag
+        uses: richardsimko/update-tag@v1
+        with:
+          tag_name: ${{ matrix.semantic_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: PROD - Publish semantic release ${{ matrix.semantic_version }}
+        run: |
+          gh release delete ${{ matrix.semantic_version }} -y || true
+          gh release create ${{ matrix.semantic_version }} -t "${{ matrix.semantic_version }}" -n "Semantic version release for [${{ needs.build.outputs.release_tag }}](https://github.com/fortify/fcli/releases/tag/${{ needs.build.outputs.release_tag }})" --verify-tag --latest=false
+          files=$(find "./artifacts/release-assets" -type f -printf "%p ")
+          gh release upload "${{ matrix.semantic_version }}" $files --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
   docker:
     name: Trigger Docker builds
-    needs: [build, release]
+    needs: [build, release, semantic_versions]
+    # Always run if build & release were successful, ignoring status of semantic_versions
+    if: always() && needs.build.result == 'success' && needs.release.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code
@@ -377,45 +416,49 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-          path: docs
         
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: ./tmp
           name: build-output
           
       - name: Update documentation from artifact
         run: |
-          # Delete all Git-related files
-          rm -rf docs/.git*
-          
           # Extract top-level documentation resources
-          # TODO Should we do this only when building a release, or also for dev_v2.x,
+          # TODO Should we do this only when building a release, or also for dev_v3.x,
           #      or for all (dev & release) versions like we do now?
-          unzip -o artifacts/docs-gh-pages.zip -d "docs"
+          unzip -o tmp/docs-gh-pages.zip -d "."
           
           # Define the output directory, based on tag/branch name
-          versionDir=docs/${{ needs.build.outputs.release_tag }}
+          versionDir=${{ needs.build.outputs.release_tag }}
           
           # Delete, recreate and fill the directory for the current tag/branch name,
           # while leaving documentation for other tags/branches intact (as checked out above)
           rm -rf "${versionDir}"
           mkdir -p "${versionDir}"
-          unzip artifacts/docs-jekyll.zip -d "${versionDir}"
+          unzip tmp/docs-jekyll.zip -d "${versionDir}"
           
           # Recreate version data files, which may be empty if no versions available
-          cd docs
           mkdir -p _data/versions
           touch _data/versions/release.yml
           touch _data/versions/dev.yml
           ls -d v*.*.* | sort -rV | while read line; do echo "- '$line'"; done > _data/versions/release.yml
           ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
           
-      - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          enable_jekyll: true
+          # Update symlinks based on available versions, processing versions in ascending order
+          # to replace previous links with a newer version if appropriate. For example, 'latest'
+          # will first point to the oldest version, then replaced with second-oldest version, ...,
+          # until it points to the latest version.
+          ls -d v*.*.* | sort -V | while read line; do
+            ln -sfT $line latest
+            ln -sfT $line $(echo "$line" | cut -d. -f 1)   # v<major>
+            ln -sfT $line $(echo "$line" | cut -d. -f 1,2) # v<major>.<minor>
+          done
+          
+          git config user.name github-actions
+          git config user.email github-actions@fortify.com
+          git add .
+          git commit -m "Update documentation for ${{ needs.build.outputs.release_tag }}"
+          git push
           

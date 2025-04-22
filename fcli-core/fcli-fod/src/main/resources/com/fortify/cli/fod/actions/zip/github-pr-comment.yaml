@@ -48,11 +48,17 @@ cli.options:
     description: 'Required GitHub API URL. Default value: GITHUB_API_URL environment variable.'
     required: true
     default: ${#env('GITHUB_API_URL')}
+    mask:
+      description: GITHUB HOST NAME
+      pattern: https?://([^/]+).*
+      sensitivity: low
   github-token:
     names: --github-token
     description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
     required: true
     default: ${#env('GITHUB_TOKEN')}
+    mask:
+      sensitivity: high
   github-owner:
     names: --github-owner
     description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'

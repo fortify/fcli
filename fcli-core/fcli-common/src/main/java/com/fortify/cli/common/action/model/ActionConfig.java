@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.model;
 
+import java.util.LinkedHashMap;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -61,6 +63,12 @@ public final class ActionConfig implements IActionElement {
         is specified by the user) to avoid such output from interfering with progress messages.    
         """)
     @JsonProperty(value = "output", required = false) private ActionConfigOutput output = ActionConfigOutput.delayed;
+    
+    @JsonPropertyDescription("""
+        Optional map: Environment variables used by this action for which values should be masked in the fcli \
+        log file. Map keys define environment variables names, map values define masking configuration.    
+        """)
+    @JsonProperty(value = "mask.env-vars", required = false) private LinkedHashMap<String, ActionInputMask> envVarMasks;
     
     @Override
     public void postLoad(Action action) {}

@@ -21,6 +21,7 @@ import picocli.CommandLine.Option;
 public class DebrickedUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
 	// For now, this option is hidden as there is only the single debricked.com SaaS instance
     @Option(names = {"--debricked-url"}, required = true, order=1, defaultValue = "https://debricked.com", hidden = true)
+    // @MaskValue(sensitivity = LogSensitivityLevel.low, description = "DEBRICKED HOST NAME", pattern = LogMaskHelper.URL_HOSTNAME_PATTERN)
     @Getter private String url;
     
     public boolean hasUrlConfig() {

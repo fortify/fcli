@@ -14,6 +14,8 @@ package com.fortify.cli.fod._common.session.cli.mixin;
 
 import java.util.Optional;
 
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.util.StringUtils;
@@ -50,13 +52,16 @@ public class FoDSessionLoginOptions {
     
     public static class FoDUserCredentialOptions extends UserCredentialOptions implements IFoDUserCredentials {
         @Option(names = {"-t", "--tenant"}, required = true) 
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
         @Getter private String tenant;
     }
     
     public static class FoDClientCredentialOptions implements IFoDClientCredentials {
-        @Option(names = {"--client-id"}, required = true) 
+        @Option(names = {"--client-id"}, required = true)
+        @MaskValue(sensitivity = LogSensitivityLevel.medium, description = "FOD CLIENT ID")
         @Getter private String clientId;
         @Option(names = {"--client-secret"}, required = true, interactive = true, arity = "0..1", echo = false) 
+        @MaskValue(sensitivity = LogSensitivityLevel.high, description = "FOD CLIENT SECRET")
         @Getter private String clientSecret;
     }
 
