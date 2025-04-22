@@ -1,6 +1,7 @@
 package com.fortify.cli.aviator.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
@@ -12,6 +13,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.google.errorprone.annotations.Var;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +30,11 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
 
     @Override
     protected JsonNode getJsonNode(AviatorAdminConfigDescriptor configDescriptor) {
-        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl());
-             IProgressWriter progressWriter = progressWriterFactoryMixin.create();) {
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(configDescriptor.getAviatorUrl())) {
             String[] messageAndSignature = createMessageAndSignature(configDescriptor);
             Application createdApplication = createApplication(client, configDescriptor, messageAndSignature);
             LOG.info("Application '{}' created successfully for tenant: {}", applicationName, configDescriptor.getTenant());
-            progressWriter.writeInfo(createdApplication.getLegalTermsOfService());
-            return AviatorGrpcUtils.grpcToJsonNode(createdApplication);
+            return processCreateApplicationResponse(createdApplication);
         }
     }
 
@@ -46,6 +46,20 @@ public class AviatorAppCreateCommand extends AbstractAviatorAdminSessionOutputCo
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
         return client.createApplication(applicationName, configDescriptor.getTenant(), signature, message);
+    }
+
+    private JsonNode processCreateApplicationResponse(Application createdApplication) {
+        if (createdApplication == null) {
+            return null;
+        }
+
+        JsonNode applicationNode = AviatorGrpcUtils.grpcToJsonNode(createdApplication);
+        JsonNode legalTerms = applicationNode.get("legalTermsOfService");
+        if (legalTerms != null) {
+            ((ObjectNode) applicationNode).put("disclaimer", legalTerms);
+        }
+
+        return applicationNode;
     }
 
     @Override
