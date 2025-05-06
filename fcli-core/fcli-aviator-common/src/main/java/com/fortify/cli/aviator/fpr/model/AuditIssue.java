@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.fpr;
+package com.fortify.cli.aviator.fpr.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;

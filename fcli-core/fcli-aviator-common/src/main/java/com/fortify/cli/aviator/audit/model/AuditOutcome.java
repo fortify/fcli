@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.core.model;
+package com.fortify.cli.aviator.audit.model;
 
 import java.util.Map;
 

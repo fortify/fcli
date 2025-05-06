@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.core;
+package com.fortify.cli.aviator.audit;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,18 +17,18 @@ import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.core.model.AuditOutcome;
-import com.fortify.cli.aviator.core.model.AuditResponse;
-import com.fortify.cli.aviator.core.model.FPRAuditResult;
-import com.fortify.cli.aviator.fpr.AuditIssue;
-import com.fortify.cli.aviator.fpr.AuditProcessor;
-import com.fortify.cli.aviator.fpr.FPRInfo;
+import com.fortify.cli.aviator.audit.model.AuditOutcome;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.FPRAuditResult;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.util.ExtensionsConfig;
+import com.fortify.cli.aviator.fpr.model.Vulnerability;
+import com.fortify.cli.aviator.config.ExtensionsConfig;
 import com.fortify.cli.aviator.util.FPRLoadingUtil;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.TagMappingConfig;
+import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.util.ZipUtils;
 
 public class AuditFPR {

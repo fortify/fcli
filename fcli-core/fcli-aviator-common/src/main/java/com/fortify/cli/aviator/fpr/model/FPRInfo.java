@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.fpr;
+package com.fortify.cli.aviator.fpr.model;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

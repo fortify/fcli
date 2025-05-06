@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.fpr;
+package com.fortify.cli.aviator.fpr.model;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 

@@ -52,9 +52,9 @@ import com.fortify.aviator.grpc.UserPromptRequest;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.core.model.AuditResponse;
-import com.fortify.cli.aviator.core.model.StackTraceElement;
-import com.fortify.cli.aviator.core.model.UserPrompt;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.StringUtil;
 import com.fortify.grpc.token.DeleteTokenRequest;
@@ -756,7 +756,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     private AuditResponse convertToAuditResponse(AuditorResponse response) {
         AuditResponse auditResponse = new AuditResponse();
-        auditResponse.setAuditResult(new com.fortify.cli.aviator.core.model.AuditResult(
+        auditResponse.setAuditResult(new com.fortify.cli.aviator.audit.model.AuditResult(
                 response.getAuditResult().getTagValue(),
                 response.getAuditResult().getComment()
         ));

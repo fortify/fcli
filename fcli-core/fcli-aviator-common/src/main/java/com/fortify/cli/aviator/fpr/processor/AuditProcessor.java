@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.fpr;
+package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,6 +31,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -39,9 +40,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.core.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.TagMappingConfig;
+import com.fortify.cli.aviator.config.TagMappingConfig;
 
 import lombok.Getter;
 

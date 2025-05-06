@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.core.model;
+package com.fortify.cli.aviator.audit.model;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 

@@ -1,8 +1,8 @@
-package com.fortify.cli.aviator.fpr;
+package com.fortify.cli.aviator.util;
 
 import java.util.Comparator;
 
-import com.fortify.cli.aviator.core.model.UserPrompt;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
 
 public class IssueOrderingComparator implements Comparator<UserPrompt> {
 
@@ -12,8 +12,8 @@ public class IssueOrderingComparator implements Comparator<UserPrompt> {
         if (p1 == null) return -1;
         if (p2 == null) return 1;
 
-        com.fortify.cli.aviator.core.model.StackTraceElement loc1 = p1.getFirstStackTrace().get(0);
-        com.fortify.cli.aviator.core.model.StackTraceElement loc2 = p2.getFirstStackTrace().get(0);
+        com.fortify.cli.aviator.audit.model.StackTraceElement loc1 = p1.getFirstStackTrace().get(0);
+        com.fortify.cli.aviator.audit.model.StackTraceElement loc2 = p2.getFirstStackTrace().get(0);
 
         if (loc1 == null && loc2 == null) return 0;
         if (loc1 == null) return -1;

@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.fpr;
+package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.IOException;
 import java.nio.charset.MalformedInputException;
@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.fortify.cli.aviator.fpr.model.Node;
+import com.fortify.cli.aviator.fpr.model.Vulnerability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -31,9 +33,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator.core.model.File;
-import com.fortify.cli.aviator.core.model.Fragment;
-import com.fortify.cli.aviator.core.model.StackTraceElement;
+import com.fortify.cli.aviator.audit.model.File;
+import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.filter.AnalyzerType;
 import com.fortify.cli.aviator.util.StringUtil;
 

@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.core;
+package com.fortify.cli.aviator.audit;
 
 import static com.fortify.cli.aviator.util.Constants.DEFAULT_PING_INTERVAL_SECONDS;
 
@@ -26,14 +26,14 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.core.model.AuditOutcome;
-import com.fortify.cli.aviator.core.model.AuditResponse;
-import com.fortify.cli.aviator.core.model.UserPrompt;
-import com.fortify.cli.aviator.fpr.AuditIssue;
-import com.fortify.cli.aviator.fpr.AuditProcessor;
-import com.fortify.cli.aviator.fpr.FPRInfo;
-import com.fortify.cli.aviator.fpr.IssueOrderingComparator;
-import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.audit.model.AuditOutcome;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.util.IssueOrderingComparator;
+import com.fortify.cli.aviator.fpr.model.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;

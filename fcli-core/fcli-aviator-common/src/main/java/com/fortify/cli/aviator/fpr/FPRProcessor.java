@@ -5,13 +5,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.model.Vulnerability;
+import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
-import com.fortify.cli.aviator.fpr.filter.FilterTemplateParser;
+import com.fortify.cli.aviator.fpr.processor.FilterTemplateParser;
 
 import lombok.Getter;
 

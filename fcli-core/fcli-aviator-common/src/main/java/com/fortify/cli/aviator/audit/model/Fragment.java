@@ -1,19 +1,19 @@
-package com.fortify.cli.aviator.core.model;
+package com.fortify.cli.aviator.audit.model;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Reflectable
+@AllArgsConstructor
 @NoArgsConstructor
-@Setter
-public class File {
-    private String name;
+@Builder
+@Reflectable
+public class Fragment {
     private String content;
-    private boolean segment;
     private int startLine;
     private int endLine;
 }

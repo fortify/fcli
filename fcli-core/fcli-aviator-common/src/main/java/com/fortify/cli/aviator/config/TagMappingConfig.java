@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.util;
+package com.fortify.cli.aviator.config;
 
 import lombok.Data;
 

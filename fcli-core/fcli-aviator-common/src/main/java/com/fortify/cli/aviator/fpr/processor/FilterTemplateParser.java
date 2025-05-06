@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.fpr.filter;
+package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -18,6 +18,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import com.fortify.cli.aviator.fpr.filter.Filter;
+import com.fortify.cli.aviator.fpr.filter.FilterSet;
+import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
+import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
+import com.fortify.cli.aviator.fpr.filter.PrimaryTag;
+import com.fortify.cli.aviator.fpr.filter.TagDefinition;
+import com.fortify.cli.aviator.fpr.filter.TagValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -25,7 +32,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.fortify.cli.aviator.fpr.AuditProcessor;
 import com.fortify.cli.aviator.util.Constants;
 
 public class FilterTemplateParser {
