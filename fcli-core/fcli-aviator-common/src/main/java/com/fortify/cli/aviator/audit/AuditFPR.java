@@ -3,7 +3,6 @@ package com.fortify.cli.aviator.audit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -29,59 +28,94 @@ import com.fortify.cli.aviator.config.ExtensionsConfig;
 import com.fortify.cli.aviator.util.FPRLoadingUtil;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.aviator.util.ZipUtils;
 
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
 
-    public static FPRAuditResult auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger, String tagMappingFilePath)
-            throws AviatorSimpleException, AviatorTechnicalException {
-        LOG.info("Starting FPR audit process for file: {}", file.getPath());
+    private static class FprSetup {
+        final Path extractedPath;
+        final TagMappingConfig tagMappingConfig;
+        final AuditProcessor auditProcessor;
 
+        FprSetup(Path extractedPath, TagMappingConfig tagMappingConfig, AuditProcessor auditProcessor) {
+            this.extractedPath = extractedPath;
+            this.tagMappingConfig = tagMappingConfig;
+            this.auditProcessor = auditProcessor;
+        }
+    }
+
+    private static class ParsedFprData {
+        final Map<String, AuditIssue> auditIssueMap;
+        final List<Vulnerability> vulnerabilities;
+        final FPRInfo fprInfo;
+
+        ParsedFprData(Map<String, AuditIssue> auditIssueMap, List<Vulnerability> vulnerabilities, FPRInfo fprInfo) {
+            this.auditIssueMap = auditIssueMap;
+            this.vulnerabilities = vulnerabilities;
+            this.fprInfo = fprInfo;
+        }
+    }
+
+
+    public static FPRAuditResult auditFPR(File fprFile, String token, String url, String appVersion, IAviatorLogger logger, String tagMappingFilePath)
+            throws AviatorSimpleException, AviatorTechnicalException {
+        LOG.info("Starting FPR audit process for file: {}", fprFile.getPath());
+
+        FprSetup setup = prepareFprAndLoadConfigs(fprFile, tagMappingFilePath);
+
+        ParsedFprData parsedData = parseFpr(setup.extractedPath, fprFile.getPath(), setup.auditProcessor);
+
+        Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
+        AuditOutcome auditOutcome = performAviatorAudit(
+                parsedData, setup.auditProcessor, logger, token, appVersion, url, auditResponses
+        );
+
+        return finalizeFprAudit(auditOutcome, auditResponses, setup.auditProcessor, setup.tagMappingConfig);
+    }
+
+    private static FprSetup prepareFprAndLoadConfigs(File fprFile, String tagMappingFilePath)
+            throws AviatorTechnicalException, AviatorSimpleException, AviatorBugException {
         Path extractedPath;
         try {
-            extractedPath = ZipUtils.extractZip(file.getPath());
+            extractedPath = ZipUtils.extractZip(fprFile.getPath());
             LOG.debug("Extracted FPR to path: {}", extractedPath);
         } catch (IOException e) {
-            LOG.error("Failed to extract FPR file: {}", file.getPath(), e);
+            LOG.error("Failed to extract FPR file: {}", fprFile.getPath(), e);
             throw new AviatorTechnicalException("Unable to extract FPR file due to an I/O error.", e);
         }
 
         try {
-            if (!FPRLoadingUtil.isValidFpr(file.getPath())) {
-                LOG.error("Invalid FPR file: {}", file);
+            if (!FPRLoadingUtil.isValidFpr(fprFile.getPath())) {
+                LOG.error("Invalid FPR file: {}", fprFile);
                 throw new AviatorSimpleException("Invalid FPR file format.");
             }
-            if (!FPRLoadingUtil.hasSource(file)) {
-                LOG.error("FPR file does not contain source code: {}", file);
+            if (!FPRLoadingUtil.hasSource(fprFile)) {
+                LOG.error("FPR file does not contain source code: {}", fprFile);
                 throw new AviatorSimpleException("FPR file does not contain source code.");
             }
         } catch (IOException e) {
-            LOG.error("I/O error checking FPR source presence: {}", file.getPath(), e);
+            LOG.error("I/O error checking FPR source presence: {}", fprFile.getPath(), e);
             throw new AviatorTechnicalException("I/O error checking FPR source presence.", e);
         }
         LOG.info("FPR validation successful");
 
         ExtensionsConfig extensionsConfig;
         try {
-            Yaml yaml = new Yaml();
-            try (InputStream inputStream = AuditFPR.class.getClassLoader().getResourceAsStream("extensions_config.yaml")) {
-                if (inputStream == null) {
-                    throw new AviatorBugException ("Resource not found: extensions_config.yaml");
-                }
-                extensionsConfig = yaml.loadAs(inputStream, ExtensionsConfig.class);
-                if (extensionsConfig == null) {
-                    throw new AviatorBugException ("Failed to load required extensions configuration.");
-                }
+            extensionsConfig = ResourceUtil.loadYamlConfig("extensions_config.yaml", ExtensionsConfig.class);
+            if (extensionsConfig == null) {
+                throw new AviatorBugException("Failed to load required extensions configuration from resource.");
             }
         } catch (IOException e) {
-            throw new AviatorBugException ("Unable to load extensions configuration due to an I/O error.", e);
+            throw new AviatorBugException("Unable to load extensions configuration from resource due to an I/O error.", e);
         }
+        FileTypeLanguageMapperUtil.initializeConfig(extensionsConfig);
 
         TagMappingConfig tagMappingConfig;
-        Yaml yaml = new Yaml();
         try {
             if (tagMappingFilePath != null && !tagMappingFilePath.trim().isEmpty()) {
+                Yaml yaml = new Yaml();
                 try (FileInputStream fis = new FileInputStream(tagMappingFilePath)) {
                     tagMappingConfig = yaml.loadAs(fis, TagMappingConfig.class);
                     if (tagMappingConfig == null) {
@@ -89,14 +123,9 @@ public class AuditFPR {
                     }
                 }
             } else {
-                try (InputStream inputStream = AuditFPR.class.getClassLoader().getResourceAsStream("default_tag_mapping.yaml")) {
-                    if (inputStream == null) {
-                        throw new AviatorSimpleException("Resource not found: default_tag_mapping.yaml");
-                    }
-                    tagMappingConfig = yaml.loadAs(inputStream, TagMappingConfig.class);
-                    if (tagMappingConfig == null) {
-                        throw new AviatorTechnicalException("Default tag mapping configuration could not be loaded.");
-                    }
+                tagMappingConfig = ResourceUtil.loadYamlConfig("default_tag_mapping.yaml", TagMappingConfig.class);
+                if (tagMappingConfig == null) {
+                    throw new AviatorTechnicalException("Default tag mapping configuration could not be loaded from resource.");
                 }
             }
         } catch (IOException e) {
@@ -107,22 +136,45 @@ public class AuditFPR {
             throw new AviatorSimpleException("Invalid tag mapping file format in '" + tagMappingFilePath + "': " + e.getMessage(), e);
         }
 
-        FileTypeLanguageMapperUtil.initializeConfig(extensionsConfig);
+        AuditProcessor auditProcessor = new AuditProcessor(extractedPath, fprFile.getPath());
+        return new FprSetup(extractedPath, tagMappingConfig, auditProcessor);
+    }
 
-        AuditProcessor auditProcessor = new AuditProcessor(extractedPath, file.getPath());
+    private static ParsedFprData parseFpr(Path extractedPath, String originalFprPath, AuditProcessor auditProcessor)
+            throws AviatorTechnicalException {
         Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
-
-        FPRProcessor fprProcessor = new FPRProcessor(file.getPath(), extractedPath, auditIssueMap, auditProcessor);
+        FPRProcessor fprProcessor = new FPRProcessor(originalFprPath, extractedPath, auditIssueMap, auditProcessor);
         List<Vulnerability> vulnerabilities = fprProcessor.process();
         FPRInfo fprInfo = fprProcessor.getFprInfo();
+        return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo);
+    }
 
-        Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
-        IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, logger);
-        AuditOutcome outcome = issueAuditor.performAudit(auditResponses, token, appVersion, fprInfo.getBuildId(), url);
+    private static AuditOutcome performAviatorAudit(
+            ParsedFprData parsedData, AuditProcessor auditProcessor, IAviatorLogger logger,
+            String token, String appVersion, String url,
+            Map<String, AuditResponse> auditResponsesToFill)
+            throws AviatorSimpleException, AviatorTechnicalException {
 
-        LOG.info("Completed audit process, received {} responses", auditResponses.size());
+        IssueAuditor issueAuditor = new IssueAuditor(
+                parsedData.vulnerabilities,
+                auditProcessor,
+                parsedData.auditIssueMap,
+                parsedData.fprInfo,
+                logger
+        );
+        AuditOutcome outcome = issueAuditor.performAudit(
+                auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url
+        );
+        LOG.info("Completed Aviator audit, received {} responses", auditResponsesToFill.size());
+        return outcome;
+    }
 
-        int totalIssuesToAudit = outcome.getTotalIssuesToAudit();
+    private static FPRAuditResult finalizeFprAudit(
+            AuditOutcome auditOutcome, Map<String, AuditResponse> auditResponses,
+            AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig)
+            throws AviatorTechnicalException {
+
+        int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
         if (auditResponses.isEmpty()) {
             if (totalIssuesToAudit == 0) {
                 LOG.info("No issues were audited, skipping update and upload");
@@ -133,7 +185,7 @@ public class AuditFPR {
             }
         }
 
-        int issuesSuccessfullyAudited = (int) auditResponses.values().stream()
+        long issuesSuccessfullyAudited = auditResponses.values().stream()
                 .filter(response -> "SUCCESS".equals(response.getStatus()))
                 .count();
 
@@ -148,6 +200,6 @@ public class AuditFPR {
 
         File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, tagMappingConfig);
         LOG.info("FPR audit process completed with status: {}", status);
-        return new FPRAuditResult(updatedFile, status, null, issuesSuccessfullyAudited, totalIssuesToAudit);
+        return new FPRAuditResult(updatedFile, status, null, (int) issuesSuccessfullyAudited, totalIssuesToAudit);
     }
 }
