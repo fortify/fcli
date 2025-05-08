@@ -1,0 +1,98 @@
+[
+  {
+    "name": "com.fortify.grpc.token.TokenGenerationResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.grpc.token.TokenValidationResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.grpc.token.RevokeTokenResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.grpc.token.ListTokensResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.grpc.token.TokenInfo",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.grpc.token.DeleteTokenResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+
+  {
+    "name": "com.fortify.aviator.application.Application",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationResponseMessage",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.application.ApplicationList",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+
+  {
+    "name": "com.fortify.aviator.entitlement.Entitlement",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.entitlement.TenantInfo",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+
+  {
+    "name": "com.fortify.aviator.grpc.AuditorResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.AuditResult",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.PongResponse",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.IssueData",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.AnalysisInfo",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.StackTraceElement",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.Fragment",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.File",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.aviator.grpc.StackTraceElementList",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+
+  {
+    "name": "com.google.protobuf.Timestamp",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.google.protobuf.Empty",
+    "allDeclaredConstructors": true, "allPublicConstructors": true, "allDeclaredMethods": true, "allPublicMethods": true, "allDeclaredFields": true, "allPublicFields": true
+  }
+]
