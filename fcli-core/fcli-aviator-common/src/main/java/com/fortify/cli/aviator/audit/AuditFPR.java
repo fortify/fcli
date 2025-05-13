@@ -1,7 +1,6 @@
 package com.fortify.cli.aviator.audit;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -10,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
+import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.exception.AviatorBugException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
@@ -24,10 +23,8 @@ import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
 import com.fortify.cli.aviator.fpr.model.Vulnerability;
-import com.fortify.cli.aviator.config.ExtensionsConfig;
-import com.fortify.cli.aviator.util.FPRLoadingUtil;
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.util.FPRLoadingUtil;
 import com.fortify.cli.aviator.util.ResourceUtil;
 import com.fortify.cli.aviator.util.ZipUtils;
 
@@ -62,6 +59,8 @@ public class AuditFPR {
     public static FPRAuditResult auditFPR(File fprFile, String token, String url, String appVersion, IAviatorLogger logger, String tagMappingFilePath)
             throws AviatorSimpleException, AviatorTechnicalException {
         LOG.info("Starting FPR audit process for file: {}", fprFile.getPath());
+
+        AviatorConfigManager.getInstance();
 
         FprSetup setup = prepareFprAndLoadConfigs(fprFile, tagMappingFilePath);
 
@@ -101,39 +100,14 @@ public class AuditFPR {
         }
         LOG.info("FPR validation successful");
 
-        ExtensionsConfig extensionsConfig;
-        try {
-            extensionsConfig = ResourceUtil.loadYamlConfig("extensions_config.yaml", ExtensionsConfig.class);
-            if (extensionsConfig == null) {
-                throw new AviatorBugException("Failed to load required extensions configuration from resource.");
-            }
-        } catch (IOException e) {
-            throw new AviatorBugException("Unable to load extensions configuration from resource due to an I/O error.", e);
-        }
-        FileTypeLanguageMapperUtil.initializeConfig(extensionsConfig);
 
         TagMappingConfig tagMappingConfig;
-        try {
-            if (tagMappingFilePath != null && !tagMappingFilePath.trim().isEmpty()) {
-                Yaml yaml = new Yaml();
-                try (FileInputStream fis = new FileInputStream(tagMappingFilePath)) {
-                    tagMappingConfig = yaml.loadAs(fis, TagMappingConfig.class);
-                    if (tagMappingConfig == null) {
-                        throw new AviatorSimpleException("Tag mapping file '" + tagMappingFilePath + "' is invalid or empty.");
-                    }
-                }
-            } else {
-                tagMappingConfig = ResourceUtil.loadYamlConfig("default_tag_mapping.yaml", TagMappingConfig.class);
-                if (tagMappingConfig == null) {
-                    throw new AviatorTechnicalException("Default tag mapping configuration could not be loaded from resource.");
-                }
-            }
-        } catch (IOException e) {
-            LOG.error("Failed to load tag mapping configuration: {}", e.getMessage(), e);
-            throw new AviatorTechnicalException("Failed to load tag mapping configuration due to an I/O error.", e);
-        } catch (Exception e) {
-            LOG.error("Invalid tag mapping file format in '{}': {}", tagMappingFilePath, e.getMessage(), e);
-            throw new AviatorSimpleException("Invalid tag mapping file format in '" + tagMappingFilePath + "': " + e.getMessage(), e);
+        if (tagMappingFilePath != null && !tagMappingFilePath.trim().isEmpty()) {
+            LOG.info("Loading user-provided tag mapping from: {}", tagMappingFilePath);
+            tagMappingConfig = ResourceUtil.loadYamlFile(new File(tagMappingFilePath), TagMappingConfig.class);
+        } else {
+            LOG.info("Using default tag mapping configuration.");
+            tagMappingConfig = AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
         }
 
         AuditProcessor auditProcessor = new AuditProcessor(extractedPath, fprFile.getPath());
