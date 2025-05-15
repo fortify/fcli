@@ -14,14 +14,24 @@ package com.fortify.cli.aviator._common.session.user.cli.cmd;
 
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionLoginOptions;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionNameArgGroup;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator._common.util.AviatorJwtUtils;
+import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
+import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.grpc.token.TokenValidationResponse;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -30,6 +40,8 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false)
 public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<AviatorUserSessionDescriptor> {
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorUserSessionLoginCommand.class);
+
     @Mixin @Getter private OutputHelperMixins.Login outputHelper;
     @Getter private AviatorUserSessionHelper sessionHelper = AviatorUserSessionHelper.instance();
     @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
@@ -44,6 +56,31 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
     protected AviatorUserSessionDescriptor login(String sessionName) {
         String resolvedToken = tokenResolver.getToken();
         Date expiryDate = AviatorJwtUtils.extractExpiryDateFromToken(resolvedToken);
+        String tenantName = AviatorJwtUtils.extractTenantNameFromToken(resolvedToken);
+
+        LOG.info("Default Aviator admin configuration found. Attempting to validate user token...");
+        try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(sessionLoginOptions.getAviatorUrl())) {
+
+            TokenValidationResponse validationResponse = client.validateUserToken(resolvedToken, tenantName);
+
+            if (!validationResponse.getValid()) {
+                String errorMsg = validationResponse.getErrorMessage();
+                String fullError = "Aviator user token validation failed: " +
+                        (errorMsg == null || errorMsg.isBlank() ? "Token is invalid." : errorMsg);
+                throw new AviatorSimpleException(fullError);
+            }
+            LOG.info("Aviator user token validated successfully with the Aviator server.");
+        } catch (AviatorSimpleException e) {
+            throw e;
+        } catch (Exception e) {
+            LOG.warn("An error occurred while trying to validate the Aviator user token with the server using the 'default' admin config: {}. " +
+                    "Proceeding with session creation, but the token's server-side validity is unconfirmed.", e.getMessage());
+            LOG.debug("Token validation gRPC call exception details: ", e);
+        }
+
+        if (expiryDate == null) {
+            LOG.warn("Could not extract expiry date from the provided token. The session may not have an accurate expiration time.");
+        }
 
         return AviatorUserSessionDescriptor.builder()
                 .aviatorUrl(sessionLoginOptions.getAviatorUrl())

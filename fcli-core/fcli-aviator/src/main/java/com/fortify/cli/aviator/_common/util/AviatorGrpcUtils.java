@@ -1,10 +1,13 @@
 package com.fortify.cli.aviator._common.util;
 
 import java.util.AbstractMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.protobuf.Descriptors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +31,14 @@ public class AviatorGrpcUtils {
     public static JsonNode grpcToJsonNode(Message message) {
         registerLogMaskFields(message);
         try {
-            String jsonString = JsonFormat.printer()
-                    .includingDefaultValueFields()
-                    .preservingProtoFieldNames()
-                    .print(message);
-            LOG.debug("Converted gRPC message to JSON: {}", jsonString);
+            Set<Descriptors.FieldDescriptor> allFields =
+                    new HashSet<>(message.getDescriptorForType().getFields());
+
+             String jsonString = JsonFormat.printer()
+                     .includingDefaultValueFields(allFields)
+                     .preservingProtoFieldNames()
+                     .print(message);
+             LOG.debug("Converted gRPC message to JSON: {}", jsonString);
             return objectMapper.readTree(jsonString);
         } catch (Exception e) {
             LOG.error("Error converting gRPC message to JSON: {}", e.getMessage(), e);
@@ -41,8 +47,7 @@ public class AviatorGrpcUtils {
     }
 
     private static void registerLogMaskFields(Message message) {
-        message.getAllFields().entrySet().forEach(e->
-            LogMaskHelper.INSTANCE.registerValue(maskedFields.get(e.getKey().getJsonName()), LogMaskSource.GRPC_RESPONSE, e.getValue()));
+        message.getAllFields().forEach((key, value) -> LogMaskHelper.INSTANCE.registerValue(maskedFields.get(key.getJsonName()), LogMaskSource.GRPC_RESPONSE, value));
     }
 
     public static JsonNode emptyJsonNode() {

@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import com.fortify.grpc.token.ValidateUserTokenRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -933,6 +934,13 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateToken, request, Constants.OP_VALIDATE_TOKEN);
     }
 
+    public TokenValidationResponse validateUserToken(String token, String tenantName) {
+        ValidateUserTokenRequest request = ValidateUserTokenRequest.newBuilder()
+                .setToken(token)
+                .setTenantName(tenantName != null ? tenantName : "")
+                .build();
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::validateUserToken, request, Constants.OP_VALIDATE_USER_TOKEN);
+    }
     public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder()
                 .setTenantName(tenantName)

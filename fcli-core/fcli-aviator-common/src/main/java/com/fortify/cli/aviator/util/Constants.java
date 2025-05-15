@@ -57,6 +57,7 @@ public class Constants {
     public static final String OP_REVOKE_TOKEN = "revoking token";
     public static final String OP_DELETE_TOKEN = "deleting token";
     public static final String OP_VALIDATE_TOKEN = "validating token";
+    public static final String OP_VALIDATE_USER_TOKEN = "validating user token";
     public static final String OP_LIST_ENTITLEMENTS = "listing entitlements";
 
     public static final long DEFAULT_PING_INTERVAL_SECONDS = 30;

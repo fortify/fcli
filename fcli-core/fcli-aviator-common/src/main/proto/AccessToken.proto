@@ -12,6 +12,7 @@ service TokenService {
   rpc RevokeToken (RevokeTokenRequest) returns (RevokeTokenResponse) {}
   rpc ListTokens (ListTokensRequest) returns (ListTokensResponse) {}
   rpc DeleteToken (DeleteTokenRequest) returns (DeleteTokenResponse) {}
+  rpc ValidateUserToken (ValidateUserTokenRequest) returns (TokenValidationResponse) {}
 }
 
 message TokenGenerationRequest {
@@ -38,6 +39,11 @@ message TokenValidationRequest {
   string tenant_name = 2;
   string request_signature = 3;
   string message = 4;  // format: "token;tenantName;timestamp"
+}
+
+message ValidateUserTokenRequest {
+  string token = 1;
+  string tenant_name = 2;
 }
 
 message TokenValidationResponse {
