@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.4.1](https://github.com/fortify/fcli/compare/v3.4.0...v3.4.1) (2025-04-30)
+
+
+### Bug Fixes
+
+* Fix bug in Aviator module ([7f66cbc](https://github.com/fortify/fcli/commit/7f66cbcbb0f600ad67ff3db067515290cb980fe2))
+
+## [3.4.0](https://github.com/fortify/fcli/compare/v3.3.0...v3.4.0) (2025-04-29)
+
+
+### Features
+
+* Unhide `fcli aviator` commands for upcoming Aviator release ([0e3d0c7](https://github.com/fortify/fcli/commit/0e3d0c7a4df97ca5f5b8b400fc4f9cf3701f1386))
+
+## [3.3.0](https://github.com/fortify/fcli/compare/v3.2.1...v3.3.0) (2025-04-25)
+
+
+### Features
+
+* Add log masking capabilities ([68a7875](https://github.com/fortify/fcli/commit/68a7875e48c8dab63eb4e09163ac5fc45842663a))
+
+
+### Bug Fixes
+
+* FoD `release-summary` action: Support FoD 24.3 (FedRAMP) ([#721](https://github.com/fortify/fcli/issues/721)) ([7c87e8d](https://github.com/fortify/fcli/commit/7c87e8dd2213620986b1aec6feb2d4bb6e079941))
+
 ## [3.2.1](https://github.com/fortify/fcli/compare/v3.2.0...v3.2.1) (2025-04-15)
 
 

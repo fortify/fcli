@@ -14,8 +14,8 @@ package com.fortify.cli.aviator._main.cli.cmd;
 
 import com.fortify.cli.aviator._common.config.admin.cli.cmd.AviatorAdminConfigCommands;
 import com.fortify.cli.aviator._common.session.user.cli.cmd.AviatorUserSessionCommands;
-import com.fortify.cli.aviator.entitlement.cli.cmd.AviatorEntitlementCommands;
 import com.fortify.cli.aviator.app.cli.cmd.AviatorAppCommands;
+import com.fortify.cli.aviator.entitlement.cli.cmd.AviatorEntitlementCommands;
 import com.fortify.cli.aviator.ssc.cli.cmd.AviatorSSCCommands;
 import com.fortify.cli.aviator.token.cli.cmd.AviatorTokenCommands;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
@@ -24,7 +24,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "aviator",
-        hidden = true,
         resourceBundle = "com.fortify.cli.aviator.i18n.AviatorMessages",
         subcommands = {
                 // This list of product subcommands should be in alphabetical

@@ -1,10 +1,11 @@
 package com.fortify.cli.aviator.util;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import lombok.NoArgsConstructor;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.formkiq.graalvm.annotations.Reflectable;
+
+import lombok.NoArgsConstructor;
 
 @NoArgsConstructor @Reflectable
 public class ExtensionsConfig {
@@ -19,10 +20,12 @@ public class ExtensionsConfig {
     }
 
     public String getLanguageForExtension(String extension) {
-        if (extension == null) {
+        if (StringUtil.isEmpty(extension)) {
             return "Unknown";
         }
-        var ext = extension.startsWith(".") ? extension : "." + extension;
+        var ext = extension.startsWith(".")
+                ? extension
+                : "." + extension;
 
         return supportedExtensions.getOrDefault(ext, "Unknown");
     }

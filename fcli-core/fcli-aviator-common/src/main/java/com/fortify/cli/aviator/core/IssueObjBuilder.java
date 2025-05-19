@@ -1,5 +1,8 @@
 package com.fortify.cli.aviator.core;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.fortify.cli.aviator.core.model.AnalysisInfo;
 import com.fortify.cli.aviator.core.model.File;
 import com.fortify.cli.aviator.core.model.IssueData;
@@ -7,9 +10,7 @@ import com.fortify.cli.aviator.core.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.fortify.cli.aviator.util.StringUtil;
 
 public class IssueObjBuilder {
 
@@ -50,6 +51,7 @@ public class IssueObjBuilder {
         }
 
         String language = programmingLanguages.isEmpty() ? null : programmingLanguages.iterator().next();
+        String fileExtension = FileUtil.getFileExtension(vulnerability.getLastStackTraceElement().getFilename());
 
         return UserPrompt.builder()
                 .issueData(issueData)
@@ -60,7 +62,7 @@ public class IssueObjBuilder {
                 .files(vulnerability.getFiles())
                 .lastStackTraceElement(vulnerability.getLastStackTraceElement())
                 .programmingLanguages(programmingLanguages)
-                .fileExtension(FileUtil.getFileExtension(vulnerability.getLastStackTraceElement().getFilename()))
+                .fileExtension(StringUtil.isEmpty(fileExtension) ? "Unknown" : fileExtension)
                 .language(language)
                 .category(vulnerability.getCategory())
                 .tier("")

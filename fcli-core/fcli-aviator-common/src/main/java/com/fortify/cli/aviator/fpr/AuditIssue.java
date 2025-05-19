@@ -1,14 +1,14 @@
 package com.fortify.cli.aviator.fpr;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Singular;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.formkiq.graalvm.annotations.Reflectable;
+
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder

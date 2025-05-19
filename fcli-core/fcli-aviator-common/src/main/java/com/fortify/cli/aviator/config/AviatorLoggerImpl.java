@@ -1,8 +1,9 @@
 package com.fortify.cli.aviator.config;
 
-import com.fortify.cli.common.progress.helper.IProgressWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 
 public class AviatorLoggerImpl implements IAviatorLogger {
     private final IProgressWriter progressWriter;

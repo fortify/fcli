@@ -2,34 +2,37 @@
 package com.fortify.cli.aviator.token.cli.cmd;
 
 import java.io.File;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.DateTimeException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.output.cli.cmd.AbstractAviatorAdminSessionOutputCommand;
-import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
 import com.fortify.cli.aviator._common.util.AviatorGrpcUtils;
 import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.aviator.util.FileUtil;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.grpc.token.TokenGenerationResponse;
+
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
-public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand {
+public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
     @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
@@ -97,5 +100,10 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
     @Override
     public boolean isSingular() {
         return true;
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "CREATED";
     }
 }

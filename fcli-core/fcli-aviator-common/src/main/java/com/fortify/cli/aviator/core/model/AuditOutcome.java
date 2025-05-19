@@ -1,8 +1,8 @@
 package com.fortify.cli.aviator.core.model;
 
-import lombok.Data;
-
 import java.util.Map;
+
+import lombok.Data;
 
 @Data
 public class AuditOutcome {

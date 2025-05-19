@@ -1,8 +1,8 @@
 package com.fortify.cli.aviator.core.model;
 
-import lombok.Data;
-
 import java.io.File;
+
+import lombok.Data;
 
 @Data
 public class FPRAuditResult {

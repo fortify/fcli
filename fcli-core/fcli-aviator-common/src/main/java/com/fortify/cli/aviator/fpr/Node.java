@@ -1,10 +1,10 @@
 package com.fortify.cli.aviator.fpr;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 @AllArgsConstructor

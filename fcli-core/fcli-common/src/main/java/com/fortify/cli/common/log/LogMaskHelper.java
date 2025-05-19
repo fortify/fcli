@@ -56,6 +56,17 @@ public final class LogMaskHelper {
     }
     
     /**
+     * Register a value to be masked, based on the semantics as described in {@link MaskValue}. If
+     * {@link MaskValueDescriptor} is <code>null</code>, the given value will not be registered for masking.
+     */
+    public final LogMaskHelper registerValue(MaskValueDescriptor maskDescriptor, LogMaskSource source, Object value) {
+        if ( maskDescriptor!=null ) {
+            registerValue(maskDescriptor.sensitivity(), source, maskDescriptor.description(), value, maskDescriptor.pattern());
+        }
+        return this;
+    }
+    
+    /**
      * Register a value to be masked, based on the same semantics as described in {@link MaskValue} but passing
      * each attribute of that annotation as a separate method argument.
      */

@@ -12,23 +12,22 @@
  */
 package com.fortify.cli.common.log;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-
-import ch.qos.logback.classic.pattern.ClassicConverter;
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
 /**
- * This class provides the 'msgType' conversion word that can be 
- * used in logging pattern layouts to show the {@link LogMessageType}
- * in log entries.
- * 
+ * Non-annotation equivalent of {@link MaskValue}.
+ *
  * @author Ruud Senden
  */
-@Reflectable
-public class LogMessageTypeConverter extends ClassicConverter {
-    public static final String conversionWord = "msgType";
-    @Override
-    public String convert(ILoggingEvent event) {
-        return LogMessageType.getType(event).toFixedLengthString();
+@RequiredArgsConstructor @Data @Accessors(fluent=true)
+public class MaskValueDescriptor {
+    private final LogSensitivityLevel sensitivity;
+    private final String description;
+    private final String pattern;
+    
+    public MaskValueDescriptor(LogSensitivityLevel sensitivity, String description) {
+        this(sensitivity, description, null);
     }
 }

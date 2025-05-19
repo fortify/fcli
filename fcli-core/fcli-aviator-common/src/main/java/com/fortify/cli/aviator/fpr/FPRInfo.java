@@ -1,22 +1,23 @@
 package com.fortify.cli.aviator.fpr;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.aviator.fpr.filter.FilterSet;
-import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
-import com.fortify.cli.aviator.util.StringUtil;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.fortify.cli.aviator.fpr.filter.FilterSet;
+import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
+import com.fortify.cli.aviator.util.StringUtil;
+
+import lombok.Getter;
+import lombok.Setter;
 
 
 @Getter

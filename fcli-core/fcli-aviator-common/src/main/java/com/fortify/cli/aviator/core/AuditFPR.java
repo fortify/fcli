@@ -1,20 +1,5 @@
 package com.fortify.cli.aviator.core;
 
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.core.model.AuditOutcome;
-import com.fortify.cli.aviator.core.model.AuditResponse;
-import com.fortify.cli.aviator.core.model.FPRAuditResult;
-import com.fortify.cli.aviator.fpr.*;
-import com.fortify.cli.aviator.util.ExtensionsConfig;
-import com.fortify.cli.aviator.util.FPRLoadingUtil;
-import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
-import com.fortify.cli.aviator.util.TagMappingConfig;
-import com.fortify.cli.aviator.util.ZipUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,6 +8,28 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
+
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.core.model.AuditOutcome;
+import com.fortify.cli.aviator.core.model.AuditResponse;
+import com.fortify.cli.aviator.core.model.FPRAuditResult;
+import com.fortify.cli.aviator.fpr.AuditIssue;
+import com.fortify.cli.aviator.fpr.AuditProcessor;
+import com.fortify.cli.aviator.fpr.FPRInfo;
+import com.fortify.cli.aviator.fpr.FPRProcessor;
+import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.util.ExtensionsConfig;
+import com.fortify.cli.aviator.util.FPRLoadingUtil;
+import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.aviator.util.TagMappingConfig;
+import com.fortify.cli.aviator.util.ZipUtils;
 
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
@@ -60,17 +67,15 @@ public class AuditFPR {
             Yaml yaml = new Yaml();
             try (InputStream inputStream = AuditFPR.class.getClassLoader().getResourceAsStream("extensions_config.yaml")) {
                 if (inputStream == null) {
-                    throw new AviatorSimpleException("Resource not found: extensions_config.yaml");
+                    throw new AviatorBugException ("Resource not found: extensions_config.yaml");
                 }
                 extensionsConfig = yaml.loadAs(inputStream, ExtensionsConfig.class);
                 if (extensionsConfig == null) {
-                    LOG.error("Failed to load extensions configuration (result was null)");
-                    throw new AviatorTechnicalException("Failed to load required extensions configuration.");
+                    throw new AviatorBugException ("Failed to load required extensions configuration.");
                 }
             }
         } catch (IOException e) {
-            LOG.error("Failed to load extensions configuration file: {}", e.getMessage(), e);
-            throw new AviatorTechnicalException("Unable to load extensions configuration due to an I/O error.", e);
+            throw new AviatorBugException ("Unable to load extensions configuration due to an I/O error.", e);
         }
 
         TagMappingConfig tagMappingConfig;
@@ -112,7 +117,7 @@ public class AuditFPR {
         FPRInfo fprInfo = fprProcessor.getFprInfo();
 
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
-        IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, false, logger);
+        IssueAuditor issueAuditor = new IssueAuditor(vulnerabilities, auditProcessor, auditIssueMap, fprInfo, logger);
         AuditOutcome outcome = issueAuditor.performAudit(auditResponses, token, appVersion, fprInfo.getBuildId(), url);
 
         LOG.info("Completed audit process, received {} responses", auditResponses.size());
@@ -144,10 +149,5 @@ public class AuditFPR {
         File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, tagMappingConfig);
         LOG.info("FPR audit process completed with status: {}", status);
         return new FPRAuditResult(updatedFile, status, null, issuesSuccessfullyAudited, totalIssuesToAudit);
-    }
-
-    public static FPRAuditResult auditFPR(File file, String token, String url, String appVersion, IAviatorLogger logger)
-            throws AviatorSimpleException, AviatorTechnicalException {
-        return auditFPR(file, token, url, appVersion, logger, null);
     }
 }

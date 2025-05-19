@@ -61,6 +61,7 @@ message UserPromptRequest {
   oneof request_type {
     StreamInitRequest init = 1;
     AuditRequest audit = 2;
+    PingRequest ping = 3;
   }
 }
 message AuditRequest {
@@ -98,6 +99,11 @@ message StackTraceElementList {
   repeated StackTraceElement elements = 1;
 }
 
+message PingRequest {
+  string stream_id = 1;
+  int64 timestamp = 2;
+}
+
 message AuditorResponse {
   AuditResult auditResult = 1;
   int32 inputToken = 2;
@@ -112,12 +118,20 @@ message AuditorResponse {
   string systemPrompt = 11;
   string requestId = 12;
   string streamId = 13;
+  PongResponse pong = 14;
 }
 
 message AuditResult {
   string tagValue = 1;
   string comment = 2;
 }
+
+message PongResponse {
+  string stream_id = 1;
+  int64 server_timestamp = 2;
+  int64 client_timestamp = 3;
+}
+
 message FinalSummary {
   string summary = 1;
   int32 total_messages = 2;

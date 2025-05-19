@@ -1,7 +1,5 @@
 package com.fortify.cli.aviator.util;
 
-import java.util.Optional;
-
 public class FileTypeLanguageMapperUtil {
     private static ExtensionsConfig extensionsConfig;
 
@@ -10,14 +8,15 @@ public class FileTypeLanguageMapperUtil {
     }
 
     public static String getProgrammingLanguage(String fileExtension) {
-        if (extensionsConfig == null) {
+        if(StringUtil.isEmpty(fileExtension)){
             return "Unknown";
         }
-
         String ext = fileExtension.startsWith(".")
                 ? fileExtension
                 : "." + fileExtension;
 
-        return extensionsConfig.getLanguageForExtension(ext);
+        return extensionsConfig != null
+                ? extensionsConfig.getLanguageForExtension(ext)
+                : "Unknown";
     }
 }

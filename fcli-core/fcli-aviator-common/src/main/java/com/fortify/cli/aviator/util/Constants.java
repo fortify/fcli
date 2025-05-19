@@ -58,4 +58,8 @@ public class Constants {
     public static final String OP_DELETE_TOKEN = "deleting token";
     public static final String OP_VALIDATE_TOKEN = "validating token";
     public static final String OP_LIST_ENTITLEMENTS = "listing entitlements";
+
+    public static final long DEFAULT_PING_INTERVAL_SECONDS = 30;
+    public static final long PING_TIMEOUT_SECONDS = 10;
+    public static final int MAX_PING_FAILURES = 3;
 }

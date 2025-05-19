@@ -1,10 +1,9 @@
 package com.fortify.cli.aviator._common.session.user.cli.mixin;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
-
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.StringUtils;
-import lombok.Getter;
+
 import picocli.CommandLine.Option;
 
 /**

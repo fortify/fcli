@@ -1,0 +1,32 @@
+[
+  {
+    "name": "com.fortify.cli.aviator.util.TagMappingConfig",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.cli.aviator.util.TagMappingConfig$Mapping",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.cli.aviator.util.TagMappingConfig$Tier",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.cli.aviator.util.TagMappingConfig$Result",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "com.fortify.cli.aviator.util.ExtensionsConfig",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  }
+]

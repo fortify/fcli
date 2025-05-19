@@ -1,10 +1,11 @@
 package com.fortify.cli.aviator.util;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import lombok.Data;
 
-@Data
+@Data @Reflectable
 public class TagMappingConfig {
-    private String tagId = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
+    private String tag_id = "87f2364f-dcd4-49e6-861d-f8d3f351686b";
     private Mapping mapping;
 
     @Data

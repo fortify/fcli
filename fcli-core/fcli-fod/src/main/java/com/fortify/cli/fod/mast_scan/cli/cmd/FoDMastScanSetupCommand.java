@@ -65,15 +65,15 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     private Integer entitlementId;
     @Mixin private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     private enum MobileFrameworks { iOS, Android }
-    @Option(names = {"--framework"}, required = true)
+    @Option(names = {"--framework"}, required = true, defaultValue = "Android")
     private MobileFrameworks mobileFramework;
     @Option(names = {"--timezone"}, defaultValue = "UTC")
     private String timezone;
-    private enum MobileAuditPreferenceTypes { Manual, None }
-    @Option(names = {"--audit-preference"}, defaultValue = "None")
+    private enum MobileAuditPreferenceTypes { Manual, Automated }
+    @Option(names = {"--audit-preference"}, defaultValue = "Automated")
     private MobileAuditPreferenceTypes auditPreferenceType;
     private enum MobilePlatforms { Phone, Tablet, Both }
-    @Option(names = {"--platform"}, required = true)
+    @Option(names = {"--platform"}, defaultValue = "Phone")
     private MobilePlatforms mobilePlatform;
     @Option(names={"--skip-if-exists"})
     private Boolean skipIfExists = false;
@@ -103,14 +103,22 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         Integer assessmentTypeId = atd.getAssessmentTypeId();
         Integer entitlementIdToUse = atd.getEntitlementId();
 
+        // Note: for some reason the API uses "None" for Automated audit but shows "Automated" in the UI!
+        var auditPreference = auditPreferenceType.name();
+        if (auditPreferenceType != null && auditPreferenceType.name().equals("Automated")) {
+            auditPreference = "None";
+        }
+
+        // Note: the API does not currently allow entitlement id to be configured via "scan-setup" only via "scan-start"
+        // we will leave this here for when it does and update setupMastScanRequest below
         validateEntitlement(currentSetup, entitlementIdToUse, relId, atd);
-        LOG.info("Release will be usig entitlement " + entitlementIdToUse);
+        LOG.info("Release will be using entitlement " + entitlementIdToUse);
 
         FoDScanConfigMobileSetupRequest setupMastScanRequest = FoDScanConfigMobileSetupRequest.builder()
                 .assessmentTypeId(assessmentTypeId)
                 .frameworkType(mobileFramework.name())
                 .platformType(mobilePlatform.name())
-                .auditPreferenceType(auditPreferenceType.name())
+                .auditPreferenceType(auditPreference)
                 .timeZone(timezone).build();
 
         return FoDScanConfigMobileHelper.setupScan(unirest, releaseDescriptor, setupMastScanRequest);
@@ -139,8 +147,8 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode transformRecord(JsonNode record) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(getUnirestInstance());
         return ((ObjectNode)record)
-            .put("scanType", mobileAssessmentType)
-            .put("setupType", auditPreferenceType.name())
+            .put("scanType", FoDScanType.Mobile.name())
+            .put("setupType", mobileAssessmentType)
             .put("applicationName", releaseDescriptor.getApplicationName())
             .put("releaseName", releaseDescriptor.getReleaseName())
             .put("microserviceName", releaseDescriptor.getMicroserviceName());

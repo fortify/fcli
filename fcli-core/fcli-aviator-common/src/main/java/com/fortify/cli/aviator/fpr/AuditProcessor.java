@@ -1,16 +1,24 @@
 package com.fortify.cli.aviator.fpr;
 
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.core.model.AuditResponse;
-import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.TagMappingConfig;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -22,19 +30,20 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.core.model.AuditResponse;
+import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.TagMappingConfig;
+
+import lombok.Getter;
 
 
 public class AuditProcessor {
@@ -59,19 +68,7 @@ public class AuditProcessor {
     }
 
     @Getter
-    private Path extractedPath;
-
-    public void saveFilterTemplateXml(Document doc) throws Exception {
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-        DOMSource source = new DOMSource(doc);
-        Path filterTemplatePath = extractedPath.resolve("filtertemplate.xml");
-        StreamResult result = new StreamResult(filterTemplatePath.toFile());
-        transformer.transform(source, result);
-        logger.debug("Updated filtertemplate.xml saved to: {}", filterTemplatePath);
-    }
+    private final Path extractedPath;
 
     public Map<String, AuditIssue> processAuditXML() throws AviatorTechnicalException {
         Path auditPath = extractedPath.resolve("audit.xml");
@@ -240,7 +237,6 @@ public class AuditProcessor {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
             Element issueElement = findIssueElement(instanceId);
-            String tagId = tagMappingConfig.getTagId();
 
             if (response.getTier() != null) {
                 if (issueElement != null) {
@@ -293,7 +289,7 @@ public class AuditProcessor {
             }
 
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                updateOrAddTag(issueElement, tagMappingConfig.getTagId(), resultConfig.getValue());
+                updateOrAddTag(issueElement, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
             if (resultConfig != null && resultConfig.getSuppress()) {
                 issueElement.setAttribute("suppressed", "true");
@@ -336,7 +332,7 @@ public class AuditProcessor {
             }
 
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                addTagHistory(clientAuditTrail, tagMappingConfig.getTagId(), resultConfig.getValue());
+                addTagHistory(clientAuditTrail, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
             if (resultConfig != null && resultConfig.getSuppress()) {
                 issueElement.setAttribute("suppressed", "true");
@@ -473,7 +469,7 @@ public class AuditProcessor {
             }
 
             if (resultConfig != null && resultConfig.getValue() != null && !resultConfig.getValue().isEmpty()) {
-                updateOrAddTag(newIssue, tagMappingConfig.getTagId(), resultConfig.getValue());
+                updateOrAddTag(newIssue, tagMappingConfig.getTag_id(), resultConfig.getValue());
             }
             if (resultConfig != null && resultConfig.getSuppress()) {
                 newIssue.setAttribute("suppressed", "true");
@@ -535,7 +531,7 @@ public class AuditProcessor {
         newIssue.setAttribute("suppressed", "false");
 
         updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
-        updateOrAddTag(newIssue, Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW);
+        updateOrAddTag(newIssue, Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED);
 
         addCommentToIssueElement(newIssue, comment, Constants.USER_NAME);
 
@@ -549,7 +545,7 @@ public class AuditProcessor {
                     .suppressed(false)
                     .tags(Map.of(
                             Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR,
-                            Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW
+                            Constants.AVIATOR_PREDICTION_TAG_ID, Constants.AVIATOR_EXCLUDED
                     ))
                     .threadedComments(List.of(
                             AuditIssue.Comment.builder()

@@ -165,13 +165,50 @@
     },
     {
         "name": "ch.qos.logback.classic.encoder.PatternLayoutEncoder",
-        "allPublicMethods":true,
-        "allDeclaredConstructors": true
+        "queryAllPublicMethods":true,
+        "methods":[{"name":"<init>","parameterTypes":[] }]
+    },
+    {
+        "name":"ch.qos.logback.classic.filter.ThresholdFilter",
+        "queryAllPublicMethods":true,
+        "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setLevel","parameterTypes":["java.lang.String"] }]
+    },
+    {
+        "name":"ch.qos.logback.classic.pattern.KeyValuePairConverter",
+        "methods":[{"name":"<init>","parameterTypes":[] }]
     },
     {
         "name": "ch.qos.logback.core.ConsoleAppender",
-        "allPublicMethods":true,
-        "allDeclaredConstructors": true
+        "queryAllPublicMethods":true,
+        "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setTarget","parameterTypes":["java.lang.String"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.OutputStreamAppender",
+        "methods":[{"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.UnsynchronizedAppenderBase",
+        "methods":[{"name":"addFilter","parameterTypes":["ch.qos.logback.core.filter.Filter"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.encoder.Encoder",
+        "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.encoder.LayoutWrappingEncoder",
+        "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.filter.Filter",
+        "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.pattern.PatternLayoutEncoderBase",
+        "methods":[{"name":"setPattern","parameterTypes":["java.lang.String"] }]
+    },
+    {
+        "name":"ch.qos.logback.core.spi.ContextAware",
+        "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
     },
     {
         "name": "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",

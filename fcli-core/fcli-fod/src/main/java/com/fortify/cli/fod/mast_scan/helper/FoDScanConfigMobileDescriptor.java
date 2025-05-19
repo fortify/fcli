@@ -26,9 +26,8 @@ public class FoDScanConfigMobileDescriptor extends JsonNodeHolder {
     private Integer releaseId;
     private Integer assessmentTypeId;
     private Integer entitlementId;
-    private String entitlementDescription;
     private String entitlementFrequencyType;
-    private Integer entitlementFrequencyTypeId;
-    private Integer technologyStackId;
-    private String technologyStack;
+    private String frameworkType;
+    private String auditPreferenceType;
+    private String timeZone;
 }

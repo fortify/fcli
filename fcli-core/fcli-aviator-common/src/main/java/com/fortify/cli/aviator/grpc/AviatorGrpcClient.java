@@ -1,5 +1,31 @@
 package com.fortify.cli.aviator.grpc;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.aviator.application.Application;
 import com.fortify.aviator.application.ApplicationById;
 import com.fortify.aviator.application.ApplicationByTenantName;
@@ -12,7 +38,17 @@ import com.fortify.aviator.entitlement.Entitlement;
 import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantResponse;
-import com.fortify.aviator.grpc.*;
+import com.fortify.aviator.grpc.AnalysisInfo;
+import com.fortify.aviator.grpc.AuditRequest;
+import com.fortify.aviator.grpc.AuditorResponse;
+import com.fortify.aviator.grpc.AuditorServiceGrpc;
+import com.fortify.aviator.grpc.File;
+import com.fortify.aviator.grpc.Fragment;
+import com.fortify.aviator.grpc.IssueData;
+import com.fortify.aviator.grpc.PingRequest;
+import com.fortify.aviator.grpc.StackTraceElementList;
+import com.fortify.aviator.grpc.StreamInitRequest;
+import com.fortify.aviator.grpc.UserPromptRequest;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
@@ -32,6 +68,7 @@ import com.fortify.grpc.token.TokenGenerationResponse;
 import com.fortify.grpc.token.TokenServiceGrpc;
 import com.fortify.grpc.token.TokenValidationRequest;
 import com.fortify.grpc.token.TokenValidationResponse;
+
 import io.grpc.CompressorRegistry;
 import io.grpc.DecompressorRegistry;
 import io.grpc.ManagedChannel;
@@ -42,15 +79,6 @@ import io.grpc.stub.AbstractBlockingStub;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class AviatorGrpcClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClient.class);
@@ -89,6 +117,11 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final AtomicBoolean streamCompleted = new AtomicBoolean(false);
     private volatile boolean isStreamActive = false;
 
+    private final ScheduledExecutorService pingScheduler;
+    private ScheduledFuture<?> pingTask;
+    private final long pingIntervalSeconds;
+    private final AtomicBoolean isPinging = new AtomicBoolean(false);
+
     private static class RequestMetrics {
         private final long startTime;
         private volatile long endTime = 0;
@@ -108,7 +141,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         }
     }
 
-    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
+    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
         LOG.info("Initializing AviatorGrpcClient with ManagedChannel");
         this.logger = logger;
         this.streamId = UUID.randomUUID().toString();
@@ -146,9 +179,17 @@ public class AviatorGrpcClient implements AutoCloseable {
         });
         this.isShutdown = new AtomicBoolean(false);
         this.requestSemaphore = new Semaphore(INITIAL_REQUEST_WINDOW);
+
+        this.pingIntervalSeconds = pingIntervalSeconds;
+
+        this.pingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "aviator-client-ping-" + r.hashCode());
+            t.setDaemon(true);
+            return t;
+        });
     }
 
-    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger) {
+    public AviatorGrpcClient(String host, int port, long defaultTimeoutSeconds, IAviatorLogger logger, long pingIntervalSeconds) {
         this(ManagedChannelBuilder.forAddress(host, port)
                         .useTransportSecurity()
                         .maxInboundMessageSize(MAX_MESSAGE_SIZE)
@@ -160,8 +201,54 @@ public class AviatorGrpcClient implements AutoCloseable {
                         .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
                         .build(),
                 defaultTimeoutSeconds,
-                logger);
+                logger, pingIntervalSeconds);
         LOG.info("Initialized AviatorGrpcClient - Host: {}, Port: {}", host, port);
+    }
+    public AviatorGrpcClient(ManagedChannel channel, long defaultTimeoutSeconds, IAviatorLogger logger) {
+        this(channel, defaultTimeoutSeconds, logger, 30);
+    }
+
+    private void startPingPong() {
+        if (isPinging.compareAndSet(false, true)) {
+            logger.info("Starting ping-pong keepalive with interval of {} seconds", pingIntervalSeconds);
+            pingTask = pingScheduler.scheduleAtFixedRate(
+                    this::sendPing,
+                    pingIntervalSeconds,
+                    pingIntervalSeconds,
+                    TimeUnit.SECONDS
+            );
+        }
+    }
+
+    private void stopPingPong() {
+        if (isPinging.compareAndSet(true, false) && pingTask != null) {
+            logger.info("Stopping ping-pong keepalive");
+            pingTask.cancel(false);
+            pingTask = null;
+        }
+    }
+
+    // Send ping message
+    private void sendPing() {
+        try {
+            if (requestObserver != null && !streamCompleted.get() && isStreamActive) {
+                PingRequest pingRequest = PingRequest.newBuilder()
+                        .setStreamId(streamId)
+                        .setTimestamp(System.currentTimeMillis())
+                        .build();
+
+                UserPromptRequest pingMsg = UserPromptRequest.newBuilder()
+                        .setPing(pingRequest)
+                        .build();
+
+                LOG.info("Sending ping streamId: {}", streamId);
+                requestObserver.onNext(pingMsg);
+            }
+        } catch (Exception e) {
+            if (!streamCompleted.get()) {
+                LOG.warn("Failed to send ping: {}", e.getMessage());
+            }
+        }
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(
@@ -180,8 +267,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         AtomicInteger errorRequests = new AtomicInteger(0);
 
         ClientResponseObserver<UserPromptRequest, AuditorResponse> responseObserver =
-                new ClientResponseObserver<UserPromptRequest, AuditorResponse>() {
-
+                new ClientResponseObserver<>() {
                     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
                     @Override
@@ -192,6 +278,15 @@ public class AviatorGrpcClient implements AutoCloseable {
                     @Override
                     public void onNext(AuditorResponse response) {
                         logger.info("Received response - Status: " + response.getStatus() + ", RequestId: " + response.getRequestId());
+                        if ("PONG".equals(response.getStatus())) {
+                            logger.info("Received pong from server: StreamId: {}, Client timestamp: {}, Server timestamp: {}, RequestId: {}",
+                                    response.getStreamId(),
+                                    response.getPong().getClientTimestamp(),
+                                    response.getPong().getServerTimestamp(),
+                                    response.getRequestId());
+                            return;
+                        }
+
                         if ("PROCESSING_ERROR".equals(response.getStatus()) || "REQUEST_PROCESSING_ERROR".equals(response.getStatus())) {
                             logger.error(response.getStatusMessage());
                             RequestMetrics metrics = requestMetricsMap.remove(response.getRequestId());
@@ -205,9 +300,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                         }
 
                         if ("INTERNAL_ERROR".equals(response.getStatus())) {
-                            String cliMessage = "internal server error";
+                            String cliMessage = "Internal server error occurred";
                             logger.error(cliMessage);
-                            resultFuture.completeExceptionally(new AviatorSimpleException(cliMessage)); // Throw simple exception
+                            resultFuture.completeExceptionally(new AviatorTechnicalException(cliMessage));
                             if (requestObserver != null) {
                                 requestObserver.onCompleted();
                             }
@@ -222,8 +317,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                             logger.error("Server terminated stream due to backpressure violations: {}", response.getStatusMessage());
                             streamCompleted.set(true);
                             if (!resultFuture.isDone()) {
-                                resultFuture.completeExceptionally(new RuntimeException("Stream terminated by server: " + response.getStatusMessage()));
+                                resultFuture.completeExceptionally(new AviatorTechnicalException("Stream terminated by server: " + response.getStatusMessage()));
                             }
+                            return;
                         } else {
                             consecutiveBackpressureViolations.set(0);
                             currentBackoff.set(1);
@@ -241,9 +337,10 @@ public class AviatorGrpcClient implements AutoCloseable {
                                 isInitialized.set(true);
                                 initLatch.countDown();
                                 logger.info("Stream initialized successfully");
+                                startPingPong();
                             } else {
                                 logger.progress("Stream initialization failed: " + response.getStatusMessage());
-                                resultFuture.completeExceptionally(new RuntimeException("Stream initialization failed: " + response.getStatusMessage()));
+                                resultFuture.completeExceptionally(new AviatorTechnicalException("Stream initialization failed: " + response.getStatusMessage()));
                                 if (requestObserver != null) {
                                     requestObserver.onCompleted();
                                 }
@@ -273,14 +370,22 @@ public class AviatorGrpcClient implements AutoCloseable {
 
                     @Override
                     public void onError(Throwable t) {
+                        stopPingPong();
                         if (!resultFuture.isDone()) {
-                            resultFuture.completeExceptionally(t); // Propagate without extra logging
+                            if (t instanceof StatusRuntimeException sre) {
+                                String description = sre.getStatus().getDescription() != null ? sre.getStatus().getDescription() : "Unknown gRPC error";
+                                String techMessage = String.format("gRPC stream failed: %s (Status: %s)", description, sre.getStatus().getCode());
+                                resultFuture.completeExceptionally(new AviatorTechnicalException(techMessage, t));
+                            } else {
+                                resultFuture.completeExceptionally(new AviatorTechnicalException("Stream error", t));
+                            }
                         }
                         latch.countDown();
                     }
 
                     @Override
                     public void onCompleted() {
+                        stopPingPong();
                         logger.progress("Stream completed");
                         if (!resultFuture.isDone()) {
                             resultFuture.complete(responses);
@@ -306,6 +411,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                     .build();
 
             requestObserver.onNext(initRequest);
+            LOG.info("Client Id  for stream initialization {}",streamId);
 
             processingExecutor.submit(() -> {
                 try {
@@ -323,7 +429,6 @@ public class AviatorGrpcClient implements AutoCloseable {
                     LOG.warn("Exception caught after stream completion during processing execution", e);
                 }
             });
-
         } catch (Exception e) {
             if (requestObserver != null) {
                 requestObserver.onError(e);
@@ -331,18 +436,17 @@ public class AviatorGrpcClient implements AutoCloseable {
             throw new AviatorTechnicalException("Error initiating batch processing", e);
         }
 
-
         return resultFuture.exceptionally(ex -> {
+            stopPingPong();
             Throwable cause = (ex instanceof CompletionException || ex instanceof ExecutionException) && ex.getCause() != null ? ex.getCause() : ex;
-            if (cause instanceof AviatorSimpleException) throw (AviatorSimpleException)cause;
-            if (cause instanceof AviatorTechnicalException) throw (AviatorTechnicalException)cause;
+            if (cause instanceof AviatorSimpleException) throw (AviatorSimpleException) cause;
+            if (cause instanceof AviatorTechnicalException) throw (AviatorTechnicalException) cause;
             throw new AviatorTechnicalException("Processing FPR failed", cause);
         });
     }
 
     private void processRequests(Queue<UserPrompt> requests, StreamObserver<UserPromptRequest> observer) {
         logger.progress("Starting to process issues...");
-        int totalProcessed = 0;
         AtomicInteger failedRequests = new AtomicInteger(0);
         AtomicInteger pendingRequests = new AtomicInteger(0);
 
@@ -380,8 +484,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
                 if (messageSize > MAX_MESSAGE_SIZE) {
                     LOG.warn("Request too large, skipping");
-                    requestSemaphore.release();
-                    continue;
+                    throw new AviatorSimpleException("Request size exceeds maximum allowed limit");
                 }
 
                 requestMetricsMap.put(requestId, new RequestMetrics());
@@ -392,33 +495,33 @@ public class AviatorGrpcClient implements AutoCloseable {
                     requestMetricsMap.remove(requestId);
                     pendingRequests.decrementAndGet();
                     failedRequests.incrementAndGet();
+                    LOG.error("Failed to send request after retries: {}", requestId);
                     if (failedRequests.get() > 10) {
-                        throw new RuntimeException("Too many failed requests");
+                        throw new AviatorTechnicalException("Too many failed requests");
                     }
                 } else {
                     outstandingRequests.incrementAndGet();
                 }
 
                 pendingRequests.decrementAndGet();
-                totalProcessed++;
-
             } catch (InterruptedException ie) {
                 if (!streamCompleted.get()) {
                     Thread.currentThread().interrupt();
-                    LOG.error("Thread interrupted while processing requests");
+                    throw new AviatorTechnicalException("Thread interrupted while processing requests", ie);
                 }
                 break;
+            } catch (AviatorSimpleException e) {
+                throw e;
             } catch (Exception e) {
                 if (!streamCompleted.get()) {
-                    LOG.error("Error processing request: {}", e.getMessage());
-                    failedRequests.incrementAndGet();
+                    LOG.error("Error processing request: {}", e.getMessage(), e);
+                    throw new AviatorTechnicalException("Error processing request", e);
                 }
-            }finally {
-                  if (acquiredSemaphore) {
-                      requestSemaphore.release();
-                  }
+            } finally {
+                if (acquiredSemaphore) {
+                    requestSemaphore.release();
+                }
             }
-
         }
     }
 
@@ -437,13 +540,15 @@ public class AviatorGrpcClient implements AutoCloseable {
                 int messageSize = request.getSerializedSize();
                 if (messageSize > MAX_MESSAGE_SIZE) {
                     LOG.error("Message size too large: {} bytes", messageSize);
-                    return false;
+                    throw new AviatorSimpleException("Message size exceeds maximum allowed limit");
                 }
 
                 requestObserver.onNext(request);
                 return true;
+            } catch (AviatorSimpleException e) {
+                throw e; // Propagate user-facing errors
             } catch (Exception e) {
-                if (!streamCompleted.get()) { // Only log if stream isn’t completed
+                if (!streamCompleted.get()) {
                     LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
                 }
                 if (attempt == maxRetries - 1) {
@@ -456,7 +561,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                     Thread.sleep(backoffMs);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
-                    return false;
+                    throw new AviatorTechnicalException("Interrupted during retry backoff", ie);
                 }
             }
         }
@@ -496,20 +601,31 @@ public class AviatorGrpcClient implements AutoCloseable {
     public void close() {
         LOG.debug("Closing client...");
         isShutdown.set(true);
+        stopPingPong();
         try {
             if (isStreamActive && !latch.await(10, TimeUnit.SECONDS)) {
-                LOG.error("Timed out waiting for stream completion");
+                LOG.warn("Timed out waiting for stream completion");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOG.error("Interrupted while waiting for stream completion");
+            LOG.warn("Interrupted while waiting for stream completion");
         }
         if (requestObserver != null && !streamCompleted.get()) {
             try {
-                streamCompleted.set(true);
-                requestObserver.onCompleted();
+                if (requestObserver instanceof ClientCallStreamObserver) {
+                    ClientCallStreamObserver<?> clientObserver = (ClientCallStreamObserver<?>) requestObserver;
+                    if (clientObserver.isReady()) {
+                        streamCompleted.set(true);
+                        requestObserver.onCompleted();
+                        LOG.debug("Request observer completed");
+                    } else {
+                        LOG.debug("Request observer not ready, skipping onCompleted");
+                    }
+                } else {
+                    LOG.debug("Request observer is not a ClientCallStreamObserver, skipping onCompleted");
+                }
             } catch (Exception e) {
-                LOG.error("Error closing request observer: {}", e.getMessage());
+                LOG.debug("Exception during request observer completion, likely already closed: {}", e.getMessage());
             }
         }
 
@@ -518,18 +634,34 @@ public class AviatorGrpcClient implements AutoCloseable {
                 channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                LOG.warn("Interrupted during channel shutdown");
             } finally {
                 processingExecutor.shutdown();
                 try {
                     if (!processingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
                         processingExecutor.shutdownNow();
+                        LOG.debug("Processing executor forcibly shut down");
                     }
                 } catch (InterruptedException e) {
                     processingExecutor.shutdownNow();
                     Thread.currentThread().interrupt();
+                    LOG.warn("Interrupted during executor shutdown");
                 }
             }
         }
+
+        if (pingScheduler != null && !pingScheduler.isShutdown()) {
+            try {
+                pingScheduler.shutdown();
+                if (!pingScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    pingScheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                pingScheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+
         LOG.info("Client closed");
     }
 
@@ -646,46 +778,54 @@ public class AviatorGrpcClient implements AutoCloseable {
         R call(S stub, T request) throws StatusRuntimeException;
     }
 
-        private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
-            try {
-                S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
-                return call.call(stubWithDeadline, request);
-            } catch (StatusRuntimeException e) {
-                Status status = e.getStatus();
-                String description = status.getDescription() != null ? status.getDescription() : "Unknown gRPC error from server";
+    private <S extends AbstractBlockingStub<S>, T, R> R executeGrpcCall(S stub, GrpcCall<S, T, R> call, T request, String operation) {
+        try {
+            S stubWithDeadline = stub.withDeadlineAfter(defaultTimeoutSeconds, TimeUnit.SECONDS);
+            return call.call(stubWithDeadline, request);
+        } catch (StatusRuntimeException e) {
+            Status status = e.getStatus();
+            String description = status.getDescription() != null ? status.getDescription() : "Unknown gRPC error from server";
 
-                switch (status.getCode()) {
-                    case INVALID_ARGUMENT:
-                    case NOT_FOUND:
-                    case ALREADY_EXISTS:
-                        String simpleMsg = String.format("Error during %s: %s", operation, description);
-                        throw new AviatorSimpleException(simpleMsg);
-                    case FAILED_PRECONDITION:
-                        throw new AviatorSimpleException(description);
-                    case PERMISSION_DENIED:
-                        if (description.contains("Invalid signature")) {
-                            throw new AviatorSimpleException(
-                                    "Invalid signature. Please verify the private key configured for FCLI matches the public key registered for your user on the Aviator server for the current tenant.");
-                        } else {
-                            String permMsg = String.format("Permission denied during %s: %s", operation, description);
-                            throw new AviatorSimpleException(permMsg);
-                        }
-                    case INTERNAL:
-                    case UNAVAILABLE:
-                    case DEADLINE_EXCEEDED:
-                    case UNIMPLEMENTED:
-                    case DATA_LOSS:
-                    default:
-                        String techMessage = String.format("gRPC call for %s failed: %s (Status: %s)", operation, description, status.getCode());
-                        LOG.debug(techMessage, e);
-                        throw new AviatorTechnicalException(techMessage, e);
-                }
-            } catch (Exception e) {
-                String errorMessage = "Unexpected error during " + operation + ": " + e.getMessage();
-                LOG.error(errorMessage, e);
-                throw new AviatorTechnicalException(errorMessage, e);
+            switch (status.getCode()) {
+                case INVALID_ARGUMENT:
+                case NOT_FOUND:
+                case ALREADY_EXISTS:
+                case FAILED_PRECONDITION:
+                case OUT_OF_RANGE:
+                    String simpleMsg = String.format("Error during %s: %s", operation, description);
+                    throw new AviatorSimpleException(simpleMsg);
+                case PERMISSION_DENIED:
+                    if (description.contains("Invalid signature")) {
+                        throw new AviatorSimpleException(
+                                "Invalid signature. Please verify the private key configured for FCLI matches the public key registered for your user on the Aviator server for the current tenant.");
+                    } else {
+                        String permMsg = String.format("Permission denied during %s: %s", operation, description);
+                        throw new AviatorSimpleException(permMsg);
+                    }
+                case UNAUTHENTICATED:
+                    throw new AviatorSimpleException("Authentication failed. Please check your credentials.");
+                case DEADLINE_EXCEEDED:
+                    throw new AviatorSimpleException("The operation took too long to complete. Please try again later.");
+                case RESOURCE_EXHAUSTED:
+                    throw new AviatorSimpleException("Resource limits have been exceeded. Please try again later or contact support.");
+                case CANCELLED:
+                case UNKNOWN:
+                case ABORTED:
+                case UNIMPLEMENTED:
+                case INTERNAL:
+                case UNAVAILABLE:
+                case DATA_LOSS:
+                default:
+                    String techMessage = String.format("gRPC call for %s failed: %s (Status: %s)", operation, description, status.getCode());
+                    LOG.debug(techMessage, e);
+                    throw new AviatorTechnicalException(techMessage, e);
             }
+        } catch (Exception e) {
+            String errorMessage = "Unexpected error during " + operation + ": " + e.getMessage();
+            LOG.error(errorMessage, e);
+            throw new AviatorTechnicalException(errorMessage, e);
         }
+    }
 
     public Application createApplication(String name, String tenantName, String signature, String message) {
         CreateApplicationRequest request = CreateApplicationRequest.newBuilder()
@@ -750,14 +890,13 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::generateToken, request, Constants.OP_GENERATE_TOKEN);
     }
 
-    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message, int pageSize, String pageToken) {
+    public ListTokensResponse listTokens(String email, String tenantName, String signature, String message) {
         ListTokensRequest request = ListTokensRequest.newBuilder()
                 .setEmail(email)
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName)
-                .setPageSize(pageSize)
-                .setPageToken(pageToken)
+                .setIgnorePagination(true)
                 .build();
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }

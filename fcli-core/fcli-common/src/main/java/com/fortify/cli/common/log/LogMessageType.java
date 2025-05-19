@@ -25,7 +25,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * @author Ruud Senden
  */
 public enum LogMessageType {
-    FCLI, HTTP_IN, HTTP_OUT, OTHER;
+    FCLI, HTTP, HTTP_IN, HTTP_OUT, GRPC, GRPC_IN, GRPC_OUT, OTHER;
     
     private final String fixedLengthString;
     /** Constructor to generate a fixed length string for the current
@@ -56,10 +56,18 @@ public enum LogMessageType {
         if ( loggerName!=null ) {
             if ( loggerName.startsWith("com.fortify.cli") ) {
                 return LogMessageType.FCLI;
-            } else if ( loggerName.startsWith("org.apache.http") && 
-                    (loggerName.endsWith("headers") || loggerName.endsWith("wire")) ) {
-                return StringUtils.substringAfter(event.getFormattedMessage(), " ").startsWith("<<") 
-                        ? LogMessageType.HTTP_IN : LogMessageType.HTTP_OUT; 
+            } else if ( loggerName.startsWith("org.apache.http") ) {
+                if ( loggerName.endsWith("headers") || loggerName.endsWith("wire") ) {
+                    return StringUtils.substringAfter(event.getFormattedMessage(), " ").startsWith("<<") 
+                        ? LogMessageType.HTTP_IN : LogMessageType.HTTP_OUT;
+                } else {
+                    return LogMessageType.HTTP;
+                }
+            } else if ( loggerName.endsWith("NettyClientHandler") ) {
+                var msg = event.getFormattedMessage();
+                if ( msg.contains("INBOUND") ) { return LogMessageType.GRPC_IN; }
+                else if ( msg.contains("OUTBOUND") ) { return LogMessageType.GRPC_OUT; }
+                else { return LogMessageType.GRPC; }
             }
         }
         return LogMessageType.OTHER;

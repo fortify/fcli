@@ -1,35 +1,46 @@
 package com.fortify.cli.aviator.core;
 
+import static com.fortify.cli.aviator.util.Constants.DEFAULT_PING_INTERVAL_SECONDS;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.core.model.AuditOutcome;
 import com.fortify.cli.aviator.core.model.AuditResponse;
 import com.fortify.cli.aviator.core.model.UserPrompt;
-import com.fortify.cli.aviator.core.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.AuditIssue;
 import com.fortify.cli.aviator.fpr.AuditProcessor;
 import com.fortify.cli.aviator.fpr.FPRInfo;
+import com.fortify.cli.aviator.fpr.IssueOrderingComparator;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
-import com.fortify.cli.aviator.fpr.filter.TagValue;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 
 public class IssueAuditor {
@@ -47,18 +58,14 @@ public class IssueAuditor {
     private final AuditProcessor auditProcessor;
     private final Map<String, AuditIssue> auditIssueMap;
     private final FPRInfo fprInfo;
-    private final String userName = Constants.USER_NAME;
 
     private final TagDefinition analysisTag;
     private TagDefinition humanAuditTag;
-    private TagDefinition aviatorPredictionTag;
     private TagDefinition aviatorStatusTag;
 
-    private final boolean isTestMode;
-    private final AtomicInteger issuesSentToLLM;
     private final IAviatorLogger logger;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, boolean isTestMode, IAviatorLogger logger) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, IAviatorLogger logger) {
         this.logger = logger;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
@@ -69,11 +76,8 @@ public class IssueAuditor {
         this.auditProcessor = auditProcessor;
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
-        this.isTestMode = isTestMode;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
-
-        issuesSentToLLM = new AtomicInteger(0);
     }
 
     private TagDefinition resolveResultTag(String tagName, String tagGuid, TagDefinition analysisTag) {
@@ -88,11 +92,7 @@ public class IssueAuditor {
         }
 
         List<String> values;
-        if (analysisTag != null) {
-            values = analysisTag.getValues().stream().map(TagValue::getValue).collect(Collectors.toList());
-        } else {
-            values = Arrays.asList(Constants.NOT_AN_ISSUE, Constants.EXPLOITABLE);
-        }
+        values = Arrays.asList(Constants.NOT_AN_ISSUE, Constants.EXPLOITABLE);
 
         return new TagDefinition(tagName, StringUtil.isEmpty(tagGuid) ? UUID.randomUUID().toString() : tagGuid, values, false);
     }
@@ -109,7 +109,7 @@ public class IssueAuditor {
         String name = "Aviator status";
         String id = "FB7B0462-2C2E-46D9-811A-DCC1F3C83051";
 
-        List<String> values = Arrays.asList(Constants.PROCESSED_BY_AVIATOR);
+        List<String> values = List.of(Constants.PROCESSED_BY_AVIATOR);
         return new TagDefinition(name, id, values, false);
     }
 
@@ -126,7 +126,7 @@ public class IssueAuditor {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
-        aviatorPredictionTag = resolveAviatorPredictionTag();
+        TagDefinition aviatorPredictionTag = resolveAviatorPredictionTag();
         aviatorStatusTag = resolveAviatorStatusTag();
         humanAuditTag = resolveHumanAuditStatus();
         LOG.debug("Initialized tags - prediction: {}, status: {}, human: {}",
@@ -149,7 +149,7 @@ public class IssueAuditor {
         if (filteredUserPrompts.isEmpty()) {
             logger.progress("Audit skipped - no issues to process");
         } else {
-            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger)) {
+            try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger, DEFAULT_PING_INTERVAL_SECONDS)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
                         client.processBatchRequests(filteredUserPrompts, projectName, token);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
@@ -158,16 +158,17 @@ public class IssueAuditor {
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof AviatorSimpleException) {
-                    logger.progress("Audit failed (user error)");
                     throw (AviatorSimpleException) cause;
+                } else if (cause instanceof AviatorTechnicalException) {
+                    throw (AviatorTechnicalException) cause;
+                } else {
+                    throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
                 }
-                logger.progress("Audit failed due to unexpected error during execution");
-                throw new AviatorTechnicalException("Unexpected error during audit execution", cause);
             } catch (TimeoutException e) {
-                logger.progress("Audit failed due to timeout");
+                logger.error("Audit failed due to timeout after 500 minutes");
                 throw new AviatorTechnicalException("Audit timed out after 500 minutes", e);
             } catch (InterruptedException e) {
-                logger.progress("Audit failed due to interruption");
+                logger.error("Audit failed due to interruption");
                 Thread.currentThread().interrupt();
                 throw new AviatorTechnicalException("Audit interrupted", e);
             }
@@ -180,7 +181,7 @@ public class IssueAuditor {
     private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
         List<UserPrompt> eligibleUserPrompts = userPrompts.stream()
                 .filter(this::shouldInclude)
-                .collect(Collectors.toList());
+                .toList();
 
         Map<String, List<UserPrompt>> issuesByCategory = eligibleUserPrompts.stream()
                 .collect(Collectors.groupingBy(UserPrompt::getCategory));
@@ -232,8 +233,6 @@ public class IssueAuditor {
 
             for (int i = 0; i < issues.size(); i++) {
                 UserPrompt issue = issues.get(i);
-                String issueId = issue.getIssueData().getInstanceID();
-
                 if (i >= MAX_PER_CATEGORY) {
                     updateSkippedIssue(issue, MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalNewIssues);
                 } else if (newIssuesInCategoryCapped.get(category) >= auditAllThreshold && i >= totalLimitIndex) {
@@ -251,7 +250,6 @@ public class IssueAuditor {
         ConcurrentLinkedDeque<UserPrompt> issuesToAudit = new ConcurrentLinkedDeque<>();
 
         for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
-            String category = entry.getKey();
             List<UserPrompt> issues = entry.getValue();
 
             if (issues.size() <= MAX_PER_CATEGORY) {
@@ -306,7 +304,7 @@ public class IssueAuditor {
         if (auditIssue == null) return false;
         Map<String, String> tags = auditIssue.getTags();
         String auditorStatusTag = Constants.AUDITOR_STATUS_TAG_ID;
-        Boolean isAuditorStatusPopulated = tags.containsKey(auditorStatusTag) && tags.get(auditorStatusTag).equalsIgnoreCase("Pending Review");
+        boolean isAuditorStatusPopulated = tags.containsKey(auditorStatusTag) && tags.get(auditorStatusTag).equalsIgnoreCase("Pending Review");
         String aviatorExpectedOutcome = Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID;
         String analysisTagS = Constants.ANALYSIS_TAG_ID;
 
@@ -597,24 +595,5 @@ public class IssueAuditor {
             template = template.replace("{issues_new_in_category}", String.valueOf(values[0])).replace("{MAX_PER_CATEGORY}", String.valueOf(MAX_PER_CATEGORY)).replace("{issues_new_total}", String.valueOf(values[1])).replace("{MAX_TOTAL}", String.valueOf(MAX_TOTAL));
         }
         return template;
-    }
-
-
-    private class IssueOrderingComparator implements Comparator<UserPrompt> {
-        @Override
-        public int compare(UserPrompt first, UserPrompt second) {
-            String firstFilename = Optional.ofNullable(first.getLastStackTraceElement()).map(StackTraceElement::getFilename).orElse("");
-            String secondFilename = Optional.ofNullable(second.getLastStackTraceElement()).map(StackTraceElement::getFilename).orElse("");
-
-            int filenameComparison = firstFilename.compareTo(secondFilename);
-            if (filenameComparison != 0) {
-                return filenameComparison;
-            }
-
-            Integer firstLine = Optional.ofNullable(first.getLastStackTraceElement()).map(StackTraceElement::getLine).orElse(0);
-            Integer secondLine = Optional.ofNullable(second.getLastStackTraceElement()).map(StackTraceElement::getLine).orElse(0);
-
-            return Integer.compare(firstLine, secondLine);
-        }
     }
 }

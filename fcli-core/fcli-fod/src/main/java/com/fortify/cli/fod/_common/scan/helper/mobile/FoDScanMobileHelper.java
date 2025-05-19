@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
@@ -37,7 +36,7 @@ public class FoDScanMobileHelper extends FoDScanHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, IProgressWriterI18n progressWriter, FoDReleaseDescriptor releaseDescriptor, FoDScanMobileStartRequest req,
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanMobileStartRequest req,
                                                     File scanFile) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.MOBILE_SCANS_START).routeParam("relId", relId)
@@ -47,7 +46,6 @@ public class FoDScanMobileHelper extends FoDScanHelper {
                 .queryString("platformType", req.getPlatformType())
                 .queryString("timeZone", req.getTimeZone())
                 .queryString("entitlementFrequencyType", req.getEntitlementFrequencyType());
-
         if (req.getEntitlementId() != null && req.getEntitlementId() > 0) {
             request = request.queryString("entitlementId", req.getEntitlementId());
         }
@@ -55,7 +53,7 @@ public class FoDScanMobileHelper extends FoDScanHelper {
         JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
-            throw new FcliSimpleException("Unable to retrieve scan id from response when starting Static scan.");
+            throw new FcliSimpleException("Unable to retrieve scan id from response when starting Mobile scan.");
         }
         JsonNode node = objectMapper.createObjectNode()
             .put("scanId", startScanResponse.getScanId())
@@ -67,4 +65,5 @@ public class FoDScanMobileHelper extends FoDScanHelper {
             .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
+
 }

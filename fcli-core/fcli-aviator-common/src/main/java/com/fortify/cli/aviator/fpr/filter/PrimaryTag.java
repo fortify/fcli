@@ -1,6 +1,5 @@
 package com.fortify.cli.aviator.fpr.filter;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 

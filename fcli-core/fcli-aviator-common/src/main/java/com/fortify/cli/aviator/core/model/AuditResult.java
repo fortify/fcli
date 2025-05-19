@@ -1,13 +1,13 @@
 package com.fortify.cli.aviator.core.model;
 
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.ToString;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import com.formkiq.graalvm.annotations.Reflectable;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 @XmlRootElement(name = "audit")
 @AllArgsConstructor

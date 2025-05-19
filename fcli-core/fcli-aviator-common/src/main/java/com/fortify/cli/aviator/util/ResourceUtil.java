@@ -1,13 +1,13 @@
 package com.fortify.cli.aviator.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 public class ResourceUtil {
     private static final Logger logger = LoggerFactory.getLogger(ResourceUtil.class);

@@ -13,11 +13,13 @@
 
 package com.fortify.cli.fod.mast_scan.helper;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
 public class FoDScanConfigMobileHelper {
@@ -37,4 +39,15 @@ public class FoDScanConfigMobileHelper {
                 .asString().getBody();
         return getSetupDescriptor(unirest, releaseId);
     }
+
+    public static final FoDScanConfigMobileDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+        GetRequest request = unirest.get(FoDUrls.MOBILE_SCANS + "/scan-setup")
+                .routeParam("relId", releaseDescriptor.getReleaseId());
+        JsonNode setup = request.asObject(ObjectNode.class).getBody()
+                .put("applicationName", releaseDescriptor.getApplicationName())
+                .put("releaseName", releaseDescriptor.getReleaseName())
+                .put("microserviceName", releaseDescriptor.getMicroserviceName());
+        return JsonHelper.treeToValue(setup, FoDScanConfigMobileDescriptor.class);
+    }
+
 }
