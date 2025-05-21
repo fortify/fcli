@@ -67,7 +67,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
             logger.progress("Status: Processing FPR with Aviator");
-            FPRAuditResult auditResult = AuditFPR.auditFPR(fprFile, token, url, appName, logger, tagMapping);
+            FPRAuditResult auditResult = AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping);
             auditAction = getDetailedAction(auditResult);
 
             String artifactId = "UPLOAD_SKIPPED";

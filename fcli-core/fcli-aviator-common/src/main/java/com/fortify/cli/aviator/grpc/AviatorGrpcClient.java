@@ -253,7 +253,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(
-            Queue<UserPrompt> requests, String projectName, String token) {
+            Queue<UserPrompt> requests, String projectName, String FPRBuildId , String SSCApplicationName, String SSCApplicationVersion, String token) {
         isStreamActive = true;
         if (requests == null || requests.isEmpty()) {
             LOG.info("No issues to process");
@@ -406,6 +406,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                             .setRequestId(initRequestId)
                             .setToken(token)
                             .setApplicationName(projectName)
+                            .setSscApplicationName(SSCApplicationName)
+                            .setSscApplicationVersion(SSCApplicationVersion)
+                            .setFprBuildId(FPRBuildId)
                             .setTotalReportedIssues(totalRequests)
                             .setTotalIssuesToPredict(totalRequests)
                             .build())

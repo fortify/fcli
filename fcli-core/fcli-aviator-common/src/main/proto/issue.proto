@@ -52,10 +52,13 @@ message Fragment {
 message StreamInitRequest {
   string token=1;
   string applicationName=2;
-  string streamId = 3;
-  string requestId = 4;
-  int32 totalReportedIssues=5;
-  int32 totalIssuesToPredict=6;
+  string fprBuildId = 3;
+  string sscApplicationName = 4;
+  string sscApplicationVersion = 5;
+  string streamId = 6;
+  string requestId = 7;
+  int32 totalReportedIssues = 8;
+  int32 totalIssuesToPredict = 9;
 }
 message UserPromptRequest {
   oneof request_type {

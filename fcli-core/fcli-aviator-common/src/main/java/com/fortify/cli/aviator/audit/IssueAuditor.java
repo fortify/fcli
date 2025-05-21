@@ -53,6 +53,9 @@ public class IssueAuditor {
     public final String MAX_TOTAL_EXCEEDED;
     private final TagDefinition resultsTag;
 
+    public final String SSCApplicationName;
+    public final String SSCApplicationVersion;
+
     private List<Vulnerability> vulnerabilities;
     private List<UserPrompt> userPrompts;
     private final AuditProcessor auditProcessor;
@@ -65,7 +68,7 @@ public class IssueAuditor {
 
     private final IAviatorLogger logger;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, IAviatorLogger logger) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion , IAviatorLogger logger) {
         this.logger = logger;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
@@ -76,6 +79,8 @@ public class IssueAuditor {
         this.auditProcessor = auditProcessor;
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
+        this.SSCApplicationName = SSCApplicationName;
+        this.SSCApplicationVersion = SSCApplicationVersion;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
         this.resultsTag = resolveResultTag("", "", analysisTag);
     }
@@ -151,7 +156,7 @@ public class IssueAuditor {
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger, DEFAULT_PING_INTERVAL_SECONDS)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
-                        client.processBatchRequests(filteredUserPrompts, projectName, token);
+                        client.processBatchRequests(filteredUserPrompts, projectName, fprInfo.getBuildId(), SSCApplicationName, SSCApplicationVersion, token);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
                 logger.progress("Audit completed");

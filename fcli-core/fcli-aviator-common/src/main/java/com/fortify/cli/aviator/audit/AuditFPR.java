@@ -56,7 +56,7 @@ public class AuditFPR {
     }
 
 
-    public static FPRAuditResult auditFPR(File fprFile, String token, String url, String appVersion, IAviatorLogger logger, String tagMappingFilePath)
+    public static FPRAuditResult auditFPR(File fprFile, String token, String url, String appVersion, String SSCApplicationName,String SSCApplicationVersion , IAviatorLogger logger, String tagMappingFilePath)
             throws AviatorSimpleException, AviatorTechnicalException {
         LOG.info("Starting FPR audit process for file: {}", fprFile.getPath());
 
@@ -68,7 +68,7 @@ public class AuditFPR {
 
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
         AuditOutcome auditOutcome = performAviatorAudit(
-                parsedData, setup.auditProcessor, logger, token, appVersion, url, auditResponses
+                parsedData, setup.auditProcessor, logger, token, appVersion, url, SSCApplicationName, SSCApplicationVersion, auditResponses
         );
 
         return finalizeFprAudit(auditOutcome, auditResponses, setup.auditProcessor, setup.tagMappingConfig);
@@ -125,7 +125,7 @@ public class AuditFPR {
 
     private static AuditOutcome performAviatorAudit(
             ParsedFprData parsedData, AuditProcessor auditProcessor, IAviatorLogger logger,
-            String token, String appVersion, String url,
+            String token, String appVersion, String url, String SSCApplicationName, String SSCApplicationVersion ,
             Map<String, AuditResponse> auditResponsesToFill)
             throws AviatorSimpleException, AviatorTechnicalException {
 
@@ -134,6 +134,8 @@ public class AuditFPR {
                 auditProcessor,
                 parsedData.auditIssueMap,
                 parsedData.fprInfo,
+                SSCApplicationName,
+                SSCApplicationVersion,
                 logger
         );
         AuditOutcome outcome = issueAuditor.performAudit(
