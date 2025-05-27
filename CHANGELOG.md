@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.5.1](https://github.com/fortify/fcli/compare/v3.5.0...v3.5.1) (2025-05-22)
+
+
+### Bug Fixes
+
+* `fcli aviator`: Fix `NullPointerException` when auditing certain vulnerabilities ([#744](https://github.com/fortify/fcli/issues/744)) ([4bd9e5d](https://github.com/fortify/fcli/commit/4bd9e5d8d73f068f0344f758be218acf1ff5d36f))
+
+## [3.5.0](https://github.com/fortify/fcli/compare/v3.4.1...v3.5.0) (2025-05-19)
+
+
+### Features
+
+* `fcli fod mast-scan`: Improve `setup` and `start` commands based on FoD API improvements (fixes [#685](https://github.com/fortify/fcli/issues/685)) ([#737](https://github.com/fortify/fcli/issues/737)) ([4bdfd87](https://github.com/fortify/fcli/commit/4bdfd8793759bddeae6fc130be100c925ddba7d6))
+
+
+### Bug Fixes
+
+* `fcli aviator`: Fix reflection issues in fcli native binaries ([#736](https://github.com/fortify/fcli/issues/736)) ([acb6794](https://github.com/fortify/fcli/commit/acb6794aa69d8f73c308657d2806ea3e9b714099))
+
 ## [3.4.1](https://github.com/fortify/fcli/compare/v3.4.0...v3.4.1) (2025-04-30)
 
 

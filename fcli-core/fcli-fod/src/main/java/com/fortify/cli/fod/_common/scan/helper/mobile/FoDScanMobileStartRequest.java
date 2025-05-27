@@ -18,31 +18,28 @@ import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.With;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
-@Getter @ToString @Builder
+@Data @Builder(toBuilder=true) @With
 public class FoDScanMobileStartRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM/dd/yyyy HH:mm")
-
     private String startDate;
     private Integer assessmentTypeId;
     private Integer entitlementId;
     private String entitlementFrequencyType;
-
     private String timeZone;
-
     private String frameworkType;
     private String platformType;
     private Boolean isRemediationScan;
+    // the following are legacy options we no longer used
     //private Boolean isBundledAssessment;
     //private Integer parentAssessmentTypeId;
     //private Boolean applyPreviousScanSettings;
     private String scanMethodType;
     private String scanTool;
     private String scanToolVersion;
-
     private String notes;
 }
