@@ -1018,9 +1018,17 @@ public class FVDLProcessor {
 
     private void loadSourceFileMap() throws Exception {
         sourceFileMap = new HashMap<>();
-        Path indexPath = extractedPath.resolve("src-archive/index.xml");
-        if (!Files.exists(indexPath)) {
-            throw new IllegalStateException("index.xml not found in " + extractedPath);
+
+        Path srcArchivePath = extractedPath.resolve("src-archive/index.xml");
+        Path srcXrefdataPath = extractedPath.resolve("src-xrefdata/index.xml");
+
+        Path indexPath = null;
+        if (Files.exists(srcArchivePath)) {
+            indexPath = srcArchivePath;
+        } else if (Files.exists(srcXrefdataPath)) {
+            indexPath = srcXrefdataPath;
+        } else {
+            throw new IllegalStateException("index.xml not found in either src-archive or src-xrefdata under " + extractedPath);
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

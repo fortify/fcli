@@ -10,9 +10,14 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ZipUtils {
+    private static final Logger logger = LoggerFactory.getLogger(ZipUtils.class);
+
     public static Path extractZip(String zipFilePath) throws IOException {
+        logger.debug("Starting extraction of zip file: {}", zipFilePath);
         Path tempDir = Files.createTempDirectory(new File(System.getProperty("java.io.tmpdir")).toPath(), "fpr-extraction-");
         tempDir.toFile().deleteOnExit();
 
@@ -30,29 +35,32 @@ public class ZipUtils {
                     Files.createDirectories(extractedFilePath);
                 } else {
                     Files.createDirectories(extractedFilePath.getParent());
-                    try (InputStream is = zipFile.getInputStream(entry)) {
-                        Files.copy(is, extractedFilePath, StandardCopyOption.REPLACE_EXISTING);
+                    if (entry.getSize() == 0) {
+                        Files.createFile(extractedFilePath);
+                    } else {
+                        try (InputStream is = zipFile.getInputStream(entry)) {
+                            Files.copy(is, extractedFilePath, StandardCopyOption.REPLACE_EXISTING);
+                        }
                     }
                 }
                 extractedFilePath.toFile().deleteOnExit();
             }
         } catch (IOException e) {
-            try {
-                Files.walk(tempDir)
-                        .sorted(Comparator.reverseOrder())
-                        .forEach(path -> {
-                            try {
-                                Files.deleteIfExists(path);
-                            } catch (IOException ex) {
-
-                            }
-                        });
+            try (var stream = Files.walk(tempDir).sorted(Comparator.reverseOrder())) {
+                stream.forEach(path -> {
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (IOException ex) {
+                        logger.warn("Failed to delete temporary file: {} due to {}", path, ex.getMessage());
+                    }
+                });
             } catch (IOException cleanupEx) {
-
+                logger.warn("Failed to walk temporary directory for cleanup: {}", cleanupEx.getMessage());
             }
             throw new IOException("Failed to extract zip file: " + e.getMessage(), e);
         }
 
+        logger.info("Successfully extracted zip file to: {}", tempDir);
         return tempDir;
     }
 }

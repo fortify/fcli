@@ -1,5 +1,6 @@
 package com.fortify.cli.aviator.fpr;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -606,7 +608,10 @@ public class AuditProcessor {
         String tempFprPath = originalFprPath + ".tmp";
         Path tempPath = Paths.get(tempFprPath);
 
+        logger.debug("Starting update of FPR file: {}", originalFprPath);
+
         try (ZipFile zipFile = new ZipFile(originalFprPath)) {
+            // Basic validation
         } catch (IOException e) {
             logger.error("Input FPR file is invalid or cannot be read: {}", originalFprPath, e);
             throw new AviatorTechnicalException("Invalid or unreadable input FPR file.", e);
@@ -614,84 +619,111 @@ public class AuditProcessor {
 
         try {
             Files.copy(Paths.get(originalFprPath), tempPath);
+        } catch (IOException e) {
+            logger.error("Failed to create temporary copy of FPR: {}", tempFprPath, e);
+            throw new AviatorTechnicalException("Failed to create temporary copy of FPR.", e);
+        }
 
-            try (ZipFile zipFile = new ZipFile(tempFprPath);
-                 FileOutputStream fos = new FileOutputStream(originalFprPath);
-                 ZipOutputStream zos = new ZipOutputStream(fos)) {
+        try (ZipFile zipFile = new ZipFile(tempFprPath);
+             FileOutputStream fos = new FileOutputStream(originalFprPath);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
 
-                AtomicBoolean auditXmlExists = new AtomicBoolean(false);
-                AtomicBoolean filterTemplateXmlExists = new AtomicBoolean(false);
+            AtomicBoolean auditXmlExists = new AtomicBoolean(false);
+            AtomicBoolean filterTemplateXmlExists = new AtomicBoolean(false);
 
-                Enumeration<? extends ZipEntry> entries = zipFile.entries();
-                while(entries.hasMoreElements()) {
-                    ZipEntry entry = entries.nextElement();
-                    String entryName = entry.getName();
-                    ZipEntry newEntry = new ZipEntry(entryName);
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                String entryName = entry.getName();
 
-                    try {
-                        if (entryName.equals("audit.xml")) {
-                            auditXmlExists.set(true);
-                            zos.putNextEntry(newEntry);
-                            transformDomToStream(auditDoc, zos);
-                            zos.closeEntry();
-                        } else if (filterTemplateDoc != null && entryName.equals("filtertemplate.xml")) {
-                            filterTemplateXmlExists.set(true);
-                            zos.putNextEntry(newEntry);
-                            transformDomToStream(filterTemplateDoc, zos);
-                            zos.closeEntry();
-                        } else {
-                            zos.putNextEntry(newEntry);
-                            if (!entry.isDirectory()) {
-                                try (InputStream is = zipFile.getInputStream(entry)) {
-                                    byte[] buffer = new byte[4096];
-                                    int len;
-                                    while ((len = is.read(buffer)) > 0) {
-                                        zos.write(buffer, 0, len);
-                                    }
-                                }
-                            }
-                            zos.closeEntry();
-                        }
-                    } catch (TransformerException | IOException e) {
-                        logger.error("Error processing zip entry: {}", entryName, e);
-                        throw new AviatorTechnicalException("Error processing zip entry: " + entryName, e);
+                try {
+                    if (entryName.equals("audit.xml")) {
+                        auditXmlExists.set(true);
+                        zos.putNextEntry(new ZipEntry(entryName));
+                        transformDomToStream(auditDoc, zos);
+                        zos.closeEntry();
+                    } else if (filterTemplateDoc != null && entryName.equals("filtertemplate.xml")) {
+                        filterTemplateXmlExists.set(true);
+                        zos.putNextEntry(new ZipEntry(entryName));
+                        transformDomToStream(filterTemplateDoc, zos);
+                        zos.closeEntry();
+                    } else {
+                        copyEntryContents(zipFile, entry, zos);
                     }
+                } catch (TransformerException | IOException e) {
+                    logger.error("Error processing zip entry: {}", entryName, e);
+                    throw new AviatorTechnicalException("Error processing zip entry: " + entryName, e);
                 }
-
-                if (!auditXmlExists.get()) {
-                    zos.putNextEntry(new ZipEntry("audit.xml"));
-                    transformDomToStream(auditDoc, zos);
-                    zos.closeEntry();
-                }
-
-                if (filterTemplateDoc != null && !filterTemplateXmlExists.get()) {
-                    zos.putNextEntry(new ZipEntry("filtertemplate.xml"));
-                    transformDomToStream(filterTemplateDoc, zos);
-                    zos.closeEntry();
-                }
-
-                zos.finish();
             }
 
+            if (!auditXmlExists.get()) {
+                zos.putNextEntry(new ZipEntry("audit.xml"));
+                transformDomToStream(auditDoc, zos);
+                zos.closeEntry();
+            }
+
+            if (filterTemplateDoc != null && !filterTemplateXmlExists.get()) {
+                zos.putNextEntry(new ZipEntry("filtertemplate.xml"));
+                transformDomToStream(filterTemplateDoc, zos);
+                zos.closeEntry();
+            }
+
+            zos.finish();
+            logger.info("Successfully updated FPR file: {}", originalFprPath);
         } catch (IOException | TransformerException e) {
-            logger.error("Error updating content in original FPR", e);
+            logger.error("Error updating content in original FPR: {}", originalFprPath, e);
             try {
                 Path path = Paths.get(originalFprPath);
                 Files.deleteIfExists(path);
                 Files.move(tempPath, path);
-                logger.info("Restored original FPR from backup due to error.");
-            } catch(IOException restoreEx) {
+                logger.info("Restored original FPR from backup: {}", originalFprPath);
+            } catch (IOException restoreEx) {
                 logger.error("Failed to restore original FPR from backup at {}: {}", tempFprPath, restoreEx.getMessage());
+                e.addSuppressed(restoreEx);
             }
             throw new AviatorTechnicalException("Error updating FPR content.", e);
         } finally {
             try {
                 Files.deleteIfExists(tempPath);
+                logger.debug("Deleted temporary FPR file: {}", tempFprPath);
             } catch (IOException e) {
-                logger.warn("Failed to delete temporary FPR file: {}", tempFprPath, e);
+                logger.warn("Failed to delete temporary FPR file: {} due to {}", tempFprPath, e.getMessage());
             }
         }
+
         return new File(originalFprPath);
+    }
+
+    private void copyEntryContents(ZipFile sourceZipFile, ZipEntry sourceEntry, ZipOutputStream targetZos) throws IOException {
+        ZipEntry newEntry = new ZipEntry(sourceEntry.getName());
+        if (sourceEntry.getMethod() == ZipEntry.STORED) {
+            newEntry.setMethod(ZipEntry.STORED);
+            newEntry.setSize(sourceEntry.getSize());
+            newEntry.setCompressedSize(sourceEntry.getCompressedSize());
+            newEntry.setCrc(sourceEntry.getCrc());
+        }
+
+        targetZos.putNextEntry(newEntry);
+
+        if (!sourceEntry.isDirectory()) {
+            if (sourceEntry.getSize() == 0) {
+                // 0-byte file: do nothing after putNextEntry, an empty entry is created.
+                logger.debug("Processed 0-byte zip entry: {}", sourceEntry.getName());
+            } else {
+                // Non-empty file: attempt to copy contents.
+                try (InputStream is = sourceZipFile.getInputStream(sourceEntry)) {
+                    byte[] buffer = new byte[4096];
+                    int len;
+                    while ((len = is.read(buffer)) > 0) {
+                        targetZos.write(buffer, 0, len);
+                    }
+                } catch (EOFException | ZipException e) {
+                    logger.warn("Content of zip entry '{}' seems corrupted ({}). An empty placeholder will be written.",
+                            sourceEntry.getName(), e.getMessage());
+                }
+            }
+        }
+        targetZos.closeEntry();
     }
 
     private void transformDomToStream(Document doc, ZipOutputStream zos) throws TransformerException {
@@ -699,7 +731,8 @@ public class AuditProcessor {
         try {
             transformerFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
         } catch (TransformerConfigurationException e) {
-            logger.warn("Security feature {} not supported by TransformerFactory.", javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, e);
+            logger.warn("Security feature {} not supported by TransformerFactory: {}",
+                    javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, e.getMessage());
         }
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(doc);
