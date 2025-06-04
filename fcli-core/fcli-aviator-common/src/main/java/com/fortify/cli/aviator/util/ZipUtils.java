@@ -10,6 +10,8 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.fortify.cli.common.exception.FcliBugException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +30,7 @@ public class ZipUtils {
                 Path extractedFilePath = tempDir.resolve(entry.getName());
 
                 if (!extractedFilePath.normalize().startsWith(tempDir.normalize())) {
-                    throw new IOException("Bad zip entry: " + entry.getName());
+                    throw new FcliBugException("Bad zip entry: " + entry.getName());
                 }
 
                 if (entry.isDirectory()) {
@@ -57,10 +59,10 @@ public class ZipUtils {
             } catch (IOException cleanupEx) {
                 logger.warn("Failed to walk temporary directory for cleanup: {}", cleanupEx.getMessage());
             }
-            throw new IOException("Failed to extract zip file: " + e.getMessage(), e);
+            throw new FcliBugException("Failed to extract zip file: " + e.getMessage(), e);
         }
 
-        logger.info("Successfully extracted zip file to: {}", tempDir);
+        logger.debug("Successfully extracted zip file to: {}", tempDir);
         return tempDir;
     }
 }

@@ -29,11 +29,9 @@ public class FPRLoadingUtil {
             while (entries.hasMoreElements()) {
                 ZipEntry next = entries.nextElement();
                 if (next != null) {
-                    String nextName = next.getName().replace('\\', '/'); // Normalize separators
-                    logger.debug("ZIP entry: {} (isDirectory: {})", nextName, next.isDirectory());
+                    String nextName = next.getName().replace('\\', '/');
                     if (!next.isDirectory() && nextName != null) {
                         if (SRC_FILE_PATTERN.matcher(nextName).matches()) {
-                            logger.debug("Found source file: {}", nextName);
                             foundSource = true;
                             break;
                         } else {

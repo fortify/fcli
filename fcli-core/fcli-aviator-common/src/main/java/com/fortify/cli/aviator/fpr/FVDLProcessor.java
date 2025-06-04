@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.fortify.cli.common.exception.FcliBugException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -1028,7 +1029,7 @@ public class FVDLProcessor {
         } else if (Files.exists(srcXrefdataPath)) {
             indexPath = srcXrefdataPath;
         } else {
-            throw new IllegalStateException("index.xml not found in either src-archive or src-xrefdata under " + extractedPath);
+            throw new FcliBugException("index.xml not found in either src-archive or src-xrefdata under " + extractedPath);
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
