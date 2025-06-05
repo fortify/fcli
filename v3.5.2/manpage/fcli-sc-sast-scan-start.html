@@ -1,0 +1,209 @@
+---
+title: fcli-sc-sast-scan-start(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-sc-sast-scan-start(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.5.2" %}
+
+
+<div id="header">
+<h1>fcli-sc-sast-scan-start(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_ssc_session_name_options">SSC session name options</a></li>
+<li><a href="#_output_options">Output options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-sc-sast-scan-start - Start a SAST scan.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli sc-sast scan start</strong> [<strong>--diagnose</strong>] [<strong>--no-replace</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                        <strong>-f</strong>=<em>&lt;file&gt;</em> [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
+                        [<strong>--pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em>]
+                        [<strong>--publish-as</strong>=<em>&lt;fprFileName&gt;</em>]
+                        [<strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                        [<strong>--publish-token</strong>=<em>&lt;publishToken&gt;</em>]
+                        [<strong>--sargs</strong>=<em>&lt;scanArguments&gt;</em>]
+                        [<strong>--scan-timeout</strong>=<em>&lt;scanTimeout&gt;</em>] [<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em>]
+                        [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>]
+                        [<strong>--debug</strong>]] [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_type_
+                    _    [=&lt;args&gt;">] [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
+                        <em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <em class="<strong>--store</strong>=_variableName[:_
+          _              &lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--diagnose</strong></dt>
+<dd>
+<p>Request generation of server-side diagnostic logs</p>
+</dd>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
+<dd>
+<p>File containing the payload to be scanned. This must be either an MBS file generated through 'sourceanalyzer -export-build-session', or a package file generated through 'scancentral package'.</p>
+</dd>
+<dt class="hdlist1"><strong>--no-replace</strong></dt>
+<dd>
+<p>If ScanCentral SAST is configured to replace existing scan jobs if jobs are already running for the given application version, this option may be used to override this behavior and keep the existing scan jobs.</p>
+</dd>
+<dt class="hdlist1"><strong>--notify</strong>=<em>&lt;email&gt;</em></dt>
+<dd>
+<p>Email address to which to send a scan completion notification.</p>
+</dd>
+<dt class="hdlist1"><strong>--pool, --sensor-pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em></dt>
+<dd>
+<p>Sensor pool Uuid or Name.</p>
+</dd>
+<dt class="hdlist1"><strong>--publish-as</strong>=<em>&lt;fprFileName&gt;</em></dt>
+<dd>
+<p>FPR file name to use when publishing the scan results to SSC.</p>
+</dd>
+<dt class="hdlist1"><strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Publish scan results to the given SSC application version once the scan has completed.</p>
+</dd>
+<dt class="hdlist1"><strong>--publish-token</strong>=<em>&lt;publishToken&gt;</em></dt>
+<dd>
+<p>SSC token to be used to publish the scan results to SSC. If not specified, the current SSC session token will be used. Note that publishing may fail if the token expires or is revoked before publishing has completed. It is recommended to either use a pre-generated long-lived token, or, if you authenticated using SSC user name and password, to wait for scan completion before running the 'session logout' command.</p>
+</dd>
+<dt class="hdlist1"><strong>--sargs, --scan-args</strong>=<em>&lt;scanArguments&gt;</em></dt>
+<dd>
+<p>Fortify Static Code Analyzer scan arguments, see ScanCentral SAST documentation for supported scan arguments for your ScanCentral SAST version. Multiple scan arguments must be provided as a single option argument, arguments containing spaces or that conflict with fcli options like '-filter' must be embedded in single quotes, and local files must be referenced through the '@' prefix. Note that contrary to fcli, scan arguments usually start with a single dash, not double dashes. For example:</p>
+<div class="literalblock">
+<div class="content">
+<pre>--sargs "'-quick' '-filter' '@my filters.txt'"</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--scan-timeout</strong>=<em>&lt;scanTimeout&gt;</em></dt>
+<dd>
+<p>Specify scan time-out (in minutes) for this scan job. This overrides the default scan time-out configured on ScanCentral SAST.</p>
+</dd>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--sensor-version</strong>=<em>&lt;sensorVersion&gt;</em></dt>
+<dd>
+<p>Version of the sensor on which the payload should be scanned. This option is not supported for MBS files, not recommended for package files generated by ScanCentral Client versions 24.2 and above, but required for package files generated by older ScanCentral Client versions, ideally matching the ScanCentral Client version that was used to generate the package file. If needed, this option can be used to override the sensor version that would be selected by default by ScanCentral SAST, but this is not officially supported and may cause unexpected results.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ssc_session_name_options"><a class="anchor" href="#_ssc_session_name_options"></a>SSC session name options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>type[=&lt;args&gt;]</em></dt>
+<dd>
+<p>Specify output type and optional type arguments. Available output formats: csv, table, expr, json, xml, yaml. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--style</strong>=<em>&lt;outputStyleElements&gt;</em>[,<em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of style elements to apply to the selected output format. Allowed values: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enables both fcli trace logging and the --diagnose option</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em></dt>
+<dd>
+<p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-06-05 14:14:46 UTC
+</div>
+</div>
+</body>
+</html>

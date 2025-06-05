@@ -1,0 +1,137 @@
+---
+title: fcli-tool-bugtracker-utility-run(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-bugtracker-utility-run(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.5.2" %}
+
+
+<div id="header">
+<h1>fcli-tool-bugtracker-utility-run(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-bugtracker-utility-run - Run FortifyBugTrackerUtility</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool bugtracker-utility run</strong> [<strong>-d</strong>=<em>&lt;workDir&gt;</em>] [<strong>--use-shell</strong>=<em>&lt;useShell&gt;</em>]
+                                 [<strong>-v</strong>=<em>&lt;versionToRun&gt;</em>] [[<strong>-h</strong>]
+                                 [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                 [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                 [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]]
+                                 [<em>&lt;toolArgs&gt;</em>&#8230;&#8203;]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command allows for running FortifyBugTrackerUtility as previously installed through the 'fcli tool bugtracker-utility install' command. It is recommended to use double dashes to separate fcli options from FortifyBugTrackerUtility options, i.e., 'fcli tool bugtracker-utility run &lt;fcli options&gt;&#8201;&#8212;&#8201;&lt;FortifyBugTrackerUtility options&gt;' to explicitly differentiate between fcli options and FortifyBugTrackerUtility options.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--workdir</strong>=<em>&lt;workDir&gt;</em></dt>
+<dd>
+<p>The working directory from where the tool should be invoked. Default value: current working directory.</p>
+</dd>
+<dt class="hdlist1"><strong>--use-shell</strong>=<em>&lt;useShell&gt;</em></dt>
+<dd>
+<p>Whether to use a shell to run the wrapper script provided by this tool, or to use a direct Java invocation. Using a shell provides the same behavior as manually invoking the wrapper script from the command line, but may cause issues if no (compatible) shell is available on the system or in a Docker container. Using a direct Java invocation may cause slightly different tool behavior, but will also work if no compatible shell is available and allows for consistent lookup of the appropriate JRE to use, independent of how the wrapper script performs such a JRE lookup. Allowed values: no, yes, auto. Default value: auto, which will first try to run the wrapper script, and fall back to direct Java invocation if shell invocation fails.</p>
+</dd>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;versionToRun&gt;</em></dt>
+<dd>
+<p>Tool version to run. The specified tool version must have been previously installed using the 'install' command. Default value: the tool version that was last installed.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable both fcli trace logging and collection of extra debugging data on applicable fcli actions and commands, for example enabling debug logging on tools invoked through fcli tool run commands, or enabling server-side debug log generation.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em></dt>
+<dd>
+<p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[<em>&lt;toolArgs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>The arguments to be passed to the tool.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-06-05 14:14:46 UTC
+</div>
+</div>
+</body>
+</html>
