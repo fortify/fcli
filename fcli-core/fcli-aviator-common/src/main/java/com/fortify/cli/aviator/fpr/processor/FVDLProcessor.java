@@ -1039,4 +1039,19 @@ public class FVDLProcessor {
             sourceFileMap.put(key, value);
         }
     }
+
+    public Optional<String> getSourceFileContent(String relativePath) {
+        String fullPathInZip = sourceFileMap.get(relativePath);
+        if (fullPathInZip == null) {
+            logger.warn("Source file key not found in sourceFileMap: {}", relativePath);
+            return Optional.empty();
+        }
+        Path actualSourcePath = extractedPath.resolve(fullPathInZip);
+        try {
+            return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath)));
+        } catch (IOException | RuntimeException e) {
+            logger.warn("Could not read source file content for MD5: {}", relativePath, e);
+            return Optional.empty();
+        }
+    }
 }

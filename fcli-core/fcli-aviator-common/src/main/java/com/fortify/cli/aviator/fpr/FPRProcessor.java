@@ -29,13 +29,13 @@ public class FPRProcessor {
     private FPRInfo fprInfo;
     private final AuditProcessor auditProcessor;
 
-    public FPRProcessor(String fprPath, Path extractedPath, Map<String, AuditIssue> auditIssueMap, AuditProcessor auditProcessor) {
+    public FPRProcessor(String fprPath, Path extractedPath, Map<String, AuditIssue> auditIssueMap, AuditProcessor auditProcessor, FVDLProcessor fvdlProcessor) {
         this.extractedPath = extractedPath;
         this.auditIssueMap = auditIssueMap;
         this.auditProcessor = auditProcessor;
     }
 
-    public List<Vulnerability> process() throws AviatorTechnicalException {
+    public List<Vulnerability> process(FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         logger.info("FPR Processing started");
 
         try {
@@ -51,7 +51,6 @@ public class FPRProcessor {
 
             logger.debug("Audit.xml Issues: {}", auditIssueMap.keySet().size());
 
-            FVDLProcessor fvdlProcessor = new FVDLProcessor(extractedPath);
             fvdlProcessor.processXML();
 
             List<Vulnerability> vulnerabilities = fvdlProcessor.getVulnerabilities();
@@ -64,4 +63,5 @@ public class FPRProcessor {
             logger.error("Unexpected error during FPR processing", e);
             throw new AviatorTechnicalException("Unexpected error during FPR processing.", e);
         }
-    }}
+    }
+}

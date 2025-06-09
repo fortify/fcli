@@ -4,11 +4,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -16,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -32,6 +37,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -50,11 +56,13 @@ import lombok.Getter;
 public class AuditProcessor {
 
     Logger logger = LoggerFactory.getLogger(AuditProcessor.class);
-    private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
+    private static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
+    private static final String REMEDIATIONS_NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
 
     private Document auditDoc;
     private Document filterTemplateDoc;
+    private Document remediationsDoc;
 
     public void setFilterTemplateDoc(Document doc) {
         this.filterTemplateDoc = doc;
@@ -88,7 +96,7 @@ public class AuditProcessor {
             DocumentBuilder builder = factory.newDocumentBuilder();
             auditDoc = builder.parse(auditPath.toFile());
 
-            NodeList issueNodes = auditDoc.getElementsByTagNameNS(NAMESPACE_URI, "Issue");
+            NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
             for (int i = 0; i < issueNodes.getLength(); i++) {
                 Element issueElement = (Element) issueNodes.item(i);
                 AuditIssue auditIssue = processAuditIssue(issueElement);
@@ -116,7 +124,7 @@ public class AuditProcessor {
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
             Document doc = docBuilder.newDocument();
 
-            Element rootElement = doc.createElementNS(NAMESPACE_URI, "ns2:Audit");
+            Element rootElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:Audit");
             doc.appendChild(rootElement);
             rootElement.setPrefix("ns2");
 
@@ -130,12 +138,12 @@ public class AuditProcessor {
             rootElement.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
             rootElement.setAttribute("version", "4.4");
 
-            Element projectInfoElement = doc.createElementNS(NAMESPACE_URI, "ns2:ProjectInfo");
-            Element projectNameElement = doc.createElementNS(NAMESPACE_URI, "ns2:Name");
+            Element projectInfoElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:ProjectInfo");
+            Element projectNameElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:Name");
             projectNameElement.setTextContent("Unknown Project");
-            Element projectVersionIdElement = doc.createElementNS(NAMESPACE_URI, "ns2:ProjectVersionId");
+            Element projectVersionIdElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:ProjectVersionId");
             projectVersionIdElement.setTextContent("-1");
-            Element writeDateElement = doc.createElementNS(NAMESPACE_URI, "ns2:WriteDate");
+            Element writeDateElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:WriteDate");
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
             writeDateElement.setTextContent(dateFormat.format(new Date()));
 
@@ -144,7 +152,7 @@ public class AuditProcessor {
             projectInfoElement.appendChild(writeDateElement);
             rootElement.appendChild(projectInfoElement);
 
-            Element issueListElement = doc.createElementNS(NAMESPACE_URI, "ns2:IssueList");
+            Element issueListElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:IssueList");
             rootElement.appendChild(issueListElement);
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -175,7 +183,7 @@ public class AuditProcessor {
         auditIssueBuilder.revision(Optional.of(revisionStr).filter(str -> !str.isEmpty()).map(Integer::parseInt).orElse(0));
 
         Map<String, String> tags = new HashMap<>();
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "Tag");
+        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
         for (int j = 0; j < tagNodes.getLength(); j++) {
             Element tagElement = (Element) tagNodes.item(j);
             String tagId = tagElement.getAttribute("id");
@@ -185,13 +193,13 @@ public class AuditProcessor {
         auditIssueBuilder.tags(tags);
 
         List<AuditIssue.Comment> threadedComments = new ArrayList<>();
-        NodeList commentNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "Comment");
+        NodeList commentNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Comment");
         for (int j = 0; j < commentNodes.getLength(); j++) {
             Element commentElement = (Element) commentNodes.item(j);
             AuditIssue.Comment comment = AuditIssue.Comment.builder()
-                    .content(Optional.ofNullable(getFirstElementContentNS(commentElement, NAMESPACE_URI, "Content", "")).orElse(""))
-                    .username(Optional.ofNullable(getFirstElementContentNS(commentElement, NAMESPACE_URI, "Username", "")).orElse(""))
-                    .timestamp(Optional.ofNullable(getFirstElementContentNS(commentElement, NAMESPACE_URI, "Timestamp", "")).orElse(""))
+                    .content(Optional.ofNullable(getFirstElementContentNS(commentElement, AUDIT_NAMESPACE_URI, "Content", "")).orElse(""))
+                    .username(Optional.ofNullable(getFirstElementContentNS(commentElement, AUDIT_NAMESPACE_URI, "Username", "")).orElse(""))
+                    .timestamp(Optional.ofNullable(getFirstElementContentNS(commentElement, AUDIT_NAMESPACE_URI, "Timestamp", "")).orElse(""))
                     .build();
             threadedComments.add(comment);
         }
@@ -202,7 +210,7 @@ public class AuditProcessor {
 
 
     private String getTagValue(Element tagElement) {
-        NodeList valueNodes = tagElement.getElementsByTagNameNS(NAMESPACE_URI, "Value");
+        NodeList valueNodes = tagElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
         if (valueNodes.getLength() > 0) {
             return valueNodes.item(0).getTextContent();
         }
@@ -233,26 +241,35 @@ public class AuditProcessor {
         updateOrAddTag(issueElement, tagId, tagValue);
     }
 
-    private void updateAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
+    private Map<String, String> updateAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
+        Map<String, String> remediationCommentTimestamps = new HashMap<>();
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
             Element issueElement = findIssueElement(instanceId);
+            String commentTimestamp = null;
 
-            if (response.getTier() != null) {
+            if (response.getAuditResult() != null) {
                 if (issueElement != null) {
-                    updateIssueElement(issueElement, response, tagMappingConfig);
+                    commentTimestamp = updateIssueElement(issueElement, response, tagMappingConfig);
                 } else {
-                    addNewIssueElement(instanceId, response, tagMappingConfig);
+                    commentTimestamp = addNewIssueElement(instanceId, response, tagMappingConfig);
+                }
+                if (commentTimestamp != null &&
+                        response.getAuditResult().getAutoremediation() != null &&
+                        response.getAuditResult().getAutoremediation().getChanges() != null &&
+                        !response.getAuditResult().getAutoremediation().getChanges().isEmpty()) {
+                    remediationCommentTimestamps.put(instanceId, commentTimestamp);
                 }
             } else {
-                logger.debug("Issue is Skipped {}", response.getIssueId());
+                logger.debug("Issue {} skipped or no audit result provided.", response.getIssueId());
             }
         }
+        return remediationCommentTimestamps;
     }
 
     public Element findIssueElement(String instanceId) {
-        NodeList issueNodes = auditDoc.getElementsByTagNameNS(NAMESPACE_URI, "Issue");
+        NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
         for (int i = 0; i < issueNodes.getLength(); i++) {
             Element issueElement = (Element) issueNodes.item(i);
             if (issueElement.getAttribute("instanceId").equals(instanceId)) {
@@ -262,9 +279,10 @@ public class AuditProcessor {
         return null;
     }
 
-    public void updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig) {
+    public String updateIssueElement(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig) {
         int revision = Integer.parseInt(issueElement.getAttribute("revision"));
         issueElement.setAttribute("revision", String.valueOf(++revision));
+        String commentTimestamp = null;
 
         if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
@@ -300,10 +318,11 @@ public class AuditProcessor {
         updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
 
         if (response != null && response.getAuditResult() != null) {
-            updateOrAddComment(issueElement, response.getAuditResult().comment);
+            commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
         }
 
         updateClientAuditTrail(issueElement, response, tagMappingConfig);
+        return commentTimestamp;
     }
 
     private void updateClientAuditTrail(Element issueElement, AuditResponse response, TagMappingConfig tagMappingConfig) {
@@ -343,33 +362,33 @@ public class AuditProcessor {
     }
 
     private Element getClientAuditTrailElement(Element issueElement) {
-        NodeList clientAuditTrailNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "ClientAuditTrail");
+        NodeList clientAuditTrailNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ClientAuditTrail");
         Element clientAuditTrail;
         if (clientAuditTrailNodes.getLength() > 0) {
             clientAuditTrail = (Element) clientAuditTrailNodes.item(0);
         } else {
-            clientAuditTrail = auditDoc.createElementNS(NAMESPACE_URI, "ClientAuditTrail");
+            clientAuditTrail = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "ClientAuditTrail");
             issueElement.appendChild(clientAuditTrail);
         }
         return clientAuditTrail;
     }
 
     private void addTagHistory(Element clientAuditTrail, String tagId, String tagValue) {
-        Element tagHistory = auditDoc.createElementNS(NAMESPACE_URI, "TagHistory");
+        Element tagHistory = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "TagHistory");
 
-        Element tag = auditDoc.createElementNS(NAMESPACE_URI, "Tag");
+        Element tag = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
         tag.setAttribute("id", tagId);
-        Element value = auditDoc.createElementNS(NAMESPACE_URI, "Value");
+        Element value = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Value");
         value.setTextContent(tagValue);
         tag.appendChild(value);
         tagHistory.appendChild(tag);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        Element editTime = auditDoc.createElementNS(NAMESPACE_URI, "EditTime");
+        Element editTime = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "EditTime");
         editTime.setTextContent(dateFormat.format(new Date()));
         tagHistory.appendChild(editTime);
 
-        Element username = auditDoc.createElementNS(NAMESPACE_URI, "Username");
+        Element username = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
         username.setTextContent("Fortify Aviator");
         tagHistory.appendChild(username);
 
@@ -377,7 +396,7 @@ public class AuditProcessor {
     }
 
     private void updateOrAddTag(Element issueElement, String tagId, String tagValue) {
-        NodeList tagNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "Tag");
+        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
         Element tagElement = null;
 
         for (int i = 0; i < tagNodes.getLength(); i++) {
@@ -389,62 +408,65 @@ public class AuditProcessor {
         }
 
         if (tagElement == null) {
-            tagElement = auditDoc.createElementNS(NAMESPACE_URI, "Tag");
+            tagElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
             tagElement.setAttribute("id", tagId);
             issueElement.appendChild(tagElement);
         }
 
-        NodeList valueNodes = tagElement.getElementsByTagNameNS(NAMESPACE_URI, "Value");
+        NodeList valueNodes = tagElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
         Element valueElement;
         if (valueNodes.getLength() > 0) {
             valueElement = (Element) valueNodes.item(0);
         } else {
-            valueElement = auditDoc.createElementNS(NAMESPACE_URI, "Value");
+            valueElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Value");
             tagElement.appendChild(valueElement);
         }
 
         valueElement.setTextContent(tagValue);
     }
 
-    private void updateOrAddComment(Element issueElement, String commentText) {
-        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "ThreadedComments");
+    private String updateOrAddComment(Element issueElement, String commentText) {
+        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
         Element threadedCommentsElement;
 
         if (threadedCommentsNodes.getLength() > 0) {
             threadedCommentsElement = (Element) threadedCommentsNodes.item(0);
         } else {
-            threadedCommentsElement = auditDoc.createElementNS(NAMESPACE_URI, "ThreadedComments");
+            threadedCommentsElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
             issueElement.appendChild(threadedCommentsElement);
         }
 
-        Element commentElement = auditDoc.createElementNS(NAMESPACE_URI, "Comment");
+        Element commentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Comment");
 
-        Element contentElement = auditDoc.createElementNS(NAMESPACE_URI, "Content");
+        Element contentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Content");
         contentElement.setTextContent(commentText);
         commentElement.appendChild(contentElement);
 
-        Element usernameElement = auditDoc.createElementNS(NAMESPACE_URI, "Username");
+        Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
         usernameElement.setTextContent("Fortify Aviator");
         commentElement.appendChild(usernameElement);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        Element timestampElement = auditDoc.createElementNS(NAMESPACE_URI, "Timestamp");
-        timestampElement.setTextContent(dateFormat.format(new Date()));
+        String timestamp = dateFormat.format(new Date());
+        Element timestampElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Timestamp");
+        timestampElement.setTextContent(timestamp);
         commentElement.appendChild(timestampElement);
 
         threadedCommentsElement.appendChild(commentElement);
+        return timestamp;
     }
 
-    public void addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig) {
-        Element issueList = (Element) auditDoc.getElementsByTagNameNS(NAMESPACE_URI, "IssueList").item(0);
+    public String addNewIssueElement(String instanceId, AuditResponse response, TagMappingConfig tagMappingConfig) {
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
         if (issueList == null) {
-            issueList = auditDoc.createElementNS(NAMESPACE_URI, "IssueList");
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
             auditDoc.getDocumentElement().appendChild(issueList);
         }
 
-        Element newIssue = auditDoc.createElementNS(NAMESPACE_URI, "Issue");
+        Element newIssue = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
         newIssue.setAttribute("instanceId", instanceId);
         newIssue.setAttribute("revision", "0");
+        String commentTimestamp = null;
 
         if (response != null && response.getAuditResult() != null) {
             String tagValue = response.getAuditResult().tagValue;
@@ -480,12 +502,13 @@ public class AuditProcessor {
         updateOrAddTag(newIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
 
         if (response != null && response.getAuditResult() != null) {
-            updateOrAddComment(newIssue, response.getAuditResult().comment);
+            commentTimestamp = updateOrAddComment(newIssue, response.getAuditResult().comment);
         }
 
         updateClientAuditTrail(newIssue, response, tagMappingConfig);
 
         issueList.appendChild(newIssue);
+        return commentTimestamp;
     }
 
     public void addCommentToIssueXml(String instanceId, String commentText, String username) {
@@ -513,10 +536,10 @@ public class AuditProcessor {
             return;
         }
 
-        Element issueList = (Element) auditDoc.getElementsByTagNameNS(NAMESPACE_URI, "IssueList").item(0);
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
         if (issueList == null) {
             logger.error("Cannot add skipped issue element, <IssueList> not found in audit.xml.");
-            issueList = auditDoc.createElementNS(NAMESPACE_URI, "IssueList");
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
             if (auditDoc.getDocumentElement() != null) {
                 auditDoc.getDocumentElement().appendChild(issueList);
                 logger.warn("Created missing <IssueList> element.");
@@ -526,7 +549,7 @@ public class AuditProcessor {
             }
         }
 
-        Element newIssue = auditDoc.createElementNS(NAMESPACE_URI, "Issue");
+        Element newIssue = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
         newIssue.setAttribute("instanceId", instanceId);
         newIssue.setAttribute("revision", "0");
         newIssue.setAttribute("suppressed", "false");
@@ -561,45 +584,214 @@ public class AuditProcessor {
         }
     }
 
-    private void addCommentToIssueElement(Element issueElement, String commentText, String username) {
-        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(NAMESPACE_URI, "ThreadedComments");
+    private String addCommentToIssueElement(Element issueElement, String commentText, String username) {
+        NodeList threadedCommentsNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
         Element threadedCommentsElement;
 
         if (threadedCommentsNodes.getLength() > 0) {
             threadedCommentsElement = (Element) threadedCommentsNodes.item(0);
         } else {
-            threadedCommentsElement = auditDoc.createElementNS(NAMESPACE_URI, "ThreadedComments");
+            threadedCommentsElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "ThreadedComments");
             issueElement.appendChild(threadedCommentsElement);
         }
 
-        Element commentElement = auditDoc.createElementNS(NAMESPACE_URI, "Comment");
+        Element commentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Comment");
 
-        Element contentElement = auditDoc.createElementNS(NAMESPACE_URI, "Content");
+        Element contentElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Content");
         contentElement.setTextContent(commentText != null ? commentText : "");
         commentElement.appendChild(contentElement);
 
-        Element usernameElement = auditDoc.createElementNS(NAMESPACE_URI, "Username");
+        Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
         usernameElement.setTextContent(username != null ? username : "Unknown User");
         commentElement.appendChild(usernameElement);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        Element timestampElement = auditDoc.createElementNS(NAMESPACE_URI, "Timestamp");
+        String timestamp = "";
         try {
-            timestampElement.setTextContent(dateFormat.format(new Date()));
+            timestamp = dateFormat.format(new Date());
         } catch (Exception e) {
             logger.warn("Could not format timestamp for comment: {}", e.getMessage());
-            timestampElement.setTextContent("");
         }
-
+        Element timestampElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Timestamp");
+        timestampElement.setTextContent(timestamp);
         commentElement.appendChild(timestampElement);
 
         threadedCommentsElement.appendChild(commentElement);
+        return timestamp;
     }
 
-    public File updateAndSaveAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
-        updateAuditXml(auditResponses, tagMappingConfig);
+    public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
+                                                     TagMappingConfig tagMappingConfig,
+                                                     FPRInfo fprInfo,
+                                                     FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+        Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
+
+        boolean hasRemediations = auditResponses.values().stream()
+                .anyMatch(ar -> ar.getAuditResult() != null &&
+                        ar.getAuditResult().getAutoremediation() != null &&
+                        ar.getAuditResult().getAutoremediation().getChanges() != null &&
+                        !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
+
+        if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
+            this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo, fvdlProcessor);
+        } else {
+            this.remediationsDoc = null;
+            if (hasRemediations) {
+                logger.warn("Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
+            }
+        }
+
         File updatedFile = updateContentInOriginalFpr();
         return updatedFile;
+    }
+
+    private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
+                                             Map<String, String> remediationCommentTimestamps,
+                                             FPRInfo fprInfo, FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+        try {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setNamespaceAware(true);
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+            Document doc = docBuilder.newDocument();
+
+            Element rootElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+            doc.appendChild(rootElement);
+
+            // ProjectInfo
+            Element projectInfoElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+            Element projectNameElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+            projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
+            Element projectWriteDateElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
+            projectInfoElement.appendChild(projectNameElement);
+            projectInfoElement.appendChild(projectWriteDateElement);
+            rootElement.appendChild(projectInfoElement);
+
+            // RemediationList
+            Element remediationListElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
+            rootElement.appendChild(remediationListElement);
+
+            for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
+                String instanceId = entry.getKey();
+                AuditResponse auditResponse = entry.getValue();
+
+                if (auditResponse.getAuditResult() != null &&
+                        auditResponse.getAuditResult().getAutoremediation() != null &&
+                        auditResponse.getAuditResult().getAutoremediation().getChanges() != null &&
+                        !auditResponse.getAuditResult().getAutoremediation().getChanges().isEmpty() &&
+                        remediationCommentTimestamps.containsKey(instanceId)) {
+
+                    Element remediationElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+                    remediationElement.setAttribute("instanceId", instanceId);
+                    remediationElement.setAttribute("writeDate", remediationCommentTimestamps.get(instanceId));
+
+                    Element auditCommentElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
+                    String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
+                    auditCommentElement.appendChild(doc.createCDATASection(auditComment));
+                    remediationElement.appendChild(auditCommentElement);
+
+                    Map<String, List<com.fortify.cli.aviator.audit.model.Change>> changesByFile =
+                            auditResponse.getAuditResult().getAutoremediation().getChanges().stream()
+                                    .collect(Collectors.groupingBy(com.fortify.cli.aviator.audit.model.Change::getFile));
+
+                    for (Map.Entry<String, List<com.fortify.cli.aviator.audit.model.Change>> fileChangeEntry : changesByFile.entrySet()) {
+                        String filename = fileChangeEntry.getKey();
+                        List<com.fortify.cli.aviator.audit.model.Change> fileSpecificChanges = fileChangeEntry.getValue();
+
+                        Element fileChangesElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges");
+
+                        Element filenameElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Filename");
+                        filenameElement.setTextContent(filename);
+                        fileChangesElement.appendChild(filenameElement);
+
+                        String originalFileContent = fvdlProcessor.getSourceFileContent(filename)
+                                .orElseThrow(() -> new AviatorTechnicalException("Could not get original content for file: " + filename + " for MD5 calculation."));
+                        Element fileMD5Element = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileMD5");
+                        fileMD5Element.setTextContent(calculateMD5Base64(originalFileContent));
+                        fileChangesElement.appendChild(fileMD5Element);
+
+                        for (com.fortify.cli.aviator.audit.model.Change change : fileSpecificChanges) {
+                            Element changeElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
+
+                            Element lineFromElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
+                            lineFromElement.setTextContent(String.valueOf(parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine")));
+                            changeElement.appendChild(lineFromElement);
+
+                            Element lineToElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineTo");
+                            lineToElement.setTextContent(String.valueOf(parseLineNumber(change.getToLine(), filename, instanceId, "ToLine")));
+                            changeElement.appendChild(lineToElement);
+
+                            Element originalCodeElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
+                            int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine (for OriginalCode)");
+                            int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine (for OriginalCode)");
+                            String[] allLines = originalFileContent.split("\\r?\\n|\\n|\\r");
+                            StringBuilder originalCodeSb = new StringBuilder();
+                            if (lineFromNum >= 1 && lineToNum >= lineFromNum && lineFromNum <= allLines.length) {
+                                for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
+                                    originalCodeSb.append(allLines[k]);
+                                    if (k < Math.min(lineToNum, allLines.length) - 1) {
+                                        originalCodeSb.append(System.lineSeparator());
+                                    }
+                                }
+                            } else if (lineFromNum == 0 && lineToNum == 0) {
+                                // Insertion at top, no original code.
+                            } else {
+                                logger.warn("Invalid line numbers for original code extraction: file='{}', instanceId='{}', from={}, to={}. Max lines: {}. Original FromLine: '{}', Original ToLine: '{}'",
+                                        filename, instanceId, lineFromNum, lineToNum, allLines.length, change.getFromLine(), change.getToLine());
+                            }
+                            // *** CHANGE: Use CDATA Section for OriginalCode ***
+                            originalCodeElement.appendChild(doc.createCDATASection(originalCodeSb.toString()));
+                            changeElement.appendChild(originalCodeElement);
+
+
+                            Element newCodeElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
+                            String newCode = change.getReplaceWith() != null ? change.getReplaceWith() : "";
+                            // *** CHANGE: Use CDATA Section for NewCode ***
+                            newCodeElement.appendChild(doc.createCDATASection(newCode));
+                            changeElement.appendChild(newCodeElement);
+
+                            fileChangesElement.appendChild(changeElement);
+                        }
+                        remediationElement.appendChild(fileChangesElement);
+                    }
+                    remediationListElement.appendChild(remediationElement);
+                }
+            }
+            return doc;
+        } catch (ParserConfigurationException e) {
+            throw new AviatorTechnicalException("Error creating XML document for remediations", e);
+        } catch (NumberFormatException e) {
+            throw new AviatorTechnicalException("Error processing remediations: " + e.getMessage(), e);
+        }
+    }
+
+    private static String calculateMD5Base64(String content) {
+        if (content == null) return "";
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("MD5 algorithm not found", e);
+        }
+    }
+
+    private int parseLineNumber(String lineStr, String filePath, String instanceId, String changeType) { // Added parameters for logging
+        if (lineStr == null || lineStr.trim().isEmpty()) {
+            logger.warn("Line number string is null or empty for file '{}', instanceId '{}', changeType '{}'. Defaulting to 0.", filePath, instanceId, changeType);
+            return 0;
+        }
+        // Remove any commas that might be present
+        String cleanedLineStr = lineStr.replace(",", "");
+        try {
+            return Integer.parseInt(cleanedLineStr);
+        } catch (NumberFormatException e) {
+            // Enhanced logging to include context
+            logger.error("Error parsing {} line number string: '{}' (original: '{}') for file '{}', instanceId '{}'.",
+                    changeType, cleanedLineStr, lineStr, filePath, instanceId, e);
+            throw e; // Re-throw to be caught by the calling method's try-catch
+        }
     }
 
     private File updateContentInOriginalFpr() throws AviatorTechnicalException {
@@ -614,14 +806,16 @@ public class AuditProcessor {
         }
 
         try {
-            Files.copy(Paths.get(originalFprPath), tempPath);
+            Files.copy(Paths.get(originalFprPath), tempPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            try (ZipFile zipFile = new ZipFile(tempFprPath);
+            try (ZipFile zipFile = new ZipFile(tempPath.toFile());
                  FileOutputStream fos = new FileOutputStream(originalFprPath);
                  ZipOutputStream zos = new ZipOutputStream(fos)) {
 
                 AtomicBoolean auditXmlExists = new AtomicBoolean(false);
                 AtomicBoolean filterTemplateXmlExists = new AtomicBoolean(false);
+                AtomicBoolean remediationsXmlExists = new AtomicBoolean(false);
+
 
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
                 while(entries.hasMoreElements()) {
@@ -632,26 +826,35 @@ public class AuditProcessor {
                     try {
                         if (entryName.equals("audit.xml")) {
                             auditXmlExists.set(true);
-                            zos.putNextEntry(newEntry);
-                            transformDomToStream(auditDoc, zos);
-                            zos.closeEntry();
-                        } else if (filterTemplateDoc != null && entryName.equals("filtertemplate.xml")) {
-                            filterTemplateXmlExists.set(true);
-                            zos.putNextEntry(newEntry);
-                            transformDomToStream(filterTemplateDoc, zos);
-                            zos.closeEntry();
-                        } else {
-                            zos.putNextEntry(newEntry);
-                            if (!entry.isDirectory()) {
-                                try (InputStream is = zipFile.getInputStream(entry)) {
-                                    byte[] buffer = new byte[4096];
-                                    int len;
-                                    while ((len = is.read(buffer)) > 0) {
-                                        zos.write(buffer, 0, len);
-                                    }
-                                }
+                            if (auditDoc != null) {
+                                zos.putNextEntry(newEntry);
+                                transformDomToStream(auditDoc, zos);
+                                zos.closeEntry();
+                            } else {
+                                logger.warn("auditDoc is null, copying original audit.xml");
+                                copyEntry(zipFile, entry, zos);
                             }
-                            zos.closeEntry();
+                        } else if (entryName.equals("filtertemplate.xml")) {
+                            filterTemplateXmlExists.set(true);
+                            if (filterTemplateDoc != null) {
+                                zos.putNextEntry(newEntry);
+                                transformDomToStream(filterTemplateDoc, zos);
+                                zos.closeEntry();
+                            } else {
+                                copyEntry(zipFile, entry, zos);
+                            }
+                        } else if (entryName.equals("remediations.xml")) {
+                            remediationsXmlExists.set(true);
+                            if (remediationsDoc != null) {
+                                zos.putNextEntry(newEntry);
+                                transformDomToStream(remediationsDoc, zos);
+                                zos.closeEntry();
+                            } else {
+                                logger.debug("remediationsDoc is null, remediations.xml will not be included or will be removed if it existed.");
+                            }
+                        }
+                        else {
+                            copyEntry(zipFile, entry, zos);
                         }
                     } catch (TransformerException | IOException e) {
                         logger.error("Error processing zip entry: {}", entryName, e);
@@ -659,7 +862,7 @@ public class AuditProcessor {
                     }
                 }
 
-                if (!auditXmlExists.get()) {
+                if (auditDoc != null && !auditXmlExists.get()) {
                     zos.putNextEntry(new ZipEntry("audit.xml"));
                     transformDomToStream(auditDoc, zos);
                     zos.closeEntry();
@@ -671,6 +874,12 @@ public class AuditProcessor {
                     zos.closeEntry();
                 }
 
+                if (remediationsDoc != null && !remediationsXmlExists.get()) {
+                    zos.putNextEntry(new ZipEntry("remediations.xml"));
+                    transformDomToStream(remediationsDoc, zos);
+                    zos.closeEntry();
+                }
+
                 zos.finish();
             }
 
@@ -679,7 +888,7 @@ public class AuditProcessor {
             try {
                 Path path = Paths.get(originalFprPath);
                 Files.deleteIfExists(path);
-                Files.move(tempPath, path);
+                Files.move(tempPath, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 logger.info("Restored original FPR from backup due to error.");
             } catch(IOException restoreEx) {
                 logger.error("Failed to restore original FPR from backup at {}: {}", tempFprPath, restoreEx.getMessage());
@@ -695,6 +904,23 @@ public class AuditProcessor {
         return new File(originalFprPath);
     }
 
+    private void copyEntry(ZipFile zipFile, ZipEntry entry, ZipOutputStream zos) throws IOException {
+        // Ensure the new entry uses the original name
+        ZipEntry newEntry = new ZipEntry(entry.getName());
+        zos.putNextEntry(newEntry);
+        if (!entry.isDirectory()) {
+            try (InputStream is = zipFile.getInputStream(entry)) {
+                byte[] buffer = new byte[4096]; // Buffer for copying
+                int len;
+                while ((len = is.read(buffer)) > 0) {
+                    zos.write(buffer, 0, len);
+                }
+            }
+        }
+        zos.closeEntry();
+    }
+
+
     private void transformDomToStream(Document doc, ZipOutputStream zos) throws TransformerException {
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         try {
@@ -703,6 +929,8 @@ public class AuditProcessor {
             logger.warn("Security feature {} not supported by TransformerFactory.", javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, e);
         }
         Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
         DOMSource source = new DOMSource(doc);
         StreamResult result = new StreamResult(zos);
         transformer.transform(source, result);

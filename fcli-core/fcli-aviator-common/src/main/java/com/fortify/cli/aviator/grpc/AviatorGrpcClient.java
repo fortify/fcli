@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import com.fortify.cli.aviator.audit.model.Autoremediation;
+import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.grpc.token.ValidateUserTokenRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -759,10 +761,24 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     private AuditResponse convertToAuditResponse(AuditorResponse response) {
         AuditResponse auditResponse = new AuditResponse();
-        auditResponse.setAuditResult(new com.fortify.cli.aviator.audit.model.AuditResult(
-                response.getAuditResult().getTagValue(),
-                response.getAuditResult().getComment()
-        ));
+        com.fortify.cli.aviator.audit.model.AuditResult.AuditResultBuilder auditResultBuilder =
+                com.fortify.cli.aviator.audit.model.AuditResult.builder()
+                        .tagValue(response.getAuditResult().getTagValue())
+                        .comment(response.getAuditResult().getComment());
+
+        if (response.getAuditResult().hasAutoremediation()) {
+            com.fortify.aviator.grpc.Autoremediation grpcAutoremediation = response.getAuditResult().getAutoremediation();
+            List<Change> cliChanges = grpcAutoremediation.getChangesList().stream()
+                    .map(grpcChange -> Change.builder()
+                            .file(grpcChange.getFile())
+                            .fromLine(grpcChange.getFromLine())
+                            .toLine(grpcChange.getToLine())
+                            .replaceWith(grpcChange.getReplaceWith())
+                            .build())
+                    .collect(Collectors.toList());
+            auditResultBuilder.autoremediation(Autoremediation.builder().changes(cliChanges).build());
+        }
+        auditResponse.setAuditResult(auditResultBuilder.build());
         auditResponse.setInputToken(response.getInputToken());
         auditResponse.setOutputToken(response.getOutputToken());
         auditResponse.setStatus(response.getStatus());

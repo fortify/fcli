@@ -20,6 +20,7 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
 import com.fortify.cli.aviator.fpr.model.Vulnerability;
@@ -33,13 +34,15 @@ public class AuditFPR {
 
     private static class FprSetup {
         final Path extractedPath;
+        final FVDLProcessor fvdlProcessor;
         final TagMappingConfig tagMappingConfig;
         final AuditProcessor auditProcessor;
 
-        FprSetup(Path extractedPath, TagMappingConfig tagMappingConfig, AuditProcessor auditProcessor) {
+        FprSetup(Path extractedPath, TagMappingConfig tagMappingConfig, AuditProcessor auditProcessor, FVDLProcessor fvdlProcessor) {
             this.extractedPath = extractedPath;
             this.tagMappingConfig = tagMappingConfig;
             this.auditProcessor = auditProcessor;
+            this.fvdlProcessor = fvdlProcessor;
         }
     }
 
@@ -62,28 +65,31 @@ public class AuditFPR {
 
         AviatorConfigManager.getInstance();
 
-        FprSetup setup = prepareFprAndLoadConfigs(fprFile, tagMappingFilePath);
+        Path extractedTempPath;
+        try {
+            extractedTempPath = ZipUtils.extractZip(fprFile.getPath());
+        } catch (IOException e) {
+            LOG.error("Failed to extract FPR: {}", fprFile.getPath(), e);
+            throw new AviatorTechnicalException("Failed to extract FPR: " + e.getMessage(), e);
+        }
 
-        ParsedFprData parsedData = parseFpr(setup.extractedPath, fprFile.getPath(), setup.auditProcessor);
+        AuditProcessor auditProcessor = new AuditProcessor(extractedTempPath, fprFile.getPath());
+        FVDLProcessor fvdlProcessor = new FVDLProcessor(extractedTempPath);
+
+        FprSetup setup = prepareFprAndLoadConfigs(fprFile, tagMappingFilePath, auditProcessor, fvdlProcessor, extractedTempPath);
+        ParsedFprData parsedData = parseFpr(extractedTempPath, fprFile.getPath(), setup.auditProcessor, setup.fvdlProcessor);
+
 
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
         AuditOutcome auditOutcome = performAviatorAudit(
                 parsedData, setup.auditProcessor, logger, token, appVersion, url, SSCApplicationName, SSCApplicationVersion, auditResponses
         );
 
-        return finalizeFprAudit(auditOutcome, auditResponses, setup.auditProcessor, setup.tagMappingConfig);
+        return finalizeFprAudit(auditOutcome, auditResponses, setup.auditProcessor, setup.tagMappingConfig, parsedData.fprInfo, setup.fvdlProcessor);
     }
 
-    private static FprSetup prepareFprAndLoadConfigs(File fprFile, String tagMappingFilePath)
+    private static FprSetup prepareFprAndLoadConfigs(File fprFile, String tagMappingFilePath, AuditProcessor auditProcessor, FVDLProcessor fvdlProcessor, Path extractedPath)
             throws AviatorTechnicalException, AviatorSimpleException, AviatorBugException {
-        Path extractedPath;
-        try {
-            extractedPath = ZipUtils.extractZip(fprFile.getPath());
-            LOG.debug("Extracted FPR to path: {}", extractedPath);
-        } catch (IOException e) {
-            LOG.error("Failed to extract FPR file: {}", fprFile.getPath(), e);
-            throw new AviatorTechnicalException("Unable to extract FPR file due to an I/O error.", e);
-        }
 
         try {
             if (!FPRLoadingUtil.isValidFpr(fprFile.getPath())) {
@@ -110,15 +116,14 @@ public class AuditFPR {
             tagMappingConfig = AviatorConfigManager.getInstance().getDefaultTagMappingConfig();
         }
 
-        AuditProcessor auditProcessor = new AuditProcessor(extractedPath, fprFile.getPath());
-        return new FprSetup(extractedPath, tagMappingConfig, auditProcessor);
+        return new FprSetup(extractedPath, tagMappingConfig, auditProcessor, fvdlProcessor);
     }
 
-    private static ParsedFprData parseFpr(Path extractedPath, String originalFprPath, AuditProcessor auditProcessor)
+    private static ParsedFprData parseFpr(Path extractedPath, String originalFprPath, AuditProcessor auditProcessor, FVDLProcessor fvdlProcessor)
             throws AviatorTechnicalException {
         Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
-        FPRProcessor fprProcessor = new FPRProcessor(originalFprPath, extractedPath, auditIssueMap, auditProcessor);
-        List<Vulnerability> vulnerabilities = fprProcessor.process();
+        FPRProcessor fprProcessor = new FPRProcessor(originalFprPath, extractedPath, auditIssueMap, auditProcessor, fvdlProcessor);
+        List<Vulnerability> vulnerabilities = fprProcessor.process(fvdlProcessor);
         FPRInfo fprInfo = fprProcessor.getFprInfo();
         return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo);
     }
@@ -147,7 +152,8 @@ public class AuditFPR {
 
     private static FPRAuditResult finalizeFprAudit(
             AuditOutcome auditOutcome, Map<String, AuditResponse> auditResponses,
-            AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig)
+            AuditProcessor auditProcessor, TagMappingConfig tagMappingConfig,
+            FPRInfo fprInfo, FVDLProcessor fvdlProcessor)
             throws AviatorTechnicalException {
 
         int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
@@ -174,7 +180,7 @@ public class AuditFPR {
             status = "FAILED";
         }
 
-        File updatedFile = auditProcessor.updateAndSaveAuditXml(auditResponses, tagMappingConfig);
+        File updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, fprInfo, fvdlProcessor);
         LOG.info("FPR audit process completed with status: {}", status);
         return new FPRAuditResult(updatedFile, status, null, (int) issuesSuccessfullyAudited, totalIssuesToAudit);
     }
