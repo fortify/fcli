@@ -718,11 +718,10 @@ public class AviatorGrpcClient implements AutoCloseable {
                         .setEndLine(file.getEndLine())
                         .build())
                 .collect(Collectors.toList()));
-
         builder.setLastStackTraceElement(convertToStackTraceElement(userPrompt.getLastStackTraceElement()));
         builder.addAllProgrammingLanguages(userPrompt.getProgrammingLanguages());
-        builder.setFileExtension(userPrompt.getFileExtension());
-        builder.setLanguage(userPrompt.getLanguage());
+        builder.setFileExtension(userPrompt.getFileExtension() == null ? "" : userPrompt.getFileExtension());
+        builder.setLanguage(userPrompt.getLanguage() == null ? "" : userPrompt.getLanguage());
         builder.setCategory(userPrompt.getCategory() == null ? "" : userPrompt.getCategory());
         builder.setSource(convertToStackTraceElement(userPrompt.getSource()));
         builder.setSink(convertToStackTraceElement(userPrompt.getSink()));

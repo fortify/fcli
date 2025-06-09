@@ -18,7 +18,8 @@ public class FPRLoadingUtil {
     }
 
     private static final Pattern AUDIT_FVDL_PATTERN = Pattern.compile("^audit\\.fvdl$");
-    private static final Pattern SRC_FILE_PATTERN = Pattern.compile("^src(-archive)?(/|(\\\\+))(?!index.xml|ScanUUID).+");
+    // Updated pattern to match both src-archive and src-xrefdata
+    private static final Pattern SRC_FILE_PATTERN = Pattern.compile("^(src(-archive)?|src-xrefdata)(/|(\\\\+))(?!index.xml|ScanUUID).+");
 
     public static boolean hasSource(File project) throws IOException {
         boolean foundSource = false;
@@ -27,11 +28,15 @@ public class FPRLoadingUtil {
 
             while (entries.hasMoreElements()) {
                 ZipEntry next = entries.nextElement();
-                if (next != null && !next.isDirectory()) {
-                    String nextName = next.getName();
-                    if (nextName != null && SRC_FILE_PATTERN.matcher(nextName).matches()) {
-                        foundSource = true;
-                        break;
+                if (next != null) {
+                    String nextName = next.getName().replace('\\', '/');
+                    if (!next.isDirectory() && nextName != null) {
+                        if (SRC_FILE_PATTERN.matcher(nextName).matches()) {
+                            foundSource = true;
+                            break;
+                        } else {
+                            logger.debug("Entry does not match source pattern: {}", nextName);
+                        }
                     }
                 }
             }
