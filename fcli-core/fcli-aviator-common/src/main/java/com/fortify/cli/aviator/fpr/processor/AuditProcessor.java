@@ -777,7 +777,7 @@ public class AuditProcessor {
         }
     }
 
-    private int parseLineNumber(String lineStr, String filePath, String instanceId, String changeType) { // Added parameters for logging
+    private int parseLineNumber(String lineStr, String filePath, String instanceId, String changeType) {
         if (lineStr == null || lineStr.trim().isEmpty()) {
             logger.warn("Line number string is null or empty for file '{}', instanceId '{}', changeType '{}'. Defaulting to 0.", filePath, instanceId, changeType);
             return 0;
