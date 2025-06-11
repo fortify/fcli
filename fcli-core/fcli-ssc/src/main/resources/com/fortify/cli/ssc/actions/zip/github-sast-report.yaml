@@ -181,7 +181,7 @@ formatters:
                         },
                         physicalLocation: {
                             artifactLocation: {
-                                uri: issueSourceFileResolver.resolve(fullPath)
+                                uri: #root.issueSourceFileResolver.resolve(fullPath)
                             },
                             region: {
                                 startLine: line==0||line==null?1:line
