@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.2](https://github.com/fortify/fcli/compare/v3.5.1...v3.5.2) (2025-06-05)
+
+
+### Bug Fixes
+
+* `fcli aviator`: Handle 0-byte and corrupted ZIP entries during FPR processing ([3140991](https://github.com/fortify/fcli/commit/31409913b33456b4515100572ab8d029a02cd4a0))
+
 ## [3.5.1](https://github.com/fortify/fcli/compare/v3.5.0...v3.5.1) (2025-05-22)
 
 
