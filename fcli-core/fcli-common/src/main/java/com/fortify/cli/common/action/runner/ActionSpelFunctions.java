@@ -40,6 +40,7 @@ import org.jsoup.safety.Safelist;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
@@ -48,6 +49,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.IssueSourceFileResolver;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.NoArgsConstructor;
@@ -430,6 +432,13 @@ public class ActionSpelFunctions {
         o.properties().forEach(
                 p->result.add(mapper.createObjectNode().put("key", p.getKey()).set("value", p.getValue())));
         return result;
+    }
+    
+    public static final POJONode issueSourceFileResolver(Map<String,String> config) {
+        var sourceDir = config.get("sourceDir");
+        var builder = IssueSourceFileResolver.builder().sourcePath(StringUtils.isBlank(sourceDir) ? null : Path.of(sourceDir) );
+        // TODO Update builder based on other config properties
+        return new POJONode(builder.build());
     }
     
     public static final String copyright() {

@@ -22,6 +22,7 @@ steps:
       global.ci.qualifiedRepoName:  # Fully qualified repository name
       global.ci.sourceBranch:       # The current branch being processed/scanned 
       global.ci.commitSHA:          # Commit SHA for current commit
+      global.ci.sourceDir:          # Directory containing source files to be scanned           
       # The following are set by default at the end, but may be overridden by individual CI configurations
       global.fod.prCommentAction:   # FoD PR comment action
       global.ssc.prCommentAction:   # SSC PR comment action
@@ -40,6 +41,7 @@ steps:
       global.ci.qualifiedRepoName: ${#env('GITHUB_REPOSITORY')}
       global.ci.sourceBranch:      ${#env('GITHUB_HEAD_REF')?:#env('GITHUB_REF_NAME')}
       global.ci.commitSHA:         ${#env('GITHUB_SHA')}
+      global.ci.sourceDir:         ${#env('SOURCE_DIR')?:#env('GITHUB_WORKSPACE')?:'.'}
       
   # GitLab
   - if: ${#env('GITLAB_CI')=='true'}
@@ -49,6 +51,7 @@ steps:
       global.ci.qualifiedRepoName: ${#env('CI_REPOSITORY_URL').replaceAll('[^:]+://[^/]+/','').replaceAll('\.git$', '')}
       global.ci.sourceBranch:      ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
       global.ci.commitSHA:         ${#env('CI_COMMIT_SHA')}
+      global.ci.sourceDir:         ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
       
   # Azure DevOps
   - if: ${#isNotBlank(#env('Build.Repository.Name'))}

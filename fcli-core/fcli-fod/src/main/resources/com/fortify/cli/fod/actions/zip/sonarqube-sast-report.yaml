@@ -18,16 +18,21 @@ cli.options:
     default: sq-fortify-sast.json
   file-path-prefix:
     names: --file-path-prefix, --pfx
-    description: "Optional prefix for issue file paths"
+    description: "Optional prefix for issue file paths; please consider using --source-dir option instead"
     required: false
     default: ""
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
   
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
   - log.progress: Processing issue data
   - rest.call:
       issues:
@@ -58,7 +63,7 @@ formatters:
       type: VULNERABILITY
       primaryLocation:
         message: ${issue.category} - ${#fod.issueBrowserUrl(issue)}
-        filePath: ${cli['file-path-prefix']}${issue.primaryLocationFull}
+        filePath: ${issueSourceFileResolver.resolve((cli['file-path-prefix']?:'')+issue.primaryLocationFull)}
         textRange:
           startLine: ${issue.lineNumber==0?1:issue.lineNumber}
       # effortMinutes:

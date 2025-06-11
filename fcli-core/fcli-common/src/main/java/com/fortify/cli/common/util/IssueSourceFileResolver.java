@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.Builder;
@@ -45,39 +48,20 @@ import lombok.SneakyThrows;
  *  
  * @author Ruud Senden
  */
-// TODO Also see TODO comments in IssueFilePathFinderTest
-// TODO How to handle absolute paths? Always return as-is (or null if not existing and OnNoMatch.NULL)? Or try to resolve against repoPath?
+// TODO Also see TODO comments in IssueSourceFileResolverTest
+// TODO How to handle absolute paths? Always return as-is (or null if not existing and OnNoMatch.NULL)? Or try to resolve against sourcePath?
 // TODO How to handle drive letters (with either absolute or relative path)?
 @Builder @Reflectable
-public class IssueFilePathFinder {
-    private final Path repoPath;
+public class IssueSourceFileResolver {
+    private static final Logger LOG = LoggerFactory.getLogger(IssueSourceFileResolver.class);
+    @Getter private final Path sourcePath;
     @Builder.Default private final OnNoMatch onNoMatch = OnNoMatch.ORIGINAL;
     @Builder.Default private final FileSeparator separatorOnReturn = FileSeparator.LINUX;
-    private final AtomicReference<RepoFileIndex> indexReference = new AtomicReference<>();
-    
-    @Reflectable
-    // We provide convenience methods for use in fcli actions, as these can't reference enum constants.
-    public static class IssueFilePathFinderBuilder {
-        public final IssueFilePathFinderBuilder nullOnNoMatch() {
-            return onNoMatch(OnNoMatch.NULL);
-        }
-        public final IssueFilePathFinderBuilder originalOnNoMatch() {
-            return onNoMatch(OnNoMatch.ORIGINAL);
-        }
-        public final IssueFilePathFinderBuilder linuxSeparatorOnReturn() {
-            return separatorOnReturn(FileSeparator.LINUX);
-        }
-        public final IssueFilePathFinderBuilder windowsSeparatorOnReturn() {
-            return separatorOnReturn(FileSeparator.WINDOWS);
-        }
-        public final IssueFilePathFinderBuilder platformSeparatorOnReturn() {
-            return separatorOnReturn(FileSeparator.PLATFORM);
-        }
-    }
+    private final AtomicReference<SourceFileIndex> indexReference = new AtomicReference<>();
     
     /**
-     * Find the given {@link Path} in the configured repository path. Based on the Fortify behavior
-     * described in the class description, if the configured repository path contains a single file 
+     * Find the given {@link Path} in the configured source path. Based on the Fortify behavior
+     * described in the class description, if the configured source path contains a single file 
      * <code>src/main/java/com/fortify/X.java</code>, this method will return a relative {@link Path} 
      * representing <code>src/main/java/com/fortify/X.java</code> for each of the following input paths:
      * <ul>
@@ -93,12 +77,13 @@ public class IssueFilePathFinder {
      * Any other input path will be considered a non-matching path, in which case either the given 
      * path or <code>null</code> will be returned, based on the configured {@link OnNoMatch} setting.
      * In particular, note that if the given path includes a leading directory, it will only match
-     * if any of its sub-paths match the full relative repository path. With the example above, this
+     * if any of its sub-paths match the full relative source path. With the example above, this
      * means that <code>scancentral123/work/com/fortify/X.java</code> will be considered non-matching,
      * as it lacks the <code>src/main/java</code> path.
      */
-    public final Path find(Path issuePath) {
-        var result = indexReference.updateAndGet(this::createIndexIfNull).find(issuePath);
+    public final Path resolve(Path issuePath) {
+        var result = indexReference.updateAndGet(this::createIndexIfNull).resolve(issuePath);
+        if ( result!=null && LOG.isTraceEnabled() ) { LOG.trace("Resolved issue path {} to source path {}", issuePath, result); }
         if ( result==null && onNoMatch==OnNoMatch.ORIGINAL ) {
             result = issuePath;
         }
@@ -106,21 +91,21 @@ public class IssueFilePathFinder {
     }
     
     /**
-     * This is the {@link String}-based variant of {@link #find(Path)}:
+     * This is the {@link String}-based variant of {@link #resolve(Path)}:
      * <ol>
      *  <li>Convert the given {@link String} into a {@link Path} instance</li>
-     *  <li>Call the {@link #find(Path)} method to find this path in the configured repository path</li>
-     *  <li>Convert the {@link Path} instance returned by {@link #find(Path)} into a {@link String},
+     *  <li>Call the {@link #resolve(Path)} method to find this path in the configured source path</li>
+     *  <li>Convert the {@link Path} instance returned by {@link #resolve(Path)} into a {@link String},
      *      using the configured {@link #separatorOnReturn} file separator.</li>
      * </ol>
      */
-    public final String find(String issuePath) {
-        return FileUtils.pathToString(find(Path.of(issuePath)), separatorOnReturn.getSeparatorChar());
+    public final String resolve(String issuePath) {
+        return FileUtils.pathToString(resolve(Path.of(issuePath)), separatorOnReturn.getSeparatorChar());
     }
     
-    private final RepoFileIndex createIndexIfNull(RepoFileIndex index) {
+    private final SourceFileIndex createIndexIfNull(SourceFileIndex index) {
         if ( index==null ) {
-            index = new RepoFileIndex(repoPath);
+            index = new SourceFileIndex(sourcePath);
         }
         return index;
     }
@@ -136,59 +121,60 @@ public class IssueFilePathFinder {
         @Getter private final char separatorChar;
     }
     
-    private static final class RepoFileIndex {
+    private static final class SourceFileIndex {
         /** Full relative paths, like src/main/java/com/fortify/X.java */
         private final Map<String,Path> fullRelativePathsIndex;
         /** Full and partial relative paths, like src/main/java/com/fortify/X.java, com/fortify/X.java, X.java */ 
         private final Map<String,Path> fullAndPartialRelativePathsIndex;
         
-        private RepoFileIndex(Path repoPath) {
-            this.fullRelativePathsIndex = createFullRelativePathsIndex(repoPath);
+        private SourceFileIndex(Path sourcePath) {
+            this.fullRelativePathsIndex = createFullRelativePathsIndex(sourcePath);
             this.fullAndPartialRelativePathsIndex = createFullAndPartialRelativePathsIndex(fullRelativePathsIndex.values());
         }
         
         /**
          * <p>This method first tries to match the given path against {@link #fullAndPartialRelativePathsIndex}, which, given a 
-         * repository path <code>src/main/java/com/fortify/X.java</code>, will match each of the following input paths:
+         * source path <code>src/main/java/com/fortify/X.java</code>, will match each of the following input paths:
          * <code>X.java</code>, <code>com/fortify/X.java</code>, and <code>src/main/java/com/fortify/X.java</code>. This handles 
          * situations where Fortify strips leading directories.</p>
          * 
          * <p>If no match is found in {@link #fullAndPartialRelativePathsIndex}, this method will then attempt to match any of 
-         * the sub-paths in the given path against {@link #fullRelativePathsIndex}, which, given a repository path
+         * the sub-paths in the given path against {@link #fullRelativePathsIndex}, which, given a source path
          * <code>src/main/java/com/fortify/X.java</code>, will match an input path like 
          * <code>any/leading/dir/src/main/java/com/fortify/X.java</code>, but not <code>any/leading/dir/com/fortify/X.java</code>.</p> 
          */
-        protected final Path find(Path path) {
+        protected final Path resolve(Path path) {
             var normalizedPath = path.normalize();
             var result = fullAndPartialRelativePathsIndex.get(pathToString(normalizedPath));
-            return result!=null ? result : findSubPathInFullRelativePathsIndex(path);
+            return result!=null ? result : resolveSubPathFromFullRelativePathsIndex(path);
         }
 
-        private Path findSubPathInFullRelativePathsIndex(Path normalizedPath) {
+        private Path resolveSubPathFromFullRelativePathsIndex(Path normalizedPath) {
             var result = fullRelativePathsIndex.get(pathToString(normalizedPath));
             if ( result==null ) {
                 var nameCount = normalizedPath.getNameCount();
                 if ( nameCount > 1 ) {
-                    return findSubPathInFullRelativePathsIndex(normalizedPath.subpath(1, nameCount));
+                    return resolveSubPathFromFullRelativePathsIndex(normalizedPath.subpath(1, nameCount));
                 }
             }
             return result;
         }
 
         @SneakyThrows
-        private static final Map<String, Path> createFullRelativePathsIndex(Path repoPath) {
+        private static final Map<String, Path> createFullRelativePathsIndex(Path sourcePath) {
             var result = new HashMap<String, Path>();
-            if ( repoPath!=null && Files.isDirectory(repoPath) ) {
-                var normalizedRepoPath = repoPath.normalize();
-                try (Stream<Path> stream = Files.walk(normalizedRepoPath)) {
+            if ( sourcePath!=null && Files.isDirectory(sourcePath) ) {
+                var normalizedSourcePath = sourcePath.normalize();
+                try (Stream<Path> stream = Files.walk(normalizedSourcePath)) {
                     stream.filter(Files::isRegularFile)
-                          .forEach(p->addPathToFullRelativePathsIndex(result, normalizedRepoPath.relativize(p.normalize())));
+                          .forEach(p->addPathToFullRelativePathsIndex(result, normalizedSourcePath.relativize(p.normalize())));
                 }
             }
             return result;
         }
 
         private static final void addPathToFullRelativePathsIndex(Map<String, Path> result, Path fullRelativePath) {
+            if ( LOG.isTraceEnabled() ) { LOG.trace("Adding source path {} to index", fullRelativePath); }
             result.put(pathToString(fullRelativePath), fullRelativePath);
         }
         

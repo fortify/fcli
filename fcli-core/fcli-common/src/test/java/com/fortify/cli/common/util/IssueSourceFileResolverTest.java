@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import com.fortify.cli.common.util.IssueFilePathFinder.OnNoMatch;
+import com.fortify.cli.common.util.IssueSourceFileResolver.OnNoMatch;
 
 import lombok.SneakyThrows;
 
@@ -16,22 +16,22 @@ import lombok.SneakyThrows;
  *
  * @author Ruud Senden
  */
-public class IssueFilePathFinderTest {
-    private static final Path sampleRepoPath = createSampleRepo();
-    private static final IssueFilePathFinder originalOnNoMatchFinder = IssueFilePathFinder.builder()
-            .repoPath(sampleRepoPath)
+public class IssueSourceFileResolverTest {
+    private static final Path sampleSourcePath = createSampleRepo();
+    private static final IssueSourceFileResolver originalOnNoMatchResolver = IssueSourceFileResolver.builder()
+            .sourcePath(sampleSourcePath)
             .onNoMatch(OnNoMatch.ORIGINAL)
             .build();
-    private static final IssueFilePathFinder nullOnNoMatchFinder = IssueFilePathFinder.builder()
-            .repoPath(sampleRepoPath)
+    private static final IssueSourceFileResolver nullOnNoMatchResolver = IssueSourceFileResolver.builder()
+            .sourcePath(sampleSourcePath)
             .onNoMatch(OnNoMatch.NULL)
             .build();
-    private static final IssueFilePathFinder originalFinder = IssueFilePathFinder.builder()
-            .repoPath(null)
+    private static final IssueSourceFileResolver originalResolver = IssueSourceFileResolver.builder()
+            .sourcePath(null)
             .onNoMatch(OnNoMatch.ORIGINAL)
             .build();
-    private static final IssueFilePathFinder nullFinder = IssueFilePathFinder.builder()
-            .repoPath(null)
+    private static final IssueSourceFileResolver nullResolver = IssueSourceFileResolver.builder()
+            .sourcePath(null)
             .onNoMatch(OnNoMatch.NULL)
             .build();
     
@@ -48,8 +48,8 @@ public class IssueFilePathFinderTest {
         "scancentral123/work/src/main/java/com/fortify/Test1.java,src/main/java/com/fortify/Test1.java"
         // TODO Determine expected behavior for absolute paths, and add test cases if necessary 
     })
-    public void testOriginalOnMatchFinder(String fortifyPath, String expectedResult) throws Exception {
-        test(originalOnNoMatchFinder, fortifyPath, expectedResult);
+    public void testOriginalOnMatchResolver(String fortifyPath, String expectedResult) throws Exception {
+        test(originalOnNoMatchResolver, fortifyPath, expectedResult);
     }
     
     @ParameterizedTest
@@ -65,8 +65,8 @@ public class IssueFilePathFinderTest {
         "scancentral123/work/src/main/java/com/fortify/Test1.java,src/main/java/com/fortify/Test1.java"
         // TODO Determine expected behavior for absolute paths, and add test cases if necessary 
     })
-    public void testNullOnMatchFinder(String fortifyPath, String expectedResult) throws Exception {
-        test(nullOnNoMatchFinder, fortifyPath, expectedResult);
+    public void testNullOnMatchResolver(String fortifyPath, String expectedResult) throws Exception {
+        test(nullOnNoMatchResolver, fortifyPath, expectedResult);
     }
     
     @ParameterizedTest
@@ -76,8 +76,8 @@ public class IssueFilePathFinderTest {
         "scancentral123/work/Test1.java,scancentral123/work/Test1.java"
         // TODO Determine expected behavior for absolute paths, and add test cases if necessary 
     })
-    public void testOriginalFinder(String fortifyPath, String expectedResult) throws Exception {
-        test(originalFinder, fortifyPath, expectedResult);
+    public void testOriginalResolver(String fortifyPath, String expectedResult) throws Exception {
+        test(originalResolver, fortifyPath, expectedResult);
     }
     
     @ParameterizedTest
@@ -87,13 +87,13 @@ public class IssueFilePathFinderTest {
         "scancentral123/work/Test1.java,"
         // TODO Determine expected behavior for absolute paths, and add test cases if necessary 
     })
-    public void testNullFinder(String fortifyPath, String expectedResult) throws Exception {
-        test(nullFinder, fortifyPath, expectedResult);
+    public void testNullResolver(String fortifyPath, String expectedResult) throws Exception {
+        test(nullResolver, fortifyPath, expectedResult);
     }
     
-    private void test(IssueFilePathFinder finder, String fortifyPath, String expectedResult) {
+    private void test(IssueSourceFileResolver resolver, String fortifyPath, String expectedResult) {
         expectedResult = StringUtils.isBlank(expectedResult) ? null : expectedResult;
-        assertEquals(expectedResult, finder.find(fortifyPath));
+        assertEquals(expectedResult, resolver.resolve(fortifyPath));
     }
 
     @SneakyThrows
