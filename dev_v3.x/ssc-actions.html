@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <code>fcli ssc action</code>
-fcli_version: 0.20250611.080323-dev_v3.x
+fcli_version: 0.20250611.115621-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250611.080323-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250611.080323-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250611.115621-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <code>fcli ssc action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20250611.080323-dev_v3.x</span>
+<span id="revnumber">version 0.20250611.115621-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -247,6 +247,10 @@ For information on how to create or update findings into AWS Security Hub, see
 <dd>
 <p>Required AWS account id. Default value: AWS_ACCOUNT_ID environment variable.</p>
 </dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -294,6 +298,10 @@ For information on how to create or update findings into AWS Security Hub, see
 <dt class="hdlist1">--page-size</dt>
 <dd>
 <p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+</dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
 </dd>
 </dl>
 </div>
@@ -606,6 +614,10 @@ previous scan for this PR.</p>
 <dd>
 <p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
 </dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -737,6 +749,10 @@ previous scan for this PR.</p>
 <dt class="hdlist1">--page-size</dt>
 <dd>
 <p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+</dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
 </dd>
 </dl>
 </div>
@@ -884,6 +900,10 @@ reports. For more information about SARIF, please see
 <dt class="hdlist1">--page-size</dt>
 <dd>
 <p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+</dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
 </dd>
 </dl>
 </div>
@@ -1057,6 +1077,10 @@ appropriate option values and setup commands to run.</p>
 <dd>
 <p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
 </dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -1065,8 +1089,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250611.080323-dev_v3.x<br>
-Last updated 2025-06-11 08:05:35 UTC
+Version 0.20250611.115621-dev_v3.x<br>
+Last updated 2025-06-11 11:58:25 UTC
 </div>
 </div>
 </body>
