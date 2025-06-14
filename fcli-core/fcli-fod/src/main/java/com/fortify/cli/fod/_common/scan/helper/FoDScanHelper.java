@@ -157,23 +157,16 @@ public class FoDScanHelper {
         Integer assessmentTypeId = 0;
         LOG.info("Finding/Validating entitlement to use.");
 
-        // first find an appropriate assessment type to use
-        Optional<FoDReleaseAssessmentTypeDescriptor> atd = Arrays.stream(
-                        FoDReleaseAssessmentTypeHelper.getAssessmentTypes(unirest, relId, scanType, entitlementFrequencyType,
-                                false, true)
-                ).filter(n -> n.getName().equals(assessmentType))
-                .findFirst();
-        if (atd.isEmpty()) {
-            throw new FcliSimpleException("Cannot find appropriate assessment type for specified options.");
-        }
-        assessmentTypeId = atd.get().getAssessmentTypeId();
-        entitlementIdToUse = atd.get().getEntitlementId();
+        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, scanType, 
+            entitlementFrequencyType, assessmentType);
+        assessmentTypeId = atd.getAssessmentTypeId();
+        entitlementIdToUse = atd.getEntitlementId();
 
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found
             if (!Objects.equals(entitlementIdToUse, entitlementId)) {
-                throw new FcliSimpleException("Cannot appropriate assessment type for use with entitlement: " + entitlementId);
+                throw new FcliSimpleException("Cannot find appropriate assessment type for use with entitlement: " + entitlementId);
             }
             LOG.info("The 'entitlement-id' specified by user '" + entitlementId + "' is valid.");
         } else {
@@ -186,9 +179,12 @@ public class FoDScanHelper {
         }
         LOG.info("Configuring release to use entitlement '" + entitlementIdToUse + "'.");
 
-        // check if the entitlement is still valid
-        FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd.get());
-        LOG.info("The entitlement '" + entitlementIdToUse + "' is still valid.");
+        // check if the entitlement ican be used
+        if (FoDReleaseAssessmentTypeHelper.validateEntitlementCanBeUsed(relId, atd)) {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is still valid.");
+        } else {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is no longer valid.");
+        }
 
         return FoDScanAssessmentTypeDescriptor.builder()
                 .assessmentTypeId(assessmentTypeId)

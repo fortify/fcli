@@ -59,15 +59,12 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     private static final Log LOG = LogFactory.getLog(FoDSastScanSetupCommand.class);
     @Getter @Mixin private OutputHelperMixins.Setup outputHelper;
 
-    @Mixin
-    private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin
-    private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
     @Option(names = {"--assessment-type"}, required = true)
     private String staticAssessmentType; // Plain text name as custom assessment types can be created
-    @Mixin
-    private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
+    @Mixin  private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--technology-stack"}, required = true, defaultValue = "Auto Detect")
@@ -94,6 +91,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     //      using this of course.
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
+    private String assessmentTypeName;
+
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try (var progressWriter = progressWriterFactory.create()) {
@@ -116,6 +115,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), staticAssessmentType);
         var assessmentTypeId = atd.getAssessmentTypeId();
         var entitlementIdToUse = atd.getEntitlementId();
+        assessmentTypeName = atd.getName();
 
         validateEntitlement(currentSetup, entitlementIdToUse, relId, atd);
         LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
@@ -169,7 +169,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found
             if (!Objects.equals(entitlementIdToUse, entitlementId)) {
-                throw new FcliSimpleException("Cannot appropriate assessment type for use with entitlement: " + entitlementId);
+                throw new FcliSimpleException("Cannot find appropriate assessment type for use with entitlement: " + entitlementId);
             }
         } else {
             if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
@@ -179,8 +179,12 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 }
             }
         }
-        // check if the entitlement is still valid
-        FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd);
+        // check if the entitlement can still be used
+        if (FoDReleaseAssessmentTypeHelper.validateEntitlementCanBeUsed(relId, atd)) {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is still valid.");
+        } else {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is no longer valid.");
+        }
     }
 
     @Override
@@ -188,7 +192,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(getUnirestInstance());
         return ((ObjectNode)record)
         // Start partial fix for (#598)
-                        .put("scanType", staticAssessmentType)
+                        .put("scanType", assessmentTypeName)
                         .put("setupType", auditPreferenceType.name())
         // End               
                         .put("applicationName", releaseDescriptor.getApplicationName())
