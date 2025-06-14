@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-report-wait-for(1)
+title: fcli-fod-oss-scan-list-components(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-report-wait-for(1)</title>
+<title>fcli-fod-oss-scan-list-components(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-fod-report-wait-for(1) Manual Page</h1>
+<h1>fcli-fod-oss-scan-list-components(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -30,12 +30,11 @@ fcli_version:
 <li><a href="#_fod_session_name_options">FoD session name options</a></li>
 <li><a href="#_output_options">Output options</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-report-wait-for - Wait for report to reach or exit specified generation status.</p>
+<p>fcli-fod-oss-scan-list-components - (PREVIEW) List Open Source components.</p>
 </div>
 </div>
 <div id="content">
@@ -43,20 +42,20 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod report wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
-                         [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
-                         [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
-                         [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
-                         [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em>
-                         ] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [<strong>-s</strong>=<em>&lt;states&gt;</em>
-                         [,<em>&lt;states&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                         [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                         [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]] <em class="[<strong>-o</strong>=_type_
-                     _    [=&lt;args&gt;">] [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
-                         <em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <em class="<strong>--store</strong>=_variableName[:_
-           _              &lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                         [<strong>-u</strong>=<em>any-match|all-match</em> | <strong>-w</strong>=<em>any-match|all-match</em>]
-                         [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]] <em>report-id&#8217;s</em>&#8230;&#8203;</p>
+<p><strong>fcli fod oss-scan list-components</strong> [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                                  [<strong>--rel</strong>=<em>id|app[:ms]:rel</em>]
+                                  [<strong>--scan-types</strong>=<em>&lt;scanTypes&gt;</em>[,
+                                  <em>&lt;scanTypes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                                  [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                  [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                  [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]]
+                                  [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_type_
+                              _    [=&lt;args&gt;">] [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
+                                  <em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                  <em class="<strong>--store</strong>=_variableName[:&lt;propertyNames&gt;">]
+                                  [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+                            _      expression&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -64,11 +63,9 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Although this command offers a lot of options to cover many different use cases, you can simply pass a report id (possibly stored using --store on of the 'report create' command) to wait for report generation to complete. If any error state or unknown state is detected, an exception will be thrown.</p>
-</div>
-<div class="paragraph">
-<p>The following statuses are currently known by fcli:
-See fcli help output</p>
+<p>This command is not fully implemented and is intended for preview only. Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.
+This command lists the Open Source components for an application, a release or the whole tenant. The list of OSS components is based on the results of the last SCA scan on a release of the application. To filter the results retrieved from this command use the standard <code>-q</code> option. For example to only show vulnerable components, you can use <code>-q isVulnerable</code>, or to only show components with a specific license (e.g. AGPL), you can use <code>-q 'licenseSummary matches "AGPL.*"'</code>.
+Please note: the FoD REST API does not yet support filtering by application, so specifying this option will currently return all Open Source components for all applications.</p>
 </div>
 </div>
 </div>
@@ -77,45 +74,25 @@ See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
+<dt class="hdlist1"><strong>--app</strong>=<em>&lt;appNameOrId&gt;</em></dt>
 <dd>
-<p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
+<p>Application id or name. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id.</p>
 </dd>
-<dt class="hdlist1"><strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em></dt>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Action to take when a failure state is returned for any of the records: wait, terminate, fail.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
-<dt class="hdlist1"><strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em></dt>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
-<p>Action to take when timeout occurs: terminate, fail.</p>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
 </dd>
-<dt class="hdlist1"><strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em></dt>
+<dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
-<p>Action to take when an unknown state is returned for any of the records: wait, terminate, fail.</p>
+<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
 </dd>
-<dt class="hdlist1"><strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em></dt>
+<dt class="hdlist1"><strong>--scan-types</strong>=<em>&lt;scanTypes&gt;</em>[,<em>&lt;scanTypes&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Action to take when an unknown state is passed in any of the --while or --until options: ignore, fail.</p>
-</dd>
-<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
-<dd>
-<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
-</dd>
-<dt class="hdlist1"><strong>-s</strong>, <strong>--any-state</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>One or more scan states against which to match the report generation status.</p>
-</dd>
-<dt class="hdlist1"><strong>-t</strong>, <strong>--timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
-<dd>
-<p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour).</p>
-</dd>
-<dt class="hdlist1"><strong>-u</strong>, <strong>--until</strong>=<em>any-match|all-match</em></dt>
-<dd>
-<p>Wait until report generation status matches.</p>
-</dd>
-<dt class="hdlist1"><strong>-w</strong>, <strong>--while</strong>=<em>any-match|all-match</em></dt>
-<dd>
-<p>Wait while report generation status matches.</p>
+<p>Comma-separated list of scan types for which to list Open Source components for. Default value: Debricked. Valid values: Sonatype, CycloneDx, Debricked.</p>
 </dd>
 </dl>
 </div>
@@ -187,19 +164,6 @@ See fcli help output</p>
 <dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em></dt>
 <dd>
 <p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>report-id&#8217;s</em>&#8230;&#8203;</dt>
-<dd>
-<p>Report id(s).</p>
 </dd>
 </dl>
 </div>
