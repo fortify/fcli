@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250614.114935-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250614.115436-dev_v3.x" %}
 
 
 <div id="header">
@@ -67,8 +67,8 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p>This command currently supports scanning of 'Mobile Assessment' type only.
-To correctly start a scan you will need to provide the name of the assessment type using the '--assessment-type=xxx' option. This will usually be "Mobile Assessment" but since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod release lsat' command for the release.
-The scan will need to have been previously setup using the FoD UI or the 'fod mast-scan setup' command.</p>
+To correctly start a scan you will need to provide the Id or Name of the assessment type using the '--assessment-type' option. This will usually be "Mobile Assessment" but since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod release lsat' command for the release.
+If you know the Id of an entitlement that you want to use then you can supply it to the '--entitlement-id' option. If not, and you supply both the '--assessment-type' and '--entitlement-frequency' options the command will try to find an appropriate entitlement.</p>
 </div>
 </div>
 </div>
@@ -79,7 +79,7 @@ The scan will need to have been previously setup using the FoD UI or the 'fod ma
 <dl>
 <dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;mobileAssessmentType&gt;</em></dt>
 <dd>
-<p>The type of MAST assessment to carry out. Use 'fod release lsat' to find valid values.</p>
+<p>The assessment type to use, this can be the Id or the Name. Use 'fod release lsat' to find valid values.</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
@@ -212,7 +212,7 @@ The scan will need to have been previously setup using the FoD UI or the 'fod ma
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-06-14 11:51:40 UTC
+Last updated 2025-06-14 11:56:40 UTC
 </div>
 </div>
 </body>
