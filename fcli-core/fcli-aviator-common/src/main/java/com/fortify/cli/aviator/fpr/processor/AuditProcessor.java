@@ -41,6 +41,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -64,12 +65,9 @@ public class AuditProcessor {
 
 
     private Document auditDoc;
+    @Setter
     private Document filterTemplateDoc;
     private Document remediationsDoc;
-
-    public void setFilterTemplateDoc(Document doc) {
-        this.filterTemplateDoc = doc;
-    }
 
     private final Map<String, AuditIssue> auditIssueMap = new HashMap<>();
     private final String fprFilePath;
@@ -200,9 +198,9 @@ public class AuditProcessor {
         for (int j = 0; j < commentNodes.getLength(); j++) {
             Element commentElement = (Element) commentNodes.item(j);
             AuditIssue.Comment comment = AuditIssue.Comment.builder()
-                    .content(Optional.ofNullable(getFirstElementContentNS(commentElement, AUDIT_NAMESPACE_URI, "Content", "")).orElse(""))
-                    .username(Optional.ofNullable(getFirstElementContentNS(commentElement, AUDIT_NAMESPACE_URI, "Username", "")).orElse(""))
-                    .timestamp(Optional.ofNullable(getFirstElementContentNS(commentElement, AUDIT_NAMESPACE_URI, "Timestamp", "")).orElse(""))
+                    .content(Optional.ofNullable(getFirstElementContentNS(commentElement, "Content")).orElse(""))
+                    .username(Optional.ofNullable(getFirstElementContentNS(commentElement, "Username")).orElse(""))
+                    .timestamp(Optional.ofNullable(getFirstElementContentNS(commentElement, "Timestamp")).orElse(""))
                     .build();
             threadedComments.add(comment);
         }
@@ -220,12 +218,12 @@ public class AuditProcessor {
         return "";
     }
 
-    private String getFirstElementContentNS(Element parent, String namespace, String tagName, String defaultValue) {
-        NodeList nodes = parent.getElementsByTagNameNS(namespace, tagName);
-        if (nodes != null && nodes.getLength() > 0 && nodes.item(0) != null) {
+    private String getFirstElementContentNS(Element parent, String tagName) {
+        NodeList nodes = parent.getElementsByTagNameNS(AuditProcessor.AUDIT_NAMESPACE_URI, tagName);
+        if (nodes.getLength() > 0 && nodes.item(0) != null) {
             return nodes.item(0).getTextContent();
         }
-        return defaultValue;
+        return "";
     }
 
     public void updateIssueTag(AuditIssue auditIssue, String tagId, String tagValue) {
@@ -250,7 +248,7 @@ public class AuditProcessor {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
             Element issueElement = findIssueElement(instanceId);
-            String commentTimestamp = null;
+            String commentTimestamp;
 
             if (response.getAuditResult() != null) {
                 if (issueElement != null) {
@@ -270,7 +268,6 @@ public class AuditProcessor {
         }
         return remediationCommentTimestamps;
     }
-
     public Element findIssueElement(String instanceId) {
         NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
         for (int i = 0; i < issueNodes.getLength(); i++) {
@@ -320,11 +317,12 @@ public class AuditProcessor {
 
         updateOrAddTag(issueElement, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
 
-        if (response != null && response.getAuditResult() != null) {
+        if (response.getAuditResult() != null) {
             commentTimestamp = updateOrAddComment(issueElement, response.getAuditResult().comment);
         }
 
         updateClientAuditTrail(issueElement, response, tagMappingConfig);
+
         return commentTimestamp;
     }
 
@@ -644,8 +642,7 @@ public class AuditProcessor {
             }
         }
 
-        File updatedFile = updateContentInOriginalFpr();
-        return updatedFile;
+        return updateContentInOriginalFpr();
     }
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
@@ -743,7 +740,6 @@ public class AuditProcessor {
                                 logger.warn("Invalid line numbers for original code extraction: file='{}', instanceId='{}', from={}, to={}. Max lines: {}. Original FromLine: '{}', Original ToLine: '{}'",
                                         filename, instanceId, lineFromNum, lineToNum, allLines.length, change.getFromLine(), change.getToLine());
                             }
-                            // *** CHANGE: Use CDATA Section for OriginalCode ***
                             originalCodeElement.appendChild(doc.createCDATASection(originalCodeSb.toString()));
                             changeElement.appendChild(originalCodeElement);
 
