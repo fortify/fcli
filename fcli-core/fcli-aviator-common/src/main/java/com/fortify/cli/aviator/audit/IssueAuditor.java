@@ -314,6 +314,9 @@ public class IssueAuditor {
         String analysisTagS = Constants.ANALYSIS_TAG_ID;
 
         if (auditIssueMap.containsKey(issueId)) {
+            if (auditIssue.isSuppressed()){
+                return true;
+            }
             if (isAuditorStatusPopulated || tags.containsKey(aviatorExpectedOutcome)) {
                 return true;
             }
