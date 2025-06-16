@@ -54,6 +54,7 @@ public class Constants {
     public static final String OP_LIST_APPS = "listing applications";
     public static final String OP_GENERATE_TOKEN = "token generation";
     public static final String OP_LIST_TOKENS = "listing tokens";
+    public static final String OP_LIST_TOKENS_BY_DEVELOPER = "list tokens by developer";
     public static final String OP_REVOKE_TOKEN = "revoking token";
     public static final String OP_DELETE_TOKEN = "deleting token";
     public static final String OP_VALIDATE_TOKEN = "validating token";

@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
+import com.fortify.cli.aviator.util.StringUtil;
+import com.fortify.grpc.token.ListTokensByDeveloperRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    @Option(names = {"-e", "--email"}, required = true) private String email;
+    @Option(names = {"-e", "--email"}) private String email;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenListCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -47,7 +49,12 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
     private ArrayNode fetchAllTokens(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor) {
         ArrayNode tokensArray = AviatorGrpcUtils.createArrayNode();
         String[] messageAndSignature = createMessageAndSignature(configDescriptor);
-        ListTokensResponse response = listTokens(client, configDescriptor, messageAndSignature);
+        ListTokensResponse response;
+        if (!StringUtil.isEmpty(email)) {
+            response = listTokensByDeveloper(client, configDescriptor, messageAndSignature);
+        } else {
+            response = listTokens(client, configDescriptor, messageAndSignature);
+        }
         appendTokensToArray(response, tokensArray);
         return tokensArray;
     }
@@ -60,6 +67,18 @@ public class AviatorTokenListCommand extends AbstractAviatorAdminSessionOutputCo
         String message = messageAndSignature[0];
         String signature = messageAndSignature[1];
         ListTokensResponse response = client.listTokens(email, configDescriptor.getTenant(), signature, message);
+        if (!response.getSuccess()) {
+            String errorMessage = response.getErrorMessage().isBlank()
+                    ? "Failed to list tokens: Unable to retrieve tokens for email '" + email + "'. Please verify the email and ensure you have the necessary permissions."
+                    : response.getErrorMessage();
+            throw new AviatorSimpleException(errorMessage);
+        }
+        return response;
+    }
+    private ListTokensResponse listTokensByDeveloper(AviatorGrpcClient client, AviatorAdminConfigDescriptor configDescriptor, String[] messageAndSignature) {
+        String message = messageAndSignature[0];
+        String signature = messageAndSignature[1];
+        ListTokensResponse response = client.listTokensByDeveloper(configDescriptor.getTenant(), email, signature, message);
         if (!response.getSuccess()) {
             String errorMessage = response.getErrorMessage().isBlank()
                     ? "Failed to list tokens: Unable to retrieve tokens for email '" + email + "'. Please verify the email and ensure you have the necessary permissions."

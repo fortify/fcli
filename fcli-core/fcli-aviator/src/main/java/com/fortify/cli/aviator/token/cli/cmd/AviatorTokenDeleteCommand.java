@@ -25,7 +25,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class AviatorTokenDeleteCommand extends AbstractAviatorAdminSessionOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Option(names = {"-e", "--email"}, required = true) private String email;
+    @Option(names = {"-e", "--email"}) private String email;
     @Mixin @Getter private AviatorUserTokenResolverMixin tokenResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorTokenDeleteCommand.class);
 

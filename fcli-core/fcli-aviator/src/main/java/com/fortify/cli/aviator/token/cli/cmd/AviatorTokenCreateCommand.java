@@ -35,7 +35,7 @@ import picocli.CommandLine.Option;
 public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
-    @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
+    @Option(names = {"-n", "--name"}) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
     @Option(names = {"--save-token"}, descriptionKey = "fcli.aviator.token.create.save-token", paramLabel = "<file>") private File saveTokenFile;
 

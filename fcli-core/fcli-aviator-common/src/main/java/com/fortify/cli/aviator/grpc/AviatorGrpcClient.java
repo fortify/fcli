@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import com.fortify.cli.aviator.audit.model.Autoremediation;
 import com.fortify.cli.aviator.audit.model.Change;
+import com.fortify.grpc.token.ListTokensByDeveloperRequest;
 import com.fortify.grpc.token.ValidateUserTokenRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -911,7 +912,6 @@ public class AviatorGrpcClient implements AutoCloseable {
 
     public ListTokensResponse listTokens(String email, String tenantName, String signature, String message) {
         ListTokensRequest request = ListTokensRequest.newBuilder()
-                .setEmail(email)
                 .setRequestSignature(signature)
                 .setMessage(message)
                 .setTenantName(tenantName)
@@ -920,10 +920,22 @@ public class AviatorGrpcClient implements AutoCloseable {
         return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokens, request, Constants.OP_LIST_TOKENS);
     }
 
+    public ListTokensResponse listTokensByDeveloper(String tenantName, String developerEmail, String signature, String message) {
+        ListTokensByDeveloperRequest.Builder requestBuilder = ListTokensByDeveloperRequest.newBuilder()
+                .setTenantName(tenantName)
+                .setRequestSignature(signature)
+                .setMessage(message)
+                .setIgnorePagination(true);
+        if (developerEmail != null) {
+            requestBuilder.setDeveloperEmail(developerEmail);
+        }
+        ListTokensByDeveloperRequest request = requestBuilder.build();
+        return executeGrpcCall(tokenServiceBlockingStub, TokenServiceGrpc.TokenServiceBlockingStub::listTokensByDeveloper, request, Constants.OP_LIST_TOKENS_BY_DEVELOPER);
+    }
+
     public RevokeTokenResponse revokeToken(String token, String email, String tenantName, String signature, String message) {
         RevokeTokenRequest request = RevokeTokenRequest.newBuilder()
                 .setToken(token)
-                .setEmail(email)
                 .setTenantName(tenantName)
                 .setRequestSignature(signature)
                 .setMessage(message)
@@ -934,7 +946,6 @@ public class AviatorGrpcClient implements AutoCloseable {
     public DeleteTokenResponse deleteToken(String token, String email, String tenantName, String signature, String message) {
         DeleteTokenRequest request = DeleteTokenRequest.newBuilder()
                 .setToken(token)
-                .setEmail(email)
                 .setTenantName(tenantName)
                 .setRequestSignature(signature)
                 .setMessage(message)

@@ -52,13 +52,14 @@ message Fragment {
 message StreamInitRequest {
   string token=1;
   string applicationName=2;
-  string fprBuildId = 3;
-  string sscApplicationName = 4;
-  string sscApplicationVersion = 5;
-  string streamId = 6;
-  string requestId = 7;
-  int32 totalReportedIssues = 8;
-  int32 totalIssuesToPredict = 9;
+  string streamId = 3;
+  string requestId = 4;
+  int32 totalReportedIssues=5;
+  int32 totalIssuesToPredict=6;
+  optional string fprBuildId = 7;
+  optional string sscApplicationName = 8;
+  optional string sscApplicationVersion = 9;
+
 }
 message UserPromptRequest {
   oneof request_type {
@@ -127,7 +128,7 @@ message AuditorResponse {
 message AuditResult {
   string tagValue = 1;
   string comment = 2;
-  Autoremediation autoremediation = 3;
+  optional Autoremediation autoremediation = 3;
 }
 
 message PongResponse {
@@ -142,7 +143,7 @@ message FinalSummary {
 }
 
 message Autoremediation {
-      repeated Change changes = 1;
+  repeated Change changes = 1;
 }
 
 message Change {
