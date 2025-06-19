@@ -454,5 +454,20 @@
     "allPublicMethods": true,
     "allDeclaredFields": true,
     "allPublicFields": true
+  },
+  {
+    "name": "io.grpc.netty.shaded.io.grpc.netty.ProtocolNegotiators$WaitUntilActiveHandler",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.grpc.netty.shaded.io.netty.channel.epoll.EpollChannelOption",
+    "fields": [
+      { "name": "TCP_USER_TIMEOUT" }
+    ]
   }
 ]
