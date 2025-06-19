@@ -469,5 +469,11 @@
     "fields": [
       { "name": "TCP_USER_TIMEOUT" }
     ]
+  },
+  {
+    "name": "io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts",
+    "methods": [
+      {"name": "defaultSslProvider", "parameterTypes": []}
+    ]
   }
 ]

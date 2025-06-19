@@ -39,7 +39,7 @@ public class AviatorGrpcClientHelper {
 
             LOG.debug("No port specified or using target string, using ManagedChannelBuilder.forTarget: {}", target);
             ManagedChannel channel = ManagedChannelBuilder.forTarget(target)
-                    .useTransportSecurity()
+                    .usePlaintext()
                     .maxInboundMessageSize(16 * 1024 * 1024) // 16 MB
                     .keepAliveTime(30, TimeUnit.SECONDS)
                     .keepAliveTimeout(10, TimeUnit.SECONDS)
@@ -65,7 +65,7 @@ public class AviatorGrpcClientHelper {
                 }
                 LOG.debug("Port specified, using ManagedChannelBuilder.forAddress: {}:{}", host, port);
                 ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
-                        .useTransportSecurity()
+                        .usePlaintext()
                         .maxInboundMessageSize(16 * 1024 * 1024)
                         .keepAliveTime(30, TimeUnit.SECONDS)
                         .keepAliveTimeout(10, TimeUnit.SECONDS)
