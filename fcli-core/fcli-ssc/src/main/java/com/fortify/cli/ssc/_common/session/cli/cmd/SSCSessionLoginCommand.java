@@ -16,17 +16,20 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCAndScanCentralUnirestHelper;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions.SSCAndScanCentralUrlConfigOptions;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCSessionNameArgGroup;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
+import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -59,12 +62,25 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
         // SSC connection will already have been validated during login, so we only need to
         // verify SC-SAST & SC-DAST connections.
         SSCAndScanCentralSessionDescriptor sessionData = SSCAndScanCentralSessionHelper.instance().get(sessionName, true);
+        String sscUrl = sessionData.getSscUrlConfig().getUrl();
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             testAuthenticatedSCSastConnection(unirest, sessionData);
-        }
+        }	
+        catch(UnirestException  expt) {
+        	logoutBeforeNewLogin(sessionName, sessionData);
+        	getSessionHelper().destroy(sessionName);
+        	String scSastUrl = sessionData.getScSastUrlConfig().getUrl();
+        	throw new FcliSimpleException(String.format("SC-SAST is temporarily unavailable. You can still connect to SSC by using the --disable=sc-sast option.\nSSC URL: %s\nSC-SAST URL: %s" , sscUrl,scSastUrl), expt.getMessage());
+        }	
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             testAuthenticatedSCDastConnection(unirest, sessionData);
         }
+        catch(UnirestException  expt) {
+        	logoutBeforeNewLogin(sessionName, sessionData);
+        	getSessionHelper().destroy(sessionName);
+        	String scDastUrl = sessionData.getScDastUrlConfig().getUrl();
+        	throw new FcliSimpleException(String.format("SC-DAST is temporarily unavailable. You can still connect to SSC by using the --disable=sc-dast option.\nSSC URL: %s\nSC-DAST URL: %s", sscUrl,scDastUrl), expt.getMessage());
+        }	
     }
 
     private void testAuthenticatedSCSastConnection(UnirestInstance u, SSCAndScanCentralSessionDescriptor sessionData) {
