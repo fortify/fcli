@@ -127,12 +127,18 @@ formatters:
           `SETUP_EXTRA_OPTS`. To allow this action to create new applications, depending on FoD version,
           you may (also) need to provide the `--app-owner <user id or name>` option through `SETUP_EXTRA_OPTS`.
     scan:
-      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS\nDO_SAST_WAIT
+      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
           For now, this fcli action only supports running a SAST scan, which is enabled by default. The
           `SAST_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the `fcli fod sast-scan start`
           command. By default, this action will wait until the scan has been completed, unless `DO_SAST_WAIT`
           is set to `false`; note that any post-scan tasks will be skipped in this case.
+      - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+        desc: >-
+          By default, the scan process is configured to wait until completion. This behavior can be changed by setting
+          DO_SAST_WAIT to 'false'. note that any post-scan tasks will be skipped in this case. Extra options
+          for a custom fcli action can be passed through the `SAST_WAIT_EXTRA_OPTS` environment variable,
+          which may include fcli options to allow unsigned custom actions to be used.
     postScan:
       - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
         desc: >-
@@ -201,12 +207,18 @@ formatters:
           application version representing your default branch by passing the `--copy-from` option through
           `SETUP_EXTRA_OPTS`.
     scan:
-      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS\nDO_SAST_WAIT
+      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
             For now, this fcli action only supports running a SAST scan, which is enabled by default. The
             `SAST_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the `fcli sc-sast scan start`
             command. By default, this action will wait until the scan has been completed, unless `DO_SAST_WAIT`
             is set to `false`; note that any post-scan tasks will be skipped in this case.
+      - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+        desc: >-
+          By default, the scan process is configured to wait until completion. This behavior can be changed by setting
+          DO_SAST_WAIT to 'false'. note that any post-scan tasks will be skipped in this case. Extra options
+          for a custom fcli action can be passed through the `SAST_WAIT_EXTRA_OPTS` environment variable,
+          which may include fcli options to allow unsigned custom actions to be used.
     postScan:
       - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
         desc: >-
