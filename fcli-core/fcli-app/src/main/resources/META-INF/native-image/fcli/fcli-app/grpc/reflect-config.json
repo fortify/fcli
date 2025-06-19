@@ -445,5 +445,14 @@
       { "name" : "channelActive", "parameterTypes" : ["io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext"] },
       { "name" : "userEventTriggered", "parameterTypes" : ["io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext", "java.lang.Object"] }
     ]
+  },
+  {
+    "name": "io.grpc.netty.shaded.io.netty.channel.epoll.EpollSocketChannel",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   }
 ]
