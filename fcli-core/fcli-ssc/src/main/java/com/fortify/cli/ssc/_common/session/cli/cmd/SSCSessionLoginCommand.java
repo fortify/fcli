@@ -27,6 +27,7 @@ import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
+import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -59,11 +60,24 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
         // SSC connection will already have been validated during login, so we only need to
         // verify SC-SAST & SC-DAST connections.
         SSCAndScanCentralSessionDescriptor sessionData = SSCAndScanCentralSessionHelper.instance().get(sessionName, true);
+        String sscUrl = sessionData.getSscUrlConfig().getUrl();
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             testAuthenticatedSCSastConnection(unirest, sessionData);
         }
+        catch(UnirestException  expt) {
+        	logoutBeforeNewLogin(sessionName, sessionData);
+        	getSessionHelper().destroy(sessionName);
+        	String scSastUrl = sessionData.getScSastUrlConfig().getUrl();
+        	throw new FcliSimpleException(String.format("SC-SAST is temporarily unavailable. You can still connect to SSC by using the --disable=sc-sast argument.\nSSC URL: %s\nSC-SAST URL: %s" , sscUrl,scSastUrl), expt.getMessage());
+        }
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             testAuthenticatedSCDastConnection(unirest, sessionData);
+        }
+        catch(UnirestException  expt) {
+        	logoutBeforeNewLogin(sessionName, sessionData);
+        	getSessionHelper().destroy(sessionName);
+        	String scDastUrl = sessionData.getScDastUrlConfig().getUrl();
+        	throw new FcliSimpleException(String.format("SC-DAST is temporarily unavailable. You can still connect to SSC by using the --disable=sc-dast argument.\nSSC URL: %s\nSC-DAST URL: %s", sscUrl,scDastUrl), expt.getMessage());
         }
     }
 
