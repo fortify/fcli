@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,8 +24,12 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data 
 public abstract class AbstractActionElementIf implements IActionStep {
-    @JsonPropertyDescription("""
-        Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'
-        """)
-    @JsonProperty(value = "if", required = false) private TemplateExpression _if;
+	@FCLIActionPropertyMetaInfo(fieldName = "if", fieldDesc = """
+			Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'
+			""")
+	@JsonPropertyDescription("""
+			Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'
+			""")
+	@JsonProperty(value = "if", required = false)
+	private TemplateExpression _if;
 }

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -53,6 +54,11 @@ public final class ActionStepCheckEntry extends AbstractActionElementIf implemen
     // Map key under which this instance was declared
     @JsonIgnore private String key;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "display-name", fieldDesc = """
+        Optional string: Display name of this check, to be displayed in PASS/FAIL messages. \
+        If not defined, the display name will be set to the map key under which this check \
+        is defined.
+        """)
     @JsonPropertyDescription("""
         Optional string: Display name of this check, to be displayed in PASS/FAIL messages. \
         If not defined, the display name will be set to the map key under which this check \
@@ -60,12 +66,22 @@ public final class ActionStepCheckEntry extends AbstractActionElementIf implemen
         """)
     @JsonProperty(value = "display-name", required = true) private String displayName;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "fail.if", fieldDesc = PASS_FAIL_IF)
     @JsonPropertyDescription(PASS_FAIL_IF)
     @JsonProperty(value = "fail.if", required = false) private TemplateExpression failIf;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "pass.if", fieldDesc = PASS_FAIL_IF)
     @JsonPropertyDescription(PASS_FAIL_IF)
     @JsonProperty(value = "pass.if", required = false) private TemplateExpression passIf;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "ifSkipped", fieldDesc = """
+            Optional enum value: Define the check result in case the check is being skipped due to \
+            conditional execution or no records to be processed in forEach blocks. Allowed values:
+            FAIL: Fail the check if it was not executed
+            PASS: Pass the check if it was not executed
+            SKIP: Report that the test was skipped
+            HIDE: Hide the check from output
+            """)
     @JsonPropertyDescription("""
         Optional enum value: Define the check result in case the check is being skipped due to \
         conditional execution or no records to be processed in forEach blocks. Allowed values:
@@ -74,7 +90,7 @@ public final class ActionStepCheckEntry extends AbstractActionElementIf implemen
         SKIP: Report that the test was skipped
         HIDE: Hide the check from output
         """)
-    @JsonProperty(required = false, defaultValue = "SKIP") private CheckStatus ifSkipped = CheckStatus.SKIP;
+    @JsonProperty(value = "ifSkipped", required = false, defaultValue = "SKIP") private CheckStatus ifSkipped = CheckStatus.SKIP;
     
     public final void postLoad(Action action) {
         if ( StringUtils.isBlank(displayName) ) { displayName = key; }

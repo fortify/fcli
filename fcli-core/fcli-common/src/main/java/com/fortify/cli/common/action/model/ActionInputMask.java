@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,23 +27,38 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionInputMask implements IActionElement {
-    @JsonPropertyDescription("""
-        Optional enum value: Option sensitivity; high/medium/low. Default value: high   
-        """)
-    @JsonProperty(value = "sensitivity", required = false) private LogSensitivityLevel sensitivityLevel = LogSensitivityLevel.high;
-    
-    @JsonPropertyDescription("""
-        Optional string: Mask description, used to generate the masked output.
-        """)
-    @JsonProperty(value = "description", required = false) private String description;
-    
-    @JsonPropertyDescription("""
-        Optional string: Pattern for fine-tuning which option value contents should be
-        masked. Every matching regex group will be masked using the given description.
-        If no pattern is defined, or if the pattern doesn't contain any groups, the
-        full option value will be masked.
-        """)
-    @JsonProperty(value = "pattern", required = false) private String pattern;
+	@FCLIActionPropertyMetaInfo(fieldName = "sensitivity", fieldDesc = """
+			Optional enum value: Option sensitivity; high/medium/low. Default value: high
+			""")
+	@JsonPropertyDescription("""
+			Optional enum value: Option sensitivity; high/medium/low. Default value: high
+			""")
+	@JsonProperty(value = "sensitivity", required = false)
+	private LogSensitivityLevel sensitivityLevel = LogSensitivityLevel.high;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "description", fieldDesc = """
+			Optional string: Mask description, used to generate the masked output.
+			""")
+	@JsonPropertyDescription("""
+			Optional string: Mask description, used to generate the masked output.
+			""")
+	@JsonProperty(value = "description", required = false)
+	private String description;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "pattern", fieldDesc = """
+			Optional string: Pattern for fine-tuning which option value contents should be
+			masked. Every matching regex group will be masked using the given description.
+			If no pattern is defined, or if the pattern doesn't contain any groups, the
+			full option value will be masked.
+			""")
+	@JsonPropertyDescription("""
+			Optional string: Pattern for fine-tuning which option value contents should be
+			masked. Every matching regex group will be masked using the given description.
+			If no pattern is defined, or if the pattern doesn't contain any groups, the
+			full option value will be masked.
+			""")
+	@JsonProperty(value = "pattern", required = false)
+	private String pattern;
     
     public final void postLoad(Action action) {
     }

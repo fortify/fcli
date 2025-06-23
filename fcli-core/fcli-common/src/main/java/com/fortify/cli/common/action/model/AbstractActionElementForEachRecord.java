@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,23 +30,38 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractActionElementForEachRecord extends AbstractActionElementIf {
-    @JsonPropertyDescription("""
-        Required string: Variable name to assign to each individual record being processed, allowing \
-        the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined \
-        in the 'do' block through the specified variable name.
-        """)
-    @JsonProperty(value = "record.var-name", required = true) private String varName;
-    
-    @JsonPropertyDescription("""
-        Required list: Steps to be executed for each individual record.
-        """)
-    @JsonProperty(value = "do", required = true)  private List<ActionStep> _do;
-    
-    @JsonPropertyDescription("""
-        Optional SpEL template expression: Stop execution of the steps configured in the \
-        'do' instruction if the breakIf expression evaluates to 'true'.
-        """)
-    @JsonProperty(value = "breakIf", required = false) private TemplateExpression breakIf;
+	@FCLIActionPropertyMetaInfo(fieldName = "record.var-name", fieldDesc = """
+			Required string: Variable name to assign to each individual record being processed, allowing \
+			the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined \
+			in the 'do' block through the specified variable name.
+			""")
+	@JsonPropertyDescription("""
+			Required string: Variable name to assign to each individual record being processed, allowing \
+			the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined \
+			in the 'do' block through the specified variable name.
+			""")
+	@JsonProperty(value = "record.var-name", required = true)
+	private String varName;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "do", fieldDesc = """
+			Required list: Steps to be executed for each individual record.
+			""")
+	@JsonPropertyDescription("""
+			Required list: Steps to be executed for each individual record.
+			""")
+	@JsonProperty(value = "do", required = true)
+	private List<ActionStep> _do;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "breakIf", fieldDesc = """
+			Optional SpEL template expression: Stop execution of the steps configured in the \
+			'do' instruction if the breakIf expression evaluates to 'true'.
+			""")
+	@JsonPropertyDescription("""
+			Optional SpEL template expression: Stop execution of the steps configured in the \
+			'do' instruction if the breakIf expression evaluates to 'true'.
+			""")
+	@JsonProperty(value = "breakIf", required = false)
+	private TemplateExpression breakIf;
     
     /**
      * This method is invoked by the {@link ActionStep#postLoad()}

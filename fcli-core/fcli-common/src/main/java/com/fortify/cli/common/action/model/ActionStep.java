@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -59,229 +60,436 @@ public final class ActionStep extends AbstractActionElementIf {
     // Capture the single non-null property value, indexed by JSON property name
     @JsonIgnore private Map.Entry<String, Object> stepValue;
     
-    @JsonPropertyDescription("""
-        Set one or more variables values for use in later action steps. This step takes a list of variables to \
-        set, with each list item taking a single yaml property that represents the variable name to set, which \
-        may be specified as an SpEL template expression. 
-        
-        Based on the format of the variable name, this step can either set/replace a single-value variable, \
-        set/replace a property on a variable containing a set of properties, or append a value to an array-type \
-        variable. By default, variables are only accessible by the current fcli action, unless they are prefixed \
-        with 'global.', in which case they are also accessible by other actions that execute within the context \
-        of a single fcli command-line invocation. For example, if action 1 uses the run.fcli step to execute action \
-        2, any global variables set in action 1 will be accessibly by action 2, and vice versa. 
-        
-        Following are some examples that show how to specify the operation to perform, and thereby implicitly \
-        declaring the variable type:
-        
-        # Set/replace the single-value variable named 'var1'
-        var1: ...
-        
-        # Set/replace properties 'prop1' and 'prop2' on variable 'var2'
-        var2.prop1: ...
-        var2.prop2: ...
-        
-        # Append two items to the array-type variable 'var3' (two trailing dots) 
-        var3..: ...
-        var3..: ...
-        
-        # Same as above, but setting global variables:
-        global.var1: ...
-        global.var2.prop1: ...
-        global.var2.prop2: ...
-        global.var3..: ...
-        global.var3..: ...
-        
-        # The following would be illegal, as a variable cannot contain both
-        # a set of properties and an array:
-        var4.prop1: ...
-        var4..: ...
-        
-        Due to this syntax, variable names cannot contain dots like 'var.1', as '1' would be \
-        interpreted as a property name on the 'var' variable. Property names may contain dots \
-        though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.
-        
-        Values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
-        properties. An 'if' property is also supported to conditionally set the variable. If \
-        formatter is specified, the given formatter from the 'formatters' section will be used to \
-        format the given value, or, if no value is given, the formatter will be evaluated against \
-        the set of all variables. Some examples:
-        
-        global.name: John Doe
-        simpleValue1: Hello ${global.name}
-        formattedValue1: {fmt: myFormatter, if: "${someExpression}"}
-        formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}     
-        
-        Within a single 'var.set*' step, variables are processed in the order that they are \
-        declared, allowing earlier declared variables to be referenced by variables or \
-        formatters that are declared later in the same step.
-        """)
-    @JsonProperty(value = "var.set", required = false) private LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> varSet;
-    
-    @JsonPropertyDescription("""
-        Remove one or more local or global variables. Variable names to remove can be provided as plain \
-        text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.
-        """)
-    @JsonProperty(value = "var.rm", required = false) private List<TemplateExpression> varRemove;
-    
-    @JsonPropertyDescription("""
-        Write a progress message. Progress messages are usually written to console and log \
-        file directly. Depending on progress writer configuration, progress messages may \
-        disappear when the next progress message is written, or after all action steps have \
-        been executed. If you need to write an information message that is always displayed \
-        to the end user, without the possibility of the message being removed, please use \
-        log.info instead.     
-        """)
-    @JsonProperty(value = "log.progress", required = false) private TemplateExpression logProgress;
-    
-    @JsonPropertyDescription("""
-        Write an informational message to console and log file (if enabled). Note that depending \
-        on the config:output setting, informational messages may be shown either immediately, or \
-        only after all action steps have been executed, to not interfere with progress messages.
-        """)
-    @JsonProperty(value = "log.info", required = false) private TemplateExpression logInfo;
-    
-    @JsonPropertyDescription("""
-        Write a warning message to console and log file (if enabled). Note that depending on the \
-        config:output setting, warning messages may be shown either immediately, or only after all \
-        action steps have been executed, to not interfere with progress messages.
-        """)
-    @JsonProperty(value = "log.warn", required = false) private TemplateExpression logWarn;
-    
-    @JsonPropertyDescription("Write a debug message to log file (if enabled).")
-    @JsonProperty(value = "log.debug", required = false) private TemplateExpression logDebug;
-    
-    @JsonPropertyDescription("""
-        Add REST request targets for use in 'rest.call' steps. This step takes a map, with \
-        keys defining REST target names, and values defining the REST target definition. 
-        """)
-    @JsonProperty(value = "rest.target", required = false) private LinkedHashMap<String, ActionStepRestTargetEntry> restTargets;
-    
-    @JsonPropertyDescription("""
-        Execute one or more REST calls. This step takes a map, with keys defining an indentifier \
-        for the REST call, and values defining the request data and how to process the response. \
-        For paged REST requests, a single 'rest.call' instruction will execute multiple REST \
-        requests to load the individual pages. The response of each individual REST request \
-        will be stored as local action variables. For example, given a rest.call identifier 'x' \
-        the following local action variables will be set:
-        
-        x: The processed response
-        x_raw: The raw, unprocessed response
-        x_exception: Java Exception instance if the request failed
-        
-        These variables can be referenced only within the current 'rest.call' map entry, for \
-        example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible 
-        by later steps or other map entries within the same 'rest.call' step. If you wish to make \
-        any data produced by the REST call available to later steps, you'll need to use 'var.*' \
-        steps in either 'on.success' or 'records.for-each' instructions.
-         
-        Note that multiple REST calls defined within a single 'rest.call' step will be executed \
-        in the specified order, but the requests are built independent of each other. As such, \
-        within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be \
-        accessed in the request definition (uri, query, body, ...) of another map entry. The \
-        reason is that for target systems that supports bulk requests (like SSC), multiple \
-        requests within a single 'rest.call' instruction may be combined into a single bulk \
-        request, so none of the REST responses will be available yet while building the bulk \
-        request. If you need to use the output from one REST call as input for another REST \
-        call, these REST calls should be defined in separate 'rest.call' steps.
-        """)
-    @JsonProperty(value = "rest.call", required = false) private LinkedHashMap<String, ActionStepRestCallEntry> restCalls;
-    
-    @JsonPropertyDescription("""
-        Execute one or more fcli commands. This step takes a map, with map keys defining an identifier \
-        for the fcli invocation, and values defining the fcli command to run and how to process the \
-        output and exit code. The identifier can be used in later steps (or later fcli invocations in \
-        the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and \
-        exit code that were produced by the fcli command, depending on step configuration. For example, 
-        given an fcli invocation identifier named 'x', the following action variables may be set: 
-        
-        x.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'
-        x.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'
-        x.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'
-        x.exitCode: Exit code of the fcli invocation
-        
-        The following action variables may also be set by this fcli step, but these are considered \
-        preview functionality and may be removed or renamed at any time. For now, these are meant to \
-        be used only by built-in fcli actions; custom actions using these action variables may fail to \
-        run on other fcli 3.x versions.
-        
-        x.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration
-        x.skipReason: Reason why execution was skipped; will be null if x.skipped==true
-        x.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)
-        x.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation
-        x.success: Set to true if fcli invocation was successful, false if failed
-        x.failed: Set to true if fcli invocation failed, false if successfull
-        
-        """)
-    @JsonProperty(value = "run.fcli", required = false) private LinkedHashMap<String, ActionStepRunFcliEntry> runFcli;
-    
-    @JsonPropertyDescription("""
-        Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, \
-        and map values defining the data to write to the destination. Destination can be specified as either \
-        stdout, stderr, or a file name. If a file already exists, it will be overwritten. Note that depending \
-        on the config:output setting, data written to stdout or stderr may be shown either immediately, or only \
-        after all action steps have been executed, to not interfere with progress messages.
-        
-        Map values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
-        properties. An 'if' property is also supported to conditionally write to the output. If \
-        formatter is specified, the given formatter from the 'formatters' section will be used to \
-        format the given value, or, if no value is given, the formatter will be evaluated against \
-        the set of all variables. Some examples:
-        
-        /path/to/myFile1: Hello ${name}
-        /path/to/myFile2: {fmt: myFormatter, if: "${someExpression}"}
-        /path/to/myFile3: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}     
-        """)
-    @JsonProperty(value="out.write", required = false) private LinkedHashMap<TemplateExpression, TemplateExpressionWithFormatter> outWrite;
-    
-    @JsonPropertyDescription("""
-        Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, \
-        check results will be written to console and return a non-zero exit code if the outcome of one or more checks \
-        was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check \
-        definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to \
-        conditionally execute additional checks based on earlier check outcome. Note that if the same check name \
-        (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} \
-        will contain the status of the last executed check for the given check name.
-        """)
-    @JsonProperty(value = "check", required = false) private LinkedHashMap<String, ActionStepCheckEntry> check;
-    
-    @JsonPropertyDescription("""
-        Execute the steps defined in the 'do' block for every record provided by the 'from' expression.    
-        """)
-    @JsonProperty(value = "records.for-each", required = false) private ActionStepRecordsForEach recordsForEach;
-    
-    @JsonPropertyDescription("""
-        This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. \
-        This includes the ability to run the do-block within the context of an fcli session, with the session \
-        being created before running the do-block and being terminated afterwards, and the ability to define \
-        writers than can output data in various formats like CSV, appending data to those writers in the do-block, \
-        and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, \
-        these writers support more output formats, and, depending on writer type and configuration, allows for streaming \
-        output, rather than having to collect all data in memory first.
-        """)
-    @JsonProperty(value = "with", required = false) private ActionStepWith with;
-    
-    @JsonPropertyDescription("""
-        This instruction may only be used from within a with:do, with the with:writers instruction defining the writers \
-        that the writer.append instruction can append data to. The given data will be formatted an written according to \
-        the corresponding writer configuration.  
-        """)
-    @JsonProperty(value="writer.append", required = false) private LinkedHashMap<String, TemplateExpressionWithFormatter> writerAppend;
-    
-    @JsonPropertyDescription("""
-        Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.    
-        """)
-    @JsonProperty(value = "steps", required = false) private List<ActionStep> steps;
-    
-    @JsonPropertyDescription("""
-        Throw an exception, thereby terminating action execution.
-        """)
-    @JsonProperty(value = "throw", required = false) private TemplateExpression _throw;
-    
-    @JsonPropertyDescription("""
-        Terminate action execution and return the given exit code.
-        """)
-    @JsonProperty(value = "exit", required = false) private TemplateExpression _exit;
+	@FCLIActionPropertyMetaInfo(fieldName = "var.set", fieldDesc = """
+			Set one or more variables values for use in later action steps. This step takes a list of variables to \
+			set, with each list item taking a single yaml property that represents the variable name to set, which \
+			may be specified as an SpEL template expression.
+
+			Based on the format of the variable name, this step can either set/replace a single-value variable, \
+			set/replace a property on a variable containing a set of properties, or append a value to an array-type \
+			variable. By default, variables are only accessible by the current fcli action, unless they are prefixed \
+			with 'global.', in which case they are also accessible by other actions that execute within the context \
+			of a single fcli command-line invocation. For example, if action 1 uses the run.fcli step to execute action \
+			2, any global variables set in action 1 will be accessibly by action 2, and vice versa.
+
+			Following are some examples that show how to specify the operation to perform, and thereby implicitly \
+			declaring the variable type:
+
+			# Set/replace the single-value variable named 'var1'
+			var1: ...
+
+			# Set/replace properties 'prop1' and 'prop2' on variable 'var2'
+			var2.prop1: ...
+			var2.prop2: ...
+
+			# Append two items to the array-type variable 'var3' (two trailing dots)
+			var3..: ...
+			var3..: ...
+
+			# Same as above, but setting global variables:
+			global.var1: ...
+			global.var2.prop1: ...
+			global.var2.prop2: ...
+			global.var3..: ...
+			global.var3..: ...
+
+			# The following would be illegal, as a variable cannot contain both
+			# a set of properties and an array:
+			var4.prop1: ...
+			var4..: ...
+
+			Due to this syntax, variable names cannot contain dots like 'var.1', as '1' would be \
+			interpreted as a property name on the 'var' variable. Property names may contain dots \
+			though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.
+
+			Values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
+			properties. An 'if' property is also supported to conditionally set the variable. If \
+			formatter is specified, the given formatter from the 'formatters' section will be used to \
+			format the given value, or, if no value is given, the formatter will be evaluated against \
+			the set of all variables. Some examples:
+
+			global.name: John Doe
+			simpleValue1: Hello ${global.name}
+			formattedValue1: {fmt: myFormatter, if: "${someExpression}"}
+			formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}
+
+			Within a single 'var.set*' step, variables are processed in the order that they are \
+			declared, allowing earlier declared variables to be referenced by variables or \
+			formatters that are declared later in the same step.
+			""")
+	@JsonPropertyDescription("""
+			Set one or more variables values for use in later action steps. This step takes a list of variables to \
+			set, with each list item taking a single yaml property that represents the variable name to set, which \
+			may be specified as an SpEL template expression.
+
+			Based on the format of the variable name, this step can either set/replace a single-value variable, \
+			set/replace a property on a variable containing a set of properties, or append a value to an array-type \
+			variable. By default, variables are only accessible by the current fcli action, unless they are prefixed \
+			with 'global.', in which case they are also accessible by other actions that execute within the context \
+			of a single fcli command-line invocation. For example, if action 1 uses the run.fcli step to execute action \
+			2, any global variables set in action 1 will be accessibly by action 2, and vice versa.
+
+			Following are some examples that show how to specify the operation to perform, and thereby implicitly \
+			declaring the variable type:
+
+			# Set/replace the single-value variable named 'var1'
+			var1: ...
+
+			# Set/replace properties 'prop1' and 'prop2' on variable 'var2'
+			var2.prop1: ...
+			var2.prop2: ...
+
+			# Append two items to the array-type variable 'var3' (two trailing dots)
+			var3..: ...
+			var3..: ...
+
+			# Same as above, but setting global variables:
+			global.var1: ...
+			global.var2.prop1: ...
+			global.var2.prop2: ...
+			global.var3..: ...
+			global.var3..: ...
+
+			# The following would be illegal, as a variable cannot contain both
+			# a set of properties and an array:
+			var4.prop1: ...
+			var4..: ...
+
+			Due to this syntax, variable names cannot contain dots like 'var.1', as '1' would be \
+			interpreted as a property name on the 'var' variable. Property names may contain dots \
+			though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.
+
+			Values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
+			properties. An 'if' property is also supported to conditionally set the variable. If \
+			formatter is specified, the given formatter from the 'formatters' section will be used to \
+			format the given value, or, if no value is given, the formatter will be evaluated against \
+			the set of all variables. Some examples:
+
+			global.name: John Doe
+			simpleValue1: Hello ${global.name}
+			formattedValue1: {fmt: myFormatter, if: "${someExpression}"}
+			formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}
+
+			Within a single 'var.set*' step, variables are processed in the order that they are \
+			declared, allowing earlier declared variables to be referenced by variables or \
+			formatters that are declared later in the same step.
+			""")
+	@JsonProperty(value = "var.set", required = false)
+	private LinkedHashMap<TemplateExpression, TemplateExpressionWithFormatter> varSet;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "var.rm", fieldDesc = """
+			Remove one or more local or global variables. Variable names to remove can be provided as plain \
+			text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.
+			""")
+	@JsonPropertyDescription("""
+			Remove one or more local or global variables. Variable names to remove can be provided as plain \
+			text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.
+			""")
+	@JsonProperty(value = "var.rm", required = false)
+	private List<TemplateExpression> varRemove;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "log.progress", fieldDesc = """
+			Write a progress message. Progress messages are usually written to console and log \
+			file directly. Depending on progress writer configuration, progress messages may \
+			disappear when the next progress message is written, or after all action steps have \
+			been executed. If you need to write an information message that is always displayed \
+			to the end user, without the possibility of the message being removed, please use \
+			log.info instead.
+			""")
+	@JsonPropertyDescription("""
+			Write a progress message. Progress messages are usually written to console and log \
+			file directly. Depending on progress writer configuration, progress messages may \
+			disappear when the next progress message is written, or after all action steps have \
+			been executed. If you need to write an information message that is always displayed \
+			to the end user, without the possibility of the message being removed, please use \
+			log.info instead.
+			""")
+	@JsonProperty(value = "log.progress", required = false)
+	private TemplateExpression logProgress;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "log.info", fieldDesc = """
+			Write an informational message to console and log file (if enabled). Note that depending \
+			on the config:output setting, informational messages may be shown either immediately, or \
+			only after all action steps have been executed, to not interfere with progress messages.
+			""")
+	@JsonPropertyDescription("""
+			Write an informational message to console and log file (if enabled). Note that depending \
+			on the config:output setting, informational messages may be shown either immediately, or \
+			only after all action steps have been executed, to not interfere with progress messages.
+			""")
+	@JsonProperty(value = "log.info", required = false)
+	private TemplateExpression logInfo;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "log.warn", fieldDesc = """
+			Write a warning message to console and log file (if enabled). Note that depending on the \
+			config:output setting, warning messages may be shown either immediately, or only after all \
+			action steps have been executed, to not interfere with progress messages.
+			""")
+	@JsonPropertyDescription("""
+			Write a warning message to console and log file (if enabled). Note that depending on the \
+			config:output setting, warning messages may be shown either immediately, or only after all \
+			action steps have been executed, to not interfere with progress messages.
+			""")
+	@JsonProperty(value = "log.warn", required = false)
+	private TemplateExpression logWarn;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "log.debug", fieldDesc = "Write a debug message to log file (if enabled).")
+	@JsonPropertyDescription("Write a debug message to log file (if enabled).")
+	@JsonProperty(value = "log.debug", required = false)
+	private TemplateExpression logDebug;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "rest.target", fieldDesc = """
+			Add REST request targets for use in 'rest.call' steps. This step takes a map, with \
+			keys defining REST target names, and values defining the REST target definition.
+			""")
+	@JsonPropertyDescription("""
+			Add REST request targets for use in 'rest.call' steps. This step takes a map, with \
+			keys defining REST target names, and values defining the REST target definition.
+			""")
+	@JsonProperty(value = "rest.target", required = false)
+	private LinkedHashMap<String, ActionStepRestTargetEntry> restTargets;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "rest.call", fieldDesc = """
+			Execute one or more REST calls. This step takes a map, with keys defining an indentifier \
+			for the REST call, and values defining the request data and how to process the response. \
+			For paged REST requests, a single 'rest.call' instruction will execute multiple REST \
+			requests to load the individual pages. The response of each individual REST request \
+			will be stored as local action variables. For example, given a rest.call identifier 'x' \
+			the following local action variables will be set:
+
+			x: The processed response
+			x_raw: The raw, unprocessed response
+			x_exception: Java Exception instance if the request failed
+
+			These variables can be referenced only within the current 'rest.call' map entry, for \
+			example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible
+			by later steps or other map entries within the same 'rest.call' step. If you wish to make \
+			any data produced by the REST call available to later steps, you'll need to use 'var.*' \
+			steps in either 'on.success' or 'records.for-each' instructions.
+
+			Note that multiple REST calls defined within a single 'rest.call' step will be executed \
+			in the specified order, but the requests are built independent of each other. As such, \
+			within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be \
+			accessed in the request definition (uri, query, body, ...) of another map entry. The \
+			reason is that for target systems that supports bulk requests (like SSC), multiple \
+			requests within a single 'rest.call' instruction may be combined into a single bulk \
+			request, so none of the REST responses will be available yet while building the bulk \
+			request. If you need to use the output from one REST call as input for another REST \
+			call, these REST calls should be defined in separate 'rest.call' steps.
+			""")
+	@JsonPropertyDescription("""
+			Execute one or more REST calls. This step takes a map, with keys defining an indentifier \
+			for the REST call, and values defining the request data and how to process the response. \
+			For paged REST requests, a single 'rest.call' instruction will execute multiple REST \
+			requests to load the individual pages. The response of each individual REST request \
+			will be stored as local action variables. For example, given a rest.call identifier 'x' \
+			the following local action variables will be set:
+
+			x: The processed response
+			x_raw: The raw, unprocessed response
+			x_exception: Java Exception instance if the request failed
+
+			These variables can be referenced only within the current 'rest.call' map entry, for \
+			example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible
+			by later steps or other map entries within the same 'rest.call' step. If you wish to make \
+			any data produced by the REST call available to later steps, you'll need to use 'var.*' \
+			steps in either 'on.success' or 'records.for-each' instructions.
+
+			Note that multiple REST calls defined within a single 'rest.call' step will be executed \
+			in the specified order, but the requests are built independent of each other. As such, \
+			within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be \
+			accessed in the request definition (uri, query, body, ...) of another map entry. The \
+			reason is that for target systems that supports bulk requests (like SSC), multiple \
+			requests within a single 'rest.call' instruction may be combined into a single bulk \
+			request, so none of the REST responses will be available yet while building the bulk \
+			request. If you need to use the output from one REST call as input for another REST \
+			call, these REST calls should be defined in separate 'rest.call' steps.
+			""")
+	@JsonProperty(value = "rest.call", required = false)
+	private LinkedHashMap<String, ActionStepRestCallEntry> restCalls;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "run.fcli", fieldDesc = """
+			Execute one or more fcli commands. This step takes a map, with map keys defining an identifier \
+			for the fcli invocation, and values defining the fcli command to run and how to process the \
+			output and exit code. The identifier can be used in later steps (or later fcli invocations in \
+			the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and \
+			exit code that were produced by the fcli command, depending on step configuration. For example,
+			given an fcli invocation identifier named 'x', the following action variables may be set:
+
+			x.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'
+			x.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'
+			x.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'
+			x.exitCode: Exit code of the fcli invocation
+
+			The following action variables may also be set by this fcli step, but these are considered \
+			preview functionality and may be removed or renamed at any time. For now, these are meant to \
+			be used only by built-in fcli actions; custom actions using these action variables may fail to \
+			run on other fcli 3.x versions.
+
+			x.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration
+			x.skipReason: Reason why execution was skipped; will be null if x.skipped==true
+			x.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)
+			x.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation
+			x.success: Set to true if fcli invocation was successful, false if failed
+			x.failed: Set to true if fcli invocation failed, false if successfull
+
+			""")
+	@JsonPropertyDescription("""
+			Execute one or more fcli commands. This step takes a map, with map keys defining an identifier \
+			for the fcli invocation, and values defining the fcli command to run and how to process the \
+			output and exit code. The identifier can be used in later steps (or later fcli invocations in \
+			the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and \
+			exit code that were produced by the fcli command, depending on step configuration. For example,
+			given an fcli invocation identifier named 'x', the following action variables may be set:
+
+			x.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'
+			x.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'
+			x.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'
+			x.exitCode: Exit code of the fcli invocation
+
+			The following action variables may also be set by this fcli step, but these are considered \
+			preview functionality and may be removed or renamed at any time. For now, these are meant to \
+			be used only by built-in fcli actions; custom actions using these action variables may fail to \
+			run on other fcli 3.x versions.
+
+			x.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration
+			x.skipReason: Reason why execution was skipped; will be null if x.skipped==true
+			x.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)
+			x.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation
+			x.success: Set to true if fcli invocation was successful, false if failed
+			x.failed: Set to true if fcli invocation failed, false if successfull
+
+			""")
+	@JsonProperty(value = "run.fcli", required = false)
+	private LinkedHashMap<String, ActionStepRunFcliEntry> runFcli;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "out.write", fieldDesc = """
+			Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, \
+			and map values defining the data to write to the destination. Destination can be specified as either \
+			stdout, stderr, or a file name. If a file already exists, it will be overwritten. Note that depending \
+			on the config:output setting, data written to stdout or stderr may be shown either immediately, or only \
+			after all action steps have been executed, to not interfere with progress messages.
+
+			Map values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
+			properties. An 'if' property is also supported to conditionally write to the output. If \
+			formatter is specified, the given formatter from the 'formatters' section will be used to \
+			format the given value, or, if no value is given, the formatter will be evaluated against \
+			the set of all variables. Some examples:
+
+			/path/to/myFile1: Hello ${name}
+			/path/to/myFile2: {fmt: myFormatter, if: "${someExpression}"}
+			/path/to/myFile3: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}
+			""")
+	@JsonPropertyDescription("""
+			Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, \
+			and map values defining the data to write to the destination. Destination can be specified as either \
+			stdout, stderr, or a file name. If a file already exists, it will be overwritten. Note that depending \
+			on the config:output setting, data written to stdout or stderr may be shown either immediately, or only \
+			after all action steps have been executed, to not interfere with progress messages.
+
+			Map values may be specified as either an SpEL template expression, or as 'value' and 'fmt' \
+			properties. An 'if' property is also supported to conditionally write to the output. If \
+			formatter is specified, the given formatter from the 'formatters' section will be used to \
+			format the given value, or, if no value is given, the formatter will be evaluated against \
+			the set of all variables. Some examples:
+
+			/path/to/myFile1: Hello ${name}
+			/path/to/myFile2: {fmt: myFormatter, if: "${someExpression}"}
+			/path/to/myFile3: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}
+			""")
+	@JsonProperty(value = "out.write", required = false)
+	private LinkedHashMap<TemplateExpression, TemplateExpressionWithFormatter> outWrite;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "check", fieldDesc = """
+			Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, \
+			check results will be written to console and return a non-zero exit code if the outcome of one or more checks \
+			was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check \
+			definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to \
+			conditionally execute additional checks based on earlier check outcome. Note that if the same check name \
+			(map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} \
+			will contain the status of the last executed check for the given check name.
+			""")
+	@JsonPropertyDescription("""
+			Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, \
+			check results will be written to console and return a non-zero exit code if the outcome of one or more checks \
+			was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check \
+			definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to \
+			conditionally execute additional checks based on earlier check outcome. Note that if the same check name \
+			(map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} \
+			will contain the status of the last executed check for the given check name.
+			""")
+	@JsonProperty(value = "check", required = false)
+	private LinkedHashMap<String, ActionStepCheckEntry> check;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "records.for-each", fieldDesc = """
+			Execute the steps defined in the 'do' block for every record provided by the 'from' expression.
+			""")
+	@JsonPropertyDescription("""
+			Execute the steps defined in the 'do' block for every record provided by the 'from' expression.
+			""")
+	@JsonProperty(value = "records.for-each", required = false)
+	private ActionStepRecordsForEach recordsForEach;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "with", fieldDesc = """
+			This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. \
+			This includes the ability to run the do-block within the context of an fcli session, with the session \
+			being created before running the do-block and being terminated afterwards, and the ability to define \
+			writers than can output data in various formats like CSV, appending data to those writers in the do-block, \
+			and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, \
+			these writers support more output formats, and, depending on writer type and configuration, allows for streaming \
+			output, rather than having to collect all data in memory first.
+			""")
+	@JsonPropertyDescription("""
+			This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. \
+			This includes the ability to run the do-block within the context of an fcli session, with the session \
+			being created before running the do-block and being terminated afterwards, and the ability to define \
+			writers than can output data in various formats like CSV, appending data to those writers in the do-block, \
+			and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, \
+			these writers support more output formats, and, depending on writer type and configuration, allows for streaming \
+			output, rather than having to collect all data in memory first.
+			""")
+	@JsonProperty(value = "with", required = false)
+	private ActionStepWith with;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "writer.append", fieldDesc = """
+			This instruction may only be used from within a with:do, with the with:writers instruction defining the writers \
+			that the writer.append instruction can append data to. The given data will be formatted an written according to \
+			the corresponding writer configuration.
+			""")
+	@JsonPropertyDescription("""
+			This instruction may only be used from within a with:do, with the with:writers instruction defining the writers \
+			that the writer.append instruction can append data to. The given data will be formatted an written according to \
+			the corresponding writer configuration.
+			""")
+	@JsonProperty(value = "writer.append", required = false)
+	private LinkedHashMap<String, TemplateExpressionWithFormatter> writerAppend;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "steps", fieldDesc = """
+			Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.
+			""")
+	@JsonPropertyDescription("""
+			Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.
+			""")
+	@JsonProperty(value = "steps", required = false)
+	private List<ActionStep> steps;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "throw", fieldDesc = """
+			Throw an exception, thereby terminating action execution.
+			""")
+	@JsonPropertyDescription("""
+			Throw an exception, thereby terminating action execution.
+			""")
+	@JsonProperty(value = "throw", required = false)
+	private TemplateExpression _throw;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "exit", fieldDesc = """
+			Terminate action execution and return the given exit code.
+			""")
+	@JsonPropertyDescription("""
+			Terminate action execution and return the given exit code.
+			""")
+	@JsonProperty(value = "exit", required = false)
+	private TemplateExpression _exit;
     
     /**
      * This method is invoked by the parent element (which may either be another

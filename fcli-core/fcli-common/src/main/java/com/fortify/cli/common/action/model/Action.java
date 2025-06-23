@@ -42,6 +42,7 @@ import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,56 +68,100 @@ import lombok.ToString;
 @Data
 @JsonClassDescription("Fortify CLI action definition")
 public class Action implements IActionElement {
-    @JsonPropertyDescription("""
-        Required string unless `yaml-language-server` comment with schema location is provided: Defines the fcli \
-        action YAML schema version used by this action. When a user tries to run this action, fcli will check \
-        whether the current fcli version is compatible with the given action schema version.   
-        """)
-    @JsonProperty(value = "$schema", required=false) public String schema;
-    
-    @JsonPropertyDescription("""
-        Required string: Author of this action. This is a free-format string, allowing action users to see who \
-        provided this action.   
-        """)
-    @JsonProperty(value = "author", required = true) private String author;
-    
-    @JsonPropertyDescription("""
-        Required object: Action usage help, providing action usage instructions for users of this action. For \
-        example, this information may be included in action documentation, or can be viewed by users through \
-        the 'fcli * action help' command.
-        """)
-    @JsonProperty(value = "usage", required = true) private ActionUsage usage;
-    
-    @JsonPropertyDescription("""
-        Optional object: Action configuration properties. This includes configuration properties for setting \
-        default values to be used by some action steps, or how action output should be processed.
-        """)
-    @JsonProperty(value = "config", required = false) private ActionConfig config= new ActionConfig();
-    
-    @JsonPropertyDescription("""
-        Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which \
-        can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values \
-        define option definitions like option names that can be specified on the command line, option description, ...
-        """)
-    @JsonProperty(value = "cli.options", required = false) private Map<String, ActionCliOption> cliOptions = Collections.emptyMap();
-    
-    @JsonPropertyDescription("""
-        Required list: Steps to be executed when this action is being run. Each list item should consist of a \
-        single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional \
-        execution. Note that the YAML schema allows for multiple instructions to be present within a single list \
-        item, but this will result in an error.
-        """)
-    @JsonProperty(value = "steps", required = true) private ArrayList<ActionStep> steps;
-    
-    @JsonPropertyDescription("""
-        Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter \
-        name, map values define how the data should be formatted. Each formatter can be defined as either a single \
-        string or a structured YAML object. Every string value in the formatter will be processed as a Spring \
-        Expression Language expression, allowing access to current action variables and SpEL functions. For example, \
-        if action variable 'name' is currently set to 'John Doe', a formatter node like 'hello: Hello ${name}' \
-        will set the property 'hello' to 'Hello John Doe'.
-        """)
-    @JsonProperty(value = "formatters", required = false) private Map<String, JsonNode> formatters = Collections.emptyMap();
+	@FCLIActionPropertyMetaInfo(fieldName = "$schema", fieldDesc = """
+			Required string unless `yaml-language-server` comment with schema location is provided: Defines the fcli \
+			action YAML schema version used by this action. When a user tries to run this action, fcli will check \
+			whether the current fcli version is compatible with the given action schema version.
+			""")
+	@JsonPropertyDescription("""
+			Required string unless `yaml-language-server` comment with schema location is provided: Defines the fcli \
+			action YAML schema version used by this action. When a user tries to run this action, fcli will check \
+			whether the current fcli version is compatible with the given action schema version.
+			""")
+	@JsonProperty(value = "$schema", required = false)
+	public String schema;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "author", fieldDesc = """
+			Required string: Author of this action. This is a free-format string, allowing action users to see who \
+			provided this action.
+			""")
+	@JsonPropertyDescription("""
+			Required string: Author of this action. This is a free-format string, allowing action users to see who \
+			provided this action.
+			""")
+	@JsonProperty(value = "author", required = true)
+	private String author;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "usage", fieldDesc = """
+			Required object: Action usage help, providing action usage instructions for users of this action. For \
+			example, this information may be included in action documentation, or can be viewed by users through \
+			the 'fcli * action help' command.
+			""")
+	@JsonPropertyDescription("""
+			Required object: Action usage help, providing action usage instructions for users of this action. For \
+			example, this information may be included in action documentation, or can be viewed by users through \
+			the 'fcli * action help' command.
+			""")
+	@JsonProperty(value = "usage", required = true)
+	private ActionUsage usage;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "config", fieldDesc = """
+			Optional object: Action configuration properties. This includes configuration properties for setting \
+			default values to be used by some action steps, or how action output should be processed.
+			""")
+	@JsonPropertyDescription("""
+			Optional object: Action configuration properties. This includes configuration properties for setting \
+			default values to be used by some action steps, or how action output should be processed.
+			""")
+	@JsonProperty(value = "config", required = false)
+	private ActionConfig config = new ActionConfig();
+
+	@FCLIActionPropertyMetaInfo(fieldName = "cli.options", fieldDesc = """
+			Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which \
+			can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values \
+			define option definitions like option names that can be specified on the command line, option description, ...
+			""")
+	@JsonPropertyDescription("""
+			Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which \
+			can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values \
+			define option definitions like option names that can be specified on the command line, option description, ...
+			""")
+	@JsonProperty(value = "cli.options", required = false)
+	private Map<String, ActionCliOption> cliOptions = Collections.emptyMap();
+
+	@FCLIActionPropertyMetaInfo(fieldName = "steps", fieldDesc = """
+			Required list: Steps to be executed when this action is being run. Each list item should consist of a \
+			single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional \
+			execution. Note that the YAML schema allows for multiple instructions to be present within a single list \
+			item, but this will result in an error.
+			""")
+	@JsonPropertyDescription("""
+			Required list: Steps to be executed when this action is being run. Each list item should consist of a \
+			single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional \
+			execution. Note that the YAML schema allows for multiple instructions to be present within a single list \
+			item, but this will result in an error.
+			""")
+	@JsonProperty(value = "steps", required = true)
+	private ArrayList<ActionStep> steps;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "formatters", fieldDesc = """
+			Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter \
+			name, map values define how the data should be formatted. Each formatter can be defined as either a single \
+			string or a structured YAML object. Every string value in the formatter will be processed as a Spring \
+			Expression Language expression, allowing access to current action variables and SpEL functions. For example, \
+			if action variable 'name' is currently set to 'John Doe', a formatter node like 'hello: Hello ${name}' \
+			will set the property 'hello' to 'Hello John Doe'.
+			""")
+	@JsonPropertyDescription("""
+			Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter \
+			name, map values define how the data should be formatted. Each formatter can be defined as either a single \
+			string or a structured YAML object. Every string value in the formatter will be processed as a Spring \
+			Expression Language expression, allowing access to current action variables and SpEL functions. For example, \
+			if action variable 'name' is currently set to 'John Doe', a formatter node like 'hello: Hello ${name}' \
+			will set the property 'hello' to 'Hello John Doe'.
+			""")
+	@JsonProperty(value = "formatters", required = false)
+	private Map<String, JsonNode> formatters = Collections.emptyMap();
     
     @JsonIgnore ActionMetadata metadata;
     /** Maps/Collections listing action elements. 

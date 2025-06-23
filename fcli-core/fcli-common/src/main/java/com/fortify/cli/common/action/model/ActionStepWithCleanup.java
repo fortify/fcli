@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,13 +33,22 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 public final class ActionStepWithCleanup implements IActionElement {
     // TODO Add property that allows for installing a shutdown hook
-    @JsonPropertyDescription("""
+    @FCLIActionPropertyMetaInfo(fieldName = "init", fieldDesc = """
+            Required list of initialization steps to be run before the steps in the do-block will be \
+            run. If initialization fails, the steps in the do-block will not be run, but steps in the \
+            cleanup-block will still be run.
+            """)
+	@JsonPropertyDescription("""
         Required list of initialization steps to be run before the steps in the do-block will be \
         run. If initialization fails, the steps in the do-block will not be run, but steps in the \
         cleanup-block will still be run.
         """)
     @JsonProperty(value = "init", required = true) private List<ActionStep> initSteps;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "cleanup", fieldDesc = """
+        Required list of cleanup steps. These steps will run even if the initialization steps or \
+        the steps in the do-block terminated with a failure.
+        """)
     @JsonPropertyDescription("""
         Required list of cleanup steps. These steps will run even if the initialization steps or \
         the steps in the do-block terminated with a failure.

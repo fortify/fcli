@@ -21,6 +21,7 @@ import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +34,19 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonInclude(Include.NON_NULL)
 public final class ActionStepWithWriter implements IActionElement {
-    @JsonPropertyDescription("""
+    @FCLIActionPropertyMetaInfo(fieldName = "to", fieldDesc = """
+        Required SpEL template expression; destination where to write the output of this writer. \
+        Destination can be specified as one of the following: 
+        
+        - A file name to write the output to
+        - 'stdout' to write the output to stdout
+        - 'stderr' to write the output to stderr
+        - 'var:varName' to write the output as text into the given 'varName' action variable  
+        
+        With 'var:varName', the given variable name will be available to steps after the current \
+        'with' block has completed. 
+        """)
+	@JsonPropertyDescription("""
         Required SpEL template expression; destination where to write the output of this writer. \
         Destination can be specified as one of the following: 
         
@@ -47,6 +60,10 @@ public final class ActionStepWithWriter implements IActionElement {
         """)
     @JsonProperty(value = "to", required = true) private TemplateExpression to;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "type", fieldDesc = """
+        Required SpEL template expression defining the writer type. The evaluated \
+        expression must evaluate to one of the following types:
+        """)
     @JsonPropertyDescription("""
         Required SpEL template expression defining the writer type. The evaluated \
         expression must evaluate to one of the following types:
@@ -54,6 +71,13 @@ public final class ActionStepWithWriter implements IActionElement {
     @JsonPropertyDescriptionAppend(RecordWriterFactory.class)
     @JsonProperty(value = "type", required = true) private TemplateExpression type;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "type-args", fieldDesc = """
+        Optional SpEL template expression defining arguments for the given writer type. \
+        In most cases, it's much easier to just pass an already formatted object to \
+        the 'writer.append' step; this 'type-args' instruction is just meant to provide \
+        feature parity with the fcli '--output type=args' command line option. See \
+        fcli documentation for details on supported options for the various writer types.
+        """)
     @JsonPropertyDescription("""
         Optional SpEL template expression defining arguments for the given writer type. \
         In most cases, it's much easier to just pass an already formatted object to \
@@ -63,6 +87,11 @@ public final class ActionStepWithWriter implements IActionElement {
         """)
     @JsonProperty(value = "type-args", required = false) private TemplateExpression typeArgs;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "style", fieldDesc = """
+        Optional SpEL template expression defining the writer style. If specified, \
+        the expression should evaluate to a comma-separated list of style elements \
+        to be applied to the output. Supported style elements:
+        """)
     @JsonPropertyDescription("""
         Optional SpEL template expression defining the writer style. If specified, \
         the expression should evaluate to a comma-separated list of style elements \

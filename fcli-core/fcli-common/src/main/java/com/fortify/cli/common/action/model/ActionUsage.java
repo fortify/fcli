@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,9 +27,17 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionUsage implements IActionElement {
+	@FCLIActionPropertyMetaInfo(fieldName = "header", fieldDesc = "Required string: Action usage header, displayed in list and help outputs")
     @JsonPropertyDescription("Required string: Action usage header, displayed in list and help outputs")
     @JsonProperty(value = "header", required = true) private String header;
     
+	@FCLIActionPropertyMetaInfo(fieldName = "description", fieldDesc = """
+	        Required SpEL template expression: Action usage description, displayed in help output and online documentation. \
+	        The template expression can reference the 'isAsciiDoc' and 'isPlainText' properties to determine whether the \
+	        contents are to be rendered as AsciiDoc (for online documentation) or plain text (for help output). For internal \
+	        use only, the template expression can utilize the '#include('path/to/classpath/resource') function to include \
+	        contents of a class path resource. 
+	        """)
     @JsonPropertyDescription("""
         Required SpEL template expression: Action usage description, displayed in help output and online documentation. \
         The template expression can reference the 'isAsciiDoc' and 'isPlainText' properties to determine whether the \

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,47 +32,82 @@ import lombok.NoArgsConstructor;
 public final class ActionCliOption implements IActionElement, IMapKeyAware<String> {
     @JsonIgnore private String key;
     
-    @JsonPropertyDescription("""
-        Required string: The option names allowed on the command line to specify a value \
-        for this option. Multi-letter option names should be preceded by double dashes like \
-        --option-name, single-letter option names should be preceded by a single dash like\
-        -o. Multiple option names may be separated by a comma and optional whitespace, for \
-        example:
-        options: --option, -o
-        """)
-    @JsonProperty(value = "names", required = true) private String names;
-    
-    @JsonPropertyDescription("""
-        Required string: Action parameter description to be shown in action usage help.    
-        """)
-    @JsonProperty(value = "description", required = true) private String description;
-    
-    @JsonPropertyDescription("""
-        Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array.
-        """)
-    @JsonProperty(value = "type", required = false) private String type;
-        
-    @JsonPropertyDescription("""
-        Optional SpEL template expression: Default value for this CLI option if no value is specified by the user. \
-        For example, this can be used to read a default value from an environment variable using ${#env('ENV_NAME')}  
-        """)
-    @JsonProperty(value = "default", required = false) private TemplateExpression defaultValue;
-    
-    @JsonPropertyDescription("""
-        Optional boolean: CLI options are required by default, unless this property is set to false.    
-        """)
-    @JsonProperty(value = "required", required = false, defaultValue = "true") private boolean required = true;
-    
-    @JsonPropertyDescription("""
-        Optional object: Mask option value in the fcli log file using the given mask configuration.
-        """)
-    @JsonProperty(value = "mask", required = false) private ActionInputMask mask;
-    
-    @JsonPropertyDescription("""
-        Optional string: Allows for defining groups of options, which can for example be used with \
-        ${#action.copyParametersFromGroup("optionGroupName")} 
-        """)
-    @JsonProperty(value = "group", required = false) private String group;
+	@FCLIActionPropertyMetaInfo(fieldName = "names", fieldDesc = """
+			Required string: The option names allowed on the command line to specify a value \
+			for this option. Multi-letter option names should be preceded by double dashes like \
+			--option-name, single-letter option names should be preceded by a single dash like\
+			-o. Multiple option names may be separated by a comma and optional whitespace, for \
+			example:
+			options: --option, -o
+			""")
+	@JsonPropertyDescription("""
+			Required string: The option names allowed on the command line to specify a value \
+			for this option. Multi-letter option names should be preceded by double dashes like \
+			--option-name, single-letter option names should be preceded by a single dash like\
+			-o. Multiple option names may be separated by a comma and optional whitespace, for \
+			example:
+			options: --option, -o
+			""")
+	@JsonProperty(value = "names", required = true)
+	private String names;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "description", fieldDesc = """
+			Required string: Action parameter description to be shown in action usage help.
+			""")
+	@JsonPropertyDescription("""
+			Required string: Action parameter description to be shown in action usage help.
+			""")
+	@JsonProperty(value = "description", required = true)
+	private String description;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "type", fieldDesc = """
+			Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array.
+			""")
+	@JsonPropertyDescription("""
+			Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array.
+			""")
+	@JsonProperty(value = "type", required = false)
+	private String type;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "default", fieldDesc = """
+			Optional SpEL template expression: Default value for this CLI option if no value is specified by the user. \
+			For example, this can be used to read a default value from an environment variable using ${#env('ENV_NAME')}
+			""")
+	@JsonPropertyDescription("""
+			Optional SpEL template expression: Default value for this CLI option if no value is specified by the user. \
+			For example, this can be used to read a default value from an environment variable using ${#env('ENV_NAME')}
+			""")
+	@JsonProperty(value = "default", required = false)
+	private TemplateExpression defaultValue;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "required", fieldDesc = """
+			Optional boolean: CLI options are required by default, unless this property is set to false.
+			""")
+	@JsonPropertyDescription("""
+			Optional boolean: CLI options are required by default, unless this property is set to false.
+			""")
+	@JsonProperty(value = "required", required = false, defaultValue = "true")
+	private boolean required = true;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "mask", fieldDesc = """
+			Optional object: Mask option value in the fcli log file using the given mask configuration.
+			""")
+	@JsonPropertyDescription("""
+			Optional object: Mask option value in the fcli log file using the given mask configuration.
+			""")
+	@JsonProperty(value = "mask", required = false)
+	private ActionInputMask mask;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "group", fieldDesc = """
+			Optional string: Allows for defining groups of options, which can for example be used with \
+			${#action.copyParametersFromGroup("optionGroupName")}
+			""")
+	@JsonPropertyDescription("""
+			Optional string: Allows for defining groups of options, which can for example be used with \
+			${#action.copyParametersFromGroup("optionGroupName")}
+			""")
+	@JsonProperty(value = "group", required = false)
+	private String group;
     
     @JsonIgnore public final String[] getNamesAsArray() {
         return names==null ? null : names.split("[\\s,]+");

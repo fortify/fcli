@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,12 +31,20 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonInclude(Include.NON_NULL)
 public final class ActionStepWithSession implements IActionElement {
-    @JsonPropertyDescription("""
+    @FCLIActionPropertyMetaInfo(fieldName = "login", fieldDesc = """
+        Required SpEL template expression; the session login command to run before running \
+        the steps specified in the do-block.
+        """)
+	@JsonPropertyDescription("""
         Required SpEL template expression; the session login command to run before running \
         the steps specified in the do-block.
         """)
     @JsonProperty(value = "login", required = true) private TemplateExpression loginCommand;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "logout", fieldDesc = """
+        Required SpEL template expression; the session logout command to run after the steps \
+        in the do-block have been completed either successfully or with failure.
+        """)
     @JsonPropertyDescription("""
         Required SpEL template expression; the session logout command to run after the steps \
         in the do-block have been completed either successfully or with failure.

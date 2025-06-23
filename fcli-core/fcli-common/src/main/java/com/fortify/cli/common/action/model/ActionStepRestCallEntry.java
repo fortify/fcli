@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import kong.unirest.HttpMethod;
 import lombok.Data;
@@ -39,17 +40,33 @@ import lombok.NoArgsConstructor;
 public final class ActionStepRestCallEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "method", fieldDesc = """
+        Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.    
+        """)
     @JsonPropertyDescription("""
         Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.    
         """)
     @JsonProperty(value = "method", required = false, defaultValue = "GET") private String method = HttpMethod.GET.name();
     
+    @FCLIActionPropertyMetaInfo(fieldName = "uri", fieldDesc = """
+        Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${var.id}' to be \
+        appended to the base URL provided by the given 'target'.
+        """)
     @JsonPropertyDescription("""
         Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${var.id}' to be \
         appended to the base URL provided by the given 'target'.
         """)
     @JsonProperty(value = "uri", required = true) private TemplateExpression uri;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "target", fieldDesc = """
+        Required string if no default target has been configured through config:rest.target.default. \
+        Target on which to execute the REST request. Third-party request targets can be configured \
+        through 'rest.target' steps; such steps should appear before the 'rest.call' steps that \
+        reference these request targets. In additionan, fcli provides the 'fod' target for actions \
+        run through 'fcli fod action run', and the 'ssc', 'sc-sast', and 'sc-dast' targets for \
+        actions run through the 'fcli ssc action run' command. These fcli-provided targets integrate \
+        with fcli session management.     
+        """)
     @JsonPropertyDescription("""
         Required string if no default target has been configured through config:rest.target.default. \
         Target on which to execute the REST request. Third-party request targets can be configured \
@@ -61,6 +78,11 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
         """)
     @JsonProperty(value = "target", required = false) private String target;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "query", fieldDesc = """
+        Optional map: Query parameters to be added to the request. Map keys specify the query parameter name, \
+        map values specify the query parameter value. Keys must be plain strings, values are evaluated as \
+        SpEL template expressions, for example 'someParam: ${var1.prop1]}'.
+        """)
     @JsonPropertyDescription("""
         Optional map: Query parameters to be added to the request. Map keys specify the query parameter name, \
         map values specify the query parameter value. Keys must be plain strings, values are evaluated as \
@@ -68,11 +90,19 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
         """)
     @JsonProperty(value = "query", required = false) private LinkedHashMap<String,TemplateExpression> query;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "body", fieldDesc = """
+        Optional SpEL template expression: Request body to send with the REST request.
+        """)
     @JsonPropertyDescription("""
         Optional SpEL template expression: Request body to send with the REST request.
         """)
     @JsonProperty(value = "body", required = false) private TemplateExpression body;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "type", fieldDesc = """
+        Optional enum value: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' \
+        (for now only supported for built-in request targets like 'fod' or 'ssc'), the request will be repeated \
+        with the appropriate paging request parameters to load and process all available pages. Defaults value: simple.
+        """)
     @JsonPropertyDescription("""
         Optional enum value: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' \
         (for now only supported for built-in request targets like 'fod' or 'ssc'), the request will be repeated \
@@ -80,11 +110,21 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
         """)
     @JsonProperty(value = "type", required = false, defaultValue = "simple") private ActionStepRestCallEntry.ActionStepRequestType type = ActionStepRequestType.simple;
 
+    @FCLIActionPropertyMetaInfo(fieldName = "log.progress", fieldDesc = """
+        Optional object: Log progress messages during the various stages of request/response processing.
+        """)
     @JsonPropertyDescription("""
         Optional object: Log progress messages during the various stages of request/response processing.
         """)
     @JsonProperty(value = "log.progress", required = false) private ActionStepRestCallEntry.ActionStepRestCallLogProgressDescriptor logProgress;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "on.success", fieldDesc = """
+        Optional list: Steps to be executed on each successfull REST response. For simple requests, these \
+        steps will be executed once. For paged requests, these steps will be executed after every individual \
+        page has been received. Steps can reference the [requestName] and [requestName]_raw variables to \
+        access processed and raw response data respectively. Any steps define in 'on.success' will be executed \
+        before processing individual response records through the 'records.for-each' instruction.
+        """)
     @JsonPropertyDescription("""
         Optional list: Steps to be executed on each successfull REST response. For simple requests, these \
         steps will be executed once. For paged requests, these steps will be executed after every individual \
@@ -94,6 +134,11 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
         """)
     @JsonProperty(value = "on.success", required = false) private ArrayList<ActionStep> onResponse;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "on.fail", fieldDesc = """
+        Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown \
+        on request failure. Steps can reference a variable named after the identifier for this REST call, for \
+        example 'x_exception', to access the Java Exception object that represents the failure that occurred.
+        """)
     @JsonPropertyDescription("""
         Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown \
         on request failure. Steps can reference a variable named after the identifier for this REST call, for \
@@ -101,6 +146,10 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
         """)
     @JsonProperty(value = "on.fail", required = false) private ArrayList<ActionStep> onFail;
 
+    @FCLIActionPropertyMetaInfo(fieldName = "records.for-each", fieldDesc = """
+        Optional object: If the processed (successfull) REST response provides an array of records, this \
+        instruction allows for executing the steps provided in the 'do' block for each individual record.
+        """)
     @JsonPropertyDescription("""
         Optional object: If the processed (successfull) REST response provides an array of records, this \
         instruction allows for executing the steps provided in the 'do' block for each individual record.

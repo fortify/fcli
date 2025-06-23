@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,48 +28,85 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionConfig implements IActionElement {
-    @JsonPropertyDescription("""
-        Optional string: Default target to use for rest.call steps.    
-        """)
-    @JsonProperty(value = "rest.target.default", required = false) private String restTargetDefault;
-    
-    @JsonPropertyDescription("""
-        (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.
-        
-        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
-        using this instruction may fail to run on other fcli 3.x versions.    
-    """)
-    @JsonProperty(value = "run.fcli.status.check.default", required = false) private Boolean runFcliStatusCheckDefault;
-    
-    @JsonPropertyDescription("""
-        (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.
-        
-        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
-        using this instruction may fail to run on other fcli 3.x versions.    
-    """)
-    @JsonProperty(value = "run.fcli.status.log.default", required = false) private Boolean runFcliStatusLogDefault;
-    
-    @JsonPropertyDescription("""
-        (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.
-        
-        For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
-        using this instruction may fail to run on other fcli 3.x versions.    
-    """)
-    @JsonProperty(value = "run.fcli.group.default", required = false) private String runFcliGroupDefault;
-    
-    @JsonPropertyDescription("""
-        Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress \
-        messages will be delayed until the end of action execution. If set to 'immediate', output will be \
-        written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' \
-        is specified by the user) to avoid such output from interfering with progress messages.    
-        """)
-    @JsonProperty(value = "output", required = false) private ActionConfigOutput output = ActionConfigOutput.delayed;
-    
-    @JsonPropertyDescription("""
-        Optional map: Environment variables used by this action for which values should be masked in the fcli \
-        log file. Map keys define environment variables names, map values define masking configuration.    
-        """)
-    @JsonProperty(value = "mask.env-vars", required = false) private LinkedHashMap<String, ActionInputMask> envVarMasks;
+	@FCLIActionPropertyMetaInfo(fieldName = "rest.target.default", fieldDesc = """
+			Optional string: Default target to use for rest.call steps.
+			""")
+	@JsonPropertyDescription("""
+			Optional string: Default target to use for rest.call steps.
+			""")
+	@JsonProperty(value = "rest.target.default", required = false)
+	private String restTargetDefault;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "run.fcli.status.check.default", fieldDesc = """
+			    (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.
+
+			    For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+			    using this instruction may fail to run on other fcli 3.x versions.
+			""")
+	@JsonPropertyDescription("""
+			    (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.
+
+			    For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+			    using this instruction may fail to run on other fcli 3.x versions.
+			""")
+	@JsonProperty(value = "run.fcli.status.check.default", required = false)
+	private Boolean runFcliStatusCheckDefault;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "run.fcli.status.log.default", fieldDesc = """
+			    (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.
+
+			    For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+			    using this instruction may fail to run on other fcli 3.x versions.
+			""")
+	@JsonPropertyDescription("""
+			    (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.
+
+			    For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+			    using this instruction may fail to run on other fcli 3.x versions.
+			""")
+	@JsonProperty(value = "run.fcli.status.log.default", required = false)
+	private Boolean runFcliStatusLogDefault;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "run.fcli.group.default", fieldDesc = """
+			    (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.
+
+			    For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+			    using this instruction may fail to run on other fcli 3.x versions.
+			""")
+	@JsonPropertyDescription("""
+			    (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.
+
+			    For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
+			    using this instruction may fail to run on other fcli 3.x versions.
+			""")
+	@JsonProperty(value = "run.fcli.group.default", required = false)
+	private String runFcliGroupDefault;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "output", fieldDesc = """
+			Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress \
+			messages will be delayed until the end of action execution. If set to 'immediate', output will be \
+			written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' \
+			is specified by the user) to avoid such output from interfering with progress messages.
+			""")
+	@JsonPropertyDescription("""
+			Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress \
+			messages will be delayed until the end of action execution. If set to 'immediate', output will be \
+			written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' \
+			is specified by the user) to avoid such output from interfering with progress messages.
+			""")
+	@JsonProperty(value = "output", required = false)
+	private ActionConfigOutput output = ActionConfigOutput.delayed;
+
+	@FCLIActionPropertyMetaInfo(fieldName = "mask.env-vars", fieldDesc = """
+			Optional map: Environment variables used by this action for which values should be masked in the fcli \
+			log file. Map keys define environment variables names, map values define masking configuration.
+			""")
+	@JsonPropertyDescription("""
+			Optional map: Environment variables used by this action for which values should be masked in the fcli \
+			log file. Map keys define environment variables names, map values define masking configuration.
+			""")
+	@JsonProperty(value = "mask.env-vars", required = false)
+	private LinkedHashMap<String, ActionInputMask> envVarMasks;
     
     @Override
     public void postLoad(Action action) {}

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,10 +29,20 @@ import lombok.NoArgsConstructor;
 @Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
 public class TemplateExpressionWithFormatter extends AbstractActionElementIf {
-    @JsonPropertyDescription("""
+    @FCLIActionPropertyMetaInfo(fieldName = "value", fieldDesc = """
+            The value to use for this instruction, may be specified as an SpEL template expression.
+            """)
+	@JsonPropertyDescription("""
         The value to use for this instruction, may be specified as an SpEL template expression.
         """)
     @JsonProperty(value = "value", required = false) private TemplateExpression value;
+    
+    @FCLIActionPropertyMetaInfo(fieldName = "fmt", fieldDesc = """
+        The formatter to use for this instruction, may be used as an SpEL template expression. \
+        If 'value' is specified, the given value will be provided as input for the formatter. \
+        If 'value' is not specified, the set of current action variables will be provided as \
+        input for the formatter.
+        """)
     @JsonPropertyDescription("""
         The formatter to use for this instruction, may be used as an SpEL template expression. \
         If 'value' is specified, the given value will be provided as input for the formatter. \

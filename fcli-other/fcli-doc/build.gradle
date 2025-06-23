@@ -33,6 +33,14 @@ task generateActionSchema(type: JavaExec) {
     args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutputDir
 }
 
+task generateActionDoc(type: JavaExec) {
+	dependsOn('build')
+	classpath = sourceSets.main.runtimeClasspath
+	main 'com.fortify.cli.common.action.schema.generator.FcliActionsDocCreator'
+	// Pass whether this is an (fcli) development release, schema version and output dir
+	args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutputDir
+}
+
 task generateManpageAsciiDoc(type: JavaExec) {
     group = "Documentation"
     description = "Generate AsciiDoc manpage"
@@ -202,7 +210,7 @@ task distDocsVersionedJekyll(type: Zip) {
 
 // Zip the output of the asciiDoctorStaticJekyl task into ${releaseAssetsDir}
 task distDocsStaticJekyll(type: Zip) {
-    dependsOn 'asciiDoctorStaticJekyll', 'generateActionSchema'
+    dependsOn 'asciiDoctorStaticJekyll', 'generateActionSchema', 'generateActionDoc'
     archiveFileName = "docs-gh-pages.zip"
     destinationDirectory = file("$distDir")
     from layout.buildDirectory.dir("${ghPagesStaticOutputDir}")

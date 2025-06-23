@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.variable.FCLIActionPropertyMetaInfo;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -43,6 +44,17 @@ public final class ActionStepWith extends AbstractActionElementIf {
     // TODO Do we want to provide this functionality? And what would be a proper name for this instruction?
     @JsonIgnore /* @JsonProperty(value = "cleanup", required = false) */ private ActionStepWithCleanup cleanup;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "sessions", fieldDesc = """
+        This instruction allows for setting up one or more sessions before running the steps \
+        specified in the do-block, and logging out of those sessions once the steps in the do-block \
+        have completed wither successfully or with failure.
+        
+        Note that for now, these sessions can only be referenced by explicitly specifying the --session \
+        option on 'run.fcli' instructions. The 'rest.call' instructions and any SpEL functions that are \
+        dependent on an fcli session will use the session that was specified through the --session \
+        option on the 'fcli * action run' command; they will ignore sessions created through the \
+        'with:session' instruction.
+        """)
     @JsonPropertyDescription("""
         This instruction allows for setting up one or more sessions before running the steps \
         specified in the do-block, and logging out of those sessions once the steps in the do-block \
@@ -56,6 +68,14 @@ public final class ActionStepWith extends AbstractActionElementIf {
         """)
     @JsonProperty(value = "sessions", required = false) private List<ActionStepWithSession> sessions;
     
+    @FCLIActionPropertyMetaInfo(fieldName = "writers", fieldDesc = """
+        This instruction allows for setting up one or more record writers that can referenced by \
+        writer.append steps in the associated do-block. After all steps in the do-block have been \
+        executed, the writer will be closed. This instruction takes a map, with map keys defining \
+        writer identifiers, and map values defining the writer configurations. The number of records \
+        that have been appended to the current writer can be accessed through the 'writerId.count' \
+        variable.
+        """)
     @JsonPropertyDescription("""
         This instruction allows for setting up one or more record writers that can referenced by \
         writer.append steps in the associated do-block. After all steps in the do-block have been \
@@ -68,6 +88,9 @@ public final class ActionStepWith extends AbstractActionElementIf {
     
     // TODO Add property that allows for installing a shutdown hook
     
+    @FCLIActionPropertyMetaInfo(fieldName = "do", fieldDesc = """
+        Required list of steps to be run within the context of the given configuration.
+        """)
     @JsonPropertyDescription("""
         Required list of steps to be run within the context of the given configuration.
         """)
