@@ -19,10 +19,15 @@ cli.options:
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
   
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
   - log.progress: Loading static scan summary
   - rest.call:
       staticScanSummary:
@@ -94,7 +99,7 @@ formatters:
             }
         }}
       location:
-        file:       ${issue.primaryLocationFull}
+        file:       ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
         start_line: ${issue.lineNumber}
       links:
         - name: Additional issue details, including analysis trace, in Fortify on Demand

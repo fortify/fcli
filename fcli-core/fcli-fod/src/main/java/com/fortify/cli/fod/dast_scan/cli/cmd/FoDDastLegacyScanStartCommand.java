@@ -131,9 +131,12 @@ public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
             }
             LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
-            // check if the entitlement is still valid
-            FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd.get());
-            LOG.info("The entitlement " + entitlementIdToUse + " is valid.");
+            // check if the entitlement can still be used
+            if (FoDReleaseAssessmentTypeHelper.validateEntitlementCanBeUsed(relId, atd.get())) {
+                LOG.info("The entitlement '" + entitlementIdToUse + "' is still valid.");
+            } else {
+                LOG.info("The entitlement '" + entitlementIdToUse + "' is no longer valid.");
+            }
 
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)

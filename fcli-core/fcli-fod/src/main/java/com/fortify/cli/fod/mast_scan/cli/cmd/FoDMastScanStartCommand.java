@@ -153,8 +153,13 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
                 }
             }
         }
-        // check if the entitlement is still valid
-        FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd);
+
+        // check if the entitlement can still be used
+        if (FoDReleaseAssessmentTypeHelper.validateEntitlementCanBeUsed(relId, atd)) {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is still valid.");
+        } else {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is no longer valid.");
+        }
     }
 
 

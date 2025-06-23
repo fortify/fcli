@@ -38,7 +38,7 @@ public class URIHelper {
         // Note that this only works for simple parameter names, not parameter names that
         // contain characters that have a special meaning in regex. For example, if param
         // contains a dot like in a.c=value, we'd also match and remove abc=value.
-        var pattern = String.format("^%s=[^&]+&?|&%s=[^&]", param, param);
+        var pattern = String.format("^%s=[^&]*+&?|&%s=[^&]*", param, param);
         var query = uri.getQuery();
         if (StringUtils.isNotBlank(query)) { query = query.replaceAll(pattern, ""); }
         var newParamAndValue = String.format("%s=%s", param, URLEncoder.encode(newValue.toString(), StandardCharsets.UTF_8));

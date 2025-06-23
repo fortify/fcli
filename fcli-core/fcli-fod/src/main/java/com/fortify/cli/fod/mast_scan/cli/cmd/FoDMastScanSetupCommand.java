@@ -80,6 +80,8 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
  
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
+    private String assessmentTypeName;
+
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try (var progressWriter = progressWriterFactory.create()) {
@@ -102,17 +104,18 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), mobileAssessmentType);
         Integer assessmentTypeId = atd.getAssessmentTypeId();
         Integer entitlementIdToUse = atd.getEntitlementId();
+        assessmentTypeName = atd.getName();
+
+        // Note: the API does not currently allow entitlement id to be configured via "scan-setup" only via "scan-start"
+        // we will leave this here for when it does and update setupMastScanRequest below
+        validateEntitlement(currentSetup, entitlementIdToUse, relId, atd);
+        LOG.info("Release will be using entitlement " + entitlementIdToUse);
 
         // Note: for some reason the API uses "None" for Automated audit but shows "Automated" in the UI!
         var auditPreference = auditPreferenceType.name();
         if (auditPreferenceType != null && auditPreferenceType.name().equals("Automated")) {
             auditPreference = "None";
         }
-
-        // Note: the API does not currently allow entitlement id to be configured via "scan-setup" only via "scan-start"
-        // we will leave this here for when it does and update setupMastScanRequest below
-        validateEntitlement(currentSetup, entitlementIdToUse, relId, atd);
-        LOG.info("Release will be using entitlement " + entitlementIdToUse);
 
         FoDScanConfigMobileSetupRequest setupMastScanRequest = FoDScanConfigMobileSetupRequest.builder()
                 .assessmentTypeId(assessmentTypeId)
@@ -139,16 +142,20 @@ public class FoDMastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 }
             }
         }
-        // check if the entitlement is still valid
-        FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd);
+        // check if the entitlement can still be used
+        if (FoDReleaseAssessmentTypeHelper.validateEntitlementCanBeUsed(relId, atd)) {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is still valid.");
+        } else {
+            LOG.info("The entitlement '" + entitlementIdToUse + "' is no longer valid.");
+        }
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(getUnirestInstance());
         return ((ObjectNode)record)
-            .put("scanType", FoDScanType.Mobile.name())
-            .put("setupType", mobileAssessmentType)
+            .put("scanType", assessmentTypeName)
+            .put("setupType", auditPreferenceType.name())
             .put("applicationName", releaseDescriptor.getApplicationName())
             .put("releaseName", releaseDescriptor.getReleaseName())
             .put("microserviceName", releaseDescriptor.getMicroserviceName());

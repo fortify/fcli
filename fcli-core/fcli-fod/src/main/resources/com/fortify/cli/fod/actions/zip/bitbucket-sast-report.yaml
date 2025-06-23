@@ -24,10 +24,15 @@ cli.options:
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
   
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
   - log.progress: Processing issue data
   - with:
         writers:
@@ -107,7 +112,7 @@ formatters:
       external_id: FTFY-${issue.id}
       # uuid:
       annotation_type: VULNERABILITY
-      path: ${issue.primaryLocationFull}
+      path: ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
       line: ${issue.lineNumber==0?1:issue.lineNumber}
       summary: ${issue.category}
       details: ${#htmlToText(issue.details?.summary)}

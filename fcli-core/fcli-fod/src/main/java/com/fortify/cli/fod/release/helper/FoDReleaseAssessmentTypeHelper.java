@@ -59,33 +59,46 @@ public final class FoDReleaseAssessmentTypeHelper {
         return JsonHelper.treeToValue(assessmentTypes, FoDReleaseAssessmentTypeDescriptor[].class);
     }
 
-    public static final FoDReleaseAssessmentTypeDescriptor getAssessmentTypeDescriptor(UnirestInstance unirest, String relId, 
+    public static final FoDReleaseAssessmentTypeDescriptor getAssessmentTypeDescriptor(
+        UnirestInstance unirest, String relId, 
         FoDScanType scanType, EntitlementFrequencyType entFreqType, String assessmentType) {
-        // find an appropriate assessment type to use
-        Optional<FoDReleaseAssessmentTypeDescriptor> atd = Arrays.stream(
-                        FoDReleaseAssessmentTypeHelper.getAssessmentTypes(unirest,
-                                relId, scanType, entFreqType,
-                                false, true)
-                ).filter(n -> n.getName().equals(assessmentType))
-                .findFirst();
-        return atd.orElseThrow(()->new IllegalArgumentException("Cannot find appropriate assessment type for specified options."));
+        // support both assessment type id and name
+        java.util.function.Predicate<FoDReleaseAssessmentTypeDescriptor> predicate;
+        try {
+            int assessmentTypeId = Integer.parseInt(assessmentType);
+            predicate = n -> n.getAssessmentTypeId().equals(assessmentTypeId);
+        } catch (NumberFormatException nfe) {
+            predicate = n -> n.getName().equals(assessmentType);
+        }
+        return Arrays.stream(FoDReleaseAssessmentTypeHelper.getAssessmentTypes(
+                    unirest, relId, scanType, entFreqType, false, true))
+                .filter(predicate)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Cannot find appropriate assessment type for specified options."));
     }
 
-    public final static void validateEntitlement(String relId,
-                                                 FoDReleaseAssessmentTypeDescriptor atd) {
+    // This method has caused issues if enforced (#682) so we are just using it for logging for now
+    public final static boolean validateEntitlementCanBeUsed(String relId, FoDReleaseAssessmentTypeDescriptor atd) {
         if (atd == null || atd.getAssessmentTypeId() == null || atd.getAssessmentTypeId() <= 0) {
             throw new FcliSimpleException("Invalid or empty FODAssessmentTypeDescriptor.");
         }
-        // check entitlement has not expired
-        if (atd.getSubscriptionEndDate() != null &&
-                atd.getSubscriptionEndDate().before(Date.from(Instant.now()))) {
-            LOG.debug("Current Date: " + Date.from(Instant.now()).toString());
-            LOG.debug("Subscription End Date: " + atd.getSubscriptionEndDate());
+        LOG.debug("Validating entitlement for release: " + relId);
+        Date now = Date.from(Instant.now());
+        Date endDate = atd.getSubscriptionEndDate();
+        if (endDate != null && endDate.before(now)) {
+            LOG.debug("Subscription End Date: " + endDate);
             LOG.debug("Warning: the entitlement has expired.");
+            return false;
         }
-        // warn if all units are consumed or not enough for "new" scan
         if (atd.getUnitsAvailable() == 0) {
             LOG.debug("Warning: all units of the entitlement have been consumed.");
+            return false;
         }
+        if (atd.getUnits() > atd.getUnitsAvailable()) {
+            LOG.debug("Warning: the assessment needs more units than are available.");
+            return false;
+        }
+        return true;
     }
 }

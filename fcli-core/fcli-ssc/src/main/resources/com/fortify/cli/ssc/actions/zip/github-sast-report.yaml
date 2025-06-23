@@ -42,11 +42,16 @@ cli.options:
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
     required: false
     default: "100"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
   
 steps:
   - var.set:
       av: ${#ssc.appVersion(cli.appversion)}
       fs: ${#ssc.filterSet(av, cli.filterset)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
   - log.progress: Loading latest static scan
   - rest.call:
       artifacts:
@@ -157,7 +162,7 @@ formatters:
       locations:
         - physicalLocation:
             artifactLocation:
-              uri: ${issue.fullFileName}
+              uri: ${issueSourceFileResolver.resolve(issue.fullFileName)}
             region:
               startLine: ${issue.lineNumber==0||issue.lineNumber==null?1:issue.lineNumber}
               endLine: ${issue.lineNumber==0||issue.lineNumber==null?1:issue.lineNumber}
@@ -176,7 +181,7 @@ formatters:
                         },
                         physicalLocation: {
                             artifactLocation: {
-                                uri: fullPath
+                                uri: #root.issueSourceFileResolver.resolve(fullPath)
                             },
                             region: {
                                 startLine: line==0||line==null?1:line

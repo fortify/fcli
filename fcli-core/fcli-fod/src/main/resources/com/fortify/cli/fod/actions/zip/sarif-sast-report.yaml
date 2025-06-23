@@ -35,10 +35,15 @@ cli.options:
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
 
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
   - log.progress: Loading static scan summary
   - rest.call:
       staticScanSummary:
@@ -131,7 +136,7 @@ formatters:
       locations:
         - physicalLocation:
             artifactLocation:
-              uri: ${issue.primaryLocationFull}
+              uri: ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
             region:
               startLine: ${issue.lineNumber==0?1:issue.lineNumber}
               endLine: ${issue.lineNumber==0?1:issue.lineNumber}
@@ -150,7 +155,7 @@ formatters:
                         },
                         physicalLocation: {
                             artifactLocation: {
-                                uri: location
+                                uri: #root.issueSourceFileResolver.resolve(location)
                             },
                             region: {
                                 startLine: lineNumber==0?1:lineNumber

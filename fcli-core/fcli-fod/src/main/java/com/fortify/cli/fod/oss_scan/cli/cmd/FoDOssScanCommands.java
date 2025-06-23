@@ -31,6 +31,7 @@ import picocli.CommandLine;
                 FoDOssScanStartCommand.class,
                 //FoDOssScanCancelCommand.class,
                 FoDOssScanWaitForCommand.class,
+                FoDOssComponentsListCommand.class
         }
 )
 @DefaultVariablePropertyName("releaseAndScanId")
