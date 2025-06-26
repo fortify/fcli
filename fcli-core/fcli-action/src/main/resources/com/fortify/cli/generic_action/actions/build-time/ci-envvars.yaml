@@ -129,16 +129,18 @@ formatters:
     scan:
       - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
-          For now, this fcli action only supports running a SAST scan, which is enabled by default. The
-          `SAST_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the `fcli fod sast-scan start`
-          command. By default, this action will wait until the scan has been completed, unless `DO_SAST_WAIT`
-          is set to `false`; note that any post-scan tasks will be skipped in this case.
+          Currently, the fcli ci action supports only running a SAST scan, which is enabled by default.
+          The SAST_SCAN_EXTRA_OPTS environment variable can be used to provide additional options to the
+          fcli fod sast-scan start command, such as specifying scan notes. Note that these environment
+          variables only control the submission of the scan request; for details on waiting for the scan
+          to complete, see the information below.
       - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
         desc: >-
-          By default, the scan process is configured to wait until completion. This behavior can be changed by setting
-          DO_SAST_WAIT to 'false'. note that any post-scan tasks will be skipped in this case. Extra options
-          for a custom fcli action can be passed through the `SAST_WAIT_EXTRA_OPTS` environment variable,
-          which may include fcli options to allow unsigned custom actions to be used.
+          If a SAST scan is in progress, the fcli ci action will wait for the scan to complete by default.
+          This behavior can be overridden by setting DO_SAST_WAIT to false, but note that doing so will
+          skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+          extra options to the fcli fod sast-scan wait-for command, for example adjusting the polling
+          interval or timeout.
     postScan:
       - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
         desc: >-
@@ -209,16 +211,18 @@ formatters:
     scan:
       - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
-            For now, this fcli action only supports running a SAST scan, which is enabled by default. The
-            `SAST_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the `fcli sc-sast scan start`
-            command. By default, this action will wait until the scan has been completed, unless `DO_SAST_WAIT`
-            is set to `false`; note that any post-scan tasks will be skipped in this case.
+          Currently, the fcli ci action supports only running a SAST scan, which is enabled by default.
+          The SAST_SCAN_EXTRA_OPTS environment variable can be used to provide additional options to
+          the fcli sc-sast scan start command, such as requesting scan completion email notification.
+          Note that these environment variables only control the submission of the scan request; for
+          details on waiting for the scan to complete, see the information below. 
       - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
         desc: >-
-          By default, the scan process is configured to wait until completion. This behavior can be changed by setting
-          DO_SAST_WAIT to 'false'. note that any post-scan tasks will be skipped in this case. Extra options
-          for a custom fcli action can be passed through the `SAST_WAIT_EXTRA_OPTS` environment variable,
-          which may include fcli options to allow unsigned custom actions to be used.
+          If a SAST scan is in progress, the fcli ci action will wait for the scan to complete
+          by default. This behavior can be overridden by setting DO_SAST_WAIT to false, but note
+          that doing so will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment
+          variable can be used to pass extra options to the fcli sc-sast scan wait-for command,
+          for example adjusting the polling interval or timeout.
     postScan:
       - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
         desc: >-
