@@ -45,32 +45,27 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--tag-mapping"}, required = false, description = "Tag Mapping") private String tagMapping;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
-    private JsonNode cachedResult;
 
     @Override
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if (this.cachedResult == null) {
-            var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
-            try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-                AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-                SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
-                this.cachedResult = processFpr(unirest, av, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger);
-            }
+        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
+            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
+            SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
+            return processFpr(unirest, av, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger);
         }
-        return this.cachedResult;
     }
 
     @SneakyThrows
     private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger) {
-        File downloadedFpr = null;
+        File downloadedFpr = downloadFprFromSSC(unirest, av, logger);
+
+        if (downloadedFpr == null) {
+            return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
+        }
+
         try {
-            downloadedFpr = downloadFprFromSSC(unirest, av, logger);
-
-            if (downloadedFpr == null) {
-                return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
-            }
-
             FPRAuditResult auditResult = performAviatorAudit(downloadedFpr, token, url, av, logger);
             String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
             String progressMessage = AviatorSSCAuditHelper.getProgressMessage(auditResult);
@@ -84,7 +79,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             return AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
 
         } finally {
-            if (downloadedFpr != null && downloadedFpr.exists() && !downloadedFpr.delete()) {
+            if (downloadedFpr.exists() && !downloadedFpr.delete()) {
                 LOG.warn("Failed to delete temporary downloaded FPR file: {}", downloadedFpr.getAbsolutePath());
             }
         }
