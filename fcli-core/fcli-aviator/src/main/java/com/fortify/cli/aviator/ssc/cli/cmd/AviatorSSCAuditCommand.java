@@ -61,9 +61,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         return this.cachedResult;
     }
 
-    /**
-     * Main orchestration method for the audit process.
-     */
     @SneakyThrows
     private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger) {
         File downloadedFpr = null;
@@ -71,7 +68,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             downloadedFpr = downloadFprFromSSC(unirest, av, logger);
 
             if (downloadedFpr == null) {
-                // If download fails gracefully (no FPR), return a result indicating this.
                 return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
             }
 
