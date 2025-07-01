@@ -28,6 +28,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -38,6 +39,9 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
@@ -63,6 +67,9 @@ public class AuditProcessor {
     private static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
     private static final String REMEDIATIONS_NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
+    private static final String REMEDIATIONS_XSD_PATH = "/remediations.xsd";
+    private static volatile Schema remediationsSchema;
+    private static final String HASHING_ALGORITHM_SHA_256 = "SHA-256";
 
     private Document auditDoc;
     @Setter
@@ -647,30 +654,31 @@ public class AuditProcessor {
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
                                              Map<String, String> remediationCommentTimestamps,
-                                             FPRInfo fprInfo, FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                             FPRInfo fprInfo,
+                                             FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setNamespaceAware(true);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-            Document doc = docBuilder.newDocument();
 
-            Element rootElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
-            doc.appendChild(rootElement);
+            Document finalDoc = docBuilder.newDocument();
+            Element rootElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+            finalDoc.appendChild(rootElement);
 
-            // ProjectInfo
-            Element projectInfoElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
-            Element projectNameElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+            Element projectInfoElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+            Element projectNameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
             projectNameElement.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
-            Element projectWriteDateElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+            Element projectWriteDateElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
             projectWriteDateElement.setTextContent(dateTimeFormat.format(new Date()));
             projectInfoElement.appendChild(projectNameElement);
             projectInfoElement.appendChild(projectWriteDateElement);
             rootElement.appendChild(projectInfoElement);
 
-            // RemediationList
-            Element remediationListElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
+            Element remediationListElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
             rootElement.appendChild(remediationListElement);
+
+            int validRemediationCount = 0;
 
             for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
                 String instanceId = entry.getKey();
@@ -682,13 +690,13 @@ public class AuditProcessor {
                         !auditResponse.getAuditResult().getAutoremediation().getChanges().isEmpty() &&
                         remediationCommentTimestamps.containsKey(instanceId)) {
 
-                    Element remediationElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
+                    Element remediationElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediation");
                     remediationElement.setAttribute("instanceId", instanceId);
                     remediationElement.setAttribute("writeDate", remediationCommentTimestamps.get(instanceId));
 
-                    Element auditCommentElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
+                    Element auditCommentElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "AuditComment");
                     String auditComment = auditResponse.getAuditResult().getComment() != null ? auditResponse.getAuditResult().getComment() : "";
-                    auditCommentElement.appendChild(doc.createCDATASection(auditComment));
+                    auditCommentElement.appendChild(finalDoc.createCDATASection(auditComment));
                     remediationElement.appendChild(auditCommentElement);
 
                     Map<String, List<com.fortify.cli.aviator.audit.model.Change>> changesByFile =
@@ -699,80 +707,106 @@ public class AuditProcessor {
                         String filename = fileChangeEntry.getKey();
                         List<com.fortify.cli.aviator.audit.model.Change> fileSpecificChanges = fileChangeEntry.getValue();
 
-                        Element fileChangesElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges");
-
-                        Element filenameElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Filename");
+                        Element fileChangesElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges");
+                        Element filenameElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Filename");
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
                         String originalFileContent = fvdlProcessor.getSourceFileContent(filename)
-                                .orElseThrow(() -> new AviatorTechnicalException("Could not get original content for file: " + filename + " for MD5 calculation."));
-                        Element fileMD5Element = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "FileMD5");
-                        fileMD5Element.setTextContent(calculateMD5Base64(originalFileContent));
-                        fileChangesElement.appendChild(fileMD5Element);
+                                .orElseThrow(() -> new AviatorTechnicalException("Could not get original content for file: " + filename));
+
+                        Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
+                        hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
+                        hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));
+                        fileChangesElement.appendChild(hashElement);
+
+                        String[] allLines = originalFileContent.split("\\r?\\n|\\r|\\n");
 
                         for (com.fortify.cli.aviator.audit.model.Change change : fileSpecificChanges) {
-                            Element changeElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
+                            try {
+                                Element changeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Change");
+                                int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine");
+                                int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine");
 
-                            Element lineFromElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
-                            lineFromElement.setTextContent(String.valueOf(parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine")));
-                            changeElement.appendChild(lineFromElement);
+                                Element lineFromElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineFrom");
+                                lineFromElement.setTextContent(String.valueOf(lineFromNum));
+                                changeElement.appendChild(lineFromElement);
 
-                            Element lineToElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineTo");
-                            lineToElement.setTextContent(String.valueOf(parseLineNumber(change.getToLine(), filename, instanceId, "ToLine")));
-                            changeElement.appendChild(lineToElement);
+                                Element lineToElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "LineTo");
+                                lineToElement.setTextContent(String.valueOf(lineToNum));
+                                changeElement.appendChild(lineToElement);
 
-                            Element originalCodeElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
-                            int lineFromNum = parseLineNumber(change.getFromLine(), filename, instanceId, "FromLine (for OriginalCode)");
-                            int lineToNum = parseLineNumber(change.getToLine(), filename, instanceId, "ToLine (for OriginalCode)");
-                            String[] allLines = originalFileContent.split("\\r?\\n|\\n|\\r");
-                            StringBuilder originalCodeSb = new StringBuilder();
-                            if (lineFromNum >= 1 && lineToNum >= lineFromNum && lineFromNum <= allLines.length) {
-                                for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
-                                    originalCodeSb.append(allLines[k]);
-                                    if (k < Math.min(lineToNum, allLines.length) - 1) {
-                                        originalCodeSb.append(System.lineSeparator());
+                                StringBuilder originalCodeSb = new StringBuilder();
+                                if (lineFromNum >= 1 && lineToNum >= lineFromNum && lineFromNum <= allLines.length) {
+                                    for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
+                                        originalCodeSb.append(allLines[k]);
+                                        if (k < Math.min(lineToNum, allLines.length) - 1) {
+                                            originalCodeSb.append(System.lineSeparator());
+                                        }
                                     }
                                 }
-                            } else if (lineFromNum == 0 && lineToNum == 0) {
-                                // Insertion at top, no original code.
-                            } else {
-                                logger.warn("Invalid line numbers for original code extraction: file='{}', instanceId='{}', from={}, to={}. Max lines: {}. Original FromLine: '{}', Original ToLine: '{}'",
-                                        filename, instanceId, lineFromNum, lineToNum, allLines.length, change.getFromLine(), change.getToLine());
+                                Element originalCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "OriginalCode");
+                                originalCodeElement.appendChild(finalDoc.createCDATASection(originalCodeSb.toString()));
+                                changeElement.appendChild(originalCodeElement);
+
+                                Element newCodeElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
+                                newCodeElement.appendChild(finalDoc.createCDATASection(change.getReplaceWith() != null ? change.getReplaceWith() : ""));
+                                changeElement.appendChild(newCodeElement);
+
+                                final int CONTEXT_LINES = 3;
+                                int contextStartLineIndex = Math.max(0, lineFromNum - 1 - CONTEXT_LINES);
+                                if (lineFromNum == 0) contextStartLineIndex = 0;
+                                int contextEndLineIndex = Math.min(allLines.length - 1, lineToNum - 1 + CONTEXT_LINES);
+                                if (lineToNum == 0) contextEndLineIndex = -1;
+                                int actualBeforeLines = (lineFromNum > 0) ? (lineFromNum - 1 - contextStartLineIndex) : 0;
+                                int actualAfterLines = (lineToNum > 0) ? (contextEndLineIndex - (lineToNum - 1)) : 0;
+
+                                StringBuilder contextSb = new StringBuilder();
+                                for (int i = contextStartLineIndex; i <= contextEndLineIndex; i++) {
+                                    contextSb.append(allLines[i]);
+                                    if (i < contextEndLineIndex) {
+                                        contextSb.append(System.lineSeparator());
+                                    }
+                                }
+                                Element contextElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Context");
+                                contextElement.setAttribute("before", String.valueOf(actualBeforeLines));
+                                contextElement.setAttribute("after", String.valueOf(actualAfterLines));
+                                contextElement.appendChild(finalDoc.createCDATASection(contextSb.toString()));
+                                changeElement.appendChild(contextElement);
+
+                                fileChangesElement.appendChild(changeElement);
+                            } catch (NumberFormatException e) {
+                                logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
                             }
-                            originalCodeElement.appendChild(doc.createCDATASection(originalCodeSb.toString()));
-                            changeElement.appendChild(originalCodeElement);
-
-
-                            Element newCodeElement = doc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "NewCode");
-                            String newCode = change.getReplaceWith() != null ? change.getReplaceWith() : "";
-                            // *** CHANGE: Use CDATA Section for NewCode ***
-                            newCodeElement.appendChild(doc.createCDATASection(newCode));
-                            changeElement.appendChild(newCodeElement);
-
-                            fileChangesElement.appendChild(changeElement);
                         }
-                        remediationElement.appendChild(fileChangesElement);
+                        if (fileChangesElement.hasChildNodes()) {
+                            remediationElement.appendChild(fileChangesElement);
+                        }
                     }
-                    remediationListElement.appendChild(remediationElement);
+
+                    if (isRemediationElementValid(remediationElement, fprInfo)) {
+                        remediationListElement.appendChild(remediationElement);
+                        validRemediationCount++;
+                    } else {
+                        logger.warn("Skipping invalid remediation for issue instanceId: {} due to schema validation failure.", instanceId);
+                    }
                 }
             }
-            return doc;
+
+            return validRemediationCount > 0 ? finalDoc : null;
         } catch (ParserConfigurationException e) {
             throw new AviatorTechnicalException("Error creating XML document for remediations", e);
-        } catch (NumberFormatException e) {
-            throw new AviatorTechnicalException("Error processing remediations: " + e.getMessage(), e);
         }
     }
 
-    private static String calculateMD5Base64(String content) {
+    private String calculateHashBase64(String content, String algorithm) {
         if (content == null) return "";
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance(algorithm);
             byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(digest);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not found", e);
+            throw new RuntimeException(algorithm + " algorithm not found", e);
         }
     }
 
@@ -781,15 +815,96 @@ public class AuditProcessor {
             logger.warn("Line number string is null or empty for file '{}', instanceId '{}', changeType '{}'. Defaulting to 0.", filePath, instanceId, changeType);
             return 0;
         }
-        // Remove any commas that might be present
+
         String cleanedLineStr = lineStr.replace(",", "");
+
         try {
             return Integer.parseInt(cleanedLineStr);
         } catch (NumberFormatException e) {
-            // Enhanced logging to include context
             logger.error("Error parsing {} line number string: '{}' (original: '{}') for file '{}', instanceId '{}'.",
                     changeType, cleanedLineStr, lineStr, filePath, instanceId, e);
-            throw e; // Re-throw to be caught by the calling method's try-catch
+            throw e;
+        }
+    }
+
+    private static Schema getRemediationsSchema() throws SAXException, IOException {
+        if (remediationsSchema == null) {
+            synchronized (AuditProcessor.class) {
+                if (remediationsSchema == null) {
+                    SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+                    try (InputStream schemaStream = AuditProcessor.class.getResourceAsStream(REMEDIATIONS_XSD_PATH)) {
+                        if (schemaStream == null) {
+                            throw new IOException("Cannot find resource: " + REMEDIATIONS_XSD_PATH + ". Is it in the JAR?");
+                        }
+                        remediationsSchema = factory.newSchema(new javax.xml.transform.stream.StreamSource(schemaStream));
+                    }
+                }
+            }
+        }
+        return remediationsSchema;
+    }
+
+    private void validateRemediationsDocument(Document doc) throws SAXException, IOException {
+        Schema schema = getRemediationsSchema();
+        Validator validator = schema.newValidator();
+
+        validator.setErrorHandler(new org.xml.sax.helpers.DefaultHandler() {
+            @Override
+            public void error(org.xml.sax.SAXParseException e) throws SAXException {
+                logger.error("Schema Validation Error: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+                throw e;
+            }
+            @Override
+            public void fatalError(org.xml.sax.SAXParseException e) throws SAXException {
+                logger.error("Schema Validation Fatal Error: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+                throw e;
+            }
+            @Override
+            public void warning(org.xml.sax.SAXParseException e) {
+                logger.warn("Schema Validation Warning: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+            }
+        });
+
+        validator.validate(new DOMSource(doc));
+    }
+
+    private boolean isRemediationElementValid(Element remediationElement, FPRInfo fprInfo) {
+        String instanceId = remediationElement.getAttribute("instanceId");
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document tempDoc = builder.newDocument();
+
+            Element root = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Remediations");
+            tempDoc.appendChild(root);
+
+            Element projectInfo = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "ProjectInfo");
+            Element name = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Name");
+            name.setTextContent(fprInfo.getBuildId() != null ? fprInfo.getBuildId() : "UnknownProject");
+            Element date = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "WriteDate");
+            date.setTextContent(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(new Date()));
+            projectInfo.appendChild(name);
+            projectInfo.appendChild(date);
+            root.appendChild(projectInfo);
+
+            Element list = tempDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "RemediationList");
+            root.appendChild(list);
+
+            // Import the node from the main document into our temporary document.
+            org.w3c.dom.Node importedNode = tempDoc.importNode(remediationElement, true);
+            list.appendChild(importedNode);
+
+            // Validate the temporary document
+            validateRemediationsDocument(tempDoc);
+            return true;
+
+        } catch (SAXException e) {
+            logger.error("Validation failed for remediation of issue instanceId: {}. It will be excluded. Reason: {}", instanceId, e.getMessage());
+            return false;
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred during validation for issue instanceId: {}. It will be excluded.", instanceId, e);
+            return false;
         }
     }
 
