@@ -18,13 +18,13 @@ public final class AviatorJwtUtils {
 
     private static JsonNode getJwtPayload(String token) {
         if (StringUtils.isBlank(token)) {
-            LOG.warn("Provided token is null or blank, cannot extract payload.");
+            LOG.warn("WARN: Provided token is null or blank, cannot extract payload.");
             return null;
         }
         try {
             String[] chunks = token.split("\\.");
             if (chunks.length < 2) {
-                LOG.warn("Invalid JWT token structure ({} parts), cannot extract payload.", chunks.length);
+                LOG.warn("WARN: Invalid JWT token structure ({} parts), cannot extract payload.", chunks.length);
                 return null;
             }
             Base64.Decoder decoder = Base64.getUrlDecoder();
@@ -75,10 +75,10 @@ public final class AviatorJwtUtils {
             if (tenantNameNode.isTextual() && !StringUtils.isBlank(tenantNameNode.asText())) {
                 return tenantNameNode.asText();
             } else {
-                LOG.warn("Token 'tenantName' field is present but not a non-blank text value: {}", tenantNameNode.asText(""));
+                LOG.warn("WARN: Token 'tenantName' field is present but not a non-blank text value: {}", tenantNameNode.asText(""));
             }
         } else {
-            LOG.warn("Token payload does not contain 'tenantName' field.");
+            LOG.warn("WARN: Token payload does not contain 'tenantName' field.");
         }
         return null;
     }
@@ -94,7 +94,7 @@ public final class AviatorJwtUtils {
             if (emailNode.isTextual() && !StringUtils.isBlank(emailNode.asText())) {
                 email = emailNode.asText();
             } else {
-                LOG.warn("Token 'email' field is present but not a non-blank text value: {}", emailNode.asText(""));
+                LOG.warn("WARN: Token 'email' field is present but not a non-blank text value: {}", emailNode.asText(""));
             }
         }
 
@@ -109,7 +109,7 @@ public final class AviatorJwtUtils {
         }
 
         if (StringUtils.isBlank(email)) {
-            LOG.warn("Token payload does not contain a usable 'email' or 'sub' field.");
+            LOG.warn("WARN: Token payload does not contain a usable 'email' or 'sub' field.");
         }
         return email;
     }

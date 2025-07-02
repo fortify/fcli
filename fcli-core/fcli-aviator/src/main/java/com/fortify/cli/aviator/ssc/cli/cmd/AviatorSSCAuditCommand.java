@@ -90,7 +90,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
         } finally {
             if (downloadedFpr != null && downloadedFpr.exists() && !downloadedFpr.delete()) {
-                LOG.warn("Failed to delete temporary downloaded FPR file: {}", downloadedFpr.getAbsolutePath());
+                LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFpr.getAbsolutePath());
             }
         }
     }

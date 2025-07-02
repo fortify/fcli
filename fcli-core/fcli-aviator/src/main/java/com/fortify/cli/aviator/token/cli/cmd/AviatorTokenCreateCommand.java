@@ -85,7 +85,7 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
                 String formattedDate = DATE_FORMATTER.format(Instant.ofEpochSecond(expiryDateEpoch).atZone(ZoneId.of("UTC")));
                 ((ObjectNode) jsonNode).put("expiry_date", formattedDate);
             } catch (DateTimeException | NumberFormatException e) {
-                LOG.warn("Could not format expiry_date from epoch seconds: {}", jsonNode.get("expiry_date").asText(), e);
+                LOG.warn("WARN: Could not format expiry_date from epoch seconds: {}", jsonNode.get("expiry_date").asText(), e);
             }
         }
         LOG.info("Token '{}' created successfully for email: {}", customTokenName, email);
