@@ -72,7 +72,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     private final String replaceVariables(String s) {
         return s.replace("${version}", FcliBuildPropertiesHelper.getFcliBuildInfo().replace(':', ' '))
                 .replace("${type}", getType())
-                .replace("${typeLower}", getType().toLowerCase());
+                .replace("${actionCmd}", getActionCmd().toLowerCase());
     }
     
     private final String generateHeader() {
@@ -97,7 +97,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
             
             === Synopsis
             
-            *fcli ${typeLower} action run %s [fcli ${typeLower} action run options] [action options, see below]* 
+            *${actionCmd} run %s [${actionCmd} run options] [action options, see below]* 
             
             === Description
             
