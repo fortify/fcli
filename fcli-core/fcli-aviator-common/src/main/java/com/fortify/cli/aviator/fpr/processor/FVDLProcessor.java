@@ -2,6 +2,7 @@ package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.IOException;
 import java.nio.charset.MalformedInputException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,12 +21,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import com.fortify.cli.aviator.fpr.model.Node;
 import com.fortify.cli.aviator.fpr.model.Vulnerability;
+import com.fortify.cli.common.exception.FcliBugException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -1018,11 +1021,49 @@ public class FVDLProcessor {
         return sb.toString();
     }
 
+    private boolean directoryContainsSourceFiles(Path dirPath) throws IOException {
+        if (!Files.isDirectory(dirPath)) {
+            return false;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
+            for (Path path : stream) {
+                boolean isRegularFile = Files.isRegularFile(path);
+                boolean isNotIndexXml = !path.getFileName().toString().equals("index.xml");
+
+                if (isRegularFile && isNotIndexXml) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
     private void loadSourceFileMap() throws Exception {
         sourceFileMap = new HashMap<>();
-        Path indexPath = extractedPath.resolve("src-archive/index.xml");
-        if (!Files.exists(indexPath)) {
-            throw new IllegalStateException("index.xml not found in " + extractedPath);
+        Path srcArchiveDir = extractedPath.resolve("src-archive");
+        Path srcXrefdataDir = extractedPath.resolve("src-xrefdata");
+
+        Path indexPath = null;
+
+
+        // Step 1: Check if the primary directory ('src-archive') is valid.
+        if (directoryContainsSourceFiles(srcArchiveDir)) {
+            indexPath = srcArchiveDir.resolve("index.xml");
+
+            // Step 2: If not, check if the fallback directory ('src-xrefdata') is valid.
+        } else if (directoryContainsSourceFiles(srcXrefdataDir)) {
+            indexPath = srcXrefdataDir.resolve("index.xml");
+        }
+
+        // Step 3: After checking both directories, verify that we actually found a valid
+        // directory AND that its corresponding index.xml file exists.
+        if (indexPath == null) {
+            throw new FcliBugException("Neither 'src-archive' nor 'src-xrefdata' contained any source files under " + extractedPath);
+        } else if (!Files.exists(indexPath)) {
+            throw new FcliBugException("A source directory was found, but its 'index.xml' is missing at: " + indexPath);
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
