@@ -494,7 +494,7 @@ public class FVDLProcessor {
                 }
             }
         }
-        element.setInnerStackTrace(innerStackTrace); // Assuming setter exists
+        element.setInnerStackTrace(innerStackTrace);
         return element;
     }
 
@@ -681,7 +681,7 @@ public class FVDLProcessor {
 
     private List<StackTraceElement> findLongestList(List<List<StackTraceElement>> listOfLists) {
         return listOfLists.stream()
-                .max(Comparator.comparingInt(list -> list == null ? 0 : list.size())) // Add null check
+                .max(Comparator.comparingInt(list -> list == null ? 0 : list.size()))
                 .orElse(new ArrayList<>());
     }
 

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Reflectable // If you use GraalVM native images
+@Reflectable
 public class Autoremediation {
     private List<Change> changes;
 }

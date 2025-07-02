@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Reflectable // If you use GraalVM native images
+@Reflectable
 public class Change {
     private String file;
     private String fromLine; // Corresponds to from_line in proto

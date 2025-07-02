@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import com.formkiq.graalvm.annotations.Reflectable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data; // Using @Data for getters, setters, toString, etc.
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @XmlRootElement(name = "audit")
