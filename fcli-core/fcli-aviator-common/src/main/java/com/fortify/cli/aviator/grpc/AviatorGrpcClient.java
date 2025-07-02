@@ -294,13 +294,25 @@ public class AviatorGrpcClient implements AutoCloseable {
 
                 RequestWrapper completedWrapper = inflightRequests.remove(response.getRequestId());
                 if (completedWrapper == null) {
-                    if (!isInitialized.get() && "SUCCESS".equals(response.getStatus())) {
-                        isInitialized.set(true);
-                        initLatch.countDown();
-                        logger.info("Stream initialized successfully");
-                        startPingPong();
+                    if (!isInitialized.get()) {
+                        if ("SUCCESS".equals(response.getStatus())) {
+                            isInitialized.set(true);
+                            initLatch.countDown();
+                            logger.info("Stream initialized successfully");
+                            startPingPong();
+                        } else {
+                            String errorMessage = "Stream initialization failed: " + response.getStatusMessage();
+                            if (!resultFuture.isDone()) {
+                                resultFuture.completeExceptionally(new AviatorTechnicalException(errorMessage));
+                            }
+                            if (requestObserver != null) {
+                                requestObserver.onCompleted();
+                            }
+                            streamCompleted.set(true);
+                            latch.countDown();
+                        }
                     } else {
-                        logger.warn("Received response for an unknown or already processed requestId: {}", response.getRequestId());
+                        LOG.debug("Received response for an unknown or already processed requestId: {}", response.getRequestId());
                     }
                     return;
                 }
