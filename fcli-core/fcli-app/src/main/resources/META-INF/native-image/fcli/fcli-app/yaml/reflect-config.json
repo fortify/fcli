@@ -28,5 +28,73 @@
     "allDeclaredConstructors": true, "allPublicConstructors": true,
     "allDeclaredMethods": true, "allPublicMethods": true,
     "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig",
+    "allDeclaredFields":true,
+    "queryAllPublicMethods":true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setMapping","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Mapping"] }, {"name":"setTag_id","parameterTypes":["java.lang.String"] }]
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$Mapping",
+    "allDeclaredFields":true,
+    "queryAllPublicMethods":true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setTier_1","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Tier"] }, {"name":"setTier_2","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Tier"] }]
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$MappingBeanInfo"
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$MappingCustomizer"
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$Result",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setSuppress","parameterTypes":["java.lang.Boolean"] }, {"name":"setValue","parameterTypes":["java.lang.String"] }]
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$ResultBeanInfo"
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$ResultCustomizer"
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$Tier",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "allDeclaredFields":true,
+    "queryAllPublicMethods":true,
+    "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setFp","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Result"] }, {"name":"setTp","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Result"] }, {"name":"setUnsure","parameterTypes":["com.fortify.cli.aviator.config.TagMappingConfig$Result"] }]
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$TierBeanInfo",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfig$TierCustomizer",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfigBeanInfo",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name":"com.fortify.cli.aviator.config.TagMappingConfigCustomizer",
+    "allDeclaredConstructors": true, "allPublicConstructors": true,
+    "allDeclaredMethods": true, "allPublicMethods": true,
+    "allDeclaredFields": true, "allPublicFields": true
   }
 ]
