@@ -13,6 +13,8 @@
 package com.fortify.cli.common.action.runner;
 
 import java.io.OutputStreamWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -50,7 +52,13 @@ public class ActionRunner {
         return _run(args);
     }
     
+    // TODO Review try/close/finally blocks and handling of output in delayed console writers
+    //      to see whether anything can be simplified, and whether there are any bugs.
     public final Integer _run(String[] args) {
+        List<Runnable> delayedConsoleWriterRunnables = Collections.emptyList();
+        Map<ActionStepCheckEntry, CheckStatus> checkStatuses = Collections.emptyMap();
+        CheckStatus overallCheckstatus = CheckStatus.SKIP;
+        int exitCode = 0;
         try ( var progressWriter = createProgressWriter() ) {
             var parameterValues = getParameterValues(args);
             try ( var ctx = createContext(progressWriter, parameterValues) ) {
@@ -59,14 +67,20 @@ public class ActionRunner {
                 try {
                     new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
                 } finally {
-                    ctx.getDelayedConsoleWriterRunnables().forEach(Runnable::run);
-                    if ( !ctx.getCheckStatuses().isEmpty() ) {
-                        printCheckStatuses(ctx);
-                    }
+                    // Collect outputs from context; we can't write any of these outputs
+                    // until after the progress writer has been closed.
+                    delayedConsoleWriterRunnables = ctx.getDelayedConsoleWriterRunnables();
+                    checkStatuses = ctx.getCheckStatuses();
+                    exitCode = ctx.getExitCode();
                 }
-                return ctx.getExitCode();
             }
+        } finally {
+            // Write delayed console output and check statuses, now that progress writer has been closed
+            delayedConsoleWriterRunnables.forEach(Runnable::run);
+            overallCheckstatus = processAndPrintCheckStatuses(checkStatuses);
         }
+        // Determine final exit code
+        return exitCode==0 && overallCheckstatus==CheckStatus.FAIL ? 100 : exitCode;
     }
 
     private IProgressWriterI18n createProgressWriter() {
@@ -105,17 +119,16 @@ public class ActionRunner {
         }
     }
     
-    private final void printCheckStatuses(ActionRunnerContext ctx) {
+    private final CheckStatus processAndPrintCheckStatuses(Map<ActionStepCheckEntry, CheckStatus> checkStatuses) {
+        if ( checkStatuses.isEmpty() ) { return CheckStatus.SKIP; }
         try ( var recordWriter = createCheckStatusWriter(); ) {
-            ctx.getCheckStatuses().entrySet().stream()
+            checkStatuses.entrySet().stream()
                 .filter(e->e.getValue()!=CheckStatus.HIDE)
                 .map(this::checkStatusAsObjectNode)
                 .forEach(recordWriter::append);
-            var overallStatus = CheckStatus.combine(ctx.getCheckStatuses().values());
+            var overallStatus = CheckStatus.combine(checkStatuses.values());
             recordWriter.append(checkStatusAsObjectNode("Overall Status", overallStatus));
-            if ( ctx.getExitCode()==0 && overallStatus==CheckStatus.FAIL ) {
-                ctx.setExitCode(100);
-            }
+            return overallStatus;
         }
     }
     

@@ -25,6 +25,8 @@ import org.springframework.expression.Expression;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -45,6 +47,7 @@ import lombok.ToString;
 public final class ActionRunnerVars {
     private static final Logger LOG = LoggerFactory.getLogger(ActionRunnerVars.class);
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
+    private static final ObjectWriter debugObjectWriter = new ObjectMapper().configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false).writerWithDefaultPrettyPrinter();
     private static final String GLOBAL_VAR_NAME = "global";
     private static final String CLI_OPTIONS_VAR_NAME = "cli";
     private static final String[] PROTECTED_VAR_NAMES = {GLOBAL_VAR_NAME, CLI_OPTIONS_VAR_NAME};
@@ -134,7 +137,7 @@ public final class ActionRunnerVars {
             getter = globalValues::get;
         }
         var finalName = name; // Needed for lambda below
-        logDebug(()->String.format("Set %s: %s", finalName, value==null ? null : value.toPrettyString()));
+        logDebug(()->String.format("Set %s: %s", finalName, toDebugString(value)));
         _set(finalName, value, getter, setter);
     }
     
@@ -142,7 +145,7 @@ public final class ActionRunnerVars {
      * Set a variable on this instance only
      */
     public final void setLocal(String name, JsonNode value) {
-        logDebug(()->String.format("Set Local %s: %s", name, value==null ? null : value.toPrettyString()));
+        logDebug(()->String.format("Set Local %s: %s", name, toDebugString(value)));
         _set(name, value, values::get, values::set);
     }
     
@@ -242,6 +245,14 @@ public final class ActionRunnerVars {
     private static final void logDebug(Supplier<String> messageSupplier) {
         if ( LOG.isDebugEnabled() ) {
             LOG.debug(messageSupplier.get());
+        }
+    }
+    
+    private static final String toDebugString(JsonNode value) {
+        try {
+            return value==null ? null : debugObjectWriter.writeValueAsString(value);
+        } catch ( Exception e ) {
+            return "<ERROR FORMATTING VALUE>";
         }
     }
 }

@@ -238,4 +238,17 @@ public final class FileUtils {
         }
         return false;
     }
+
+    /**
+     * Convert the given path to a string, using the given separator character.
+     * If given path is null, null will be returned.
+     */
+    public static final String pathToString(Path path, char separatorChar) {
+        if ( path==null ) { return null; }
+        StringBuilder result = new StringBuilder();
+        path.iterator().forEachRemaining(part -> result.append(separatorChar).append(part));
+        if ( !path.isAbsolute() ) { result.deleteCharAt(0); } // Remove leading separator character if path is not absolute
+        // TODO If original path contains a drive letter, should we include this?
+        return result.toString();
+    }
 }

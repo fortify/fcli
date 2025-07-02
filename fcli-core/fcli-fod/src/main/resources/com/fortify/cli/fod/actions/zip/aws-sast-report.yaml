@@ -31,10 +31,15 @@ cli.options:
     description: 'Required AWS account id. Default value: AWS_ACCOUNT_ID environment variable.'
     required: true
     default: ${#env('AWS_ACCOUNT_ID')}
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
 
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
   - log.progress: Loading static scan summary
   - rest.call:
       staticScanSummary:
@@ -102,7 +107,7 @@ formatters:
                 APPLICATION NAME: ${rel.applicationName}
                 RELEASE ID: ${rel.releaseId+''}
                 RELEASE NAME: ${rel.releaseName}
-                PRIMARY LOCATION: ${issue.primaryLocationFull}
+                PRIMARY LOCATION: ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
                 LINE NUMBER: ${issue.lineNumber+''}
                 INSTANCE ID: ${issue.instanceId}
       RecordState: ACTIVE

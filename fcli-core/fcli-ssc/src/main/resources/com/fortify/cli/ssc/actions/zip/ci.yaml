@@ -82,7 +82,7 @@ steps:
           - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
           
       PACKAGE_ACTION: 
-        cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')}
+        cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} --source-dir "${global.ci.sourceDir}"
         skip.if-reason:
           - ${sast.skipReason} # Skip if SAST scan is skipped
           
@@ -146,7 +146,7 @@ steps:
           # TODO Skip if prCommentAction is null or doesn't exist
           
       SAST_EXPORT:
-        cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} --av "${global.ci.av}"
+        cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} --av "${global.ci.av}" --source-dir "${global.ci.sourceDir}"
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
           - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)}

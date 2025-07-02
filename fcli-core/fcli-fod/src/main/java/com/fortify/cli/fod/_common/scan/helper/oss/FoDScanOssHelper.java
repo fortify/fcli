@@ -14,9 +14,11 @@
 package com.fortify.cli.fod._common.scan.helper.oss;
 
 import java.io.File;
+import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -78,6 +80,51 @@ public class FoDScanOssHelper extends FoDScanHelper {
                 .put("releaseName", releaseDescriptor.getReleaseName())
                 .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(setup, FoDScanConfigOssDescriptor.class);
+    }
+
+    public static final JsonNode formatResults(JsonNode record) {
+        String licenseSummary = "", issueSummary = "";
+        JsonNode licensesNode = record.get("licenses");
+        if (licensesNode.isArray()) {
+            for (JsonNode license : licensesNode) {
+                licenseSummary = licenseSummary.concat(license.get("name").asText()).concat(", ");
+            }
+        }
+        if (!licenseSummary.isBlank()) licenseSummary = licenseSummary.substring(0, licenseSummary.lastIndexOf(","));
+        JsonNode vulnerabilitiesNode = record.get("vulnerabilityCounts");
+        
+        int criticalCount = 0, highCount = 0, mediumCount = 0, lowCount = 0;
+        StringBuilder issuesBuilder = new StringBuilder();
+
+        if (vulnerabilitiesNode != null && vulnerabilitiesNode.isArray()) {
+            for (JsonNode vuln : vulnerabilitiesNode) {
+                String severity = vuln.path("severity").asText();
+                int count = vuln.path("count").asInt(0);
+                if (count > 0) {
+                    issuesBuilder.append(severity).append(":").append(count).append(", ");
+                }
+                switch (severity) {
+                    case "Critical": criticalCount += count; break;
+                    case "High":     highCount += count; break;
+                    case "Medium":   mediumCount += count; break;
+                    case "Low":      lowCount += count; break;
+                }
+            }
+        }
+        issueSummary = issuesBuilder.length() > 0
+            ? issuesBuilder.substring(0, issuesBuilder.length() - 2)
+            : "";
+         
+        //((ObjectNode)record).remove("licenses");
+        return ((ObjectNode)record)
+            .put("licenseSummary", licenseSummary)
+            .put("issueSummary", issueSummary)
+            .put("isVulnerable", (criticalCount + highCount + mediumCount + lowCount) > 0)
+            .put("openSourceCritical", criticalCount)
+            .put("openSourceHigh", highCount)
+            .put("openSourceMedium", mediumCount)
+            .put("openSourceLow", lowCount)
+            .put("issueCount", criticalCount + highCount + mediumCount + lowCount);
     }
 
 }

@@ -48,7 +48,9 @@ public final class ActionRunnerHelper {
      
     public static final JsonNode getValueAsJsonNode(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
         var rawValue = getValueAsObject(vars, templateExpressionWithFormatter);
-        return rawValue==null ? null : JsonHelper.getObjectMapper().valueToTree(rawValue);
+        if ( rawValue==null ) { return null; }
+        if ( rawValue instanceof JsonNode ) { return (JsonNode)rawValue; }
+        return JsonHelper.getObjectMapper().valueToTree(rawValue);
     }
     
     public static final Object formatValueAsObject(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {

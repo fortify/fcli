@@ -99,7 +99,7 @@ formatters:
       category: dependency_scanning
       name: ${issue.issueName}
       message: ${issue.issueName}
-      description: ${#abbreviate(#htmlToText(issue.details?.brief), 15000)}
+      description: ${#abbreviate(#htmlToText(issue.details?.brief?:""), 15000)}
       cve: 'N/A'
       severity: ${issue.friority}
       confidence: ${(issue.friority matches "(Critical|Medium)") ? "High":"Low" }

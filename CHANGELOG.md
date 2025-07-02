@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.0](https://github.com/fortify/fcli/compare/v3.5.2...v3.6.0) (2025-06-14)
+
+
+### Features
+
+* `*-sast-report` actions: Add `--source-dir` option to allow for matching Fortify-reported source file paths against repository file paths (fixes [#749](https://github.com/fortify/fcli/issues/749)) ([775c5a3](https://github.com/fortify/fcli/commit/775c5a32ca65c435dd77d5eb760ddfda70796c95))
+* `ci` actions: Automatically pass `--source-dir` option to SAST report actions (fixes [#749](https://github.com/fortify/fcli/issues/749)) ([775c5a3](https://github.com/fortify/fcli/commit/775c5a32ca65c435dd77d5eb760ddfda70796c95))
+* `fcli fod`: New `fcli fod oss list-components` command (resolves [#244](https://github.com/fortify/fcli/issues/244)) ([775c5a3](https://github.com/fortify/fcli/commit/775c5a32ca65c435dd77d5eb760ddfda70796c95))
+
+
+### Bug Fixes
+
+* `fcli fod sast-scan setup`: Allow assessment type to be specified by Id or Name (resolves [#738](https://github.com/fortify/fcli/issues/738)) ([775c5a3](https://github.com/fortify/fcli/commit/775c5a32ca65c435dd77d5eb760ddfda70796c95))
+* `fcli fod`: Fix issue with page handling in REST responses, potentially causing issues if more than 9 pages of results are available on FoD ([775c5a3](https://github.com/fortify/fcli/commit/775c5a32ca65c435dd77d5eb760ddfda70796c95))
+
 ## [3.5.2](https://github.com/fortify/fcli/compare/v3.5.1...v3.5.2) (2025-06-05)
 
 

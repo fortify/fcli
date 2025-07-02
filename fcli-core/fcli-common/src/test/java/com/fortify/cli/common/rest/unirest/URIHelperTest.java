@@ -33,6 +33,8 @@ public class URIHelperTest {
         "?o=5&oo=5,?oo=5&o=10",
         "?oo=5&o=5&oo=7,?oo=5&oo=7&o=10",
         "?oo=5&o=5&o=6&oo=7,?oo=5&oo=7&o=10",
+        "?oo=5&o=50&o=60&oo=7,?oo=5&oo=7&o=10",
+        "?oo=5&o=500&o=600&oo=7,?oo=5&oo=7&o=10",
     })
     public void testAddOrReplaceParam(String input, String expected) throws Exception {
         if ( input==null ) { input = ""; }

@@ -32,7 +32,7 @@ steps:
         uri:    /api/v3/scans/${rel.currentDynamicScanId}/site-tree
         if:     ${rel.currentDynamicScanId!=null}
         on.fail: 
-          - log.debug: "Site tree unavailable: ${exception.getMessage()}"
+          - log.debug: "Site tree unavailable: ${siteTree_exception.getMessage()}"
   - log.progress: Processing issue data
   - rest.call:
       issues:
@@ -98,7 +98,7 @@ formatters:
       category: dast
       name: ${issue.category}
       message: ${issue.category}
-      description: ${#abbreviate(#htmlToText(issue.details?.summary), 15000)}
+      description: ${#abbreviate(#htmlToText(issue.details?.summary?:""), 15000)}
       cve: 'N/A'
       severity: ${{'Critical':'Critical','High':'High','Medium':'Medium','Low':'Low','Best Practice':'Info','Info':'Info'}.get(issue.severityString)?:'Unknown'}
       confidence: ${(issue.severityString matches "(Critical|Medium)") ? "High":"Low" }

@@ -127,12 +127,19 @@ formatters:
           `SETUP_EXTRA_OPTS`. To allow this action to create new applications, depending on FoD version,
           you may (also) need to provide the `--app-owner <user id or name>` option through `SETUP_EXTRA_OPTS`.
     scan:
-      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS\nDO_SAST_WAIT
+      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
-          For now, this fcli action only supports running a SAST scan, which is enabled by default. The
-          `SAST_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the `fcli fod sast-scan start`
-          command. By default, this action will wait until the scan has been completed, unless `DO_SAST_WAIT`
-          is set to `false`; note that any post-scan tasks will be skipped in this case.
+          The fcli `ci` action currently only supports running a SAST scan, which is enabled by default.
+          The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to the
+          `fcli fod sast-scan start` command, for example to specify scan notes. Note that these environment
+          variables only control the submission of the scan request; see the information below for details
+          on waiting for the scan to complete.
+      - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+        desc: >-
+          By default, the fcli `ci` action will wait for the SAST scan to complete. This behavior can be
+          overridden by setting `DO_SAST_WAIT` to `false`, but note that doing so will skip any post-scan
+          tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+          `fcli fod sast-scan wait-for` command, for example to adjust the polling interval or timeout.
     postScan:
       - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
         desc: >-
@@ -201,12 +208,19 @@ formatters:
           application version representing your default branch by passing the `--copy-from` option through
           `SETUP_EXTRA_OPTS`.
     scan:
-      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS\nDO_SAST_WAIT
+      - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
-            For now, this fcli action only supports running a SAST scan, which is enabled by default. The
-            `SAST_SCAN_EXTRA_OPTS` environment variable can be used to pass extra options to the `fcli sc-sast scan start`
-            command. By default, this action will wait until the scan has been completed, unless `DO_SAST_WAIT`
-            is set to `false`; note that any post-scan tasks will be skipped in this case.
+          The fcli `ci` action currently only supports running a SAST scan, which is enabled by default.
+          The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
+          the `fcli sc-sast scan start` command, for example to request a scan completion email notification.
+          Note that these environment variables only control the submission of the scan request; see the
+          information below for details on waiting for the scan to complete. 
+      - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+        desc: >-
+          By default, the fcli `ci` action will wait for the SAST scan to complete. This behavior can be
+          overridden by setting `DO_SAST_WAIT` to `false`, but note that doing so will skip any post-scan
+          tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+          `fcli sc-sast scan wait-for` command, for example to adjust the polling interval or timeout.
     postScan:
       - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
         desc: >-
