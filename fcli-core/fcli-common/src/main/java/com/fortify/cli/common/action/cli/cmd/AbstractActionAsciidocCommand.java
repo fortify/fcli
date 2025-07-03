@@ -72,7 +72,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     private final String replaceVariables(String s) {
         return s.replace("${version}", FcliBuildPropertiesHelper.getFcliBuildInfo().replace(':', ' '))
                 .replace("${type}", getType())
-                .replace("${actionCmd}", getActionCmd().toLowerCase());
+                .replace("${actionCmd}", getActionCmd());
     }
     
     private final String generateHeader() {
