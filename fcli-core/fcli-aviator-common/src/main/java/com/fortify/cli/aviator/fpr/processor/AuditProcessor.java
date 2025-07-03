@@ -781,17 +781,24 @@ public class AuditProcessor {
                                 logger.error("Skipping change for issue {} due to invalid line number format. Details: {}", instanceId, e.getMessage());
                             }
                         }
-                        if (fileChangesElement.hasChildNodes()) {
+                        if (fileChangesElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "Change").getLength() > 0) {
                             remediationElement.appendChild(fileChangesElement);
                         }
                     }
 
-                    if (isRemediationElementValid(remediationElement, fprInfo)) {
-                        remediationListElement.appendChild(remediationElement);
-                        validRemediationCount++;
+                    // Check if any FileChanges were actually added to the remediation element.
+                    // This prevents validation errors if all changes for an issue were skipped.
+                    if (remediationElement.getElementsByTagNameNS(REMEDIATIONS_NAMESPACE_URI, "FileChanges").getLength() > 0) {
+                        if (isRemediationElementValid(remediationElement, fprInfo)) {
+                            remediationListElement.appendChild(remediationElement);
+                            validRemediationCount++;
+                        } else {
+                            logger.warn("Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
+                        }
                     } else {
-                        logger.warn("Skipping invalid remediation for issue instanceId: {} due to schema validation failure.", instanceId);
+                        logger.warn("Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
                     }
+
                 }
             }
 
@@ -901,11 +908,38 @@ public class AuditProcessor {
             return true;
 
         } catch (SAXException e) {
-            logger.error("Validation failed for remediation of issue instanceId: {}. It will be excluded. Reason: {}", instanceId, e.getMessage());
+            String xmlContent = domElementToString(remediationElement);
+            logger.error("Validation failed for remediation of issue instanceId: {}. It will be excluded. Reason: {}\n--- Invalid XML Snippet ---\n{}\n--- End Snippet ---",
+                    instanceId, e.getMessage(), xmlContent);
             return false;
         } catch (Exception e) {
             logger.error("An unexpected error occurred during validation for issue instanceId: {}. It will be excluded.", instanceId, e);
             return false;
+        }
+    }
+
+    /**
+     * Converts a DOM Element to its XML string representation for logging.
+     * @param element The element to convert.
+     * @return A formatted XML string of the element.
+     */
+    private String domElementToString(Element element) {
+        try {
+            TransformerFactory tf = TransformerFactory.newInstance();
+            tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            tf.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+            tf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+
+            java.io.StringWriter writer = new java.io.StringWriter();
+            transformer.transform(new DOMSource(element), new StreamResult(writer));
+            return writer.getBuffer().toString();
+        } catch (Exception e) {
+            logger.error("Failed to serialize XML element for logging", e);
+            return "Error converting element to string: " + e.getMessage();
         }
     }
 
