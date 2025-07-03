@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc._common.session.cli.mixin;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fortify.cli.common.log.LogSensitivityLevel;
@@ -53,23 +54,20 @@ public class SSCAndScanCentralSessionLoginOptions {
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "SC-SAST CONTROLLER URL")
         @Getter private String scSastControllerUrl;
 
-        @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-		@Option(names = { "--disable" }, required = false, split = ",", order =3, descriptionKey = "fcli.ssc.component.list.disable")
-		@Getter private Set<SSCComponentDisable> disable;
+		@DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+		@Option(names = { "--disable" }, required = false, split = ",", order = 3)
+		@Getter	private Set<SSCComponentDisable> disabledComponents = new HashSet<>();
 
 		@RequiredArgsConstructor
 		public static enum SSCComponentDisable {
-			sc_sast("sc-sast"), sc_dast("sc-dast");
-
-			@Getter
-			private final String param;
+			sc_sast, sc_dast;
 
 			@Override
-	        public String toString() {
-	            return super.toString().replace('_', '-');
-	        }
+			public String toString() {
+				return name().replace('_', '-');
+			}
 		}
-    }
+	}
     
     public static class SSCAndScanCentralCredentialConfigOptions implements ISSCAndScanCentralCredentialsConfig {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 1) 

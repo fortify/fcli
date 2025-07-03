@@ -113,26 +113,15 @@ public class SSCAndScanCentralSessionDescriptor extends AbstractSessionDescripto
                 .sscUrlConfig(sscUrlConfig)
                 .sscTokenData(sscTokenData)
                 .revokeTokenOnLogout(providedSscToken==null);
-        var sscConfigProperties = getSscConfigProperties(sscUrlConfig, sscTokenData.getToken());
-        boolean disableSast = false;
-        boolean disableDast = false;
-        Set<SSCComponentDisable> disabledComponents = sscAndScanCentralUrlConfig.getDisable();
-        if(disabledComponents != null) {
-        	for (SSCComponentDisable disable : disabledComponents) {
-                if (disable == SSCComponentDisable.sc_sast) {
-                	disableSast = true;
-                } else if (disable == SSCComponentDisable.sc_dast) {
-                	disableDast = true;
-                }
-            }
-        }
-		if (disableSast) {
+		var sscConfigProperties = getSscConfigProperties(sscUrlConfig, sscTokenData.getToken());
+		Set<SSCComponentDisable> disabledComponents = sscAndScanCentralUrlConfig.getDisabledComponents();
+		if (disabledComponents.contains(SSCComponentDisable.sc_sast)) {
 			sessionDescriptorBuilder.scSastDisabledReason("Disabled by user");
 		} else {
 			addScSastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig,
 					sscAndScanCentralCredentialsConfig.getScSastClientAuthToken(), sscConfigProperties);
 		}
-        if (disableDast)
+        if (disabledComponents.contains(SSCComponentDisable.sc_dast))
         	sessionDescriptorBuilder.scDastDisabledReason("Disabled by user");
         else
         	addScDastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig, sscConfigProperties);

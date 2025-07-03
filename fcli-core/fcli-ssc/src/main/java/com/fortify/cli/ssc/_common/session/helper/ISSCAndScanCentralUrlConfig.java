@@ -14,5 +14,5 @@ import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLog
 public interface ISSCAndScanCentralUrlConfig extends IConnectionConfig {
     String getSscUrl();
     String getScSastControllerUrl();
-    Set<SSCComponentDisable> getDisable();
+    Set<SSCComponentDisable> getDisabledComponents();
 }
