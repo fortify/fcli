@@ -141,9 +141,9 @@ public class IssueAuditor {
         LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
 
         userPrompts = userPrompts.stream().filter(this::shouldInclude).collect(Collectors.toList());
-        int totalIssuesToAudit = userPrompts.size();
 
         ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
+        int totalIssuesToAudit = filteredUserPrompts.size();
         logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
 
         if (filteredUserPrompts.isEmpty()) {
