@@ -1,6 +1,6 @@
 ---
-title: Action Documentation: <code>fcli ssc action</code>
-fcli_version: 0.20250707.201323-dev_v3.x
+title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
+fcli_version: 0.20250707.211018-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250707.201323-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250707.201323-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250707.211018-dev_v3.x" %}
 
 
 <div id="header">
-<h1>Action Documentation: <code>fcli ssc action</code></h1>
+<h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20250707.201323-dev_v3.x</span>
+<span id="revnumber">version 0.20250707.211018-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -237,7 +237,7 @@ For information on how to create or update findings into AWS Security Hub, see
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 <dt class="hdlist1">--aws-region</dt>
 <dd>
@@ -297,7 +297,7 @@ For information on how to create or update findings into AWS Security Hub, see
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
@@ -435,7 +435,7 @@ SAST_SCAN_EXTRA_OPTS</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_WAIT<br>
 SAST_WAIT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">By default, the fcli <code>ci</code> action will wait for the SAST scan to complete. This behavior can be overridden by setting <code>DO_SAST_WAIT</code> to <code>false</code>, but note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="manpage/fcli-sc-sast-scan.html"><code>fcli sc-sast scan wait-for</code></a> command, for example to adjust the polling interval or timeout.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, the fcli <code>ci</code> action will wait for the SAST scan to complete. This behavior can be overridden by setting <code>DO_SAST_WAIT</code> to <code>false</code>, but note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="manpage/fcli-sc-sast-scan-wait-for.html"><code>fcli sc-sast scan wait-for</code></a> command, for example to adjust the polling interval or timeout.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_APPVERSION_SUMMARY<br>
@@ -616,7 +616,7 @@ previous scan for this PR.</p>
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
@@ -664,7 +664,7 @@ previous scan for this PR.</p>
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 </dl>
 </div>
@@ -708,7 +708,7 @@ previous scan for this PR.</p>
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 </dl>
 </div>
@@ -752,7 +752,7 @@ previous scan for this PR.</p>
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
@@ -800,7 +800,7 @@ previous scan for this PR.</p>
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 </dl>
 </div>
@@ -903,7 +903,7 @@ reports. For more information about SARIF, please see
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
@@ -1031,7 +1031,7 @@ appropriate option values and setup commands to run.</p>
 </dd>
 <dt class="hdlist1">--refresh-timeout</dt>
 <dd>
-<p>See 'fcli ssc av create'. Default value: 300s</p>
+<p>See <a href="manpage/fcli-ssc-appversion-create.html"><code>fcli ssc appversion create</code></a>. Default value: 300s</p>
 </dd>
 </dl>
 </div>
@@ -1079,7 +1079,7 @@ appropriate option values and setup commands to run.</p>
 </dd>
 <dt class="hdlist1">--page-size</dt>
 <dd>
-<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100</p>
+<p>Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see <code>--socket-timeout</code> option on <a href="manpage/fcli-ssc-session-login.html"><code>fcli ssc session login</code></a> command). Default value: 100</p>
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
@@ -1093,8 +1093,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250707.201323-dev_v3.x<br>
-Last updated 2025-07-07 20:15:31 UTC
+Version 0.20250707.211018-dev_v3.x<br>
+Last updated 2025-07-07 21:12:26 UTC
 </div>
 </div>
 </body>
