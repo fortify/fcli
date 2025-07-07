@@ -413,7 +413,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     }
 
     private void processRequestQueue(int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture) {
-        logger.progress("Starting to process issues from queue...");
+        logger.progress("Starting to process issues...");
 
         long startTime = System.currentTimeMillis();
         long maxProcessingTimeMs = defaultTimeoutSeconds * 1000 * 2; // Give extra time for retries
