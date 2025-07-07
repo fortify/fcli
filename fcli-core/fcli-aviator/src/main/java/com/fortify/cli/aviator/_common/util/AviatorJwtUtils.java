@@ -1,5 +1,6 @@
 package com.fortify.cli.aviator._common.util;
 
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Date;
 
@@ -8,7 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.util.StringUtils; // For StringUtils.isBlank
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.common.util.StringUtils;
 
 public final class AviatorJwtUtils {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorJwtUtils.class);
@@ -18,26 +20,31 @@ public final class AviatorJwtUtils {
 
     private static JsonNode getJwtPayload(String token) {
         if (StringUtils.isBlank(token)) {
-            LOG.warn("WARN: Provided token is null or blank, cannot extract payload.");
-            return null;
+            throw new AviatorSimpleException("Provided token is null or blank, cannot extract payload.");
         }
+
         try {
             String[] chunks = token.split("\\.");
             if (chunks.length < 2) {
-                LOG.warn("WARN: Invalid JWT token structure ({} parts), cannot extract payload.", chunks.length);
-                return null;
+                throw new IllegalArgumentException(String.format("Invalid token structure: expected at least 2 parts, but found %d.", chunks.length));
             }
+
             Base64.Decoder decoder = Base64.getUrlDecoder();
-            String payloadJson = new String(decoder.decode(chunks[1]));
-            return objectMapper.readTree(payloadJson);
+            String payloadJson;
+            try {
+                payloadJson = new String(decoder.decode(chunks[1]));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("The token's payload is not valid Base64URL.", e);
+            }
+
+            try {
+                return objectMapper.readTree(payloadJson);
+            } catch (IOException e) {
+                throw new IllegalArgumentException("The token's payload is not valid JSON.", e);
+            }
         } catch (IllegalArgumentException e) {
-            LOG.warn("Failed to decode Base64URL from JWT payload: {}. Token part: {}", e.getMessage(), (token.split("\\.").length > 1 ? token.split("\\.")[1] : "N/A"));
-            LOG.debug("Base64 Decode Exception details: ", e);
-        } catch (Exception e) {
-            LOG.warn("Failed to parse JWT token payload: {}.", e.getMessage());
-            LOG.debug("JWT Parse Exception details: ", e);
+            throw new AviatorSimpleException("Invalid JWT token: failed to parse payload JSON.", e);
         }
-        return null;
     }
 
     public static Date extractExpiryDateFromToken(String token) {

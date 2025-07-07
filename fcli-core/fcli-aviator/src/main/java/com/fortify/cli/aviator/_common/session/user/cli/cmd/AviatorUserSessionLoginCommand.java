@@ -17,22 +17,22 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDescriptor;
-import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionLoginOptions;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionNameArgGroup;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserTokenResolverMixin;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionDescriptor;
 import com.fortify.cli.aviator._common.session.user.helper.AviatorUserSessionHelper;
 import com.fortify.cli.aviator._common.util.AviatorJwtUtils;
-import com.fortify.cli.aviator._common.util.AviatorSignatureUtils;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.grpc.token.TokenValidationResponse;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -66,16 +66,17 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
             if (!validationResponse.getValid()) {
                 String errorMsg = validationResponse.getErrorMessage();
                 String fullError = "Aviator user token validation failed: " +
-                        (errorMsg == null || errorMsg.isBlank() ? "Token is invalid." : errorMsg);
-                throw new AviatorSimpleException(fullError);
+                        (errorMsg == null || errorMsg.isBlank() ? "The token is invalid. Please verify the token is correct and try again." : errorMsg);                throw new AviatorSimpleException(fullError);
             }
             LOG.info("Aviator user token validated successfully with the Aviator server.");
-        } catch (AviatorSimpleException e) {
-            throw e;
-        } catch (Exception e) {
-            LOG.warn("An error occurred while trying to validate the Aviator user token with the server using the 'default' admin config: {}. " +
-                    "Proceeding with session creation, but the token's server-side validity is unconfirmed.", e.getMessage());
-            LOG.debug("Token validation gRPC call exception details: ", e);
+        } catch (AviatorTechnicalException e) {
+            if (e.getCause() instanceof StatusRuntimeException sre && sre.getStatus().getCode() == Status.Code.UNIMPLEMENTED) {
+                LOG.warn("Could not validate token with the Aviator server; this may be an older version that does not support this feature. " +
+                        "Proceeding with session creation, but the token's server-side validity is unconfirmed.");
+                LOG.debug("Token validation gRPC call exception details: ", e);
+            } else {
+                throw e;
+            }
         }
 
         if (expiryDate == null) {
