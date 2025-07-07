@@ -597,7 +597,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         isShutdown.set(true);
         stopPingPong();
         try {
-            if (requestHandler.isReady() && !latch.await(10, TimeUnit.SECONDS)) {
+            if (requestHandler != null && requestHandler.isReady() && !latch.await(10, TimeUnit.SECONDS)) {
                 LOG.warn("Timed out waiting for stream completion");
             }
         } catch (InterruptedException e) {
@@ -619,16 +619,18 @@ public class AviatorGrpcClient implements AutoCloseable {
                 Thread.currentThread().interrupt();
                 LOG.warn("Interrupted during channel shutdown");
             } finally {
-                processingExecutor.shutdown();
-                try {
-                    if (!processingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                if (processingExecutor != null){
+                    processingExecutor.shutdown();
+                    try {
+                        if (!processingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                            processingExecutor.shutdownNow();
+                            LOG.debug("Processing executor forcibly shut down");
+                        }
+                    } catch (InterruptedException e) {
                         processingExecutor.shutdownNow();
-                        LOG.debug("Processing executor forcibly shut down");
+                        Thread.currentThread().interrupt();
+                        LOG.warn("Interrupted during executor shutdown");
                     }
-                } catch (InterruptedException e) {
-                    processingExecutor.shutdownNow();
-                    Thread.currentThread().interrupt();
-                    LOG.warn("Interrupted during executor shutdown");
                 }
             }
         }
