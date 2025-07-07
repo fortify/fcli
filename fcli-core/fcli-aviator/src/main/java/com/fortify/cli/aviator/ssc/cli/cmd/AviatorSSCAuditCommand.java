@@ -46,24 +46,15 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
-    private static final ThreadLocal<JsonNode> cachedResult = new ThreadLocal<>();
-
     @Override
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        JsonNode result = cachedResult.get();
-
-        if (result == null) {
-            var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
-            try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
-                AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
-                SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
-                result = processFpr(unirest, av, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger);
-                cachedResult.set(result);
-            }
+        var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
+            AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
+            SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
+            return processFpr(unirest, av, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger);
         }
-
-        return result;
     }
 
     @SneakyThrows
@@ -145,16 +136,11 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @Override
     public String getActionCommandResult() {
-        JsonNode result = getJsonNode(null);
-        return result != null ? result.path("action").asText("FAILED") : "FAILED";
+        return "AUDITED";
     }
 
     @Override
     public boolean isSingular() {
         return true;
-    }
-
-    public static void cleanup() {
-        cachedResult.remove();
     }
 }

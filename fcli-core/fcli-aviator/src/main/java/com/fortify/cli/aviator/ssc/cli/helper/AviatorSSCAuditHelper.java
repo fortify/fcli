@@ -2,6 +2,7 @@ package com.fortify.cli.aviator.ssc.cli.helper;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 
 /**
@@ -24,7 +25,7 @@ public final class AviatorSSCAuditHelper {
         result.put("applicationName", av.getApplicationName());
         result.put("name", av.getVersionName());
         result.put("artifactId", artifactId);
-        result.put("action", action);
+        result.put(IActionCommandResultSupplier.actionFieldName, action);
         return result;
     }
 
