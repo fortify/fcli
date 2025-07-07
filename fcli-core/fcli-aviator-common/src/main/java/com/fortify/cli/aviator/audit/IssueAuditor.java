@@ -568,7 +568,11 @@ public class IssueAuditor {
         String instanceId = userPrompt.getIssueData().getInstanceID();
         AuditIssue auditIssue = auditIssueMap.get(instanceId);
 
-        String comment = formatComment(reasonTemplate, issuesInCategory, totalIssues);
+        String comment = reasonTemplate
+                .replace("{issues_new_in_category}", String.valueOf(issuesInCategory))
+                .replace("{MAX_PER_CATEGORY}", String.valueOf(MAX_PER_CATEGORY))
+                .replace("{issues_new_total}", String.valueOf(totalIssues))
+                .replace("{MAX_TOTAL}", String.valueOf(MAX_TOTAL));
 
         if (auditIssue != null) {
             LOG.debug("Updating existing audit entry for skipped issue: {}", instanceId);
@@ -596,12 +600,5 @@ public class IssueAuditor {
                 LOG.error("Failed to add skipped issue element to audit.xml for {}: {}", instanceId, e.getMessage());
             }
         }
-    }
-
-    private String formatComment(String template, int... values) {
-        if (values.length == 2) {
-            template = template.replace("{issues_new_in_category}", String.valueOf(values[0])).replace("{MAX_PER_CATEGORY}", String.valueOf(MAX_PER_CATEGORY)).replace("{issues_new_total}", String.valueOf(values[1])).replace("{MAX_TOTAL}", String.valueOf(MAX_TOTAL));
-        }
-        return template;
     }
 }
