@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc._common.session.helper;
 
 import java.util.Date;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -30,6 +31,7 @@ import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptor;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions.SSCAndScanCentralUrlConfigOptions.SSCComponentDisable;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse.SSCTokenData;
@@ -111,9 +113,18 @@ public class SSCAndScanCentralSessionDescriptor extends AbstractSessionDescripto
                 .sscUrlConfig(sscUrlConfig)
                 .sscTokenData(sscTokenData)
                 .revokeTokenOnLogout(providedSscToken==null);
-        var sscConfigProperties = getSscConfigProperties(sscUrlConfig, sscTokenData.getToken());
-        addScSastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig, sscAndScanCentralCredentialsConfig.getScSastClientAuthToken(), sscConfigProperties);
-        addScDastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig, sscConfigProperties);
+		var sscConfigProperties = getSscConfigProperties(sscUrlConfig, sscTokenData.getToken());
+		Set<SSCComponentDisable> disabledComponents = sscAndScanCentralUrlConfig.getDisabledComponents();
+		if (disabledComponents.contains(SSCComponentDisable.sc_sast)) {
+			sessionDescriptorBuilder.scSastDisabledReason("Disabled by user");
+		} else {
+			addScSastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig,
+					sscAndScanCentralCredentialsConfig.getScSastClientAuthToken(), sscConfigProperties);
+		}
+        if (disabledComponents.contains(SSCComponentDisable.sc_dast))
+        	sessionDescriptorBuilder.scDastDisabledReason("Disabled by user");
+        else
+        	addScDastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig, sscConfigProperties);
         return sessionDescriptorBuilder.build();
     }
     

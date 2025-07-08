@@ -219,8 +219,8 @@ formatters:
         desc: >-
           By default, the fcli `ci` action will wait for the SAST scan to complete. This behavior can be
           overridden by setting `DO_SAST_WAIT` to `false`, but note that doing so will skip any post-scan
-          tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-          `fcli sc-sast scan wait-for` command, for example to adjust the polling interval or timeout.
+          tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to
+          the `fcli sc-sast scan wait-for` command, for example to adjust the polling interval or timeout.
     postScan:
       - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
         desc: >-

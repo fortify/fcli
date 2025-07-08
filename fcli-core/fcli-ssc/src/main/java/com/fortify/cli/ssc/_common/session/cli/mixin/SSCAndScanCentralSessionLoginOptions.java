@@ -13,6 +13,8 @@
 package com.fortify.cli.ssc._common.session.cli.mixin;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
@@ -21,12 +23,15 @@ import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -45,10 +50,24 @@ public class SSCAndScanCentralSessionLoginOptions {
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "SSC HOST", pattern = MaskValue.URL_HOSTNAME_PATTERN)
         @Getter private String sscUrl;
         
-        @Option(names = {"--sc-sast-url"}, required = false, order=1)
+        @Option(names = {"--sc-sast-url"}, required = false, order=2)
         @MaskValue(sensitivity = LogSensitivityLevel.low, description = "SC-SAST CONTROLLER URL")
         @Getter private String scSastControllerUrl;
-    }
+
+		@DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+		@Option(names = { "--disable" }, required = false, split = ",", order = 3)
+		@Getter	private Set<SSCComponentDisable> disabledComponents = new HashSet<>();
+
+		@RequiredArgsConstructor
+		public static enum SSCComponentDisable {
+			sc_sast, sc_dast;
+
+			@Override
+			public String toString() {
+				return name().replace('_', '-');
+			}
+		}
+	}
     
     public static class SSCAndScanCentralCredentialConfigOptions implements ISSCAndScanCentralCredentialsConfig {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 1) 

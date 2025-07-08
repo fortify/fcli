@@ -55,7 +55,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
-import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,9 +143,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final CountDownLatch initLatch = new CountDownLatch(1);
     private final Semaphore requestSemaphore;
     private final AtomicInteger outstandingRequests = new AtomicInteger(0);
-    private volatile StreamObserver<UserPromptRequest> requestObserver;
-    private final AtomicBoolean streamCompleted = new AtomicBoolean(false);
-    private volatile boolean isStreamActive = false;
+    private RequestHandler<UserPromptRequest> requestHandler;
 
     private final ScheduledExecutorService pingScheduler;
     private ScheduledFuture<?> pingTask;
@@ -215,23 +212,23 @@ public class AviatorGrpcClient implements AutoCloseable {
     // Send ping message
     private void sendPing() {
         try {
-            if (requestObserver != null && !streamCompleted.get() && isStreamActive) {
+            if (requestHandler != null && requestHandler.isReady()) {
                 PingRequest pingRequest = PingRequest.newBuilder().setStreamId(streamId).setTimestamp(System.currentTimeMillis()).build();
 
                 UserPromptRequest pingMsg = UserPromptRequest.newBuilder().setPing(pingRequest).build();
 
                 LOG.info("Sending ping streamId: {}", streamId);
-                requestObserver.onNext(pingMsg);
+                requestHandler.sendRequest(pingMsg);
             }
         } catch (Exception e) {
-            if (!streamCompleted.get()) {
+            if (requestHandler != null && !requestHandler.isCompleted()) {
                 LOG.warn("Failed to send ping: {}", e.getMessage());
             }
         }
     }
 
     public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token) {
-        isStreamActive = true;
+        requestHandler = new RequestHandler<>(streamId);
         if (requests == null || requests.isEmpty()) {
             LOG.info("No issues to process");
             return CompletableFuture.completedFuture(new HashMap<>());
@@ -250,7 +247,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
             @Override
             public void beforeStart(ClientCallStreamObserver<UserPromptRequest> requestStream) {
-                requestObserver = requestStream;
+                requestHandler.initialize(requestStream);
             }
 
             @Override
@@ -270,10 +267,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                     String cliMessage = "Internal server error occurred";
                     logger.error(cliMessage);
                     resultFuture.completeExceptionally(new AviatorTechnicalException(cliMessage));
-                    if (requestObserver != null) {
-                        requestObserver.onCompleted();
+                    if (requestHandler != null) {
+                        requestHandler.complete();
                     }
-                    streamCompleted.set(true);
                     latch.countDown();
                     return;
                 }
@@ -282,7 +278,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                     handleBackpressureWarning();
                 } else if ("BACKPRESSURE_VIOLATION".equals(response.getStatus())) {
                     logger.error("Server terminated stream due to backpressure violations: {}", response.getStatusMessage());
-                    streamCompleted.set(true);
+                    if (requestHandler != null) {
+                        requestHandler.complete();
+                    }
                     if (!resultFuture.isDone()) {
                         resultFuture.completeExceptionally(new AviatorTechnicalException("Stream terminated by server: " + response.getStatusMessage()));
                     }
@@ -305,10 +303,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                             if (!resultFuture.isDone()) {
                                 resultFuture.completeExceptionally(new AviatorTechnicalException(errorMessage));
                             }
-                            if (requestObserver != null) {
-                                requestObserver.onCompleted();
+                            if (requestHandler != null) {
+                                requestHandler.complete();
                             }
-                            streamCompleted.set(true);
                             latch.countDown();
                         }
                     } else {
@@ -334,8 +331,8 @@ public class AviatorGrpcClient implements AutoCloseable {
 
                 if (completed >= totalRequests) {
                     logger.info("All requests accounted for, completing stream.");
-                    if (streamCompleted.compareAndSet(false, true) && requestObserver != null) {
-                        requestObserver.onCompleted();
+                    if (requestHandler != null && !requestHandler.isCompleted()) {
+                        requestHandler.complete();
                     }
                     if (!resultFuture.isDone()) {
                         resultFuture.complete(responses);
@@ -377,7 +374,7 @@ public class AviatorGrpcClient implements AutoCloseable {
             String initRequestId = UUID.randomUUID().toString();
             UserPromptRequest initRequest = UserPromptRequest.newBuilder().setInit(StreamInitRequest.newBuilder().setStreamId(streamId).setRequestId(initRequestId).setToken(token).setApplicationName(projectName).setSscApplicationName(SSCApplicationName).setSscApplicationVersion(SSCApplicationVersion).setFprBuildId(FPRBuildId).setTotalReportedIssues(totalRequests).setTotalIssuesToPredict(totalRequests).build()).build();
 
-            requestObserver.onNext(initRequest);
+            requestHandler.sendRequest(initRequest);
             LOG.info("Client Id  for stream initialization {}", streamId);
 
             processingExecutor.submit(() -> {
@@ -390,15 +387,15 @@ public class AviatorGrpcClient implements AutoCloseable {
                     Thread.currentThread().interrupt();
                     throw new AviatorTechnicalException("Interrupted during request processing", e);
                 } catch (Exception e) {
-                    if (!streamCompleted.get()) {
+                    if (requestHandler != null && !requestHandler.isCompleted()) {
                         throw new AviatorTechnicalException("Error during request processing execution", e);
                     }
                     LOG.warn("Exception caught after stream completion during processing execution", e);
                 }
             });
         } catch (Exception e) {
-            if (requestObserver != null) {
-                requestObserver.onError(e);
+            if (requestHandler != null) {
+                requestHandler.sendError(e);
             }
             throw new AviatorTechnicalException("Error initiating batch processing", e);
         }
@@ -418,7 +415,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         long startTime = System.currentTimeMillis();
         long maxProcessingTimeMs = defaultTimeoutSeconds * 1000 * 2; // Give extra time for retries
 
-        while (!isShutdown.get() && !streamCompleted.get()) {
+        while (!isShutdown.get() && !requestHandler.isCompleted()) {
             try {
 
                 if (processingQueue.isEmpty()) {
@@ -443,7 +440,7 @@ public class AviatorGrpcClient implements AutoCloseable {
 
                 requestSemaphore.acquire();
 
-                if (streamCompleted.get()) {
+                if (requestHandler.isCompleted()) {
                     requestSemaphore.release();
                     break;
                 }
@@ -469,7 +466,7 @@ public class AviatorGrpcClient implements AutoCloseable {
                 Thread.currentThread().interrupt();
                 throw new AviatorTechnicalException("Thread interrupted while processing queue", ie);
             } catch (Exception e) {
-                if (!streamCompleted.get()) {
+                if (!requestHandler.isCompleted()) {
                     LOG.error("Error in processing loop: {}", e.getMessage(), e);
                     throw new AviatorTechnicalException("Error in processing loop", e);
                 }
@@ -525,8 +522,8 @@ public class AviatorGrpcClient implements AutoCloseable {
             LOG.warn("Request for instance {} permanently failed. Remaining outstanding requests: {}", wrapperToRetry.userPrompt.getIssueData().getInstanceID(), stillOutstanding);
             if (completed >= totalRequests) {
                 logger.info("All requests accounted for after permanent failure, completing stream.");
-                if (streamCompleted.compareAndSet(false, true) && requestObserver != null) {
-                    requestObserver.onCompleted();
+                if (requestHandler != null && !requestHandler.isCompleted()) {
+                    requestHandler.complete();
                 }
                 if (!resultFuture.isDone()) resultFuture.complete(responses);
                 latch.countDown();
@@ -543,12 +540,12 @@ public class AviatorGrpcClient implements AutoCloseable {
     private boolean sendRequestWithRetry(UserPromptRequest request, int maxRetries) {
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
-                if (requestObserver == null) {
-                    LOG.debug("Request observer is null, aborting send");
+                if (requestHandler == null || !requestHandler.isReady()) {
+                    LOG.debug("Request handler is not ready, aborting send");
                     return false;
                 }
 
-                if (streamCompleted.get()) {
+                if (requestHandler.isCompleted()) {
                     return false;
                 }
 
@@ -558,12 +555,12 @@ public class AviatorGrpcClient implements AutoCloseable {
                     throw new AviatorSimpleException("Message size exceeds maximum allowed limit");
                 }
 
-                requestObserver.onNext(request);
+                requestHandler.sendRequest(request);
                 return true;
             } catch (AviatorSimpleException e) {
                 throw e;
             } catch (Exception e) {
-                if (!streamCompleted.get()) {
+                if (requestHandler != null && !requestHandler.isCompleted()) {
                     LOG.error("Error sending request (attempt {}): {}", attempt + 1, e.getMessage());
                 }
                 if (attempt == maxRetries - 1) {
@@ -610,29 +607,18 @@ public class AviatorGrpcClient implements AutoCloseable {
         isShutdown.set(true);
         stopPingPong();
         try {
-            if (isStreamActive && !latch.await(10, TimeUnit.SECONDS)) {
+            if (requestHandler != null && !latch.await(10, TimeUnit.SECONDS)) {
                 LOG.warn("Timed out waiting for stream completion");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("Interrupted while waiting for stream completion");
         }
-        if (requestObserver != null && !streamCompleted.get()) {
+        if (requestHandler != null && !requestHandler.isCompleted()) {
             try {
-                if (requestObserver instanceof ClientCallStreamObserver) {
-                    ClientCallStreamObserver<?> clientObserver = (ClientCallStreamObserver<?>) requestObserver;
-                    if (clientObserver.isReady()) {
-                        streamCompleted.set(true);
-                        requestObserver.onCompleted();
-                        LOG.debug("Request observer completed");
-                    } else {
-                        LOG.debug("Request observer not ready, skipping onCompleted");
-                    }
-                } else {
-                    LOG.debug("Request observer is not a ClientCallStreamObserver, skipping onCompleted");
-                }
+                requestHandler.complete().get(5, TimeUnit.SECONDS);
             } catch (Exception e) {
-                LOG.debug("Exception during request observer completion, likely already closed: {}", e.getMessage());
+                LOG.debug("Exception during request handler completion, likely already closed: {}", e.getMessage());
             }
         }
 

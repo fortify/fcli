@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
+import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequestSummary;

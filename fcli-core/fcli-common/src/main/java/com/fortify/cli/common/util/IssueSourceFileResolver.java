@@ -144,6 +144,7 @@ public class IssueSourceFileResolver {
          * <code>any/leading/dir/src/main/java/com/fortify/X.java</code>, but not <code>any/leading/dir/com/fortify/X.java</code>.</p> 
          */
         protected final Path resolve(Path path) {
+            if ( path==null ) { return null; }
             var normalizedPath = path.normalize();
             var result = fullAndPartialRelativePathsIndex.get(pathToString(normalizedPath));
             return result!=null ? result : resolveSubPathFromFullRelativePathsIndex(path);

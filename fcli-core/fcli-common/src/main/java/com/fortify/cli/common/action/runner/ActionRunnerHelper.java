@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
+import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
 

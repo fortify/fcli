@@ -25,7 +25,7 @@ cli.options:
     required: false
   page-size:
     names: --page-size
-    description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
+    description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see `--socket-timeout` option on `fcli ssc session login` command). Default value: 100"
     required: false
     default: "100"
   sourceDir:
