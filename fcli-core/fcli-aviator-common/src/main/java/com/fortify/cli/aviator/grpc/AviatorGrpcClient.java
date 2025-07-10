@@ -89,11 +89,10 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final IAviatorLogger logger;
 
     private static final int MAX_MESSAGE_SIZE = 16 * 1024 * 1024;
-    private static final int INITIAL_REQUEST_WINDOW = 100;
+    private static final int INITIAL_REQUEST_WINDOW = 5;
     private static final int MAX_RETRIES = 10;
     private static final long BASE_DELAY_MS = 500;
     private static final long MAX_DELAY_MS = 5000;
-
     private static class RequestWrapper {
         final UserPrompt userPrompt;
         int attemptCount = 0;
@@ -177,7 +176,6 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.requestSemaphore = new Semaphore(INITIAL_REQUEST_WINDOW);
 
         this.pingIntervalSeconds = pingIntervalSeconds;
-
         this.pingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "aviator-client-ping-" + r.hashCode());
             t.setDaemon(true);
@@ -216,9 +214,9 @@ public class AviatorGrpcClient implements AutoCloseable {
                 PingRequest pingRequest = PingRequest.newBuilder().setStreamId(streamId).setTimestamp(System.currentTimeMillis()).build();
 
                 UserPromptRequest pingMsg = UserPromptRequest.newBuilder().setPing(pingRequest).build();
-
-                LOG.info("Sending ping streamId: {}", streamId);
-                requestHandler.sendRequest(pingMsg);
+                requestHandler.getRequestQueue().addFirst(pingMsg);
+                CompletableFuture.supplyAsync(()->requestHandler.flush());
+                LOG.info("ping  streamId: {}", streamId);
             }
         } catch (Exception e) {
             if (requestHandler != null && !requestHandler.isCompleted()) {
