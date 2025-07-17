@@ -153,7 +153,7 @@
           "additionalProperties" : {
             "$ref" : "#/$defs/ActionStepRunFcliEntry"
           },
-          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n\nThe following action variables may also be set by this fcli step, but these are considered preview functionality and may be removed or renamed at any time. For now, these are meant to be used only by built-in fcli actions; custom actions using these action variables may fail to run on other fcli 3.x versions.\n\nx.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration\nx.skipReason: Reason why execution was skipped; will be null if x.skipped==true\nx.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)\nx.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation\nx.success: Set to true if fcli invocation was successful, false if failed\nx.failed: Set to true if fcli invocation failed, false if successfull\n\n"
+          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n\nThe following action variables may also be set by this fcli step, but these are considered preview functionality and may be removed or renamed at any time. For now, these are meant to be used only by built-in fcli actions; custom actions using these action variables may fail to run on other fcli 3.x versions.\n\nx.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration\nx.skipReason: Reason why execution was skipped; will be null if x.skipped==true (deprecated; see x.statusReason)\nx.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)\nx.statusReason: Reason why execution failed or was skipped; will be null if step was executed successfully\nx.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation\nx.success: Set to true if fcli invocation was successful, false if failed\nx.failed: Set to true if fcli invocation failed, false if successfull\n\n"
         },
         "steps" : {
           "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
@@ -200,6 +200,11 @@
               "items" : {
                 "type" : "object",
                 "properties" : {
+                  "if" : {
+                    "format" : "spelTemplateExpression",
+                    "type" : [ "boolean", "integer", "string", "number", "null" ],
+                    "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+                  },
                   "login" : {
                     "format" : "spelTemplateExpression",
                     "type" : [ "boolean", "integer", "string", "number", "null" ],
@@ -481,6 +486,11 @@
     "ActionStepWithWriter" : {
       "type" : "object",
       "properties" : {
+        "if" : {
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
         "style" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number", "null" ],
