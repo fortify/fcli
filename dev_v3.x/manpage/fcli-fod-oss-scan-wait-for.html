@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250717.125352-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250717.142035-dev_v3.x" %}
 
 
 <div id="header">
@@ -69,7 +69,7 @@ fcli_version:
 </div>
 <div class="paragraph">
 <p>The following states are currently known by fcli:
-See fcli help output</p>
+Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued</p>
 </div>
 <div class="paragraph">
 <p>Please note it is recommended to pass the scan id&#8217;s as '&lt;release-id&gt;:&lt;scan-id&gt;' rather than just '&lt;scan-id&gt;'. If only '&lt;scan-id&gt;' is passed then its status might not be available yet, causing FoD to return a '404 - Not Found' error. It is recommended to pass a fcli variable to do this as it will automatically resolve to using &lt;release-id&gt;:&lt;scan-id&gt;. For example, to start a SAST scan and wait for it to complete, use:</p>
@@ -223,7 +223,7 @@ fcli fod sast-scan wait-for ::scan::</pre>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-07-17 12:55:53 UTC
+Last updated 2025-07-17 14:22:39 UTC
 </div>
 </div>
 </body>

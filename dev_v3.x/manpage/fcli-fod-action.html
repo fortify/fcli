@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250717.125352-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250717.142035-dev_v3.x" %}
 
 
 <div id="header">
@@ -51,7 +51,7 @@ fcli_version:
 <p>Fcli supports workflow-style actions defined in YAML files. Many built-in actions are provided, focusing on data export and CI/CD integration. Users can also develop their own custom actions, either from scratch or by customizing built-in actions. If you require any assistance with developing custom actions, please consult with Fortify Professional Services.</p>
 </div>
 <div class="paragraph">
-<p>This fcli version supports the following action schema versions: See fcli help output.</p>
+<p>This fcli version supports the following action schema versions: any (as this is an fcli development version).</p>
 </div>
 <div class="paragraph">
 <p>Actions can potentially perform dangerous operations like deleting data or posting data to 3rd-party systems, so it is recommended to only run trusted actions. Action authors can sign their actions using the <code>action sign</code> command; actions without a (valid) signature will require confirmation when trying to run them. Trusted public keys can be configured through the <code>fcli config public-key</code> commands, or passed directly using the <code>--pubkey</code> option on various action-related commands.</p>
@@ -112,7 +112,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-07-17 12:55:53 UTC
+Last updated 2025-07-17 14:22:39 UTC
 </div>
 </div>
 </body>
