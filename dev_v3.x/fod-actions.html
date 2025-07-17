@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20250717.120923-dev_v3.x
+fcli_version: 0.20250717.125352-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250717.120923-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250717.120923-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250717.125352-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20250717.120923-dev_v3.x</span>
+<span id="revnumber">version 0.20250717.125352-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -74,60 +74,67 @@ fcli_version: 0.20250717.120923-dev_v3.x
 <li><a href="#_options_5">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
+<li><a href="#_gitlab_codequality_report">gitlab-codequality-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_8">Synopsis</a></li>
 <li><a href="#_description_8">Description</a></li>
 <li><a href="#_options_6">Options</a></li>
 </ul>
 </li>
-<li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
+<li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_9">Synopsis</a></li>
 <li><a href="#_description_9">Description</a></li>
 <li><a href="#_options_7">Options</a></li>
 </ul>
 </li>
-<li><a href="#_package">package</a>
+<li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_10">Synopsis</a></li>
 <li><a href="#_description_10">Description</a></li>
 <li><a href="#_options_8">Options</a></li>
 </ul>
 </li>
-<li><a href="#_release_summary">release-summary</a>
+<li><a href="#_package">package</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_11">Synopsis</a></li>
 <li><a href="#_description_11">Description</a></li>
 <li><a href="#_options_9">Options</a></li>
 </ul>
 </li>
-<li><a href="#_sarif_sast_report">sarif-sast-report</a>
+<li><a href="#_release_summary">release-summary</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_12">Synopsis</a></li>
 <li><a href="#_description_12">Description</a></li>
 <li><a href="#_options_10">Options</a></li>
 </ul>
 </li>
-<li><a href="#_servicenow_csv_report">servicenow-csv-report</a>
+<li><a href="#_sarif_sast_report">sarif-sast-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_13">Synopsis</a></li>
 <li><a href="#_description_13">Description</a></li>
 <li><a href="#_options_11">Options</a></li>
 </ul>
 </li>
-<li><a href="#_setup_release">setup-release</a>
+<li><a href="#_servicenow_csv_report">servicenow-csv-report</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_14">Synopsis</a></li>
 <li><a href="#_description_14">Description</a></li>
 <li><a href="#_options_12">Options</a></li>
 </ul>
 </li>
-<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
+<li><a href="#_setup_release">setup-release</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_15">Synopsis</a></li>
 <li><a href="#_description_15">Description</a></li>
 <li><a href="#_options_13">Options</a></li>
+</ul>
+</li>
+<li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
+<ul class="sectlevel2">
+<li><a href="#_synopsis_16">Synopsis</a></li>
+<li><a href="#_description_16">Description</a></li>
+<li><a href="#_options_14">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -543,26 +550,66 @@ previous scan for this PR.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_gitlab_dast_report"><a class="anchor" href="#_gitlab_dast_report"></a>gitlab-dast-report</h2>
+<h2 id="_gitlab_codequality_report"><a class="anchor" href="#_gitlab_codequality_report"></a>gitlab-codequality-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab DAST report listing FoD DAST vulnerabilities.</p>
+<p>Generate a GitLab Code Quality report listing FoD SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
 <div class="paragraph">
-<p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> gitlab-dast-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
+<p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> gitlab-codequality-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
-<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast</a></p>
+<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality</a></p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_options_6"><a class="anchor" href="#_options_6"></a>Options</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--file, -f</dt>
+<dd>
+<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-codequality.json</p>
+</dd>
+<dt class="hdlist1">--release, --rel</dt>
+<dd>
+<p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
+</dd>
+<dt class="hdlist1">--source-dir</dt>
+<dd>
+<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gitlab_dast_report"><a class="anchor" href="#_gitlab_dast_report"></a>gitlab-dast-report</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generate a GitLab DAST report listing FoD DAST vulnerabilities.</p>
+</div>
+<div class="sect2">
+<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
+<div class="paragraph">
+<p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> gitlab-dast-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
+<div class="paragraph">
+<p>For information on how to import this report into GitLab, see
+<a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -585,20 +632,20 @@ previous scan for this PR.</p>
 <p>Generate a GitLab SAST report listing FoD SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
+<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> gitlab-sast-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
+<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast</a></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_7"><a class="anchor" href="#_options_7"></a>Options</h3>
+<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -625,13 +672,13 @@ previous scan for this PR.</p>
 <p>(PREVIEW) Package source code</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
+<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> package [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
+<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to package source code using ScanCentral Client. It will
 take care of installing the specified ScanCentral Client version, followed by
@@ -642,7 +689,7 @@ only ScanCentral logs, not fcli logs.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_8"><a class="anchor" href="#_options_8"></a>Options</h3>
+<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--use-package</dt>
@@ -682,13 +729,13 @@ specified.</p>
 <p>(PREVIEW) Generate release summary.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
+<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> release-summary [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
+<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a short summary listing issue counts and other statistics
 for a given release. Based on user feedback on this initial version of this action,
@@ -696,7 +743,7 @@ parameters and output of this action may change in the next couple of fcli relea
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_9"><a class="anchor" href="#_options_9"></a>Options</h3>
+<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -719,13 +766,13 @@ parameters and output of this action may change in the next couple of fcli relea
 <p>Generate SARIF report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
+<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> sarif-sast-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
+<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a SARIF report listing Fortify SAST vulnerabilities, which
 may be useful for integration with various 3rd-party tools that can ingest SARIF
@@ -734,7 +781,7 @@ reports. For more information about SARIF, please see
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_10"><a class="anchor" href="#_options_10"></a>Options</h3>
+<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -761,13 +808,13 @@ reports. For more information about SARIF, please see
 <p>(PREVIEW) Generate ServiceNow CSV report</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
+<h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> servicenow-csv-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
+<h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a CSV report that can be imported into the ServiceNow
 Vulnerability Response module; please see the following link for details:
@@ -777,7 +824,7 @@ the given FoD release.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_11"><a class="anchor" href="#_options_11"></a>Options</h3>
+<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -804,13 +851,13 @@ the given FoD release.</p>
 <p>Set up application release.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
+<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> setup-release [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
+<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
 <div class="paragraph">
 <p>This action allows for preparing an application release for running an application
 security scan. It will create the application and/or release if they do not exist
@@ -839,7 +886,7 @@ appropriate option values and setup commands to run.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_12"><a class="anchor" href="#_options_12"></a>Options</h3>
+<h3 id="_options_13"><a class="anchor" href="#_options_13"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--release, --rel</dt>
@@ -926,20 +973,20 @@ appropriate option values and setup commands to run.</p>
 <p>Generate a SonarQube External Issues report listing FoD SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
+<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> sonarqube-sast-report [<a href="manpage/fcli-fod-action-run.html">fcli fod action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
+<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into SonarQube, see
 <a href="https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/" class="bare">https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/</a></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_13"><a class="anchor" href="#_options_13"></a>Options</h3>
+<h3 id="_options_14"><a class="anchor" href="#_options_14"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--file, -f</dt>
@@ -966,8 +1013,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250717.120923-dev_v3.x<br>
-Last updated 2025-07-17 12:11:17 UTC
+Version 0.20250717.125352-dev_v3.x<br>
+Last updated 2025-07-17 12:55:55 UTC
 </div>
 </div>
 </body>
