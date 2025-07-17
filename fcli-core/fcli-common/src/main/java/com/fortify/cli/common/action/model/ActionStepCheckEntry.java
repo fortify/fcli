@@ -74,7 +74,7 @@ public final class ActionStepCheckEntry extends AbstractActionElementIf implemen
         SKIP: Report that the test was skipped
         HIDE: Hide the check from output
         """)
-    @JsonProperty(required = false, defaultValue = "SKIP") private CheckStatus ifSkipped = CheckStatus.SKIP;
+    @JsonProperty(value = "ifSkipped", required = false, defaultValue = "SKIP") private CheckStatus ifSkipped = CheckStatus.SKIP;
     
     public final void postLoad(Action action) {
         if ( StringUtils.isBlank(displayName) ) { displayName = key; }
