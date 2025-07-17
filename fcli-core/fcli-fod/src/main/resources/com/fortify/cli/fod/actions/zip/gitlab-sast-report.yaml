@@ -50,6 +50,8 @@ steps:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
             recommendations:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+            traces:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/traces
           do:
             - var.set:
                 vulnerabilities..: {fmt: vulnerabilities}
@@ -111,3 +113,20 @@ formatters:
       location:
         file:       ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
         start_line: ${issue.lineNumber==0?1:issue.lineNumber}
+      details:
+        code_flows: 
+          name: Code Flows
+          type: code-flows
+          items: |-
+            ${#normalizeAndMergeTraceNodes(issue.traces).![
+                     #this.![{
+                       type: 'code-flow-node',
+                       node_type: {'SOURCE': 'source', 'SINK': 'sink', '':'propagation'}.get(sourceOrSink),
+                       file_location: {
+                         type: 'file-location',
+                         file_name: #root.issueSourceFileResolver.resolve(path),
+                         line_start: line==0||line==null?1:line
+                       }
+                     }]
+                  ]
+            }

@@ -46,6 +46,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.EnvHelper;
@@ -439,6 +440,14 @@ public class ActionSpelFunctions {
         var builder = IssueSourceFileResolver.builder().sourcePath(StringUtils.isBlank(sourceDir) ? null : Path.of(sourceDir) );
         // TODO Update builder based on other config properties
         return new POJONode(builder.build());
+    }
+    
+    public static final ArrayNode normalizeTraceNodes(ArrayNode traceNodes) {
+        return FortifyTraceNodeHelper.normalize(traceNodes);
+    }
+    
+    public static final ArrayNode normalizeAndMergeTraceNodes(ArrayNode traceNodes) {
+        return FortifyTraceNodeHelper.normalizeAndMerge(traceNodes);
     }
     
     public static final String copyright() {

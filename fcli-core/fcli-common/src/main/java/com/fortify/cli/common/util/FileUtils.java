@@ -16,8 +16,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.file.CopyOption;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -59,12 +61,24 @@ public final class FileUtils {
     
     @SneakyThrows
     public static final String readResourceAsString(String resourcePath, Charset charset) {
-        return new String(readResourceAsBytes(resourcePath), charset);
+        return new String(checkCharset(readResourceAsBytes(resourcePath), charset), charset);
     }
     
     @SneakyThrows
-    public static String readInputStreamAsString(InputStream is, Charset charset) {
-        return new String(is.readAllBytes(), charset);
+    public static final String readInputStreamAsString(InputStream is, Charset charset) {
+        return new String(checkCharset(is.readAllBytes(), charset), charset);
+    }
+    
+    public static final byte[] checkCharset(byte[] bytes, Charset charset) {
+        try {
+            var decoder = charset.newDecoder();
+            decoder.onMalformedInput(CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            decoder.decode(ByteBuffer.wrap(bytes));
+            return bytes;
+        } catch ( Exception e ) {
+            throw new FcliSimpleException("Input must be in "+charset.displayName()+" encoding");
+        }
     }
     
     @SneakyThrows

@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.7.0](https://github.com/fortify/fcli/compare/v3.6.0...v3.7.0) (2025-07-07)
+
+
+### Features
+
+* `fcli ssc session login`: Allow for disabling SC-SAST/SC-DAST connectivity (resolves [#740](https://github.com/fortify/fcli/issues/740)) ([b7aaae2](https://github.com/fortify/fcli/commit/b7aaae2e8676c2d900eb11a8052850b3f109b6ca))
+
+
+### Bug Fixes
+
+* `ci` action: Improve & complement usage help (fixes [#752](https://github.com/fortify/fcli/issues/752), closes [#762](https://github.com/fortify/fcli/issues/762)) ([22a5498](https://github.com/fortify/fcli/commit/22a549892a0ad61c297358d01165db6a95887be8))
+* `fcli aviator ssc audit`: Fix thread synchronization issues that randomly cause exceptions while auditing ([7819ec5](https://github.com/fortify/fcli/commit/7819ec5ec7427c74fa5c6f054a4918973a42ea26))
+* `gitlab-*-report` actions: Output empty string instead of `null` for `description` field ([da7f705](https://github.com/fortify/fcli/commit/da7f70526ce7350aded970c63185153807c3af2b))
+* `gitlab-dast-report` FoD action: Fix exception if site tree is unavailable ([6b24369](https://github.com/fortify/fcli/commit/6b2436991e124b720ddd4b62ad58c3fb943b8e7c))
+* Fix action progress messages not being cleared before final output (fixes [#766](https://github.com/fortify/fcli/issues/766)) ([4f03395](https://github.com/fortify/fcli/commit/4f033950d598575db5c7d8bd773baa5edfc4db50))
+* Fix incorrect synopsis in documentation for built-in actions (fixes [#765](https://github.com/fortify/fcli/issues/765)) (closes [#767](https://github.com/fortify/fcli/issues/767)) ([4f18948](https://github.com/fortify/fcli/commit/4f189483aa44eb32d7a8392dfaf833d86a4c4158))
+* SSC `check-policy` action: Fix --filterset option being ignored ([55e555d](https://github.com/fortify/fcli/commit/55e555dc96e0b22540a10c8f0c72b796e8484cac))
+
 ## [3.6.0](https://github.com/fortify/fcli/compare/v3.5.2...v3.6.0) (2025-06-14)
 
 

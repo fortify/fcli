@@ -25,11 +25,11 @@ steps:
       fs: ${#ssc.filterSet(av, cli.filterset)}
   - run.fcli:
       countsByFolder:
-        cmd: ssc issue count --av ${av.id} --by FOLDER
+        cmd: ssc issue count --av ${av.id} --fs ${fs.guid} --by FOLDER
         records.collect: true
   - run.fcli:
       countsByNewIssue:
-        cmd: ssc issue count --av ${av.id} --by "New Issue"
+        cmd: ssc issue count --av ${av.id} --fs ${fs.guid} --by "New Issue"
         records.collect: true
   - check:
       noCritical:
@@ -40,7 +40,7 @@ steps:
         fail.if:      ${countsByNewIssue.records.^[cleanName=='NEW']?.visibleCount>0}
   - run.fcli:
       listIssues:
-        cmd: ssc issue ls --av ${av.id}
+        cmd: ssc issue ls --av ${av.id} --fs ${fs.guid}
         records.for-each:
           record.var-name: issue
           do:

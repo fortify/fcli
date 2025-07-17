@@ -42,7 +42,7 @@ public class SSCArtifactResolverMixin {
         public abstract String[] getArtifactIds();
 
         public SSCArtifactDescriptor[] getArtifactDescriptors(UnirestInstance unirest){
-            return Stream.of(getArtifactIds()).map(id->SSCArtifactHelper.getArtifactDescriptor(unirest, id)).toArray(SSCArtifactDescriptor[]::new);
+            return Stream.of(getArtifactIds()).filter(s->!s.contains("SKIP")).map(id->SSCArtifactHelper.getArtifactDescriptor(unirest, id)).toArray(SSCArtifactDescriptor[]::new);
         }
         
         public Collection<JsonNode> getArtifactDescriptorJsonNodes(UnirestInstance unirest){

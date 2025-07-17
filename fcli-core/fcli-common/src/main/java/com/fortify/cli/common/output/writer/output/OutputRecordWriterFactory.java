@@ -53,27 +53,22 @@ public class OutputRecordWriterFactory {
     }
 
     private String resolveArgs() {
-        // TODO Always add action column, or only on default options?
-        return addActionColumn(StringUtils.isNotBlank(recordWriterArgs) 
+        return StringUtils.isNotBlank(recordWriterArgs) 
                 ? recordWriterArgs 
-                : getDefaultArgs());
-    }
-    
-    private String addActionColumn(String options) {
-        if ( addActionColumn && !StringUtils.isBlank(options) && !options.contains(IActionCommandResultSupplier.actionFieldName) ) {
-            return options+String.format(",%s:%s", IActionCommandResultSupplier.actionFieldName, "Action");
-        }
-        return options;
+                : getDefaultArgs();
     }
 
     private String getDefaultArgs() {
         var keySuffix = "output."+recordWriterFactory.toString()+".args";
-        var defaultOptions = messageResolver.getMessageString(keySuffix);
+        var defaultArgs = messageResolver.getMessageString(keySuffix);
+        if ( addActionColumn && !StringUtils.isBlank(defaultArgs) && !defaultArgs.contains(IActionCommandResultSupplier.actionFieldName) ) {
+            defaultArgs += String.format(",%s", IActionCommandResultSupplier.actionFieldName);
+        }
         // TODO Only add headers for default options (i.e., apply here), 
         //      or also for user-supplied options (i.e., apply in resolveOptions())?
         //      If we change to the latter, we need to make header human-readble 
         //      formatting optional in addHeader()
-        return addHeaders(defaultOptions);
+        return addHeaders(defaultArgs);
     }
     
     private String addHeaders(String options) {

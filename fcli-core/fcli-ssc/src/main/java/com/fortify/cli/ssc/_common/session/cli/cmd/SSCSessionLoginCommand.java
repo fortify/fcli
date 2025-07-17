@@ -27,6 +27,7 @@ import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
+import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -59,11 +60,34 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
         // SSC connection will already have been validated during login, so we only need to
         // verify SC-SAST & SC-DAST connections.
         SSCAndScanCentralSessionDescriptor sessionData = SSCAndScanCentralSessionHelper.instance().get(sessionName, true);
+        String sscUrl = sessionData.getSscUrlConfig().getUrl();
         try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
             testAuthenticatedSCSastConnection(unirest, sessionData);
         }
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            testAuthenticatedSCDastConnection(unirest, sessionData);
+		catch (UnirestException e) {
+			logoutBeforeNewLogin(sessionName, sessionData);
+			getSessionHelper().destroy(sessionName);
+			String scSastUrlConfiguredInSSC = sessionData.getScSastUrlConfig().getUrl();
+			String userGivenScSastUrl = sessionLoginOptions.getSscAndScanCentralUrlConfigOptions().getScSastControllerUrl();
+			if (userGivenScSastUrl != null) {
+				throw new FcliSimpleException(
+						String.format("Unable to connect to the given SC-SAST URL.\nSSC URL: %s\nSC-SAST URL: %s",
+								sscUrl, userGivenScSastUrl),
+						e);
+			} else {
+				throw new FcliSimpleException(String.format(
+						"Unable to connect to SC-SAST URL as configured in SSC; please contact your SSC administrator, or use the --disable option to disable SC-SAST functionality for this session.\nSSC URL: %s\nSC-SAST URL: %s",
+						sscUrl, scSastUrlConfiguredInSSC), e);
+			}
+
+		}
+		try (var unirest = GenericUnirestFactory.createUnirestInstance()) {
+			testAuthenticatedSCDastConnection(unirest, sessionData);
+		} catch (UnirestException e) {
+			logoutBeforeNewLogin(sessionName, sessionData);
+			getSessionHelper().destroy(sessionName);
+			String scDastUrl = sessionData.getScDastUrlConfig().getUrl();
+			throw new FcliSimpleException(String.format("Unable to connect to SC-DAST URL as configured in SSC; please contact your SSC administrator, or use the --disable option to disable SC-DAST functionality for this session.\nSSC URL: %s\nSC-DAST URL: %s", sscUrl, scDastUrl), e);
         }
     }
 

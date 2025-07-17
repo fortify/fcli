@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
-import com.fortify.cli.common.json.JsonHelper.JsonNodeDeepCopyWalker;
 
 public class JsonNodeDeepCopyWalkerTest {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();

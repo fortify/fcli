@@ -15,8 +15,8 @@ package com.fortify.cli.fod.oss_scan.cli.cmd;
 import java.io.File;
 import java.util.function.BiFunction;
 
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedHelper;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions;
+import com.fortify.cli.common.debricked.DebrickedHelper;
+import com.fortify.cli.common.debricked.DebrickedLoginOptions;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;

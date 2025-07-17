@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.cli.cmd.import_debricked;
+package com.fortify.cli.common.debricked;
 
 import java.io.File;
 import java.nio.file.StandardCopyOption;
@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
-import com.fortify.cli.common.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
+import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
+import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedAuthOptions;
+import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
