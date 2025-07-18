@@ -23,10 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
@@ -531,7 +529,7 @@ public class AuditProcessor {
             addCommentToIssueElement(issueElement, commentText, username);
             logger.debug("Added comment via XML update for issue: {}", instanceId);
         } else {
-            logger.warn("Cannot add comment to XML, issue element not found for instance ID: {}. If this is a skipped new issue, addSkippedIssueElement should be used.", instanceId);
+            logger.warn("WARN: Cannot add comment to XML, issue element not found for instance ID: {}. If this is a skipped new issue, addSkippedIssueElement should be used.", instanceId);
         }
     }
 
@@ -541,7 +539,7 @@ public class AuditProcessor {
             return;
         }
         if (findIssueElement(instanceId) != null) {
-            logger.warn("Attempted to add skipped issue element for {}, but it already exists in audit.xml.", instanceId);
+            logger.warn("WARN: Attempted to add skipped issue element for {}, but it already exists in audit.xml.", instanceId);
             addCommentToIssueXml(instanceId, comment, Constants.USER_NAME);
             return;
         }
@@ -552,7 +550,7 @@ public class AuditProcessor {
             issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
             if (auditDoc.getDocumentElement() != null) {
                 auditDoc.getDocumentElement().appendChild(issueList);
-                logger.warn("Created missing <IssueList> element.");
+                logger.warn("WARN: Created missing <IssueList> element.");
             } else {
                 logger.error("Cannot add skipped issue element, document root is null.");
                 return;
@@ -620,7 +618,7 @@ public class AuditProcessor {
         try {
             timestamp = dateFormat.format(new Date());
         } catch (Exception e) {
-            logger.warn("Could not format timestamp for comment: {}", e.getMessage());
+            logger.warn("WARN: Could not format timestamp for comment: {}", e.getMessage());
         }
         Element timestampElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Timestamp");
         timestampElement.setTextContent(timestamp);
@@ -647,7 +645,7 @@ public class AuditProcessor {
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
-                logger.warn("Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
+                logger.warn("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
             }
         }
 
@@ -743,7 +741,7 @@ public class AuditProcessor {
                                     for (int k = lineFromNum - 1; k < Math.min(lineToNum, allLines.length); k++) {
                                         originalCodeSb.append(allLines[k]);
                                         if (k < Math.min(lineToNum, allLines.length) - 1) {
-                                            originalCodeSb.append(System.lineSeparator());
+                                            originalCodeSb.append('\n');
                                         }
                                     }
                                 }
@@ -767,7 +765,7 @@ public class AuditProcessor {
                                 for (int i = contextStartLineIndex; i <= contextEndLineIndex; i++) {
                                     contextSb.append(allLines[i]);
                                     if (i < contextEndLineIndex) {
-                                        contextSb.append(System.lineSeparator());
+                                        contextSb.append('\n');
                                     }
                                 }
                                 Element contextElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Context");
@@ -793,10 +791,10 @@ public class AuditProcessor {
                             remediationListElement.appendChild(remediationElement);
                             validRemediationCount++;
                         } else {
-                            logger.warn("Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
+                            logger.warn("WARN: Skipping structurally invalid remediation for issue instanceId: {}", instanceId);
                         }
                     } else {
-                        logger.warn("Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
+                        logger.warn("WARN: Skipping remediation for instanceId '{}' because all of its proposed changes were invalid and could not be processed.", instanceId);
                     }
 
                 }
@@ -821,7 +819,7 @@ public class AuditProcessor {
 
     private int parseLineNumber(String lineStr, String filePath, String instanceId, String changeType) {
         if (lineStr == null || lineStr.trim().isEmpty()) {
-            logger.warn("Line number string is null or empty for file '{}', instanceId '{}', changeType '{}'. Defaulting to 0.", filePath, instanceId, changeType);
+            logger.warn("WARN: Line number string is null or empty for file '{}', instanceId '{}', changeType '{}'. Defaulting to 0.", filePath, instanceId, changeType);
             return 0;
         }
 
@@ -870,7 +868,7 @@ public class AuditProcessor {
             }
             @Override
             public void warning(org.xml.sax.SAXParseException e) {
-                logger.warn("Schema Validation Warning: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
+                logger.warn("WARN: Schema Validation Warning: Line {}, Column {}: {}", e.getLineNumber(), e.getColumnNumber(), e.getMessage());
             }
         });
 
@@ -1010,7 +1008,7 @@ public class AuditProcessor {
                     }
                 } catch (java.io.EOFException | java.util.zip.ZipException e) {
                     // This defensive catch block handles corrupted entries.
-                    logger.warn("Content of zip entry '{}' seems corrupted ({}). A zero-byte placeholder will be written.",
+                    logger.warn("WARN: Content of zip entry '{}' seems corrupted ({}). A zero-byte placeholder will be written.",
                             entry.getName(), e.getMessage());
                 }
             }
@@ -1050,7 +1048,7 @@ public class AuditProcessor {
             transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
             transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         } catch (TransformerConfigurationException e) {
-            logger.warn("Security feature {} not fully supported by TransformerFactory. This is unexpected.",
+            logger.warn("WARN: Security feature {} not fully supported by TransformerFactory. This is unexpected.",
                     XMLConstants.FEATURE_SECURE_PROCESSING, e);
         }
 

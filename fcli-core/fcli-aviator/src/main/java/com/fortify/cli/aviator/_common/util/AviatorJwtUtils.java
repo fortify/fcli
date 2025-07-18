@@ -60,13 +60,13 @@ public final class AviatorJwtUtils {
                 if (expSeconds > 0) {
                     return new Date(expSeconds * 1000L);
                 } else {
-                    LOG.warn("Token 'exp' field is present but not a positive value: {}", expSeconds);
+                    LOG.warn("WARN: Token 'exp' field is present but not a positive value: {}", expSeconds);
                 }
             } else {
-                LOG.warn("Token 'exp' field is present but not a numeric value: {}", expNode.asText());
+                LOG.warn("WARN: Token 'exp' field is present but not a numeric value: {}", expNode.asText());
             }
         } else {
-            LOG.warn("Token payload does not contain 'exp' field.");
+            LOG.warn("WARN: Token payload does not contain 'exp' field.");
         }
         return null;
     }
@@ -111,7 +111,7 @@ public final class AviatorJwtUtils {
                 LOG.debug("Using 'sub' field as email as 'email' field is missing or blank.");
                 email = subNode.asText();
             } else {
-                LOG.warn("Token 'sub' field is present but not a non-blank text value: {}", subNode.asText(""));
+                LOG.warn("WARN: Token 'sub' field is present but not a non-blank text value: {}", subNode.asText(""));
             }
         }
 

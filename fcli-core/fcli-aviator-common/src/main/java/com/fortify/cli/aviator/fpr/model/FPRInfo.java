@@ -87,7 +87,7 @@ public class FPRInfo {
         try {
             return Integer.parseInt(content);
         } catch (NumberFormatException e) {
-            logger.warn("Error parsing integer: {}", content);
+            logger.warn("WARN: Error parsing integer: {}", content);
             return 0;
         }
     }

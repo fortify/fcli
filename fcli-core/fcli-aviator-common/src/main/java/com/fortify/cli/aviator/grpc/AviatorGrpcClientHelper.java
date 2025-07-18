@@ -16,7 +16,6 @@ import io.grpc.ManagedChannelBuilder;
 
 public class AviatorGrpcClientHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorGrpcClientHelper.class);
-    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
     public static AviatorGrpcClient createClient(String url, IAviatorLogger logger, long pingIntervalSeconds) throws AviatorSimpleException {
         if (url == null || url.trim().isEmpty()) {
@@ -31,7 +30,7 @@ public class AviatorGrpcClientHelper {
             if (target.contains("/")) {
                 String[] targetParts = target.split("/", 2);
                 target = targetParts[0];
-                LOG.warn("URL contained a path ('/'), using only the host part '{}' as target. Full URL: {}", target, url);
+                LOG.warn("WARN: URL contained a path ('/'), using only the host part '{}' as target. Full URL: {}", target, url);
             }
             if (target.isEmpty()) {
                 throw new AviatorSimpleException("Aviator URL is invalid: Host part is empty after cleaning. Provided URL: " + url);
@@ -48,7 +47,7 @@ public class AviatorGrpcClientHelper {
                     .compressorRegistry(CompressorRegistry.getDefaultInstance())
                     .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
                     .build();
-            return new AviatorGrpcClient(channel, DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds);
+            return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds);
 
         } else if (parts.length == 2) {
             String host = parts[0].trim();
@@ -74,7 +73,7 @@ public class AviatorGrpcClientHelper {
                         .compressorRegistry(CompressorRegistry.getDefaultInstance())
                         .decompressorRegistry(DecompressorRegistry.getDefaultInstance())
                         .build();
-                return new AviatorGrpcClient(channel, DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds);
+                return new AviatorGrpcClient(channel, Constants.DEFAULT_TIMEOUT_SECONDS, logger, pingIntervalSeconds);
             } catch (NumberFormatException e) {
                 throw new AviatorSimpleException("Aviator URL is invalid: Invalid port number '" + portStr + "'. Provided URL: " + url, e);
             }

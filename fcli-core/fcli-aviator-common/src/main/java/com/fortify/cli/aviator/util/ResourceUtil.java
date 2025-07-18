@@ -19,7 +19,7 @@ public class ResourceUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ResourceUtil.class);
     private static <T> T loadYamlInternal(InputStream inputStream, Class<T> configClass) throws IOException, YAMLException {
         if (inputStream == null) {
-            LOG.warn("InputStream is null, cannot load YAML for class {}", configClass.getSimpleName());
+            LOG.warn("WARN: InputStream is null, cannot load YAML for class {}", configClass.getSimpleName());
             return null;
         }
         LoaderOptions options = new LoaderOptions();

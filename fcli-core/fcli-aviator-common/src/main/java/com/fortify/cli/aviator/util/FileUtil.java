@@ -14,8 +14,12 @@ import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class FileUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileTypeLanguageMapperUtil.class);
 
     private FileUtil() {
     }
@@ -57,7 +61,7 @@ public final class FileUtil {
                     .forEach(File::delete);
             return !Files.exists(path);
         } catch (IOException e) {
-            System.err.println("Failed to delete directory: " + path + " - " + e.getMessage());
+            LOG.error("Failed to delete directory: {} - {}", path, e.getMessage());
             return false;
         }
     }

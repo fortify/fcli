@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -311,16 +310,16 @@ public class FVDLProcessor {
                     file.setContent(new String(encodedBytes));
                     file.setEndLine(countLines(actualSourcePath));
                 } else {
-                    logger.warn("Source file not found: {}", actualSourcePath);
+                    logger.warn("WARN: Source file not found: {}", actualSourcePath);
                     file.setContent("");
                     file.setEndLine(0);
                 }
             } catch (MalformedInputException e) {
-                logger.warn("Malformed input while reading file: {}", filename, e);
+                logger.warn("WARN: Malformed input while reading file: {}", filename, e);
                 file.setContent("");
                 file.setEndLine(0);
             } catch (IOException e) {
-                logger.warn("Error processing file: {}", filename, e);
+                logger.warn("WARN: Error processing file: {}", filename, e);
                 file.setContent("");
                 file.setEndLine(0);
             }
@@ -357,7 +356,7 @@ public class FVDLProcessor {
 
     private List<List<StackTraceElement>> processAnalysisInfo(Element analysisInfoElement) throws IOException {
         if (analysisInfoElement == null) {
-            logger.warn("AnalysisInfo element is null; returning empty stack traces");
+            logger.warn("WARN: AnalysisInfo element is null; returning empty stack traces");
             return new ArrayList<>();
         }
 
@@ -400,7 +399,7 @@ public class FVDLProcessor {
                     StackTraceElement ste = createStackTraceElement(node);
                     stackTrace.add(ste);
                 } else {
-                    logger.warn("Node ID {} not found in nodePool", nodeId);
+                    logger.warn("WARN: Node ID {} not found in nodePool", nodeId);
                 }
             } else if (nodeElement != null) {
                 Element sourceLocation = getFirstChildElement(nodeElement, "SourceLocation");
@@ -408,7 +407,7 @@ public class FVDLProcessor {
                     StackTraceElement ste = createStackTraceElementFromNode(nodeElement);
                     stackTrace.add(ste);
                 } else {
-                    logger.warn("SourceLocation missing in inline Node for Trace entry {}", i);
+                    logger.warn("WARN: SourceLocation missing in inline Node for Trace entry {}", i);
                 }
             }
         }
@@ -439,7 +438,7 @@ public class FVDLProcessor {
                     if (traceElement != null) {
                         innerStackTrace.addAll(processTraceElement(traceElement));
                     } else {
-                        logger.warn("Trace ID {} not found in UnifiedTracePool", traceId);
+                        logger.warn("WARN: Trace ID {} not found in UnifiedTracePool", traceId);
                     }
                 } else {
                     Element trace = getFirstChildElement(reason, "Trace");
@@ -485,7 +484,7 @@ public class FVDLProcessor {
                 if (traceElement != null) {
                     innerStackTrace.addAll(processTraceElement(traceElement));
                 } else {
-                    logger.warn("Trace ID {} not found in UnifiedTracePool", traceId);
+                    logger.warn("WARN: Trace ID {} not found in UnifiedTracePool", traceId);
                 }
             } else {
                 Element trace = getFirstChildElement(reason, "Trace");
@@ -562,7 +561,7 @@ public class FVDLProcessor {
 
         Path actualSourcePath = extractedPath.resolve(sourceFilePath);
         if (!Files.exists(actualSourcePath)) {
-            logger.warn("Source file not found: " + actualSourcePath);
+            logger.warn("WARN: Source file not found: " + actualSourcePath);
             return new Fragment("", 0, 0);
         }
 
@@ -1044,7 +1043,6 @@ public class FVDLProcessor {
     private void loadSourceFileMap() throws Exception {
         sourceFileMap = new HashMap<>();
         Path srcArchiveDir = extractedPath.resolve("src-archive");
-        Path srcXrefdataDir = extractedPath.resolve("src-xrefdata");
 
         Path indexPath = null;
 
@@ -1052,16 +1050,12 @@ public class FVDLProcessor {
         // Step 1: Check if the primary directory ('src-archive') is valid.
         if (directoryContainsSourceFiles(srcArchiveDir)) {
             indexPath = srcArchiveDir.resolve("index.xml");
-
-            // Step 2: If not, check if the fallback directory ('src-xrefdata') is valid.
-        } else if (directoryContainsSourceFiles(srcXrefdataDir)) {
-            indexPath = srcXrefdataDir.resolve("index.xml");
         }
 
-        // Step 3: After checking both directories, verify that we actually found a valid
+        // Step 3: After checking the directory, verify that we actually found a valid
         // directory AND that its corresponding index.xml file exists.
         if (indexPath == null) {
-            throw new FcliBugException("Neither 'src-archive' nor 'src-xrefdata' contained any source files under " + extractedPath);
+            throw new FcliBugException("'src-archive' contained no source files under " + extractedPath);
         } else if (!Files.exists(indexPath)) {
             throw new FcliBugException("A source directory was found, but its 'index.xml' is missing at: " + indexPath);
         }
@@ -1084,14 +1078,14 @@ public class FVDLProcessor {
     public Optional<String> getSourceFileContent(String relativePath) {
         String fullPathInZip = sourceFileMap.get(relativePath);
         if (fullPathInZip == null) {
-            logger.warn("Source file key not found in sourceFileMap: {}", relativePath);
+            logger.warn("WARN: Source file key not found in sourceFileMap: {}", relativePath);
             return Optional.empty();
         }
         Path actualSourcePath = extractedPath.resolve(fullPathInZip);
         try {
             return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath)));
         } catch (IOException | RuntimeException e) {
-            logger.warn("Could not read source file content for MD5: {}", relativePath, e);
+            logger.warn("WARN: Could not read source file content: {}", relativePath, e);
             return Optional.empty();
         }
     }

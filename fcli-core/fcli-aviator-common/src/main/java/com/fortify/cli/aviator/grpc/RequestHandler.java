@@ -63,7 +63,7 @@ public class RequestHandler<T> {
      */
     public CompletableFuture<Boolean> sendRequest(T request) {
         if (isCompleted.get()) {
-            logger.warn("Cannot send request on completed stream: {}", streamId);
+            logger.warn("WARN: Cannot send request on completed stream: {}", streamId);
             return CompletableFuture.completedFuture(false);
         }
 

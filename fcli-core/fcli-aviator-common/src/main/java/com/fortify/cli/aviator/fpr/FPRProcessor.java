@@ -22,7 +22,7 @@ import lombok.Getter;
 
 public class FPRProcessor {
 
-    Logger logger = LoggerFactory.getLogger(FPRProcessor.class);
+    Logger LOG = LoggerFactory.getLogger(FPRProcessor.class);
     private final Path extractedPath;
     private final Map<String, AuditIssue> auditIssueMap;
     @Getter
@@ -36,7 +36,7 @@ public class FPRProcessor {
     }
 
     public List<Vulnerability> process(FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
-        logger.info("FPR Processing started");
+        LOG.info("FPR Processing started");
 
         try {
             fprInfo = new FPRInfo(extractedPath);
@@ -49,18 +49,18 @@ public class FPRProcessor {
                 filterTemplate.flatMap(f -> f.getFilterSets().stream().filter(FilterSet::isEnabled).findFirst()).ifPresent(fprInfo::setDefaultEnabledFilterSet);
             }
 
-            logger.debug("Audit.xml Issues: {}", auditIssueMap.keySet().size());
+            LOG.debug("Audit.xml Issues: {}", auditIssueMap.keySet().size());
 
             fvdlProcessor.processXML();
 
             List<Vulnerability> vulnerabilities = fvdlProcessor.getVulnerabilities();
-            logger.debug("Number of Issues: {}", vulnerabilities.size());
+            LOG.debug("Number of Issues: {}", vulnerabilities.size());
 
             return vulnerabilities;
         } catch (AviatorTechnicalException e) {
             throw e;
         } catch (Exception e) {
-            logger.error("Unexpected error during FPR processing", e);
+            LOG.error("Unexpected error during FPR processing", e);
             throw new AviatorTechnicalException("Unexpected error during FPR processing.", e);
         }
     }

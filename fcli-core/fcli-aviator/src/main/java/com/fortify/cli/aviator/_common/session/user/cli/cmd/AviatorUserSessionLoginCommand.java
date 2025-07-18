@@ -71,7 +71,7 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
             LOG.info("Aviator user token validated successfully with the Aviator server.");
         } catch (AviatorTechnicalException e) {
             if (e.getCause() instanceof StatusRuntimeException sre && sre.getStatus().getCode() == Status.Code.UNIMPLEMENTED) {
-                LOG.warn("Could not validate token with the Aviator server; this may be an older version that does not support this feature. " +
+                LOG.warn("WARN: Could not validate token with the Aviator server; this may be an older version that does not support this feature. " +
                         "Proceeding with session creation, but the token's server-side validity is unconfirmed.");
                 LOG.debug("Token validation gRPC call exception details: ", e);
             } else {
@@ -80,7 +80,7 @@ public class AviatorUserSessionLoginCommand extends AbstractSessionLoginCommand<
         }
 
         if (expiryDate == null) {
-            LOG.warn("Could not extract expiry date from the provided token. The session may not have an accurate expiration time.");
+            LOG.warn("WARN: Could not extract expiry date from the provided token. The session may not have an accurate expiration time.");
         }
 
         return AviatorUserSessionDescriptor.builder()
