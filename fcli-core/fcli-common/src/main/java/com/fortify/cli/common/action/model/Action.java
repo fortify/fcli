@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -66,6 +67,7 @@ import lombok.ToString;
 @Reflectable @NoArgsConstructor
 @Data
 @JsonClassDescription("Fortify CLI action definition")
+@JsonTypeName("action")
 public class Action implements IActionElement {
     @JsonPropertyDescription("""
         Required string unless `yaml-language-server` comment with schema location is provided: Defines the fcli \

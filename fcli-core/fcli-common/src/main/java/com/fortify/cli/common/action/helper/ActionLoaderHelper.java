@@ -57,7 +57,7 @@ import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpressionKeyDeserializer;
 import com.fortify.cli.common.util.Break;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.ZipHelper;
@@ -279,7 +279,7 @@ public class ActionLoaderHelper {
                     .signature("N/A")
                     .publicKeyFingerprint(SignatureHelper.fortifySignatureVerifier().publicKeyFingerPrint())
                     .metadata(SignatureMetadata.builder()
-                            .fcliVersion(FcliBuildPropertiesHelper.getFcliVersion())
+                            .fcliVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
                             .signer("Fortify").build()).build();
         }
         
@@ -306,8 +306,8 @@ public class ActionLoaderHelper {
         
         private final void checkSchema() {
             var schemaUri = getSchemaUri();
-            var schemaVersion = ActionSchemaHelper.getSchemaVersion(schemaUri);
-            if ( !ActionSchemaHelper.isSupportedSchemaVersion(schemaVersion) ) {
+            var schemaVersion = ActionSchemaVersionHelper.getSchemaVersion(schemaUri);
+            if ( !ActionSchemaVersionHelper.isSupportedSchemaVersion(schemaVersion) ) {
                 actionValidationHandler.onUnsupportedSchemaVersion(metadata, schemaVersion);
             }
         }

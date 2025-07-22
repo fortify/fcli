@@ -14,9 +14,11 @@ package com.fortify.cli.common.action.model;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -27,7 +29,9 @@ import lombok.NoArgsConstructor;
  * This class describes a action parameter.
  */
 @Reflectable @NoArgsConstructor
-@Data
+@Data 
+@JsonTypeName("cli.option")
+@JsonClassDescription("Define command-line options supported by this action.")
 public final class ActionCliOption implements IActionElement, IMapKeyAware<String> {
     @JsonIgnore private String key;
     

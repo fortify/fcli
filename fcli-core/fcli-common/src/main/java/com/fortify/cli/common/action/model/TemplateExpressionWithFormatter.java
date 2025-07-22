@@ -13,9 +13,10 @@
 package com.fortify.cli.common.action.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
@@ -27,6 +28,9 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
+@JsonTypeName("formatter")
+// TODO: @JsonClassDescription(".")
+// TODO: Include info in the description that this can be specified as object, string, ... 
 public class TemplateExpressionWithFormatter extends AbstractActionElementIf {
     @JsonPropertyDescription("""
         The value to use for this instruction, may be specified as an SpEL template expression.

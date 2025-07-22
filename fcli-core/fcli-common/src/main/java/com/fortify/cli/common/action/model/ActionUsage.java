@@ -12,8 +12,10 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -25,6 +27,8 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data
+@JsonTypeName("usage")
+@JsonClassDescription("Define action usage help.")
 public final class ActionUsage implements IActionElement {
     @JsonPropertyDescription("Required string: Action usage header, displayed in list and help outputs")
     @JsonProperty(value = "header", required = true) private String header;

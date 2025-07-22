@@ -16,13 +16,13 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.SemVer;
 
-@Reflectable public final class ActionSchemaHelper {
+@Reflectable public final class ActionSchemaVersionHelper {
     private static final MessageFormat URI_FORMAT = new MessageFormat("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-{0}.json");
-    private static final boolean IS_FCLI_DEV_RELEASE = FcliBuildPropertiesHelper.isDevelopmentRelease();
-    private static final SemVer CURRENT_SCHEMA_VERSION = new SemVer(FcliBuildPropertiesHelper.getFcliActionSchemaVersion());
+    private static final boolean IS_FCLI_DEV_RELEASE = FcliBuildProperties.INSTANCE.isDevelopmentRelease();
+    private static final SemVer CURRENT_SCHEMA_VERSION = new SemVer(FcliBuildProperties.INSTANCE.getFcliActionSchemaVersion());
     
     /** Get the schema URI for the current enum entry by formatting schema version as URI */
     public static final String toURI(String version) {

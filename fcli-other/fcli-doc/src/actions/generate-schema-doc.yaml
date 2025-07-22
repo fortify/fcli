@@ -1,0 +1,166 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Generate fcli action schema documentation
+  description: |
+    This action is meant to be invoked during the Gradle build to generate 
+    fcli action schema documentation.
+
+config:
+  output: immediate
+  
+cli.options:
+  outputFile:
+    names: -f,--file
+    description: Required output file
+    default: stdout
+  
+steps:
+  # Get action schema
+  - var.set:
+      schema: ${#actionSchema()}
+  # Generate acnhor and xref replacement for 'expression' type
+  - var.set:
+      anchors.expression: expression
+      xrefs.(?<!-)expression(?!-): <<expression,expression>>
+  # Collect all types and generate corresponding anchors and xref replacements
+  - records.for-each:
+      from: ${schema.types}
+      record.var-name: jsonType
+      do:
+        - var.set:
+            jsonTypes..: ${jsonType}
+            anchors.${jsonType.name}: ${jsonType.name}
+            xrefs.(?<!-)${#regexQuote(jsonType.name)}(?!-): <<${jsonType.name},${jsonType.name}>>
+  # Generate sections for every type
+  - records.for-each:
+      from: ${jsonTypes}
+      record.var-name: jsonType
+      do:
+        # Clear table rows from previous iteration
+        - var.rm:
+            - tableRows  
+        # Iterate over all properties for the current jsonType to generate corresponding AsciiDoc tables 
+        # and top-level property sections
+        - records.for-each:
+            from: ${jsonType.properties}
+            record.var-name: jsonTypePropertyName
+            do:
+              - var.set:
+                  # Get property details for current property name
+                  property: ${schema.propertiesByQualifiedName[jsonTypePropertyName]}
+                  # Add cross references for types
+                  property.jsonType: ${#replaceAllFromRegExMap(property.jsonType, xrefs)}
+                  # Add table row 
+                  tableRows..:
+                    fmt: propertyRow
+                    value: ${property}
+              
+        # Generate table from table rows generated above, storing the AsciiDoc-formatted table as a property on current type
+        - if: ${tableRows!=null && tableRows.size()>0}
+          var.set:
+            jsonType.propertyTable:
+              fmt: propertyTable
+              value: ${tableRows}
+        # Generate sections for each type, except for top-level 'action' type
+        - if: ${jsonType.name!='action'} 
+          var.set:
+            jsonType.anchor: ${anchors[jsonType.name]}
+            jsonTypeSections..:
+              fmt: typeSection
+              value: ${jsonType}
+        # Generate section for 'action' type
+        - if: ${jsonType.name=='action'}
+          var.set: 
+            actionTypeTable:
+              fmt: actionTypeTable
+              value: ${jsonType}
+              
+  - out.write:
+      ${cli.outputFile}: {fmt: result}
+
+# TODO Provide action SpEL function to escape special characters in plain text, like property
+# descriptions? (see description.replace(...) in propertyRow below)     
+formatters:
+  result: |
+    = Fcli action schema documentation
+    
+    [%autowidth]
+    |===
+    |Fcli version |Action schema version
+    
+    |${#fcliBuildInfo().fcliVersion} 
+    |${#fcliBuildInfo().fcliActionSchemaVersion}
+    |===
+    
+    Fcli actions are defined in YAML files that define action <<config,configuration settings>>,
+    <<step,steps to be executed>>, and metadata like <<usage,usage instructions>>. The sections
+    below describe the <<top-level-yaml-instructions,YAML instructions>> and
+    <<expression,expression syntax>> that are supported by fcli for (custom) action development.
+    
+    [[top-level-yaml-instructions]]
+    == Top-level YAML instructions
+    
+    The table below lists the top-level YAML instructions supported by the current fcli (schema) version.
+    Where applicable, the `Type` column provides links to <<yaml-types,YAML types>> sub-sections that
+    provides more details on the expected contents for each property type.
+    
+    ${actionTypeTable}
+    
+    [[yaml-types]]
+    == YAML types
+    
+    The sections below list the various YAML types supported by the current fcli (schema) version. Where
+    applicable, the `Type` column provides links to other <<yaml-types,YAML types>> sub-sections that provide
+    more details on the expected contents for each property type.
+    
+    ${#join('\n\n', jsonTypeSections)}
+    
+    [[expression]]
+    == Expressions
+    
+    As shown in the property tables in the sections above, fcli actions make extensive use of expressions. These
+    expressions may contain a combination of literal text and evaluation blocks, with the latter being surrounded
+    by `${'${'}` and `${'}'}`. Some examples:
+    
+    * Plain text: `Hello stranger, welcome!`
+    * Evaluation block: `${'${welcomeMessage}'}`
+    * Combination: `${'Hello ${name}, welcome!'}`
+    
+    Evaluation blocks may be simple references to action variables that were previously set through a `var.set` step,
+    or can be complex code blocks that utilize 
+    link:https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html[Spring Expression Language (SpEL)],
+    possibly combined with fcli-provided SpEL functions. 
+    
+    Later versions of this documentation may add expression examples and an overview of fcli-provided SpEL functions
+    that can be utilized by those expressions. Until then, please have a look at fcli built-in actions to see how these
+    are utilizing SpEL expressions, and what fcli-provided functions they invoke. 
+    
+  propertyTable: |
+    [cols="1,1,3"]
+    |===
+    |Property|Type|Description 
+              
+    ${#join("", #this)}
+    |===
+  propertyRow: |
+    |${name}
+    |${jsonType}
+    |${description.replace('{','\{')}
+  typeSection: |
+    [[${anchor}]]
+    === `${name}`
+    
+    ${description}
+    
+    ${propertyTable}
+    
+    __^*{sp}Generated{sp}from{sp}${javaType}^__
+  actionTypeTable: |
+    ${propertyTable}
+    
+    __^*{sp}Generated{sp}from{sp}${javaType}^__
+    
+    
+    

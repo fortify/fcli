@@ -23,11 +23,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
@@ -47,6 +49,8 @@ import lombok.SneakyThrows;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
+@JsonTypeName("step")
+@JsonClassDescription("Define a step to be executed by this action.")
 public final class ActionStep extends AbstractActionElementIf {
     // Capture fields in this class annotated with @JsonProperty, indexed by JSON property name
     // Only used to initialize getters and propertyTypes 

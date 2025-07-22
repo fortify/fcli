@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -37,7 +39,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
 import org.jsoup.safety.Safelist;
+import org.springframework.integration.json.JsonPropertyAccessor.JsonNodeWrapper;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
@@ -45,11 +49,14 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
+import com.fortify.cli.common.action.schema.ActionSchemaDescriptorFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -68,12 +75,45 @@ public class ActionSpelFunctions {
         return Path.of(".").resolve(path).toAbsolutePath().normalize().toString();
     }
     
-    public static final String join(String separator, List<Object> elts) {
+    public static final String join(String separator, Object source) {
         switch (separator) {
         case "\\n": separator="\n"; break;
         case "\\t": separator="\t"; break;
         }
-        return elts==null ? "" : elts.stream().map(Object::toString).collect(Collectors.joining(separator));
+        Stream<?> stream = null;
+        if ( source instanceof Collection ) {
+            stream = ((Collection<?>)source).stream();
+        } else if ( source instanceof ArrayNode ) {
+            stream = JsonHelper.stream((ArrayNode)source);
+        }
+        return stream==null ? "" : stream.map(ActionSpelFunctions::toString).collect(Collectors.joining(separator));
+    }
+    
+    private static final String toString(Object o) {
+        if ( o==null ) {
+            return "";
+        } else if ( o instanceof JsonNode ) {
+            return ((JsonNode)o).asText();
+        } else {
+            return o.toString();
+        }
+    }
+    
+    public static final String regexQuote(String s) {
+        return Pattern.quote(s);
+    }
+    
+    public static final String replaceAllFromRegExMap(String s, Object mappingObject) {
+        var mappingNode = mappingObject instanceof ObjectNode ? (ObjectNode)mappingObject
+                : mappingObject instanceof JsonNodeWrapper ? ((JsonNodeWrapper<?>)mappingObject).getRealNode()
+                : JsonHelper.getObjectMapper().valueToTree(mappingObject);
+        if ( !mappingNode.isObject() ) { throw new FcliTechnicalException("replaceAllFromMap must be called with Map or ObjectNode, actual type: "+mappingObject.getClass().getSimpleName()); }
+        var fields = ((ObjectNode)mappingNode).fields();
+        while ( fields.hasNext() ) {
+            var field = fields.next();
+            s = s.replaceAll(field.getKey(), field.getValue().asText());
+        }
+        return s;
     }
     
     public static final String numberedList(List<Object> elts) {
@@ -457,6 +497,14 @@ public class ActionSpelFunctions {
     
     public static final ArrayNode normalizeAndMergeTraceNodes(ArrayNode traceNodes) {
         return FortifyTraceNodeHelper.normalizeAndMerge(traceNodes);
+    }
+    
+    public static final JsonNode actionSchema() {
+        return ActionSchemaDescriptorFactory.getActionSchemaDescriptor().asJson();
+    }
+    
+    public static final JsonNode fcliBuildInfo() {
+        return JsonHelper.getObjectMapper().valueToTree(FcliBuildProperties.INSTANCE);
     }
     
     public static final String copyright() {
