@@ -37,8 +37,12 @@ import lombok.NoArgsConstructor;
 @Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("run.fcli")
-@JsonClassDescription("Define an fcli command to be (optionally) executed.")
-//TODO: Include info in the description that this can be specified as object, string, ... 
+@JsonClassDescription("""
+        Define an fcli command to be (optionally) executed. \
+        This can be supplied as either a set of YAML properties or as a plain expression, 
+        in which case the expression outcome is interpreted as the fcli command to run,
+        with default values for all other properties.
+        """)
 public final class ActionStepRunFcliEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     

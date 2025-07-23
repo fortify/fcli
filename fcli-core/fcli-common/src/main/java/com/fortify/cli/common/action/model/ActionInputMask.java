@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 
 import lombok.Data;
@@ -29,6 +30,17 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonTypeName("mask")
 @JsonClassDescription("Define log masking settings.")
+@SampleYamlSnippets({"""
+        config:
+          mask.env-vars:
+            SOME_PASSWORD:
+              sensitivity: high
+        ""","""
+        cli.options:
+          pwd:
+            names: -p,--password
+            mask: {sensitivity: high}
+        """})
 public final class ActionInputMask implements IActionElement {
     @JsonPropertyDescription("""
         Optional enum value: Value sensitivity; high/medium/low. Default value: high   

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.schema;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,6 +83,11 @@ public class ActionSchemaHelper {
     public static final String[] getJsonTypes(Class<?>[] clazzes, Function<Class<?>, String> orElse) {
         if ( clazzes==null ) { return new String[] {}; }
         return Stream.of(clazzes).map(c->getJsonType(c, orElse)).toArray(String[]::new);
+    }
+    
+    public static final String[] getSampleYamlSnippets(AnnotatedElement annotatedElement) {
+        var target = ReflectionHelper.getAnnotationValue(annotatedElement, SampleYamlSnippets.class, SampleYamlSnippets::copyFrom, ()->annotatedElement);
+        return ReflectionHelper.getAnnotationValue(target, SampleYamlSnippets.class, SampleYamlSnippets::value, ()->new String[] {});
     }
 
 }

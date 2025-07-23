@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -32,6 +33,14 @@ import lombok.NoArgsConstructor;
 @Data 
 @JsonTypeName("cli.option")
 @JsonClassDescription("Define command-line options supported by this action.")
+@SampleYamlSnippets("""
+        cli.options:
+          file: # Can be referenced through ${cli.file} in action steps
+            names: -f,--file
+            description: Output file name
+            required: false
+            defaultValue: somefile.txt
+        """)
 public final class ActionCliOption implements IActionElement, IMapKeyAware<String> {
     @JsonIgnore private String key;
     

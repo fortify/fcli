@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -51,6 +52,16 @@ import lombok.SneakyThrows;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("step")
 @JsonClassDescription("Define a step to be executed by this action.")
+@SampleYamlSnippets("""
+        steps:
+          - var.set:
+              ...
+          - rest.call:
+              ...
+          - if: ${expr}
+            run.fcli:
+              ...
+        """)
 public final class ActionStep extends AbstractActionElementIf {
     // Capture fields in this class annotated with @JsonProperty, indexed by JSON property name
     // Only used to initialize getters and propertyTypes 
@@ -120,11 +131,39 @@ public final class ActionStep extends AbstractActionElementIf {
         declared, allowing earlier declared variables to be referenced by variables or \
         formatters that are declared later in the same step.
         """)
+    @SampleYamlSnippets(value={"""
+        steps:
+          - var.set:
+              var1: Hello ${name}
+              var2.p1: This is property 1 on var2
+              var2.p2: This is property 2 on var2 
+              var3..: This is element 1 on var3
+          - var.set:
+              var3..: This is element 2 on var3
+        """, """
+        steps:
+          - var.set:
+              var1: 'xyz'       # Plain string, without formatter
+              var2: true        # Plain boolean, without formatter
+              var3: ${expr}     # Plain expression, without formatter
+              var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
+              var5:             # Same as var4, but expanded YAML syntax
+                fmt: myFmt      
+              var6:             # Use the outcome of ${expr} as input for myFmt
+                fmt:   myFmt    
+                value: ${expr}    
+        """})
     @JsonProperty(value = "var.set", required = false) private LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> varSet;
     
     @JsonPropertyDescription("""
         Remove one or more local or global variables. Variable names to remove can be provided as plain \
         text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.
+        """)
+    @SampleYamlSnippets("""
+        steps:
+          - var.rm:
+              - var1    # Remove variable named 'var1'
+              - ${var2} # Remove variable name as stored in var2 variable
         """)
     @JsonProperty(value = "var.rm", required = false) private List<TemplateExpression> varRemove;
     
@@ -136,12 +175,20 @@ public final class ActionStep extends AbstractActionElementIf {
         to the end user, without the possibility of the message being removed, please use \
         log.info instead.     
         """)
+    @SampleYamlSnippets("""
+        steps:
+          - log.progress: Processing record ${recordNumber}
+        """)
     @JsonProperty(value = "log.progress", required = false) private TemplateExpression logProgress;
     
     @JsonPropertyDescription("""
         Write an informational message to console and log file (if enabled). Note that depending \
         on the config:output setting, informational messages may be shown either immediately, or \
         only after all action steps have been executed, to not interfere with progress messages.
+        """)
+    @SampleYamlSnippets("""
+        steps:
+          - log.info: Output written to ${fileName}
         """)
     @JsonProperty(value = "log.info", required = false) private TemplateExpression logInfo;
     
@@ -150,15 +197,24 @@ public final class ActionStep extends AbstractActionElementIf {
         config:output setting, warning messages may be shown either immediately, or only after all \
         action steps have been executed, to not interfere with progress messages.
         """)
+    @SampleYamlSnippets("""
+        steps:
+          - log.warn: Skipping this part due to errors: ${errors}
+        """)
     @JsonProperty(value = "log.warn", required = false) private TemplateExpression logWarn;
     
     @JsonPropertyDescription("Write a debug message to log file (if enabled).")
+    @SampleYamlSnippets("""
+        steps:
+           - log.debug: ${#this}   # Log all action variables
+         """)
     @JsonProperty(value = "log.debug", required = false) private TemplateExpression logDebug;
     
     @JsonPropertyDescription("""
         Add REST request targets for use in 'rest.call' steps. This step takes a map, with \
         keys defining REST target names, and values defining the REST target definition. 
         """)
+    @SampleYamlSnippets(copyFrom = ActionStepRestTargetEntry.class)
     @JsonProperty(value = "rest.target", required = false) private LinkedHashMap<String, ActionStepRestTargetEntry> restTargets;
     
     @JsonPropertyDescription("""
@@ -189,6 +245,7 @@ public final class ActionStep extends AbstractActionElementIf {
         request. If you need to use the output from one REST call as input for another REST \
         call, these REST calls should be defined in separate 'rest.call' steps.
         """)
+    @SampleYamlSnippets(copyFrom = ActionStepRestCallEntry.class)
     @JsonProperty(value = "rest.call", required = false) private LinkedHashMap<String, ActionStepRestCallEntry> restCalls;
     
     @JsonPropertyDescription("""
@@ -218,6 +275,7 @@ public final class ActionStep extends AbstractActionElementIf {
         x.failed: Set to true if fcli invocation failed, false if successfull
         
         """)
+    @SampleYamlSnippets(copyFrom = ActionStepRunFcliEntry.class)
     @JsonProperty(value = "run.fcli", required = false) private LinkedHashMap<String, ActionStepRunFcliEntry> runFcli;
     
     @JsonPropertyDescription("""
@@ -237,6 +295,11 @@ public final class ActionStep extends AbstractActionElementIf {
         /path/to/myFile2: {fmt: myFormatter, if: "${someExpression}"}
         /path/to/myFile3: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}     
         """)
+    @SampleYamlSnippets("""
+        steps:
+          - out.write:
+              ${cli.file}: {fmt: output}    
+        """)
     @JsonProperty(value="out.write", required = false) private LinkedHashMap<TemplateExpression, TemplateExpressionWithFormatter> outWrite;
     
     @JsonPropertyDescription("""
@@ -248,11 +311,13 @@ public final class ActionStep extends AbstractActionElementIf {
         (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} \
         will contain the status of the last executed check for the given check name.
         """)
+    @SampleYamlSnippets(copyFrom = ActionStepCheckEntry.class)
     @JsonProperty(value = "check", required = false) private LinkedHashMap<String, ActionStepCheckEntry> check;
     
     @JsonPropertyDescription("""
         Execute the steps defined in the 'do' block for every record provided by the 'from' expression.    
         """)
+    @SampleYamlSnippets(copyFrom = ActionStepRecordsForEach.class)
     @JsonProperty(value = "records.for-each", required = false) private ActionStepRecordsForEach recordsForEach;
     
     @JsonPropertyDescription("""
@@ -264,6 +329,7 @@ public final class ActionStep extends AbstractActionElementIf {
         these writers support more output formats, and, depending on writer type and configuration, allows for streaming \
         output, rather than having to collect all data in memory first.
         """)
+    @SampleYamlSnippets(copyFrom = ActionStepWith.class)
     @JsonProperty(value = "with", required = false) private ActionStepWith with;
     
     @JsonPropertyDescription("""
@@ -271,20 +337,45 @@ public final class ActionStep extends AbstractActionElementIf {
         that the writer.append instruction can append data to. The given data will be formatted an written according to \
         the corresponding writer configuration.  
         """)
+    @SampleYamlSnippets("""
+        steps:
+          - with:
+              writers:
+                csvWriter: ...
+            do:
+              - writer.append:
+                  csvWriter: ${myCsvRecord}    
+        """)
     @JsonProperty(value="writer.append", required = false) private LinkedHashMap<String, TemplateExpressionWithFormatter> writerAppend;
     
     @JsonPropertyDescription("""
         Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.    
+        """)
+    @SampleYamlSnippets("""
+        steps:
+          - ...
+          - if: ${condition}
+            steps:
+              - ... # One or more steps to execute if ${condition} evaluates to true     
         """)
     @JsonProperty(value = "steps", required = false) private List<ActionStep> steps;
     
     @JsonPropertyDescription("""
         Throw an exception, thereby terminating action execution.
         """)
+    @SampleYamlSnippets("""
+        steps:
+          - throw: ERROR: ${errorMessage}    
+        """)
     @JsonProperty(value = "throw", required = false) private TemplateExpression _throw;
     
     @JsonPropertyDescription("""
         Terminate action execution and return the given exit code.
+        """)
+    @SampleYamlSnippets("""
+        steps:
+          - if: ${someCondition}
+            exit: 1    
         """)
     @JsonProperty(value = "exit", required = false) private TemplateExpression _exit;
     

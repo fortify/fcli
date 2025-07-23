@@ -14,7 +14,6 @@ package com.fortify.cli.common.action.schema;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,14 +32,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.model.IActionElement;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.SneakyThrows;
 
 @Data
 public class ActionSchemaDescriptorFactory {
@@ -112,6 +109,7 @@ public class ActionSchemaDescriptorFactory {
         private final List<String> properties;
         private final String description;
         private final Set<String> referencedFromProperties;
+        private final String[] sampleSnippets;
         
         public void addReferencedFrom(ActionSchemaJsonPropertyDescriptor referencedFrom) {
             if ( referencedFrom!=null ) {
@@ -128,6 +126,7 @@ public class ActionSchemaDescriptorFactory {
                 .propertyDescriptors(new ArrayList<>())
                 .properties(new ArrayList<>())
                 .referencedFromProperties(new HashSet<String>())
+                .sampleSnippets(ActionSchemaHelper.getSampleYamlSnippets(clazz))
                 .build();
             for ( var field : getAllJsonPropertyFields(clazz) ) {
                 var pd = ActionSchemaJsonPropertyDescriptor.from(name, field, javaToJsonTypeConverter);
@@ -161,6 +160,7 @@ public class ActionSchemaDescriptorFactory {
         private final String qualifiedParentName;
         private final String[] allQualifiedParentNames;
         private final String description;
+        private final String[] sampleSnippets;
         final Class<?> javaType;
         private final Class<?>[] javaTypeArgs;
         // We lazily evaluate json types
@@ -188,7 +188,7 @@ public class ActionSchemaDescriptorFactory {
             var qualifiedName = StringUtils.isBlank(qualifiedParentName) ? name : String.format("%s::%s", qualifiedParentName, name);
             var javaType = field.getType();
             var javaGenericTypes = ReflectionHelper.getGenericTypes(field);
-            var fieldDescriptor = ActionSchemaJsonPropertyDescriptor.builder()
+           var fieldDescriptor = ActionSchemaJsonPropertyDescriptor.builder()
                     .name(name)
                     .qualifiedName(qualifiedName)
                     .qualifiedParentName(qualifiedParentName)
@@ -197,6 +197,7 @@ public class ActionSchemaDescriptorFactory {
                     .javaTypeArgs(javaGenericTypes)
                     .javaToJsonTypeConverter(javaToJsonTypeConverter)
                     .description(ActionSchemaHelper.getFullJsonPropertyDescription(field))
+                    .sampleSnippets(ActionSchemaHelper.getSampleYamlSnippets(field))
                     .field(field)
                     .build();
             return fieldDescriptor;
@@ -215,13 +216,6 @@ public class ActionSchemaDescriptorFactory {
                 currentParentName = getQualifiedParentName(currentParentName);
             }
             return result.toArray(String[]::new);
-        }
-
-        @SneakyThrows
-        private static final Class<?> getActionElementType(Class<?> type, Class<?>[] genericTypes) {
-            return ActionSchemaHelper.isActionModelClazz(type)
-                    ? type
-                    : Arrays.asList(genericTypes).stream().filter(IActionElement.class::isAssignableFrom).findFirst().orElse(null);
         }
     }
     

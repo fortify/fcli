@@ -57,10 +57,12 @@ public final class ReflectionHelper {
     }
     
     public static final <A extends Annotation,R> R getAnnotationValue(AnnotatedElement annotatedElement, Class<A> annotationType, Function<A,R> valueRetriever, Supplier<R> defaultValueSupplier) {
-        A annotation = annotatedElement.getAnnotation(annotationType);
+        A annotation = annotatedElement==null ? null : annotatedElement.getAnnotation(annotationType);
         R annotationValue = annotation==null ? null : valueRetriever.apply(annotation);
-        return annotationValue==null || (annotationValue instanceof String && StringUtils.isBlank((String)annotationValue)) 
+        return annotationValue==null || (annotationValue instanceof String && StringUtils.isBlank((String)annotationValue) || AnnotationDefaultClassValue.class.equals(annotationValue)) 
                 ? defaultValueSupplier.get() 
                 : annotationValue;
     }
+    
+    public static interface AnnotationDefaultClassValue {}
 }

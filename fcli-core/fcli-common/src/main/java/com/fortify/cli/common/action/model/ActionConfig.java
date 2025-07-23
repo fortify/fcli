@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,11 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonTypeName("config")
 @JsonClassDescription("Define configuration settings for this action.")
+@SampleYamlSnippets("""
+        config:
+          rest.target.default: fod
+          output: immediate
+        """)
 public final class ActionConfig implements IActionElement {
     @JsonPropertyDescription("""
         Optional string: Default target to use for rest.call steps.    

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -40,6 +41,24 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("rest.call")
 @JsonClassDescription("Define a REST call, like request method, URI, ...")
+@SampleYamlSnippets("""
+        steps:
+          - rest.call:
+              pvs:                            # Name for this REST call for later reference
+                target: ssc                   # Default configured through config::rest.target.default
+                method: GET                   # Default: GET
+                uri: /api/v1/projectVersions  # URI
+                query:                        # Query string parameters
+                  fields: id,name,project     # May also use expressions
+                type: paged                   # simple or paged
+                records.for-each:             # Iterate through response records
+                  record.var-name: pv         # Variable name to hold current record
+                  embed:                      # For each record, embed data from other REST call
+                    artifacts:                # Accessible through ${pv.artifacts}
+                      uri: /api/v1/projectVersions/${pv.id}/artifacts
+                  do:
+                    - ...                     # Steps to execute for each response record
+        """)
 public final class ActionStepRestCallEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     
