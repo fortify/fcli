@@ -190,7 +190,6 @@ class AviatorStreamProcessor implements AutoCloseable {
                             resultFuture.completeExceptionally(new AviatorTechnicalException("Error during request processing execution", e));
                         } else {
                             LOG.warn("Exception caught after stream completion during processing execution", e);
-                            resultFuture.completeExceptionally(e);
                         }
                     }
                 });

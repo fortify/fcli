@@ -254,6 +254,17 @@ public class AuditProcessor {
         for (Map.Entry<String, AuditResponse> entry : auditResponses.entrySet()) {
             String instanceId = entry.getKey();
             AuditResponse response = entry.getValue();
+
+            boolean isSilentlySkipped = "SKIPPED".equalsIgnoreCase(response.getStatus()) &&
+                    (response.getAuditResult() == null ||
+                            response.getAuditResult().getComment() == null ||
+                            response.getAuditResult().getComment().trim().isEmpty());
+
+            if (isSilentlySkipped) {
+                logger.debug("Issue {} was skipped by Aviator. No changes will be made to audit.xml for this issue.", instanceId);
+                continue;
+            }
+
             Element issueElement = findIssueElement(instanceId);
             String commentTimestamp;
 
