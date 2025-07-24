@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -35,6 +36,14 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("rest.target")
 @JsonClassDescription("Define a (third-party) REST target against which REST calls can be executed.")
+@SampleYamlSnippets("""
+        steps:
+          - rest.target:
+              example:
+                baseUrl: https://example.com/my-app
+                headers:
+                  Authorization: ${exampleAuth}
+        """)
 public final class ActionStepRestTargetEntry extends AbstractActionElementIf {
     @JsonPropertyDescription("""
         Required SpEL template expression: Base URL to use for REST requests to this request target.

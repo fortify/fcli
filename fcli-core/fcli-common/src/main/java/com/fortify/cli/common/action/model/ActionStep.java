@@ -131,7 +131,7 @@ public final class ActionStep extends AbstractActionElementIf {
         declared, allowing earlier declared variables to be referenced by variables or \
         formatters that are declared later in the same step.
         """)
-    @SampleYamlSnippets(value={"""
+    @SampleYamlSnippets(copyFrom=TemplateExpressionWithFormatter.class, value="""
         steps:
           - var.set:
               var1: Hello ${name}
@@ -140,19 +140,7 @@ public final class ActionStep extends AbstractActionElementIf {
               var3..: This is element 1 on var3
           - var.set:
               var3..: This is element 2 on var3
-        """, """
-        steps:
-          - var.set:
-              var1: 'xyz'       # Plain string, without formatter
-              var2: true        # Plain boolean, without formatter
-              var3: ${expr}     # Plain expression, without formatter
-              var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
-              var5:             # Same as var4, but expanded YAML syntax
-                fmt: myFmt      
-              var6:             # Use the outcome of ${expr} as input for myFmt
-                fmt:   myFmt    
-                value: ${expr}    
-        """})
+        """)
     @JsonProperty(value = "var.set", required = false) private LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> varSet;
     
     @JsonPropertyDescription("""

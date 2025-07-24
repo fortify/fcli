@@ -37,16 +37,17 @@ import lombok.NoArgsConstructor;
         value, in which case the simple value is used to set the 'value' property.
         """)
 @SampleYamlSnippets({"""
-        var.set: # Variable values demonstrate how 'value-fmt' may be specified
-          var1: 'xyz'       # Plain string, without formatter
-          var2: true        # Plain boolean, without formatter
-          var3: ${expr}     # Plain expression, without formatter
-          var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
-          var5:             # Same as var4, but expanded YAML syntax
-            fmt: myFmt      
-          var6:             # Use the outcome of ${expr} as input for myFmt
-            fmt:   myFmt    
-            value: ${expr}
+        steps:
+          - var.set: # Variable values demonstrate how 'value-fmt' may be specified
+            var1: 'xyz'       # Plain string, without formatter
+            var2: true        # Plain boolean, without formatter
+            var3: ${expr}     # Plain expression, without formatter
+            var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
+            var5:             # Same as var4, but expanded YAML syntax
+              fmt: myFmt      
+            var6:             # Use the outcome of ${expr} as input for myFmt
+              fmt:   myFmt    
+              value: ${expr}
         """})
 public class TemplateExpressionWithFormatter extends AbstractActionElementIf {
     @JsonPropertyDescription("""

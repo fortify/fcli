@@ -16,6 +16,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -86,8 +87,21 @@ public class ActionSchemaHelper {
     }
     
     public static final String[] getSampleYamlSnippets(AnnotatedElement annotatedElement) {
-        var target = ReflectionHelper.getAnnotationValue(annotatedElement, SampleYamlSnippets.class, SampleYamlSnippets::copyFrom, ()->annotatedElement);
-        return ReflectionHelper.getAnnotationValue(target, SampleYamlSnippets.class, SampleYamlSnippets::value, ()->new String[] {});
+        var targets = addSampleYamlSnippetsCopyFrom(new ArrayList<AnnotatedElement>(), new AnnotatedElement[]{annotatedElement});
+        return targets.stream()
+            .map(target->ReflectionHelper.getAnnotationValue(target, SampleYamlSnippets.class, SampleYamlSnippets::value, ()->new String[] {}))
+            .flatMap(Stream::of)
+            .toArray(String[]::new);
+    }
+
+    /** Recursively collect all 'copyFrom' classes referenced from the given annotated elements */
+    private static final List<AnnotatedElement> addSampleYamlSnippetsCopyFrom(ArrayList<AnnotatedElement> result, AnnotatedElement[] annotatedElements) {
+        if ( annotatedElements!=null && annotatedElements.length>0 ) {
+            var list = List.of(annotatedElements);
+            result.addAll(list);
+            list.forEach(e->addSampleYamlSnippetsCopyFrom(result, ReflectionHelper.getAnnotationValue(e, SampleYamlSnippets.class, SampleYamlSnippets::copyFrom, ()->new Class<?>[] {})));
+        }
+        return result;
     }
 
 }

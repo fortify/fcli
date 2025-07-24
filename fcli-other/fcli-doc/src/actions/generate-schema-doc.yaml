@@ -20,6 +20,7 @@ steps:
   # Get action schema
   - var.set:
       schema: ${#actionSchema()}
+      fcliBuildProperties: ${#fcliBuildProperties()}
   # Collect all types and generate corresponding anchors and xref replacements
   - records.for-each:
       from: ${schema.types}
@@ -91,7 +92,7 @@ steps:
             jsonType.propertyTable:
               fmt: propertyTable
               value: ${jsonType}
-        # Add type section for current type to `jsonTypeSections` variable, except for 'action' ans 'step' types
+        # Add type section for current type to `jsonTypeSections` variable, except for 'action' and 'step' types
         - if: ${!(jsonType.name matches 'action|step')} 
           var.set:
             jsonType.anchor: ${anchors[jsonType.name]}
@@ -101,8 +102,7 @@ steps:
         # Store current type in `jsonTypesByName` variable, indexed by name, for later reference 
         - var.set:
             jsonTypesByName.${jsonType.name}: ${jsonType}
-  - out.write:
-      /home/rsenden/vars.json: ${#this}         
+      
   - out.write:
       ${cli.outputFile}: {fmt: result}
 
@@ -116,8 +116,8 @@ formatters:
     |===
     |Fcli version |Action schema version
     
-    |${#fcliBuildInfo().fcliVersion} 
-    |${#fcliBuildInfo().fcliActionSchemaVersion}
+    |${fcliBuildProperties.fcliVersion} 
+    |${fcliBuildProperties.fcliActionSchemaVersion}
     |===
     
     == Introduction
@@ -162,8 +162,11 @@ formatters:
     [[expression]]
     == Expressions
     
-    As shown in the sections above, fcli actions make extensive use of expressions. These expressions may 
-    contain a combination of literal text and evaluation blocks, with the latter being surrounded
+    As shown in the sections above, fcli actions make extensive use of expressions. The following sections
+    provide mode details on expression syntax.
+    
+    === Expression Syntax
+    Expressions may contain a combination of literal text and evaluation blocks, with the latter being surrounded
     by `${'${'}` and `${'}'}`. Some examples:
     
     * Plain text: `Hello stranger, welcome!`
@@ -173,13 +176,33 @@ formatters:
     Evaluation blocks may be simple references to action variables that were previously set through a `var.set` step,
     or can be complex code blocks that utilize 
     link:https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html[Spring Expression Language (SpEL)],
-    possibly combined with fcli-provided SpEL functions. 
+    possibly combined with fcli-provided SpEL functions.
     
-    Later versions of this documentation may add expression examples and an overview of fcli-provided SpEL functions
-    that can be utilized by those expressions. Until then, please have a look at fcli built-in actions to see how these
-    are utilizing SpEL expressions, and what fcli-provided functions they invoke. 
+    === SpEL Functions
+    
+    Fcli provides many functions that can be invoked from expressions. Function calls are identified by the `#` sign,
+    for example: 
+        
+    `${"${#join('\n', records}"}`
+    
+    CAUTION: Until SpEL functions have been documented and categorized based on stability & intended use (stable, unstable,
+    preview, internal-use, ...), there's no guarantee on the stability of SpEL functions; we may add, remove, or change SpEL
+    functions between fcli releases without any notification, potentially causing errors or failures when running an fcli custom
+    action on a different fcli version. 
+    
+    Later versions of this documentation may add an overview of fcli-provided SpEL functions that can be used in SpEL expressions.
+    Until then, to see what SpEL functions are available in the current fcli version, you can either:
+        
+    * Have a look at fcli built-in actions to see which SpEL functions they are invoking
+    * Have a look at the Java classes that define the SpEL functions:
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/util/StringUtils.java[StringUtils]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/spring/expression/SpelFunctionsStandard.java[SpelFunctionsStandard]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/action/runner/ActionSpelFunctions.java[ActionSpelFunctions]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java[FoDActionSpelFunctions] (only available for actions run through `fcli fod action run`)
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java[SSCActionSpelFunctions] (only available for actions run through `fcli ssc action run`)
+    
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
-  formattedSampleSnippets: ${sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!schema-version!!!',#fcliBuildInfo().fcliActionSchemaVersion)+'\n----\n']} 
+  formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!schema-version!!!',#fcliBuildProperties().fcliActionSchemaVersion)+'\n----\n']))} 
   propertyTable: |
     [cols="1,1,3"]
     |===
@@ -200,7 +223,7 @@ formatters:
     |===
     |*`${normalizedName}` - ${jsonTypeWithLinks}*
     |${formattedDescription}
-    ${formattedSampleSnippets.size()==0?'':('a|*Sample snippet(s)*\n\n'+#join("\n", formattedSampleSnippets))}
+    ${#isBlank(formattedSampleSnippets)?'':('a|'+formattedSampleSnippets.replace('|','\|'))}
     |===
   typeSection: |
     [[${anchor}]]
@@ -208,7 +231,9 @@ formatters:
     
     ${description}
     
-    ${formattedSampleSnippets.size()==0?'':('*Sample snippet(s)*\n\n'+#join("\n", formattedSampleSnippets)+'\n\n*Supported properties*')}
+    ${formattedSampleSnippets}
+    
+    ${#isBlank(formattedSampleSnippets)?'':'*Supported properties*'}
     ${propertyTable}
     
     

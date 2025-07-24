@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -41,6 +42,13 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("check")
 @JsonClassDescription("Define a (policy) check to be evaluated.")
+@SampleYamlSnippets("""
+        steps:
+          - check:
+              MY_CHECK:
+                failIf: ${condition}
+                ifSkipped: PASS
+        """)
 public final class ActionStepCheckEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
     // Shared property description for passIf/failIf
     private static final String PASS_FAIL_IF = """

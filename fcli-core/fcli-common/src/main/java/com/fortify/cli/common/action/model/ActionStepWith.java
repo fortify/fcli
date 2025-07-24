@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,6 +38,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("with")
 @JsonClassDescription("Run the steps in the `do` block within the context of one or more writers or sessions.")
+@SampleYamlSnippets(copyFrom = {ActionStepWithSession.class, ActionStepWithWriter.class})
 public final class ActionStepWith extends AbstractActionElementIf {
     @JsonPropertyDescription("""
         This instruction allows for running a set of initialization steps before running the \

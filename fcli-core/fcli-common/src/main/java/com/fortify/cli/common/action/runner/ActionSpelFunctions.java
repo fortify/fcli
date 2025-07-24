@@ -503,7 +503,7 @@ public class ActionSpelFunctions {
         return ActionSchemaDescriptorFactory.getActionSchemaDescriptor().asJson();
     }
     
-    public static final JsonNode fcliBuildInfo() {
+    public static final JsonNode fcliBuildProperties() {
         return JsonHelper.getObjectMapper().valueToTree(FcliBuildProperties.INSTANCE);
     }
     

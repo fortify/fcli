@@ -83,7 +83,7 @@ public class Action implements IActionElement {
         Required string: Author of this action. This is a free-format string, allowing action users to see who \
         provided this action.   
         """)
-    @SampleYamlSnippets({"author: MyCompany", "author: My Name"})
+    @SampleYamlSnippets({"author: MyCompany", "author: John Doe"})
     @JsonProperty(value = "author", required = true) private String author;
     
     @JsonPropertyDescription("""

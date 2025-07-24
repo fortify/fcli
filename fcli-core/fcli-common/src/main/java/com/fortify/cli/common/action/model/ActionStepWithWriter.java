@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
@@ -37,6 +38,21 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("with-writer")
 @JsonClassDescription("Define a writer that can be referenced by steps in the `do` block, automatically closing the writer once the steps in the `do` block have completed.")
+@SampleYamlSnippets("""
+      steps:
+        - with:
+            writers:
+              csvWriter:
+                to: ${cli.file}
+              type: csv
+          do:
+            - records.for-each:
+                from: ${records}
+                record.var-name: record
+                do:
+                  - writer.append: 
+                      csvWriter: ${record}
+        """)
 public final class ActionStepWithWriter extends AbstractActionElementIf {
     @JsonPropertyDescription("""
         Required SpEL template expression; destination where to write the output of this writer. \

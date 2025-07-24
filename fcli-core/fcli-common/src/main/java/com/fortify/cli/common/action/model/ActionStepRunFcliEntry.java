@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
@@ -43,6 +44,27 @@ import lombok.NoArgsConstructor;
         in which case the expression outcome is interpreted as the fcli command to run,
         with default values for all other properties.
         """)
+@SampleYamlSnippets({"""
+        steps:
+          - run.fcli: 
+              list-av: fcli ssc av ls
+        ""","""
+        steps:
+          - run.fcli:
+              avList:
+                cmd: ssc av ls
+                records.collect: true
+          - log.debug: ${avList.records}
+        ""","""
+        steps:
+          - run.fcli:
+              process-av:
+                cmd: ssc av ls
+                records.for-each:
+                  record.var-name: av
+                  do:
+                    - log.debug: ${av}
+        """})
 public final class ActionStepRunFcliEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     

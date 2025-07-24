@@ -39,5 +39,5 @@ import com.fortify.cli.common.util.ReflectionHelper.AnnotationDefaultClassValue;
 @Target({TYPE, FIELD})
 public @interface SampleYamlSnippets {
     String[] value() default {};
-    Class<?> copyFrom() default AnnotationDefaultClassValue.class;
+    Class<?>[] copyFrom() default AnnotationDefaultClassValue.class;
 }

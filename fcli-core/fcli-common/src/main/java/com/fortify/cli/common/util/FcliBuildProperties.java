@@ -38,6 +38,15 @@ public class FcliBuildProperties {
         return version.startsWith("0.") || version.equals("unknown");
     }
     
+    public final String getRepoBranchOrTag() {
+        // TODO Determine correct dev branch, to avoid incorrect links if we ever move to dev/v4.x
+        return isDevelopmentRelease() ? "dev/v3.x" : String.format("v%s", getFcliVersion());
+    }
+    
+    public final String getSourceCodeBaseUrl() {
+        return "https://github.com/fortify/fcli/blob/"+getRepoBranchOrTag();
+    }
+    
     public final String getFcliProjectName() {
         return buildProperties.getProperty("projectName", "fcli");
     }
