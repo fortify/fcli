@@ -62,7 +62,7 @@ class FoDAccessControlGroupSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==2
-                it[1].contains("CREATED")
+                it[1].contains("REQUESTED")
             }
     }
     
