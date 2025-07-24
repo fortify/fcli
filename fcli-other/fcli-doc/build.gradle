@@ -34,12 +34,30 @@ task generateActionSchema(type: JavaExec) {
 }
 
 task generateManpageAsciiDoc(type: JavaExec) {
+    // Outer task collects resource bundle properties by executing FortifyCLIResourceBundlePropertiesHelper,
+    // which are then passed as system properties to the man page generator. This allows generated man pages
+    // to list property values that are usually generated at fcli runtime.
     group = "Documentation"
     description = "Generate AsciiDoc manpage"
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
-    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-    args fcliRootCommandsClassName, "--outdir=${manpageAsciiDocDir}", "-v"
+    main 'com.fortify.cli.app.runner.util.FortifyCLIResourceBundlePropertiesHelper'
+    standardOutput = new ByteArrayOutputStream()
+    doLast {
+      def docProperties = standardOutput.toString()
+        .split('\n')
+        .collectEntries { entry ->
+            def pair = entry.split(':')
+            [(pair.first()): pair.last()]
+        }
+      javaexec {
+          classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+          systemProperties = docProperties
+          main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+          args fcliRootCommandsClassName, "--outdir=${manpageAsciiDocDir}", "-v"
+      }
+    }
 }
+
 
 task generateManpageOutput(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 	dependsOn(generateManpageAsciiDoc)
@@ -64,6 +82,13 @@ task prepareAsciiDocForVersionedHtml(type: Copy) {
         include "*.adoc"
 		into "manpage"
     }
+}
+
+task generateActionDevDoc(type: JavaExec) {
+    dependsOn 'build', 'prepareAsciiDocForVersionedHtml'
+    classpath = sourceSets.main.runtimeClasspath
+    main 'com.fortify.cli.app.FortifyCLI'
+    args 'action', 'run', '--on-unsigned=ignore', "${projectDir}/src/actions/generate-action-dev-doc.yaml", "--file=${htmlAsciiDocDir}/action-development.adoc"
 }
 
 task generateGenericActionAsciiDoc(type: JavaExec) {
@@ -95,7 +120,7 @@ task generateFoDActionAsciiDoc(type: JavaExec) {
 
 // Generate HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml
 task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-    dependsOn(prepareAsciiDocForVersionedHtml, generateGenericActionAsciiDoc, generateSSCActionAsciiDoc, generateFoDActionAsciiDoc)
+    dependsOn(prepareAsciiDocForVersionedHtml, generateActionDevDoc, generateGenericActionAsciiDoc, generateSSCActionAsciiDoc, generateFoDActionAsciiDoc)
     forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }

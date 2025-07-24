@@ -33,7 +33,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -91,7 +91,7 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
         var signer = getSigner(extraInfo);
         return SignatureMetadata.builder()
                 .extraInfo(extraInfo)
-                .fcliVersion(FcliBuildPropertiesHelper.getFcliVersion())
+                .fcliVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
                 .signer(signer)
                 .build();
     }

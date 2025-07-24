@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Generate a GitLab Code Quality report listing SSC SAST vulnerabilities.
+  description: |
+    For information on how to import this report into GitLab, see 
+    https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality
+
+config:
+  rest.target.default: ssc
+
+cli.options:
+  file:
+    names: --file, -f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json"
+    required: false
+    default: gl-fortify-codequality.json
+  appversion:
+    names: --appversion, --av
+    description: "Required application version id or <appName>:<versionName>"
+  filterset:
+    names: --filterset, --fs
+    description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+    required: false
+  page-size:
+    names: --page-size
+    description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see `--socket-timeout` option on `fcli ssc session login` command). Default value: 100"
+    required: false
+    default: "100"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
+
+steps:
+  - var.set:
+      av: ${#ssc.appVersion(cli.appversion)}
+      fs: ${#ssc.filterSet(av, cli.filterset)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+  - log.progress: Loading latest static scan
+  - rest.call:
+      artifacts:
+        uri:  /api/v1/projectVersions/${av.id}/artifacts
+        type: paged
+        query:
+          embed: scans
+        records.for-each:
+          record.var-name: artifact
+          breakIf: ${lastStaticScan!=null}
+          do:
+            - var.set:
+                lastStaticScan: ${artifact._embed.scans?.^[type=='SCA']}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v1/projectVersions/${av.id}/issues
+        query:
+          filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
+          filterset: ${fs.guid}
+          limit: ${cli['page-size']}
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
+        records.for-each:
+          record.var-name: issue
+          embed:
+            details:
+              uri: /api/v1/issueDetails/${issue.id}
+          do:
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-codequality-report}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
+
+formatters:
+  gitlab-codequality-report:
+    ${vulnerabilities?:{}}
+
+  vulnerabilities:
+    description: ${#abbreviate(#htmlToText(issue.details?.brief?:""), 5000)}
+    check_name: ${issue.category}
+    fingerprint: ${issue.issueInstanceId}
+    location:
+        path:  ${issueSourceFileResolver.resolve(issue.fullFileName)}
+        lines:
+            begin: ${issue.lineNumber==0?1:issue.lineNumber}
+    severity: ${issue.friority}

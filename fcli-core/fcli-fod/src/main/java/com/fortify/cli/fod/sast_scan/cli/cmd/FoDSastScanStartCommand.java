@@ -13,12 +13,10 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
-import java.util.Properties;
-
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
@@ -47,7 +45,6 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
-        Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
         String relId = releaseDescriptor.getReleaseId();
         Boolean isRemediation = false;
 
@@ -65,8 +62,8 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
                 .isRemediationScan(isRemediation)
                 .scanMethodType("Other")
                 .notes(notes != null && !notes.isEmpty() ? notes : "")
-                .scanTool(fcliProperties.getProperty("projectName", "fcli"))
-                .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"))
+                .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
+                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
                 .build();
 
         return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile());

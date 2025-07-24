@@ -67,6 +67,11 @@ cli.options:
     required: false
     default: "300s"
     description: "See `fcli ssc appversion create`. Default value: 300s"
+  store:
+    names: --store
+    group: av_create_opts
+    required: false
+    description: "See `fcli ssc appversion create`"
   
 steps:
   - log.progress: "Creating SSC application version if non-existing"

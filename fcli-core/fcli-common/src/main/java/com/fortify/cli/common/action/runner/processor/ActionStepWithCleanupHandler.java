@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.common.action.runner.processor;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fortify.cli.common.action.model.ActionStepWith;
@@ -29,9 +29,13 @@ public class ActionStepWithCleanupHandler implements IActionStepWithHandler {
     private final ActionRunnerVars vars;
     private final ActionStepWithCleanup withCleanup;
     
-    public static final List<? extends IActionStepWithHandler> createHandlers(ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
+    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
+        List<ActionStepWithCleanupHandler> result = new ArrayList<>();
         var withCleanup = withStep.getCleanup();
-        return withCleanup==null ? Collections.emptyList() : List.of(new ActionStepWithCleanupHandler(ctx, vars, withCleanup));
+        if ( withCleanup!=null && actionStepProcessorWith._if(withCleanup) ) {
+            result.add(new ActionStepWithCleanupHandler(ctx, vars, withCleanup));
+        }
+        return result;
     }
 
     @Override

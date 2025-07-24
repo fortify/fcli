@@ -16,7 +16,6 @@ package com.fortify.cli.fod.mast_scan.cli.cmd;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +24,7 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
@@ -79,7 +78,6 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
 
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
-        Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
         String relId = releaseDescriptor.getReleaseId();
         Boolean isRemediation = false;
 
@@ -132,8 +130,8 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
                 .platformType(platformType)
                 .scanMethodType("Other")
                 .notes(notes != null && !notes.isEmpty() ? notes : "")
-                .scanTool(fcliProperties.getProperty("projectName", "fcli"))
-                .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
+                .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
+                .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion()).build();
 
         return FoDScanMobileHelper.startScan(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile());
     }

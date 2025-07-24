@@ -48,6 +48,7 @@ class FoDBuiltinActionRunSpec extends FcliBaseSpec {
                        'github-sast-report',
                        'gitlab-dast-report',
                        'gitlab-sast-report',
+                       'gitlab-codequality-report',
                        'sarif-sast-report',
                        'sonarqube-sast-report']
     }

@@ -439,13 +439,6 @@ jobs:
           mkdir -p "${versionDir}"
           unzip tmp/docs-jekyll.zip -d "${versionDir}"
           
-          # Recreate version data files, which may be empty if no versions available
-          mkdir -p _data/versions
-          touch _data/versions/release.yml
-          touch _data/versions/dev.yml
-          ls -d v*.*.* | sort -rV | while read line; do echo "- '$line'"; done > _data/versions/release.yml
-          ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
-          
           # Update symlinks based on available versions, processing versions in ascending order
           # to replace previous links with a newer version if appropriate. For example, 'latest'
           # will first point to the oldest version, then replaced with second-oldest version, ...,
@@ -455,6 +448,18 @@ jobs:
             ln -sfT $line $(echo "$line" | cut -d. -f 1)   # v<major>
             ln -sfT $line $(echo "$line" | cut -d. -f 1,2) # v<major>.<minor>
           done
+          
+          # Same for dev_*, but only generating latest_dev symlink
+          ls -d dev_* | sort -V | while read line; do
+            ln -sfT $line latest_dev
+          done
+          
+          # Recreate version data files, which may be empty if no versions available
+          mkdir -p _data/versions
+          touch _data/versions/release.yml
+          touch _data/versions/dev.yml
+          ls -d v*.*.* | sort -rV | while read line; do echo "- '$line'"; done > _data/versions/release.yml
+          ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
           
           git config user.name github-actions
           git config user.email github-actions@fortify.com

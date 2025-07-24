@@ -143,12 +143,12 @@ public class FoDUserHelper {
                     .applicationId(Integer.valueOf(appDescriptor.getApplicationId())).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_APPLICATION_ACCESS).routeParam("userId", String.valueOf(userDescriptor.getUserId()))
-                    .body(body).asEmpty();
+                    .body(body).asString().getBody();
         } else if (action.equals(FoDEnums.UserApplicationAccessAction.Remove)) {
             unirest.delete(FoDUrls.USER_APPLICATION_ACCESS_DELETE)
                     .routeParam("userId", String.valueOf(userDescriptor.getUserId()))
                     .routeParam("applicationId", String.valueOf(appDescriptor.getApplicationId()))
-                    .asEmpty();
+                    .asString().getBody();
         } else {
             throw new FcliSimpleException("Invalid action specified when updating users application access");
         }

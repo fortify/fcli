@@ -222,6 +222,22 @@ formatters:
           tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to
           the `fcli sc-sast scan wait-for` command, for example to adjust the polling interval or timeout.
     postScan:
+      - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
+        desc: >-
+          Aviator URL and JWT token to use for Aviator operations (see below). The `AVIATOR_TOKEN`
+          environment variable should hold the actual token contents; prefixes like `file:` or `string:`
+          (like the `--token` option on the `fcli aviator session login` command) are not supported. The
+          `AVIATOR_LOGIN_EXTRA_OPTS` environment variable can be used to pass additional options to the
+          `fcli aviator session login` command.
+      - names: DO_AVIATOR_AUDIT\nAVIATOR_APP\nAVIATOR_AUDIT_EXTRA_OPTS\nAVIATOR_WAIT_EXTRA_OPTS
+        desc: >-
+          If `DO_AVIATOR_AUDIT` is not set to `false`, and Aviator URL and token have been configured,
+          scan results will be sent to Aviator for AI-driven auditing. The Aviator application name
+          can optionally be configured through `AVIATOR_APP`, which defaults to the SSC application name.
+          The `AVIATOR_AUDIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+          `fcli aviator ssc audit` command, for example to adjust tag mappings. The `AVIATOR_WAIT_EXTRA_OPTS`
+          environment variable can be used to pass extra options to the `fcli ssc artifact wait-for` command,
+          which will be run to wait for SSC to process the audited results.
       - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
         desc: >-
           If `DO_APPVERSION_SUMMARY` is not set to `false`, an application version summary will be generated using the

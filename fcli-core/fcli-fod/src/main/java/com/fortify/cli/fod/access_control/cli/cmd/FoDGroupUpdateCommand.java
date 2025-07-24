@@ -94,7 +94,7 @@ public class FoDGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand impl
 
     @Override
     public String getActionCommandResult() {
-        return "CREATED";
+        return "REQUESTED";
     }
 
     @Override

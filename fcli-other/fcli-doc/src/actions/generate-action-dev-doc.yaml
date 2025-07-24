@@ -1,0 +1,314 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Generate fcli action schema documentation
+  description: |
+    This action is meant to be invoked during the Gradle build to generate 
+    fcli action schema documentation.
+
+config:
+  output: immediate
+  
+cli.options:
+  outputFile:
+    names: -f,--file
+    description: Required output file
+    default: stdout
+  
+steps:
+  # Get action schema
+  - var.set:
+      schema: ${#actionSchema()}
+      fcliBuildProperties: ${#fcliBuildProperties()}
+  # Collect all types and generate corresponding anchors and xref replacements
+  - records.for-each:
+      from: ${schema.types}
+      record.var-name: jsonType
+      do:
+        - var.set:
+            # Add formatted description
+            jsonType.formattedDescription:
+              fmt: formattedDescription
+              value: ${jsonType}
+            # Add formatted sample snippets to type
+            jsonType.formattedSampleSnippets:
+              fmt: formattedSampleSnippets
+              value: ${jsonType}
+            # Store type, type anchor, and type cross-reference
+            jsonTypes..: ${jsonType}
+            anchors.${jsonType.name}: type-${jsonType.name}
+            xrefs.(?<!-)${#regexQuote(jsonType.name)}(?!-): <<type-${jsonType.name},${jsonType.name}>>
+  # Add/override anchors and cross-references
+  - var.set:
+      anchors.expression: expression
+      xrefs.(?<!-)expression(?!-): <<expression,expression>>
+  
+  # Generate sections for every type
+  - records.for-each:
+      from: ${jsonTypes}
+      record.var-name: jsonType
+      do:
+        # Clear property rows and sections from previous iteration
+        - var.rm:
+            - propertyRows
+            - propertySections
+        # Iterate over all properties for the current jsonType to generate corresponding AsciiDoc tables 
+        # and top-level property sections
+        - records.for-each:
+            from: ${jsonType.properties}
+            record.var-name: jsonTypePropertyName
+            do:
+              - var.set:
+                  # Get property details for current property name
+                  property: ${schema.propertiesByQualifiedName[jsonTypePropertyName]}
+                  # Add normalized name
+                  property.normalizedName: ${property.qualifiedName.replaceAll('(.*)::(.*)', '[$1] $2').replace('[action] ','')}
+                  # Add cross references for types
+                  property.jsonTypeWithLinks: ${#replaceAllFromRegExMap(property.jsonType, xrefs)}
+                  # Add formatted description
+                  property.formattedDescription:
+                    fmt: formattedDescription
+                    value: ${property}
+                  # Add formatted sample snippets
+                  property.formattedSampleSnippets:
+                    fmt: formattedSampleSnippets
+                    value: ${property} 
+                  # Add property table row to propertyRows array
+                  propertyRows..:
+                    fmt: propertyRow
+                    value: ${property}
+                  # Add property section to propertySections array
+                  propertySections..:
+                    fmt: propertySection
+                    value: ${property}
+                  # Store propertyRows and propertySections arrays as property on current jsonType
+                  jsonType.propertyRows: ${propertyRows}
+                  jsonType.propertySections: ${propertySections}
+              
+        # Generate table from property rows generated above, storing the AsciiDoc-formatted table as a property on current type
+        - if: ${propertyRows!=null && propertyRows.size()>0}
+          var.set:
+            jsonType.propertyTable:
+              fmt: propertyTable
+              value: ${jsonType}
+        # Add type section for current type to `jsonTypeSections` variable, except for 'action' and 'step' types
+        - if: ${!(jsonType.name matches 'action|step')} 
+          var.set:
+            jsonType.anchor: ${anchors[jsonType.name]}
+            jsonTypeSections..:
+              fmt: typeSection
+              value: ${jsonType}
+        # Store current type in `jsonTypesByName` variable, indexed by name, for later reference 
+        - var.set:
+            jsonTypesByName.${jsonType.name}: ${jsonType}
+      
+  - out.write:
+      ${cli.outputFile}: {fmt: result}
+
+# TODO Provide action SpEL function to escape special characters in plain text, like property
+# descriptions? (see description.replace(...) in propertyRow below)     
+formatters:
+  result: |
+    = Fcli Action Development Guide
+    
+    [%autowidth]
+    |===
+    |Fcli version |Action schema version
+    
+    |${fcliBuildProperties.fcliVersion} 
+    |${fcliBuildProperties.fcliActionSchemaVersion}
+    |===
+    
+    == Introduction
+    
+    Fcli actions are defined in YAML files that describe action behavior through a set of instructions, 
+    combined with a rich expression syntax. This document provides information about the action instructions
+    and expression syntax that are supported by the current fcli version, as well as some general hints and
+    tips on custom action development.
+    
+    === Getting started
+    
+    To get accustomed with action syntax and features, it is highly recommended to have a look at the YAML 
+    contents of some of the fcli built-in actions. You can view the contents of built-in actions by running
+    the `fcli * action get <action>` command, or view the contents online at the following locations:
+    
+    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/resources/com/fortify/cli/common/actions/zip[common actions]
+    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip[`fcli action` actions]
+    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip[`fcli ssc` actions]
+    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip[`fcli fod` actions]
+    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml[generate-action-dev-doc.yaml] (used to generate this document)
+    
+    === Schema-based code assistance
+        
+    Fcli provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation
+    and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing
+    and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema
+    associations listed below:
+
+    * Visual Studio Code: link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[Red Hat YAML plugin]
+    * Eclipse: link:https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml[Wild Web Developer]
+
+    For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:
+
+    * YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:
+    +
+    ----
+    # yaml-language-server: $schema=${fcliBuildProperties.fcliActionSchemaUrl}
+    ----
+    * YAML property, supported by Eclipse and some other YAML editors:
+    +
+    ----
+    $schema: ${fcliBuildProperties.fcliActionSchemaUrl}
+    ----
+
+    Fcli requires at least one of these statements to be provided in the action YAML file. You may also provide both,
+    in which case the schema URL must be identical in both statements. Once you've added one of these statements to
+    your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action
+    YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.
+
+    As shown in the sample schema statements above, the current fcli version ${fcliBuildProperties.fcliVersion} supports
+    schema version link:${fcliBuildProperties.fcliActionSchemaUrl}[${fcliBuildProperties.fcliActionSchemaVersion}]. Other
+    fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
+    versions with the same schema major version range, and forward compatibility for later schema patch versions within the
+    same schema minor version range.
+    
+    NOTE: Fcli built-in actions should always point to the development version of the schema, for example
+    `https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json`. This allows fcli developers to utilize
+    the latest schema changes in their IDE, before the schema has been released. The fcli build process takes care of
+    updating the schema URL to the appropriate schema release version, thereby making sure that all fcli built-in actions
+    will eventually point to the current schema version.
+    
+    === Design considerations
+
+    Given that actions can define and process arbitrary parameters, it may be tempting to implement generic, highly
+    configurable actions. For example, you could implement a highly configurable action for checking all kinds of
+    security policy criteria, with the actual criteria to be checked being passed as action parameters.
+
+    However, from a CI/CD perspective, this means that every pipeline must properly set these action parameters.
+    Pipeline authors may copy existing pipelines or use pipeline templates to have these action parameters set to
+    predefined values, but what if those parameters need to updated globally? Potentially, this means that you'd
+    need to update thousands of pipelines to adjust action parameters. 
+
+    This is exactly the reason why we don't provide highly configurable `check-policy` actions, but instead just
+    provide a default implementation that can be customized according to organization requirements. Instead of
+    passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action.
+    If there is a need to apply different criteria for different types of applications, for example based on
+    business risk, multiple approaches are possible:
+
+    * Use SSC/FoD application version/release attributes like `Business Risk` or other characteristics to identify
+      what criteria to apply. This is the preferred approach, to allow the criteria to be applied to automatically
+      match the centrally maintained attributes/characteristics.
+    * Have the action take one or more parameters that identify what criteria to apply. This could be a policy name,
+      or a functional identifier like `--business-risk`.
+    * Publish separate actions that implement different policy criteria, like `check-high-risk-policy` and `check-low-risk-policy`.
+
+    The examples above are based on actions that perform policy checks, but the same principles and considerations
+    (may) apply to other types of actions.
+    
+    [[primary-yaml-instructions]]
+    == Primary YAML instructions
+    
+    The sections below list the primary (top-level) YAML instructions supported by the current fcli (schema) 
+    version. Where applicable, links are provided to <<yaml-types,YAML types>> sub-sections that 
+    provide more details on the expected contents for each property type.
+    
+    ${#join('\n\n', jsonTypesByName['action'].propertySections)}
+    
+    [[type-step]]
+    == YAML step instructions
+    
+    The sections below list all supported step instructions, that can for example be used in the top-level
+    `steps` instruction, but also other instructions that accept a list of steps, for example within 
+    `for-each` blocks. Where applicable, links are provided to <<yaml-types,YAML types>> sub-sections that 
+    provide more details on the expected contents for each property type.
+    
+    ${#join('\n\n', jsonTypesByName['step'].propertySections)}
+    
+    [[yaml-types]]
+    == YAML types
+    
+    The sections below list the various YAML types supported by the current fcli (schema) version. Where
+    applicable, the `Type` column provides links to other <<yaml-types,YAML types>> sub-sections that provide
+    more details on the expected contents for each property type.
+    
+    ${#join('\n\n', jsonTypeSections)}
+    
+    [[expression]]
+    == Expressions
+    
+    As shown in the sections above, fcli actions make extensive use of expressions. The following sections
+    provide mode details on expression syntax.
+    
+    === Expression Syntax
+    Expressions may contain a combination of literal text and evaluation blocks, with the latter being surrounded
+    by `${'${'}` and `${'}'}`. Some examples:
+    
+    * Plain text: `Hello stranger, welcome!`
+    * Evaluation block: `${'${welcomeMessage}'}`
+    * Combination: `${'Hello ${name}, welcome!'}`
+    
+    Evaluation blocks may be simple references to action variables that were previously set through a `var.set` step,
+    or can be complex code blocks that utilize 
+    link:https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html[Spring Expression Language (SpEL)],
+    possibly combined with fcli-provided SpEL functions.
+    
+    === SpEL Functions
+    
+    Fcli provides many functions that can be invoked from expressions. Function calls are identified by the `#` sign,
+    for example: 
+        
+    `${"${#join('\n', records}"}`
+    
+    CAUTION: Until SpEL functions have been documented and categorized based on stability & intended use (stable, unstable,
+    preview, internal-use, ...), there's no guarantee on the stability of SpEL functions; we may add, remove, or change SpEL
+    functions between fcli releases without any notification, potentially causing errors or failures when running an fcli custom
+    action on a different fcli version. 
+    
+    Later versions of this documentation may add an overview of fcli-provided SpEL functions that can be used in SpEL expressions.
+    Until then, to see what SpEL functions are available in the current fcli version, you can either:
+        
+    * Have a look at fcli built-in actions to see which SpEL functions they are invoking
+    * Have a look at the Java classes that define the SpEL functions:
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/util/StringUtils.java[StringUtils]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/spring/expression/SpelFunctionsStandard.java[SpelFunctionsStandard]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/action/runner/ActionSpelFunctions.java[ActionSpelFunctions]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java[FoDActionSpelFunctions] (only available for actions run through `fcli fod action run`)
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java[SSCActionSpelFunctions] (only available for actions run through `fcli ssc action run`)
+    
+  formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
+  formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!fcli-action-schema-url!!!',#fcliBuildProperties().fcliActionSchemaUrl)+'\n----\n']))} 
+  propertyTable: |
+    [cols="1,1,3"]
+    |===
+    |Property|Type|Description 
+              
+    ${#join("", propertyRows)}
+    |===
+  
+    __^*{sp}Generated{sp}from{sp}${javaType}^__
+  propertyRow: |
+    |${name}
+    |${jsonTypeWithLinks}
+    |${formattedDescription}
+  propertySection: |
+    === `${normalizedName}`
+    
+    [%noheader,%autowidth.stretch]
+    |===
+    |*`${normalizedName}` - ${jsonTypeWithLinks}*
+    |${formattedDescription}
+    ${#isBlank(formattedSampleSnippets)?'':('a|'+formattedSampleSnippets.replace('|','\|'))}
+    |===
+  typeSection: |
+    [[${anchor}]]
+    === `[type] ${name}`
+    
+    ${description}
+    
+    ${formattedSampleSnippets}
+    
+    ${#isBlank(formattedSampleSnippets)?'':'*Supported properties*'}
+    ${propertyTable}
+    
+    

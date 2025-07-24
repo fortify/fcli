@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
 
@@ -116,7 +116,7 @@ public final class ToolDefinitionsHelper {
         if ( stateDescriptor!=null ) {
             result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, stateDescriptor));
         } else {
-            result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, "INTERNAL", FcliBuildPropertiesHelper.getFcliBuildDate()));
+            result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, "INTERNAL", FcliBuildProperties.INSTANCE.getFcliBuildDate()));
         }
     }
     
