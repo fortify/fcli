@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20250724.102739-dev_v3.x
+fcli_version: 0.20250724.113155-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20250724.102739-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250724.102739-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250724.113155-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20250724.102739-dev_v3.x</span>
+<span id="revnumber">version 0.20250724.113155-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1295,7 +1295,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <div class="sect2">
 <h3 id="_custom_actions"><a class="anchor" href="#_custom_actions"></a>Custom Actions</h3>
 <div class="paragraph">
-<p>Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. The following sections provide more information on custom action usage and development.</p>
+<p>Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. The sections below provide more information on custom action usage. For more information on developing custom actions, please refer to the <a href="action-development.html">Fcli Action Development Guide</a>.</p>
 </div>
 <div class="sect3">
 <h4 id="_compatibility"><a class="anchor" href="#_compatibility"></a>Compatibility</h4>
@@ -1339,51 +1339,6 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 </div>
 <div class="paragraph">
 <p>To allow for easy access, custom actions can also be imported into fcli using the <code>fcli * action import</code> command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the <code>fcli * action reset</code> command to remove all previously imported custom actions.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_custom_action_development"><a class="anchor" href="#_custom_action_development"></a>Custom Action Development</h4>
-<div class="paragraph">
-<p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Visual Studio Code: <a href="https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml">Red Hat YAML plugin</a></p>
-</li>
-<li>
-<p>Eclipse: <a href="https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml">Wild Web Developer</a></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
-<div class="listingblock">
-<div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json</pre>
-</div>
-</div>
-</li>
-<li>
-<p>YAML property, supported by Eclipse and some other YAML editors:</p>
-<div class="listingblock">
-<div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json</pre>
-</div>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
-</div>
-<div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250724.102739-dev_v3.x supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json">2.2.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 </div>
 </div>
@@ -1450,34 +1405,6 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Plain string, for example having the environment variable <code>FCLI_DEFAULT_PUBKEY</code> set to <code>string:&lt;public key contents&gt;</code>. You can use CI/CD secrets/variables to set the <code>FCLI_DEFAULT_PUBKEY</code> to a value like this. For testing, you can use a <code>bash</code> command like the following: <code>export FCLI_DEFAULT_PUBKEY=string:$(cat my-public.key)</code>.</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p><strong>Design considerations</strong></p>
-</div>
-<div class="paragraph">
-<p>Given that actions can define and process arbitrary parameters, it may be tempting to implement generic, highly configurable actions. For example, you could implement a highly configurable action for checking all kinds of security policy criteria, with the actual criteria to be checked being passed as action parameters.</p>
-</div>
-<div class="paragraph">
-<p>However, from a CI/CD perspective, this means that every pipeline must properly set these action parameters. Pipeline authors may copy existing pipelines or use pipeline templates to have these action parameters set to predefined values, but what if those parameters need to updated globally? Potentially, this means that you&#8217;d need to update thousands of pipelines to adjust action parameters.</p>
-</div>
-<div class="paragraph">
-<p>This is exactly the reason why we don&#8217;t provide highly configurable <code>check-policy</code> actions, but instead just provide a default implementation that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Use SSC/FoD application version/release attributes like <code>Business Risk</code> or other characteristics to identify what criteria to apply. This is the preferred approach, to allow the criteria to be applied to automatically match the centrally maintained attributes/characteristics.</p>
-</li>
-<li>
-<p>Have the action take one or more parameters that identify what criteria to apply. This could be a policy name, or a functional identifier like <code>--business-risk</code>.</p>
-</li>
-<li>
-<p>Publish separate actions that implement different policy criteria, like <code>check-high-risk-policy</code> and <code>check-low-risk-policy</code>.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The examples above or based on actions that perform policy checks, but the same principles and considerations (may) apply to other types of actions.</p>
 </div>
 </div>
 </div>
@@ -1614,8 +1541,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250724.102739-dev_v3.x<br>
-Last updated 2025-07-24 10:29:46 UTC
+Version 0.20250724.113155-dev_v3.x<br>
+Last updated 2025-07-24 11:34:00 UTC
 </div>
 </div>
 </body>
