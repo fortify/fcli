@@ -35,6 +35,7 @@
         }
       },
       "required" : [ "description", "names" ],
+      "description" : "Define command-line options supported by this action.",
       "additionalProperties" : false
     },
     "ActionInputMask" : {
@@ -46,14 +47,15 @@
         },
         "pattern" : {
           "type" : "string",
-          "description" : "Optional string: Pattern for fine-tuning which option value contents should be\nmasked. Every matching regex group will be masked using the given description.\nIf no pattern is defined, or if the pattern doesn't contain any groups, the\nfull option value will be masked.\n"
+          "description" : "Optional string: Pattern for fine-tuning which value contents should be\nmasked. Every matching regex group will be masked using the given description.\nIf no pattern is defined, or if the pattern doesn't contain any groups, the\nfull value will be masked.\n"
         },
         "sensitivity" : {
           "type" : "string",
           "enum" : [ "high", "medium", "low" ],
-          "description" : "Optional enum value: Option sensitivity; high/medium/low. Default value: high\n"
+          "description" : "Optional enum value: Value sensitivity; high/medium/low. Default value: high\n"
         }
       },
+      "description" : "Define log masking settings.",
       "additionalProperties" : false
     },
     "ActionStep" : {
@@ -101,38 +103,42 @@
           "description" : "Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, and map values defining the data to write to the destination. Destination can be specified as either stdout, stderr, or a file name. If a file already exists, it will be overwritten. Note that depending on the config:output setting, data written to stdout or stderr may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n\nMap values may be specified as either an SpEL template expression, or as 'value' and 'fmt' properties. An 'if' property is also supported to conditionally write to the output. If formatter is specified, the given formatter from the 'formatters' section will be used to format the given value, or, if no value is given, the formatter will be evaluated against the set of all variables. Some examples:\n\n/path/to/myFile1: Hello ${name}\n/path/to/myFile2: {fmt: myFormatter, if: \"${someExpression}\"}\n/path/to/myFile3: {value: \"${myVar}\", fmt: \"${myVarFormatterExpression}\"}\n"
         },
         "records.for-each" : {
-          "type" : "object",
-          "properties" : {
-            "breakIf" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number", "null" ],
-              "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
-            },
-            "do" : {
-              "description" : "Required list: Steps to be executed for each individual record.\n",
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ActionStep"
+          "allOf" : [ {
+            "type" : "object",
+            "properties" : {
+              "breakIf" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
+                "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+              },
+              "do" : {
+                "description" : "Required list: Steps to be executed for each individual record.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
+              },
+              "from" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
+                "description" : "Required SpEL template expression, evaluating to either an array of values to be iterated over, or an IActionStepForEachProcessor instance like returned by ${#ssc.ruleDescriptionsProcessor(appVersionId)}. For each of the records in the given array or as produced by the IActionStepForEachProcessor, the steps given in the 'do' instruction will be executed until the breakIf condition (is specified) evaluates to true. The steps in the 'do' instruction may reference the current record through the action variable name specified through 'record.var-name'.\n"
+              },
+              "if" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
+                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+              },
+              "record.var-name" : {
+                "type" : "string",
+                "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
               }
             },
-            "from" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number", "null" ],
-              "description" : "Required SpEL template expression, evaluating to either an array of values to be iterated over, or an IActionStepForEachProcessor instance like returned by ${#ssc.ruleDescriptionsProcessor(appVersionId)}. For each of the records in the given array or as produced by the IActionStepForEachProcessor, the steps given in the 'do' instruction will be executed until the breakIf condition (is specified) evaluates to true. The steps in the 'do' instruction may reference the current record through the action variable name specified through 'record.var-name'.\n"
-            },
-            "if" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number", "null" ],
-              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
-            },
-            "record.var-name" : {
-              "type" : "string",
-              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
-            }
-          },
-          "required" : [ "do", "from", "record.var-name" ],
-          "additionalProperties" : false,
-          "description" : "Execute the steps defined in the 'do' block for every record provided by the 'from' expression.\n"
+            "required" : [ "do", "from", "record.var-name" ],
+            "description" : "Repeat the steps listed in the `do` block for each record provided by the `from` instruction.",
+            "additionalProperties" : false
+          }, {
+            "description" : "Execute the steps defined in the 'do' block for every record provided by the 'from' expression.\n"
+          } ]
         },
         "rest.call" : {
           "type" : "object",
@@ -180,57 +186,62 @@
           "description" : "Set one or more variables values for use in later action steps. This step takes a list of variables to set, with each list item taking a single yaml property that represents the variable name to set, which may be specified as an SpEL template expression.\n\nBased on the format of the variable name, this step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. By default, variables are only accessible by the current fcli action, unless they are prefixed with 'global.', in which case they are also accessible by other actions that execute within the context of a single fcli command-line invocation. For example, if action 1 uses the run.fcli step to execute action 2, any global variables set in action 1 will be accessibly by action 2, and vice versa.\n\nFollowing are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# Same as above, but setting global variables:\nglobal.var1: ...\nglobal.var2.prop1: ...\nglobal.var2.prop2: ...\nglobal.var3..: ...\nglobal.var3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property name on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nValues may be specified as either an SpEL template expression, or as 'value' and 'fmt' properties. An 'if' property is also supported to conditionally set the variable. If formatter is specified, the given formatter from the 'formatters' section will be used to format the given value, or, if no value is given, the formatter will be evaluated against the set of all variables. Some examples:\n\nglobal.name: John Doe\nsimpleValue1: Hello ${global.name}\nformattedValue1: {fmt: myFormatter, if: \"${someExpression}\"}\nformatterValue2: {value: \"${myVar}\", fmt: \"${myVarFormatterExpression}\"}\n\nWithin a single 'var.set*' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables or formatters that are declared later in the same step.\n"
         },
         "with" : {
-          "type" : "object",
-          "properties" : {
-            "do" : {
-              "description" : "Required list of steps to be run within the context of the given configuration.\n",
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ActionStep"
-              }
-            },
-            "if" : {
-              "format" : "spelTemplateExpression",
-              "type" : [ "boolean", "integer", "string", "number", "null" ],
-              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
-            },
-            "sessions" : {
-              "description" : "This instruction allows for setting up one or more sessions before running the steps specified in the do-block, and logging out of those sessions once the steps in the do-block have completed wither successfully or with failure.\n\nNote that for now, these sessions can only be referenced by explicitly specifying the --session option on 'run.fcli' instructions. The 'rest.call' instructions and any SpEL functions that are dependent on an fcli session will use the session that was specified through the --session option on the 'fcli * action run' command; they will ignore sessions created through the 'with:session' instruction.\n",
-              "type" : "array",
-              "items" : {
-                "type" : "object",
-                "properties" : {
-                  "if" : {
-                    "format" : "spelTemplateExpression",
-                    "type" : [ "boolean", "integer", "string", "number", "null" ],
-                    "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
-                  },
-                  "login" : {
-                    "format" : "spelTemplateExpression",
-                    "type" : [ "boolean", "integer", "string", "number", "null" ],
-                    "description" : "Required SpEL template expression; the session login command to run before running the steps specified in the do-block.\n"
-                  },
-                  "logout" : {
-                    "format" : "spelTemplateExpression",
-                    "type" : [ "boolean", "integer", "string", "number", "null" ],
-                    "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
-                  }
-                },
-                "required" : [ "login", "logout" ],
-                "additionalProperties" : false
-              }
-            },
-            "writers" : {
-              "type" : "object",
-              "additionalProperties" : {
-                "$ref" : "#/$defs/ActionStepWithWriter"
+          "allOf" : [ {
+            "type" : "object",
+            "properties" : {
+              "do" : {
+                "description" : "Required list of steps to be run within the context of the given configuration.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
               },
-              "description" : "This instruction allows for setting up one or more record writers that can referenced by writer.append steps in the associated do-block. After all steps in the do-block have been executed, the writer will be closed. This instruction takes a map, with map keys defining writer identifiers, and map values defining the writer configurations. The number of records that have been appended to the current writer can be accessed through the 'writerId.count' variable.\n"
-            }
-          },
-          "required" : [ "do" ],
-          "additionalProperties" : false,
-          "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. This includes the ability to run the do-block within the context of an fcli session, with the session being created before running the do-block and being terminated afterwards, and the ability to define writers than can output data in various formats like CSV, appending data to those writers in the do-block, and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, these writers support more output formats, and, depending on writer type and configuration, allows for streaming output, rather than having to collect all data in memory first.\n"
+              "if" : {
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
+                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+              },
+              "sessions" : {
+                "description" : "This instruction allows for setting up one or more sessions before running the steps specified in the do-block, and logging out of those sessions once the steps in the do-block have completed wither successfully or with failure.\n\nNote that for now, these sessions can only be referenced by explicitly specifying the --session option on 'run.fcli' instructions. The 'rest.call' instructions and any SpEL functions that are dependent on an fcli session will use the session that was specified through the --session option on the 'fcli * action run' command; they will ignore sessions created through the 'with:session' instruction.\n",
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "if" : {
+                      "format" : "spelTemplateExpression",
+                      "type" : [ "boolean", "integer", "string", "number", "null" ],
+                      "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+                    },
+                    "login" : {
+                      "format" : "spelTemplateExpression",
+                      "type" : [ "boolean", "integer", "string", "number", "null" ],
+                      "description" : "Required SpEL template expression; the session login command to run before running the steps specified in the do-block.\n"
+                    },
+                    "logout" : {
+                      "format" : "spelTemplateExpression",
+                      "type" : [ "boolean", "integer", "string", "number", "null" ],
+                      "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
+                    }
+                  },
+                  "required" : [ "login", "logout" ],
+                  "description" : "Define session login and logout commands, respectively executed before and after the steps listed in the `do` block.",
+                  "additionalProperties" : false
+                }
+              },
+              "writers" : {
+                "type" : "object",
+                "additionalProperties" : {
+                  "$ref" : "#/$defs/ActionStepWithWriter"
+                },
+                "description" : "This instruction allows for setting up one or more record writers that can referenced by writer.append steps in the associated do-block. After all steps in the do-block have been executed, the writer will be closed. This instruction takes a map, with map keys defining writer identifiers, and map values defining the writer configurations. The number of records that have been appended to the current writer can be accessed through the 'writerId.count' variable.\n"
+              }
+            },
+            "required" : [ "do" ],
+            "description" : "Run the steps in the `do` block within the context of one or more writers or sessions.",
+            "additionalProperties" : false
+          }, {
+            "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. This includes the ability to run the do-block within the context of an fcli session, with the session being created before running the do-block and being terminated afterwards, and the ability to define writers than can output data in various formats like CSV, appending data to those writers in the do-block, and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, these writers support more output formats, and, depending on writer type and configuration, allows for streaming output, rather than having to collect all data in memory first.\n"
+          } ]
         },
         "writer.append" : {
           "type" : "object",
@@ -240,6 +251,7 @@
           "description" : "This instruction may only be used from within a with:do, with the with:writers instruction defining the writers that the writer.append instruction can append data to. The given data will be formatted an written according to the corresponding writer configuration.\n"
         }
       },
+      "description" : "Define a step to be executed by this action.",
       "additionalProperties" : false
     },
     "ActionStepCheckEntry" : {
@@ -271,6 +283,7 @@
         }
       },
       "required" : [ "display-name" ],
+      "description" : "Define a (policy) check to be evaluated.",
       "additionalProperties" : false
     },
     "ActionStepRestCallEntry" : {
@@ -382,6 +395,7 @@
         }
       },
       "required" : [ "uri" ],
+      "description" : "Define a REST call, like request method, URI, ...",
       "additionalProperties" : false
     },
     "ActionStepRestTargetEntry" : {
@@ -403,6 +417,7 @@
         }
       },
       "required" : [ "baseUrl" ],
+      "description" : "Define a (third-party) REST target against which REST calls can be executed.",
       "additionalProperties" : false
     },
     "ActionStepRunFcliEntry" : {
@@ -481,6 +496,7 @@
           "additionalProperties" : false
         }
       },
+      "description" : "Define an fcli command to be (optionally) executed. This can be supplied as either a set of YAML properties or as a plain expression,\nin which case the expression outcome is interpreted as the fcli command to run,\nwith default values for all other properties.\n",
       "additionalProperties" : false
     },
     "ActionStepWithWriter" : {
@@ -513,6 +529,7 @@
         }
       },
       "required" : [ "to", "type" ],
+      "description" : "Define a writer that can be referenced by steps in the `do` block, automatically closing the writer once the steps in the `do` block have completed.",
       "additionalProperties" : false
     },
     "LinkedHashMap(String,TemplateExpression)" : {
@@ -541,6 +558,7 @@
           "type" : [ "boolean", "integer", "string", "number", "null" ]
         }
       },
+      "description" : "Define a value that is optionally formatted or generated by a given formatter. This can be supplied as either a set of YAML properties or as a simple (string, boolean, ...) value, in which case the simple value is used to set the 'value' property.\n",
       "additionalProperties" : false
     }
   },
@@ -562,39 +580,43 @@
       "description" : "Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values define option definitions like option names that can be specified on the command line, option description, ...\n"
     },
     "config" : {
-      "type" : "object",
-      "properties" : {
-        "mask.env-vars" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "$ref" : "#/$defs/ActionInputMask"
+      "allOf" : [ {
+        "type" : "object",
+        "properties" : {
+          "mask.env-vars" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/$defs/ActionInputMask"
+            },
+            "description" : "Optional map: Environment variables used by this action for which values should be masked in the fcli log file. Map keys define environment variables names, map values define masking configuration.\n"
           },
-          "description" : "Optional map: Environment variables used by this action for which values should be masked in the fcli log file. Map keys define environment variables names, map values define masking configuration.\n"
+          "output" : {
+            "type" : "string",
+            "enum" : [ "immediate", "delayed" ],
+            "description" : "Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' is specified by the user) to avoid such output from interfering with progress messages.\n"
+          },
+          "rest.target.default" : {
+            "type" : "string",
+            "description" : "Optional string: Default target to use for rest.call steps.\n"
+          },
+          "run.fcli.group.default" : {
+            "type" : "string",
+            "description" : "    (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          },
+          "run.fcli.status.check.default" : {
+            "type" : "boolean",
+            "description" : "    (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          },
+          "run.fcli.status.log.default" : {
+            "type" : "boolean",
+            "description" : "    (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          }
         },
-        "output" : {
-          "type" : "string",
-          "enum" : [ "immediate", "delayed" ],
-          "description" : "Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' is specified by the user) to avoid such output from interfering with progress messages.\n"
-        },
-        "rest.target.default" : {
-          "type" : "string",
-          "description" : "Optional string: Default target to use for rest.call steps.\n"
-        },
-        "run.fcli.group.default" : {
-          "type" : "string",
-          "description" : "    (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
-        },
-        "run.fcli.status.check.default" : {
-          "type" : "boolean",
-          "description" : "    (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
-        },
-        "run.fcli.status.log.default" : {
-          "type" : "boolean",
-          "description" : "    (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
-        }
-      },
-      "additionalProperties" : false,
-      "description" : "Optional object: Action configuration properties. This includes configuration properties for setting default values to be used by some action steps, or how action output should be processed.\n"
+        "description" : "Define configuration settings for this action.",
+        "additionalProperties" : false
+      }, {
+        "description" : "Optional object: Action configuration properties. This includes configuration properties for setting default values to be used by some action steps, or how action output should be processed.\n"
+      } ]
     },
     "formatters" : {
       "type" : "object",
@@ -612,21 +634,25 @@
       }
     },
     "usage" : {
-      "type" : "object",
-      "properties" : {
-        "description" : {
-          "format" : "spelTemplateExpression",
-          "type" : [ "boolean", "integer", "string", "number", "null" ],
-          "description" : "Required SpEL template expression: Action usage description, displayed in help output and online documentation. The template expression can reference the 'isAsciiDoc' and 'isPlainText' properties to determine whether the contents are to be rendered as AsciiDoc (for online documentation) or plain text (for help output). For internal use only, the template expression can utilize the '#include('path/to/classpath/resource') function to include contents of a class path resource.\n"
+      "allOf" : [ {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ],
+            "description" : "Required SpEL template expression: Action usage description, displayed in help output and online documentation. The template expression can reference the 'isAsciiDoc' and 'isPlainText' properties to determine whether the contents are to be rendered as AsciiDoc (for online documentation) or plain text (for help output). For internal use only, the template expression can utilize the '#include('path/to/classpath/resource') function to include contents of a class path resource.\n"
+          },
+          "header" : {
+            "type" : "string",
+            "description" : "Required string: Action usage header, displayed in list and help outputs"
+          }
         },
-        "header" : {
-          "type" : "string",
-          "description" : "Required string: Action usage header, displayed in list and help outputs"
-        }
-      },
-      "required" : [ "description", "header" ],
-      "additionalProperties" : false,
-      "description" : "Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the 'fcli * action help' command.\n"
+        "required" : [ "description", "header" ],
+        "description" : "Define action usage help.",
+        "additionalProperties" : false
+      }, {
+        "description" : "Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the 'fcli * action help' command.\n"
+      } ]
     }
   },
   "required" : [ "author", "steps", "usage" ],
