@@ -42,7 +42,9 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     private static final ObjectMapper yamlObjectMapper = createYamlObjectMapper();
     
     protected final String asString(Object o) {
-        if ( o instanceof TextNode ) {
+        if ( o==null ) {
+            return "<null>";
+        } else if ( o instanceof TextNode ) {
             return ((TextNode)o).asText();
         } else if ( o instanceof JsonNode ) {
             return ((JsonNode)o).toPrettyString();

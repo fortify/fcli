@@ -155,12 +155,12 @@ public class FoDUserGroupHelper {
                     .applicationId(Integer.valueOf(appDescriptor.getApplicationId())).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_GROUP_APPLICATION_ACCESS).routeParam("userGroupId", String.valueOf(userGroupDescriptor.getId()))
-                    .body(body).asEmpty();
+                    .body(body).asString().getBody();
         } else if (action.equals(FoDEnums.UserGroupApplicationAccessAction.Remove)) {
             unirest.delete(FoDUrls.USER_GROUP_APPLICATION_ACCESS_DELETE)
                     .routeParam("userGroupId", String.valueOf(userGroupDescriptor.getId()))
                     .routeParam("applicationId", String.valueOf(appDescriptor.getApplicationId()))
-                    .asEmpty();
+                    .asString().getBody();
         } else {
             throw new FcliSimpleException("Invalid action specified when updating user group application access");
         }

@@ -14,12 +14,15 @@ package com.fortify.cli.common.action.model;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
@@ -34,6 +37,34 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
+@JsonTypeName("run.fcli")
+@JsonClassDescription("""
+        Define an fcli command to be (optionally) executed. \
+        This can be supplied as either a set of YAML properties or as a plain expression, 
+        in which case the expression outcome is interpreted as the fcli command to run,
+        with default values for all other properties.
+        """)
+@SampleYamlSnippets({"""
+        steps:
+          - run.fcli: 
+              list-av: fcli ssc av ls
+        ""","""
+        steps:
+          - run.fcli:
+              avList:
+                cmd: ssc av ls
+                records.collect: true
+          - log.debug: ${avList.records}
+        ""","""
+        steps:
+          - run.fcli:
+              process-av:
+                cmd: ssc av ls
+                records.for-each:
+                  record.var-name: av
+                  do:
+                    - log.debug: ${av}
+        """})
 public final class ActionStepRunFcliEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     
@@ -195,6 +226,7 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
      */
     @Reflectable @NoArgsConstructor
     @Data @EqualsAndHashCode(callSuper = true)
+    @JsonTypeName("run.fcli-for-each")
     public static final class ActionStepFcliForEachDescriptor extends AbstractActionElementForEachRecord {
         protected final void _postLoad(Action action) {}
     }

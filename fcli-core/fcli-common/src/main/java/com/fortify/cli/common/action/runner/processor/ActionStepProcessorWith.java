@@ -32,9 +32,9 @@ public class ActionStepProcessorWith extends AbstractActionStepProcessor {
     @Override
     public void process() {
         var handlers = new ArrayList<IActionStepWithHandler>();
-        handlers.addAll(ActionStepWithCleanupHandler.createHandlers(ctx, vars, withStep));
-        handlers.addAll(ActionStepWithSessionHandler.createHandlers(ctx, vars, withStep));
-        handlers.addAll(ActionStepWithWriterHandler.createHandlers(ctx, vars, withStep));
+        handlers.addAll(ActionStepWithCleanupHandler.createHandlers(this, ctx, vars, withStep));
+        handlers.addAll(ActionStepWithSessionHandler.createHandlers(this, ctx, vars, withStep));
+        handlers.addAll(ActionStepWithWriterHandler.createHandlers(this, ctx, vars, withStep));
         var shutdownThread = registerShutdownThread(handlers);
         try {
             handlers.forEach(IActionStepWithHandler::doBefore);

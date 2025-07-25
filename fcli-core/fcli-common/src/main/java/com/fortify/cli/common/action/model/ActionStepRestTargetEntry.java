@@ -14,11 +14,14 @@ package com.fortify.cli.common.action.model;
 
 import java.util.LinkedHashMap;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -31,16 +34,26 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
+@JsonTypeName("rest.target")
+@JsonClassDescription("Define a (third-party) REST target against which REST calls can be executed.")
+@SampleYamlSnippets("""
+        steps:
+          - rest.target:
+              example:
+                baseUrl: https://example.com/my-app
+                headers:
+                  Authorization: ${exampleAuth}
+        """)
 public final class ActionStepRestTargetEntry extends AbstractActionElementIf {
     @JsonPropertyDescription("""
         Required SpEL template expression: Base URL to use for REST requests to this request target.
         """)
-    @JsonProperty(required = true) private TemplateExpression baseUrl;
+    @JsonProperty(value = "baseUrl", required = true) private TemplateExpression baseUrl;
     
     @JsonPropertyDescription("""
         Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.
         """)
-    @JsonProperty(required = false) private LinkedHashMap<String, TemplateExpression> headers;
+    @JsonProperty(value = "headers", required = false) private LinkedHashMap<String, TemplateExpression> headers;
     
     // TODO Add support for next page URL producer
     // TODO ? Add proxy support ?

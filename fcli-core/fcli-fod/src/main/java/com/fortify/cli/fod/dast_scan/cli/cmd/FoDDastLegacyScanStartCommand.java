@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
@@ -78,7 +77,6 @@ public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         try ( var progressWriter = progressWriterFactory.create() ) {
-            Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             String relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
             Integer assessmentTypeId = 0;
@@ -149,8 +147,8 @@ public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
                     .isRemediationScan(remediationScanType.getRemediationScanPreferenceType() != null && !remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
                     .applyPreviousScanSettings(true)
                     .scanMethodType("Other")
-                    .scanTool(fcliProperties.getProperty("projectName", "fcli"))
-                    .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
+                    .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
+                    .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion()).build();
 
             //System.out.println(startScanRequest);
             return FoDScanDastLegacyHelper.startScan(unirest, releaseDescriptor, startScanRequest);

@@ -26,10 +26,11 @@ import com.fasterxml.classmate.members.RawField;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.helper.ActionSchemaHelper;
+import com.fortify.cli.common.action.helper.ActionSchemaVersionHelper;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
+import com.fortify.cli.common.action.schema.ActionSchemaHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
@@ -105,7 +106,7 @@ public class GenerateActionSchema {
     
     private static final JsonNode loadExistingSchema(String actionSchemaVersion) throws IOException {
         try {
-            return JsonHelper.getObjectMapper().readTree(new URL(ActionSchemaHelper.toURI(actionSchemaVersion)));
+            return JsonHelper.getObjectMapper().readTree(new URL(ActionSchemaVersionHelper.toURI(actionSchemaVersion)));
         } catch ( FileNotFoundException fnfe ) {
             return null; // Schema doesn't exist yet
         } catch ( IOException e ) {
@@ -201,16 +202,8 @@ public class GenerateActionSchema {
         @Override
         protected String resolveDescription(MemberScope<?, ?> member) {
             var appendAnnotation = member.getAnnotationConsideringFieldAndGetterIfSupported(JsonPropertyDescriptionAppend.class);
-            var result = super.resolveDescription(member);
-            if ( result!=null && appendAnnotation!=null ) {
-                var clazz = appendAnnotation.value();
-                var values = new ArrayList<String>(); 
-                for (var e : clazz.getEnumConstants()) {
-                    values.add(e.toString());
-                }
-                result += String.join(", ", values);
-            }
-            return result;
+            var description = super.resolveDescription(member);
+            return ActionSchemaHelper.getFullJsonPropertyDescription(description, appendAnnotation);
         }
     }
 }

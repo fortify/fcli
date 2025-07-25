@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Generate a GitLab Code Quality report listing FoD SAST vulnerabilities.
+  description: |
+    For information on how to import this report into GitLab, see 
+    https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality
+
+config:
+  rest.target.default: fod
+  
+cli.options:
+  file:
+    names: --file, -f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-codequality.json"
+    required: false
+    default: gl-fortify-codequality.json
+  release:
+    names: --release, --rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  sourceDir:
+    names: --source-dir
+    required: false
+    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
+
+  
+steps:
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          filters: scantype:Static
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          embed:
+            details:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/details
+            recommendations:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+          do:
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-codequality-report}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
+
+formatters:
+  gitlab-codequality-report:
+      ${vulnerabilities?:{}} 
+     
+  vulnerabilities:
+      description: ${#abbreviate(#htmlToText(issue.details?.summary?:""), 5000)}
+      check_name: ${issue.category}
+      fingerprint: ${issue.instanceId}
+      location:
+          path: ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
+          lines: 
+              begin: ${issue.lineNumber==0?1:issue.lineNumber}
+      severity: ${issue.severityString}

@@ -95,6 +95,11 @@ cli.options:
     names: --app-criticality
     description: "See `fcli fod release create`. Default value: Medium"
     default: Medium
+  store:
+    names: --store
+    group: rel_create_opts
+    required: false
+    description: "See `fcli fod release create`"
   assessment-type:
     group: sast_setup_opts
     required: false

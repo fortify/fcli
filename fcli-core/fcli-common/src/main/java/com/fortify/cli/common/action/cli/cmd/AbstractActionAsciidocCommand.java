@@ -35,7 +35,7 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.SneakyThrows;
@@ -70,7 +70,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     }
     
     private final String replaceVariables(String s) {
-        return s.replace("${version}", FcliBuildPropertiesHelper.getFcliBuildInfo().replace(':', ' '))
+        return s.replace("${version}", FcliBuildProperties.INSTANCE.getFcliBuildInfo().replace(':', ' '))
                 .replace("${type}", getType())
                 .replace("${actionCmd}", getActionCmd());
     }

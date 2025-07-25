@@ -27,7 +27,7 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.report.writer.ReportDirWriter;
 import com.fortify.cli.common.report.writer.ReportZipWriter;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.StringUtils;
 
 import picocli.CommandLine.ArgGroup;
@@ -62,7 +62,7 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
             reportWriter.summary()
                 .put("reportType", getReportTitle())
                 .put("reportDate", new Date().toString())
-                .put("generatedBy", FcliBuildPropertiesHelper.getFcliBuildInfo());
+                .put("generatedBy", FcliBuildProperties.INSTANCE.getFcliBuildInfo());
             output.put("reportPath", reportWriter.absoluteOutputPath().toString());
             generateReport(reportWriter);
             output.set("summary", reportWriter.summary());

@@ -16,23 +16,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.fortify.cli.common.action.helper.ActionSchemaHelper;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
-import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
-import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobArtifactState;
-import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobState;
-import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
 
 import lombok.AccessLevel;
@@ -55,37 +46,7 @@ public final class FortifyCLIStaticInitializer {
         ToolUninstaller.deleteAllPending();
         initializeTrustStore();
         initializeLocale();
-        initializeFoDProperties();
-        initializeSCDastProperties();
-        initializeSCSastProperties();
-        initializeSSCProperties();
-        initializeActionProperties();
-    }
-    
-    private void initializeFoDProperties() {
-        System.setProperty("fcli.fod.scan.states", getValueNamesString(FoDScanStatus.values()));
-        System.setProperty("fcli.fod.scan.states.complete", getValueNamesString(FoDScanStatus.getDefaultCompleteStates()));
-    }
-    
-    private void initializeSCDastProperties() {
-        System.setProperty("fcli.sc-dast.scan.states", getValueNamesString(SCDastScanStatus.values()));
-        System.setProperty("fcli.sc-dast.scan.states.complete", getValueNamesString(SCDastScanStatus.getDefaultCompleteStates()));
-    }
-    
-    private void initializeSCSastProperties() {
-        System.setProperty("fcli.sc-sast.scan.jobStates", getValueNamesString(SCSastScanJobState.values()));
-        System.setProperty("fcli.sc-sast.scan.jobStates.complete", getValueNamesString(SCSastScanJobState.getDefaultCompleteStates()));
-        System.setProperty("fcli.sc-sast.scan.jobArtifactStates", getValueNamesString(SCSastScanJobArtifactState.values()));
-        System.setProperty("fcli.sc-sast.scan.jobArtifactStates.complete", getValueNamesString(SCSastScanJobArtifactState.getDefaultCompleteStates()));
-    }
-    
-    private void initializeSSCProperties() {
-        System.setProperty("fcli.ssc.artifact.states", getValueNamesString(SSCArtifactStatus.values()));
-        System.setProperty("fcli.ssc.artifact.states.complete", getValueNamesString(SSCArtifactStatus.getDefaultCompleteStates()));
-    }
-    
-    private void initializeActionProperties() {
-        System.setProperty("fcli.action.supportedSchemaVersions", ActionSchemaHelper.getSupportedSchemaVersionsString());
+        System.getProperties().putAll(FortifyCLIResourceBundlePropertiesHelper.getResourceBundleProperties());
     }
     
     private void initializeTrustStore() {
@@ -152,13 +113,5 @@ public final class FortifyCLIStaticInitializer {
     
     private void initializeLocale() {
         Locale.setDefault(LanguageHelper.getConfiguredLanguageDescriptor().getLocale());
-    }
-    
-    private String getValueNamesString(Enum<?>[] values) {
-        return getValuesString(values, Enum::name);
-    }
-    
-    private String getValuesString(Enum<?>[] values, Function<Enum<?>, String> f) {
-        return Stream.of(values).map(f).collect(Collectors.joining(", "));
     }
 }

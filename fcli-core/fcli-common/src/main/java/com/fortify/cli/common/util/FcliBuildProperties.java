@@ -19,34 +19,38 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliBugException;
 
-public class FcliBuildPropertiesHelper {
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Reflectable @NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class FcliBuildProperties {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static final Properties buildProperties = loadProperties();
+    public static final FcliBuildProperties INSTANCE = new FcliBuildProperties();
+    @JsonIgnore @Getter private final Properties buildProperties = loadProperties();
     
-    public static final Properties getBuildProperties() {
-        return buildProperties;
-    }
-    
-    public static final boolean isDevelopmentRelease() {
+    public final boolean isDevelopmentRelease() {
         var version = getFcliVersion();
         return version.startsWith("0.") || version.equals("unknown");
     }
     
-    public static final String getFcliProjectName() {
+    public final String getFcliProjectName() {
         return buildProperties.getProperty("projectName", "fcli");
     }
     
-    public static final String getFcliVersion() {
+    public final String getFcliVersion() {
         return buildProperties.getProperty("projectVersion", "unknown");
     }
     
-    public static final String getFcliBuildDateString() {
+    public final String getFcliBuildDateString() {
         return buildProperties.getProperty("buildDate", "unknown");
     }
     
-    public static final Date getFcliBuildDate() {
+    public final Date getFcliBuildDate() {
         var dateString = getFcliBuildDateString();
         if ( !StringUtils.isBlank(dateString) && !"unknown".equals(dateString) ) {
             try {
@@ -56,15 +60,34 @@ public class FcliBuildPropertiesHelper {
         return null;
     }
     
-    public static final String getFcliActionSchemaVersion() {
+    public final String getFcliActionSchemaVersion() {
         return buildProperties.getProperty("actionSchemaVersion", "unknown");
     }
     
-    public static final String getFcliBuildInfo() {
+    public final String getRepoBranchOrTag() {
+        // TODO Determine correct dev branch, to avoid incorrect links if we ever move to dev/v4.x
+        return isDevelopmentRelease() ? "dev/v3.x" : String.format("v%s", getFcliVersion());
+    }
+    
+    public final String getSourceCodeBaseUrl() {
+        return "https://github.com/fortify/fcli/blob/"+getRepoBranchOrTag();
+    }
+    
+    public final String getFcliDocBaseUrl() {
+        return isDevelopmentRelease()
+                ? "https://fortify.github.io/fcli/latest_dev"
+                : String.format("https://fortify.github.io/fcli/v%s", getFcliVersion());
+    }
+    
+    public final String getFcliActionSchemaUrl() {
+        return String.format("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-%s.json", getFcliActionSchemaVersion());
+    }
+    
+    public final String getFcliBuildInfo() {
         return String.format("%s version %s, built on %s" 
-                , FcliBuildPropertiesHelper.getFcliProjectName()
-                , FcliBuildPropertiesHelper.getFcliVersion()
-                , FcliBuildPropertiesHelper.getFcliBuildDateString());
+                , getFcliProjectName()
+                , getFcliVersion()
+                , getFcliBuildDateString());
     }
 
     private static final Properties loadProperties() {
@@ -76,5 +99,4 @@ public class FcliBuildPropertiesHelper {
         }
         return p;
     }
-
 }

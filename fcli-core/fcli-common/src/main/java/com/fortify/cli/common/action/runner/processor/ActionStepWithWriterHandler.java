@@ -32,11 +32,14 @@ public class ActionStepWithWriterHandler implements IActionStepWithHandler {
     private final String id;
     private final ActionStepWithWriter withWriter;
     
-    public static final List<? extends IActionStepWithHandler> createHandlers(ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
+    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
         var withWriters = withStep.getWriters();
         return withWriters==null || withWriters.isEmpty() 
                 ? Collections.emptyList() 
-                : withWriters.entrySet().stream().map(e->new ActionStepWithWriterHandler(ctx, vars, e.getKey(), e.getValue())).toList();
+                : withWriters.entrySet().stream()
+                    .filter(actionStepProcessorWith::_if)
+                    .map(e->new ActionStepWithWriterHandler(ctx, vars, e.getKey(), e.getValue()))
+                    .toList();
     }
 
     @Override

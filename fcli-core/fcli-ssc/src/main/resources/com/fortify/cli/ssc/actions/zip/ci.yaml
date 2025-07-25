@@ -49,109 +49,134 @@ steps:
       dast.skipReason:  # TODO
       dast.skip: true
       sast.skipReason: > # Enabled by default, unless explicitly disabled or other scan type requested
-        ${#env('DO_SAST_SCAN')=='false' ? 'SAST scan disabled as DO_SAST_SCAN==false'
-          : #env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip) ? 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested'
-          : null
+        ${
+            #skipReasonIf(#env('DO_SAST_SCAN')=='false', 'SAST scan disabled as DO_SAST_SCAN==false')
+            ?:#skipReasonIf(#env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip), 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested')
         }
+      aviator.skipReason: >
+        ${
+            #fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
+            ?:#skipBlankEnvReason('AVIATOR_TOKEN')
+            ?:#skipBlankEnvReason('AVIATOR_URL')
+        }
+      aviator.loginOpts: --url=AVIATOR_URL
+      aviator.app: ${#env('AVIATOR_APP')?:'::av::application.name'}
       # Post-scan tasks will be skipped with the following reason, unless this variable is
       # reset to null by one of the SAST/DAST/SCA/ scan/wait tasks in their on.success blocks
       postScan.skipReason: No scans have been run because they failed or were skipped
 
-  # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
-  # continue to run on failures due to config:run.fcli.status.check.default being set to false.
-  #
-  # This extensively uses the following SpEL functions and action variables::
-  # - #actionCmd(envPrefix, module, action): 
-  #   Run <envPrefix>_ACTION if specified, otherwise the given <action>.
-  #   Append any options as specified in <envPrefix>_EXTRA_OPTS.
-  # - #fcliCmd(envPrefix, cmd):
-  #   Run the given <cmd>, appending any options specified in <envPrefix>_EXTRA_OPTS
-  # - #actionCmdSkipFromEnvReason(envPrefix, skipByDefault):
-  #   If skipByDefault==false, action will only be skipped if DO_<envPrefix>==false
-  #   Otherwise, action will be skipped unlesss DO_<envPrefix>==true, or <envPrefix>_ACTION or <envPrefix>_EXTRA_OPTS are specified
-  # - #fcliCmdSkipFromEnvReason(envPrefix, skipByDefault):
-  #   If skipByDefault==false, command will only be skipped if DO_<envPrefix>==false
-  #   Otherwise, action will be skipped unlesss DO_<envPrefix>==true, or <envPrefix>_EXTRA_OPTS is specified
-  # - <earlierStep>.dependencySkipReason:
-  #   Automatically set to an appropriate skip reason by fcli, if <earlierStep> was skipped or failed.
-  - run.fcli:
-      SETUP:
-        cmd: ${#actionCmd('SETUP', 'ssc', 'setup-appversion')} --av "${global.ci.av}"
-        status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
-        skip.if-reason:
-          - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
+  # Set up Aviator session if necessary
+  - with:
+      sessions:
+        - if: ${#isBlank(aviator.skipReason)}
+          login: ${#fcliCmd('AVIATOR_LOGIN', 'fcli aviator session login')} --aviator-session ${global.sessionName} --token=env:AVIATOR_TOKEN ${#optsFromEnv(aviator.loginOpts)}
+          logout: ${#fcliCmd('AVIATOR_LOGOUT', 'fcli aviator session logout')} --aviator-session ${global.sessionName}
+      do:
+        # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
+        # continue to run on failures due to config:run.fcli.status.check.default being set to false.
+        #
+        # This extensively uses the following SpEL functions and action variables::
+        # - #actionCmd(envPrefix, module, action): 
+        #   Run <envPrefix>_ACTION if specified, otherwise the given <action>.
+        #   Append any options as specified in <envPrefix>_EXTRA_OPTS.
+        # - #fcliCmd(envPrefix, cmd):
+        #   Run the given <cmd>, appending any options specified in <envPrefix>_EXTRA_OPTS
+        # - #actionCmdSkipFromEnvReason(envPrefix, skipByDefault):
+        #   If skipByDefault==false, action will only be skipped if DO_<envPrefix>==false
+        #   Otherwise, action will be skipped unlesss DO_<envPrefix>==true, or <envPrefix>_ACTION or <envPrefix>_EXTRA_OPTS are specified
+        # - #fcliCmdSkipFromEnvReason(envPrefix, skipByDefault):
+        #   If skipByDefault==false, command will only be skipped if DO_<envPrefix>==false
+        #   Otherwise, action will be skipped unlesss DO_<envPrefix>==true, or <envPrefix>_EXTRA_OPTS is specified
+        # - <earlierStep>.dependencySkipReason:
+        #   Automatically set to an appropriate skip reason by fcli, if <earlierStep> was skipped or failed.
+        - run.fcli:
+            SETUP:
+              cmd: ${#actionCmd('SETUP', 'ssc', 'setup-appversion')} --av "${global.ci.av}" --store av
+              status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
+              skip.if-reason:
+                - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
+                  
+            PACKAGE_ACTION: 
+              cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} --source-dir "${global.ci.sourceDir}"
+              skip.if-reason:
+                - ${sast.skipReason} # Skip if SAST scan is skipped
+                  
+            SAST_SCAN: 
+              cmd: ${#fcliCmd('SAST_SCAN', 'sc-sast scan start')} --publish-to "${global.ci.av}" --store sc_sast_scan -f "${global.package.output}"
+              skip.if-reason:
+                - ${sast.skipReason}                     # Skip if SAST scan is skipped
+                - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
           
-      PACKAGE_ACTION: 
-        cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} --source-dir "${global.ci.sourceDir}"
-        skip.if-reason:
-          - ${sast.skipReason} # Skip if SAST scan is skipped
-          
-      SAST_SCAN: 
-        cmd: ${#fcliCmd('SAST_SCAN', 'sc-sast scan start')} --publish-to "${global.ci.av}" --store sc_sast_scan -f "${global.package.output}"
-        skip.if-reason:
-          - ${sast.skipReason}                     # Skip if SAST scan is skipped
-          - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
-    
-      # TODO Improve this to:
-      # - Wait for scan completion (but not publish completion)
-      # - Download logs/fpr if debugging is enabled
-      # - Wait for scan publish completion before running further post-scan steps
-      SAST_WAIT:
-        cmd: "${#fcliCmd('SAST_WAIT', 'sc-sast scan wait-for')} ::sc_sast_scan:: --store sc_sast_wait"
-        skip.if-reason:
-          - ${#fcliCmdSkipFromEnvReason('SAST_WAIT', false)} # Skip if DO_SAST_WAIT==false
-          - ${SAST_SCAN.dependencySkipReason}                # Skip if SAST_SCAN was skipped or failed
-        on.success:
-          - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
-          
-      DOWNLOAD_SAST_LOG:
-        cmd: "${#fcliCmd('DOWNLOAD_SAST_LOG', 'sc-sast scan download -t log')} ::sc_sast_scan::"
-        skip.if-reason:
-          - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
-          - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
-          
-      DOWNLOAD_SAST_SENSOR_LOG:
-        cmd: "${#fcliCmd('DOWNLOAD_SAST_SENSOR_LOG', 'sc-sast scan download -t sensor-log')} ::sc_sast_scan::"
-        skip.if-reason:
-          - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
-          - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
-
-      DOWNLOAD_SAST_FPR:
-        cmd: "${#fcliCmd('DOWNLOAD_SAST_FPR', 'sc-sast scan download -t fpr')} ::sc_sast_scan::"
-        skip.if-reason:
-          - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
-          - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
-        
-      CHECK_POLICY:
-        cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} --av "${global.ci.av}" --progress=none
-        stdout: collect
-        skip.if-reason:
-          - ${#actionCmdSkipFromEnvReason('CHECK_POLICY', true)} # Skip unless DO_CHECK_POLICY==true or CHECK_POLICY_ACTION/EXTRA_OPTS defined
-          - ${postScan.skipReason}                               # Skip if no scans were run
-          
-      APPVERSION_SUMMARY:
-        cmd: ${#actionCmd('APPVERSION_SUMMARY', 'ssc', 'appversion-summary')} --av "${global.ci.av}" --progress=none
-        stdout: collect
-        skip.if-reason:
-          - ${#actionCmdSkipFromEnvReason('APPVERSION_SUMMARY', false)} # Skip if DO_APPVERSION_SUMMARY==false
-          - ${postScan.skipReason}                                      # Skip if no scans were run
-          
-      PR_COMMENT:
-        cmd: ${#actionCmd('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)} --av "${global.ci.av}"
-        skip.if-reason: 
-          - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
-          - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)}
-          - ${postScan.skipReason}                             # Skip if no scans were run
-          # TODO Check whether current run is for a PR
-          # TODO Skip if prCommentAction is null or doesn't exist
-          
-      SAST_EXPORT:
-        cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} --av "${global.ci.av}" --source-dir "${global.ci.sourceDir}"
-        skip.if-reason:
-          - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
-          - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)}
-          - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
-
+            # TODO Improve this to:
+            # - Wait for scan completion (but not publish completion)
+            # - Download logs/fpr if debugging is enabled
+            # - Wait for scan publish completion before running further post-scan steps
+            SAST_WAIT:
+              cmd: "${#fcliCmd('SAST_WAIT', 'sc-sast scan wait-for')} ::sc_sast_scan::"
+              skip.if-reason:
+                - ${#fcliCmdSkipFromEnvReason('SAST_WAIT', false)} # Skip if DO_SAST_WAIT==false
+                - ${SAST_SCAN.dependencySkipReason}                # Skip if SAST_SCAN was skipped or failed
+              on.success:
+                - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
+                
+            DOWNLOAD_SAST_LOG:
+              cmd: "${#fcliCmd('DOWNLOAD_SAST_LOG', 'sc-sast scan download -t log')} ::sc_sast_scan::"
+              skip.if-reason:
+                - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
+                - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
+                
+            DOWNLOAD_SAST_SENSOR_LOG:
+              cmd: "${#fcliCmd('DOWNLOAD_SAST_SENSOR_LOG', 'sc-sast scan download -t sensor-log')} ::sc_sast_scan::"
+              skip.if-reason:
+                - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
+                - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
+            DOWNLOAD_SAST_FPR:
+              cmd: "${#fcliCmd('DOWNLOAD_SAST_FPR', 'sc-sast scan download -t fpr')} ::sc_sast_scan::"
+              skip.if-reason:
+                - ${#isDebugEnabled()?'':'--debug flag not specified'}   # Skip if debugging is disabled
+                - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
+              
+            AVIATOR_AUDIT:
+              cmd: ${#fcliCmd('AVIATOR_AUDIT', 'aviator ssc audit')} --aviator-session ${global.sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_audit
+              skip.if-reason:
+                - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                  
+            AVIATOR_WAIT:
+              cmd: "${#fcliCmd('AVIATOR_WAIT', 'ssc artifact wait-for')} ::aviator_audit::"
+              skip.if-reason:
+                - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                - ${AVIATOR_AUDIT.dependencySkipReason}                # Skip if AVIATOR_AUDIT was skipped or failed
+                        
+            CHECK_POLICY:
+              cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} --av "${global.ci.av}" --progress=none
+              stdout: collect
+              skip.if-reason:
+                - ${#actionCmdSkipFromEnvReason('CHECK_POLICY', true)} # Skip unless DO_CHECK_POLICY==true or CHECK_POLICY_ACTION/EXTRA_OPTS defined
+                - ${postScan.skipReason}                               # Skip if no scans were run
+                
+            APPVERSION_SUMMARY:
+              cmd: ${#actionCmd('APPVERSION_SUMMARY', 'ssc', 'appversion-summary')} --av "${global.ci.av}" --progress=none
+              stdout: collect
+              skip.if-reason:
+                - ${#actionCmdSkipFromEnvReason('APPVERSION_SUMMARY', false)} # Skip if DO_APPVERSION_SUMMARY==false
+                - ${postScan.skipReason}                                      # Skip if no scans were run
+                
+            PR_COMMENT:
+              cmd: ${#actionCmd('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)} --av "${global.ci.av}"
+              skip.if-reason: 
+                - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
+                - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)}
+                - ${postScan.skipReason}                             # Skip if no scans were run
+                # TODO Check whether current run is for a PR
+                
+            SAST_EXPORT:
+              cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} --av "${global.ci.av}" --source-dir "${global.ci.sourceDir}"
+              skip.if-reason:
+                - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
+                - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)}
+                - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
           
   - with:
       writers:
@@ -178,6 +203,7 @@ formatters:
   ciEntry:
     Step: ${ciEntry.key}
     Status: ${ciEntry.value.status}
+    Reason: ${ciEntry.value.statusReason?:''}
     
   summary: |
   

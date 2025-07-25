@@ -31,11 +31,14 @@ public class ActionStepWithSessionHandler implements IActionStepWithHandler {
     private final ActionRunnerVars vars;
     private final ActionStepWithSession withSession;
     
-    public static final List<? extends IActionStepWithHandler> createHandlers(ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
+    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
         var withSessions = withStep.getSessions();
         return withSessions==null || withSessions.isEmpty() 
                 ? Collections.emptyList() 
-                : withSessions.stream().map(ws->new ActionStepWithSessionHandler(ctx, vars, ws)).toList();
+                : withSessions.stream()
+                    .filter(actionStepProcessorWith::_if)
+                    .map(ws->new ActionStepWithSessionHandler(ctx, vars, ws))
+                    .toList();
     }
 
     @Override

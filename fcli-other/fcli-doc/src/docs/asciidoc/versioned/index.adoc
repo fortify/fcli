@@ -580,7 +580,7 @@ Note that `fcli * action run <action> -h` will just output the usage help for th
 
 === Custom Actions
 
-Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. The following sections provide more information on custom action usage and development.
+Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. The sections below provide more information on custom action usage. For more information on developing custom actions, please refer to the link:action-development.html[Fcli Action Development Guide].
 
 ==== Compatibility
 
@@ -601,32 +601,6 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 * `fcli * action help|get|run <action> --from-zip <file|url>`: Load the given action from the given zip-file.
 
 To allow for easy access, custom actions can also be imported into fcli using the `fcli * action import` command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the `fcli * action reset` command to remove all previously imported custom actions.
-
-==== Custom Action Development
-
-There are several resources available to help you developing custom actions. To start with, you can use the `fcli * action get <action>` command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:
-
-* Visual Studio Code: link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[Red Hat YAML plugin]
-* Eclipse: link:https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml[Wild Web Developer]
-
-For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:
-
-* YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:
-+
-[subs="attributes"]
-----
-# yaml-language-server: $schema={actionSchemaUrl}
-----
-* YAML property, supported by Eclipse and some other YAML editors:
-+
-[subs="attributes"]
-----
-$schema: {actionSchemaUrl}
-----
-
-Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you've added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.
-
-As shown in the sample schema statements above, the current fcli version {docversion} supports schema version link:{actionSchemaUrl}[{actionSchemaVersion}]. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range. 
 
 === Security Considerations
 
@@ -660,20 +634,6 @@ With each of these approaches, the public key can be be loaded from:
 * URL, for example pointing to public key stored in same shared source code repository as the actions themselves.
 * Environment variable, for example defined as system environment variable on self-hosted CI/CD nodes, or configured through (global) CI/CD secrets/variables.
 * Plain string, for example having the environment variable `FCLI_DEFAULT_PUBKEY` set to `string:<public key contents>`. You can use CI/CD secrets/variables to set the `FCLI_DEFAULT_PUBKEY` to a value like this. For testing, you can use a `bash` command like the following: `export FCLI_DEFAULT_PUBKEY=string:$(cat my-public.key)`.
-
-*Design considerations*
-
-Given that actions can define and process arbitrary parameters, it may be tempting to implement generic, highly configurable actions. For example, you could implement a highly configurable action for checking all kinds of security policy criteria, with the actual criteria to be checked being passed as action parameters.
-
-However, from a CI/CD perspective, this means that every pipeline must properly set these action parameters. Pipeline authors may copy existing pipelines or use pipeline templates to have these action parameters set to predefined values, but what if those parameters need to updated globally? Potentially, this means that you'd need to update thousands of pipelines to adjust action parameters. 
-
-This is exactly the reason why we don't provide highly configurable `check-policy` actions, but instead just provide a default implementation that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:
-
-* Use SSC/FoD application version/release attributes like `Business Risk` or other characteristics to identify what criteria to apply. This is the preferred approach, to allow the criteria to be applied to automatically match the centrally maintained attributes/characteristics.
-* Have the action take one or more parameters that identify what criteria to apply. This could be a policy name, or a functional identifier like `--business-risk`.
-* Publish separate actions that implement different policy criteria, like `check-high-risk-policy` and `check-low-risk-policy`.
-
-The examples above or based on actions that perform policy checks, but the same principles and considerations (may) apply to other types of actions.
 
 == Manual Pages
 

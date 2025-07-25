@@ -14,12 +14,15 @@ package com.fortify.cli.common.action.model;
 
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -33,6 +36,17 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
 @JsonInclude(Include.NON_NULL)
+@JsonTypeName("for-each")
+@JsonClassDescription("Repeat the steps listed in the `do` block for each record provided by the `from` instruction.")
+@SampleYamlSnippets("""
+        steps:
+          - records.for-each:
+              from: ${collection}
+              record.var-name: currentRecord
+              do:
+                - log.debug: ${currentRecord}
+                - ...
+        """)
 public final class ActionStepRecordsForEach extends AbstractActionElementForEachRecord {
     @JsonPropertyDescription("""
         Required SpEL template expression, evaluating to either an array of values to be iterated over, \

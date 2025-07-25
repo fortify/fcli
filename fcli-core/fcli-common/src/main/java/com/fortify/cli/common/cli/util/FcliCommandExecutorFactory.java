@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +46,7 @@ import lombok.Setter;
 import picocli.CommandLine;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
 @Builder @Data
@@ -77,22 +79,45 @@ public final class FcliCommandExecutorFactory {
         private static final Logger LOG = LoggerFactory.getLogger(FcliCommandExecutor.class);
         private final String[] resolvedArgs;
         private final CommandSpec replicatedLeafCommandSpec;
+        private Result parseErrorResult = null;
         
         public FcliCommandExecutor() {
             this.resolvedArgs = FcliVariableHelper.resolveVariables(parseArgs(cmd));
-            this.replicatedLeafCommandSpec = replicateLeafCommandSpecWithParents(rootCommandLine.parseArgs(this.resolvedArgs));
+            this.replicatedLeafCommandSpec = replicateLeafCommandSpecWithParents(parseArgs(resolvedArgs));
+        }
+
+        private ParseResult parseArgs(String[] resolvedArgs) {
+            try {
+                return rootCommandLine.parseArgs(resolvedArgs);
+            } catch ( ParameterException e ) {
+                this.parseErrorResult = call(()->handleParseException(resolvedArgs, e));
+                return null;
+            }
+        }
+
+        private int handleParseException(String[] resolvedArgs, ParameterException e) {
+            try {
+                return rootCommandLine.getParameterExceptionHandler().handleParseException(e, resolvedArgs);
+            } catch ( Exception e2 ) {
+                return FcliExecutionExceptionHandler.INSTANCE.handleException(e2, rootCommandLine);
+            }
         }
 
         public final Result execute() {
+            if ( parseErrorResult!=null ) { return parseErrorResult; }
             if ( recordConsumer!=null && canCollectRecords() ) {
                 StandardOutputWriter.collectRecords(recordConsumer, stdoutOutputType!=OutputType.show);
             }
+            return call(()->_execute());
+        }
+
+        private Result call(Callable<Integer> f) {
             Result result = null;
             try {
                 result = OutputHelper.builder()
                         .stderr(stderr).stderrType(stderrOutputType)
                         .stdout(stdout).stdoutType(stdoutOutputType)
-                        .build().call(()->_execute());
+                        .build().call(f);
             } catch ( Throwable t ) {
                 if ( t instanceof ExecutionException ) {
                     t = t.getCause();
@@ -181,6 +206,7 @@ public final class FcliCommandExecutorFactory {
         // leaf command. Otherwise, instance variables might have the wrong values, somewhat
         // similar to similar to https://vulncat.fortify.com/en/detail?category=Race%20Condition&subcategory=Singleton%20Member%20Field#Java%2fJS
         private static final CommandSpec replicateLeafCommandSpecWithParents(ParseResult parseResult) {
+            if ( parseResult==null ) { return null; }
             // This is the safest approach, but causes picocli to recreate the
             // full command tree through reflection, which is far from optimal
             // as we already know which command to execute.

@@ -29,6 +29,10 @@ public class FcliExecutionExceptionHandler implements IExecutionExceptionHandler
     
     @Override
     public int handleExecutionException(Exception ex, CommandLine commandLine, ParseResult parseResult) throws Exception {
+        return handleException(ex, commandLine);
+    }
+
+    public int handleException(Exception ex, CommandLine commandLine) {
         if ( LOG.isDebugEnabled() ) {
             LOG.debug("fcli terminating with exception", ex);
         }

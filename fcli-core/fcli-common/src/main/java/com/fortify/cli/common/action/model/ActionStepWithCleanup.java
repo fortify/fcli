@@ -14,13 +14,16 @@ package com.fortify.cli.common.action.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
@@ -28,9 +31,11 @@ import lombok.NoArgsConstructor;
  * be run around a set of steps. 
  */
 @Reflectable @NoArgsConstructor
-@Data
+@Data @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
-public final class ActionStepWithCleanup implements IActionElement {
+@JsonTypeName("with-cleanup")
+@JsonClassDescription("Define steps to run before and after the steps defined in the `do` block.")
+public final class ActionStepWithCleanup extends AbstractActionElementIf {
     // TODO Add property that allows for installing a shutdown hook
     @JsonPropertyDescription("""
         Required list of initialization steps to be run before the steps in the do-block will be \

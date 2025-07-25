@@ -50,6 +50,7 @@ class SSCBuiltinActionRunSpec extends FcliBaseSpec {
                        'gitlab-debricked-report',
                        'gitlab-sast-report',
                        'gitlab-sonatype-report',
+                       'gitlab-codequality-report',
                        'sarif-sast-report',
                        'sonarqube-sast-report']
     }
