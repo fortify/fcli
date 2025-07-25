@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250724.124451-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250725.082049-dev_v3.x" %}
 
 
 <div id="header">
@@ -27,14 +27,14 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_aviator_administrator_configuration_name_options">Aviator administrator configuration name options</a></li>
+<li><a href="#_sast_aviator_administrator_configuration_name_options">SAST Aviator administrator configuration name options</a></li>
 <li><a href="#_output_options">Output options</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-aviator-token-list - List access tokens for a user.</p>
+<p>fcli-aviator-token-list - List user access tokens.</p>
 </div>
 </div>
 <div id="content">
@@ -42,7 +42,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator token list</strong> <strong>-e</strong>=<em>&lt;email&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+<p><strong>fcli aviator token list</strong> [<strong>-e</strong>=<em>&lt;email&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                         [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                         [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]]
                         [[<strong>--admin-config</strong>=<em>&lt;configName&gt;</em>]] <em class="[<strong>-o</strong>=_type[=&lt;args&gt;">]
@@ -57,7 +57,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Retrieves a list of access tokens for a specified user within an Aviator tenant. Requires the user&#8217;s email, tenant name, and a private key for signing the request. Supports pagination via page size.</p>
+<p>Retrieves a list of access tokens. Can be filtered by a user&#8217;s email address.</p>
 </div>
 </div>
 </div>
@@ -68,7 +68,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-e</strong>, <strong>--email</strong>=<em>&lt;email&gt;</em></dt>
 <dd>
-<p>User email to list tokens for.</p>
+<p>User&#8217;s email address to  Filter the list for tokens associated with this email address (optional).</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
@@ -79,13 +79,13 @@ fcli_version:
 </div>
 </div>
 <div class="sect1">
-<h2 id="_aviator_administrator_configuration_name_options"><a class="anchor" href="#_aviator_administrator_configuration_name_options"></a>Aviator administrator configuration name options</h2>
+<h2 id="_sast_aviator_administrator_configuration_name_options"><a class="anchor" href="#_sast_aviator_administrator_configuration_name_options"></a>SAST Aviator administrator configuration name options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>--admin-config</strong>=<em>&lt;configName&gt;</em></dt>
 <dd>
-<p>Name of the Aviator administrator configuration to use. Default value: default.</p>
+<p>Name of the SAST Aviator administrator configuration to use. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -153,7 +153,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-07-24 12:46:54 UTC
+Last updated 2025-07-25 08:22:51 UTC
 </div>
 </div>
 </body>

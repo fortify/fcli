@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250724.124451-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250725.082049-dev_v3.x" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-aviator-ssc-audit - (PREVIEW) Audit an application version using SAST Aviator.</p>
+<p>fcli-aviator-ssc-audit - Audit an SSC application version using SAST Aviator.</p>
 </div>
 </div>
 <div id="content">
@@ -60,7 +60,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command downloads the current application state FPR file from the given SSC application version, audits this FPR file using SAST Aviator, and uploads the audited FPR file back to the given SSC application version. This command doesn&#8217;t wait for SSC to finish processing the audited FPR file; please use the 'fcli ssc artifact wait-for' command to wait until the audited FPR file has been processed by SSC.</p>
+<p>Downloads the FPR from an SSC application version, audits it with SAST Aviator, and uploads the result back to SSC. This command requires an active user session. Use 'fcli aviator session login' to create a session. This command doesn&#8217;t wait for SSC to finish processing the audited FPR file; please use the 'fcli ssc artifact wait-for' command to wait until the audited FPR file has been processed by SSC.</p>
 </div>
 </div>
 </div>
@@ -71,7 +71,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--app</strong>=<em>&lt;appName&gt;</em></dt>
 <dd>
-<p>Aviator application name</p>
+<p>SAST Aviator application name to associate with the audit. If not provided, the SAST/FPR Build ID of the ssc application is used.</p>
 </dd>
 <dt class="hdlist1"><strong>--av, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
 <dd>
@@ -87,7 +87,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--tag-mapping</strong>=<em>&lt;tagMapping&gt;</em></dt>
 <dd>
-<p>Tag Mapping</p>
+<p>Custom tag mapping for audit results.</p>
 </dd>
 </dl>
 </div>
@@ -181,7 +181,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-07-24 12:46:54 UTC
+Last updated 2025-07-25 08:22:51 UTC
 </div>
 </div>
 </body>
