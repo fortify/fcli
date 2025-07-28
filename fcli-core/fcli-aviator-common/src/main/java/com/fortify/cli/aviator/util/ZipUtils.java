@@ -16,10 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZipUtils {
-    private static final Logger logger = LoggerFactory.getLogger(ZipUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZipUtils.class);
 
     public static Path extractZip(String zipFilePath) throws IOException {
-        logger.debug("Starting extraction of zip file: {}", zipFilePath);
+        LOG.debug("Starting extraction of zip file: {}", zipFilePath);
         Path tempDir = Files.createTempDirectory(new File(System.getProperty("java.io.tmpdir")).toPath(), "fpr-extraction-");
         tempDir.toFile().deleteOnExit();
 
@@ -53,16 +53,16 @@ public class ZipUtils {
                     try {
                         Files.deleteIfExists(path);
                     } catch (IOException ex) {
-                        logger.warn("Failed to delete temporary file: {} due to {}", path, ex.getMessage());
+                        LOG.warn("Failed to delete temporary file: {} due to {}", path, ex.getMessage());
                     }
                 });
             } catch (IOException cleanupEx) {
-                logger.warn("Failed to walk temporary directory for cleanup: {}", cleanupEx.getMessage());
+                LOG.warn("Failed to walk temporary directory for cleanup: {}", cleanupEx.getMessage());
             }
             throw new FcliBugException("Failed to extract zip file: " + e.getMessage(), e);
         }
 
-        logger.debug("Successfully extracted zip file to: {}", tempDir);
+        LOG.debug("Successfully extracted zip file to: {}", tempDir);
         return tempDir;
     }
 }

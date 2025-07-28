@@ -56,6 +56,10 @@ message StreamInitRequest {
   string requestId = 4;
   int32 totalReportedIssues=5;
   int32 totalIssuesToPredict=6;
+  optional string fprBuildId = 7;
+  optional string sscApplicationName = 8;
+  optional string sscApplicationVersion = 9;
+
 }
 message UserPromptRequest {
   oneof request_type {
@@ -124,6 +128,7 @@ message AuditorResponse {
 message AuditResult {
   string tagValue = 1;
   string comment = 2;
+  optional Autoremediation autoremediation = 3;
 }
 
 message PongResponse {
@@ -135,4 +140,15 @@ message PongResponse {
 message FinalSummary {
   string summary = 1;
   int32 total_messages = 2;
+}
+
+message Autoremediation {
+  repeated Change changes = 1;
+}
+
+message Change {
+  string file = 1;
+  string from_line = 2;
+  string to_line = 3;
+  string replace_with = 4;
 }

@@ -11,14 +11,17 @@ service TokenService {
   rpc ValidateToken (TokenValidationRequest) returns (TokenValidationResponse) {}
   rpc RevokeToken (RevokeTokenRequest) returns (RevokeTokenResponse) {}
   rpc ListTokens (ListTokensRequest) returns (ListTokensResponse) {}
+  rpc ListTokensByDeveloper (ListTokensByDeveloperRequest) returns (ListTokensResponse) {}
   rpc DeleteToken (DeleteTokenRequest) returns (DeleteTokenResponse) {}
+  rpc ValidateUserToken (ValidateUserTokenRequest) returns (TokenValidationResponse) {}
 }
 
+// Token generation - email is now developer's email
 message TokenGenerationRequest {
-  string email = 1;
+  string email = 1;  // CHANGED: Now developer's email (who will use the token)
   string custom_token_name = 2;
   string request_signature = 3;
-  string message = 4;  // format: "email;tokenName;startDate;endDate;timestamp"
+  string message = 4;  // format: "developerEmail;tokenName;startDate;endDate;timestamp"
   string tenant_name = 5;
   string end_date = 6;  // Optional
 }
@@ -31,8 +34,10 @@ message TokenGenerationResponse {
   int64 expiry_date = 5;
   bool success = 6;
   string error_message = 7;
+  string developer_email = 8;  // NEW: Include developer email in response
 }
 
+// Token validation - no email needed, customer admin identified via signature
 message TokenValidationRequest {
   string token = 1;
   string tenant_name = 2;
@@ -40,11 +45,17 @@ message TokenValidationRequest {
   string message = 4;  // format: "token;tenantName;timestamp"
 }
 
+message ValidateUserTokenRequest {
+  string token = 1;
+  string tenant_name = 2;
+}
+
 message TokenValidationResponse {
   bool valid = 1;
   string error_message = 2;
 }
 
+// Token revocation - no email needed, customer admin identified via signature
 message RevokeTokenRequest {
   string token = 1;
   string email = 2;
@@ -58,11 +69,22 @@ message RevokeTokenResponse {
   string error_message = 2;
 }
 
+// List all tokens for tenant - customer admin identified via signature
 message ListTokensRequest {
   string email = 1;
   string tenant_name = 2;
   string request_signature = 3;
   string message = 4;  // format: "email;tenantName;timestamp"
+  int32 page_size = 5;
+  string page_token = 6;
+  bool ignorePagination = 7;
+}
+
+message ListTokensByDeveloperRequest {
+  string tenant_name = 1;
+  string developer_email = 2;
+  string request_signature = 3;
+  string message = 4;  // format: "tenantName;developerEmail;timestamp"
   int32 page_size = 5;
   string page_token = 6;
   bool ignorePagination = 7;
@@ -74,6 +96,7 @@ message TokenInfo {
   string end_date = 3;
   int64 expiry_date = 4;
   bool revoked = 5;
+  string developer_email = 6;  // NEW: Include developer email
 }
 
 message ListTokensResponse {
@@ -83,6 +106,7 @@ message ListTokensResponse {
   string error_message = 4;
 }
 
+// Delete token - no email needed, customer admin identified via signature
 message DeleteTokenRequest {
   string token = 1;
   string email = 2;

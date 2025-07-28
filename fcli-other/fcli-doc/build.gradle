@@ -88,7 +88,7 @@ task generateActionDevDoc(type: JavaExec) {
     dependsOn 'build', 'prepareAsciiDocForVersionedHtml'
     classpath = sourceSets.main.runtimeClasspath
     main 'com.fortify.cli.app.FortifyCLI'
-    args 'action', 'run', '--on-unsigned=ignore', "${projectDir}/src/actions/generate-action-dev-doc.yaml", "--file=${htmlAsciiDocDir}/action-development.adoc"
+    args 'action', 'run', '--on-unsigned=ignore', '--on-invalid-version=ignore', "${projectDir}/src/actions/generate-action-dev-doc.yaml", "--file=${htmlAsciiDocDir}/action-development.adoc"
 }
 
 task generateGenericActionAsciiDoc(type: JavaExec) {

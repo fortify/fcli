@@ -255,9 +255,13 @@ jobs:
           for f in *; do 
             sha256sum ${f} > ${f}.sha256
           done
-          for f in *; do 
-            openssl dgst -sha256 -passin env:SIGN_PASSPHRASE -sign <(echo "${SIGN_KEY}") -out ${f}.rsa_sha256 ${f}
-          done
+          if [ -z "$SIGN_KEY" ] || [ -z "$SIGN_PASSPHRASE" ]; then
+            echo "Signatures for fcli artifacts haven't been calculated; SIGN_KEY and/or SIGN_PASSPHRASE secrets not present"
+          else
+            for f in *; do 
+              openssl dgst -sha256 -passin env:SIGN_PASSPHRASE -sign <(echo "${SIGN_KEY}") -out ${f}.rsa_sha256 ${f}
+            done
+          fi
         env:
           SIGN_PASSPHRASE: ${{ secrets.SIGN_PASSPHRASE }}
           SIGN_KEY: ${{ secrets.SIGN_KEY }}

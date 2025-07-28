@@ -18,11 +18,11 @@ public class FPRLoadingUtil {
     }
 
     private static final Pattern AUDIT_FVDL_PATTERN = Pattern.compile("^audit\\.fvdl$");
-    // Updated pattern to match both src-archive and src-xrefdata
-    private static final Pattern SRC_FILE_PATTERN = Pattern.compile("^(src(-archive)?|src-xrefdata)(/|(\\\\+))(?!index.xml|ScanUUID).+");
+    private static final Pattern SRC_FILE_PATTERN = Pattern.compile("^src-archive(/|(\\\\+))(?!index.xml|ScanUUID).+");
 
     public static boolean hasSource(File project) throws IOException {
         boolean foundSource = false;
+        boolean foundIndex = false;
         try (ZipFile projectZip = new ZipFile(project)) {
             Enumeration<? extends ZipEntry> entries = projectZip.entries();
 
@@ -31,17 +31,29 @@ public class FPRLoadingUtil {
                 if (next != null) {
                     String nextName = next.getName().replace('\\', '/');
                     if (!next.isDirectory() && nextName != null) {
-                        if (SRC_FILE_PATTERN.matcher(nextName).matches()) {
+                        if (nextName.equals("src-archive/index.xml")) {
+                            foundIndex = true;
+                            logger.debug("Found index.xml");
+                        } else if (SRC_FILE_PATTERN.matcher(nextName).matches()) {
                             foundSource = true;
-                            break;
+                            logger.debug("Found source file: {}", nextName);
                         } else {
                             logger.debug("Entry does not match source pattern: {}", nextName);
+                        }
+                        if (foundSource && foundIndex) {
+                            break;
                         }
                     }
                 }
             }
         }
-        return foundSource;
+        if (!foundIndex) {
+            logger.error("src-archive/index.xml not found in FPR");
+        }
+        if (!foundSource) {
+            logger.error("No source files found in src-archive besides index.xml");
+        }
+        return foundSource && foundIndex;
     }
 
     public static boolean isValidFpr(String fprPath) {
