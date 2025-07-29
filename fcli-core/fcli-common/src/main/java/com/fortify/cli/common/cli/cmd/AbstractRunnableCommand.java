@@ -126,16 +126,16 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         @Option(names = {"-h", "--help"}, usageHelp = true)
         private boolean usageHelpRequested;
         
-        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT")
+        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT", paramLabel = "<prefix>")
         @Getter private String envPrefix;
         
-        @Option(names = "--log-file")
+        @Option(names = "--log-file", defaultValue = "./fcli.log")
         @Getter private File logFile;
         
         @Option(names = "--log-level")
         @Getter private LogLevel logLevel;
         
-        @Option(names = "--log-mask", defaultValue = "medium")
+        @Option(names = "--log-mask", defaultValue = "medium", paramLabel = "<level>")
         @Getter private LogMaskLevel logMaskLevel;
         
         @Option(names = "--debug")
