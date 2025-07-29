@@ -35,7 +35,7 @@ import picocli.CommandLine.Option;
 public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-e", "--email"}, required = true) private String email;
-    @Option(names = {"-n", "--name"}, required = true) private String customTokenName;
+    @Option(names = {"-n", "--name"}) private String customTokenName;
     @Option(names = {"--end-date"}) private String endDate;
     @Option(names = {"--save-token"}, descriptionKey = "fcli.aviator.token.create.save-token", paramLabel = "<file>") private File saveTokenFile;
 
@@ -85,7 +85,7 @@ public class AviatorTokenCreateCommand extends AbstractAviatorAdminSessionOutput
                 String formattedDate = DATE_FORMATTER.format(Instant.ofEpochSecond(expiryDateEpoch).atZone(ZoneId.of("UTC")));
                 ((ObjectNode) jsonNode).put("expiry_date", formattedDate);
             } catch (DateTimeException | NumberFormatException e) {
-                LOG.warn("Could not format expiry_date from epoch seconds: {}", jsonNode.get("expiry_date").asText(), e);
+                LOG.warn("WARN: Could not format expiry_date from epoch seconds: {}", jsonNode.get("expiry_date").asText(), e);
             }
         }
         LOG.info("Token '{}' created successfully for email: {}", customTokenName, email);

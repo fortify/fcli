@@ -2,10 +2,13 @@
 package com.fortify.cli.aviator.grpc;
 
 import io.grpc.stub.StreamObserver;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Deque;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +23,8 @@ public class RequestHandler<T> {
 
     private volatile StreamObserver<T> requestObserver;
     private final String streamId;
-    private final ConcurrentLinkedQueue<T> requestQueue;
+    @Getter
+    private final Deque<T> requestQueue;
     private final ReentrantLock sendLock;
     private final AtomicBoolean isCompleted;
     private final AtomicBoolean isInitialized;
@@ -32,7 +36,7 @@ public class RequestHandler<T> {
 
     public RequestHandler(String streamId) {
         this.streamId = streamId;
-        this.requestQueue = new ConcurrentLinkedQueue<>();
+        this.requestQueue = new ConcurrentLinkedDeque<>();
         this.sendLock = new ReentrantLock();
         this.isCompleted = new AtomicBoolean(false);
         this.isInitialized = new AtomicBoolean(false);
@@ -59,7 +63,7 @@ public class RequestHandler<T> {
      */
     public CompletableFuture<Boolean> sendRequest(T request) {
         if (isCompleted.get()) {
-            logger.warn("Cannot send request on completed stream: {}", streamId);
+            logger.warn("WARN: Cannot send request on completed stream: {}", streamId);
             return CompletableFuture.completedFuture(false);
         }
 
@@ -80,7 +84,7 @@ public class RequestHandler<T> {
      * Flush all pending requests.
      * Uses a lock to ensure only one thread sends at a time.
      */
-    private boolean flush() {
+    public boolean flush() {
         if (!isInitialized.get() || !sendLock.tryLock()) {
             // Stream not ready or another thread is already flushing
             return true;

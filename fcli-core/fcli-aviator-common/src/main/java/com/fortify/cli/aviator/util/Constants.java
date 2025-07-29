@@ -54,12 +54,21 @@ public class Constants {
     public static final String OP_LIST_APPS = "listing applications";
     public static final String OP_GENERATE_TOKEN = "token generation";
     public static final String OP_LIST_TOKENS = "listing tokens";
+    public static final String OP_LIST_TOKENS_BY_DEVELOPER = "list tokens by developer";
     public static final String OP_REVOKE_TOKEN = "revoking token";
     public static final String OP_DELETE_TOKEN = "deleting token";
     public static final String OP_VALIDATE_TOKEN = "validating token";
+    public static final String OP_VALIDATE_USER_TOKEN = "validating user token";
     public static final String OP_LIST_ENTITLEMENTS = "listing entitlements";
 
     public static final long DEFAULT_PING_INTERVAL_SECONDS = 30;
-    public static final long PING_TIMEOUT_SECONDS = 10;
-    public static final int MAX_PING_FAILURES = 3;
+    public static final int DEFAULT_TIMEOUT_SECONDS = 30;
+    public static final int MAX_MESSAGE_SIZE = 16 * 1024 * 1024;
+    public static final int INITIAL_REQUEST_WINDOW = 10;
+    public static final int MAX_RETRIES = 10;
+    public static final long BASE_DELAY_MS = 500;
+    public static final long MAX_DELAY_MS = 5000;
+    public static final int MAX_STREAM_RETRIES = 5;
+    public static final long STREAM_RETRY_BASE_DELAY_MS = 2000;
+    public static final long STREAM_RETRY_MAX_DELAY_MS = 30000;
 }

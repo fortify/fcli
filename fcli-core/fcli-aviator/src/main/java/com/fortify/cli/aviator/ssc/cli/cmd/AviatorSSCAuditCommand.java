@@ -1,21 +1,24 @@
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import java.io.File;
+import java.io.IOException;
 
+import com.fortify.cli.aviator.ssc.cli.helper.AviatorSSCAuditHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator._common.session.user.cli.mixin.AviatorUserSessionDescriptorSupplier;
+import com.fortify.cli.aviator.audit.AuditFPR;
+import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.core.AuditFPR;
-import com.fortify.cli.aviator.core.model.FPRAuditResult;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
@@ -42,7 +45,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--tag-mapping"}, required = false, description = "Tag Mapping") private String tagMapping;
 
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
-    private String auditAction;
 
     @Override
     @SneakyThrows
@@ -57,83 +59,64 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @SneakyThrows
     private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger) {
+        File downloadedFpr = null;
+        try {
+            downloadedFpr = downloadFprFromSSC(unirest, av, logger);
+
+            if (downloadedFpr == null) {
+                return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
+            }
+
+            FPRAuditResult auditResult = performAviatorAudit(downloadedFpr, token, url, av, logger);
+            String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
+            String progressMessage = AviatorSSCAuditHelper.getProgressMessage(auditResult);
+            logger.progress(progressMessage);
+
+            String artifactId = "UPLOAD_SKIPPED";
+            if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(auditResult.getStatus()) && !"FAILED".equals(auditResult.getStatus())) {
+                artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av, logger);
+            }
+
+            return AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
+
+        } finally {
+            if (downloadedFpr != null && downloadedFpr.exists() && !downloadedFpr.delete()) {
+                LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFpr.getAbsolutePath());
+            }
+        }
+    }
+
+    private File downloadFprFromSSC(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {
+        logger.progress("Status: Downloading FPR from SSC for app version: %s:%s (id: %s)", av.getApplicationName(), av.getVersionName(), av.getVersionId());
         File fprFile = File.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
         try {
-            logger.progress("Status: Downloading FPR from SSC");
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), true),
                     fprFile,
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
-
-            logger.progress("Status: Processing FPR with Aviator");
-            FPRAuditResult auditResult = AuditFPR.auditFPR(fprFile, token, url, appName, logger, tagMapping);
-            auditAction = getDetailedAction(auditResult);
-
-            String artifactId = "UPLOAD_SKIPPED";
-            String progressMessage = getProgressMessage(auditResult);
-
-            if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(auditResult.getStatus()) && !"FAILED".equals(auditResult.getStatus())) {
-                logger.progress(progressMessage);
-                JsonNode uploadResponse = uploadFpr(unirest, auditResult.getUpdatedFile(), av);
-                artifactId = uploadResponse.path("data").path("id").asText("");
-            } else {
-                logger.progress(progressMessage);
+            return fprFile;
+        } catch (UnexpectedHttpResponseException e) {
+            if (e.getStatus() == 400) {
+                logger.progress("Audit skipped - no FPR available to audit in SSC for app version %s:%s.", av.getApplicationName(), av.getVersionName());
+                LOG.info("SSC returned HTTP 400 when downloading FPR for app version id {}. Assuming no FPR is available.", av.getVersionId());
+                if (fprFile.exists()) fprFile.delete();
+                return null;
             }
-
-            ObjectNode result = av.asObjectNode();
-            result.put("id", av.getVersionId());
-            result.put("applicationName", av.getApplicationName());
-            result.put("name", av.getVersionName());
-            result.put("artifactId", artifactId);
-            result.put("action", auditAction);
-            return result;
-        } finally {
-            if (fprFile.exists() && !fprFile.delete()) {
-                LOG.warn("Failed to delete temporary downloaded FPR file: {}", fprFile.getAbsolutePath());
-            }
+            throw e;
         }
     }
 
-    private String getDetailedAction(FPRAuditResult auditResult) {
-        switch (auditResult.getStatus()) {
-            case "SKIPPED":
-                String reason = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown reason";
-                return "SKIPPED (" + reason + ")";
-            case "FAILED":
-                String message = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown error";
-                return "FAILED (" + message + ")";
-            case "PARTIALLY_AUDITED":
-                return String.format("PARTIALLY_AUDITED (%d/%d audited)",
-                        auditResult.getIssuesSuccessfullyAudited(),
-                        auditResult.getTotalIssuesToAudit());
-            case "AUDITED":
-                return "AUDITED";
-            default:
-                return "UNKNOWN";
-        }
-    }
-
-    private String getProgressMessage(FPRAuditResult auditResult) {
-        switch (auditResult.getStatus()) {
-            case "SKIPPED":
-                return "No issues to audit, skipping upload";
-            case "FAILED":
-                String message = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown error";
-                return "Audit failed: " + message;
-            case "PARTIALLY_AUDITED", "AUDITED":
-                return auditResult.getUpdatedFile() != null
-                        ? "Status: Uploading FPR to SSC"
-                        : "Audit completed but no file updated";
-            default:
-                return "Unknown audit status";
-        }
+    private FPRAuditResult performAviatorAudit(File fprFile, String token, String url, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        logger.progress("Status: Processing FPR with Aviator");
+        return AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping);
     }
 
     @SneakyThrows
-    private JsonNode uploadFpr(UnirestInstance unirest, File file, SSCAppVersionDescriptor av) {
-        return SSCFileTransferHelper.upload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), file,
+    private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+        JsonNode uploadResponse = SSCFileTransferHelper.upload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr,
                 SSCFileTransferHelper.ISSCAddUploadTokenFunction.QUERYSTRING_MAT, JsonNode.class);
+        return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
     }
 
     @Override
@@ -153,7 +136,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @Override
     public String getActionCommandResult() {
-        return auditAction != null ? auditAction : "FAILED";
+        return "AUDITED";
     }
 
     @Override
