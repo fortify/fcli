@@ -28,7 +28,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public final class OutputOptionsArgGroup implements IOutputOptions {
-    @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "<type+args>", defaultValue = "table")
+    @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "<type+args>")
     @Getter private OutputFormatConfig outputFormatConfig;
     
     @Option(names = {"--style"}, split = ",", order=2, paramLabel = "<style>,...", hideParamSyntax = true) @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
