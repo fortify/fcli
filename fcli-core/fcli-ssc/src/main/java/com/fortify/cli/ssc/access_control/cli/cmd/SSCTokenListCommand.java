@@ -15,13 +15,14 @@ package com.fortify.cli.ssc.access_control.cli.cmd;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 
 import lombok.Getter;

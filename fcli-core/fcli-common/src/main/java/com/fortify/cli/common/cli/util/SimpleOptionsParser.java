@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fortify.cli.common.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import lombok.Builder;
 import lombok.Data;

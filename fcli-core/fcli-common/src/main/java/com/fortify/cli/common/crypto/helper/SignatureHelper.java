@@ -3,6 +3,8 @@ package com.fortify.cli.common.crypto.helper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -14,7 +16,6 @@ import com.fortify.cli.common.crypto.helper.impl.TextSigner;
 import com.fortify.cli.common.crypto.helper.impl.Verifier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

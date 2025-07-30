@@ -14,8 +14,9 @@ package com.fortify.cli.common.action.cli.mixin;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -23,7 +24,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequestSummary;
 import kong.unirest.HttpResponse;
@@ -50,7 +50,7 @@ public final class UnexpectedHttpResponseException extends UnirestException {
     private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
         var httpMethod = requestSummary.getHttpMethod().name();
         var url = requestSummary.getUrl();
-        return StringUtils.indent(String.format("\nRequest: %s %s: %s", httpMethod, url, getMessage(failureResponse)), "  ");
+        return String.format("\nRequest: %s %s: %s", httpMethod, url, getMessage(failureResponse)).indent(2);
     }
 
     private static final String getMessage(HttpResponse<?> failureResponse) {
@@ -77,10 +77,10 @@ public final class UnexpectedHttpResponseException extends UnirestException {
             return "<No Data>"; 
         } else if ( body instanceof JsonNode ) {
             try {
-                return "\n"+StringUtils.indent(yamlObjectMapper.writeValueAsString(new SplitLinesJsonNodeWalker().walk((JsonNode)body)), "  ");
+                return "\n"+yamlObjectMapper.writeValueAsString(new SplitLinesJsonNodeWalker().walk((JsonNode)body)).indent(2);
             } catch ( Exception ignore ) {} 
         }
-        return "\n"+StringUtils.indent(StringUtils.abbreviate(body.toString().trim(), 255), "  ")+"\n----";
+        return "\n"+StringUtils.abbreviate(body.toString().trim(), 255).indent(2)+"\n----";
     }
 
     private static final Throwable getCause(HttpResponse<?> failureResponse) {

@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -50,6 +51,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.schema.ActionSchemaDescriptorFactory;
+import com.fortify.cli.common.action.schema.SpelFunctionJsonDescriptorFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
@@ -58,7 +60,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.NoArgsConstructor;
 
@@ -214,7 +215,7 @@ public class ActionSpelFunctions {
     private static final void _replaceCode(Element e) {
         var text = e.text();
         if ( text.contains("\n") ) {
-            text = "\n\n"+CODE_START+StringUtils.indent(text.replaceAll("\t", "    "), "    ")+CODE_END+"\n\n";
+            text = "\n\n"+CODE_START+text.replaceAll("\t", "    ").indent(4)+CODE_END+"\n\n";
         } else {
             text = "`"+text+"`";
         }
@@ -501,6 +502,10 @@ public class ActionSpelFunctions {
     
     public static final JsonNode actionSchema() {
         return ActionSchemaDescriptorFactory.getActionSchemaDescriptor().asJson();
+    }
+    
+    public static final JsonNode spelFunctionSchema() {
+        return SpelFunctionJsonDescriptorFactory.getSpelFunctionsDescriptor().asJson();
     }
     
     public static final JsonNode fcliBuildProperties() {

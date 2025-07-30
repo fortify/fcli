@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
 import com.fortify.cli.common.action.helper.ActionDescriptionRenderer;
@@ -36,7 +37,6 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.FcliBuildProperties;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
@@ -129,7 +129,7 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     private final String generateOptionDescription(IOptionDescriptor descriptor) {
         return String.format("%s::\n%s", 
                 descriptor.getOptionNamesString(", "), 
-                StringUtils.indent(descriptor.getDescription(), "  "));
+                descriptor.getDescription().indent(2));
     }
     
     private final String addLinks(String contents) {

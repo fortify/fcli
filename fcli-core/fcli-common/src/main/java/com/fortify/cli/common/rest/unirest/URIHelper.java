@@ -16,7 +16,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import com.fortify.cli.common.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import lombok.SneakyThrows;
 

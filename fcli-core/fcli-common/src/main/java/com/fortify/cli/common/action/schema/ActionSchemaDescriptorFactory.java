@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,6 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Builder;
 import lombok.Data;

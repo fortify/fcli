@@ -14,11 +14,12 @@ package com.fortify.cli.fod._common.session.cli.mixin;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;

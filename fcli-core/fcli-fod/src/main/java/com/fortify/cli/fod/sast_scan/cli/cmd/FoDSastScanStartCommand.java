@@ -13,11 +13,12 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FcliBuildProperties;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;

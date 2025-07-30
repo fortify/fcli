@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.ParseException;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
@@ -43,7 +44,6 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.util.JavaHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

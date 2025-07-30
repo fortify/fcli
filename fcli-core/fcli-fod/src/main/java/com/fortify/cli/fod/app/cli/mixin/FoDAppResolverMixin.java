@@ -13,8 +13,9 @@
 
 package com.fortify.cli.fod.app.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.EnvSuffix;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 

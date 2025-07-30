@@ -18,7 +18,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
@@ -34,7 +35,6 @@ import com.fortify.cli.common.action.schema.ActionSchemaHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
-import com.fortify.cli.common.util.StringUtils;
 import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.MemberScope;
 import com.github.victools.jsonschema.generator.Option;

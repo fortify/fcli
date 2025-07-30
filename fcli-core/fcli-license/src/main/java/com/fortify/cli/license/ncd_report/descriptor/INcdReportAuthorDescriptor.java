@@ -12,10 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.license.ncd_report.descriptor;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.util.StringUtils;
 
 /**
  * <p>Describe a commit author. Implementations must at least
@@ -37,8 +38,8 @@ public interface INcdReportAuthorDescriptor {
     String getEmail();
     
     public default ObjectNode toExpressionInput() {
-        var name = StringUtils.ifBlank(getName(), "");
-        var email = StringUtils.ifBlank(getEmail(), "");
+        var name = StringUtils.defaultIfBlank(getName(), "");
+        var email = StringUtils.defaultIfBlank(getEmail(), "");
         var lcName = name.toLowerCase();
         var lcEmail = email.toLowerCase();
         var lcEmailDomain = StringUtils.substringAfter(lcEmail, "@");

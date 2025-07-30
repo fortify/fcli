@@ -12,9 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.license.ncd_report.collector;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.ncd_report.config.INcdReportRepoSelectorConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
