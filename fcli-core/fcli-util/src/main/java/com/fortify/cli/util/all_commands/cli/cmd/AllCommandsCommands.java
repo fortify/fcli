@@ -20,7 +20,8 @@ import picocli.CommandLine.Command;
         name = "all-commands",
         subcommands = {
             AllCommandsUsageCommand.class,
-            AllCommandsListCommand.class
+            AllCommandsListCommand.class,
+            AllCommandsMCPServerCommand.class
         }
 )
 public class AllCommandsCommands extends AbstractContainerCommand {}

@@ -82,6 +82,8 @@ dependencies {
     
     // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
     implementation('org.jsoup:jsoup')
+    
+    implementation("io.modelcontextprotocol.sdk:mcp")
 }
     
 compileJava {

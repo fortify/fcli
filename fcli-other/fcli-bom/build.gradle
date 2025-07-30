@@ -11,6 +11,7 @@ javaPlatform {
 dependencies {
 	api platform('com.fasterxml.jackson:jackson-bom:2.18.3')
 	api platform('org.springframework:spring-framework-bom:6.2.4')
+    api platform("io.modelcontextprotocol.sdk:mcp-bom:0.10.0")
 		
 	constraints {
 		// Picocli
