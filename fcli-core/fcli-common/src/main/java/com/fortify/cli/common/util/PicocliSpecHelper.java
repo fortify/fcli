@@ -15,6 +15,7 @@ package com.fortify.cli.common.util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.util.ResourceBundle;
+import java.util.concurrent.Callable;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliBugException;
@@ -97,5 +98,29 @@ public class PicocliSpecHelper {
     public static final Messages getMessages(CommandSpec commandSpec) {
         ResourceBundle resourceBundle = commandSpec.resourceBundle();
         return resourceBundle==null ? null : new Messages(commandSpec, resourceBundle);
+    }
+    
+    public static final boolean isHiddenSelf(CommandSpec spec) {
+        return spec.usageMessage().hidden();
+    }
+    
+    public static final boolean hasHiddenParent(CommandSpec spec) {
+        var parent = spec.parent();
+        if ( parent==null ) { return false; }
+        if ( parent.usageMessage().hidden() ) { return true; }
+        return hasHiddenParent(parent);
+    }
+    
+    public static final boolean isHiddenSelfOrParent(CommandSpec spec) {
+        return isHiddenSelf(spec) || hasHiddenParent(spec);
+    }
+    
+    public static final boolean isRunnable(CommandSpec spec) {
+        var userObject = userObject(spec);
+        return userObject!=null && (userObject instanceof Runnable || userObject instanceof Callable<?>);
+    }
+    
+    public static final Object userObject(CommandSpec spec) {
+        return spec==null ? null : spec.userObject();
     }
 }

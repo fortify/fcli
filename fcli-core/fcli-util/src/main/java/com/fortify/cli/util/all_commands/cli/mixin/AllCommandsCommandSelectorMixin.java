@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +29,7 @@ import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.query.QueryExpression;
 import com.fortify.cli.common.output.query.QueryExpressionTypeConverter;
+import com.fortify.cli.common.util.PicocliSpecHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -84,8 +84,9 @@ public class AllCommandsCommandSelectorMixin {
         }
         
         private static final ObjectNode createNode(CommandSpec spec) {
-            var hiddenParent = hasHiddenParent(spec);
-            var hiddenSelf = spec.usageMessage().hidden();
+            var hiddenParent = PicocliSpecHelper.hasHiddenParent(spec);
+            var hiddenSelf = PicocliSpecHelper.isHiddenSelf(spec);
+            var hidden = PicocliSpecHelper.isHiddenSelfOrParent(spec);
             var nameComponents = spec.qualifiedName(" ").split(" ");
             var module = nameComponents.length>1 ? nameComponents[1] : "";
             var entity = nameComponents.length>2 ? nameComponents[2] : "";
@@ -95,23 +96,16 @@ public class AllCommandsCommandSelectorMixin {
             result.put("module", module);
             result.put("entity", entity);
             result.put("action", action);
-            result.put("hidden", hiddenParent || hiddenSelf);
+            result.put("hidden", hidden);
             result.put("hiddenParent", hiddenParent);
             result.put("hiddenSelf", hiddenSelf);
-            result.put("runnable", spec.userObject() instanceof Runnable || spec.userObject() instanceof Callable);
+            result.put("runnable", PicocliSpecHelper.isRunnable(spec));
             result.put("usageHeader", String.join("\n", spec.usageMessage().header()));
             result.set("aliases", Stream.of(spec.aliases()).map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
             result.put("aliasesString", Stream.of(spec.aliases()).collect(Collectors.joining(", ")));
             result.set("options", spec.optionsMap().keySet().stream().map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
             result.put("optionsString", spec.optionsMap().keySet().stream().collect(Collectors.joining(", ")));
             return result;
-        }
-        
-        private static final boolean hasHiddenParent(CommandSpec spec) {
-            var parent = spec.parent();
-            if ( parent==null ) { return false; }
-            if ( parent.usageMessage().hidden() ) { return true; }
-            return hasHiddenParent(parent);
         }
     }
 }

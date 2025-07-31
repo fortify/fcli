@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -30,15 +31,20 @@ import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
+import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
 
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpServerFeatures.SyncResourceSpecification;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
+import io.modelcontextprotocol.spec.McpSchema.ResourceContents;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -49,13 +55,14 @@ import picocli.CommandLine.Model.PositionalParamSpec;
 
 @Command(name = "mcp-server")
 public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
-    private static final Logger log = LoggerFactory.getLogger(AllCommandsMCPServerCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AllCommandsMCPServerCommand.class);
     @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
     
     public Integer call() throws Exception {
         initialize();
-        var specs = selectorMixin.getSelectedCommands().getSpecs().stream()
+        var toolSpecs = selectorMixin.getSelectedCommands().getSpecs().stream()
                 .map(AllCommandsMCPServerCommand::getToolSpec)
+                .filter(Objects::nonNull)
                 .toList();;
         McpSchema.ServerCapabilities serverCapabilities = McpSchema.ServerCapabilities.builder()
                 .resources(false, false)
@@ -69,18 +76,42 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
                 .instructions("Fcli MCP Server")
                 .capabilities(serverCapabilities)
                 .build();
-
-        log.info("Fcli MCP server running on stdio%n");
         
-        specs.forEach(server::addTool);
+        toolSpecs.forEach(server::addTool);
+
+        LOG.info("Fcli MCP server running on stdio%n");
+        
+        //server.addResource(getResourceSpec(selectorMixin.getSelectedCommands().getSpecs()));
         
         while(true) {
             Thread.sleep(5000L);
         }
     }
+
+    @SneakyThrows
+    private static final SyncResourceSpecification getResourceSpec(List<CommandSpec> specs) {
+        McpSchema.Resource resource = new McpSchema.Resource("fcli://all-commands", "List all fcli commands", "List all fcli commands", "application/json", null);
+        return new SyncResourceSpecification(resource, (exchange, request)->{
+            var contents = new ArrayList<ResourceContents>();
+            specs.forEach(spec->contents.add(
+                    new TextResourceContents("fcli://all-commands/"+spec.qualifiedName("+"), "application/json", asJsonString(spec))));
+            return new ReadResourceResult(contents);
+        });
+    }
     
     @SneakyThrows
+    private static final String asJsonString(CommandSpec spec) {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put("command", spec.qualifiedName(" "))
+                .put("description", buildDescription(spec))
+                .toString();
+    }
+
+    @SneakyThrows
     private static final SyncToolSpecification getToolSpec(CommandSpec spec) {
+        if ( !PicocliSpecHelper.isRunnable(spec) || PicocliSpecHelper.isHiddenSelfOrParent(spec) ) {
+            return null;
+        }
         var name = spec.qualifiedName("_");
         var schema = buildSchema(spec);
         var description = buildDescription(spec);
@@ -88,22 +119,37 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         McpSchema.Tool tool = new McpSchema.Tool(name, description, schema);
 
         return new McpServerFeatures.SyncToolSpecification(tool, (exchange, arguments) -> {
-            var args = arguments==null ? "" : arguments.entrySet().stream().map(AllCommandsMCPServerCommand::getArg).collect(Collectors.joining(" ")); 
-            var result = FcliCommandExecutorFactory.builder()
-                .cmd(spec.qualifiedName(" ")+" "+args)
-                .stdoutOutputType(OutputType.collect)
-                .stderrOutputType(OutputType.collect)
-                .build().create().execute();
-            return new McpSchema.CallToolResult(result.getErr()+"\n"+result.getOut(), result.getExitCode()==0);
+            var args = arguments==null ? "" : arguments.entrySet().stream().map(AllCommandsMCPServerCommand::getArg).collect(Collectors.joining(" "));
+            var fullCmd = spec.qualifiedName(" ")+" "+args;
+            LOG.debug("Executing: "+fullCmd);
+            try {
+                var result = FcliCommandExecutorFactory.builder()
+                    .cmd(spec.qualifiedName(" ")+" "+args)
+                    .stdoutOutputType(OutputType.collect)
+                    .stderrOutputType(OutputType.collect)
+                    .onFail(r->{})
+                    .build().create().execute();
+                LOG.debug("Stdout: "+result.getOut());
+                LOG.debug("Stderr: "+result.getErr());
+                //var resultContents = new ArrayList<Content>();
+                //resultContents.add(new TextContent(result.getOut()+"\n"+result.getErr()));
+                //resultContents.add(new EmbeddedResource(List.of(Role.USER), null, new TextResourceContents("fcli://stdout", "text/plain", result.getOut())));
+                //resultContents.add(new EmbeddedResource(List.of(Role.USER), null, new TextResourceContents("fcli://stderr", "text/plain", result.getErr())));
+                return new McpSchema.CallToolResult(result.getOut()+"\n"+result.getErr(), result.getExitCode()!=0);
+            } catch ( Exception e ) {
+                LOG.error("Exception while running fcli command", e);
+                return new McpSchema.CallToolResult(e.toString(), true);
+            }
         });
     }
 
     private static final String getArg(Entry<String, Object> e) {
         var name = e.getKey();
+        var value = String.format("%s", e.getValue());
         if ( name.startsWith("param-") ) {
-            return e.getValue().toString();
+            return value;
         } else {
-            return String.format("\"--%s=%s\"", e.getKey(), e.getValue());
+            return String.format("\"%s=%s\"", name, value);
         }
     }
 
