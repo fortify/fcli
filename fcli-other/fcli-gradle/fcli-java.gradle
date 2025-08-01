@@ -83,7 +83,9 @@ dependencies {
     // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
     implementation('org.jsoup:jsoup')
     
-    implementation("io.modelcontextprotocol.sdk:mcp")
+    implementation("io.modelcontextprotocol.sdk:mcp") {
+        exclude group: 'org.slf4j' // We don't wamnt to override SLF4j version
+    }
 }
     
 compileJava {

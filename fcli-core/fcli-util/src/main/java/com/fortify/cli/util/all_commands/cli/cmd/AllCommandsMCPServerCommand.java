@@ -121,10 +121,16 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         var schema = buildSchema(spec);
         var description = buildDescription(spec);
         
-        McpSchema.Tool tool = new McpSchema.Tool(name, description, schema);
+        McpSchema.Tool tool = McpSchema.Tool.builder()
+                .name(name)
+                .description(description)
+                .inputSchema(schema)
+                .build();
 
-        return new McpServerFeatures.SyncToolSpecification(tool, (exchange, arguments) -> {
-            var args = arguments==null ? "" : arguments.entrySet().stream().map(AllCommandsMCPServerCommand::getArg).collect(Collectors.joining(" "));
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(tool)
+                .callHandler((exchange, request) -> {
+            var args = request==null ? "" : request.arguments().entrySet().stream().map(AllCommandsMCPServerCommand::getArg).collect(Collectors.joining(" "));
             var fullCmd = spec.qualifiedName(" ")+" "+args;
             if ( spec.optionsMap().containsKey("--output") && !fullCmd.contains("--output=") ) {
                 fullCmd+=" --output=json"; 
@@ -151,7 +157,7 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
                 LOG.error("Exception while running fcli command", e);
                 return new McpSchema.CallToolResult(e.toString(), true);
             }
-        });
+        }).build();
     }
     
     private static final boolean include(CommandSpec cs) {

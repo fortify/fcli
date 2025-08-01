@@ -9,10 +9,6 @@ javaPlatform {
 }
 
 dependencies {
-	api platform('com.fasterxml.jackson:jackson-bom:2.18.3')
-	api platform('org.springframework:spring-framework-bom:6.2.4')
-    api platform("io.modelcontextprotocol.sdk:mcp-bom:0.10.0")
-		
 	constraints {
 		// Picocli
 		api("info.picocli:picocli:4.7.5")
@@ -59,5 +55,11 @@ dependencies {
         
         // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
         api('org.jsoup:jsoup:1.19.1')
+        
+        // Used for LLM MCP functionality
+        api("io.modelcontextprotocol.sdk:mcp:0.11.0")
 	}
+    
+    api platform('com.fasterxml.jackson:jackson-bom:2.18.3')
+    api platform('org.springframework:spring-framework-bom:6.2.4')
 }
