@@ -18,10 +18,12 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
+import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskLevel;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
+import com.fortify.cli.common.mcp.MCPIgnore;
 import com.fortify.cli.common.util.JavaHelper;
 
 import ch.qos.logback.classic.Level;
@@ -121,24 +123,28 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
     /**
      * This class (used as an {@link ArgGroup}) defines common fcli options that 
      * are available on every fcli command.
+     * 
+     * We {@link MCPIgnore} most generic options, as these options only
+     * take effect on top-level fcli invocation, not fcli invocations performed
+     * through {@link FcliCommandExecutorFactory} as we do for MCP tools.
      */
     public static final class GenericOptionsArgGroup {
         @Option(names = {"-h", "--help"}, usageHelp = true)
         private boolean usageHelpRequested;
         
-        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT")
+        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT") @MCPIgnore
         @Getter private String envPrefix;
         
-        @Option(names = "--log-file")
+        @Option(names = "--log-file") @MCPIgnore
         @Getter private File logFile;
         
-        @Option(names = "--log-level")
+        @Option(names = "--log-level") @MCPIgnore
         @Getter private LogLevel logLevel;
         
-        @Option(names = "--log-mask", defaultValue = "medium")
+        @Option(names = "--log-mask", defaultValue = "medium") @MCPIgnore
         @Getter private LogMaskLevel logMaskLevel;
         
-        @Option(names = "--debug")
+        @Option(names = "--debug") @MCPIgnore
         @Getter private boolean debug;
     }
 }
