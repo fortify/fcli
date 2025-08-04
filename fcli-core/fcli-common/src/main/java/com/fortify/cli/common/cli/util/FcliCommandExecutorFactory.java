@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -31,12 +30,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
-import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
+import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import lombok.Builder;
@@ -178,11 +176,7 @@ public final class FcliCommandExecutorFactory {
         }
 
         public final boolean canCollectRecords() {
-            return getLeafCommand(IOutputHelperSupplier.class).isPresent();
-        }
-        
-        private final <T> Optional<T> getLeafCommand(Class<T> type) {
-            return JavaHelper.as(replicatedLeafCommandSpec.userObject(), type);
+            return PicocliSpecHelper.canCollectRecords(replicatedLeafCommandSpec);
         }
         
         private <T> void consume(T value, Consumer<T> consumer, Consumer<T> defaultConsumer) {

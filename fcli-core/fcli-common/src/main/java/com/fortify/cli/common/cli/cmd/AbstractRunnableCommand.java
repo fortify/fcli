@@ -124,12 +124,15 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * This class (used as an {@link ArgGroup}) defines common fcli options that 
      * are available on every fcli command.
      * 
-     * We {@link MCPIgnore} most generic options, as these options only
+     * We {@link MCPIgnore} all generic options, as these options only
      * take effect on top-level fcli invocation, not fcli invocations performed
-     * through {@link FcliCommandExecutorFactory} as we do for MCP tools.
+     * through {@link FcliCommandExecutorFactory} as we do for MCP tools. We also
+     * ignore the help option; if it's useful to have usage help returned by MCP
+     * tools, it's probably better to define a separate usageHelp(cmd) tool, rather
+     * than having a --help option on every individual tool.
      */
     public static final class GenericOptionsArgGroup {
-        @Option(names = {"-h", "--help"}, usageHelp = true)
+        @Option(names = {"-h", "--help"}, usageHelp = true) @MCPIgnore
         private boolean usageHelpRequested;
         
         @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT") @MCPIgnore

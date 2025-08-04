@@ -14,6 +14,8 @@ package com.fortify.cli.common.output.cli.mixin;
 
 import java.io.File;
 
+import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.writer.output.standard.IOutputOptions;
 import com.fortify.cli.common.output.writer.output.standard.OutputFormatConfig;
 import com.fortify.cli.common.output.writer.output.standard.OutputFormatConfigConverter;
@@ -25,18 +27,30 @@ import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
+/**
+ * This class (used as an {@link ArgGroup}) defines common fcli output options 
+ * that are available on every fcli command that extends from {@link AbstractOutputCommand}.
+ * 
+ * We {@link MCPIgnore} most output options as we hardcode output format to JSON for
+ * MCP responses, and other options are (likely) not relevant in LLM/MCP environments. 
+ */
 public final class OutputOptionsArgGroup implements IOutputOptions {
     @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "type[=<args>]")
+    @MCPIgnore
     @Getter private OutputFormatConfig outputFormatConfig;
     
     @Option(names = {"--style"}, split = ",", order=2) @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @MCPIgnore
     @Getter private RecordWriterStyleElement[] outputStyleElements;
     
     @Option(names = {"--store"}, order=3, converter = VariableStoreConfigConverter.class, paramLabel = "variableName[:<propertyNames>]")
+    @MCPIgnore
     @Getter private VariableStoreConfig variableStoreConfig;
     
     @Option(names = {"--to-file"}, order=4)
+    @MCPIgnore
     @Getter private File outputFile; 
 }

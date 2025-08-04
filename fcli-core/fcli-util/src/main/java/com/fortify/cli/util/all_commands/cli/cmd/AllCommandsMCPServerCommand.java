@@ -12,15 +12,16 @@
  */
 package com.fortify.cli.util.all_commands.cli.cmd;
 
-import java.io.IOException;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Map.Entry;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,24 +29,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.util.FcliBuildProperties;
-import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.PicocliSpecHelper;
+import com.fortify.cli.common.util.ReflectionHelper;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
+import com.networknt.schema.utils.StringUtils;
 
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
-import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
+import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
+import io.modelcontextprotocol.spec.McpSchema.Tool;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -62,27 +71,14 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
     @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
     
     public Integer call() throws Exception {
-        initialize();
-        // For some reason, if we calculate this after building the server, clients like
-        // Eclipse don't show the full list of tools.
-        var toolSpecs = selectorMixin.getSelectedCommands().getSpecs().stream()
-                .map(AllCommandsMCPServerCommand::getToolSpec)
-                .filter(Objects::nonNull)
-                .peek(s->LOG.debug("Registering tool: {}", s.tool().name()))
-                .toList();;
-        McpSchema.ServerCapabilities serverCapabilities = McpSchema.ServerCapabilities.builder()
-                .resources(false, false)
-                .prompts(false)
-                .tools(true)
-                .build();
-
+        super.initialize(); // Initialize mixins etc
+        
         McpServer.sync(new StdioServerTransportProvider())
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("Fcli MCP Server")
-                .capabilities(serverCapabilities)
-                //.resources(getResourceSpec(selectorMixin.getSelectedCommands().getSpecs()))
-                .tools(toolSpecs)
+                .capabilities(getServerCapabilities())
+                .tools(createToolSpecs())
                 .build();
 
         LOG.info("Fcli MCP server running on stdio");
@@ -93,176 +89,296 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         }
     }
 
-    /* Sample for adding fcli commands as resource; not sure whether this is useful */
-    /*
-    @SneakyThrows
-    private static final SyncResourceSpecification getResourceSpec(List<CommandSpec> specs) {
-        McpSchema.Resource resource = new McpSchema.Resource("fcli://all-commands", "List all fcli commands", "List all fcli commands", "application/json", null);
-        return new SyncResourceSpecification(resource, (exchange, request)->{
-            var contents = new ArrayList<ResourceContents>();
-            specs.forEach(spec->contents.add(
-                    new TextResourceContents("fcli://all-commands/"+spec.qualifiedName("+"), "application/json", asJsonString(spec))));
-            return new ReadResourceResult(contents);
-        });
-    }
-    @SneakyThrows
-    private static final String asJsonString(CommandSpec spec) {
-        return JsonHelper.getObjectMapper().createObjectNode()
-                .put("command", spec.qualifiedName(" "))
-                .put("description", buildDescription(spec))
-                .toString();
-    }
-    */
-
-    @SneakyThrows
-    private static final SyncToolSpecification getToolSpec(CommandSpec spec) {
-        if ( !include(spec) ) { return null; }
-        var name = spec.qualifiedName("_");
-        var schema = buildSchema(spec);
-        var description = buildDescription(spec);
-        
-        McpSchema.Tool tool = McpSchema.Tool.builder()
-                .name(name)
-                .description(description)
-                .inputSchema(schema)
+    private ServerCapabilities getServerCapabilities() {
+        return ServerCapabilities.builder()
+                .resources(false, false)
+                .prompts(false)
+                .tools(true)
                 .build();
+    }
 
-        return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(tool)
-                .callHandler((exchange, request) -> {
-            var args = request==null ? "" : request.arguments().entrySet().stream().map(AllCommandsMCPServerCommand::getArg).collect(Collectors.joining(" "));
-            var fullCmd = spec.qualifiedName(" ")+" "+args;
-            if ( spec.optionsMap().containsKey("--output") && !fullCmd.contains("--output=") ) {
-                fullCmd+=" --output=json"; 
-            }
-            LOG.debug("Executing: "+fullCmd);
+    private List<SyncToolSpecification> createToolSpecs() {
+        return selectorMixin.getSelectedCommands().getSpecs().stream()
+                .filter(cs->!ignore(cs))
+                .map(cs->createToolSpec(cs))
+                .peek(s->LOG.debug("Registering tool: {}", s.tool().name()))
+                .toList();
+    }
+    
+    private static final SyncToolSpecification createToolSpec(CommandSpec spec) {
+        return new CommandToolSpecHelper(spec).createToolSpec();
+    }
+    
+    private static final boolean ignore(CommandSpec cs) {
+        return ReflectionHelper.hasAnnotation(cs, MCPIgnore.class)
+                || !PicocliSpecHelper.isRunnable(cs) 
+                || PicocliSpecHelper.isHiddenSelfOrParent(cs);
+    }
+    
+    private static final class CommandToolSpecHelper {
+        private static final ObjectMapper OM = JsonHelper.getObjectMapper();
+        private final CommandSpec commandSpec;
+        private final CommandToolSpecArgHelper toolSpecArgHelper;
+        
+        private CommandToolSpecHelper(CommandSpec commandSpec) {
+            this.commandSpec = commandSpec;
+            this.toolSpecArgHelper = new CommandToolSpecArgHelper(commandSpec);
+        }
+        
+        @SneakyThrows
+        public final SyncToolSpecification createToolSpec() {
+            return McpServerFeatures.SyncToolSpecification.builder()
+                    .tool(createTool())
+                    .callHandler((exchange, request) -> execute(request))
+                    .build();
+        }
+        
+        private final Tool createTool() {
+            return Tool.builder()
+                    .name(commandSpec.qualifiedName("_"))
+                    .description(buildToolDescription())
+                    .inputSchema(toolSpecArgHelper.getSchema())
+                    .build();
+        }
+        
+        private final String buildToolDescription() {
+            var help = commandSpec.commandLine().getHelp();
+            return String.format("%s - %s\n%s", commandSpec.qualifiedName(" "), help.header(), help.description());
+        }
+
+        private final CallToolResult execute(CallToolRequest request) {
+            var cmd = commandSpec.qualifiedName(" ");
+            var args = request==null || request.arguments()==null ? "" : toolSpecArgHelper.getFcliCmdArgs(request.arguments());
+            var fullCmd = String.format("%s %s", cmd, args);
             try {
-                var result = FcliCommandExecutorFactory.builder()
-                    .cmd(fullCmd)
-                    .stdoutOutputType(OutputType.collect)
-                    .stderrOutputType(OutputType.collect)
-                    .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
-                                   //  used by the LLM to provide suggestions on how to fix.
-                    .build().create().execute();
-                LOG.debug("Stdout: "+result.getOut());
-                LOG.debug("Stderr: "+result.getErr());
-                // TODO What's the best way to return output? Just a simple string containing stdout+stderr like we have now, separate outputs as commented out
-                //      below, structured output, ...
-                //var resultContents = new ArrayList<Content>();
-                //resultContents.add(new TextContent(result.getOut()+"\n"+result.getErr()));
-                //resultContents.add(new EmbeddedResource(List.of(Role.USER), null, new TextResourceContents("fcli://stdout", "text/plain", result.getOut())));
-                //resultContents.add(new EmbeddedResource(List.of(Role.USER), null, new TextResourceContents("fcli://stderr", "text/plain", result.getErr())));
-                return new McpSchema.CallToolResult(result.getOut()+"\n"+result.getErr(), result.getExitCode()!=0);
+                return execute(fullCmd);
             } catch ( Exception e ) {
-                LOG.error("Exception while running fcli command", e);
-                return new McpSchema.CallToolResult(e.toString(), true);
+                LOG.error("Exception while running fcli command:\n\t"+fullCmd, e);
+                return new CallToolResult(e.toString(), true);
             }
-        }).build();
-    }
-    
-    private static final boolean include(CommandSpec cs) {
-        return includeAnnotatedElement(cs.userObject().getClass()) 
-                && PicocliSpecHelper.isRunnable(cs) 
-                && !PicocliSpecHelper.isHiddenSelfOrParent(cs);
-    }
+        }
 
-    private static final String getArg(Entry<String, Object> e) {
-        var name = e.getKey();
-        var value = e.getValue();
-        if ( !name.startsWith("-") ) {
-            return streamValueElts(value).map(v->"\""+v+"\"").collect(Collectors.joining(" "));
-        } else {
-            return String.format("\"%s=%s\"", name, streamValueElts(value).collect(Collectors.joining(",")));
+        private final CallToolResult execute(String fullCmd) {
+            LOG.debug("Executing: "+fullCmd);
+            if ( PicocliSpecHelper.canCollectRecords(commandSpec) ) {
+                return executeWithRecordsCollection(fullCmd);
+            } else {
+                return executePlain(fullCmd);
+            }
+        }
+        
+        private CallToolResult executeWithRecordsCollection(String fullCmd) {
+            var records = OM.createArrayNode();
+            var result = FcliCommandExecutorFactory.builder()
+                .cmd(fullCmd)
+                .stdoutOutputType(OutputType.suppress)
+                .stderrOutputType(OutputType.collect)
+                .recordConsumer(records::add)
+                .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
+                               //  used by the LLM to provide suggestions on how to fix.
+                .build().create().execute();
+            return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);
+        }
+
+        private final CallToolResult executePlain(String fullCmd) {
+            var result = FcliCommandExecutorFactory.builder()
+                .cmd(fullCmd)
+                .stdoutOutputType(OutputType.collect)
+                .stderrOutputType(OutputType.collect)
+                .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
+                               //  used by the LLM to provide suggestions on how to fix.
+                .build().create().execute();
+            return new CallToolResult(OM.valueToTree(result).toPrettyString(), result.getExitCode()!=0);
         }
     }
-
-    private static Stream<String> streamValueElts(Object value) {
-        Stream<?> os = null;
-        if ( value==null ) { 
-            os = Stream.empty(); 
-        } else if ( value.getClass().isArray() ) { 
-            os = Stream.of((Object[])value); 
-        } else if ( Collection.class.isAssignableFrom(value.getClass()) ) {
-            os = ((Collection<?>)value).stream();
-        } else {
-            os = Stream.of(value);
+    
+    private static final class CommandToolSpecArgHelper {
+        private final List<IToolSpecArgHelper> toolSpecArgHelpers;
+        @Getter private final JsonSchema schema;
+        //@Getter private final boolean pagingSupported;
+        
+        public CommandToolSpecArgHelper(CommandSpec spec) {
+            this.toolSpecArgHelpers = createToolSpecArgHelpers(spec);
+            this.schema = createSchema(toolSpecArgHelpers);
         }
-        return os.filter(Objects::nonNull).map(Object::toString);
-    }
-
-    private static final String buildDescription(CommandSpec spec) throws IOException {
-        var help = spec.commandLine().getHelp();
-        return String.format("%s - %s\n%s", spec.qualifiedName(" "), help.header(), help.description());
-    }
-
-    
-    private static final JsonSchema buildSchema(CommandSpec spec) {
-        var properties = new LinkedHashMap<String, Object>();
-        var required = new ArrayList<String>();
-        spec.options().stream()
-            .filter(AllCommandsMCPServerCommand::include)
-            .forEach(o->addProperty(o, properties,required));
-        spec.positionalParameters().forEach(p->addParameter(p, properties,required));
-        return new JsonSchema("object", properties, required, null, null, null);
-    }
-    
-    private static final void addParameter(PositionalParamSpec p, LinkedHashMap<String, Object> properties, ArrayList<String> required) {
-        var argName = ((Field)p.userObject()).getName(); // Note that argName may not start with dashes, to distinguish from options. Field names cannot contain dashes, so we're fine here
-        properties.put(argName, createProperty(p));
-        if ( p.required() ) { required.add(argName); }
-    }
-
-    private static final ObjectNode createProperty(ArgSpec as) {
-        return JsonHelper.getObjectMapper().createObjectNode()
-                .put("description", getDescription(as))
-                .set("type", getPropertyType(as.typeInfo()));
-    }
-
-    private static final JsonNode getPropertyType(ITypeInfo typeInfo) {
-        // TODO Although technically we can just always accept strings, using proper types based on the type of as.userObject(),
-        //      for example booleans, might result in a better user experience. However, we do then need to convert back to string
-        //      when generating the fcli command to be executed, which in most cases can likely be just toString() or similar, but
-        //      arrays/collections may need to be converted to comma-separated string.
-        var type = typeInfo.getType();
         
-        // GitHub Copilot Eclipse plugin doesn't seem to like 'array' or 'enum' types, so returning 'string' for those for now.
-        // Symptoms include Copilot preferences not listing any MCP tools (even from other MCP servers), and no response to chat messages.
+        public final String getFcliCmdArgs(Map<String, Object> toolArgs) {
+            return toolSpecArgHelpers.stream().map(h->h.getFcliCmdArgs(toolArgs)).collect(Collectors.joining(" "));
+        }
+
+        private static final List<IToolSpecArgHelper> createToolSpecArgHelpers(CommandSpec spec) {
+            var result = new ArrayList<IToolSpecArgHelper>();
+            addArgSpecHelpers(result, spec.positionalParameters(), PositionalParamToolSpecArgHelper::new);
+            addArgSpecHelpers(result, spec.options(), OptionToolSpecArgHelper::new);
+            addQueryToolSpecArgHelper(result, spec);
+            return result;
+        }
+
+        private static void addQueryToolSpecArgHelper(ArrayList<IToolSpecArgHelper> result, CommandSpec spec) {
+            var messageResolver = new CommandSpecMessageResolver(spec);
+            if ( spec.optionsMap().containsKey("--query") ) {
+                String commonQueryFieldsString = messageResolver.getMessageString("mcp.common-query-fields");
+                if ( StringUtils.isNotBlank(commonQueryFieldsString) ) {
+                    result.add(new QueryToolSpecArgHelper(Arrays.asList(commonQueryFieldsString.split(","))));
+                }
+            }
+        }
+
+        private static <T extends ArgSpec> void addArgSpecHelpers(List<IToolSpecArgHelper> result, List<T> argSpecs, Function<T, IToolSpecArgHelper> factory) {
+            argSpecs.stream()
+                .filter(as->!ignore(as))
+                .map(factory::apply)
+                .forEach(result::add);
+        }
+
+        private static final JsonSchema createSchema(List<IToolSpecArgHelper> toolSpecArgHelpers) {
+            var result = new JsonSchema("object", new LinkedHashMap<String, Object>(), new ArrayList<String>(), false, null, null);
+            toolSpecArgHelpers.forEach(h->h.updateSchema(result));
+            return result;
+        }
         
-        /* 
-        if ( typeInfo.isArray() || typeInfo.isCollection() ) {
+        private static final boolean ignore(ArgSpec as) {
+            return ReflectionHelper.hasAnnotation(as.userObject(), MCPIgnore.class);
+        }
+    }
+    
+    private static interface IToolSpecArgHelper {
+        public void updateSchema(JsonSchema schema);
+        public String getFcliCmdArgs(Map<String, Object> toolArgs);
+    }
+    
+    
+    @RequiredArgsConstructor
+    private static final class QueryToolSpecArgHelper implements IToolSpecArgHelper {
+        private final List<String> commonQueryFields;
+    
+        @Override
+        public void updateSchema(JsonSchema schema) {
+            commonQueryFields.forEach(fieldName->schema.properties().put(getToolArgName(fieldName), 
+                    JsonHelper.getObjectMapper().createObjectNode()
+                    .put("type", "regex").put("description", getToolArgDescription(fieldName))));
+        }
+        
+        public static final String getToolArgName(String fieldName) {
+            return String.format("--match-%s", fieldName);
+        }
+        
+        public static final String getToolArgDescription(String fieldName) {
+            return String.format("Return only records for which the %s field matches the given regular expression", fieldName);
+        }
+        
+        @Override
+        public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+            var queries = new ArrayList<String>();
+            for ( var fieldName : commonQueryFields ) {
+                var value = toolArgs.get(getToolArgName(fieldName));
+                if ( value!=null ) {
+                    queries.add(String.format("%s matches '%s'", fieldName, value));
+                }
+            }
+            return queries.isEmpty() ? "" : String.format("\"--query=%s\"", String.join(" && ", queries));
+        }
+        
+    }
+    
+    private static abstract class AbstractArgSpecToolSpecArgHelper implements IToolSpecArgHelper { 
+        protected abstract ArgSpec getArgSpec();
+        protected abstract String getName();
+        protected abstract String combineFcliCmdArgs(String name, Stream<String> values);
+        @Override
+        public void updateSchema(JsonSchema schema) {
+            var argSpec = getArgSpec();
+            schema.properties().put(getName(), createProperty(argSpec));
+            if ( isRequired(argSpec) ) {
+                schema.required().add(getName());
+            }
+        }
+        
+        @Override
+        public String getFcliCmdArgs(Map<String, Object> toolArgs) {
+            var name = getName();
+            var toolArgValue = toolArgs.get(name);
+            return toolArgValue==null ? "" : combineFcliCmdArgs(name, streamValueElts(toolArgValue));
+        }
+        
+        private static Stream<String> streamValueElts(Object value) {
+            Stream<?> os = null;
+            if ( value==null ) { 
+                os = Stream.empty(); 
+            } else if ( value.getClass().isArray() ) { 
+                os = Stream.of((Object[])value); 
+            } else if ( Collection.class.isAssignableFrom(value.getClass()) ) {
+                os = ((Collection<?>)value).stream();
+            } else {
+                os = Stream.of(value);
+            }
+            return os.filter(Objects::nonNull).map(Object::toString);
+        }
+        
+        private static final boolean isRequired(ArgSpec argSpec) {
+            return argSpec.required(); // TODO If option is contained in exclusive arggroup, we need to consider it as optional
+        }
+        private static final ObjectNode createProperty(ArgSpec argSpec) {
             return JsonHelper.getObjectMapper().createObjectNode()
-                    .put("type", "array");
-                    .set("items", 
-                        JsonHelper.getObjectMapper().createObjectNode().set("type", getPropertyType(typeInfo.getAuxiliaryTypeInfos().get(0))));
+                    .put("description", getDescription(argSpec))
+                    .set("type", getPropertyType(argSpec.typeInfo()));
         }
-        */
-        if ( typeInfo.isArray() || typeInfo.isCollection() ) { return new TextNode("string"); }
-        if (typeInfo.isBoolean()) { return new TextNode("boolean"); }
-        if (type==Integer.class || type==int.class ) { return new TextNode("integer"); }
-        if (type==Number.class || type==float.class || type==double.class) { return new TextNode("number"); }
-        //if (typeInfo.isEnum()) { return JsonHelper.getObjectMapper().createObjectNode().set("enum", JsonHelper.toArrayNode(typeInfo.getEnumConstantNames().toArray(String[]::new))); }
-        return new TextNode("string");
-    }
-
-    private static String getDescription(ArgSpec as) {
-        String[] descElts = as.description(); 
-        return descElts==null || descElts.length<1 ? "" : String.join(" ", descElts);
+    
+        private static final JsonNode getPropertyType(ITypeInfo typeInfo) {
+            // TODO Although technically we can just always accept strings, using proper types based on the type of as.userObject(),
+            //      for example booleans, might result in a better user experience. However, we do then need to convert back to string
+            //      when generating the fcli command to be executed, which in most cases can likely be just toString() or similar, but
+            //      arrays/collections may need to be converted to comma-separated string.
+            var type = typeInfo.getType();
+            
+            // GitHub Copilot Eclipse plugin doesn't seem to like 'array' or 'enum' types, so returning 'string' for those for now.
+            // Symptoms include Copilot preferences not listing any MCP tools (even from other MCP servers), and no response to chat messages.
+            
+            /* 
+            if ( typeInfo.isArray() || typeInfo.isCollection() ) {
+                return JsonHelper.getObjectMapper().createObjectNode()
+                        .put("type", "array");
+                        .set("items", 
+                            JsonHelper.getObjectMapper().createObjectNode().set("type", getPropertyType(typeInfo.getAuxiliaryTypeInfos().get(0))));
+            }
+            */
+            if ( typeInfo.isArray() || typeInfo.isCollection() ) { return new TextNode("string"); }
+            if (typeInfo.isBoolean()) { return new TextNode("boolean"); }
+            if (type==Integer.class || type==int.class ) { return new TextNode("integer"); }
+            if (type==Number.class || type==float.class || type==double.class) { return new TextNode("number"); }
+            //if (typeInfo.isEnum()) { return JsonHelper.getObjectMapper().createObjectNode().set("enum", JsonHelper.toArrayNode(typeInfo.getEnumConstantNames().toArray(String[]::new))); }
+            return new TextNode("string");
+        }
+    
+        private static String getDescription(ArgSpec argSpec) {
+            String[] descElts = argSpec.description(); 
+            return descElts==null || descElts.length<1 ? "" : String.join(" ", descElts);
+        }
     }
     
-    private static final boolean include(ArgSpec as) {
-        return includeAnnotatedElement(as.userObject());
+    @RequiredArgsConstructor
+    private static final class PositionalParamToolSpecArgHelper extends AbstractArgSpecToolSpecArgHelper {
+        @Getter private final PositionalParamSpec argSpec;
+        @Override
+        protected String getName() {
+           return ((Field)argSpec.userObject()).getName();
+        }
+        @Override
+        protected String combineFcliCmdArgs(String name, Stream<String> values) {
+            return values.map(v->"\""+v+"\"").collect(Collectors.joining(" "));
+        }
     }
     
-    private static final boolean includeAnnotatedElement(Object o) {
-        return JavaHelper.as(o, AnnotatedElement.class)
-                .map(e->!e.isAnnotationPresent(MCPIgnore.class))
-                .orElse(true);
-    }
-
-    private static final void addProperty(OptionSpec o, LinkedHashMap<String, Object> properties, ArrayList<String> required) {
-        properties.put(o.longestName(), createProperty(o));
-        if ( o.required() ) {
-            required.add(o.longestName());
+    @RequiredArgsConstructor
+    private static final class OptionToolSpecArgHelper extends AbstractArgSpecToolSpecArgHelper {
+        @Getter private final OptionSpec argSpec;
+        @Override
+        protected String getName() {
+            return argSpec.longestName();
+        }
+        @Override
+        protected String combineFcliCmdArgs(String name, Stream<String> values) {
+            return String.format("\"%s=%s\"", name, values.collect(Collectors.joining(",")));
         }
     }
 }

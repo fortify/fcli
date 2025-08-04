@@ -19,6 +19,7 @@ import java.util.concurrent.Callable;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
 
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
@@ -122,5 +123,9 @@ public class PicocliSpecHelper {
     
     public static final Object userObject(CommandSpec spec) {
         return spec==null ? null : spec.userObject();
+    }
+    
+    public static final boolean canCollectRecords(CommandSpec spec) {
+        return JavaHelper.as(spec.userObject(), IOutputHelperSupplier.class).isPresent();
     }
 }
