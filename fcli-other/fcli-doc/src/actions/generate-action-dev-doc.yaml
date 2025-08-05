@@ -102,7 +102,31 @@ steps:
         # Store current type in `jsonTypesByName` variable, indexed by name, for later reference 
         - var.set:
             jsonTypesByName.${jsonType.name}: ${jsonType}
-      
+
+   # Get SpEL Functions
+  - var.set:
+      schema: ${#spelFunctionSchema()}
+
+  - records.for-each:
+     from: ${schema.methods}
+     record.var-name: method
+     do:
+        - var.rm:
+            - paramTableRows
+        - if: ${method.params != null && method.params.size() > 0}
+          records.for-each:
+              from: ${method.params}
+              record.var-name: param
+              do:
+                 - var.set:
+                    paramTableRows..: "${param.type} ${param.name} - ${param.description}"
+                          
+        - var.set:
+           method.paramTableRows: ${paramTableRows}
+           funcDescriptions..:
+             fmt: funcDescriptionSection
+             value: ${method}
+                       
   - out.write:
       ${cli.outputFile}: {fmt: result}
 
@@ -111,6 +135,8 @@ steps:
 formatters:
   result: |
     = Fcli Action Development Guide
+    :toc:
+    :toclevels: 4
     
     [%autowidth]
     |===
@@ -276,6 +302,9 @@ formatters:
     ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java[FoDActionSpelFunctions] (only available for actions run through `fcli fod action run`)
     ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java[SSCActionSpelFunctions] (only available for actions run through `fcli ssc action run`)
     
+    \n
+    ${#join("\n\n", funcDescriptions)}
+    
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
   formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!fcli-action-schema-url!!!',#fcliBuildProperties().fcliActionSchemaUrl)+'\n----\n']))} 
   propertyTable: |
@@ -310,5 +339,20 @@ formatters:
     
     ${#isBlank(formattedSampleSnippets)?'':'*Supported properties*'}
     ${propertyTable}
+  funcDescriptionSection: |
+    ==== `${name?:'-'}`
+    [%noheader,%autowidth.stretch]
+    |===
+    |**Signature: `${signature}`**
+    |${description}
+              
+    a|*Parameters:*
+    [%noheader,%autowidth.stretch]
+    !===
+    ${'!' + (paramTableRows != null ? #join('\n\n!', paramTableRows) : 'NA')}
+    !===
+    a|*Returns:*
+    ${returns != null ? returns.description : ''}
+    |===
     
     

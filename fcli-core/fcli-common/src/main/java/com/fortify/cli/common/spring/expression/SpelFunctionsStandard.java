@@ -22,9 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.schema.annotations.MethodDescription;
-import com.fortify.cli.common.action.schema.annotations.ParamDescription;
-import com.fortify.cli.common.action.schema.annotations.ReturnDescription;
+import com.fortify.cli.common.action.schema.annotations.MethodDescriptor;
+import com.fortify.cli.common.action.schema.annotations.ParamDescriptor;
+import com.fortify.cli.common.action.schema.annotations.ReturnDescriptor;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
@@ -38,32 +38,32 @@ import lombok.NoArgsConstructor;
 public class SpelFunctionsStandard {
     private static final DateTimePeriodHelper PeriodHelper = DateTimePeriodHelper.all();
     
-    @MethodDescription("Checks whether debug logging is currently enabled.")
-    public static final @ReturnDescription("`true` if debug logging is enabled; `false` otherwise") boolean isDebugEnabled() {
+    @MethodDescriptor("Checks whether debug logging is currently enabled.")
+    public static final @ReturnDescriptor("`true` if debug logging is enabled; `false` otherwise") boolean isDebugEnabled() {
         return DebugHelper.isDebugEnabled();
     }
 
-	@MethodDescription("Generates a new random UUID (Universally Unique Identifier) as a string.")
-	public static final @ReturnDescription("a randomly generated UUID string in standard 36-character format") String uuid() {
+	@MethodDescriptor("Generates a new random UUID (Universally Unique Identifier) as a string.")
+	public static final @ReturnDescriptor("a randomly generated UUID string in standard 36-character format") String uuid() {
 		return UUID.randomUUID().toString();
 	}
     
-	@MethodDescription("Formats a string using the specified format string and arguments, "
+	@MethodDescriptor("Formats a string using the specified format string and arguments, "
 			+ "returning the formatted string.")
-	public static final @ReturnDescription("the formatted string resulting from applying `fmt` to the `input` arguments") String fmt(
-			@ParamDescription("the format string") String fmt,
-			@ParamDescription("the arguments referenced by the format specifiers in the format string") Object... input) {
+	public static final @ReturnDescriptor("the formatted string resulting from applying `fmt` to the `input` arguments") String fmt(
+			@ParamDescriptor("the format string") String fmt,
+			@ParamDescriptor("the arguments referenced by the format specifiers in the format string") Object... input) {
 		return String.format(fmt, input);
 	}
     
-	@MethodDescription("Parses the given string `s` into an {@link OffsetDateTime}. "
-			+ "If the string can be parsed as an OffsetDateTime, it is returned directly. "
-			+ "If parsing as an OffsetDateTime fails, the string is parsed as a {@link LocalDate}, "
-			+ "and the resulting date is converted to an OffsetDateTime at the start of the day with UTC offset. "
-			+ "If the input string `s` is `null`, this method returns `null`.")
-	public static final @ReturnDescription("the parsed {@link OffsetDateTime} instance representing the date/time encoded in the string, "
-			+ "or `null` if `s` is `null`") OffsetDateTime date(
-					@ParamDescription("the string to parse into an OffsetDateTime; may be `null`") String s) {
+	@MethodDescriptor("Parses the given string into an `OffsetDateTime`. "
+			+ "If the string can be parsed as an `OffsetDateTime`, it is returned directly. "
+			+ "If parsing as an `OffsetDateTime` fails, the string is parsed as a `LocalDate`, "
+			+ "and the resulting date is converted to an `OffsetDateTime` at the start of the day with UTC offset. "
+			+ "If the input string is `null`, this method returns `null`.")
+	public static final @ReturnDescriptor("the parsed `OffsetDateTime` instance representing the date/time encoded in the string, "
+			+ "or `null` if input is `null`") OffsetDateTime date(
+					@ParamDescriptor("the string to parse into an `OffsetDateTime`; may be `null`") String s) {
 		if (s == null) {
 			return null;
 		}
@@ -77,14 +77,14 @@ public class SpelFunctionsStandard {
 		return dt;
 	}
     
-	@MethodDescription("Returns the current {@link OffsetDateTime}, optionally adjusted by a period string. "
+	@MethodDescriptor("Returns the current `OffsetDateTime`, optionally adjusted by a period string. "
 			+ "If no argument is provided or the argument is blank, returns the current date-time. "
 			+ "If a single argument starting with '+' is provided, returns the current date-time plus the specified period. "
 			+ "If a single argument starting with '-' is provided, returns the current date-time minus the specified period. "
 			+ "If more than one argument is provided, or if the period format is invalid, an exception is thrown.")
-	public static final @ReturnDescription("the current {@link OffsetDateTime} adjusted by the given period, "
+	public static final @ReturnDescriptor("the current `OffsetDateTime` adjusted by the given period, "
 			+ "or the current date-time if no valid period is provided") OffsetDateTime now(
-					@ParamDescription("an optional single-element array with a period string "
+					@ParamDescriptor("an optional single-element array with a period string "
 							+ "starting with '+' or '-' to adjust the current time") String... s) {
 		if (s != null && s.length > 1) {
 			throw new FcliSimpleException("#now(period) only takes a single argument");
@@ -99,19 +99,19 @@ public class SpelFunctionsStandard {
 		}
 	}
     
-	@MethodDescription("Retrieves the contents of a variable by its name from the FCLI variable helper. "
+	@MethodDescriptor("Retrieves the contents of a variable by its name from the FCLI variable helper. "
 			+ "The retrieval enforces that the variable must exist, throwing an error if not found.")
-	public static final @ReturnDescription("the {@link JsonNode} contents of the variable identified by `name`") JsonNode var(
-			@ParamDescription("the name of the variable to retrieve; must not be null or empty") String name) {
+	public static final @ReturnDescriptor("the `JsonNode` contents of the variable identified by argument") JsonNode var(
+			@ParamDescriptor("the name of the variable to retrieve; must not be null or empty") String name) {
 		return FcliVariableHelper.getVariableContents(name, true);
 	}
     
-	@MethodDescription("Retrieves the value of the specified environment variable by name. "
-			+ "Throws an exception if the provided variable name is blank or null. "
+	@MethodDescriptor("Retrieves the value of the specified environment variable by name. "
+			+ "Throws an exception if the provided variable name is blank or `null`. "
 			+ "If the environment variable exists but its value is blank, this method returns `null`.")
-	public static final @ReturnDescription("the value of the environment variable identified by `name`, "
+	public static final @ReturnDescriptor("the value of the environment variable identified by argument, "
 			+ "or `null` if the environment variable is not set or its value is blank") String env(
-					@ParamDescription("the name of the environment variable to retrieve; must not be blank or null") String name) {
+					@ParamDescriptor("the name of the environment variable to retrieve; must not be blank or `null`") String name) {
 		if (StringUtils.isBlank(name)) {
 			throw new FcliSimpleException("Environment variable name passed to #env may not be null");
 		}
@@ -120,15 +120,15 @@ public class SpelFunctionsStandard {
 		return StringUtils.isBlank(result) ? null : result;
 	}
 
-	@MethodDescription("Encrypts the given string using the configured encryption helper.")
-	public static final @ReturnDescription("the encrypted form of the input string") String encrypt(
-			@ParamDescription("the string to encrypt") String s) {
+	@MethodDescriptor("Encrypts the given string using the configured encryption helper.")
+	public static final @ReturnDescriptor("the encrypted form of the input string") String encrypt(
+			@ParamDescriptor("the string to encrypt") String s) {
 		return EncryptionHelper.encrypt(s);
 	}
 
-	@MethodDescription("Decrypts the given encrypted string using the configured decryption helper.")
-	public static final @ReturnDescription("the decrypted form of the input string") String decrypt(
-			@ParamDescription("the encrypted string to decrypt") String s) {
+	@MethodDescriptor("Decrypts the given encrypted string using the configured decryption helper.")
+	public static final @ReturnDescriptor("the decrypted form of the input string") String decrypt(
+			@ParamDescriptor("the encrypted string to decrypt") String s) {
 		return EncryptionHelper.decrypt(s);
 	}
     

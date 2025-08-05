@@ -31,6 +31,7 @@ import com.fortify.cli.common.action.model.IMapKeyAware;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpressionKeySerializer;
+import com.fortify.cli.common.util.StringHelper;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -93,12 +94,12 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     protected final String getEntryAsString(Object value) {
         if ( value==null ) { return null; }
         try {
-			return String.format("%s%s:\n%s", value.getClass().getSimpleName(),
+        	return StringHelper.indent(String.format("%s%s:\n%s", value.getClass().getSimpleName(),
 					value instanceof IMapKeyAware<?> ? String.format(" (%s)", ((IMapKeyAware<?>) value).getKey()) : "",
-					yamlObjectMapper.writeValueAsString(value)).indent(4);
+					yamlObjectMapper.writeValueAsString(value)), "    ");
         } catch ( Exception e ) {
-			return String.format("(Fallback to unformatted: %s: %s)\n%s", e.getClass().getSimpleName(), e.getMessage(),
-					value.toString()).indent(2);
+			return StringHelper.indent(String.format("(Fallback to unformatted: %s: %s)\n%s", e.getClass().getSimpleName(), e.getMessage(),
+					value.toString()), "  ");
         }
     }
     

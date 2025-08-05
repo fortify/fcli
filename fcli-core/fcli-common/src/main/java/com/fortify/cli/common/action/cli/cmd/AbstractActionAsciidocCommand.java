@@ -37,6 +37,7 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.FcliBuildProperties;
+import com.fortify.cli.common.util.StringHelper;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
@@ -128,8 +129,8 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     
     private final String generateOptionDescription(IOptionDescriptor descriptor) {
         return String.format("%s::\n%s", 
-                descriptor.getOptionNamesString(", "), 
-                descriptor.getDescription().indent(2));
+                descriptor.getOptionNamesString(", "),
+                StringHelper.indent(descriptor.getDescription(), "  "));
     }
     
     private final String addLinks(String contents) {
