@@ -15,12 +15,13 @@ package com.fortify.cli.util.all_commands.cli.cmd;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,16 +30,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.mcp.MCPIgnore;
-import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
+import com.fortify.cli.common.output.cli.mixin.QueryOptionsArgGroup;
+import com.fortify.cli.common.output.transform.PropertyPathFormatter;
+import com.fortify.cli.common.output.transform.fields.SelectedFieldsTransformer;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
+import com.fortify.cli.common.util.OutputHelper.Result;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
@@ -47,6 +52,7 @@ import com.networknt.schema.utils.StringUtils;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
+import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -116,7 +122,6 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
     }
     
     private static final class CommandToolSpecHelper {
-        private static final ObjectMapper OM = JsonHelper.getObjectMapper();
         private final CommandSpec commandSpec;
         private final CommandToolSpecArgHelper toolSpecArgHelper;
         
@@ -129,7 +134,7 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         public final SyncToolSpecification createToolSpec() {
             return McpServerFeatures.SyncToolSpecification.builder()
                     .tool(createTool())
-                    .callHandler((exchange, request) -> execute(request))
+                    .callHandler(createExecutor()::execute)
                     .build();
         }
         
@@ -145,42 +150,56 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
             var help = commandSpec.commandLine().getHelp();
             return String.format("%s - %s\n%s", commandSpec.qualifiedName(" "), help.header(), help.description());
         }
+        
+        private final ICommandToolSpecExecutor createExecutor() {
+            if ( PicocliSpecHelper.canCollectRecords(commandSpec) ) {
+                if ( toolSpecArgHelper.isPaged() ) {
+                    return new CommandToolSpecPagedRecordsBasedExecutor(toolSpecArgHelper, commandSpec);
+                } else {
+                    return new CommandToolSpecSimpleRecordsBasedExecutor(toolSpecArgHelper, commandSpec);
+                }
+            } else {
+                return new CommandToolSpecPlainExecutor(toolSpecArgHelper, commandSpec);
+            }
+        }
 
-        private final CallToolResult execute(CallToolRequest request) {
-            var cmd = commandSpec.qualifiedName(" ");
-            var args = request==null || request.arguments()==null ? "" : toolSpecArgHelper.getFcliCmdArgs(request.arguments());
-            var fullCmd = String.format("%s %s", cmd, args);
+    }
+    
+    private static interface ICommandToolSpecExecutor {
+        public CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request);
+    }
+    
+    private static abstract class AbstractCommandToolSpecExecutor implements ICommandToolSpecExecutor {
+        protected abstract CommandSpec getCommandSpec();
+        protected abstract CommandToolSpecArgHelper getToolSpecArgHelper();
+        
+        private final String getFullCmd(CallToolRequest request) {
+            var cmd = getCommandSpec().qualifiedName(" ");
+            var args = request==null || request.arguments()==null ? "" : getToolSpecArgHelper().getFcliCmdArgs(request.arguments());
+            return String.format("%s %s", cmd, args);
+        }
+        
+        @Override
+        public CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request) {
+            var fullCmd = getFullCmd(request);
             try {
-                return execute(fullCmd);
+                return execute(exchange, request, fullCmd);
             } catch ( Exception e ) {
                 LOG.error("Exception while running fcli command:\n\t"+fullCmd, e);
                 return new CallToolResult(e.toString(), true);
             }
         }
-
-        private final CallToolResult execute(String fullCmd) {
-            LOG.debug("Executing: "+fullCmd);
-            if ( PicocliSpecHelper.canCollectRecords(commandSpec) ) {
-                return executeWithRecordsCollection(fullCmd);
-            } else {
-                return executePlain(fullCmd);
-            }
-        }
         
-        private CallToolResult executeWithRecordsCollection(String fullCmd) {
-            var records = OM.createArrayNode();
-            var result = FcliCommandExecutorFactory.builder()
-                .cmd(fullCmd)
-                .stdoutOutputType(OutputType.suppress)
-                .stderrOutputType(OutputType.collect)
-                .recordConsumer(records::add)
-                .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
-                               //  used by the LLM to provide suggestions on how to fix.
-                .build().create().execute();
-            return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);
-        }
-
-        private final CallToolResult executePlain(String fullCmd) {
+        protected abstract CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd);
+    }
+    
+    @RequiredArgsConstructor
+    private static final class CommandToolSpecPlainExecutor extends AbstractCommandToolSpecExecutor {
+        @Getter private final CommandToolSpecArgHelper toolSpecArgHelper;
+        @Getter private final CommandSpec commandSpec;
+        
+        @Override
+        protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
             var result = FcliCommandExecutorFactory.builder()
                 .cmd(fullCmd)
                 .stdoutOutputType(OutputType.collect)
@@ -188,16 +207,57 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
                 .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
                                //  used by the LLM to provide suggestions on how to fix.
                 .build().create().execute();
-            return new CallToolResult(OM.valueToTree(result).toPrettyString(), result.getExitCode()!=0);
+            return new CallToolResult(JsonHelper.getObjectMapper().valueToTree(result).toPrettyString(), result.getExitCode()!=0);
+        }
+    }
+    
+    private static abstract class AbstractCommandToolSpecRecordsBasedExecutor extends AbstractCommandToolSpecExecutor {
+        protected Result collectRecords(String fullCmd, ArrayNode records) {
+            return FcliCommandExecutorFactory.builder()
+                .cmd(fullCmd)
+                .stdoutOutputType(OutputType.suppress)
+                .stderrOutputType(OutputType.collect)
+                .recordConsumer(records::add)
+                .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
+                               //  used by the LLM to provide suggestions on how to fix.
+                .build().create().execute();
+        }
+    }
+    
+    @RequiredArgsConstructor
+    private static final class CommandToolSpecSimpleRecordsBasedExecutor extends AbstractCommandToolSpecRecordsBasedExecutor {
+        @Getter private final CommandToolSpecArgHelper toolSpecArgHelper;
+        @Getter private final CommandSpec commandSpec;
+        
+        @Override
+        protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
+            var records = JsonHelper.getObjectMapper().createArrayNode();
+            var result = collectRecords(fullCmd, records);
+            return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);
+        }
+    }
+    
+    @RequiredArgsConstructor
+    private static final class CommandToolSpecPagedRecordsBasedExecutor extends AbstractCommandToolSpecRecordsBasedExecutor {
+        @Getter private final CommandToolSpecArgHelper toolSpecArgHelper;
+        @Getter private final CommandSpec commandSpec;
+        
+        @Override
+        protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
+            // TODO Add caching & paging
+            var records = JsonHelper.getObjectMapper().createArrayNode();
+            var result = collectRecords(fullCmd, records);
+            return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);
         }
     }
     
     private static final class CommandToolSpecArgHelper {
         private final List<IToolSpecArgHelper> toolSpecArgHelpers;
         @Getter private final JsonSchema schema;
-        //@Getter private final boolean pagingSupported;
+        @Getter private final boolean paged;
         
         public CommandToolSpecArgHelper(CommandSpec spec) {
+            this.paged = spec.name().startsWith("list"); // TODO Improve
             this.toolSpecArgHelpers = createToolSpecArgHelpers(spec);
             this.schema = createSchema(toolSpecArgHelpers);
         }
@@ -215,13 +275,14 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         }
 
         private static void addQueryToolSpecArgHelper(ArrayList<IToolSpecArgHelper> result, CommandSpec spec) {
-            var messageResolver = new CommandSpecMessageResolver(spec);
-            if ( spec.optionsMap().containsKey("--query") ) {
-                String commonQueryFieldsString = messageResolver.getMessageString("mcp.common-query-fields");
-                if ( StringUtils.isNotBlank(commonQueryFieldsString) ) {
-                    result.add(new QueryToolSpecArgHelper(Arrays.asList(commonQueryFieldsString.split(","))));
-                }
+            if ( hasGenericQueryOpt(spec) ) {
+                result.add(new QueryToolSpecArgHelper(spec));
             }
+        }
+
+        private static final boolean hasGenericQueryOpt(CommandSpec spec) {
+            var queryOpt = spec.optionsMap().get("--query"); 
+            return queryOpt!=null && queryOpt.group()!=null && QueryOptionsArgGroup.class.equals(queryOpt.group().typeInfo().getType());
         }
 
         private static <T extends ArgSpec> void addArgSpecHelpers(List<IToolSpecArgHelper> result, List<T> argSpecs, Function<T, IToolSpecArgHelper> factory) {
@@ -232,7 +293,7 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         }
 
         private static final JsonSchema createSchema(List<IToolSpecArgHelper> toolSpecArgHelpers) {
-            var result = new JsonSchema("object", new LinkedHashMap<String, Object>(), new ArrayList<String>(), false, null, null);
+            var result = new JsonSchema("object", new LinkedHashMap<String, Object>(), new ArrayList<String>(), false, new LinkedHashMap<String, Object>(), new LinkedHashMap<String, Object>());
             toolSpecArgHelpers.forEach(h->h.updateSchema(result));
             return result;
         }
@@ -247,38 +308,147 @@ public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
         public String getFcliCmdArgs(Map<String, Object> toolArgs);
     }
     
-    
-    @RequiredArgsConstructor
     private static final class QueryToolSpecArgHelper implements IToolSpecArgHelper {
-        private final List<String> commonQueryFields;
-    
-        @Override
+        private final CommandSpec spec;
+        private final Map<String, String> fieldsBySchemaPropertyName;
+        private final ObjectNode querySchema;
+        
+        public QueryToolSpecArgHelper(CommandSpec spec) {
+            this.spec = spec;
+            this.fieldsBySchemaPropertyName = generateFieldsBySchemaPropertyName(spec);
+            this.querySchema = generateQuerySchema(spec, fieldsBySchemaPropertyName.keySet());
+        }
+        
+        private static final Map<String, String> generateFieldsBySchemaPropertyName(CommandSpec spec) {
+            var result = new LinkedHashMap<String, String>();
+            var fieldsFromTableArgs = PicocliSpecHelper.getMessageString(spec, "output.table.args");
+            var fieldsFromMCPFields = PicocliSpecHelper.getMessageString(spec, "mcp.fields");
+            var fields = Stream.of(fieldsFromTableArgs, fieldsFromMCPFields).filter(StringUtils::isNotBlank).collect(Collectors.joining(","));
+            if ( StringUtils.isNotBlank(fields) ) {
+                SelectedFieldsTransformer.parsePropertyNames(fields)
+                    .entrySet().forEach(e->addFieldBySchemaPropertyName(result, spec, e));
+            }
+            return result;
+        }
+        
+        private static final void addFieldBySchemaPropertyName(LinkedHashMap<String, String> result, CommandSpec spec, Entry<String, String> e) {
+            var fieldName = e.getKey();
+            var schemaPropertyName = e.getValue();
+            if ( StringUtils.isBlank(schemaPropertyName) ) { // Table columns may have empty headers, so we use field name instead
+                schemaPropertyName = fieldName;
+            }
+            schemaPropertyName = schemaPropertyName.replaceAll("String$", ""); // Remove 'String' suffix, like in OutputRecordWriterFactory::addHeader
+            /* TODO Do we want to add entity prefix?
+            if ( !schemaPropertyName.contains(".") ) { // Add entity name, for example 'name' becomes 'appversion.name'
+                var entityName = spec.name().startsWith("list-") 
+                        ? spec.name().replaceFirst("^list-", "")
+                        : spec.parent()!=null
+                          ? spec.parent().name()
+                          : null;
+                if ( StringUtils.isNotBlank(entityName) ) {
+                    var singularEntityName = entityName.replaceAll("s$", "");
+                    if ( !schemaPropertyName.toLowerCase().startsWith(singularEntityName.toLowerCase())) {
+                        schemaPropertyName = String.format("%s.%s", singularEntityName, schemaPropertyName);
+                    }
+                }
+            }
+            */
+            schemaPropertyName = schemaPropertyName.replaceAll("[-_]", "."); // Replace dashes and underscores by '.'
+            result.put(schemaPropertyName, fieldName);
+        }
+        
+        private static final ObjectNode generateQuerySchema(CommandSpec spec, Set<String> schemaPropertyNames) {
+            var properties = JsonHelper.getObjectMapper().createObjectNode();
+            schemaPropertyNames.forEach(p->properties.set(p, getPropertySchema(spec, p)));
+            return JsonHelper.getObjectMapper().createObjectNode()
+                    .put("type", "object")
+                    .put("description", "TODO")
+                    .put("title", "TODO")
+                    .set("properties", properties);
+        }
+
+        @SneakyThrows
+        private static final ObjectNode getPropertySchema(CommandSpec spec, String schemaPropertyName) {
+            var schemaString = getMessageString(spec, schemaPropertyName, "schema", null);
+            if ( schemaString==null ) {
+                schemaString = generatePropertySchemaString(spec, schemaPropertyName);
+            }
+            return (ObjectNode)JsonHelper.getObjectMapper().readTree(schemaString);
+        }
+
+        private static final String generatePropertySchemaString(CommandSpec spec, String schemaPropertyName) {
+            var humanReadableName = PropertyPathFormatter.humanReadable(schemaPropertyName);
+            return String.format("""
+                {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "regex"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "%s",
+                  "description": "%s"
+                }
+                """, 
+                  getMessageString(spec, schemaPropertyName, "title", humanReadableName), 
+                  getMessageString(spec, schemaPropertyName, "description", getPropertyDescription(humanReadableName))
+                );
+        }
+
+        private static String getPropertyDescription(String humanReadableName) {
+            return String.format("Match %s against the given regular expression", humanReadableName);
+        }
+
+        private static final String getMessageString(CommandSpec spec, String schemaPropertyName, String name, String defaultValue) {
+            var result = PicocliSpecHelper.getMessageString(spec, String.format("mcp.%s.%s", schemaPropertyName, name));
+            return StringUtils.isNotBlank(result) ? result : defaultValue;
+        }
+
+        @Override @SneakyThrows
         public void updateSchema(JsonSchema schema) {
-            commonQueryFields.forEach(fieldName->schema.properties().put(getToolArgName(fieldName), 
-                    JsonHelper.getObjectMapper().createObjectNode()
-                    .put("type", "regex").put("description", getToolArgDescription(fieldName))));
-        }
-        
-        public static final String getToolArgName(String fieldName) {
-            return String.format("--match-%s", fieldName);
-        }
-        
-        public static final String getToolArgDescription(String fieldName) {
-            return String.format("Return only records for which the %s field matches the given regular expression", fieldName);
+            var defName = PropertyPathFormatter.pascalCase(String.format("%s.query", spec.qualifiedName(".").replaceAll("[-_]", "."))); 
+            schema.properties().put("--query", JsonHelper.getObjectMapper().readTree(String.format("""
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/%s"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Query",
+                  "description": "Filter results of this MCP tool using the given queries."
+                }    
+                """, defName)));
+            schema.defs().put(defName, querySchema);
         }
         
         @Override
         public String getFcliCmdArgs(Map<String, Object> toolArgs) {
             var queries = new ArrayList<String>();
-            for ( var fieldName : commonQueryFields ) {
-                var value = toolArgs.get(getToolArgName(fieldName));
-                if ( value!=null ) {
-                    queries.add(String.format("%s matches '%s'", fieldName, value));
+            var queryObj = toolArgs.get("--query");
+            if ( queryObj != null ) {
+                if ( queryObj instanceof Map ) {
+                    ((Map<?,?>)queryObj).entrySet().forEach(e->addQuery(queries, (String)e.getKey(), (String)e.getValue() ));
+                } else if ( queryObj instanceof ObjectNode ) {
+                    ((ObjectNode)queryObj).properties().forEach(e->addQuery(queries, e.getKey(), e.getValue().asText()));
+                } else {
+                    throw new FcliSimpleException("Invalid type (%s) for --query; expected object", queryObj.getClass().getSimpleName());
                 }
             }
             return queries.isEmpty() ? "" : String.format("\"--query=%s\"", String.join(" && ", queries));
         }
-        
+
+        private final void addQuery(ArrayList<String> queries, String schemaPropertyName, String value) {
+            var fieldName = fieldsBySchemaPropertyName.getOrDefault(schemaPropertyName, schemaPropertyName);
+            queries.add(String.format("%s matches '%s'", fieldName, value));
+        }
     }
     
     private static abstract class AbstractArgSpecToolSpecArgHelper implements IToolSpecArgHelper { 
