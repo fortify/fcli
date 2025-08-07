@@ -83,7 +83,7 @@ public class AuditFPR {
         FilterSet activeFilterSet = null;
 
         if (ignoreFilters) {
-            LOG.info("User has chosen to ignore all filter sets.");
+            logger.progress("User has chosen to ignore all filter sets.");
         } else if (filterSetNameOrId != null && !filterSetNameOrId.trim().isEmpty()) {
             LOG.info("Attempting to find user-specified filter set by name or ID: '{}'", filterSetNameOrId);
             if (parsedData.fprInfo.getFilterTemplate() != null) {
@@ -106,9 +106,9 @@ public class AuditFPR {
         }
 
         if (activeFilterSet != null) {
-            LOG.info("Applying filters from active FilterSet: '{}' (ID: {})", activeFilterSet.getTitle(), activeFilterSet.getId());
+            logger.progress("Applying filters from active FilterSet: %s (ID: %s)", activeFilterSet.getTitle(), activeFilterSet.getId());
         } else if (!ignoreFilters) {
-            LOG.info("No active filter set specified or found. Auditing all applicable issues.");
+            logger.progress("No active filter set specified or found. Auditing all applicable issues.");
         }
 
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
