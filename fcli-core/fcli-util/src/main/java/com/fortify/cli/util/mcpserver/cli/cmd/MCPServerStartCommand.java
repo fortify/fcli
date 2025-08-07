@@ -14,6 +14,7 @@ package com.fortify.cli.util.mcpserver.cli.cmd;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME) 
@@ -90,9 +92,19 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     private static final boolean ignore(CommandSpec cs) {
         return ReflectionHelper.hasAnnotation(cs, MCPIgnore.class)
                 || !PicocliSpecHelper.isRunnable(cs) 
-                || PicocliSpecHelper.isHiddenSelfOrParent(cs);
+                || PicocliSpecHelper.isHiddenSelfOrParent(cs)
+                || hasRequiredSensitiveArgs(cs);
     }
     
+    private static final boolean hasRequiredSensitiveArgs(CommandSpec cs) {
+        return Stream.concat(cs.options().stream(), cs.positionalParameters().stream())
+                .anyMatch(as->isRequiredSensitiveArg(as));
+    }
+
+    private static final boolean isRequiredSensitiveArg(ArgSpec as) {
+       return as.required() && CommandToolSpecArgHelper.isSensitive(as);
+    }
+
     private static final class CommandToolSpecHelper {
         private final CommandSpec commandSpec;
         private final CommandToolSpecArgHelper toolSpecArgHelper;

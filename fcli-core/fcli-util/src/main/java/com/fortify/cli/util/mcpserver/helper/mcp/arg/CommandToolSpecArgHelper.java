@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPIgnore;
 import com.fortify.cli.common.output.cli.mixin.QueryOptionsArgGroup;
 import com.fortify.cli.common.util.ReflectionHelper;
@@ -76,6 +78,11 @@ public final class CommandToolSpecArgHelper {
     }
     
     private static final boolean ignore(ArgSpec as) {
-        return ReflectionHelper.hasAnnotation(as.userObject(), MCPIgnore.class);
+        return ReflectionHelper.hasAnnotation(as.userObject(), MCPIgnore.class) || isSensitive(as);
+    }
+    
+    public static final boolean isSensitive(ArgSpec as) {
+        return (as.interactive() && !as.echo()) 
+            || ReflectionHelper.getAnnotationValue(as.userObject(), MaskValue.class, MaskValue::sensitivity, ()->null)==LogSensitivityLevel.high;
     }
 }

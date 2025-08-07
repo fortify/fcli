@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
