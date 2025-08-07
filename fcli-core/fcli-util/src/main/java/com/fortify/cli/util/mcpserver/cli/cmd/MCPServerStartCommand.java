@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +63,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
                 .build();
 
         LOG.info("Fcli MCP server running on stdio");
+        System.err.println("Fcli MCP server running on stdio. Hit Ctrl-C to exit.");
         
         // Keep server running forever until killed
         while(true) {
@@ -131,8 +133,13 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         }
         
         private final String buildToolDescription() {
-            var help = commandSpec.commandLine().getHelp();
-            return String.format("%s - %s\n%s", commandSpec.qualifiedName(" "), help.header(), help.description());
+            var cmdHeader = commandSpec.commandLine().getHelp().header();
+            // Regular fcli usage help might show options/description contents that doesn't 
+            // apply to LLM context (for example because some options are not rendered or 
+            // use a different syntax, like --query). As such, we only include an MCP-specific
+            // description (if defined).
+            var mcpToolDescription = PicocliSpecHelper.getMessageString(commandSpec, "mcp.description");
+            return StringUtils.isBlank(mcpToolDescription) ? cmdHeader : String.format("%s\n%s", cmdHeader, mcpToolDescription);
         }
         
         private final ICommandToolSpecExecutor createExecutor() {
