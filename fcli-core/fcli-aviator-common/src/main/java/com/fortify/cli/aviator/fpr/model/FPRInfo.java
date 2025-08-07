@@ -2,10 +2,12 @@ package com.fortify.cli.aviator.fpr.model;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -14,7 +16,6 @@ import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
-import com.fortify.cli.aviator.util.StringUtil;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +26,7 @@ import lombok.Setter;
 public class FPRInfo {
     private String uuid;
     private String buildId;
+    private String FPRName;
     private String sourceBasePath;
     private int numberOfFiles;
     private int scanTime;
@@ -34,7 +36,8 @@ public class FPRInfo {
 
     Logger logger = LoggerFactory.getLogger(FPRInfo.class);
 
-    public FPRInfo(Path extractedPath) {
+    public FPRInfo(Path extractedPath, Path FPRPath) {
+        FPRName = String.valueOf(FPRPath.getFileName());
         try {
             extractInfoFromAuditFvdl(extractedPath);
         } catch (Exception e) {
@@ -90,5 +93,15 @@ public class FPRInfo {
             logger.warn("WARN: Error parsing integer: {}", content);
             return 0;
         }
+    }
+
+    public Optional<FilterSet> getDefaultEnabledFilterSet() {
+        if (filterTemplate == null || filterTemplate.getFilterSets() == null) {
+            return Optional.empty();
+        }
+
+        return filterTemplate.getFilterSets().stream()
+                .filter(FilterSet::isEnabled)
+                .findFirst();
     }
 }

@@ -1,6 +1,5 @@
 package com.fortify.cli.aviator.fpr.processor;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilterOutputStream;

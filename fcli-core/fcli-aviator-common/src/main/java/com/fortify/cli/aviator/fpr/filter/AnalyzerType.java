@@ -38,6 +38,7 @@ public enum AnalyzerType {
                 return type.legacyName;
             }
         }
+        // Default case: uncapitalize if not found
         return uncapitalize(analyzer);
     }
 
@@ -47,9 +48,11 @@ public enum AnalyzerType {
                 return type.canonicalName;
             }
         }
+        // Default case: capitalize if not found
         return capitalize(analyzerName);
     }
 
+    // Assuming these helper methods exist in your codebase
     private static String uncapitalize(String str) {
         if (str == null || str.isEmpty()) {
             return str;

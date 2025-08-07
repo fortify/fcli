@@ -1,5 +1,28 @@
 package com.fortify.cli.aviator.fpr.processor;
 
+import com.fortify.cli.aviator.fpr.filter.Filter;
+import com.fortify.cli.aviator.fpr.filter.FilterSet;
+import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
+import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
+import com.fortify.cli.aviator.fpr.filter.PrimaryTag;
+import com.fortify.cli.aviator.fpr.filter.TagDefinition;
+import com.fortify.cli.aviator.fpr.filter.TagValue;
+import com.fortify.cli.aviator.util.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,30 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import com.fortify.cli.aviator.fpr.filter.Filter;
-import com.fortify.cli.aviator.fpr.filter.FilterSet;
-import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
-import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
-import com.fortify.cli.aviator.fpr.filter.PrimaryTag;
-import com.fortify.cli.aviator.fpr.filter.TagDefinition;
-import com.fortify.cli.aviator.fpr.filter.TagValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.fortify.cli.aviator.util.Constants;
 
 public class FilterTemplateParser {
 
@@ -52,11 +51,15 @@ public class FilterTemplateParser {
             Optional<Path> filterTemplatePath = findFilterTemplatePath(extractedPath);
 
             if (!filterTemplatePath.isPresent()) {
-                logger.error("filtertemplate.xml not found in FPR");
+                logger.info("filtertemplate.xml not found in FPR");
                 return Optional.empty();
             }
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             factory.setFeature("http://xml.org/sax/features/validation", false);
             factory.setNamespaceAware(true);
@@ -185,6 +188,9 @@ public class FilterTemplateParser {
     private void saveDocument(Document doc, File outputFile) {
         try {
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            transformerFactory.setFeature("http://javax.xml.XMLConstants/feature/secure-processing", true);
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
             Transformer transformer = transformerFactory.newTransformer();
 
             transformer.setOutputProperty(OutputKeys.VERSION, "1.0");
@@ -208,9 +214,9 @@ public class FilterTemplateParser {
             StreamResult result = new StreamResult(outputFile);
             transformer.transform(source, result);
 
-            logger.debug("Successfully saved updated filtertemplate.xml");
+            logger.info("Successfully saved updated filtertemplate.xml");
         } catch (Exception e) {
-            logger.error("Error saving XML document: {} " , e.getMessage(), e);
+            logger.error("Error saving XML document: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to save XML document", e);
         }
     }

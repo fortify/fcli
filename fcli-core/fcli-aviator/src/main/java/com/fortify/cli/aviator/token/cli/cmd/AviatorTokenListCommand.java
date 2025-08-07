@@ -5,7 +5,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import com.fortify.cli.aviator.util.StringUtil;
-import com.fortify.grpc.token.ListTokensByDeveloperRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

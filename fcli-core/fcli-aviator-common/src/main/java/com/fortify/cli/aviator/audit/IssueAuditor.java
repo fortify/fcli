@@ -16,10 +16,15 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.fpr.filter.Filter;
+import com.fortify.cli.aviator.fpr.filter.FilterSet;
+import com.fortify.cli.aviator.fpr.filter.TagDefinition;
+import com.fortify.cli.aviator.fpr.filter.VulnerabilityFilterer;
+import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,17 +35,11 @@ import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.util.IssueOrderingComparator;
-import com.fortify.cli.aviator.fpr.model.Vulnerability;
-import com.fortify.cli.aviator.fpr.filter.Filter;
-import com.fortify.cli.aviator.fpr.filter.FilterSet;
-import com.fortify.cli.aviator.fpr.filter.TagDefinition;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
-import com.fortify.cli.aviator.util.StringUtil;
 
 
 public class IssueAuditor {
@@ -61,6 +60,8 @@ public class IssueAuditor {
     private final AuditProcessor auditProcessor;
     private final Map<String, AuditIssue> auditIssueMap;
     private final FPRInfo fprInfo;
+    private final FilterSet activeFilterSet; // <-- ADD THIS NEW FIELD
+
 
     private final TagDefinition analysisTag;
     private TagDefinition humanAuditTag;
@@ -68,7 +69,7 @@ public class IssueAuditor {
 
     private final IAviatorLogger logger;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion , IAviatorLogger logger) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion, FilterSet activeFilterSet , IAviatorLogger logger) {
         this.logger = logger;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
@@ -79,6 +80,7 @@ public class IssueAuditor {
         this.auditProcessor = auditProcessor;
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
+        this.activeFilterSet = activeFilterSet;
         this.SSCApplicationName = SSCApplicationName;
         this.SSCApplicationVersion = SSCApplicationVersion;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
@@ -137,8 +139,8 @@ public class IssueAuditor {
         LOG.debug("Initialized tags - prediction: {}, status: {}, human: {}",
                 aviatorPredictionTag, aviatorStatusTag, humanAuditTag);
 
-        if (fprInfo.getDefaultEnabledFilterSet() != null) {
-            vulnerabilities = filterVulnerabilities(vulnerabilities, fprInfo.getDefaultEnabledFilterSet());
+        if (this.activeFilterSet != null) {
+            this.vulnerabilities = filterVulnerabilities(this.vulnerabilities, this.activeFilterSet);
         }
 
         userPrompts.clear();
@@ -330,234 +332,54 @@ public class IssueAuditor {
         return false;
     }
 
+    /**
+     * Filters a list of vulnerabilities using the specified FilterSet, accurately
+     * simulating the behavior of Fortify's folder assignment and hide rules by
+     * delegating to the robust VulnerabilityFilterer engine.
+     *
+     * @param vulnerabilities The original list of vulnerabilities to filter.
+     * @param fs              The FilterSet containing the filter rules.
+     * @return A new list containing only the visible vulnerabilities that were assigned to a folder.
+     */
     public List<Vulnerability> filterVulnerabilities(List<Vulnerability> vulnerabilities, FilterSet fs) {
-        if (fs == null || vulnerabilities == null) {
+        if (fs == null || fs.getFilters() == null || fs.getFilters().isEmpty() || vulnerabilities == null) {
             return vulnerabilities;
         }
 
-        Set<Vulnerability> resultSet = new HashSet<>();
+        List<Filter> folderFilters = fs.getFilters().stream()
+                .filter(f -> "setFolder".equalsIgnoreCase(f.getAction()))
+                .collect(Collectors.toList());
 
-        for (Filter filter : fs.getFilters()) {
-            String actionParam = filter.getActionParam();
-            String query = filter.getQuery();
-            String action = filter.getAction();
+        List<Filter> hideFilters = fs.getFilters().stream()
+                .filter(f -> "hide".equalsIgnoreCase(f.getAction()))
+                .collect(Collectors.toList());
 
-            if ("true".equalsIgnoreCase(actionParam)) {
-                if ("setFolder".equalsIgnoreCase(action)) {
-                    processSpecialQuery(vulnerabilities, query, resultSet, true);
-                } else if ("hide".equalsIgnoreCase(action)) {
-                    processSpecialQuery(vulnerabilities, query, resultSet, false);
-                }
-            } else if (StringUtil.isValidUUID(actionParam)) {
-                if ("setFolder".equalsIgnoreCase(action)) {
-                    processAdvancedQuery(vulnerabilities, query, resultSet, true);
-                } else if ("hide".equalsIgnoreCase(action)) {
-                    processAdvancedQuery(vulnerabilities, query, resultSet, false);
-                }
-            }
-        }
-
-        return new ArrayList<>(resultSet);
-    }
-
-    private void processAdvancedQuery(List<Vulnerability> vulnerabilities, String query, Set<Vulnerability> resultSet, boolean shouldAdd) {
-        Pattern fortifyPriorityPattern = Pattern.compile("confidence:\\[(\\d+),(\\d+)]\\s*severity:\\((\\d+),(\\d+)]");
-        Matcher fortifyPriorityMatcher = fortifyPriorityPattern.matcher(query);
-
-        Pattern newPattern = Pattern.compile("confidence:\\[(\\d+(\\.\\d+)?)-(\\d+(\\.\\d+)?)]\\s*AND\\s*\\[fortify priority order]:(\\w+)");
-        Matcher newMatcher = newPattern.matcher(query);
-
-        Pattern fortifyPriorityOrderPattern = Pattern.compile("\\[fortify priority order]:(\\w+)");
-        Matcher fortifyPriorityOrderMatcher = fortifyPriorityOrderPattern.matcher(query);
-
-        if (newMatcher.matches()) {
-            handleNewPatternMatching(vulnerabilities, resultSet, newMatcher, shouldAdd);
-        } else if (fortifyPriorityMatcher.matches()) {
-            handleFortifyPriorityMatching(vulnerabilities, resultSet, fortifyPriorityMatcher, shouldAdd);
-        } else if (fortifyPriorityOrderMatcher.matches()) {
-            handleFortifyPriorityOrderMatching(vulnerabilities, resultSet, fortifyPriorityOrderMatcher, shouldAdd);
+        // STAGE 1: Determine the initial set of candidate vulnerabilities
+        Set<Vulnerability> candidateVulnerabilities = new HashSet<>();
+        if (folderFilters.isEmpty()) {
+            candidateVulnerabilities.addAll(vulnerabilities);
         } else {
-            handleDefaultCase(vulnerabilities, resultSet, shouldAdd);
-        }
-    }
-
-    private void handleFortifyPriorityOrderMatching(List<Vulnerability> vulnerabilities, Set<Vulnerability> resultSet, Matcher matcher, boolean shouldAdd) {
-        String priority = matcher.group(1).toUpperCase();
-
-        vulnerabilities.stream().filter(vuln -> vuln.getPriority() != null && vuln.getPriority().equalsIgnoreCase(priority)).forEach(vuln -> {
-            if (shouldAdd) {
-                resultSet.add(vuln);
-            } else {
-                resultSet.remove(vuln);
-            }
-        });
-    }
-
-    private void handleNewPatternMatching(List<Vulnerability> vulnerabilities, Set<Vulnerability> resultSet, Matcher newMatcher, boolean shouldAdd) {
-        double confidenceMin = Double.parseDouble(newMatcher.group(1));
-        double confidenceMax = Double.parseDouble(newMatcher.group(3));
-        String priority = newMatcher.group(5).toUpperCase();
-
-        vulnerabilities.stream().filter(vuln -> {
-            if (vuln.getConfidence() >= confidenceMin && vuln.getConfidence() <= confidenceMax) {
-                return vuln.getPriority() != null && vuln.getPriority().toUpperCase().equals(priority);
-            }
-            return false;
-        }).forEach(vuln -> {
-            if (shouldAdd) {
-                resultSet.add(vuln);
-            } else {
-                resultSet.remove(vuln);
-            }
-        });
-    }
-
-    private void handleFortifyPriorityMatching(List<Vulnerability> vulnerabilities, Set<Vulnerability> resultSet, Matcher fortifyPriorityMatcher, boolean shouldAdd) {
-        int[] ranges = parseRanges(fortifyPriorityMatcher);
-
-        if (ranges.length != 4) {
-            return;
-        }
-
-        int confidenceMin = ranges[0];
-        int confidenceMax = ranges[1];
-        int severityMin = ranges[2];
-        int severityMax = ranges[3];
-
-        vulnerabilities.stream().filter(vuln -> vuln.getConfidence() >= confidenceMin && vuln.getConfidence() <= confidenceMax && vuln.getInstanceSeverity() > severityMin && vuln.getInstanceSeverity() <= severityMax).forEach(vuln -> {
-            if (shouldAdd) {
-                resultSet.add(vuln);
-            } else {
-                resultSet.remove(vuln);
-            }
-        });
-    }
-
-    private void handleDefaultCase(List<Vulnerability> vulnerabilities, Set<Vulnerability> resultSet, boolean shouldAdd) {
-        vulnerabilities.forEach(vuln -> {
-            if (shouldAdd) {
-                resultSet.add(vuln);
-            } else {
-                resultSet.remove(vuln);
-            }
-        });
-    }
-
-    public static int[] parseRanges(Matcher matcher) {
-        matcher.reset();
-        if (matcher.find()) {
-            return new int[]{Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)), Integer.parseInt(matcher.group(4))};
-        }
-        return new int[0];
-    }
-
-    private void processSpecialQuery(List<Vulnerability> vulnerabilities, String query, Set<Vulnerability> resultSet, boolean shouldAdd) {
-        List<String> conditions = splitQueryIntoConditions(query);
-
-        if (conditions.isEmpty()) {
-            if (shouldAdd) {
-                resultSet.addAll(vulnerabilities);
-            }
-            return;
-        }
-
-        for (Vulnerability vuln : vulnerabilities) {
-            boolean matchesAllConditions = true;
-
-            for (String condition : conditions) {
-                if (!condition.contains(":")) continue;
-
-                String[] parts = condition.split(":", 2);
-                String field = parts[0].trim();
-                String value = parts[1].trim();
-
-                value = value.replace("\\:", ":");
-
-                boolean isNegation = value.startsWith("!");
-                String actualValue = isNegation ? value.substring(1) : value;
-
-                boolean matches;
-                if (field.equalsIgnoreCase("confidence") || field.equalsIgnoreCase("severity")) {
-                    matches = checkRangeMatch(vuln, field, actualValue);
-                } else {
-                    matches = checkFieldMatch(vuln, field, actualValue);
-                }
-
-                if (isNegation) {
-                    matches = !matches;
-                }
-
-                if (!matches) {
-                    matchesAllConditions = false;
-                    break;
-                }
-            }
-
-            if (matchesAllConditions) {
-                if (shouldAdd) {
-                    resultSet.add(vuln);
-                } else {
-                    resultSet.remove(vuln);
-                }
+            for (Filter folderFilter : folderFilters) {
+                // Use the new, correct filter engine
+                List<Vulnerability> matched = VulnerabilityFilterer.filter(vulnerabilities, folderFilter.getQuery());
+                candidateVulnerabilities.addAll(matched);
             }
         }
-    }
 
-    private boolean checkRangeMatch(Vulnerability vuln, String field, String range) {
-        Pattern rangePattern = Pattern.compile("([\\[(])(\\d+(\\.\\d+)?),(\\d+(\\.\\d+)?)([])])");
-        Matcher rangeMatcher = rangePattern.matcher(range);
-
-        if (!rangeMatcher.matches()) {
-            return false;
+        // STAGE 2: Determine which of the candidates should be hidden
+        Set<Vulnerability> hiddenVulnerabilities = new HashSet<>();
+        for (Filter hideFilter : hideFilters) {
+            // Apply the hide filter to the candidate set
+            List<Vulnerability> matchedToHide = VulnerabilityFilterer.filter(new ArrayList<>(candidateVulnerabilities), hideFilter.getQuery());
+            hiddenVulnerabilities.addAll(matchedToHide);
         }
 
-        double value;
-        if (field.equalsIgnoreCase("confidence")) {
-            value = vuln.getConfidence();
-        } else if (field.equalsIgnoreCase("severity")) {
-            value = vuln.getInstanceSeverity();
-        } else {
-            return false;
-        }
+        candidateVulnerabilities.removeAll(hiddenVulnerabilities);
 
-        double min = Double.parseDouble(rangeMatcher.group(2));
-        double max = Double.parseDouble(rangeMatcher.group(4));
-        boolean includeMin = rangeMatcher.group(1).equals("[");
-        boolean includeMax = rangeMatcher.group(5).equals("]");
+        List<Vulnerability> finalResult = new ArrayList<>(candidateVulnerabilities);
+        LOG.info("FilterSet '{}' applied. {} of {} vulnerabilities remain.", fs.getTitle(), finalResult.size(), vulnerabilities.size());
 
-        if (includeMin && includeMax) {
-            return value >= min && value <= max;
-        } else if (includeMin) {
-            return value >= min && value < max;
-        } else if (includeMax) {
-            return value > min && value <= max;
-        } else {
-            return value > min && value < max;
-        }
-    }
-
-    private List<String> splitQueryIntoConditions(String query) {
-        List<String> conditions = new ArrayList<>();
-        Pattern conditionPattern = Pattern.compile("(\\w+):(.*?)(?=\\s\\w+:|$)");
-        Matcher matcher = conditionPattern.matcher(query);
-
-        while (matcher.find()) {
-            conditions.add(matcher.group().trim());
-        }
-
-        return conditions;
-    }
-
-
-    private boolean checkFieldMatch(Vulnerability vuln, String field, String value) {
-        return switch (field.toLowerCase()) {
-            case "audience" ->
-                    vuln.getAudience() != null && vuln.getAudience().toLowerCase().contains(value.toLowerCase());
-            case "analyzer" -> vuln.getAnalyzer() != null && vuln.getAnalyzer().equalsIgnoreCase(value.toLowerCase());
-            case "category" -> vuln.getCategory() != null && vuln.getCategory().equalsIgnoreCase(value.toLowerCase());
-            case "fortify priority order" -> vuln.getPriority() != null && vuln.getPriority().equalsIgnoreCase(value);
-            default -> false;
-        };
+        return finalResult;
     }
 
     private void updateSkippedIssue(UserPrompt userPrompt, String reasonTemplate, int issuesInCategory, int totalIssues) {
