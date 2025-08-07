@@ -10,12 +10,12 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.all_commands.helper.mcp.exec;
+package com.fortify.cli.util.mcpserver.helper.mcp.exec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.util.all_commands.helper.mcp.arg.CommandToolSpecArgHelper;
+import com.fortify.cli.util.mcpserver.helper.mcp.arg.CommandToolSpecArgHelper;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;

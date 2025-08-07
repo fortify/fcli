@@ -10,25 +10,24 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.all_commands.helper.mcp.arg;
+package com.fortify.cli.util.mcpserver.helper.mcp.arg;
 
-import java.lang.reflect.Field;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import picocli.CommandLine.Model.PositionalParamSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 @RequiredArgsConstructor
-public final class PositionalParamToolSpecArgHelper extends AbstractArgSpecToolSpecArgHelper {
-    @Getter private final PositionalParamSpec argSpec;
+public final class OptionToolSpecArgHelper extends AbstractArgSpecToolSpecArgHelper {
+    @Getter private final OptionSpec argSpec;
     @Override
     protected String getName() {
-       return ((Field)argSpec.userObject()).getName();
+        return argSpec.longestName();
     }
     @Override
     protected String combineFcliCmdArgs(String name, Stream<String> values) {
-        return values.map(v->"\""+v+"\"").collect(Collectors.joining(" "));
+        return String.format("\"%s=%s\"", name, values.collect(Collectors.joining(",")));
     }
 }

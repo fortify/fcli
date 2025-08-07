@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.all_commands.helper.mcp.exec;
+package com.fortify.cli.util.mcpserver.helper.mcp.exec;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;

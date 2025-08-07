@@ -10,10 +10,10 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.all_commands.helper.mcp.exec;
+package com.fortify.cli.util.mcpserver.helper.mcp.exec;
 
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util.all_commands.helper.mcp.arg.CommandToolSpecArgHelper;
+import com.fortify.cli.util.mcpserver.helper.mcp.arg.CommandToolSpecArgHelper;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -23,12 +23,13 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Model.CommandSpec;
 
 @RequiredArgsConstructor
-public final class CommandToolSpecSimpleRecordsBasedExecutor extends AbstractCommandToolSpecRecordsBasedExecutor {
+public final class CommandToolSpecPagedRecordsBasedExecutor extends AbstractCommandToolSpecRecordsBasedExecutor {
     @Getter private final CommandToolSpecArgHelper toolSpecArgHelper;
     @Getter private final CommandSpec commandSpec;
     
     @Override
     protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
+        // TODO Add caching & paging
         var records = JsonHelper.getObjectMapper().createArrayNode();
         var result = collectRecords(fullCmd, records);
         return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);

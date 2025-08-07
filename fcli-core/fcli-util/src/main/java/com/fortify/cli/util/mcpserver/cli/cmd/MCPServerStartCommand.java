@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.all_commands.cli.cmd;
+package com.fortify.cli.util.mcpserver.cli.cmd;
 
 import java.time.Duration;
 import java.util.List;
@@ -20,15 +20,16 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
-import com.fortify.cli.util.all_commands.helper.mcp.arg.CommandToolSpecArgHelper;
-import com.fortify.cli.util.all_commands.helper.mcp.exec.CommandToolSpecPagedRecordsBasedExecutor;
-import com.fortify.cli.util.all_commands.helper.mcp.exec.CommandToolSpecPlainExecutor;
-import com.fortify.cli.util.all_commands.helper.mcp.exec.CommandToolSpecSimpleRecordsBasedExecutor;
-import com.fortify.cli.util.all_commands.helper.mcp.exec.ICommandToolSpecExecutor;
+import com.fortify.cli.util.mcpserver.helper.mcp.arg.CommandToolSpecArgHelper;
+import com.fortify.cli.util.mcpserver.helper.mcp.exec.CommandToolSpecPagedRecordsBasedExecutor;
+import com.fortify.cli.util.mcpserver.helper.mcp.exec.CommandToolSpecPlainExecutor;
+import com.fortify.cli.util.mcpserver.helper.mcp.exec.CommandToolSpecSimpleRecordsBasedExecutor;
+import com.fortify.cli.util.mcpserver.helper.mcp.exec.ICommandToolSpecExecutor;
 
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -41,10 +42,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 
-@Command(name = "mcp-server") 
+@Command(name = OutputHelperMixins.Start.CMD_NAME) 
 @MCPIgnore // Doesn't make sense to allow mcp-server command to be called from MCP server
-public class AllCommandsMCPServerCommand extends AbstractRunnableCommand {
-    private static final Logger LOG = LoggerFactory.getLogger(AllCommandsMCPServerCommand.class);
+public class MCPServerStartCommand extends AbstractRunnableCommand {
+    private static final Logger LOG = LoggerFactory.getLogger(MCPServerStartCommand.class);
     @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
     
     public Integer call() throws Exception {

@@ -10,17 +10,16 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.util.all_commands.cli.cmd;
+package com.fortify.cli.util.mcpserver.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "all-commands",
+        name = "mcp-server",
         subcommands = {
-            AllCommandsUsageCommand.class,
-            AllCommandsListCommand.class
+            MCPServerStartCommand.class
         }
 )
-public class AllCommandsCommands extends AbstractContainerCommand {}
+public class MCPServerCommands extends AbstractContainerCommand {}
