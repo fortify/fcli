@@ -30,7 +30,7 @@ public final class CommandToolSpecSimpleRecordsBasedExecutor extends AbstractCom
     @Override
     protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
         var records = JsonHelper.getObjectMapper().createArrayNode();
-        var result = collectRecords(fullCmd, records);
+        var result = collectRecords(fullCmd, records::add);
         return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);
     }
 }

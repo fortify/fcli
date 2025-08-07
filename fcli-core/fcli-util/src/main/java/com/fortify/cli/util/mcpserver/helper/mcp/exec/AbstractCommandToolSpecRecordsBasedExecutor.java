@@ -12,18 +12,20 @@
  */
 package com.fortify.cli.util.mcpserver.helper.mcp.exec;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import java.util.function.Consumer;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
 abstract class AbstractCommandToolSpecRecordsBasedExecutor extends AbstractCommandToolSpecExecutor {
-    protected Result collectRecords(String fullCmd, ArrayNode records) {
+    protected Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer) {
         return FcliCommandExecutorFactory.builder()
             .cmd(fullCmd)
             .stdoutOutputType(OutputType.suppress)
             .stderrOutputType(OutputType.collect)
-            .recordConsumer(records::add)
+            .recordConsumer(recordConsumer)
             .onFail(r->{}) // Continue on non-zero exit code, assuming stdout/stderr shows more info about the error, which in turn can be
                            //  used by the LLM to provide suggestions on how to fix.
             .build().create().execute();

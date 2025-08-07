@@ -36,8 +36,10 @@ public final class CommandToolSpecArgHelper {
     @Getter private final boolean paged;
     
     public CommandToolSpecArgHelper(CommandSpec spec) {
-        this.paged = spec.name().startsWith("list"); // TODO Improve
-        this.toolSpecArgHelpers = createToolSpecArgHelpers(spec);
+        // TODO Improve paged criteria, for example by looking at isSingular() if available, and/or allow 
+        // customizing for individual commands through annotation or resource bundle
+        this.paged = spec.name().startsWith("list");
+        this.toolSpecArgHelpers = createToolSpecArgHelpers(spec, paged);
         this.schema = createSchema(toolSpecArgHelpers);
     }
     
@@ -45,12 +47,19 @@ public final class CommandToolSpecArgHelper {
         return toolSpecArgHelpers.stream().map(h->h.getFcliCmdArgs(toolArgs)).collect(Collectors.joining(" "));
     }
 
-    private static final List<IToolSpecArgHelper> createToolSpecArgHelpers(CommandSpec spec) {
+    private static final List<IToolSpecArgHelper> createToolSpecArgHelpers(CommandSpec spec, boolean paged) {
         var result = new ArrayList<IToolSpecArgHelper>();
         addArgSpecHelpers(result, spec.positionalParameters(), PositionalParamToolSpecArgHelper::new);
         addArgSpecHelpers(result, spec.options(), OptionToolSpecArgHelper::new);
         addQueryToolSpecArgHelper(result, spec);
+        addPagingArgSpecHelper(result, paged);
         return result;
+    }
+
+    private static void addPagingArgSpecHelper(ArrayList<IToolSpecArgHelper> result, boolean paged) {
+        if ( paged ) {
+            result.add(new PagingToolSpecArgHelper());
+        }
     }
 
     private static void addQueryToolSpecArgHelper(ArrayList<IToolSpecArgHelper> result, CommandSpec spec) {

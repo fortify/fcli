@@ -135,7 +135,7 @@ public final class QueryToolSpecArgHelper implements IToolSpecArgHelper {
     @Override @SneakyThrows
     public void updateSchema(JsonSchema schema) {
         var defName = PropertyPathFormatter.pascalCase(String.format("%s.query", spec.qualifiedName(".").replaceAll("[-_]", "."))); 
-        schema.properties().put("--query", JsonHelper.getObjectMapper().readTree(String.format("""
+        schema.properties().put("query", JsonHelper.getObjectMapper().readTree(String.format("""
             {
               "anyOf": [
                 {
