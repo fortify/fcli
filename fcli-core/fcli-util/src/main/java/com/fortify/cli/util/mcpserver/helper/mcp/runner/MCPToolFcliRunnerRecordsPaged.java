@@ -40,7 +40,8 @@ public final class MCPToolFcliRunnerRecordsPaged extends AbstractMCPToolFcliRunn
         var refresh = toolArgAsBoolean(request, MCPToolArgHandlerPaging.ARG_REFRESH, false);
         var result = MCPToolFcliRecordsCache.INSTANCE.getOrCollect(fullCmd, refresh);
         var offset = toolArgAsInt(request, MCPToolArgHandlerPaging.ARG_OFFSET, 0);
-        var limit = toolArgAsInt(request, MCPToolArgHandlerPaging.ARG_LIMIT, 20);
+        //var limit = toolArgAsInt(request, MCPToolArgHandlerPaging.ARG_LIMIT, 20);
+        var limit = 20;
         return MCPToolResultRecordsPaged.from(result, offset, limit).asCallToolResult();
     }
     

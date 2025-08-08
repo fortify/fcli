@@ -44,6 +44,7 @@ public final class MCPToolArgHandlerPaging implements IMCPToolArgHandler {
               "description": "Return results starting from the given offset. Responses on previous requests indicate the total number of available records, as well as first, last, and next page offsets."
             }    
             """));
+        /*
         schema.properties().put(ARG_LIMIT, JsonHelper.getObjectMapper().readTree("""
             {
               "type": "integer",
@@ -52,6 +53,7 @@ public final class MCPToolArgHandlerPaging implements IMCPToolArgHandler {
               "description": "Return at most the given number of records."
             }    
             """));
+        */
         schema.properties().put(ARG_REFRESH, JsonHelper.getObjectMapper().readTree("""
             {
               "type": "boolean",
