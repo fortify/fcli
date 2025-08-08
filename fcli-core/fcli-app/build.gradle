@@ -23,13 +23,22 @@ dependencies {
 }
 
 // Generate reflect-config.json for picocli-related classes
-ext.generatedPicocliReflectConfigDir = "${buildDir}/generated-reflect-config"
+ext.generatedReflectConfigDir = "${buildDir}/generated-reflect-config"
 task generatePicocliReflectConfig(type: JavaExec) {
     group = "GeneratePicocliReflectConfig"
     description = "Generate picocli reflect-config.json"
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
     main 'picocli.codegen.aot.graalvm.ReflectionConfigGenerator'
-    args fcliRootCommandsClassName, "-o", "${generatedPicocliReflectConfigDir}/META-INF/native-image/picocli-reflect-config/reflect-config.json"
+    args fcliRootCommandsClassName, "-o", "${generatedReflectConfigDir}/META-INF/native-image/picocli-reflect-config/reflect-config.json"
+}
+
+// Generate reflect-config.json for MCP-related classes
+task generateMCPReflectConfig(type: JavaExec) {
+    group = "GenerateMCPReflectConfig"
+    description = "Generate MCP reflect-config.json"
+    classpath(configurations.runtimeClasspath, sourceSets.main.runtimeClasspath)
+    main 'com.fortify.cli.util.mcpserver.helper.mcp.MCPReflectConfigGenerator'
+    args "${generatedReflectConfigDir}/META-INF/native-image/mcp-reflect-config/reflect-config.json"
 }
 
 // Generate shadow jar
@@ -43,9 +52,9 @@ shadowJar {
     archiveBaseName.set('fcli')
     archiveClassifier.set('')
     archiveVersion.set('')
-    from(["$generatedPicocliReflectConfigDir"])
+    from(["$generatedReflectConfigDir"])
 }
-shadowJar.dependsOn generatePicocliReflectConfig
+shadowJar.dependsOn generatePicocliReflectConfig, generateMCPReflectConfig
 
 ext {
 	thirdPartyBaseName = "${project.name}"
