@@ -27,11 +27,11 @@ import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
-import com.fortify.cli.util.mcpserver.helper.mcp.arg.CommandToolSpecArgHelper;
-import com.fortify.cli.util.mcpserver.helper.mcp.exec.CommandToolSpecPagedRecordsBasedExecutor;
-import com.fortify.cli.util.mcpserver.helper.mcp.exec.CommandToolSpecPlainExecutor;
-import com.fortify.cli.util.mcpserver.helper.mcp.exec.CommandToolSpecSimpleRecordsBasedExecutor;
-import com.fortify.cli.util.mcpserver.helper.mcp.exec.ICommandToolSpecExecutor;
+import com.fortify.cli.util.mcpserver.helper.mcp.arg.MCPToolArgHandlers;
+import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
+import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerPlainText;
+import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerRecords;
+import com.fortify.cli.util.mcpserver.helper.mcp.runner.IMCPToolRunner;
 
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -104,23 +104,23 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     }
 
     private static final boolean isRequiredSensitiveArg(ArgSpec as) {
-       return as.required() && CommandToolSpecArgHelper.isSensitive(as);
+       return as.required() && MCPToolArgHandlers.isSensitive(as);
     }
 
     private static final class CommandToolSpecHelper {
         private final CommandSpec commandSpec;
-        private final CommandToolSpecArgHelper toolSpecArgHelper;
+        private final MCPToolArgHandlers toolSpecArgHelper;
         
         private CommandToolSpecHelper(CommandSpec commandSpec) {
             this.commandSpec = commandSpec;
-            this.toolSpecArgHelper = new CommandToolSpecArgHelper(commandSpec);
+            this.toolSpecArgHelper = new MCPToolArgHandlers(commandSpec);
         }
         
         @SneakyThrows
         public final SyncToolSpecification createToolSpec() {
             return McpServerFeatures.SyncToolSpecification.builder()
                     .tool(createTool())
-                    .callHandler(createExecutor()::execute)
+                    .callHandler(createRunner()::run)
                     .build();
         }
         
@@ -142,15 +142,15 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             return StringUtils.isBlank(mcpToolDescription) ? cmdHeader : String.format("%s\n%s", cmdHeader, mcpToolDescription);
         }
         
-        private final ICommandToolSpecExecutor createExecutor() {
+        private final IMCPToolRunner createRunner() {
             if ( PicocliSpecHelper.canCollectRecords(commandSpec) ) {
                 if ( toolSpecArgHelper.isPaged() ) {
-                    return new CommandToolSpecPagedRecordsBasedExecutor(toolSpecArgHelper, commandSpec);
+                    return new MCPToolFcliRunnerRecordsPaged(toolSpecArgHelper, commandSpec);
                 } else {
-                    return new CommandToolSpecSimpleRecordsBasedExecutor(toolSpecArgHelper, commandSpec);
+                    return new MCPToolFcliRunnerRecords(toolSpecArgHelper, commandSpec);
                 }
             } else {
-                return new CommandToolSpecPlainExecutor(toolSpecArgHelper, commandSpec);
+                return new MCPToolFcliRunnerPlainText(toolSpecArgHelper, commandSpec);
             }
         }
 

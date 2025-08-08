@@ -10,10 +10,9 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.exec;
+package com.fortify.cli.util.mcpserver.helper.mcp.runner;
 
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util.mcpserver.helper.mcp.arg.CommandToolSpecArgHelper;
+import com.fortify.cli.util.mcpserver.helper.mcp.arg.MCPToolArgHandlers;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -22,15 +21,23 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Model.CommandSpec;
 
+/**
+ * {@link IMCPToolRunner} implementation that returns zero or more records as produced
+ * by the fcli command being executed, in a structured JSON object as described by 
+ * {@link MCPToolResultRecords}.
+ * This is commonly used to run fcli commands that return either a single or small number of records.
+ * See {@link MCPToolFcliRunnerRecordsPaged} for running fcli commands thta may return a large number
+ * of records.
+ *
+ * @author Ruud Senden
+ */
 @RequiredArgsConstructor
-public final class CommandToolSpecSimpleRecordsBasedExecutor extends AbstractCommandToolSpecRecordsBasedExecutor {
-    @Getter private final CommandToolSpecArgHelper toolSpecArgHelper;
+public final class MCPToolFcliRunnerRecords extends AbstractMCPToolFcliRunner {
+    @Getter private final MCPToolArgHandlers toolSpecArgHelper;
     @Getter private final CommandSpec commandSpec;
     
     @Override
     protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
-        var records = JsonHelper.getObjectMapper().createArrayNode();
-        var result = collectRecords(fullCmd, records::add);
-        return new CallToolResult(records.toPrettyString(), result.getExitCode()!=0);
+        return MCPToolFcliRunnerHelper.collectRecords(fullCmd).asCallToolResult();
     }
 }

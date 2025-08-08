@@ -10,12 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.exec;
+package com.fortify.cli.util.mcpserver.helper.mcp.runner;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
-public interface ICommandToolSpecExecutor {
-    public CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request);
+/**
+ * Functional interface providing a single {@link #run(McpSyncServerExchange, CallToolRequest)}
+ * method that can be registered as an MCP tool call handler through 
+ * SyncToolSpecification.Builder::callHandler(runner::run).
+ * 
+ * @author Ruud Senden
+ */
+@FunctionalInterface
+public interface IMCPToolRunner {
+    public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request);
 }

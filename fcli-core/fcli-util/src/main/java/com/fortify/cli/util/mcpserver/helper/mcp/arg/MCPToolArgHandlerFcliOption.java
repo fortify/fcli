@@ -19,8 +19,18 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Model.OptionSpec;
 
+/**
+ * {@link IMCPToolArgHandler} implementation for handling fcli options (represented as 
+ * Picocli {@link OptionSpec}) as MCP tool arguments. Most of the functionality is
+ * provided by the {@link AbstractMCPToolArgHandlerFcli} base class; this class just
+ * provides the {@link OptionSpec} and name for the configured option, and the 
+ * {@link #combineFcliCmdArgs(String, Stream)} method for formatting MCP tool argument
+ * values as fcli options.
+ *
+ * @author Ruud Senden
+ */
 @RequiredArgsConstructor
-public final class OptionToolSpecArgHelper extends AbstractArgSpecToolSpecArgHelper {
+public final class MCPToolArgHandlerFcliOption extends AbstractMCPToolArgHandlerFcli {
     @Getter private final OptionSpec argSpec;
     @Override
     protected String getName() {

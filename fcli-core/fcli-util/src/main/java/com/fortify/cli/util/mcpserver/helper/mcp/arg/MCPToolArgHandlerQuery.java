@@ -32,12 +32,22 @@ import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Model.CommandSpec;
 
-public final class QueryToolSpecArgHelper implements IToolSpecArgHelper {
+/**
+ * {@link IMCPToolArgHandler} implementation for handling queries. The {@link #updateSchema(JsonSchema)}
+ * method adds a {@value MCPToolArgHandlerQuery#ARG_QUERY} argument to the MCP tool schema, generating
+ * an associated JSON type definition that lists some of the commonly used fields that can be queried
+ * upon. The {@link #getFcliCmdArgs(Map)} uses the {@value MCPToolArgHandlerQuery#ARG_QUERY} argument
+ * value to generate the appropriate SpEL-formatted value for the fcli --query argument.
+ *
+ * @author Ruud Senden
+ */
+public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
+    private static final String ARG_QUERY = "query";
     private final CommandSpec spec;
     private final Map<String, String> fieldsBySchemaPropertyName;
     private final ObjectNode querySchema;
     
-    public QueryToolSpecArgHelper(CommandSpec spec) {
+    public MCPToolArgHandlerQuery(CommandSpec spec) {
         this.spec = spec;
         this.fieldsBySchemaPropertyName = generateFieldsBySchemaPropertyName(spec);
         this.querySchema = generateQuerySchema(spec, fieldsBySchemaPropertyName.keySet());
@@ -135,7 +145,7 @@ public final class QueryToolSpecArgHelper implements IToolSpecArgHelper {
     @Override @SneakyThrows
     public void updateSchema(JsonSchema schema) {
         var defName = PropertyPathFormatter.pascalCase(String.format("%s.query", spec.qualifiedName(".").replaceAll("[-_]", "."))); 
-        schema.properties().put("query", JsonHelper.getObjectMapper().readTree(String.format("""
+        schema.properties().put(ARG_QUERY, JsonHelper.getObjectMapper().readTree(String.format("""
             {
               "anyOf": [
                 {
@@ -156,7 +166,7 @@ public final class QueryToolSpecArgHelper implements IToolSpecArgHelper {
     @Override
     public String getFcliCmdArgs(Map<String, Object> toolArgs) {
         var queries = new ArrayList<String>();
-        var queryObj = toolArgs.get("--query");
+        var queryObj = toolArgs.get(ARG_QUERY);
         if ( queryObj != null ) {
             if ( queryObj instanceof Map ) {
                 ((Map<?,?>)queryObj).entrySet().forEach(e->addQuery(queries, (String)e.getKey(), (String)e.getValue() ));

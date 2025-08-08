@@ -26,7 +26,17 @@ import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.ITypeInfo;
 
-abstract class AbstractArgSpecToolSpecArgHelper implements IToolSpecArgHelper { 
+/**
+ * This abstract class provides a partial implementation of the {@link IMCPToolArgHandler}
+ * interface for fcli options and positional parameters. The {@link #updateSchema(JsonSchema)}
+ * method adds the option or positional parameter as described by the {@link #getArgSpec()}
+ * and {@link #getName()} methods as an MCP tool argument. The {@link #getFcliCmdArgs(Map)}
+ * method in turn processes the given MCP tool arguments, utilizing the abstract 
+ * {@link #combineFcliCmdArgs(String, Stream)} method to generate the actual fcli arguments.
+ *
+ * @author Ruud Senden
+ */
+abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler { 
     protected abstract ArgSpec getArgSpec();
     protected abstract String getName();
     protected abstract String combineFcliCmdArgs(String name, Stream<String> values);

@@ -30,41 +30,47 @@ import lombok.Getter;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 
-public final class CommandToolSpecArgHelper {
-    private final List<IToolSpecArgHelper> toolSpecArgHelpers;
+/**
+ * Given a {@link CommandSpec} instance, this class will collect all relevant {@link IMCPToolArgHandler} 
+ * instances that will handle fcli options, positional parameters, queries, and paging. 
+ *
+ * @author Ruud Senden
+ */
+public final class MCPToolArgHandlers {
+    private final List<IMCPToolArgHandler> mcpToolArgHandlers;
     @Getter private final JsonSchema schema;
     @Getter private final boolean paged;
     
-    public CommandToolSpecArgHelper(CommandSpec spec) {
+    public MCPToolArgHandlers(CommandSpec spec) {
         // TODO Improve paged criteria, for example by looking at isSingular() if available, and/or allow 
         // customizing for individual commands through annotation or resource bundle
         this.paged = spec.name().startsWith("list");
-        this.toolSpecArgHelpers = createToolSpecArgHelpers(spec, paged);
-        this.schema = createSchema(toolSpecArgHelpers);
+        this.mcpToolArgHandlers = createToolSpecArgHelpers(spec, paged);
+        this.schema = createSchema(mcpToolArgHandlers);
     }
     
     public final String getFcliCmdArgs(Map<String, Object> toolArgs) {
-        return toolSpecArgHelpers.stream().map(h->h.getFcliCmdArgs(toolArgs)).collect(Collectors.joining(" "));
+        return mcpToolArgHandlers.stream().map(h->h.getFcliCmdArgs(toolArgs)).collect(Collectors.joining(" "));
     }
 
-    private static final List<IToolSpecArgHelper> createToolSpecArgHelpers(CommandSpec spec, boolean paged) {
-        var result = new ArrayList<IToolSpecArgHelper>();
-        addArgSpecHelpers(result, spec.positionalParameters(), PositionalParamToolSpecArgHelper::new);
-        addArgSpecHelpers(result, spec.options(), OptionToolSpecArgHelper::new);
+    private static final List<IMCPToolArgHandler> createToolSpecArgHelpers(CommandSpec spec, boolean paged) {
+        var result = new ArrayList<IMCPToolArgHandler>();
+        addArgSpecHelpers(result, spec.positionalParameters(), MCPToolArgHandlerFcliParam::new);
+        addArgSpecHelpers(result, spec.options(), MCPToolArgHandlerFcliOption::new);
         addQueryToolSpecArgHelper(result, spec);
         addPagingArgSpecHelper(result, paged);
         return result;
     }
 
-    private static void addPagingArgSpecHelper(ArrayList<IToolSpecArgHelper> result, boolean paged) {
+    private static void addPagingArgSpecHelper(ArrayList<IMCPToolArgHandler> result, boolean paged) {
         if ( paged ) {
-            result.add(new PagingToolSpecArgHelper());
+            result.add(new MCPToolArgHandlerPaging());
         }
     }
 
-    private static void addQueryToolSpecArgHelper(ArrayList<IToolSpecArgHelper> result, CommandSpec spec) {
+    private static void addQueryToolSpecArgHelper(ArrayList<IMCPToolArgHandler> result, CommandSpec spec) {
         if ( hasGenericQueryOpt(spec) ) {
-            result.add(new QueryToolSpecArgHelper(spec));
+            result.add(new MCPToolArgHandlerQuery(spec));
         }
     }
 
@@ -73,16 +79,16 @@ public final class CommandToolSpecArgHelper {
         return queryOpt!=null && queryOpt.group()!=null && QueryOptionsArgGroup.class.equals(queryOpt.group().typeInfo().getType());
     }
 
-    private static <T extends ArgSpec> void addArgSpecHelpers(List<IToolSpecArgHelper> result, List<T> argSpecs, Function<T, IToolSpecArgHelper> factory) {
+    private static <T extends ArgSpec> void addArgSpecHelpers(List<IMCPToolArgHandler> result, List<T> argSpecs, Function<T, IMCPToolArgHandler> factory) {
         argSpecs.stream()
             .filter(as->!ignore(as))
             .map(factory::apply)
             .forEach(result::add);
     }
 
-    private static final JsonSchema createSchema(List<IToolSpecArgHelper> toolSpecArgHelpers) {
+    private static final JsonSchema createSchema(List<IMCPToolArgHandler> mCPToolArgHandlers) {
         var result = new JsonSchema("object", new LinkedHashMap<String, Object>(), new ArrayList<String>(), false, new LinkedHashMap<String, Object>(), new LinkedHashMap<String, Object>());
-        toolSpecArgHelpers.forEach(h->h.updateSchema(result));
+        mCPToolArgHandlers.forEach(h->h.updateSchema(result));
         return result;
     }
     

@@ -16,7 +16,20 @@ import java.util.Map;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 
-public interface IToolSpecArgHelper {
+/**
+ * Interface for defining MCP tool arguments
+ *
+ * @author Ruud Senden
+ */
+public interface IMCPToolArgHandler {
+    /**
+     * This method allows implementations to add MCP tool arguments and related data to the given {@link JsonSchema}.
+     */
     public void updateSchema(JsonSchema schema);
+    
+    /**
+     * This method allows implementations to generate fcli command arguments based on the given MCP tool arguments.
+     * If no arguments are to be added, this should return an empty string.  
+     */
     public String getFcliCmdArgs(Map<String, Object> toolArgs);
 }
