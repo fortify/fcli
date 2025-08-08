@@ -1,0 +1,129 @@
+---
+title: fcli-util-mcp-server-start(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-util-mcp-server-start(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250808.154316-dev_mcp-server" %}
+
+
+<div id="header">
+<h1>fcli-util-mcp-server-start(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-util-mcp-server-start - (PREVIEW) Start fcli MCP server for LLM integration</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli util mcp-server start</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>]
+                           [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>]
+                           [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command will start an MCP (Model Context Protocol) server that allows an LLM system to interact with Fortify products by executing fcli commands. For more information about MCP, please see <a href="https://modelcontextprotocol.io/" class="bare">https://modelcontextprotocol.io/</a>. For now, only stdio transport is supported. Various LLM clients allow for configuring local stdio MCP servers; following is an example for the Copilot Eclipse plugin:
+{
+  "servers": {
+    "fcli": {
+    "type": "stdio",
+    "command": "/path/to/fcli",
+    "args": ["util","mcp-server","start","--query=module=='fod'"]
+  }
+}, &#8230;&#8203;</p>
+</div>
+<div class="paragraph">
+<p>By default, the fcli MCP server will generate an MCP tool definition for every individual fcli command, excluding commands that are not relevant or pose a security risk in the context of an LLM. For example, non-runnable (container) commands are not relevant in LLM context, and thus are not included in MCP tool definitions. Similarly, any command that accepts user credentials is not included in MCP tool definitions, to avoid users from entering their credentials in an LLM system. Note that this means that LLMs cannot run fcli session login commands; you&#8217;ll need to have an active 'default' session for each of the modules that you want to interact with through the LLM system.</p>
+</div>
+<div class="paragraph">
+<p>Note that LLMs pose limits on the number of enabled tools; enabling every fcli command as an MCP tool will most likely exceed this limit. Most LLM clients allow for enabling or disabling individual tools, however it&#8217;s recommended to utilize the --query option on this 'mcp-server start' command to have the fcli MCP server generate MCP tools for only a subset of fcli commands, for example '--query=module matches "ssc|sc-sast"' or '--query=module=="fod"'.</p>
+</div>
+<div class="paragraph">
+<p>As clients often allow for easily enabling or disabling all tools provided by a given MCP server, you may want to define multiple fcli MCP servers with different queries. For example, with the queries shown above, you could define one MCP server for interacting with 'fcli fod' commands, and another MCP server for interacting with 'fcli ssc' and 'fcli sc-sast' commands.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dd>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable both fcli trace logging and collection of extra debugging data on applicable fcli actions and commands, for example enabling debug logging on tools invoked through fcli tool run commands, or enabling server-side debug log generation.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em></dt>
+<dd>
+<p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-08-08 15:45:24 UTC
+</div>
+</div>
+</body>
+</html>
