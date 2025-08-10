@@ -377,7 +377,7 @@ public class IssueAuditor {
         candidateVulnerabilities.removeAll(hiddenVulnerabilities);
 
         List<Vulnerability> finalResult = new ArrayList<>(candidateVulnerabilities);
-        LOG.info("FilterSet '{}' applied. {} of {} vulnerabilities remain.", fs.getTitle(), finalResult.size(), vulnerabilities.size());
+        logger.info("FilterSet '{}' applied. {} of {} vulnerabilities remain.", fs.getTitle(), finalResult.size(), vulnerabilities.size());
 
         return finalResult;
     }

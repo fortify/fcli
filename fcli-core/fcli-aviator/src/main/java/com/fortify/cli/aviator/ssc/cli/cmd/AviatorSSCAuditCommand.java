@@ -2,8 +2,10 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import com.fortify.cli.aviator.ssc.cli.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.common.util.DisableTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +44,10 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
     @Option(names = {"--app"}) private String appName;
-    @Option(names = {"--tag-mapping"}, description = "Tag Mapping") private String tagMapping;
-    @Option(names = {"--filterset", "--fs"}, description = "Name or ID of the FilterSet to apply.") private String filterSetNameOrId;
-    @Option(names = {"--ignore-filters"}, description = "Ignore all filter sets, including the default enabled one.") private boolean ignoreFilters;
-
+    @Option(names = {"--tag-mapping"}) private String tagMapping;
+    @Option(names = {"--filterset", "--fs"}) private String filterSetNameOrId;
+    @Option(names = {"--ignore-filters"}) private boolean ignoreFilters;
+    @Option(names = {"--priority", "-p"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> priorities;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
     @Override
@@ -111,7 +113,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     private FPRAuditResult performAviatorAudit(File fprFile, String token, String url, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         logger.progress("Status: Processing FPR with Aviator");
-        return AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping, filterSetNameOrId, ignoreFilters);
+        return AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping, filterSetNameOrId, ignoreFilters, priorities);
     }
 
     @SneakyThrows
