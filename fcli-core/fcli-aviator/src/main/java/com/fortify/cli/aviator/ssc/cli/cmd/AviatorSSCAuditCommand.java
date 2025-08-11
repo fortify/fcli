@@ -48,6 +48,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--filterset", "--fs"}) private String filterSetNameOrId;
     @Option(names = {"--ignore-filters"}) private boolean ignoreFilters;
     @Option(names = {"--priority", "-p"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> priorities;
+    @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
     @Override
@@ -113,7 +114,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     private FPRAuditResult performAviatorAudit(File fprFile, String token, String url, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         logger.progress("Status: Processing FPR with Aviator");
-        return AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping, filterSetNameOrId, ignoreFilters, priorities);
+        return AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping, filterSetNameOrId, ignoreFilters, priorities, folderNames);
     }
 
     @SneakyThrows

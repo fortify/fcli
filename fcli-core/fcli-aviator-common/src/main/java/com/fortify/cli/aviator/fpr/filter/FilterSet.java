@@ -18,4 +18,5 @@ public class FilterSet {
     private String description;
     private List<String> enabledFolders;
     private List<Filter> filters;
+    private List<FolderDefinition> folderDefinitions;
 }

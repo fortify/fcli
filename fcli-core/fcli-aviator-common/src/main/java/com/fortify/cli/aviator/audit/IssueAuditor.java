@@ -17,12 +17,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
+import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
+import com.fortify.cli.aviator.fpr.filter.SearchTree;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
-import com.fortify.cli.aviator.fpr.filter.VulnerabilityFilterer;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
@@ -60,7 +63,7 @@ public class IssueAuditor {
     private final AuditProcessor auditProcessor;
     private final Map<String, AuditIssue> auditIssueMap;
     private final FPRInfo fprInfo;
-    private final FilterSet activeFilterSet; // <-- ADD THIS NEW FIELD
+    private final FilterSelection filterSelection;
 
 
     private final TagDefinition analysisTag;
@@ -69,7 +72,7 @@ public class IssueAuditor {
 
     private final IAviatorLogger logger;
 
-    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion, FilterSet activeFilterSet , IAviatorLogger logger) {
+    public IssueAuditor(List<Vulnerability> vulnerabilities, AuditProcessor auditProcessor, Map<String, AuditIssue> auditIssueMap, FPRInfo fprInfo, String SSCApplicationName, String SSCApplicationVersion, FilterSelection filterSelection , IAviatorLogger logger) {
         this.logger = logger;
         this.MAX_PER_CATEGORY = Constants.MAX_PER_CATEGORY;
         this.MAX_TOTAL = Constants.MAX_TOTAL;
@@ -80,7 +83,7 @@ public class IssueAuditor {
         this.auditProcessor = auditProcessor;
         this.auditIssueMap = auditIssueMap;
         this.fprInfo = fprInfo;
-        this.activeFilterSet = activeFilterSet;
+        this.filterSelection = filterSelection;
         this.SSCApplicationName = SSCApplicationName;
         this.SSCApplicationVersion = SSCApplicationVersion;
         this.analysisTag = fprInfo.getFilterTemplate().getTagDefinitions().stream().filter(t -> "Analysis".equalsIgnoreCase(t.getName())).findFirst().orElse(null);
@@ -133,32 +136,16 @@ public class IssueAuditor {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
-        TagDefinition aviatorPredictionTag = resolveAviatorPredictionTag();
-        aviatorStatusTag = resolveAviatorStatusTag();
-        humanAuditTag = resolveHumanAuditStatus();
-        LOG.debug("Initialized tags - prediction: {}, status: {}, human: {}",
-                aviatorPredictionTag, aviatorStatusTag, humanAuditTag);
+        ConcurrentLinkedDeque<UserPrompt> promptsToAudit = prepareAndFilterPrompts();
+        int totalIssuesToAudit = promptsToAudit.size();
+        logger.progress("Final count of issues to be audited: %d", totalIssuesToAudit);
 
-        if (this.activeFilterSet != null) {
-            this.vulnerabilities = filterVulnerabilities(this.vulnerabilities, this.activeFilterSet);
-        }
-
-        userPrompts.clear();
-        vulnerabilities.stream().map(IssueObjBuilder::buildIssueObj).forEach(userPrompts::add);
-        LOG.info("Built {} user prompts from vulnerabilities", userPrompts.size());
-
-        userPrompts = userPrompts.stream().filter(this::shouldInclude).collect(Collectors.toList());
-
-        ConcurrentLinkedDeque<UserPrompt> filteredUserPrompts = getIssuesToAudit();
-        int totalIssuesToAudit = filteredUserPrompts.size();
-        logger.progress("Filtered issues count: %d", filteredUserPrompts.size());
-
-        if (filteredUserPrompts.isEmpty()) {
-            logger.progress("Audit skipped - no issues to process");
+        if (promptsToAudit.isEmpty()) {
+            logger.progress("Audit skipped - no issues to process after filtering.");
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger, DEFAULT_PING_INTERVAL_SECONDS)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
-                        client.processBatchRequests(filteredUserPrompts, projectName, fprInfo.getBuildId(), SSCApplicationName, SSCApplicationVersion, token);
+                        client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName, SSCApplicationVersion, token);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
                 logger.progress("Audit completed");
@@ -181,14 +168,40 @@ public class IssueAuditor {
             }
         }
 
-        fprInfo.setResultsTag(resultsTag.getId());
+        if (resultsTag != null) {
+            fprInfo.setResultsTag(resultsTag.getId());
+        }
         return new AuditOutcome(auditResponses, totalIssuesToAudit);
     }
 
-    private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit() {
-        List<UserPrompt> eligibleUserPrompts = userPrompts.stream()
+    private ConcurrentLinkedDeque<UserPrompt> prepareAndFilterPrompts() {
+        aviatorStatusTag = resolveAviatorStatusTag();
+        humanAuditTag = resolveHumanAuditStatus();
+
+        FilterSet activeFilterSet = filterSelection.getActiveFilterSet();
+        List<Vulnerability> filteredVulnerabilities;
+
+        if (activeFilterSet != null) {
+            filteredVulnerabilities = filterVulnerabilities(this.vulnerabilities, activeFilterSet);
+        } else {
+            LOG.info("No active filter set. All applicable issues will be considered.");
+            filteredVulnerabilities = new ArrayList<>(this.vulnerabilities);
+        }
+
+        // Convert the filtered vulnerabilities to UserPrompts
+        List<UserPrompt> prompts = filteredVulnerabilities.stream()
+                .map(IssueObjBuilder::buildIssueObj)
+                .collect(Collectors.toList());
+
+        // Apply secondary checks (like 'isAudited')
+        List<UserPrompt> includedPrompts = prompts.stream()
                 .filter(this::shouldInclude)
-                .toList();
+                .collect(Collectors.toList());
+
+        // Final step: apply capping logic to the included prompts.
+        return getIssuesToAudit(includedPrompts);
+    }
+    private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit(List<UserPrompt> eligibleUserPrompts) {
 
         Map<String, List<UserPrompt>> issuesByCategory = eligibleUserPrompts.stream()
                 .collect(Collectors.groupingBy(UserPrompt::getCategory));
@@ -332,54 +345,65 @@ public class IssueAuditor {
         return false;
     }
 
-    /**
-     * Filters a list of vulnerabilities using the specified FilterSet, accurately
-     * simulating the behavior of Fortify's folder assignment and hide rules by
-     * delegating to the robust VulnerabilityFilterer engine.
-     *
-     * @param vulnerabilities The original list of vulnerabilities to filter.
-     * @param fs              The FilterSet containing the filter rules.
-     * @return A new list containing only the visible vulnerabilities that were assigned to a folder.
-     */
-    public List<Vulnerability> filterVulnerabilities(List<Vulnerability> vulnerabilities, FilterSet fs) {
-        if (fs == null || fs.getFilters() == null || fs.getFilters().isEmpty() || vulnerabilities == null) {
-            return vulnerabilities;
-        }
+    private List<Vulnerability> filterVulnerabilities(List<Vulnerability> allVulnerabilities, FilterSet fs) {
+        List<String> targetFolderNames = filterSelection.getTargetFolderNames();
 
         List<Filter> folderFilters = fs.getFilters().stream()
-                .filter(f -> "setFolder".equalsIgnoreCase(f.getAction()))
-                .collect(Collectors.toList());
-
+                .filter(f -> "setFolder".equalsIgnoreCase(f.getAction())).collect(Collectors.toList());
         List<Filter> hideFilters = fs.getFilters().stream()
-                .filter(f -> "hide".equalsIgnoreCase(f.getAction()))
-                .collect(Collectors.toList());
+                .filter(f -> "hide".equalsIgnoreCase(f.getAction())).collect(Collectors.toList());
 
-        // STAGE 1: Determine the initial set of candidate vulnerabilities
-        Set<Vulnerability> candidateVulnerabilities = new HashSet<>();
-        if (folderFilters.isEmpty()) {
-            candidateVulnerabilities.addAll(vulnerabilities);
-        } else {
+        Map<Filter, SearchTree> parsedQueries = new HashMap<>();
+        // Use a stream to populate the map
+        Stream.concat(folderFilters.stream(), hideFilters.stream()).forEach(f -> {
+            try {
+                parsedQueries.put(f, com.fortify.cli.aviator.fpr.filter.engine.FilterParser.parse(f.getQuery()));
+            } catch (Exception e) {
+                LOG.error("Failed to parse filter query: '{}'. This filter will be skipped.", f.getQuery(), e);
+                parsedQueries.put(f, new com.fortify.cli.aviator.fpr.filter.SearchTree(null));
+            }
+        });
+
+        Map<String, List<Vulnerability>> folderContents = new HashMap<>();
+        for (Vulnerability vuln : allVulnerabilities) {
             for (Filter folderFilter : folderFilters) {
-                // Use the new, correct filter engine
-                List<Vulnerability> matched = VulnerabilityFilterer.filter(vulnerabilities, folderFilter.getQuery());
-                candidateVulnerabilities.addAll(matched);
+                if (com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator.evaluate(parsedQueries.get(folderFilter), vuln)) {
+                    folderContents.computeIfAbsent(folderFilter.getActionParam(), k -> new ArrayList<>()).add(vuln);
+                    break;
+                }
             }
         }
 
-        // STAGE 2: Determine which of the candidates should be hidden
-        Set<Vulnerability> hiddenVulnerabilities = new HashSet<>();
-        for (Filter hideFilter : hideFilters) {
-            // Apply the hide filter to the candidate set
-            List<Vulnerability> matchedToHide = VulnerabilityFilterer.filter(new ArrayList<>(candidateVulnerabilities), hideFilter.getQuery());
-            hiddenVulnerabilities.addAll(matchedToHide);
+        folderContents.values().forEach(vulnList ->
+                vulnList.removeIf(vuln -> hideFilters.stream().anyMatch(
+                        hideFilter -> com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator.evaluate(parsedQueries.get(hideFilter), vuln)
+                ))
+        );
+
+        if (!filterSelection.isFilteringByFolder()) {
+            List<Vulnerability> result = folderContents.values().stream().flatMap(List::stream).collect(Collectors.toList());
+            logger.info("FilterSet '{}' applied. {} of {} total vulnerabilities remain.", fs.getTitle(), result.size(), allVulnerabilities.size());
+            return result;
+        } else {
+            // This logic correctly finds folder IDs based on user-provided names.
+            Set<String> targetFolderIds = fs.getFolderDefinitions().stream()
+                    .filter(fd -> targetFolderNames.stream().anyMatch(name -> name.equalsIgnoreCase(fd.getName())))
+                    .map(FolderDefinition::getId)
+                    .collect(Collectors.toSet());
+
+            if (targetFolderIds.isEmpty()) {
+                String available = fs.getFolderDefinitions().stream().map(FolderDefinition::getName).collect(Collectors.joining("', '", "'", "'"));
+                throw new AviatorSimpleException("Folder(s) not found in FilterSet '"+fs.getTitle()+"'. Available folders: "+available);
+            }
+
+            List<Vulnerability> result = folderContents.entrySet().stream()
+                    .filter(entry -> targetFolderIds.contains(entry.getKey()))
+                    .flatMap(entry -> entry.getValue().stream())
+                    .collect(Collectors.toList());
+
+            logger.info("Filtered by folder(s) '{}'. {} vulnerabilities remain.", targetFolderNames, result.size());
+            return result;
         }
-
-        candidateVulnerabilities.removeAll(hiddenVulnerabilities);
-
-        List<Vulnerability> finalResult = new ArrayList<>(candidateVulnerabilities);
-        logger.info("FilterSet '{}' applied. {} of {} vulnerabilities remain.", fs.getTitle(), finalResult.size(), vulnerabilities.size());
-
-        return finalResult;
     }
 
     private void updateSkippedIssue(UserPrompt userPrompt, String reasonTemplate, int issuesInCategory, int totalIssues) {
