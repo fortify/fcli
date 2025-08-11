@@ -15,6 +15,7 @@ package com.fortify.cli.util.mcpserver.helper.mcp.runner;
 import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -39,7 +40,7 @@ public class MCPToolResultRecordsPaged extends AbstractMCPToolResult {
     public static final MCPToolResultRecordsPaged from(MCPToolResultRecords plainResult, int offset, int limit) {
         var allRecords = plainResult.getRecords();
         var pageInfo = PageInfo.from(allRecords.size(), offset, limit);
-        var endIndex = Math.min(pageInfo.getNextPageOffset(), pageInfo.getTotalRecords());
+        var endIndex = Math.min(pageInfo.getNextPageOffsetOrMaxInt(), pageInfo.getTotalRecords());
         return builder()
             .exitCode(plainResult.getExitCode())
             .stderr(plainResult.getStderr())
@@ -73,6 +74,11 @@ public class MCPToolResultRecordsPaged extends AbstractMCPToolResult {
                 .totalRecords(totalRecords)
                 .totalPages(totalPages)
                 .build();
+        }
+        
+        @JsonIgnore
+        public final int getNextPageOffsetOrMaxInt() {
+            return nextPageOffset==null ? Integer.MAX_VALUE : nextPageOffset;
         }
     }
 }
