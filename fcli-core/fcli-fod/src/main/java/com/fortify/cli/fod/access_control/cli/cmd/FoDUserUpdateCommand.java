@@ -118,7 +118,7 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
 
     @Override
     public String getActionCommandResult() {
-        return "UPDATED";
+        return "REQUESTED";
     }
 
     @Override
