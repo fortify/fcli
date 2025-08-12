@@ -64,7 +64,7 @@ public class TraceProcessor {
             if (traceId != null && traceId != 0) {
                 tracePool.put(traceId.toString(), trace);
             } else {
-                logger.warn("Trace missing or invalid ID, skipping");
+                logger.debug("Trace missing or invalid ID, skipping");
             }
         }
     }
@@ -177,7 +177,7 @@ public class TraceProcessor {
         }
 
         if (resolvedNode == null) {
-            logger.warn("Could not resolve node for trace entry at depth {}", depth);
+            logger.debug("Could not resolve node for trace entry at depth {}", depth);
             return null;
         }
 

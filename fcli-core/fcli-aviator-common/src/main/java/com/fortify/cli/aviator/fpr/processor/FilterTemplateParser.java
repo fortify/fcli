@@ -80,11 +80,17 @@ public class FilterTemplateParser {
             filterTemplate.setId(root.getAttribute("id"));
             filterTemplate.setName(getElementContent(root, "Name").orElse(null));
             filterTemplate.setDescription(getElementContent(root, "Description").orElse(null));
-            filterTemplate.setFolderDefinitions(parseFolderDefinitions(root));
+
+            // 1. Parse all folder definitions from the template first.
+            List<FolderDefinition> allFolderDefinitions = parseFolderDefinitions(root);
+            filterTemplate.setFolderDefinitions(allFolderDefinitions);
+
+            // 2. Now, parse the filter sets, PASSING the folder definitions to them.
+            filterTemplate.setFilterSets(parseFilterSets(root, allFolderDefinitions));
+
             filterTemplate.setDefaultFolder(getDefaultFolder(root).orElse(null));
             filterTemplate.setTagDefinitions(parseTagDefinitions(root));
             filterTemplate.setPrimaryTag(parsePrimaryTag(root).orElse(null));
-            filterTemplate.setFilterSets(parseFilterSets(root));
 
             addMissingTagDefinitions(filterTemplate, doc, filterTemplatePath.get().toFile());
             auditProcessor.setFilterTemplateDoc(doc);
@@ -92,7 +98,7 @@ public class FilterTemplateParser {
             return Optional.of(filterTemplate);
         } catch (Exception e) {
             logger.error("Error parsing filtertemplate.xml", e);
-            return Optional.empty();
+            throw new RuntimeException("Failed to parse filtertemplate.xml", e);
         }
     }
 
@@ -315,7 +321,7 @@ public class FilterTemplateParser {
         return Optional.empty();
     }
 
-    private List<FilterSet> parseFilterSets(Element root) {
+    private List<FilterSet> parseFilterSets(Element root, List<FolderDefinition> allFolderDefinitions) {
         List<FilterSet> filterSets = new ArrayList<>();
         NodeList filterSetNodes = root.getElementsByTagName("FilterSet");
         for (int i = 0; i < filterSetNodes.getLength(); i++) {
@@ -329,6 +335,8 @@ public class FilterTemplateParser {
             filterSet.setDescription(getElementContent(filterSetElement, "Description").orElse(null));
             filterSet.setEnabledFolders(parseEnabledFolders(filterSetElement));
             filterSet.setFilters(parseFilters(filterSetElement));
+            filterSet.setFolderDefinitions(allFolderDefinitions);
+
             filterSets.add(filterSet);
         }
         return filterSets;

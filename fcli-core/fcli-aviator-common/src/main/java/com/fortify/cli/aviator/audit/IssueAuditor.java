@@ -317,14 +317,21 @@ public class IssueAuditor {
     }
 
     private boolean isAudited(UserPrompt userPrompt) {
-
         String issueId = userPrompt.getIssueData().getInstanceID();
         AuditIssue auditIssue = auditIssueMap.get(issueId);
 
         if (auditIssue == null) return false;
+
         Map<String, String> tags = auditIssue.getTags();
+        if (tags == null) return false;
+
         String auditorStatusTag = Constants.AUDITOR_STATUS_TAG_ID;
-        boolean isAuditorStatusPopulated = tags.containsKey(auditorStatusTag) && tags.get(auditorStatusTag).equalsIgnoreCase("Pending Review");
+
+        String auditorStatusValue = tags.get(auditorStatusTag);
+        if (auditorStatusValue != null && !auditorStatusValue.equalsIgnoreCase("Pending Review")) {
+            return true;
+        }
+
         String aviatorExpectedOutcome = Constants.AVIATOR_EXPECTED_OUTCOME_TAG_ID;
         String analysisTagS = Constants.ANALYSIS_TAG_ID;
 
@@ -332,19 +339,23 @@ public class IssueAuditor {
             if (auditIssue.isSuppressed()){
                 return true;
             }
-            if (isAuditorStatusPopulated || tags.containsKey(aviatorExpectedOutcome)) {
+            if (tags.containsKey(aviatorExpectedOutcome)) {
                 return true;
             }
-            if (tags.containsKey(analysisTag.getId()) && !tags.get(analysisTag.getId()).equalsIgnoreCase("Not Set") && !tags.get(analysisTag.getId()).equalsIgnoreCase(Constants.PENDING_REVIEW) && !StringUtil.isEmpty(tags.get(analysisTag.getId()))) {
-                return true;
+
+            if (analysisTag != null && tags.containsKey(analysisTag.getId())) {
+                String tagValue = tags.get(analysisTag.getId());
+                if (tagValue != null && !tagValue.equalsIgnoreCase("Not Set") && !tagValue.equalsIgnoreCase(Constants.PENDING_REVIEW) && !tagValue.trim().isEmpty()) {
+                    return true;
+                }
             }
+
             if (tags.containsKey(analysisTagS) && !tags.get(analysisTagS).equalsIgnoreCase("Not Set") && !StringUtil.isEmpty(tags.get(analysisTagS))) {
                 return true;
             }
         }
         return false;
     }
-
     private List<Vulnerability> filterVulnerabilities(List<Vulnerability> allVulnerabilities, FilterSet fs) {
         List<String> targetFolderNames = filterSelection.getTargetFolderNames();
 
