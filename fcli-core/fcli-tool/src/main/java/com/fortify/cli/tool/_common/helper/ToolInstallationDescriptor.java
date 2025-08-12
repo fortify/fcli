@@ -22,6 +22,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.AllArgsConstructor;

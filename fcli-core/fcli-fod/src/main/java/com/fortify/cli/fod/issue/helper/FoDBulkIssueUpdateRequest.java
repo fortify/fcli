@@ -14,21 +14,23 @@
  package com.fortify.cli.fod.issue.helper;
 
  import java.util.ArrayList;
- import java.util.List;
- import java.util.function.Consumer;
- 
- import com.fasterxml.jackson.annotation.JsonIgnore;
- import com.fasterxml.jackson.annotation.JsonInclude;
- import com.formkiq.graalvm.annotations.Reflectable;
- import com.fortify.cli.common.exception.FcliSimpleException;
- import com.fortify.cli.common.util.StringUtils;
- import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
- import kong.unirest.UnirestInstance;
- import lombok.AllArgsConstructor;
- import lombok.Builder;
- import lombok.Getter;
- import lombok.NoArgsConstructor;
- import lombok.ToString;
+import java.util.List;
+import java.util.function.Consumer;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
+
+import kong.unirest.UnirestInstance;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
  
  @Reflectable @NoArgsConstructor @AllArgsConstructor
  @Getter

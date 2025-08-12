@@ -16,6 +16,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.util.ResourceBundle;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliBugException;
 

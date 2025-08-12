@@ -16,6 +16,8 @@ import java.io.File;
 import java.util.Date;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
@@ -28,7 +30,6 @@ import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.report.writer.ReportDirWriter;
 import com.fortify.cli.common.report.writer.ReportZipWriter;
 import com.fortify.cli.common.util.FcliBuildProperties;
-import com.fortify.cli.common.util.StringUtils;
 
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;

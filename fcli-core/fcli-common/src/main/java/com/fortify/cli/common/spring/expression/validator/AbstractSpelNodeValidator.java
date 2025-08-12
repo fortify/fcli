@@ -12,11 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.common.spring.expression.validator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelNode;
 
 import com.fortify.cli.common.spring.expression.AbstractSpelNodeVisitor;
-import com.fortify.cli.common.util.StringUtils;
 
 /**
  * Simple abstract SpEL AST tree validator that visits the full SpEL tree until

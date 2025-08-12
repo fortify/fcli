@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
@@ -37,7 +39,6 @@ import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.ActionRequestDescriptor;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.UnirestException;
 import lombok.Data;

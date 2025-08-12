@@ -14,9 +14,10 @@ package com.fortify.cli.app.runner.util;
 
 import java.lang.reflect.AnnotatedElement;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.EnvHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AccessLevel;
 import lombok.Getter;

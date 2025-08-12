@@ -14,6 +14,8 @@ package com.fortify.cli.common.util;
 
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.exception.FcliSimpleException;
 
 public final class EnvHelper {

@@ -12,8 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.EnvSuffix;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateHelper;
 

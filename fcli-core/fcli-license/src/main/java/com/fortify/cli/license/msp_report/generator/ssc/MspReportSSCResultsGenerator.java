@@ -16,12 +16,13 @@ import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVe
 import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_End_Customer_Name;
 import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_License_Type;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.Break;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector;
 import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.license.msp_report.config.MspReportSSCSourceConfig;

@@ -13,8 +13,9 @@
 
 package com.fortify.cli.fod.release.helper;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 

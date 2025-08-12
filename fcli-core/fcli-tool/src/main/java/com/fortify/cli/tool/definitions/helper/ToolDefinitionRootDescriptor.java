@@ -15,9 +15,10 @@ package com.fortify.cli.tool.definitions.helper;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

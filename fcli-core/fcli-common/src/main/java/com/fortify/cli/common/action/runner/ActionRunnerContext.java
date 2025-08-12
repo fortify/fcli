@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,12 +33,14 @@ import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper;
+import com.fortify.cli.common.action.schema.annotations.MethodDescriptor;
+import com.fortify.cli.common.action.schema.annotations.ParamDescriptor;
+import com.fortify.cli.common.action.schema.annotations.ReturnDescriptor;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spring.expression.ISpelEvaluator;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -129,29 +132,36 @@ public class ActionRunnerContext implements AutoCloseable {
     @Reflectable @RequiredArgsConstructor
     public static final class ActionUtil {
         private final ActionRunnerContext ctx;
-        public final String copyParametersFromGroup(String group) {
+        
+        @MethodDescriptor("Copies parameter key-value pairs from the context's CLI options filtered by the specified group, formatting them as command-line arguments.")
+        public final @ReturnDescriptor("a string containing the copied parameters formatted as CLI options") String copyParametersFromGroup(
+            @ParamDescriptor("the group name used to filter parameters; if null, all groups are included") String group) {
             StringBuilder result = new StringBuilder();
-            for ( var e : ctx.getConfig().getAction().getCliOptions().entrySet() ) {
+            for (var e : ctx.getConfig().getAction().getCliOptions().entrySet()) {
                 var name = e.getKey();
                 var p = e.getValue();
-                if ( group==null || group.equals(p.getGroup()) ) {
+                if (group == null || group.equals(p.getGroup())) {
                     var val = ctx.getParameterValues().get(name);
-                    if ( val!=null && StringUtils.isNotBlank(val.asText()) ) {
+                    if (val != null && StringUtils.isNotBlank(val.asText())) {
                         result
-                          .append("\"--")
-                          .append(name)
-                          .append("=")
-                          .append(val.asText())
-                          .append("\" ");
+                            .append("\"--")
+                            .append(name)
+                            .append("=")
+                            .append(val.asText())
+                            .append("\" ");
                     }
                 }
             }
             return result.toString();
         }
-        
-        public final JsonNode fmt(String formatterName, JsonNode input) {
+
+        @MethodDescriptor("Formats the input JsonNode using the specified formatter name via ActionRunnerHelper.")
+        public final @ReturnDescriptor("the formatted JsonNode result") JsonNode fmt(
+            @ParamDescriptor("the name of the formatter to apply") String formatterName,
+            @ParamDescriptor("the JsonNode input to be formatted") JsonNode input) {
             return ActionRunnerHelper.fmt(ctx, formatterName, input);
         }
+
     }
     
     public final boolean isDelayed() {

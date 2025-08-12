@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -29,7 +31,6 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.util.Counter;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

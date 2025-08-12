@@ -12,8 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.scan_policy.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.EnvSuffix;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyDescriptor;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
 
