@@ -31,12 +31,13 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionSpelFunctions;
-import com.fortify.cli.common.action.schema.annotations.MethodDescriptor;
-import com.fortify.cli.common.action.schema.annotations.ParamDescriptor;
-import com.fortify.cli.common.action.schema.annotations.ReturnDescriptor;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spring.expression.SpelHelper;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionDescription;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionParamDescription;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionReturnDescription;
 import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFileTransferTokenSupplier;
@@ -50,14 +51,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 @RequiredArgsConstructor @Reflectable
+@SpelFunctionPrefix("ssc.")
 public final class SSCActionSpelFunctions {
     private final SSCAndScanCentralUnirestInstanceSupplierMixin unirestInstanceSupplier;
     private final ActionRunnerContext ctx;
     
-	@MethodDescriptor("Loads the application version identified by the given name or ID. "
+	@SpelFunctionDescription("Loads the application version identified by the given name or ID. "
 			+ "This method writes progress messages before and after loading the application version.")
-	public final @ReturnDescriptor("an `ObjectNode` representing the loaded application version details") ObjectNode appVersion(
-			@ParamDescriptor("the name or ID of the application version to load") String nameOrId) {
+	public final @SpelFunctionReturnDescription("an `ObjectNode` representing the loaded application version details") ObjectNode appVersion(
+			@SpelFunctionParamDescription("the name or ID of the application version to load") String nameOrId) {
 		ctx.getProgressWriter().writeProgress("Loading application version %s", nameOrId);
 		var result = SSCAppVersionHelper.getRequiredAppVersion(unirestInstanceSupplier.getSscUnirestInstance(),
 				nameOrId, ":");
@@ -65,12 +67,12 @@ public final class SSCActionSpelFunctions {
 		return result.asObjectNode();
 	}
 
-	@MethodDescriptor("Loads a filter set descriptor associated with the given application version, "
+	@SpelFunctionDescription("Loads a filter set descriptor associated with the given application version, "
 			+ "identified by the title or ID. Writes progress messages about loading status. "
 			+ "Throws an exception if the filter set cannot be found.")
-	public final @ReturnDescriptor("a `JsonNode` representing the filter set descriptor") JsonNode filterSet(
-			@ParamDescriptor("the application version as an `ObjectNode`") ObjectNode appVersion,
-			@ParamDescriptor("the title or ID of the filter set; may be blank to load the default filter set") String titleOrId) {
+	public final @SpelFunctionReturnDescription("a `JsonNode` representing the filter set descriptor") JsonNode filterSet(
+			@SpelFunctionParamDescription("the application version as an `ObjectNode`") ObjectNode appVersion,
+			@SpelFunctionParamDescription("the title or ID of the filter set; may be blank to load the default filter set") String titleOrId) {
 		var progressMessage = StringUtils.isBlank(titleOrId) ? "Loading default filter set"
 				: String.format("Loading filter set %s", titleOrId);
 		ctx.getProgressWriter().writeProgress(progressMessage);
@@ -82,18 +84,18 @@ public final class SSCActionSpelFunctions {
 		return filterSetDescriptor.asJsonNode();
 	}
 
-	@MethodDescriptor("Creates a rule descriptions processor bound to the specified application version ID.")
-	public @ReturnDescriptor("an `action-step-for.each-processor` that processes rule descriptions for the given application version") IActionStepForEachProcessor ruleDescriptionsProcessor(
-			@ParamDescriptor("the application version ID as a string") String appVersionId) {
+	@SpelFunctionDescription("Creates a rule descriptions processor bound to the specified application version ID.")
+	public @SpelFunctionReturnDescription("an `action-step-for.each-processor` that processes rule descriptions for the given application version") IActionStepForEachProcessor ruleDescriptionsProcessor(
+			@SpelFunctionParamDescription("the application version ID as a string") String appVersionId) {
 		var unirest = ctx.getRequestHelper("ssc").getUnirestInstance();
 		return new SSCFPRRuleDescriptionProcessor(unirest, appVersionId)::process;
 	}
 
-	@MethodDescriptor("Constructs a deep link URL to browse a specific issue within SSC, optionally "
+	@SpelFunctionDescription("Constructs a deep link URL to browse a specific issue within SSC, optionally "
 			+ "including a filter set.")
-	public @ReturnDescriptor("a string containing the fully evaluated browser URL for the given issue and optional filter set") String issueBrowserUrl(
-			@ParamDescriptor("the issue as an `ObjectNode`") ObjectNode issue,
-			@ParamDescriptor("the filter set as an `ObjectNode`; may be `null`") ObjectNode filterset) {
+	public @SpelFunctionReturnDescription("a string containing the fully evaluated browser URL for the given issue and optional filter set") String issueBrowserUrl(
+			@SpelFunctionParamDescription("the issue as an `ObjectNode`") ObjectNode issue,
+			@SpelFunctionParamDescription("the filter set as an `ObjectNode`; may be `null`") ObjectNode filterset) {
 		var deepLinkExpression = baseUrl()
 				+ "/html/ssc/version/${projectVersionId}/fix/${id}/?engineType=${engineType}&issue=${issueInstanceId}";
 		if (filterset != null) {
@@ -103,11 +105,11 @@ public final class SSCActionSpelFunctions {
 				String.class);
 	}
 
-	@MethodDescriptor("Constructs a deep link URL to browse a specific application version audit page within SSC, optionally "
+	@SpelFunctionDescription("Constructs a deep link URL to browse a specific application version audit page within SSC, optionally "
 			+ "including a filter set.")
-	public @ReturnDescriptor("a string containing the fully evaluated browser URL for the application version and optional filter set") String appversionBrowserUrl(
-			@ParamDescriptor("the application version as an `ObjectNode`") ObjectNode appversion,
-			@ParamDescriptor("the filter set as an `ObjectNode`; may be `null`") ObjectNode filterset) {
+	public @SpelFunctionReturnDescription("a string containing the fully evaluated browser URL for the application version and optional filter set") String appversionBrowserUrl(
+			@SpelFunctionParamDescription("the application version as an `ObjectNode`") ObjectNode appversion,
+			@SpelFunctionParamDescription("the filter set as an `ObjectNode`; may be `null`") ObjectNode filterset) {
 		var deepLinkExpression = baseUrl() + "/html/ssc/version/${id}/audit";
 		if (filterset != null) {
 			deepLinkExpression += "?filterSet=" + filterset.get("guid").asText();

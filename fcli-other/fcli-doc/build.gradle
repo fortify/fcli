@@ -1,6 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'org.asciidoctor.jvm.convert'
 
+apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
+
 dependencies {
     implementation project("${fcliCommonRef}")
 	implementation project("${fcliAppRef}")
@@ -27,7 +29,7 @@ ext {
 
 task generateActionSchema(type: JavaExec) {
     dependsOn('build')
-    classpath = sourceSets.main.runtimeClasspath
+    classpath(sourceSets.main.runtimeClasspath, configurations.runtimeClasspath)
     main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
     // Pass whether this is an (fcli) development release, schema version and output dir
     args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutputDir

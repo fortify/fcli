@@ -19,6 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.members.RawField;
@@ -29,7 +31,6 @@ import com.fortify.cli.common.action.helper.ActionSchemaVersionHelper;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
-import com.fortify.cli.common.action.runner.ActionSpelFunctions;
 import com.fortify.cli.common.action.schema.ActionSchemaHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
@@ -53,7 +54,7 @@ public class GenerateActionSchema {
         var isDevelopmentRelease = args[0];
         var actionSchemaVersion = args[1];
         var outputPath = Path.of(args[2]);
-        var actionSchemaMajorVersion = ActionSpelFunctions.substringBefore(actionSchemaVersion, ".");
+        var actionSchemaMajorVersion = StringUtils.substringBefore(actionSchemaVersion, ".");
         var devOutputVersion = String.format("dev-%s.x", actionSchemaMajorVersion);
         
         var newSchema = generateSchema();

@@ -1,9 +1,6 @@
-/**
- * 
- */
-package com.fortify.cli.common.action.schema.annotations;
+package com.fortify.cli.common.spring.expression.fn.metadata.annotation;
 
-import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
@@ -14,7 +11,7 @@ import java.lang.annotation.Target;
  * description of the parameter to be included in the documentation.
  */
 @Retention(RUNTIME)
-@Target(PARAMETER)
-public @interface ParamDescriptor {
+@Target(METHOD)
+public @interface SpelFunctionReturnDescription {
 	String value() default "";
 }

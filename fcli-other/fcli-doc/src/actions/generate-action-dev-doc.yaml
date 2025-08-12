@@ -103,12 +103,9 @@ steps:
         - var.set:
             jsonTypesByName.${jsonType.name}: ${jsonType}
 
-   # Get SpEL Functions
-  - var.set:
-      schema: ${#spelFunctionSchema()}
-
+   # Process SpEL Functions
   - records.for-each:
-     from: ${schema.methods}
+     from: ${#spelFunctionsMetadata().functions}
      record.var-name: method
      do:
         - var.rm:

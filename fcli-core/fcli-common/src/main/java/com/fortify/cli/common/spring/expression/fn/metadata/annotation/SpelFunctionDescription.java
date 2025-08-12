@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.fortify.cli.common.action.schema.annotations;
+package com.fortify.cli.common.spring.expression.fn.metadata.annotation;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -15,6 +15,6 @@ import java.lang.annotation.Target;
  */
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface MethodDescriptor {
+public @interface SpelFunctionDescription {
 	String value() default "";
 }

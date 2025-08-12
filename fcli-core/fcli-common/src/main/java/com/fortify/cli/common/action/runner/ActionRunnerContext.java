@@ -33,14 +33,14 @@ import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper;
-import com.fortify.cli.common.action.schema.annotations.MethodDescriptor;
-import com.fortify.cli.common.action.schema.annotations.ParamDescriptor;
-import com.fortify.cli.common.action.schema.annotations.ReturnDescriptor;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spring.expression.ISpelEvaluator;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionDescription;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionParamDescription;
+import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionReturnDescription;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -133,9 +133,9 @@ public class ActionRunnerContext implements AutoCloseable {
     public static final class ActionUtil {
         private final ActionRunnerContext ctx;
         
-        @MethodDescriptor("Copies parameter key-value pairs from the context's CLI options filtered by the specified group, formatting them as command-line arguments.")
-        public final @ReturnDescriptor("a string containing the copied parameters formatted as CLI options") String copyParametersFromGroup(
-            @ParamDescriptor("the group name used to filter parameters; if null, all groups are included") String group) {
+        @SpelFunctionDescription("Copies parameter key-value pairs from the context's CLI options filtered by the specified group, formatting them as command-line arguments.")
+        public final @SpelFunctionReturnDescription("a string containing the copied parameters formatted as CLI options") String copyParametersFromGroup(
+            @SpelFunctionParamDescription("the group name used to filter parameters; if null, all groups are included") String group) {
             StringBuilder result = new StringBuilder();
             for (var e : ctx.getConfig().getAction().getCliOptions().entrySet()) {
                 var name = e.getKey();
@@ -155,10 +155,10 @@ public class ActionRunnerContext implements AutoCloseable {
             return result.toString();
         }
 
-        @MethodDescriptor("Formats the input JsonNode using the specified formatter name via ActionRunnerHelper.")
-        public final @ReturnDescriptor("the formatted JsonNode result") JsonNode fmt(
-            @ParamDescriptor("the name of the formatter to apply") String formatterName,
-            @ParamDescriptor("the JsonNode input to be formatted") JsonNode input) {
+        @SpelFunctionDescription("Formats the input JsonNode using the specified formatter name via ActionRunnerHelper.")
+        public final @SpelFunctionReturnDescription("the formatted JsonNode result") JsonNode fmt(
+            @SpelFunctionParamDescription("the name of the formatter to apply") String formatterName,
+            @SpelFunctionParamDescription("the JsonNode input to be formatted") JsonNode input) {
             return ActionRunnerHelper.fmt(ctx, formatterName, input);
         }
 
