@@ -38,9 +38,10 @@ import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spring.expression.ISpelEvaluator;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionParamDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionReturnDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionParamDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionReturnDescription;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -130,6 +131,7 @@ public class ActionRunnerContext implements AutoCloseable {
     }
     
     @Reflectable @RequiredArgsConstructor
+    @SpelFunctionPrefix("action.")
     public static final class ActionUtil {
         private final ActionRunnerContext ctx;
         

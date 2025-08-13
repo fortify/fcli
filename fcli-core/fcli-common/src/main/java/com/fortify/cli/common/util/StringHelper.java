@@ -6,9 +6,9 @@ package com.fortify.cli.common.util;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionParamDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionReturnDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionParamDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionReturnDescription;
 
 /**
  * 

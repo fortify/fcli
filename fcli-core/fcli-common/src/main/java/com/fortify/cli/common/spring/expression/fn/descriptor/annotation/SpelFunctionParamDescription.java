@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.fortify.cli.common.spring.expression.fn.metadata.annotation;
+package com.fortify.cli.common.spring.expression.fn.descriptor.annotation;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;

@@ -56,10 +56,10 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.spring.expression.fn.metadata.SpelFunctionMetadataFactory;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionParamDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionReturnDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.SpelFunctionDescriptorsFactory;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionParamDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionReturnDescription;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
@@ -549,8 +549,8 @@ public class ActionSpelFunctions {
 	}
 
 	@SpelFunctionDescription("Retrieve a JSON array listing all available spEL functions.")
-	public static final @SpelFunctionReturnDescription("a JsonNode representing the SpEL functions descriptor") JsonNode spelFunctionsMetadata() {
-		return SpelFunctionMetadataFactory.getSpelFunctionsDescriptor().asJson();
+	public static final @SpelFunctionReturnDescription("a JsonNode representing the SpEL functions descriptor") JsonNode actionSpelFunctions() {
+		return SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().asJson();
 	}
 
 	@SpelFunctionDescription("Converts the FcliBuildProperties singleton instance into a JsonNode representation.")

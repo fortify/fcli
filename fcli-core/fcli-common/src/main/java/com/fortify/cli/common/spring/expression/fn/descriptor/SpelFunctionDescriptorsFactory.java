@@ -1,8 +1,9 @@
-package com.fortify.cli.common.spring.expression.fn.metadata;
+package com.fortify.cli.common.spring.expression.fn.descriptor;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +17,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionParamDescription;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionPrefix;
-import com.fortify.cli.common.spring.expression.fn.metadata.annotation.SpelFunctionReturnDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionParamDescription;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionReturnDescription;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.ReflectionHelper;
 
@@ -28,34 +29,42 @@ import lombok.Data;
 import lombok.SneakyThrows;
 
 @Data
-public final class SpelFunctionMetadataFactory {
-	private static final Logger LOG = LoggerFactory.getLogger(SpelFunctionMetadataFactory.class);
+public final class SpelFunctionDescriptorsFactory {
+	private static final Logger LOG = LoggerFactory.getLogger(SpelFunctionDescriptorsFactory.class);
 
-	public static final SpelFunctionDescriptors getSpelFunctionsDescriptor() {
-	    Collection<Class<?>> spelFunctionClazzes = Stream.of(
-	            "com.fortify.cli.common.spring.expression.fn.SpelFunctionsStandard",
+	public static final SpelFunctionDescriptors getStandardSpelFunctionsDescriptors() {
+	    return getSpelFunctionsDescriptors("com.fortify.cli.common.spring.expression.fn.SpelFunctionsStandard");
+	}
+	
+	public static final SpelFunctionDescriptors getActionSpelFunctionsDescriptors() {
+        return getSpelFunctionsDescriptors(
+                "com.fortify.cli.common.spring.expression.fn.SpelFunctionsStandard",
                 "com.fortify.cli.common.action.runner.ActionSpelFunctions",
                 "com.fortify.cli.fod.action.helper.FoDActionSpelFunctions",
                 "com.fortify.cli.common.action.runner.ActionRunnerContext$ActionUtil",
-                "com.fortify.cli.ssc.action.helper.SSCActionSpelFunctions")
+                "com.fortify.cli.ssc.action.helper.SSCActionSpelFunctions"
+        );
+    }
+	
+	
+	public static final SpelFunctionDescriptors getSpelFunctionsDescriptors(String... spelFunctionClazzNames) {
+	   Collection<Class<?>> spelFunctionClazzes = Stream.of(spelFunctionClazzNames)
 	       .map(c->toClass(c))
 	       .collect(Collectors.toList());
 		return new SpelFunctionDescriptors(spelFunctionClazzes);
 	}
 
 	@SneakyThrows
-    private static Class<?> toClass(String c) {
+    private static final Class<?> toClass(String c) {
         return Class.forName(c);
     }
 
-    @Data
 	@Reflectable
-	public static final class SpelFunctionDescriptors {
-		private final List<SpelFunctionDescriptor> functions;
+	public static final class SpelFunctionDescriptors extends ArrayList<SpelFunctionDescriptor> {
+		private static final long serialVersionUID = 1L;
 
 		public SpelFunctionDescriptors(Collection<Class<?>> spelFunctionClazzes) {
-			this.functions = collectSpelFunctions(spelFunctionClazzes);
-			functions.sort((a, b) -> a.getName().compareTo(b.name));
+			collectSpelFunctions(spelFunctionClazzes);
 		}
 
 		@JsonIgnore
@@ -67,10 +76,11 @@ public final class SpelFunctionMetadataFactory {
 			return result;
 		}
 
-		private static final List<SpelFunctionDescriptor> collectSpelFunctions(Collection<Class<?>> spelFunctionClazzes) {
-		    return spelFunctionClazzes.stream()
+		private final void collectSpelFunctions(Collection<Class<?>> spelFunctionClazzes) {
+		    spelFunctionClazzes.stream()
 		        .flatMap(c->createFunctionDescriptorsStream(c))
-		        .collect(Collectors.toList());
+		        .sorted((a, b) -> a.getName().compareTo(b.name))
+		        .forEach(this::add);
 		}
 		
 		private static final Stream<SpelFunctionDescriptor> createFunctionDescriptorsStream(Class<?> spelFunctionClazz) {
@@ -87,6 +97,7 @@ public final class SpelFunctionMetadataFactory {
 		    var returns= createReturnDescriptor(spelFunctionMethod);
 		    var signature = createSignature(name, params, returns);
 		    return SpelFunctionDescriptor.builder()
+		            .clazz(spelFunctionClazz)
 					.name(name)
 					.description(desc)
 					.params(params)
@@ -182,6 +193,6 @@ public final class SpelFunctionMetadataFactory {
 	}
 	
 	public static void main(String[] args) {
-        System.out.println(SpelFunctionMetadataFactory.getSpelFunctionsDescriptor().asJson().toPrettyString());
+        System.out.println(SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().asJson().toPrettyString());
     }
 }
