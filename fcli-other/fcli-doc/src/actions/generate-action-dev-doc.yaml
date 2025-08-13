@@ -105,24 +105,24 @@ steps:
 
    # Process SpEL Functions
   - records.for-each:
-     from: ${#spelFunctionsMetadata().functions}
-     record.var-name: method
+     from: ${#actionSpelFunctions()}
+     record.var-name: fn
      do:
         - var.rm:
             - paramTableRows
-        - if: ${method.params != null && method.params.size() > 0}
+        - if: ${fn.params != null && fn.params.size() > 0}
           records.for-each:
-              from: ${method.params}
+              from: ${fn.params}
               record.var-name: param
               do:
                  - var.set:
                     paramTableRows..: "${param.type} ${param.name} - ${param.description}"
                           
         - var.set:
-           method.paramTableRows: ${paramTableRows}
-           funcDescriptions..:
-             fmt: funcDescriptionSection
-             value: ${method}
+           fn.paramTableRows: ${paramTableRows}
+           spelFunctionDescriptionSections..:
+             fmt: spelFunctionDescriptionSection
+             value: ${fn}
                        
   - out.write:
       ${cli.outputFile}: {fmt: result}
@@ -297,7 +297,7 @@ formatters:
     ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java[FoDActionSpelFunctions] (only available for actions run through `fcli fod action run`)
     ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java[SSCActionSpelFunctions] (only available for actions run through `fcli ssc action run`)
     
-    ${#join("\n\n", funcDescriptions)}
+    ${#join("\n\n", spelFunctionDescriptionSections)}
     
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
   formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!fcli-action-schema-url!!!',#fcliBuildProperties().fcliActionSchemaUrl)+'\n----\n']))} 
@@ -333,7 +333,7 @@ formatters:
     
     ${#isBlank(formattedSampleSnippets)?'':'*Supported properties*'}
     ${propertyTable}
-  funcDescriptionSection: |
+  spelFunctionDescriptionSection: |
     === `${name?:'-'}`
     [%noheader,%autowidth.stretch]
     |===

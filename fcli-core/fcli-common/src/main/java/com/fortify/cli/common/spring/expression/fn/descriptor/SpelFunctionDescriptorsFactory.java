@@ -40,8 +40,8 @@ public final class SpelFunctionDescriptorsFactory {
         return getSpelFunctionsDescriptors(
                 "com.fortify.cli.common.spring.expression.fn.SpelFunctionsStandard",
                 "com.fortify.cli.common.action.runner.ActionSpelFunctions",
+                "com.fortify.cli.common.action.runner.ActionRunnerContextSpelFunctions",
                 "com.fortify.cli.fod.action.helper.FoDActionSpelFunctions",
-                "com.fortify.cli.common.action.runner.ActionRunnerContext$ActionUtil",
                 "com.fortify.cli.ssc.action.helper.SSCActionSpelFunctions"
         );
     }
