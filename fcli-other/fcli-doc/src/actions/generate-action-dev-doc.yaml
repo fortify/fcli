@@ -132,8 +132,6 @@ steps:
 formatters:
   result: |
     = Fcli Action Development Guide
-    :toc:
-    :toclevels: 4
     
     [%autowidth]
     |===
@@ -276,7 +274,7 @@ formatters:
     link:https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html[Spring Expression Language (SpEL)],
     possibly combined with fcli-provided SpEL functions.
     
-    === SpEL Functions
+    == SpEL Functions
     
     Fcli provides many functions that can be invoked from expressions. Function calls are identified by the `#` sign,
     for example: 
@@ -299,7 +297,6 @@ formatters:
     ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java[FoDActionSpelFunctions] (only available for actions run through `fcli fod action run`)
     ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java[SSCActionSpelFunctions] (only available for actions run through `fcli ssc action run`)
     
-    \n
     ${#join("\n\n", funcDescriptions)}
     
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
@@ -337,7 +334,7 @@ formatters:
     ${#isBlank(formattedSampleSnippets)?'':'*Supported properties*'}
     ${propertyTable}
   funcDescriptionSection: |
-    ==== `${name?:'-'}`
+    === `${name?:'-'}`
     [%noheader,%autowidth.stretch]
     |===
     |**Signature: `${signature}`**
