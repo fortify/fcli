@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.fortify.cli.common.spring.expression.fn.descriptor.annotation;
+package com.fortify.cli.common.spel.fn.descriptor.annotation;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -11,10 +11,11 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation to be placed on SpEL Function class functions/return type to provide the
- * description of the function return type/value to be included in the documentation.
+ * description of the function and return type/value to be included in the documentation.
  */
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface SpelFunctionDescription {
-	String value() default "";
+public @interface SpelFunction {
+	String desc() default "";
+	String returns();
 }

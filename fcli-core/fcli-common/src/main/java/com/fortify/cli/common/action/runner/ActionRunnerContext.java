@@ -34,8 +34,8 @@ import com.fortify.cli.common.action.runner.processor.IActionRequestHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
-import com.fortify.cli.common.spring.expression.ISpelEvaluator;
+import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
+import com.fortify.cli.common.spel.ISpelEvaluator;
 
 import lombok.AccessLevel;
 import lombok.Builder;

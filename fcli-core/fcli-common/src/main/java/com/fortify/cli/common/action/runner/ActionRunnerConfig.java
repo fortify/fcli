@@ -23,8 +23,8 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.helper.IProgressWriterFactory;
-import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
-import com.fortify.cli.common.spring.expression.ISpelEvaluator;
+import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
+import com.fortify.cli.common.spel.ISpelEvaluator;
 
 import lombok.AccessLevel;
 import lombok.Builder;

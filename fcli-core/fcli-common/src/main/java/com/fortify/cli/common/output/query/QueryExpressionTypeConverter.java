@@ -17,7 +17,7 @@ import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.spring.expression.validator.AbstractSimpleSpelNodeValidator;
+import com.fortify.cli.common.spel.validator.AbstractSimpleSpelNodeValidator;
 
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.TypeConversionException;

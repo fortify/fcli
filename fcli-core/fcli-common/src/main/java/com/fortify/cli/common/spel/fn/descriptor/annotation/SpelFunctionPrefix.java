@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.fortify.cli.common.spring.expression.fn.descriptor.annotation;
+package com.fortify.cli.common.spel.fn.descriptor.annotation;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;

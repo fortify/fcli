@@ -22,28 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.spring.expression.wrapper;
+package com.fortify.cli.common.spel.wrapper;
 
-import java.io.IOException;
+import org.springframework.expression.Expression;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.formkiq.graalvm.annotations.Reflectable;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
- * This Jackson serializer allows for serializing {@link TemplateExpression} instances
- * to expression strings
+ * <p>This is a simple wrapper class for a Spring {@link Expression}
+ * instance. It's main use is in combination with 
+ * {@link SimpleExpressionDeserializer} to allow automatic
+ * conversion from String values to simple {@link Expression}
+ * instances in JSON/YAML documents.</p>
+ * 
+ * <p>The reason for needing this wrapper class is to differentiate
+ * with templated {@link Expression} instances that are handled 
+ * by {@link TemplateExpressionSerializer}.</p>
  */
-@Reflectable
-public final class TemplateExpressionSerializer extends StdSerializer<TemplateExpression> {
-    private static final long serialVersionUID = 1L;
-    public TemplateExpressionSerializer() {
-        super(TemplateExpression.class);
-    }
-
-    @Override
-    public void serialize(TemplateExpression value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        gen.writeString(value.getOriginalExpressionString());
-    }
+@JsonDeserialize(using = SimpleExpressionDeserializer.class)
+@JsonSerialize(using = SimpleExpressionSerializer.class)
+public class SimpleExpression extends WrappedExpression {
+	public SimpleExpression(String originalExpressionString, Expression target) {
+		super(originalExpressionString, target);
+	}
 }

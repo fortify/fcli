@@ -16,10 +16,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionDescription;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionParamDescription;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionPrefix;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionReturnDescription;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,9 +27,10 @@ import lombok.RequiredArgsConstructor;
 public final class ActionRunnerContextSpelFunctions {
     private final ActionRunnerContext ctx;
     
-    @SpelFunctionDescription("Copies parameter key-value pairs from the context's CLI options filtered by the specified group, formatting them as command-line arguments.")
-    public final @SpelFunctionReturnDescription("a string containing the copied parameters formatted as CLI options") String copyParametersFromGroup(
-        @SpelFunctionParamDescription("the group name used to filter parameters; if null, all groups are included") String group) {
+    @SpelFunction(returns="String listing non-blank command-line options copied from the given `cli.options` group")
+    public final String copyParametersFromGroup(
+        @SpelFunctionParam(name="group", desc="the `cli.options` group name from which to copy CLI options") String group) 
+    {
         StringBuilder result = new StringBuilder();
         for (var e : ctx.getConfig().getAction().getCliOptions().entrySet()) {
             var name = e.getKey();
@@ -50,10 +50,12 @@ public final class ActionRunnerContextSpelFunctions {
         return result.toString();
     }
 
-    @SpelFunctionDescription("Formats the input JsonNode using the specified formatter name via ActionRunnerHelper.")
-    public final @SpelFunctionReturnDescription("the formatted JsonNode result") JsonNode fmt(
-        @SpelFunctionParamDescription("the name of the formatter to apply") String formatterName,
-        @SpelFunctionParamDescription("the JsonNode input to be formatted") JsonNode input) {
+    @SpelFunction(desc = "Formats the input value using the specified formatter as declared through the `formatters` YAML instruction",
+                  returns="The formatted value") 
+    public final JsonNode fmt(
+        @SpelFunctionParam(name="formatterName", desc="the name of the formatter to apply") String formatterName,
+        @SpelFunctionParam(name="input", desc="the input to be formatted") JsonNode input)
+{
         return ActionRunnerHelper.fmt(ctx, formatterName, input);
     }
 

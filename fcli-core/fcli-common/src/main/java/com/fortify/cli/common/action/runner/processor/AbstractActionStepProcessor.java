@@ -30,7 +30,7 @@ import com.fortify.cli.common.action.model.IActionStepIfSupplier;
 import com.fortify.cli.common.action.model.IMapKeyAware;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpressionKeySerializer;
+import com.fortify.cli.common.spel.wrapper.TemplateExpressionKeySerializer;
 import com.fortify.cli.common.util.StringHelper;
 
 import lombok.Data;

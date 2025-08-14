@@ -116,7 +116,7 @@ steps:
               record.var-name: param
               do:
                  - var.set:
-                    paramTableRows..: "${param.type} ${param.name} - ${param.description}"
+                    paramTableRows..: "__${param.type} ${param.name}__ - ${param.description}"
                           
         - var.set:
            fn.paramTableRows: ${paramTableRows}
@@ -335,18 +335,16 @@ formatters:
     ${propertyTable}
   spelFunctionDescriptionSection: |
     === `${name?:'-'}`
-    [%noheader,%autowidth.stretch]
+    [%noheader,%autowidth.stretch,cols="1,~"]
     |===
-    |**Signature: `${signature}`**
-    |${description}
-              
-    a|*Parameters:*
-    [%noheader,%autowidth.stretch]
-    !===
-    ${'!' + (paramTableRows != null ? #join('\n\n!', paramTableRows) : 'NA')}
-    !===
-    a|*Returns:*
-    ${returns != null ? returns.description : ''}
-    |===
+    |**Signature**
+    |**`${signature}`**
     
+    ${paramTableRows==null ? '' : ('|**Parameters**\n|'+#join(' +\n', paramTableRows))}
+    
+    |**Returns**
+    |${returns != null ? returns.description : ''}
+    
+    ${#isBlank(description)?'':('2+|'+description)}
+    |===
     

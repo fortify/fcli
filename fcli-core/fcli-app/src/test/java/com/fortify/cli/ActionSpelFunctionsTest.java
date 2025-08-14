@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.common.spring.expression.fn.descriptor.SpelFunctionDescriptorsFactory;
-import com.fortify.cli.common.spring.expression.fn.descriptor.SpelFunctionDescriptorsFactory.SpelFunctionDescriptor;
+import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory;
+import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory.SpelFunctionDescriptor;
 
 /**
  *

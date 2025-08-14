@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.spring.expression;
+package com.fortify.cli.common.spel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.spring.expression.fn.SpelFunctionsStandard;
+import com.fortify.cli.common.spel.fn.SpelFunctionsStandard;
 
 import lombok.RequiredArgsConstructor;
 

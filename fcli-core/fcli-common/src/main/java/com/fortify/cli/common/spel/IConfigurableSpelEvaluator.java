@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/**
+ * Copyright 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -9,9 +9,13 @@
  * liable for technical or editorial errors or omissions contained 
  * herein. The information contained herein is subject to change 
  * without notice.
- *******************************************************************************/
-/**
- * This package and it's sub-packages contains classes related to the Spring framework 
  */
-package com.fortify.cli.common.spring;
+package com.fortify.cli.common.spel;
 
+import java.util.function.Consumer;
+
+import org.springframework.expression.spel.support.SimpleEvaluationContext;
+
+public interface IConfigurableSpelEvaluator extends ISpelEvaluator {
+    IConfigurableSpelEvaluator configure(Consumer<SimpleEvaluationContext> contextConfigurer);
+}

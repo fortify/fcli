@@ -22,28 +22,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.spring.expression.wrapper;
+package com.fortify.cli.common.spel.wrapper;
 
-import org.springframework.expression.Expression;
+import java.io.IOException;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.formkiq.graalvm.annotations.Reflectable;
 
 /**
- * <p>This is a simple wrapper class for a Spring {@link Expression}
- * instance. It's main use is in combination with 
- * {@link TemplateExpressionSerializer} to allow automatic
- * conversion from String values to templated {@link Expression}
- * instances.</p>
- * 
- * <p>The reason for needing this wrapper class is to differentiate
- * with non-templated {@link Expression} instances that are
- * handled by {@link SimpleExpressionDeserializer}.</p>
+ * This Jackson deserializer allows for parsing String values into 
+ * {@link SimpleExpression} objects
  */
-@JsonDeserialize(using = TemplateExpressionDeserializer.class)
-@JsonSerialize(using = TemplateExpressionSerializer.class)
-public class TemplateExpression extends WrappedExpression {
-	public TemplateExpression(String originalExpressionString, Expression target) {
-		super(originalExpressionString, target);
-	}
+@Reflectable
+public final class SimpleExpressionDeserializer extends StdDeserializer<SimpleExpression> {
+    private static final long serialVersionUID = 1L;
+    private static final SpelExpressionParser parser = new SpelExpressionParser();
+    public SimpleExpressionDeserializer() { this(null); } 
+    public SimpleExpressionDeserializer(Class<?> vc) { super(vc); }
+
+    @Override
+    public SimpleExpression deserialize(JsonParser jp, DeserializationContext ctxt) 
+      throws IOException, JsonProcessingException {
+        JsonNode node = jp.getCodec().readTree(jp);
+        return node==null || node.isNull() ? null : new SimpleExpression(node.asText(), parser.parseExpression(node.asText()));
+    }
 }

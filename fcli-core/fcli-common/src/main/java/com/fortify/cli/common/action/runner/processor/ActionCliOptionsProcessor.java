@@ -42,7 +42,7 @@ import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
-import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
+import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import com.github.freva.asciitable.HorizontalAlign;

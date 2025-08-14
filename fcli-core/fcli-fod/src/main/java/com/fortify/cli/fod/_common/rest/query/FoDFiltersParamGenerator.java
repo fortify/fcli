@@ -36,8 +36,8 @@ import org.springframework.expression.spel.ast.OpOr;
 import org.springframework.expression.spel.ast.OperatorMatches;
 
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.common.spring.expression.AbstractSpelNodeVisitor;
-import com.fortify.cli.common.spring.expression.SpelNodeHelper;
+import com.fortify.cli.common.spel.AbstractSpelNodeVisitor;
+import com.fortify.cli.common.spel.SpelNodeHelper;
 import com.fortify.cli.common.util.JavaHelper;
 
 public final class FoDFiltersParamGenerator implements IServerSideQueryParamValueGenerator {

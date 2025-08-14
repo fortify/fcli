@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,10 +55,9 @@ import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.spring.expression.fn.descriptor.SpelFunctionDescriptorsFactory;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionDescription;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionParamDescription;
-import com.fortify.cli.common.spring.expression.fn.descriptor.annotation.SpelFunctionReturnDescription;
+import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
@@ -76,22 +74,25 @@ public class ActionSpelFunctions {
     private static final Pattern uriPartsPattern = Pattern.compile("^(?<serverUrl>(?:(?<protocol>[A-Za-z]+):)?(\\/{0,3})(?<host>[0-9.\\-A-Za-z]+)(?::(?<port>\\d+))?)(?<path>\\/(?<relativePath>[^?#]*))?(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$");
     private static final Map<String,Set<String>> builtinActionNamesByModule = new HashMap<>();
     
-	@SpelFunctionDescription("Resolves the given path against the current working directory.")
-	public static final @SpelFunctionReturnDescription("the absolute, normalized path as a string") String resolveAgainstCurrentWorkDir(
-			@SpelFunctionParamDescription("the path to resolve against the current working directory") String path) {
+	@SpelFunction(desc="Resolves the given path against the current working directory.",
+	        returns="The absolute, normalized path")
+	public static final String resolveAgainstCurrentWorkDir(
+			@SpelFunctionParam(name="path", desc="the path to resolve against the current working directory") String path)
+	{
 		return Path.of(".").resolve(path).toAbsolutePath().normalize().toString();
 	}
     
-	@SpelFunctionDescription("Joins elements from the given source into a single string separated by the specified separator.")
-	public static final @SpelFunctionReturnDescription("a string consisting of the joined elements separated by the given separator") String join(
-			@SpelFunctionParamDescription("the string to use as a separator between elements") String separator,
-			@SpelFunctionParamDescription("the source object containing elements to join, either a `Collection` or an `ArrayNode`") Object source) {
-		switch (separator) {
+	@SpelFunction(returns="String consisting of the joined elements, separated by the given delimiter")
+	public static final String join(
+			@SpelFunctionParam(name="delimiter", desc="the delimiter to be used between each element") String delimiter,
+			@SpelFunctionParam(name="input", desc="the elements to join", type = "array") Object source)
+	{
+		switch (delimiter) {
 		case "\\n":
-			separator = "\n";
+		    delimiter = "\n";
 			break;
 		case "\\t":
-			separator = "\t";
+		    delimiter = "\t";
 			break;
 		}
 		Stream<?> stream = null;
@@ -100,36 +101,40 @@ public class ActionSpelFunctions {
 		} else if (source instanceof ArrayNode) {
 			stream = JsonHelper.stream((ArrayNode) source);
 		}
-		return stream == null ? "" : stream.map(ActionSpelFunctions::toString).collect(Collectors.joining(separator));
+		return stream == null ? "" : stream.map(ActionSpelFunctionsHelper::toString).collect(Collectors.joining(delimiter));
 	}
-
-    
-    private static final String toString(Object o) {
-        if ( o==null ) {
-            return "";
-        } else if ( o instanceof JsonNode ) {
-            return ((JsonNode)o).asText();
-        } else {
-            return o.toString();
-        }
+	
+	@SpelFunction(returns="String consisting of the joined elements separated by the given delimiter _if all elements are non-null_; otherwise `null`")
+    public static final String joinOrNull(
+            @SpelFunctionParam(name="delimiter", desc="the delimiter to be used between each element") String delimiter,
+            @SpelFunctionParam(name="input", desc="the elements to join") String... parts) 
+	{
+        if (parts == null || Arrays.asList(parts).stream().anyMatch(Objects::isNull)) {return null;}
+        return String.join(delimiter, parts);
     }
     
-	@SpelFunctionDescription("Returns a literal pattern String for the specified string, escaping any regex special characters.")
-	public static final @SpelFunctionReturnDescription("the quoted string suitable for use in a regular expression") String regexQuote(
-			@SpelFunctionParamDescription("the input string to be quoted") String s) {
+	@SpelFunction(desc = "Returns a literal regex pattern string for the given input string, escaping any characters that have a special meaning in regular expressions.",
+	        returns="The regex-quoted string")
+	public static final String regexQuote(
+			@SpelFunctionParam(name="input", desc="the string to be quoted") String s)
+	{
 		return Pattern.quote(s);
 	}
     
-	@SpelFunctionDescription("Replaces all occurrences in the input string based on regex patterns and replacement values provided in the mapping object.")
-	public static final @SpelFunctionReturnDescription("the resulting string after performing all replacements") String replaceAllFromRegExMap(
-			@SpelFunctionParamDescription("the input string on which replacements will be performed") String s,
-			@SpelFunctionParamDescription("the mapping object containing regex patterns as keys and replacement strings as values; can be an ObjectNode, JsonNodeWrapper, or any object convertible to a JSON tree") Object mappingObject) {
-
+	@SpelFunction(desc = """
+	        Replaces all occurrences in the input string based on regex patterns and replacement
+	        values provided in the mapping object.
+	        """,
+	        returns="The input string with all replacements applied")
+	public static final String replaceAllFromRegExMap(
+			@SpelFunctionParam(name="input", desc="the input string on which to apply replacements") String s,
+			@SpelFunctionParam(name="replacements", desc="map containing regex patterns as keys and replacement strings as values", type = "map<string,string>") Object mappingObject)
+	{
 		var mappingNode = mappingObject instanceof ObjectNode ? (ObjectNode) mappingObject
 				: mappingObject instanceof JsonNodeWrapper ? ((JsonNodeWrapper<?>) mappingObject).getRealNode()
 						: JsonHelper.getObjectMapper().valueToTree(mappingObject);
 		if (!mappingNode.isObject()) {
-			throw new FcliTechnicalException("replaceAllFromMap must be called with Map or ObjectNode, actual type: "
+			throw new FcliTechnicalException("replaceAllFromRegExMap must be called with Map or ObjectNode, actual type: "
 					+ mappingObject.getClass().getSimpleName());
 		}
 		var fields = ((ObjectNode) mappingNode).fields();
@@ -140,9 +145,11 @@ public class ActionSpelFunctions {
 		return s;
 	}
     
-	@SpelFunctionDescription("Generates a numbered list string from the given list of elements, each prefixed with its position number.")
-	public static final @SpelFunctionReturnDescription("a string representing the numbered list of elements, each on a new line") String numberedList(
-			@SpelFunctionParamDescription("the list of elements to be numbered and joined") List<Object> elts) {
+	@SpelFunction(desc = "Generates a numbered list from the given list of elements.",
+	        returns="Numbered list of input elements, each on a new line") 
+	public static final String numberedList(
+			@SpelFunctionParam(name="input", desc="the list of elements to be numbered and joined") List<Object> elts)
+	{
 		StringBuilder builder = new StringBuilder();
 		for (var i = 0; i < elts.size(); i++) {
 			builder.append(i + 1).append(". ").append(elts.get(i)).append('\n');
@@ -150,19 +157,12 @@ public class ActionSpelFunctions {
 		return builder.toString();
 	}
     
-	/**
-	 * Convenience method to throw an exception if an expression evaluates to false
-	 * 
-	 * @param throwError true if error should be thrown, false otherwise
-	 * @param msg        Message for exception to be thrown
-	 * @return true if throwError is false
-	 * @throws IllegalStateException with the given message if throwError is true
-	 */
-	@SpelFunctionDescription("Checks the condition and either throws an exception with the specified message or returns `true`.")
-	public static final @SpelFunctionReturnDescription("`true` if no exception is thrown") boolean check(
-			@SpelFunctionParamDescription("if `true`, an exception will be thrown") boolean throwError,
-			@SpelFunctionParamDescription("the message to use for the thrown exception") String msg) {
-
+	@SpelFunction(desc = "Throws an error with the given message if the first argument evaluates to true.",
+	        returns="`true` if no error is thrown")
+	public static final boolean check(
+			@SpelFunctionParam(name="throwError", desc="if `true`, an error will be thrown") boolean throwError,
+			@SpelFunctionParam(name="msg", desc="the error message") String msg)
+	{
 		if (throwError) {
 			throw new FcliActionStepException(msg);
 		} else {
@@ -170,85 +170,35 @@ public class ActionSpelFunctions {
 		}
 	}
     
-	@SpelFunctionDescription("Repeats the given text a specified number of times.")
-	public static final @SpelFunctionReturnDescription("the concatenated string consisting of the text repeated count times") String repeat(
-			@SpelFunctionParamDescription("the text to repeat") String text,
-			@SpelFunctionParamDescription("the number of times to repeat the text; if negative, returns an empty string") int count) {
-		if (count < 0) { return ""; }
+	@SpelFunction(desc = "Repeats the input text a specified number of times.",
+	        returns= "The input text repeated the given number of times") 
+	public static final String repeat(
+			@SpelFunctionParam(name="input", desc="the text to repeat.") String text,
+			@SpelFunctionParam(name="count", desc="the number of times to repeat the text; if <=0, an empty string will be returned") int count)
+	{
+		if (count <= 0) { return ""; }
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < count; i++) { sb.append(text);}
 		return sb.toString();
 	}
     
-	@SpelFunctionDescription("Joins the given parts into a single string separated by the specified separator, or returns `null` if any part is `null`.")
-	public static final @SpelFunctionReturnDescription("the joined string if all parts are non-null; otherwise `null`") String joinOrNull(
-			@SpelFunctionParamDescription("the string to use as a separator between parts") String separator,
-			@SpelFunctionParamDescription("the parts to join; must not contain null elements") String... parts) {
-		if (parts == null || Arrays.asList(parts).stream().anyMatch(Objects::isNull)) {return null;}
-		return String.join(separator, parts);
-	}
-    
-	@SpelFunctionDescription("Converts the given HTML string into plain text.")
-	public static final @SpelFunctionReturnDescription("the plain text extracted from the input HTML, or null if the input is `null`") String htmlToText(
-			@SpelFunctionParamDescription("the HTML string to convert to plain text") String html) {
+	@SpelFunction(desc = "Converts the given HTML string into plain text.",
+	        returns="The plain text extracted from the input HTML, or `null` if the input is `null`")
+	public static final String htmlToText(
+			@SpelFunctionParam(name="html", desc="the HTML string to convert to plain text; may be `null`") String html)
+	{
 		if (html == null) { return null; }
-		Document document = _asDocument(html);
-		return _htmlToText(document);
+		Document document = ActionSpelFunctionsJsoupHelper.asDocument(html);
+		return ActionSpelFunctionsJsoupHelper.documentToPlainText(document);
 	}
-
-    private static final Document _asDocument(String html) {
-        Document document = Jsoup.parse(html);
-        document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
-        return document;
-    }
-
-    private static String _htmlToText(Document document) {
-        document.select("li").append("\\n");
-        document.select("br").forEach(e->e.replaceWith(new TextNode("\n")));
-        document.select("p").prepend("\\n\\n");
-        // Replace code blocks, either embedding in backticks if inline (no newline characters)
-        // or indenting with 4 spaces and fencing with CODE_START and CODE_END, which will remain
-        // in place when cleaning all HTML tags, and removed using pattern matching below.
-        document.select("span.code").forEach(ActionSpelFunctions::_replaceCode);
-        document.select("code").forEach(ActionSpelFunctions::_replaceCode);
-        document.select("pre").forEach(ActionSpelFunctions::_replaceCode);
-        
-        // Remove all HTML tags. Note that for now, this keeps escaped characters like &gt;
-        // We may want to have separate methods or method parameter to allow for escaped
-        // characters to be unescaped.
-        var s = Jsoup.clean(document.html().replaceAll("\\\\n", "\n"), "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
-        
-        var sb = new StringBuilder();
-        // Remove CODE_START and CODE_END fences
-        Matcher m = CODE_PATTERN.matcher(s);
-        while(m.find()){
-            String code = m.group(1);
-            // Code may contain regex-related characters like ${..}, which we don't
-            // want to interpret as regex groups. So, we append an empty replacement
-            // (have Matcher append all text before the code block), then manually 
-            // append the code block. See https://stackoverflow.com/a/948381
-            m.appendReplacement(sb, "");
-            sb.append(Parser.unescapeEntities(code, false));
-        }
-        m.appendTail(sb);
-        return sb.toString();
-    }
     
-    private static final void _replaceCode(Element e) {
-        var text = e.text();
-        if ( text.contains("\n") ) {
-			text = StringHelper.indent("\n\n" + CODE_START + text.replaceAll("\t", "    "), "    ") + CODE_END + "\n\n";
-        } else {
-            text = "`"+text+"`";
-        }
-        e.replaceWith(new TextNode(text));
-    }
-    
-	@SpelFunctionDescription("Cleans the given rule description by processing specific HTML elements and converting it to plain text.")
-	public static final @SpelFunctionReturnDescription("the cleaned and converted plain text from the input description; returns an empty string if input is `null`") String cleanRuleDescription(
-			@SpelFunctionParamDescription("the HTML description string to be cleaned") String description) {
+	@SpelFunction(desc = "Cleans the given rule description and returns it as plain text.",
+	        returns="The cleaned rule description, or empty string if input is `null`")
+	public static final String cleanRuleDescription(
+			@SpelFunctionParam(name="ruleDescription", desc="the rule description string to be cleaned; may be `null`") String description)
+	{
 		if (description == null) { return ""; }
-		Document document = _asDocument(description);
+		Document document = ActionSpelFunctionsJsoupHelper.asDocument(description);
 		var paragraphs = document.select("Paragraph");
 		for (var p : paragraphs) {
 			var altParagraph = p.select("AltParagraph");
@@ -257,79 +207,115 @@ public class ActionSpelFunctions {
 		}
 		document.select("IfDef").remove();
 		document.select("ConditionalText").remove();
-		return _htmlToText(document);
+		return ActionSpelFunctionsJsoupHelper.documentToPlainText(document);
 	}
 
-	@SpelFunctionDescription("Cleans the given issue description by removing `AltParagraph` elements and converting it to plain text.")
-	public static final @SpelFunctionReturnDescription("the cleaned and converted plain text from the input description; returns an empty string if input is `null`") String cleanIssueDescription(
-			@SpelFunctionParamDescription("the HTML description string to be cleaned") String description) {
+	@SpelFunction(desc = "Cleans the given issue description and returns it as plain text.",
+	        returns="The cleaned issue description, or empty string if input is `null`")
+	public static final String cleanIssueDescription(
+			@SpelFunctionParam(name="issueDescription", desc="the issue description string to be cleaned") String description)
+	{
 		if (description == null) { return ""; }
-		Document document = _asDocument(description);
+		Document document = ActionSpelFunctionsJsoupHelper.asDocument(description);
 		document.select("AltParagraph").remove();
-		return _htmlToText(document);
+		return ActionSpelFunctionsJsoupHelper.documentToPlainText(document);
 	}
 	
-	@SpelFunctionDescription("Converts the given HTML string into a single-line plain text string by removing all HTML tags.")
-	public static final @SpelFunctionReturnDescription("the plain text extracted from the input HTML with all tags removed, or null if the input is `null`") String htmlToSingleLineText(
-			@SpelFunctionParamDescription("the HTML string to convert to single-line plain text") String html) {
+	@SpelFunction(desc = "Converts the given HTML string into a single-line plain text string by removing all HTML tags.",
+	        returns="The plain text representation of the given HTML input, or `null` if the input is `null`")
+	public static final String htmlToSingleLineText(
+			@SpelFunctionParam(name="html", desc="the HTML string to convert to single-line plain text") String html) 
+	{
 		if (html == null) { return null; }
 		return Jsoup.clean(html, "", Safelist.none());
 	}
 
-	@SpelFunctionDescription("Parse the given uriString using the regular expression `#uriPartsPattern` and return the value of the named capture group specified by the `arg1` parameter.")
-    public static final @SpelFunctionReturnDescription("Specified part of the given uriString") String uriPart(@SpelFunctionParamDescription("to be parsed") String uriString, @SpelFunctionParamDescription("to be returned") String part) {
+	@SpelFunction(desc = "Retrieves a given part of the given URI",
+	        returns="Requested part of the given URI, or `null` if part name is not valid or not present") 
+    public static final String uriPart(
+            @SpelFunctionParam(name="uri", desc="URI from which to retrieve the requested part") String uriString, 
+            @SpelFunctionParam(name="part", desc="URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment") String part)
+	{
         if ( StringUtils.isBlank(uriString) ) {return null;}
         // We use a regex as WebInspect results may contain URL's that contain invalid characters according to URI class
         Matcher matcher = uriPartsPattern.matcher(uriString);
         return matcher.matches() ? matcher.group(part) : null;
     }
     
-	@SpelFunctionDescription("Parse the given dateString as a JSON date (see `JSONDateTimeConverter`, then format it using the given `DateTimeFormatter` pattern.")
-	public static final @SpelFunctionReturnDescription("Formatted date") String formatDateTime(
-			@SpelFunctionParamDescription("used to format the specified date") String pattern,
-			@SpelFunctionParamDescription("JSON string representation of date to be formatted") String... dateStrings) {
+	@SpelFunction(desc = """
+	        Returns either current or given date/time formatted according to the given formatter pattern. See
+	        'Patterns for Formatting and Parsing' section at
+	        https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
+	        for details on formatter pattern syntax. If the given date/time doesn't include time zone, system
+            default time zone will be assumed.
+	        """,
+            returns="Formatted date/time")
+	public static final String formatDateTime(
+			@SpelFunctionParam(name="fmt", desc="formatter pattern used to format given or current date/time") String pattern,
+			@SpelFunctionParam(
+			  desc = "optional date/time in JSON format to be formatted; if not specified, current date/time will be formatted",
+			  name="input", type = "string", optional = true) String... dateStrings)
+	{
 		var dateString = dateStrings == null || dateStrings.length == 0 ? currentDateTime() : dateStrings[0];
 		return formatDateTimeWithZoneId(pattern, dateString, ZoneId.systemDefault());
 	}
+	
+	@SpelFunction(desc = """
+	        Returns given date/time formatted according to the given formatter pattern. See 'Patterns for Formatting
+	        and Parsing' section at
+	        https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
+            for details on formatter pattern syntax. If the given date/time doesn't include time zone, the given
+            default time zone id will be used.
+	        """,
+            returns="Formatted date/time")
+    public static final String formatDateTimeWithZoneId(
+            @SpelFunctionParam(name="fmt", desc="formatter pattern used to format given date/time") String pattern,
+            @SpelFunctionParam(name="input", desc="date/time in JSON format to be formatted") String dateString,
+            @SpelFunctionParam(name="tz", desc="default time zone id if given date/time doesn't include time zone") ZoneId defaultZoneId)
+	{
+        ZonedDateTime zonedDateTime = new JSONDateTimeConverter(defaultZoneId).parseZonedDateTime(dateString);
+        return DateTimeFormatter.ofPattern(pattern).format(zonedDateTime);
+    }
+	
+	@SpelFunction(desc = """
+            Converts given date/time to UTC time zone and formats the result according to the given formatter pattern. 
+            See 'Patterns for Formatting and Parsing' section at
+            https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
+            for details on formatter pattern syntax. If the given date/time doesn't include time zone, system
+            default time zone will be assumed.
+            """,
+            returns="Formatted date/time")
+    public static final String formatDateTimeAsUTC(
+            @SpelFunctionParam(name="fmt", desc="formatter pattern used to format given date/time") String pattern,
+            @SpelFunctionParam(name="input", desc="date/time in JSON format to be formatted") String dateString) 
+	{
+        return formatDateTimewithZoneIdAsUTC(pattern, dateString, ZoneId.systemDefault());
+    }
     
-	@SpelFunctionDescription("Returns the current date and time formatted as a string in `yyyy-MM-dd HH:mm:ss` pattern.")
-	public static final @SpelFunctionReturnDescription("the current date and time as a formatted string") String currentDateTime() {
+	@SpelFunction(desc = """
+            Converts given date/time to UTC time zone and formats the result according to the given formatter pattern. 
+            See 'Patterns for Formatting and Parsing' section at
+            https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
+            for details on formatter pattern syntax. If the given date/time doesn't include time zone, the given
+            default time zone id will be used.
+            """,
+            returns="Formatted date/time")
+    public static final String formatDateTimewithZoneIdAsUTC(
+            @SpelFunctionParam(name="fmt", desc="formatter pattern used to format given date/time") String pattern,
+            @SpelFunctionParam(name="input", desc="date/time in JSON format to be formatted") String dateString,
+            @SpelFunctionParam(name="tz", desc="default time zone id if given date/time doesn't include time zone") ZoneId defaultZoneId)
+	{
+        ZonedDateTime zonedDateTime = new JSONDateTimeConverter(defaultZoneId).parseZonedDateTime(dateString);
+        LocalDateTime utcDateTime = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneOffset.UTC);
+        return DateTimeFormatter.ofPattern(pattern).format(utcDateTime);
+    }
+    
+	@SpelFunction(returns="The current date/time as `yyyy-MM-dd HH:mm:ss`")
+	public static final String currentDateTime() {
 		return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
 	}
-    
-	@SpelFunctionDescription("Parse the given dateString in the given time zone id as a JSON date (see `JSONDateTimeConverter`, then format it using the given `DateTimeFormatter` pattern.")
-	public static final @SpelFunctionReturnDescription("Formatted date") String formatDateTimeWithZoneId(
-			@SpelFunctionParamDescription("used to format the specified date") String pattern,
-			@SpelFunctionParamDescription("JSON string representation of date to be formatted") String dateString,
-			@SpelFunctionParamDescription("Default time zone id to be used if dateString doesn't provide time zone") ZoneId defaultZoneId) {
-		ZonedDateTime zonedDateTime = new JSONDateTimeConverter(defaultZoneId).parseZonedDateTime(dateString);
-		return DateTimeFormatter.ofPattern(pattern).format(zonedDateTime);
-	}
-    
-	@SpelFunctionDescription("Parse the given dateString as a JSON date (see {`JSONDateTimeConverter`, convert it to UTC time, then format it using the given `DateTimeFormatter` pattern.")
-	public static final @SpelFunctionReturnDescription("Formatted date") String formatDateTimeAsUTC(
-			@SpelFunctionParamDescription("used to format the specified date") String pattern,
-			@SpelFunctionParamDescription("JSON string representation of date to be formatted") String dateString) {
-		return formatDateTimewithZoneIdAsUTC(pattern, dateString, ZoneId.systemDefault());
-	}
-    
-	@SpelFunctionDescription("Parse the given dateString as a JSON date (see `JSONDateTimeConverter`, convert it to UTC time, then format it using the given `DateTimeFormatter` pattern.")
-	public static final @SpelFunctionReturnDescription("Formatted date") String formatDateTimewithZoneIdAsUTC(
-			@SpelFunctionParamDescription("used to format the specified date") String pattern,
-			@SpelFunctionParamDescription("JSON string representation of date to be formatted") String dateString,
-			@SpelFunctionParamDescription("Default time zone id to be used if dateString doesn't provide time zone") ZoneId defaultZoneId) {
-		ZonedDateTime zonedDateTime = new JSONDateTimeConverter(defaultZoneId).parseZonedDateTime(dateString);
-		LocalDateTime utcDateTime = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneOffset.UTC);
-		return DateTimeFormatter.ofPattern(pattern).format(utcDateTime);
-	}
-    
-	@SpelFunctionDescription("Converts the given Iterator into an Iterable, allowing it to be used in enhanced for-loops or other Iterable contexts.")
-	public static final @SpelFunctionReturnDescription("an Iterable wrapping the provided Iterator") <T> Iterable<T> asIterable(
-			@SpelFunctionParamDescription("the Iterator to convert into an Iterable") Iterator<T> iterator) {
-		return () -> iterator;
-	}
  
-	@SpelFunctionDescription("Given an environment variable prefix, module name, and built-in fcli action name, "
+	@SpelFunction(desc= "Given an environment variable prefix, module name, and built-in fcli action name, "
 			+ "this method returns the fcli command for running the action, allowing the action "
 			+ "name to overridden, and extra options to be specified, through environment variables"
 			+ "that are based on the given environment variable prefix. Some examples:\r\n"
@@ -340,47 +326,55 @@ public class ActionSpelFunctions {
 			+ "we skip the extra _ACTION suffixes, to avoid looking for PACKAGE_ACTION_ACTION. However, "
 			+ "we do keep _ACTION for the extra options environment variable, to allow for having both "
 			+ "PACKAGE_EXTRA_OPTS (on the `scancentral package` command), and PACKAGE_ACTION_EXTRA_OPTS "
-			+ "(on the `fcli * action run package` command).")
-    public static final @SpelFunctionReturnDescription("the formatted command string to run the specified action") String actionCmd(
-    		@SpelFunctionParamDescription("the environment variable prefix used for determining action options") String envPrefix, 
-    		@SpelFunctionParamDescription("the name of the module to run the action on") String moduleName,
-    		@SpelFunctionParamDescription("the name of the action to execute") String actionName) {
+			+ "(on the `fcli * action run package` command).",
+            returns="the formatted command string to run the specified action")
+    public static final String actionCmd(
+    		@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used for determining action options") String envPrefix, 
+    		@SpelFunctionParam(name="moduleName", desc="the name of the module to run the action on") String moduleName,
+    		@SpelFunctionParam(name="actionName", desc="the name of the action to execute") String actionName)
+	{
         return String.format("fcli %s action run \"%s\" %s",
                 moduleName,
                 // If envPrefix is <cmd>_ACTION, we remove want to avoid <cmd>_ACTION_ACTION,
                 // however we'd still use <cmd>_ACTION_EXTRA_OPTS
-                _envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", actionName),
+                ActionSpelFunctionsHelper.envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", actionName),
                 extraOpts(envPrefix));
     }
     
-	@SpelFunctionDescription("Constructs the fcli command string using the given environment prefix and command.")
-	public static final @SpelFunctionReturnDescription("the formatted command string with extra options appended") String fcliCmd(
-			@SpelFunctionParamDescription("the environment variable prefix used to determine extra options") String envPrefix,
-			@SpelFunctionParamDescription("the base command to be executed") String cmd) {
+	@SpelFunction(desc = "Constructs the fcli command string using the given environment prefix and command.",
+	        returns="the formatted command string with extra options appended") 
+	public static final String fcliCmd(
+			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to determine extra options") String envPrefix,
+			@SpelFunctionParam(name="cmd", desc="the base command to be executed") String cmd)
+	{
 		return String.format("%s %s", cmd, extraOpts(envPrefix));
 	}
     
-	@SpelFunctionDescription("Determines the reason to skip executing an action command based on environment variables and available built-in actions.")
-	public static final @SpelFunctionReturnDescription("a message explaining why the action command should be skipped, or null if no skip is needed") String actionCmdSkipNoActionReason(
-			@SpelFunctionParamDescription("the environment variable prefix used to check the action environment variable") String envPrefix,
-			@SpelFunctionParamDescription("the name of the module to check for built-in actions") String moduleName,
-			@SpelFunctionParamDescription("the name of the action to check for availability") String actionName) {
+	@SpelFunction(desc = "Determines the reason to skip executing an action command based on environment variables and available built-in actions.",
+            returns="a message explaining why the action command should be skipped, or null if no skip is needed") 
+	public static final String actionCmdSkipNoActionReason(
+			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to check the action environment variable") String envPrefix,
+			@SpelFunctionParam(name="moduleName", desc="the name of the module to check for built-in actions") String moduleName,
+			@SpelFunctionParam(name="actionName", desc="the name of the action to check for availability") String actionName)
+	{
 		var actionEnvValue = EnvHelper.env(String.format("%s_ACTION", envPrefix.replaceAll("_ACTION$", "")));
 		if (StringUtils.isBlank(actionEnvValue)) {
 			if (StringUtils.isBlank(actionName)) {
 				return "No built-in action available";
 			}
-			if (!_hasBuiltInAction(moduleName, actionName)) {
+			if (!ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName)) {
 				return String.format("Built-in %s action %s doesn't exist", moduleName, actionName);
 			}
 		}
 		return null;
 	}
     
-	@SpelFunctionDescription("Determines the reason to skip an action command based on environment variables and a default skip flag.")
-	public static final @SpelFunctionReturnDescription("a message explaining why the action is skipped, or null if the action should proceed") String actionCmdSkipFromEnvReason(
-			@SpelFunctionParamDescription("the environment variable prefix used to construct related environment variable names") String envPrefix,
-			@SpelFunctionParamDescription("flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault) {
+	@SpelFunction(desc = "Determines the reason to skip an action command based on environment variables and a default skip flag.",
+            returns="a message explaining why the action is skipped, or null if the action should proceed")
+	public static final String actionCmdSkipFromEnvReason(
+			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct related environment variable names") String envPrefix,
+			@SpelFunctionParam(name="skipByDefault", desc="flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault)
+	{
 		var doEnvName = String.format("DO_%s", envPrefix);
 		var doEnvValue = EnvHelper.env(doEnvName);
 		if (StringUtils.isNotBlank(doEnvValue)) {
@@ -402,10 +396,12 @@ public class ActionSpelFunctions {
 		return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
 	}
     
-	@SpelFunctionDescription("Determines the reason to skip an fcli command based on environment variables and a default skip flag.")
-	public static final @SpelFunctionReturnDescription("a message explaining why the fcli command is skipped, or null if the command should proceed") String fcliCmdSkipFromEnvReason(
-			@SpelFunctionParamDescription("the environment variable prefix used to construct related environment variable names") String envPrefix,
-			@SpelFunctionParamDescription("flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault) {
+	@SpelFunction(desc = "Determines the reason to skip an fcli command based on environment variables and a default skip flag.",
+            returns="a message explaining why the fcli command is skipped, or null if the command should proceed") 
+	public static final String fcliCmdSkipFromEnvReason(
+			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct related environment variable names") String envPrefix,
+			@SpelFunctionParam(name="skipByDefault", desc="flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault)
+	{
 		var doEnvName = String.format("DO_%s", envPrefix);
 		var doEnvValue = EnvHelper.env(doEnvName);
 		if (StringUtils.isNotBlank(doEnvValue)) {
@@ -426,58 +422,55 @@ public class ActionSpelFunctions {
 		return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
 	}
     
-	@SpelFunctionDescription("Returns the specified reason if the skip condition is true; otherwise returns null.")
-	public static final @SpelFunctionReturnDescription("the reason string if skip is true; otherwise null") String skipReasonIf(
-			@SpelFunctionParamDescription("the condition indicating whether to skip") boolean skip,
-			@SpelFunctionParamDescription("the reason to return if skipping") String reason) {
+	@SpelFunction(desc = "Returns the specified reason if the skip condition is true; otherwise returns null.",
+            returns="the reason string if skip is true; otherwise null") 
+	public static final String skipReasonIf(
+			@SpelFunctionParam(name="skip", desc="the condition indicating whether to skip") boolean skip,
+			@SpelFunctionParam(name="reason", desc="the reason to return if skipping") String reason)
+	{
 		return skip ? reason : null;
 	}
     
-	@SpelFunctionDescription("Returns null if the specified environment variable is set and not blank; otherwise returns a message indicating it is not set.")
-	public static final @SpelFunctionReturnDescription("null if the environment variable is set and not blank; otherwise a message indicating the variable is not set") String skipBlankEnvReason(
-			@SpelFunctionParamDescription("the name of the environment variable to check") String envName) {
+	@SpelFunction(desc = "Returns null if the specified environment variable is set and not blank; otherwise returns a message indicating it is not set.",
+            returns="null if the environment variable is set and not blank; otherwise a message indicating the variable is not set") 
+	public static final String skipBlankEnvReason(
+			@SpelFunctionParam(name="", desc="the name of the environment variable to check") String envName) 
+	{
 		return StringUtils.isNotBlank(EnvHelper.env(envName)) ? null : String.format("%s not set", envName);
 	}
 
-	@SpelFunctionDescription("If a custom action has been configured through _ACTION env var, this method returns true. "
+	@SpelFunction(desc = "If a custom action has been configured through _ACTION env var, this method returns true. "
 			+ "If no custom action has been configured, this method checks whether a built-in action "
-			+ "exists with the given name.")
-    public static final @SpelFunctionReturnDescription("`true` if an action is specified in the environment or is a built-in action; otherwise `false`") boolean hasAction(
-    		@SpelFunctionParamDescription("the environment variable prefix used to check for an action") String envPrefix,
-    		@SpelFunctionParamDescription("the name of the module to check for a built-in action") String moduleName,
-    		@SpelFunctionParamDescription("the name of the action to check for availability") String actionName) {
-        var envValue = _envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", null);
-        return StringUtils.isNotBlank(envValue) ? true : _hasBuiltInAction(moduleName, actionName);
+			+ "exists with the given name.",
+            returns="`true` if an action is specified in the environment or is a built-in action; otherwise `false`")
+    public static final  boolean hasAction(
+    		@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to check for an action") String envPrefix,
+    		@SpelFunctionParam(name="moduleName", desc="the name of the module to check for a built-in action") String moduleName,
+    		@SpelFunctionParam(name="actionName", desc="the name of the action to check for availability") String actionName)
+	{
+        var envValue = ActionSpelFunctionsHelper.envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", null);
+        return StringUtils.isNotBlank(envValue) ? true : ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName);
     }
     
-	@SpelFunctionDescription("Returns the action name if it is a built-in action for the specified module; otherwise returns `null`.")
-	public static final @SpelFunctionReturnDescription("the action name if available as a built-in action; otherwise `null`") String actionOrNull(
-			@SpelFunctionParamDescription("the name of the module to check for the built-in action") String moduleName,
-			@SpelFunctionParamDescription("the name of the action to verify") String actionName) {
-		return _hasBuiltInAction(moduleName, actionName) ? actionName : null;
+	@SpelFunction(desc = "Returns the action name if it is a built-in action for the specified module; otherwise returns `null`.",
+            returns="the action name if available as a built-in action; otherwise `null`") 
+	public static final String actionOrNull(
+			@SpelFunctionParam(name="moduleName", desc="the name of the module to check for the built-in action") String moduleName,
+			@SpelFunctionParam(name="actionName", desc="the name of the action to verify") String actionName)
+	{
+		return ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName) ? actionName : null;
 	}
-    
-    private static boolean _hasBuiltInAction(String moduleName, String actionName) {
-        if ( StringUtils.isBlank(actionName) ) { return false; }
-        return builtinActionNamesByModule
-                .computeIfAbsent(moduleName, ActionSpelFunctions::_getBuiltinActionNames)
-                .contains(actionName);
-    }
-    
-    private static final Set<String> _getBuiltinActionNames(String moduleName) {
-        return ActionLoaderHelper
-                    .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
-                    .collect(Collectors.toSet());
-    }
     
     /**
      * This method takes a string in the format "--opt1=ENV1 -o=ENV2 ...", outputting a string
      * with environment variable names replaced by the corresponding values. Options for which
      * the environment variable value is null or empty will be removed.
      */
-	@SpelFunctionDescription("Constructs a string of option key-value pairs by looking up environment variable values based on the given opts string.")
-	public static final @SpelFunctionReturnDescription("a string of options formatted as `key=value` pairs with values fetched from the environment; empty string if input is blank or no matches found") String optsFromEnv(
-			@SpelFunctionParamDescription("the input string containing options in the format `key=ENV_VAR` separated by spaces") String opts) {
+	@SpelFunction(desc = "Constructs a string of option key-value pairs by looking up environment variable values based on the given opts string.",
+            returns="a string of options formatted as `key=value` pairs with values fetched from the environment; empty string if input is blank or no matches found") 
+	public static final String optsFromEnv(
+			@SpelFunctionParam(name="opts", desc="the input string containing options in the format `key=ENV_VAR` separated by spaces") String opts)
+	{
 		if (StringUtils.isBlank(opts)) { return ""; }
 		var output = new ArrayList<String>();
 		var elts = opts.split(" ");
@@ -491,28 +484,19 @@ public class ActionSpelFunctions {
 		return String.join(" ", output);
 	}
 
-    @SpelFunctionDescription("Retrieves the value of the environment variable constructed as envPrefix + `_EXTRA_OPTS`, or returns an empty string if not set.")
-    public static final @SpelFunctionReturnDescription("the value of the specified EXTRA_OPTS environment variable, or an empty string if not defined") String extraOpts(
-        @SpelFunctionParamDescription("the environment variable prefix used to construct the full `EXTRA_OPTS` variable name") String envPrefix) {
-        return _envOrDefault(envPrefix, "EXTRA_OPTS", "");
-    }
-
-    
-    /**
-     * Given an environment variable prefix and suffix, this method will return
-     * the value of the combined environment variable name, or the given default
-     * value if the combined environment variable is not defined. 
-     */
-    private static final String _envOrDefault(String prefix, String suffix, String defaultValue) {
-        var envName = String.format("%s_%s", prefix, suffix).toUpperCase().replace('-', '_');
-        var envValue = EnvHelper.env(envName);
-        return StringUtils.isNotBlank(envValue) ? envValue : defaultValue; 
+    @SpelFunction(desc = "Retrieves the value of the environment variable constructed as envPrefix + `_EXTRA_OPTS`, or returns an empty string if not set.",
+            returns="the value of the specified EXTRA_OPTS environment variable, or an empty string if not defined") 
+    public static final String extraOpts(
+        @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct the full `EXTRA_OPTS` variable name") String envPrefix)
+    {
+        return ActionSpelFunctionsHelper.envOrDefault(envPrefix, "EXTRA_OPTS", "");
     }
     
-	@SpelFunctionDescription("Converts the properties of the given ObjectNode into an `ArrayNode` of key-value pair objects.")
-	public static final @SpelFunctionReturnDescription("an ArrayNode containing objects with `key` and `value` fields from the input `ObjectNode`") ArrayNode properties(
-			@SpelFunctionParamDescription("the ObjectNode whose properties are to be converted") ObjectNode o) {
-
+	@SpelFunction(desc = "Converts the properties of the given ObjectNode into an `ArrayNode` of key-value pair objects.",
+            returns="an ArrayNode containing objects with `key` and `value` fields from the input `ObjectNode`")
+	public static final ArrayNode properties(
+			@SpelFunctionParam(name="input", desc="the ObjectNode whose properties are to be converted") ObjectNode o)
+	{
 		var mapper = JsonHelper.getObjectMapper();
 		var result = mapper.createArrayNode();
 		o.properties()
@@ -520,10 +504,11 @@ public class ActionSpelFunctions {
 		return result;
 	}
 
-	@SpelFunctionDescription("Creates a POJONode wrapping an IssueSourceFileResolver built from the provided configuration map.")
-	public static final @SpelFunctionReturnDescription("a POJONode representing the configured IssueSourceFileResolver instance") POJONode issueSourceFileResolver(
-			@SpelFunctionParamDescription("the configuration map containing settings such as 'sourceDir' for the resolver") Map<String, String> config) {
-
+	@SpelFunction(desc = "Creates a POJONode wrapping an IssueSourceFileResolver built from the provided configuration map.",
+            returns="a POJONode representing the configured IssueSourceFileResolver instance") 
+	public static final POJONode issueSourceFileResolver(
+			@SpelFunctionParam(name="config", desc="the configuration map containing settings such as 'sourceDir' for the resolver") Map<String, String> config) 
+	{
 		var sourceDir = config.get("sourceDir");
 		var builder = IssueSourceFileResolver.builder()
 				.sourcePath(StringUtils.isBlank(sourceDir) ? null : Path.of(sourceDir));
@@ -531,35 +516,126 @@ public class ActionSpelFunctions {
 		return new POJONode(builder.build());
 	}
 
-	@SpelFunctionDescription("Normalizes the given ArrayNode of trace nodes.")
-	public static final @SpelFunctionReturnDescription("the normalized ArrayNode of trace nodes") ArrayNode normalizeTraceNodes(
-			@SpelFunctionParamDescription("the ArrayNode containing trace nodes to normalize") ArrayNode traceNodes) {
+	// TODO Add proper description, explaining what 'normalizing' means
+	@SpelFunction(returns="normalized array of trace nodes") 
+	public static final ArrayNode normalizeTraceNodes(
+			@SpelFunctionParam(name="input", desc="the original, non-normalized array of trace nodes") ArrayNode traceNodes)
+	{
 		return FortifyTraceNodeHelper.normalize(traceNodes);
 	}
 
-	@SpelFunctionDescription("Normalizes and merges the given ArrayNode of trace nodes.")
-	public static final @SpelFunctionReturnDescription("the normalized and merged ArrayNode of trace nodes") ArrayNode normalizeAndMergeTraceNodes(
-			@SpelFunctionParamDescription("the ArrayNode containing trace nodes to normalize and merge") ArrayNode traceNodes) {
+	// TODO Add proper description, explaining what 'normalizing and merging' means
+	@SpelFunction(returns="normalized and merged array of trace nodes") 
+	public static final ArrayNode normalizeAndMergeTraceNodes(
+			@SpelFunctionParam(name="input", desc="the original, non-normalized array of trace nodes") ArrayNode traceNodes)
+	{
 		return FortifyTraceNodeHelper.normalizeAndMerge(traceNodes);
 	}
 
-	@SpelFunctionDescription("Retrieve the JSON representation of the action schema.")
-	public static final @SpelFunctionReturnDescription("a JsonNode representing the action schema descriptor") JsonNode actionSchema() {
+	@SpelFunction(returns="an object describing the fcli action YAML schema")
+	public static final JsonNode actionSchema() {
 		return ActionSchemaDescriptorFactory.getActionSchemaDescriptor().asJson();
 	}
 
-	@SpelFunctionDescription("Retrieve a JSON array listing all available spEL functions.")
-	public static final @SpelFunctionReturnDescription("a JsonNode representing the SpEL functions descriptor") JsonNode actionSpelFunctions() {
+	@SpelFunction(returns="an array listing all available spEL functions")
+	public static final JsonNode actionSpelFunctions() {
 		return SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().asJson();
 	}
 
-	@SpelFunctionDescription("Converts the FcliBuildProperties singleton instance into a JsonNode representation.")
-	public static final @SpelFunctionReturnDescription("a JsonNode representing the FcliBuildProperties instance") JsonNode fcliBuildProperties() {
+	@SpelFunction(returns="fcli build properties like version number and build date")
+	public static final JsonNode fcliBuildProperties() {
 		return JsonHelper.getObjectMapper().valueToTree(FcliBuildProperties.INSTANCE);
 	}
 
-	@SpelFunctionDescription("Returns the formatted copyright string for the current year.")
-	public static final @SpelFunctionReturnDescription("a string representing the copyright notice with the current year") String copyright() {
+	@SpelFunction(returns="copyright notice with the current year")
+	public static final String copyright() {
 		return String.format("Copyright (c) %s Open Text", Year.now().getValue());
+	}
+	
+	private static final class ActionSpelFunctionsJsoupHelper {
+        private static final void reeplaceCode(Element e) {
+            var text = e.text();
+            if ( text.contains("\n") ) {
+                text = StringHelper.indent("\n\n" + CODE_START + text.replaceAll("\t", "    "), "    ") + CODE_END + "\n\n";
+            } else {
+                text = "`"+text+"`";
+            }
+            e.replaceWith(new TextNode(text));
+        }
+
+        private static final Document asDocument(String html) {
+            Document document = Jsoup.parse(html);
+            document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
+            return document;
+        }
+
+        private static String documentToPlainText(Document document) {
+            document.select("li").append("\\n");
+            document.select("br").forEach(e->e.replaceWith(new TextNode("\n")));
+            document.select("p").prepend("\\n\\n");
+            // Replace code blocks, either embedding in backticks if inline (no newline characters)
+            // or indenting with 4 spaces and fencing with CODE_START and CODE_END, which will remain
+            // in place when cleaning all HTML tags, and removed using pattern matching below.
+            document.select("span.code").forEach(ActionSpelFunctionsJsoupHelper::reeplaceCode);
+            document.select("code").forEach(ActionSpelFunctionsJsoupHelper::reeplaceCode);
+            document.select("pre").forEach(ActionSpelFunctionsJsoupHelper::reeplaceCode);
+            
+            // Remove all HTML tags. Note that for now, this keeps escaped characters like &gt;
+            // We may want to have separate methods or method parameter to allow for escaped
+            // characters to be unescaped.
+            var s = Jsoup.clean(document.html().replaceAll("\\\\n", "\n"), "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
+            
+            var sb = new StringBuilder();
+            // Remove CODE_START and CODE_END fences
+            Matcher m = CODE_PATTERN.matcher(s);
+            while(m.find()){
+                String code = m.group(1);
+                // Code may contain regex-related characters like ${..}, which we don't
+                // want to interpret as regex groups. So, we append an empty replacement
+                // (have Matcher append all text before the code block), then manually 
+                // append the code block. See https://stackoverflow.com/a/948381
+                m.appendReplacement(sb, "");
+                sb.append(Parser.unescapeEntities(code, false));
+            }
+            m.appendTail(sb);
+            return sb.toString();
+        }
+	    
+	}
+	
+	private static final class ActionSpelFunctionsHelper {
+    	private static final String toString(Object o) {
+            if ( o==null ) {
+                return "";
+            } else if ( o instanceof JsonNode ) {
+                return ((JsonNode)o).asText();
+            } else {
+                return o.toString();
+            }
+        }
+    	
+    	/**
+         * Given an environment variable prefix and suffix, this method will return
+         * the value of the combined environment variable name, or the given default
+         * value if the combined environment variable is not defined. 
+         */
+        private static final String envOrDefault(String prefix, String suffix, String defaultValue) {
+            var envName = String.format("%s_%s", prefix, suffix).toUpperCase().replace('-', '_');
+            var envValue = EnvHelper.env(envName);
+            return StringUtils.isNotBlank(envValue) ? envValue : defaultValue; 
+        }
+        
+        private static boolean hasBuiltInAction(String moduleName, String actionName) {
+            if ( StringUtils.isBlank(actionName) ) { return false; }
+            return builtinActionNamesByModule
+                    .computeIfAbsent(moduleName, ActionSpelFunctionsHelper::getBuiltinActionNames)
+                    .contains(actionName);
+        }
+        
+        private static final Set<String> getBuiltinActionNames(String moduleName) {
+            return ActionLoaderHelper
+                        .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
+                        .collect(Collectors.toSet());
+        }
 	}
 }

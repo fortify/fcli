@@ -42,7 +42,7 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
-import com.fortify.cli.common.spring.expression.SpelHelper;
+import com.fortify.cli.common.spel.SpelHelper;
 import com.fortify.cli.common.util.JavaHelper;
 
 import lombok.AllArgsConstructor;

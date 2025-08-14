@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.fortify.cli.common.spring.expression.fn.descriptor.annotation;
+package com.fortify.cli.common.spel.fn.descriptor.annotation;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -15,6 +15,9 @@ import java.lang.annotation.Target;
  */
 @Retention(RUNTIME)
 @Target(PARAMETER)
-public @interface SpelFunctionParamDescription {
-	String value() default "";
+public @interface SpelFunctionParam {
+    String name();
+	String desc();
+	String type() default "";
+	boolean optional() default false;
 }
