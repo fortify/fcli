@@ -16,6 +16,11 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(METHOD)
 public @interface SpelFunction {
+    SpelFunctionCategory cat();
 	String desc() default "";
 	String returns();
+	
+	public static enum SpelFunctionCategory {
+	    txt, date, workflow, fortify, fcli, util
+	}
 }

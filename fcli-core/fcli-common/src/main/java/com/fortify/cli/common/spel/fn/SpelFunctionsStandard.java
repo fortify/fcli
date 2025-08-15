@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.spel.fn;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -37,21 +39,21 @@ import lombok.NoArgsConstructor;
 public class SpelFunctionsStandard {
     private static final DateTimePeriodHelper PeriodHelper = DateTimePeriodHelper.all();
 
-    @SpelFunction(returns="`true` if given string is null or blank, `false` otherwise")
+    @SpelFunction(cat=txt, returns="`true` if given string is null or blank, `false` otherwise")
     public static final boolean isBlank(
             @SpelFunctionParam(name="input", desc="the string to check") String s) 
     {
         return StringUtils.isBlank(s);
     }
-
-    @SpelFunction(returns="`false` if given string is null or blank, `true` otherwise")
+    
+    @SpelFunction(cat=txt, returns="`false` if given string is null or blank, `true` otherwise")
     public static final boolean isNotBlank(
             @SpelFunctionParam(name="input", desc="the string to check") String s) 
     {
         return StringUtils.isNotBlank(s);
     }
 
-    @SpelFunction(returns="The substring before the first occurrence of the separator, or `null` if input string is `null`")
+    @SpelFunction(cat=txt, returns="The substring before the first occurrence of the separator, or `null` if input string is `null`")
     public static final String substringBefore(
             @SpelFunctionParam(name="input", desc="the string to get a substring from") String s, 
             @SpelFunctionParam(name="separator", desc="the separator to search for") String separator)
@@ -59,7 +61,7 @@ public class SpelFunctionsStandard {
         return StringUtils.substringBefore(s, separator);
     }
 
-    @SpelFunction(returns="The substring after the first occurrence of the separator, or `null` if input string is `null`")
+    @SpelFunction(cat=txt, returns="The substring after the first occurrence of the separator, or `null` if input string is `null`")
     public static final String substringAfter(
             @SpelFunctionParam(name="input", desc="the string to get a substring from") String s, 
             @SpelFunctionParam(name="separator", desc="the separator to search for") String separator) 
@@ -67,7 +69,7 @@ public class SpelFunctionsStandard {
         return StringUtils.substringAfter(s, separator);
     }
 
-    @SpelFunction(returns="The input string abbreviated to the given maximum length, with any remaining text replaced by '...'")
+    @SpelFunction(cat=txt, returns="The input string abbreviated to the given maximum length, with any remaining text replaced by '...'")
     public static final String abbreviate(
             @SpelFunctionParam(name="input", desc="the string to abbreviate") String s,
             @SpelFunctionParam(name="maxLength", desc="the maximum length of the result string, must be at least 4") int maxLength)
@@ -75,17 +77,17 @@ public class SpelFunctionsStandard {
         return StringUtils.abbreviate(s, maxLength);
     }
 
-    @SpelFunction(returns="`true` if debug logging is enabled; `false` otherwise")
+    @SpelFunction(cat=fcli, returns="`true` if debug logging is enabled; `false` otherwise")
     public static final boolean isDebugEnabled() {
         return DebugHelper.isDebugEnabled();
     }
 
-    @SpelFunction(returns="A randomly generated UUID string in standard 36-character format") 
+    @SpelFunction(cat=util, returns="A randomly generated UUID string in standard 36-character format") 
     public static final String uuid() {
         return UUID.randomUUID().toString();
     }
 
-    @SpelFunction(desc = """
+    @SpelFunction(cat=txt, desc = """
             Formats a string using the specified format string and arguments, returning the formatted string. \
             See https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Formatter.html#syntax \
             for details on format string syntax.
@@ -98,7 +100,7 @@ public class SpelFunctionsStandard {
         return String.format(fmt, args);
     }
 
-    @SpelFunction(desc = """
+    @SpelFunction(cat=date, desc = """
             Parses the given string as a Java `OffsetDateTime` object, for example to allow for date/time \
             comparisons, formatting, or retrieval of individual elements like month or year. See \
             https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/OffsetDateTime.html for \
@@ -124,7 +126,7 @@ public class SpelFunctionsStandard {
         return dt;
     }
 
-    @SpelFunction(returns="""
+    @SpelFunction(cat=date, returns="""
             The current date/time as a Java `OffsetDateTime` object, optionally adjusted by the given period
             """)
     public static final OffsetDateTime now(
@@ -143,7 +145,7 @@ public class SpelFunctionsStandard {
         }
     }
 
-    @SpelFunction(desc = """
+    @SpelFunction(cat=fcli, desc = """
             Retrieves the contents of an fcli variable that was stored through the --store option \
             on a previous fcli invocation, throwing an error if the variable does not exist.
             """,
@@ -154,7 +156,7 @@ public class SpelFunctionsStandard {
         return FcliVariableHelper.getVariableContents(name, true);
     }
 
-    @SpelFunction(returns="""
+    @SpelFunction(cat=util, returns="""
             The value of the given environment variable, or `null` if the environment \
             variable is not set or its value is blank
             """)
@@ -169,7 +171,7 @@ public class SpelFunctionsStandard {
         return StringUtils.isBlank(result) ? null : result;
     }
 
-    @SpelFunction(desc = "Encrypts the given string using the fcli encryption mechanism, compatible with the 'fcli util crypto' commands.",
+    @SpelFunction(cat=fcli, desc = "Encrypts the given string using the fcli encryption mechanism, compatible with the 'fcli util crypto' commands.",
                   returns="The encrypted form of the input string")
     public static final String encrypt(
             @SpelFunctionParam(name="input", desc="the string to encrypt") String s)
@@ -177,7 +179,7 @@ public class SpelFunctionsStandard {
         return EncryptionHelper.encrypt(s);
     }
 
-    @SpelFunction(desc = "Decrypts the given encrypted string using the fcli decryption mechanism, compatible with the 'fcli util crypto' commands.",
+    @SpelFunction(cat=fcli, desc = "Decrypts the given encrypted string using the fcli decryption mechanism, compatible with the 'fcli util crypto' commands.",
                   returns="The decrypted form of the input string")
     public static final String decrypt(
             @SpelFunctionParam(name="input", desc="the encrypted string to decrypt") String s)

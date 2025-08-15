@@ -20,6 +20,8 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
+
 import lombok.RequiredArgsConstructor;
 
 @Reflectable @RequiredArgsConstructor
@@ -27,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 public final class ActionRunnerContextSpelFunctions {
     private final ActionRunnerContext ctx;
     
-    @SpelFunction(returns="String listing non-blank command-line options copied from the given `cli.options` group")
+    @SpelFunction(cat=workflow, returns="String listing non-blank command-line options copied from the given `cli.options` group")
     public final String copyParametersFromGroup(
         @SpelFunctionParam(name="group", desc="the `cli.options` group name from which to copy CLI options") String group) 
     {
@@ -50,12 +52,12 @@ public final class ActionRunnerContextSpelFunctions {
         return result.toString();
     }
 
-    @SpelFunction(desc = "Formats the input value using the specified formatter as declared through the `formatters` YAML instruction",
+    @SpelFunction(cat=fcli, desc = "Formats the input value using the specified formatter as declared through the `formatters` YAML instruction",
                   returns="The formatted value") 
     public final JsonNode fmt(
         @SpelFunctionParam(name="formatterName", desc="the name of the formatter to apply") String formatterName,
         @SpelFunctionParam(name="input", desc="the input to be formatted") JsonNode input)
-{
+    {
         return ActionRunnerHelper.fmt(ctx, formatterName, input);
     }
 

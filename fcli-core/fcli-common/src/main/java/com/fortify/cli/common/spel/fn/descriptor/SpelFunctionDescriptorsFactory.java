@@ -55,7 +55,7 @@ public final class SpelFunctionDescriptorsFactory {
 	private static final ArrayListWithAsJsonMethod<SpelFunctionDescriptor> collectSpelFunctions(Collection<Class<?>> spelFunctionClazzes) {
 	    return spelFunctionClazzes.stream()
 	        .flatMap(c->createFunctionDescriptorsStream(c))
-	        .sorted((a, b) -> a.getName().compareTo(b.name))
+	        .sorted((a, b) -> a.getCategoryAndName().compareTo(b.getCategoryAndName()))
 	        .collect(Collectors.toCollection(ArrayListWithAsJsonMethod::new));
 	}
 	
@@ -67,6 +67,7 @@ public final class SpelFunctionDescriptorsFactory {
 	
 	private static final SpelFunctionDescriptor createSpelFunctionDescriptor(Class<?> spelFunctionClazz, Method spelFunctionMethod) {
 	    var prefix = ReflectionHelper.getAnnotationValue(spelFunctionClazz, SpelFunctionPrefix.class, SpelFunctionPrefix::value, ()->"");
+	    var category = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::cat, ()->com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util).name();
 	    var name = prefix + spelFunctionMethod.getName();
 	    var desc = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::desc, ()->"");
 	    var params = createParamDescriptors(spelFunctionMethod);
@@ -74,13 +75,15 @@ public final class SpelFunctionDescriptorsFactory {
 	    var signature = createSignature(name, params, returns);
 	    return SpelFunctionDescriptor.builder()
 	            .clazz(spelFunctionClazz)
+	            .category(category)
 				.name(name)
 				.description(desc)
 				.params(params)
 				.returns(returns)
-				.signature(signature).build();
+				.signature(signature)
+				.build();
 	}
-
+	
 	private static final String createSignature(String name, List<SpelFunctionParamDescriptor> params, SpelFunctionReturnDescriptor returns) {
         var paramsStringBuilder = new StringBuilder();
         for ( var p : params ) {
@@ -154,11 +157,16 @@ public final class SpelFunctionDescriptorsFactory {
 	@Reflectable
 	public static final class SpelFunctionDescriptor {
 	    @JsonIgnore private final Class<?> clazz;
+	    private final String category;
 		private final String name;
 		private final String description;
 		private final String signature;
 		private final List<SpelFunctionParamDescriptor> params;
 		private final SpelFunctionReturnDescriptor returns;
+		
+		@JsonIgnore private final String getCategoryAndName() {
+		    return String.format("[%s] %s", category, name);
+		}
 	}
 
 	@Data @Builder

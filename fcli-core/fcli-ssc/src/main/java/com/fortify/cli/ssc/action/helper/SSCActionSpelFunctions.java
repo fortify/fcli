@@ -44,6 +44,8 @@ import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFi
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
+
 import kong.unirest.RawResponse;
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +57,7 @@ public final class SSCActionSpelFunctions {
     private final SSCAndScanCentralUnirestInstanceSupplierMixin unirestInstanceSupplier;
     private final ActionRunnerContext ctx;
     
-    @SpelFunction(returns="SSC application version object for the given application version name or id") 
+    @SpelFunction(cat=fortify, returns="SSC application version object for the given application version name or id") 
 	public final ObjectNode appVersion(
 			@SpelFunctionParam(name="nameOrId", desc="the name or ID of the application version to load") String nameOrId) 
 	{
@@ -66,7 +68,7 @@ public final class SSCActionSpelFunctions {
 		return result.asObjectNode();
 	}
 
-	@SpelFunction(returns="SSC filter set object for the given application version and filter set title or id") 
+	@SpelFunction(cat=fortify, returns="SSC filter set object for the given application version and filter set title or id") 
 	public final  JsonNode filterSet(
 			@SpelFunctionParam(name="av", desc="an SSC application version object, for example as returned by `#ssc.appVersion(...)`, containing at least the `id` field") ObjectNode appVersion,
 			@SpelFunctionParam(name="titleOrId", desc="the title or ID of the filter set to load; may be blank to load the default filter set") String titleOrId) 
@@ -82,7 +84,7 @@ public final class SSCActionSpelFunctions {
 		return filterSetDescriptor.asJsonNode();
 	}
 
-	@SpelFunction(desc="""
+	@SpelFunction(cat=fortify, desc="""
 	        The return value of this function can be passed to a `records.for-each::from` instruction \
 	        to iterate over all rule descriptions that are referenced by issues in the given application \
 	        version. See built-in SSC sarif-sast-report.yaml action for sample usage. 
@@ -95,7 +97,7 @@ public final class SSCActionSpelFunctions {
 		return new SSCFPRRuleDescriptionProcessor(unirest, appVersionId)::process;
 	}
 
-	@SpelFunction(returns="Browser-accessible URL pointing to the SSC issue details page for the given issue")
+	@SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the SSC issue details page for the given issue")
 	public String issueBrowserUrl(
 			@SpelFunctionParam(name="issue", desc="an SSC issue object, containing at least `projectVersionId`, `id`, `engineType`, and `issueInstanceId` fields") ObjectNode issue,
 			@SpelFunctionParam(name="fs", desc="`null` to use default filter set, or an SSC filter set object, for example as returned by `#ssc.filterSet(...)`, containing at least the `guid` field") ObjectNode filterset) 
@@ -109,7 +111,7 @@ public final class SSCActionSpelFunctions {
 				String.class);
 	}
 
-	@SpelFunction(returns="Browser-accessible URL pointing to the SSC application version page for the given application version")
+	@SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the SSC application version page for the given application version")
 	public String appversionBrowserUrl(
 	        @SpelFunctionParam(name="av", desc="an SSC application version object, for example as returned by `#ssc.appVersion(...)`, containing at least the `id` field") ObjectNode appVersion,
             @SpelFunctionParam(name="fs", desc="`null` to use default filter set, or an SSC filter set object, for example as returned by `#ssc.filterSet(...)`, containing at least the `guid` field") ObjectNode filterset)

@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.fod.action.helper;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
@@ -31,7 +33,7 @@ public final class FoDActionSpelFunctions {
     private final FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
     private final ActionRunnerContext ctx;
     
-    @SpelFunction(returns="FoD release object for the given release name or id") 
+    @SpelFunction(cat=fortify, returns="FoD release object for the given release name or id") 
     public final ObjectNode release(
             @SpelFunctionParam(name="nameOrId", desc="the name or ID of the release to load") String nameOrId)
     {
@@ -41,7 +43,7 @@ public final class FoDActionSpelFunctions {
         return result.asObjectNode();
     }
 
-    @SpelFunction(returns="Browser-accessible URL pointing to the FoD issue details page for the given issue")
+    @SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the FoD issue details page for the given issue")
     public String issueBrowserUrl(
             @SpelFunctionParam(name="issue", desc="an FoD issue object, containing at least the `vulnId` field") ObjectNode issue)
     {
@@ -50,7 +52,7 @@ public final class FoDActionSpelFunctions {
         return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), issue, String.class);
     }
     
-    @SpelFunction(returns="Browser-accessible URL pointing to the FoD release page for the given release") 
+    @SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the FoD release page for the given release") 
     public String releaseBrowserUrl(
             @SpelFunctionParam(name="rel", desc="an FoD release object, for example as returned by `#fod.release(...)`, containing at least the `releaseId` field") ObjectNode release)
     {
@@ -59,7 +61,7 @@ public final class FoDActionSpelFunctions {
         return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), release, String.class);
     }
     
-    @SpelFunction(returns="Browser-accessible URL pointing to the FoD application page for the given release") 
+    @SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the FoD application page for the given release") 
     public String appBrowserUrl(
             @SpelFunctionParam(name="rel", desc="an FoD release object, for example as returned by `#fod.release(...)`, containing at least the `applicationId` field") ObjectNode release)
     {
