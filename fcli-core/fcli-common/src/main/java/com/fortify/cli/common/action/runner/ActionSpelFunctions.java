@@ -317,23 +317,32 @@ public class ActionSpelFunctions {
 		return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
 	}
  
-	@SpelFunction(cat=workflow, desc= "Given an environment variable prefix, module name, and built-in fcli action name, "
-			+ "this method returns the fcli command for running the action, allowing the action "
-			+ "name to overridden, and extra options to be specified, through environment variables"
-			+ "that are based on the given environment variable prefix. Some examples:\r\n"
-			+ "- If envPrefix is `SETUP`, we look for SETUP_ACTION and SETUP_EXTRA_OPTS\n"
-			+ "- If envPrefix is `PACKAGE_ACTION`, we look for PACKAGE_ACTION and PACKAGE_ACTION_EXTRA_OPTS\n"
-			+ "\r\n"
-			+ "As can be seen in the second example, if the given envPrefix already ends with _ACTION, "
-			+ "we skip the extra _ACTION suffixes, to avoid looking for PACKAGE_ACTION_ACTION. However, "
-			+ "we do keep _ACTION for the extra options environment variable, to allow for having both "
-			+ "PACKAGE_EXTRA_OPTS (on the `scancentral package` command), and PACKAGE_ACTION_EXTRA_OPTS "
-			+ "(on the `fcli * action run package` command).",
-            returns="the formatted command string to run the specified action")
+	@SpelFunction(cat=workflow, desc= """
+	        Constructs an fcli command for running an fcli action based on function arguments combined with
+	        user-supplied environment variables. Example environment variable names:
+			
+			* If `envPrefix` is `SETUP`, we look for `SETUP_ACTION` and `SETUP_EXTRA_OPTS`
+			* If `envPrefix` is `PACKAGE_ACTION`, we look for `PACKAGE_ACTION` and `PACKAGE_ACTION_EXTRA_OPTS`
+			
+			As can be seen in the second example, if the given envPrefix already ends with `_ACTION`, \
+			the extra `_ACTION` suffix is skipped to avoid variable names like `PACKAGE_ACTION_ACTION`. \
+			Note though that we do keep `_ACTION` in `*_ACTION_EXTRA_OPTS`, to allow for having both \
+			PACKAGE_EXTRA_OPTS (on the `scancentral package` command), and PACKAGE_ACTION_EXTRA_OPTS \
+			(on the `fcli * action run package` command).
+			
+			This function returns an fcli command like `fcli <module> action run <action> <extra-opts>`, 
+			where:
+			
+			* `<module>` is taken from the corresponding function argument
+			* `<action>` is taken from either environment variable (if defined) or function argument, \
+			  allowing the user to run a custom	fcli action instead of built-in action
+			* `<extra-opts>` is taken from environment variable
+            """, 
+            returns="`fcli <module> action run <action> <extra-opts>`")
     public static final String actionCmd(
-    		@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used for determining action options") String envPrefix, 
-    		@SpelFunctionParam(name="moduleName", desc="the name of the module to run the action on") String moduleName,
-    		@SpelFunctionParam(name="actionName", desc="the name of the action to execute") String actionName)
+    		@SpelFunctionParam(name="envPrefix", desc="environment variable prefix") String envPrefix, 
+    		@SpelFunctionParam(name="moduleName", desc="fcli module name") String moduleName,
+    		@SpelFunctionParam(name="actionName", desc="fcli action name") String actionName)
 	{
         return String.format("fcli %s action run \"%s\" %s",
                 moduleName,
@@ -343,8 +352,11 @@ public class ActionSpelFunctions {
                 extraOpts(envPrefix));
     }
     
-	@SpelFunction(cat=workflow, desc = "Constructs the fcli command string using the given environment prefix and command.",
-	        returns="the formatted command string with extra options appended") 
+	@SpelFunction(cat=workflow, desc = """
+	        Returns the given fcli command, amended with extra options specified in an optional,
+	        user-supplied environment variable named `<envPrefix>_EXTRA_OPTS`.
+	        """,
+	        returns="`<cmd> <extra-opts>`") 
 	public static final String fcliCmd(
 			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to determine extra options") String envPrefix,
 			@SpelFunctionParam(name="cmd", desc="the base command to be executed") String cmd)
@@ -352,8 +364,13 @@ public class ActionSpelFunctions {
 		return String.format("%s %s", cmd, extraOpts(envPrefix));
 	}
     
-	@SpelFunction(cat=workflow, desc = "Determines the reason to skip executing an action command based on environment variables and available built-in actions.",
-            returns="a message explaining why the action command should be skipped, or null if no skip is needed") 
+	@SpelFunction(cat=workflow, desc="""
+	        Returns a skip reason if there's no action available to be run. If user configured a custom action \
+	        for the given `envPrefix` (also see `#actionCmd(...)`, we assume that the action exists and thus \
+	        return `null`. Otherwise, we check whether the given (built-in) action name is not blank and exists;
+	        if not, we return an appropriate skip reason.  
+	        """, 
+	        returns="Skip reason or `null` if no reason to skip") 
 	public static final String actionCmdSkipNoActionReason(
 			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to check the action environment variable") String envPrefix,
 			@SpelFunctionParam(name="moduleName", desc="the name of the module to check for built-in actions") String moduleName,
@@ -371,8 +388,13 @@ public class ActionSpelFunctions {
 		return null;
 	}
     
-	@SpelFunction(cat=workflow, desc = "Determines the reason to skip an action command based on environment variables and a default skip flag.",
-            returns="a message explaining why the action is skipped, or null if the action should proceed")
+	@SpelFunction(cat=workflow, desc="""
+	        For use with `run.fcli::skip.if-reason`, returns a skip reason if either user explicitly \
+	        set `DO_<envPrefix>` to `false`, or if `skipByDefault` is `true` and user didn't explicitly \
+	        set `DO_<envPrefix>` to `true`. Note that `DO_<envPrefix>: true` is implied if either \
+	        `<envPrefix>_ACTION` or `<envPrefix>_EXTRA_OPTS` have been set.
+	        """, 
+	        returns="Skip reason or `null` if no reason to skip")
 	public static final String actionCmdSkipFromEnvReason(
 			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct related environment variable names") String envPrefix,
 			@SpelFunctionParam(name="skipByDefault", desc="flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault)
@@ -398,8 +420,13 @@ public class ActionSpelFunctions {
 		return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
 	}
     
-	@SpelFunction(cat=workflow, desc = "Determines the reason to skip an fcli command based on environment variables and a default skip flag.",
-            returns="a message explaining why the fcli command is skipped, or null if the command should proceed") 
+	@SpelFunction(cat=workflow, desc="""
+            For use with `run.fcli::skip.if-reason`, returns a skip reason if either user explicitly \
+            set `DO_<envPrefix>` to `false`, or if `skipByDefault` is `true` and user didn't explicitly \
+            set `DO_<envPrefix>` to `true`. Note that `DO_<envPrefix>==true` is implied if \
+            `<envPrefix>_EXTRA_OPTS` has been set.
+            """, 
+            returns="Skip reason or `null` if no reason to skip") 
 	public static final String fcliCmdSkipFromEnvReason(
 			@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct related environment variable names") String envPrefix,
 			@SpelFunctionParam(name="skipByDefault", desc="flag indicating whether to skip by default when no relevant environment variables are set") boolean skipByDefault)
@@ -424,8 +451,11 @@ public class ActionSpelFunctions {
 		return skipByDefault ? String.format("Set %s to 'true' to enable this step", doEnvName) : null;
 	}
     
-	@SpelFunction(cat=workflow, desc = "Returns the specified reason if the skip condition is true; otherwise returns null.",
-            returns="the reason string if skip is true; otherwise null") 
+	@SpelFunction(cat=workflow, desc="""
+            For use with `run.fcli::skip.if-reason`, returns the given skip reason if `skip` is \
+            `true`, otherwise `null` is returned.
+            """, 
+            returns="Skip reason or `null` if no reason to skip") 
 	public static final String skipReasonIf(
 			@SpelFunctionParam(name="skip", desc="the condition indicating whether to skip") boolean skip,
 			@SpelFunctionParam(name="reason", desc="the reason to return if skipping") String reason)
@@ -433,32 +463,22 @@ public class ActionSpelFunctions {
 		return skip ? reason : null;
 	}
     
-	@SpelFunction(cat=workflow, desc = "Returns null if the specified environment variable is set and not blank; otherwise returns a message indicating it is not set.",
-            returns="null if the environment variable is set and not blank; otherwise a message indicating the variable is not set") 
+	@SpelFunction(cat=workflow, desc="""
+            For use with `run.fcli::skip.if-reason`, returns a skip reason if the given environment \
+            variable hasn't been set, otherwise `null` is returned.
+            """, 
+            returns="Skip reason or `null` if no reason to skip")  
 	public static final String skipBlankEnvReason(
 			@SpelFunctionParam(name="", desc="the name of the environment variable to check") String envName) 
 	{
 		return StringUtils.isNotBlank(EnvHelper.env(envName)) ? null : String.format("%s not set", envName);
 	}
 
-	@SpelFunction(cat=workflow, desc = "If a custom action has been configured through _ACTION env var, this method returns true. "
-			+ "If no custom action has been configured, this method checks whether a built-in action "
-			+ "exists with the given name.",
-            returns="`true` if an action is specified in the environment or is a built-in action; otherwise `false`")
-    public static final  boolean hasAction(
-    		@SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to check for an action") String envPrefix,
-    		@SpelFunctionParam(name="moduleName", desc="the name of the module to check for a built-in action") String moduleName,
-    		@SpelFunctionParam(name="actionName", desc="the name of the action to check for availability") String actionName)
-	{
-        var envValue = ActionSpelFunctionsHelper.envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", null);
-        return StringUtils.isNotBlank(envValue) ? true : ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName);
-    }
-    
-	@SpelFunction(cat=workflow, desc = "Returns the action name if it is a built-in action for the specified module; otherwise returns `null`.",
-            returns="the action name if available as a built-in action; otherwise `null`") 
+	@SpelFunction(cat=workflow,
+            returns="The given fcli action name if it exists in the given fcli module, `null` otherwise.") 
 	public static final String actionOrNull(
-			@SpelFunctionParam(name="moduleName", desc="the name of the module to check for the built-in action") String moduleName,
-			@SpelFunctionParam(name="actionName", desc="the name of the action to verify") String actionName)
+			@SpelFunctionParam(name="moduleName", desc="fcli module to check for action existence") String moduleName,
+			@SpelFunctionParam(name="actionName", desc="fcli action to check for existence") String actionName)
 	{
 		return ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName) ? actionName : null;
 	}
@@ -468,10 +488,15 @@ public class ActionSpelFunctions {
      * with environment variable names replaced by the corresponding values. Options for which
      * the environment variable value is null or empty will be removed.
      */
-	@SpelFunction(cat=workflow, desc = "Constructs a string of option key-value pairs by looking up environment variable values based on the given opts string.",
-            returns="a string of options formatted as `key=value` pairs with values fetched from the environment; empty string if input is blank or no matches found") 
+	@SpelFunction(cat=workflow, desc = """
+            Replaces environment variable references in the given options string with the corresponding \
+            environment variable values, removing any options for which the environment variable doesn't \
+            exist or its value is blank. For example, given `--opt1=ENV1 --opt2=ENV2`, this function will \
+            return `"--opt1=SomeValue"` if `ENV1` is set to `SomeValue` and `ENV2` is either blank or doesn't \
+            exist. 
+            """, returns="") 
 	public static final String optsFromEnv(
-			@SpelFunctionParam(name="opts", desc="the input string containing options in the format `key=ENV_VAR` separated by spaces") String opts)
+			@SpelFunctionParam(name="input", desc="options to be resolved from environment variables") String opts)
 	{
 		if (StringUtils.isBlank(opts)) { return ""; }
 		var output = new ArrayList<String>();
@@ -486,18 +511,22 @@ public class ActionSpelFunctions {
 		return String.join(" ", output);
 	}
 
-    @SpelFunction(cat=workflow, desc = "Retrieves the value of the environment variable constructed as envPrefix + `_EXTRA_OPTS`, or returns an empty string if not set.",
-            returns="the value of the specified EXTRA_OPTS environment variable, or an empty string if not defined") 
+    @SpelFunction(cat=workflow,
+            returns="Value of `<envPrefix>_EXTRA_OPTS` environment variable, or empty string if not defined") 
     public static final String extraOpts(
         @SpelFunctionParam(name="envPrefix", desc="the environment variable prefix used to construct the full `EXTRA_OPTS` variable name") String envPrefix)
     {
         return ActionSpelFunctionsHelper.envOrDefault(envPrefix, "EXTRA_OPTS", "");
     }
     
-	@SpelFunction(cat=util, desc = "Converts the properties of the given ObjectNode into an `ArrayNode` of key-value pair objects.",
-            returns="an ArrayNode containing objects with `key` and `value` fields from the input `ObjectNode`")
+	@SpelFunction(cat=util, desc = """
+	        Converts the given object into an array of key-value pairs. For example, an object `{p1: v1, p2: v2}` \
+	        will be converted into an array `[{key: p1, value: v1}, {key: p2, value: v2}`. This can for example be
+	        used with `records.for-each::from` to iterate over object properties.
+	        """,
+            returns="Array representation of the given object")
 	public static final ArrayNode properties(
-			@SpelFunctionParam(name="input", desc="the ObjectNode whose properties are to be converted") ObjectNode o)
+			@SpelFunctionParam(name="input", desc="the object to convert to an array") ObjectNode o)
 	{
 		var mapper = JsonHelper.getObjectMapper();
 		var result = mapper.createArrayNode();
@@ -506,10 +535,36 @@ public class ActionSpelFunctions {
 		return result;
 	}
 
-	@SpelFunction(cat=fortify, desc = "Creates a POJONode wrapping an IssueSourceFileResolver built from the provided configuration map.",
-            returns="a POJONode representing the configured IssueSourceFileResolver instance") 
+	@SpelFunction(cat=fortify, desc = """
+	        Instantiates an issue source file resolver, allowing source file paths as reported by \
+	        Fortify to be resolved against a locally cloned source code repository. 
+	        
+	        In some cases, there is a mismatch between source file paths as reported by SSC or FoD \
+	        and actual repository source file paths, with Fortify either inserting or stripping leading \
+	        directories. When third-party systems like GitHub or GitLab ingest fcli-generated reports, \
+	        such mismatches may prevent third-party systems from properly rendering source code snippets \
+	        or links.
+	        
+	        The issue source file resolver can be initialized like this:
+	        
+	        ```
+	        - var.set:
+	            issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+	        ```
+	        
+	        Once initialized, Fortify-reported issue file paths can be matched and relativized against \
+	        the given `sourceDir` through either:
+	        
+	        * SSC: `${issueSourceFileResolver.resolve(issue.fullFileName)}`
+	        * FoD: `${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
+	        
+	        Of course, the same approach can be used to resolve other Fortify-reported source file paths, \
+	        for example in trace node entries. See the various fcli built-in `*-report` actions in SSC and \
+	        FoD modules for examples.
+	        """,
+            returns="Issue source file resolver") 
 	public static final POJONode issueSourceFileResolver(
-			@SpelFunctionParam(name="config", desc="the configuration map containing settings such as 'sourceDir' for the resolver") Map<String, String> config) 
+			@SpelFunctionParam(name="config", desc="configuration; for now, this must contain a single `sourceDir` property") Map<String, String> config) 
 	{
 		var sourceDir = config.get("sourceDir");
 		var builder = IssueSourceFileResolver.builder()
@@ -534,22 +589,22 @@ public class ActionSpelFunctions {
 		return FortifyTraceNodeHelper.normalizeAndMerge(traceNodes);
 	}
 
-	@SpelFunction(cat=fcli, returns="an object describing the fcli action YAML schema")
+	@SpelFunction(cat=fcli, returns="An object describing the fcli action YAML schema")
 	public static final JsonNode actionSchema() {
 		return ActionSchemaDescriptorFactory.getActionSchemaDescriptor().asJson();
 	}
 
-	@SpelFunction(cat=fcli, returns="an array listing all available spEL functions")
+	@SpelFunction(cat=fcli, returns="An array listing all available SpEL functions")
 	public static final JsonNode actionSpelFunctions() {
 		return SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().asJson();
 	}
 
-	@SpelFunction(cat=fcli, returns="fcli build properties like version number and build date")
+	@SpelFunction(cat=fcli, returns="Fcli build properties like version number and build date")
 	public static final JsonNode fcliBuildProperties() {
 		return JsonHelper.getObjectMapper().valueToTree(FcliBuildProperties.INSTANCE);
 	}
 
-	@SpelFunction(cat=fcli, returns="copyright notice with the current year")
+	@SpelFunction(cat=fcli, returns="Copyright notice with the current year")
 	public static final String copyright() {
 		return String.format("Copyright (c) %s Open Text", Year.now().getValue());
 	}

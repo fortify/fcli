@@ -274,9 +274,9 @@ formatters:
     Evaluation blocks may be simple references to action variables that were previously set through a `var.set` step,
     or can be complex code blocks that utilize 
     link:https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html[Spring Expression Language (SpEL)],
-    possibly combined with fcli-provided SpEL functions.
+    possibly combined with fcli-provided SpEL functions as described in the next sections.
     
-    == SpEL Functions
+    === SpEL Functions
     
     Fcli provides many functions that can be invoked from expressions. Function calls are identified by the `#` sign,
     for example: 
@@ -334,6 +334,6 @@ formatters:
     |**Returns**
     |${returns != null ? returns.description : ''}
     
-    ${#isBlank(description)?'':('2+|'+description)}
+    ${#isBlank(description)?'':('2+a|'+description)}
     |===
     
