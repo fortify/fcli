@@ -573,5 +573,16 @@
     "allDeclaredConstructors": true, "allPublicConstructors": true,
     "allDeclaredMethods": true, "allPublicMethods": true,
     "allDeclaredFields": true, "allPublicFields": true
+  },
+  {
+    "name": "io.grpc.netty.shaded.io.netty.buffer.AbstractByteBufAllocator",
+    "methods": [
+      {
+        "name": "toLeakAwareBuffer",
+        "parameterTypes": [
+          "io.grpc.netty.shaded.io.netty.buffer.ByteBuf"
+        ]
+      }
+    ]
   }
 ]
