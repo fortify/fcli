@@ -184,12 +184,18 @@ class AviatorStreamProcessor implements AutoCloseable {
                         processRequestQueue(currentStreamState.totalRequests, processedRequests, responses, resultFuture, this.streamLatch);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        // Check if interruption is due to normal shutdown
+                        if (client.isShutdown.get() || requestHandler.isCompleted()) {
+                            LOG.debug("Processing task interrupted during normal shutdown");
+                            return; // Exit gracefully without propagating exception
+                        }
                         resultFuture.completeExceptionally(new AviatorTechnicalException("Interrupted during request processing", e));
                     } catch (Exception e) {
-                        if (requestHandler != null && !requestHandler.isCompleted()) {
+                        // Only propagate exceptions if the stream hasn't completed successfully
+                        if (requestHandler != null && !requestHandler.isCompleted() && !resultFuture.isDone()) {
                             resultFuture.completeExceptionally(new AviatorTechnicalException("Error during request processing execution", e));
                         } else {
-                            LOG.warn("Exception caught after stream completion during processing execution", e);
+                            LOG.debug("Exception caught after stream completion or shutdown: {}", e.getMessage());
                         }
                     }
                 });
@@ -549,10 +555,19 @@ class AviatorStreamProcessor implements AutoCloseable {
                         continue;
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw new AviatorTechnicalException("Thread interrupted while waiting for retry queue", ie);
+                        if (!client.isShutdown.get()) {
+                            throw new AviatorTechnicalException("Thread interrupted while waiting for retry queue", ie);
+                        }
+                        // If client is shutting down, exit gracefully
+                        LOG.debug("Thread interrupted during shutdown, exiting processing loop");
+                        return;
                     }
                 }
-
+                // Check shutdown before acquiring semaphore
+                if (client.isShutdown.get()) {
+                    LOG.debug("Client shutdown detected, exiting processing loop");
+                    return;
+                }
                 LOG.debug("Acquiring semaphore, available: " + requestSemaphore.availablePermits());
                 requestSemaphore.acquire();
 
@@ -591,6 +606,11 @@ class AviatorStreamProcessor implements AutoCloseable {
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
+                // Check if this is due to shutdown
+                if (client.isShutdown.get()) {
+                    LOG.debug("Thread interrupted during shutdown, exiting processing loop gracefully");
+                    return;
+                }
                 throw new AviatorTechnicalException("Thread interrupted while processing queue", ie);
             } catch (Exception e) {
                 if (!requestHandler.isCompleted()) {

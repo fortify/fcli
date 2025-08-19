@@ -60,15 +60,6 @@ public class FVDLProcessor {
     @Getter
     private List<Vulnerability> vulnerabilities;
 
-    // Configuration properties (e.g., cutoffs from library)
-    private static final int ISSUE_CUTOFF_START = getProperty("PK_ISSUE_CUTOFF_START_INDEX", 0);
-    private static final int ISSUE_CUTOFF_END = getProperty("PK_ISSUE_CUTOFF_END_INDEX", Integer.MAX_VALUE);
-    private static final Map<String, int[]> CATEGORY_CUTOFFS = new HashMap<>();
-
-    static {
-        CATEGORY_CUTOFFS.put("SQL Injection", new int[]{0, 100});
-    }
-
     public FVDLProcessor(Path extractedPath) {
         this.extractedPath = extractedPath;
         this.fileUtils = new com.fortify.cli.aviator.fpr.utils.FileUtils();
@@ -106,27 +97,13 @@ public class FVDLProcessor {
         traceProcessor.process(fvdl.getUnifiedTracePool());
         snippetProcessor.process(fvdl.getSnippets());
         descriptionProcessor.process(fvdl.getDescription());
-
-        // Process vulnerabilities with cutoffs
-        int totalCount = 0;
-        Map<String, Integer> categoryCounts = new HashMap<>();
-        // TODO Remove Limits
         for (com.fortify.cli.aviator.fpr.jaxb.Vulnerability vulnJAXB : fvdl.getVulnerabilities().getVulnerability()) {
-            if (totalCount >= ISSUE_CUTOFF_START && totalCount < ISSUE_CUTOFF_END) {
-                String category = vulnJAXB.getClassInfo().getType();
-                int[] categoryCutoff = CATEGORY_CUTOFFS.getOrDefault(category, new int[]{0, Integer.MAX_VALUE});
-                int categoryCount = categoryCounts.getOrDefault(category, 0);
-                if (categoryCount >= categoryCutoff[0] && categoryCount < categoryCutoff[1]) {
-                    Vulnerability vulnCustom = processVulnerability(vulnJAXB);
-                    if (vulnCustom != null) {
-                        vulnerabilities.add(vulnCustom);
-                    }
-                }
-                categoryCounts.put(category, categoryCount + 1);
+            Vulnerability vulnCustom = processVulnerability(vulnJAXB);
+            if (vulnCustom != null) {
+                vulnerabilities.add(vulnCustom);
             }
-            totalCount++;
-        }
 
+        }
         this.vulnerabilities = vulnerabilities;
         return vulnerabilities;
     }

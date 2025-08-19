@@ -5,7 +5,6 @@ import static com.fortify.cli.aviator.util.Constants.DEFAULT_PING_INTERVAL_SECON
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +38,6 @@ import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.util.IssueOrderingComparator;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
@@ -194,99 +192,12 @@ public class IssueAuditor {
                 .collect(Collectors.toList());
 
         // Apply secondary checks (like 'isAudited')
-        List<UserPrompt> includedPrompts = prompts.stream()
-                .filter(this::shouldInclude)
-                .collect(Collectors.toList());
 
-        // Final step: apply capping logic to the included prompts.
-        return getIssuesToAudit(includedPrompts);
-    }
-    private ConcurrentLinkedDeque<UserPrompt> getIssuesToAudit(List<UserPrompt> eligibleUserPrompts) {
+        return prompts.stream()
+                .filter(this::shouldInclude).collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
 
-        Map<String, List<UserPrompt>> issuesByCategory = eligibleUserPrompts.stream()
-                .collect(Collectors.groupingBy(UserPrompt::getCategory));
-
-        Map<String, Integer> newIssuesInCategoryCapped = new HashMap<>();
-        int totalNewIssues = 0;
-        int totalNewIssuesCapped = 0;
-
-        List<String> categories = new ArrayList<>(issuesByCategory.keySet());
-        for (String category : categories) {
-            List<UserPrompt> issues = issuesByCategory.get(category);
-            issues.sort(new IssueOrderingComparator());
-            issuesByCategory.put(category, issues);
-
-            int newIssuesCount = issues.size();
-            int cappedCount = Math.min(MAX_PER_CATEGORY, newIssuesCount);
-
-            newIssuesInCategoryCapped.put(category, cappedCount);
-            totalNewIssues += newIssuesCount;
-            totalNewIssuesCapped += cappedCount;
-        }
-
-        if (totalNewIssuesCapped <= MAX_TOTAL) {
-            LOG.debug("Total capped issues ({}) is within the limit ({}), using simpler per-category limiting.", totalNewIssuesCapped, MAX_TOTAL);
-            return getIssuesToAuditLimitedByCategoryCount(issuesByCategory, totalNewIssues);
-        }
-
-        LOG.debug("Total capped issues ({}) exceeds the limit ({}), applying proportional limiting.", totalNewIssuesCapped, MAX_TOTAL);
-
-        double auditAllThreshold = (issuesByCategory.isEmpty()) ? 0 : totalNewIssuesCapped / (2.0 * issuesByCategory.size());
-        int auditAllTotal = 0;
-        int auditSomeTotal = 0;
-
-        for (int count : newIssuesInCategoryCapped.values()) {
-            if (count < auditAllThreshold) {
-                auditAllTotal += count;
-            } else {
-                auditSomeTotal += count;
-            }
-        }
-
-        ConcurrentLinkedDeque<UserPrompt> issuesToAudit = new ConcurrentLinkedDeque<>();
-        double auditFraction = (auditSomeTotal == 0) ? 0 : ((double) MAX_TOTAL - (double) auditAllTotal) / (double) auditSomeTotal;
-        auditFraction = Math.max(0.0, Math.min(1.0, auditFraction));
-        for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
-            String category = entry.getKey();
-            List<UserPrompt> issues = entry.getValue();
-            long totalLimitIndex = Math.round(auditFraction * newIssuesInCategoryCapped.get(category));
-
-            for (int i = 0; i < issues.size(); i++) {
-                UserPrompt issue = issues.get(i);
-                if (i >= MAX_PER_CATEGORY) {
-                    updateSkippedIssue(issue, MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalNewIssues);
-                } else if (newIssuesInCategoryCapped.get(category) >= auditAllThreshold && i >= totalLimitIndex) {
-                    updateSkippedIssue(issue, MAX_TOTAL_EXCEEDED, issues.size(), totalNewIssues);
-                } else {
-                    issuesToAudit.add(issue);
-                }
-            }
-        }
-
-        return issuesToAudit;
     }
 
-    private ConcurrentLinkedDeque<UserPrompt> getIssuesToAuditLimitedByCategoryCount(Map<String, List<UserPrompt>> issuesByCategory, int totalCount) {
-        ConcurrentLinkedDeque<UserPrompt> issuesToAudit = new ConcurrentLinkedDeque<>();
-
-        for (Map.Entry<String, List<UserPrompt>> entry : issuesByCategory.entrySet()) {
-            List<UserPrompt> issues = entry.getValue();
-
-            if (issues.size() <= MAX_PER_CATEGORY) {
-                issuesToAudit.addAll(issues);
-            } else {
-                for (int i = 0; i < issues.size(); i++) {
-                    UserPrompt issue = issues.get(i);
-                    if (i < MAX_PER_CATEGORY) {
-                        issuesToAudit.add(issue);
-                    } else {
-                        updateSkippedIssue(issue, MAX_PER_CATEGORY_EXCEEDED, issues.size(), totalCount);
-                    }
-                }
-            }
-        }
-        return issuesToAudit;
-    }
 
     private boolean shouldInclude(UserPrompt userPrompt) {
 
