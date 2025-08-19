@@ -21,12 +21,13 @@ import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.DataSignatureUpdater;
 import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.FileSignatureUpdater;
 import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.ISignatureUpdater;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

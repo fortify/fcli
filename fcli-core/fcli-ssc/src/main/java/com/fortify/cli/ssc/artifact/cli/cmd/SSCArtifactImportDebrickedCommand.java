@@ -14,12 +14,13 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import java.io.File;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.debricked.DebrickedHelper;
 import com.fortify.cli.common.debricked.DebrickedLoginOptions;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

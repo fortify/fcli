@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -31,7 +33,6 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.JavaHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;

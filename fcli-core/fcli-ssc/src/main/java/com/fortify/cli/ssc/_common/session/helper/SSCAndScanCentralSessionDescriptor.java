@@ -15,6 +15,8 @@ package com.fortify.cli.ssc._common.session.helper;
 import java.util.Date;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -30,7 +32,6 @@ import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptor;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions.SSCAndScanCentralUrlConfigOptions.SSCComponentDisable;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenGetOrCreateResponse;

@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.common.action.model;
 
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 public interface IActionStepIfSupplier {
     TemplateExpression get_if();

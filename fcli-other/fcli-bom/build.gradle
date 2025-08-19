@@ -53,9 +53,12 @@ dependencies {
         api 'org.junit.jupiter:junit-jupiter-params:5.10.2'
     	api 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 
+        // Commons lang3
+        api('org.apache.commons:commons-lang3:3.18.0')
+        
         // Required for unpacking tar.gz (debricked cli)
         api('org.apache.commons:commons-compress:1.27.1')
-        
+            
         // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
         api('org.jsoup:jsoup:1.19.1')
 	}

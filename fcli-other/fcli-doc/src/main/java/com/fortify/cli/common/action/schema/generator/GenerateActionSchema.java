@@ -14,11 +14,14 @@ package com.fortify.cli.common.action.schema.generator;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
@@ -33,8 +36,8 @@ import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.action.schema.ActionSchemaHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.MemberScope;
 import com.github.victools.jsonschema.generator.Option;
@@ -49,6 +52,8 @@ import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.jackson.JacksonOption;
 
 public class GenerateActionSchema {
+    private static final String actionSpelFunctionSignatures = SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors()
+            .stream().map(d->d.getSignature()).collect(Collectors.joining("\n"));
     public static void main(String[] args) throws Exception {
         if ( args.length!=3 ) { throw new IllegalArgumentException("This command must be run as GenerateActionSchema <true (dev release)|false (final release)> <action schema version> <schema output file location>"); }
         var isDevelopmentRelease = args[0];
@@ -126,7 +131,7 @@ public class GenerateActionSchema {
         configBuilder.forTypesInGeneral().withCustomDefinitionProvider((type, context) -> {
             if (type.getErasedType() == TemplateExpression.class) {
                 var custom = createTemplateExpressionDefinition(context);
-                return new CustomDefinition(custom, true);
+                return new CustomDefinition(custom, false);
             } else if (type.getErasedType() == JsonNode.class ) {
                 var custom = context.getGeneratorConfig().createObjectNode();
                 custom.put(context.getKeyword(SchemaKeyword.TAG_ADDITIONAL_PROPERTIES), true)
@@ -138,7 +143,7 @@ public class GenerateActionSchema {
                 var resolver = new TypeResolver();
                 var properties = getProperties(type, context, resolver);
                 var custom = context.getGeneratorConfig().createObjectNode();
-                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression or object")
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "expression or object")
                     .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN))
@@ -152,7 +157,7 @@ public class GenerateActionSchema {
                 var resolver = new TypeResolver();
                 var properties = getProperties(type, context, resolver);
                 var custom = context.getGeneratorConfig().createObjectNode();
-                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression or object")
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "expression or object")
                     .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
@@ -177,14 +182,30 @@ public class GenerateActionSchema {
         type.getMemberFields().stream()
             .map(RawField::getRawMember)
             .filter(f->f.isAnnotationPresent(JsonProperty.class))
-            .forEach(f->properties.set(f.getAnnotation(JsonProperty.class).value(), context.createDefinition(
-            resolver.resolve(f.getGenericType()))));
+            .forEach(f->properties.set(f.getAnnotation(JsonProperty.class).value(), 
+                    createDefinition(context, resolver, f)));
+        
         return properties;
     }
 
+    private static ObjectNode createDefinition(SchemaGenerationContext context, TypeResolver resolver, Field f) {
+        if ( f.getType() == TemplateExpression.class ) {
+            return context.getGeneratorConfig().createObjectNode()
+                    .put(context.getKeyword(SchemaKeyword.TAG_REF), "#/$defs/TemplateExpression");
+        } else {
+            return context.createDefinition(resolver.resolve(f.getGenericType()));
+        }
+    }
+    
     private static ObjectNode createTemplateExpressionDefinition(SchemaGenerationContext context) {
         var custom = context.getGeneratorConfig().createObjectNode();
         custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression")
+            .put(context.getKeyword(SchemaKeyword.TAG_DESCRIPTION), String.format("""
+                    Spring template expression, like 'Hello ${name}'.
+                    See https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html \
+                    for expression language reference. Expressions may invoke the following fcli-provided \
+                    functions: \n%s\nSee fcli custom action development documentation for more information.
+                    """, actionSpelFunctionSignatures))
             .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN))
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_INTEGER))

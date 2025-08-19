@@ -23,10 +23,10 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
-import com.fortify.cli.common.spring.expression.SpelEvaluator;
-import com.fortify.cli.common.spring.expression.SpelHelper;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
+import com.fortify.cli.common.spel.SpelEvaluator;
+import com.fortify.cli.common.spel.SpelHelper;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

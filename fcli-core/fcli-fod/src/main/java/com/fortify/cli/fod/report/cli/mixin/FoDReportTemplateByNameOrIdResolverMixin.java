@@ -12,7 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.fod.report.cli.mixin;
 
-import com.fortify.cli.common.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.fod.report.helper.FoDReportTemplateDescriptor;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateHelper;
 

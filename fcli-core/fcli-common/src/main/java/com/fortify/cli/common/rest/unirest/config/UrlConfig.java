@@ -14,10 +14,11 @@ package com.fortify.cli.common.rest.unirest.config;
 
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

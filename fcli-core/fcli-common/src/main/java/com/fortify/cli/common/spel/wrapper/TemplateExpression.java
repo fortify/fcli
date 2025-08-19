@@ -22,31 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.spring.expression.wrapper;
+package com.fortify.cli.common.spel.wrapper;
 
-import java.io.IOException;
+import org.springframework.expression.Expression;
 
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.spring.expression.SpelHelper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
- * This Jackson key deserializer allows for parsing map keys into 
- * TemplateExpression objects.
+ * <p>This is a simple wrapper class for a Spring {@link Expression}
+ * instance. It's main use is in combination with 
+ * {@link TemplateExpressionSerializer} to allow automatic
+ * conversion from String values to templated {@link Expression}
+ * instances.</p>
+ * 
+ * <p>The reason for needing this wrapper class is to differentiate
+ * with non-templated {@link Expression} instances that are
+ * handled by {@link SimpleExpressionDeserializer}.</p>
  */
-@Reflectable
-public final class TemplateExpressionKeyDeserializer extends KeyDeserializer {
-    @Override
-    public Object deserializeKey(String key, DeserializationContext ctxt) throws IOException {
-        return key==null ? null : SpelHelper.parseTemplateExpression(key);
-    }
-    
-    public static final ObjectMapper registerOn(ObjectMapper objectMapper) {
-        SimpleModule module = new SimpleModule();
-        module.addKeyDeserializer(TemplateExpression.class, new TemplateExpressionKeyDeserializer());
-        return objectMapper.registerModule(module);
-    }
+@JsonDeserialize(using = TemplateExpressionDeserializer.class)
+@JsonSerialize(using = TemplateExpressionSerializer.class)
+public class TemplateExpression extends WrappedExpression {
+	public TemplateExpression(String originalExpressionString, Expression target) {
+		super(originalExpressionString, target);
+	}
 }

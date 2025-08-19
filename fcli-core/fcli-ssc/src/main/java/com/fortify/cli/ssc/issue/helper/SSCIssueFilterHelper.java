@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.issue.helper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.util.LinkedMultiValueMap;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.StringHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
@@ -52,7 +54,8 @@ public final class SSCIssueFilterHelper {
             } else if ( matchingFriendlyFilters.size()>1 ) {
                 throw new FcliSimpleException(technicalOrFriendlyFilter+" is ambiguous.\n" +
                     "please use one of the following filters:\n"+
-                    matchingFriendlyFilters.stream().map(s->s.indent(2)).collect(Collectors.joining("\n")));
+						matchingFriendlyFilters.stream().filter(Objects::nonNull).map(s -> StringHelper.indent(s, "  "))
+								.collect(Collectors.joining("\n")));
             } else {
                 return matchingFriendlyFilters.get(0);
             }

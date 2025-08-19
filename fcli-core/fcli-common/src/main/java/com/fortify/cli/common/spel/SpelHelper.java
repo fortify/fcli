@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.spring.expression;
+package com.fortify.cli.common.spel;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -19,8 +19,8 @@ import org.springframework.expression.common.TemplateParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-import com.fortify.cli.common.spring.expression.wrapper.SimpleExpression;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.spel.wrapper.SimpleExpression;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 public final class SpelHelper {
     private static final SpelExpressionParser parser = new SpelExpressionParser();

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.spring.expression.validator;
+package com.fortify.cli.common.spel.validator;
 
 import java.util.HashMap;
 import java.util.Map;

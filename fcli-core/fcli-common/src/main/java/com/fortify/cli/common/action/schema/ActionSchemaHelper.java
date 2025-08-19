@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fortify.cli.common.action.model.IActionElement;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.ReflectionHelper;
 
 /**

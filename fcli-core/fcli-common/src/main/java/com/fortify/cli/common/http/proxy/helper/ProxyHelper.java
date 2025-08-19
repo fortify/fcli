@@ -18,12 +18,12 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FcliDataHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.UnirestInstance;
 

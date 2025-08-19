@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.spring.expression;
+package com.fortify.cli.common.spel;
 
 import java.util.Iterator;
 import java.util.Optional;

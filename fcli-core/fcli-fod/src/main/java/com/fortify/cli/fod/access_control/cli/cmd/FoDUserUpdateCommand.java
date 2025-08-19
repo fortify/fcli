@@ -14,12 +14,13 @@ package com.fortify.cli.fod.access_control.cli.cmd;
 
 import java.util.ArrayList;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.access_control.cli.mixin.FoDUserResolverMixin;
@@ -118,7 +119,7 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
 
     @Override
     public String getActionCommandResult() {
-        return "UPDATED";
+        return "REQUESTED";
     }
 
     @Override

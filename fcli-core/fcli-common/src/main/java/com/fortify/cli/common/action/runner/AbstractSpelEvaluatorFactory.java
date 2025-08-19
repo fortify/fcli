@@ -18,9 +18,9 @@ import java.util.function.BiConsumer;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
-import com.fortify.cli.common.spring.expression.SpelEvaluator;
-import com.fortify.cli.common.spring.expression.SpelHelper;
+import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
+import com.fortify.cli.common.spel.SpelEvaluator;
+import com.fortify.cli.common.spel.SpelHelper;
 
 import lombok.Getter;
 

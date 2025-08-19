@@ -17,8 +17,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 

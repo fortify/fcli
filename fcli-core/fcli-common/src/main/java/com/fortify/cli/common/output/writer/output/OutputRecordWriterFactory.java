@@ -16,6 +16,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.writer.IMessageResolver;
@@ -24,7 +26,6 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Builder;
 

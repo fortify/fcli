@@ -22,33 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.spring.expression.wrapper;
+package com.fortify.cli.common.spel.wrapper;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.spring.expression.SpelHelper;
 
 /**
- * This Jackson deserializer allows got parsing String values into 
- * TemplateExpression objects.
+ * This Jackson serializer allows for serializing {@link TemplateExpression} instances
+ * to expression strings
  */
 @Reflectable
-public final class TemplateExpressionDeserializer extends StdDeserializer<TemplateExpression> {
+public final class TemplateExpressionSerializer extends StdSerializer<TemplateExpression> {
     private static final long serialVersionUID = 1L;
-    
-    public TemplateExpressionDeserializer() { this(null); } 
-    public TemplateExpressionDeserializer(Class<?> vc) { super(vc); }
+    public TemplateExpressionSerializer() {
+        super(TemplateExpression.class);
+    }
 
     @Override
-    public TemplateExpression deserialize(JsonParser jp, DeserializationContext ctxt) 
-      throws IOException, JsonProcessingException {
-        JsonNode node = jp.getCodec().readTree(jp);
-        return node==null || node.isNull() ? null : SpelHelper.parseTemplateExpression(node.asText());
+    public void serialize(TemplateExpression value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeString(value.getOriginalExpressionString());
     }
 }

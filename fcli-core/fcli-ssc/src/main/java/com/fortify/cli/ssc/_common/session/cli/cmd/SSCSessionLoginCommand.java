@@ -12,12 +12,13 @@
  *******************************************************************************/
 package com.fortify.cli.ssc._common.session.cli.cmd;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCAndScanCentralUnirestHelper;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions;
