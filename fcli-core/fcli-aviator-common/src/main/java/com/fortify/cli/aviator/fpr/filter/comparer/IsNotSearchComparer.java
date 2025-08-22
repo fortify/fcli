@@ -11,7 +11,16 @@ public class IsNotSearchComparer implements SearchComparer {
     }
 
     @Override
-    public boolean matches(Object attributeValue) {
-        return !wrapped.matches(attributeValue);
+    public boolean matches(Object possibleMatch) {
+        //if possible match is null hten it definitely IS NOT
+        if (possibleMatch == null) {
+            return true;
+        }
+        boolean result = !wrapped.matches(possibleMatch);
+        return result;
+    }
+
+    public String getSearchTerm() {
+        return "!" + wrapped.getSearchTerm();
     }
 }

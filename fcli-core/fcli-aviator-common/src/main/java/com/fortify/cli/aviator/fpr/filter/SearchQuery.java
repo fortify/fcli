@@ -2,10 +2,12 @@ package com.fortify.cli.aviator.fpr.filter;
 
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.comparer.SearchComparer;
+import lombok.Getter;
 
 /**
  * Represents a single, atomic condition in a filter, combining an attribute with a self-contained comparer.
  */
+@Getter
 public class SearchQuery {
     private final String attributeName;
     private final SearchComparer comparer;
@@ -26,8 +28,15 @@ public class SearchQuery {
         return comparer.matches(attributeValue);
     }
 
-    @Override
+    public SearchComparer getSearchComparer() {
+        return comparer;
+    }
+
+    public String getAttributeName() {
+        return attributeName;
+    }
+
     public String toString() {
-        return String.format("Query[%s]", attributeName);
+        return attributeName + ":" + comparer.toString();
     }
 }

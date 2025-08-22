@@ -18,6 +18,11 @@ public class ExactMatchComparer implements SearchComparer {
         if (!(attributeValue instanceof String)) {
             return false;
         }
-        return searchTerm.equalsIgnoreCase((String) attributeValue);
+        boolean result = searchTerm.equalsIgnoreCase((String) attributeValue);
+        return result;
+    }
+
+    public String getSearchTerm() {
+        return searchTerm;
     }
 }

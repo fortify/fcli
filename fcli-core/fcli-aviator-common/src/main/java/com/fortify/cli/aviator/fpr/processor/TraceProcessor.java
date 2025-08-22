@@ -10,6 +10,7 @@ import com.fortify.cli.aviator.fpr.model.Node;
 import com.fortify.cli.aviator.fpr.model.TraceEntry;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TraceProcessor {
     private static final Logger logger = LoggerFactory.getLogger(TraceProcessor.class);
-    private static final int MAX_RECURSION_DEPTH = 50; // Configurable depth limit to prevent stack overflow
-    private final Map<String, UnifiedTrace> tracePool = new ConcurrentHashMap<>();
+    private static final int MAX_RECURSION_DEPTH = 50;
+    @Getter private final Map<String, UnifiedTrace> tracePool = new ConcurrentHashMap<>();
     private final NodeProcessor nodeProcessor;
     private final SnippetProcessor snippetProcessor;
     private final FileUtils fileUtils;
@@ -41,7 +42,7 @@ public class TraceProcessor {
      * @param sourceFileMap    Map of relative to actual file paths
      */
     public TraceProcessor(Path extractedPath, NodeProcessor nodeProcessor, SnippetProcessor snippetProcessor, FileUtils fileUtils, Map<String, String> sourceFileMap) {
-        this.extractedPath = extractedPath; // <-- INITIALIZE IT
+        this.extractedPath = extractedPath;
         this.nodeProcessor = nodeProcessor;
         this.snippetProcessor = snippetProcessor;
         this.fileUtils = fileUtils;
@@ -64,18 +65,9 @@ public class TraceProcessor {
             if (traceId != null && traceId != 0) {
                 tracePool.put(traceId.toString(), trace);
             } else {
-                logger.debug("Trace missing or invalid ID, skipping");
+                logger.warn("Trace missing or invalid ID, skipping");
             }
         }
-    }
-
-    /**
-     * Gets the cached trace pool.
-     *
-     * @return Map of trace ID to UnifiedTrace
-     */
-    public Map<String, UnifiedTrace> getTracePool() {
-        return tracePool;
     }
 
     /**
@@ -100,17 +92,16 @@ public class TraceProcessor {
     /**
      * Recursively resolves a UnifiedTrace with depth limiting and cycle detection.
      *
-     * @param trace    Current UnifiedTrace
+     * @param trace       Current UnifiedTrace
      * @param stackTraces Output list of stack traces
-     * @param depth    Current recursion depth
-     * @param visited  Map of visited trace IDs to avoid cycles
+     * @param depth       Current recursion depth
+     * @param visited     Map of visited trace IDs to avoid cycles
      * @throws IOException If file access fails
      */
     private void resolveTraceRecursive(UnifiedTrace trace, List<List<StackTraceElement>> stackTraces, int depth, Map<String, Boolean> visited) throws IOException {
         Integer traceIdInt = trace.getId();
         String traceId = traceIdInt != null ? traceIdInt.toString() : "";
 
-        // Cycle detection for top-level traces
         if (!traceId.isEmpty()) {
             if (visited.getOrDefault(traceId, false)) {
                 logger.debug("Cycle detected for trace ID: {}", traceId);
@@ -119,11 +110,8 @@ public class TraceProcessor {
             visited.put(traceId, true);
         }
 
-        // This method now only processes ONE level of a trace into a single list.
-        // The recursive building of inner traces is handled by buildStackTraceElement.
         List<StackTraceElement> currentStack = new ArrayList<>();
         for (UnifiedTrace.Primary.Entry entry : trace.getPrimary().getEntry()) {
-            // We now pass the 'visited' map down to the builder.
             StackTraceElement ste = buildStackTraceElement(processEntry(entry), depth, visited);
             if (ste != null) {
                 currentStack.add(ste);
@@ -151,6 +139,7 @@ public class TraceProcessor {
         return new TraceEntry(nodeObject, isDefault);
     }
 
+    // +++ THIS ENTIRE METHOD IS REPLACED WITH THE CORRECTED LOGIC +++
     /**
      * Builds a StackTraceElement from a TraceEntry.
      *
@@ -164,23 +153,36 @@ public class TraceProcessor {
             return null;
         }
 
-        // --- Resolve the current node (same as before) ---
         Object nodeObject = entry.getNode();
-        UnifiedNodeRef nodeRef = nodeObject instanceof UnifiedNodeRef ? (UnifiedNodeRef) nodeObject : null;
-        UnifiedNode unifiedNode = nodeObject instanceof UnifiedNode ? (UnifiedNode) nodeObject : null;
+        UnifiedNode unifiedNode; // This will hold the full JAXB node object, regardless of source.
+        Node resolvedNode;      // This will hold our custom processed Node object.
 
-        Node resolvedNode;
-        if (unifiedNode != null) {
+        if (nodeObject instanceof UnifiedNode inlineNode) {
+            // Path for an INLINE <Node>
+            unifiedNode = inlineNode;
             resolvedNode = nodeProcessor.processNode(unifiedNode);
-        } else {
-            resolvedNode = resolveNodeRef(nodeRef);
-        }
 
-        if (resolvedNode == null) {
-            logger.debug("Could not resolve node for trace entry at depth {}", depth);
+        } else if (nodeObject instanceof UnifiedNodeRef nodeRef) {
+            // Path for a <NodeRef>
+            String refId = Integer.toString(nodeRef.getId());
+
+            // 1. Get our custom, processed Node from the node processor's main pool.
+            resolvedNode = resolveNodeRef(nodeRef);
+
+            // 2. Get the ORIGINAL JAXB UnifiedNode from the raw pool. THIS IS THE KEY FIX.
+            unifiedNode = nodeProcessor.getRawNodePool().get(refId);
+
+        } else {
+            logger.warn("Unknown node object type in trace entry: {}", nodeObject != null ? nodeObject.getClass().getName() : "null");
             return null;
         }
 
+        if (resolvedNode == null) {
+            logger.warn("Could not resolve node for trace entry at depth {}", depth);
+            return null;
+        }
+
+        // --- Create the parent StackTraceElement (same as before) ---
         String filename = resolvedNode.getFilePath();
         int line = resolvedNode.getLine();
         String codeLine = fileUtils.getLineFromFile(this.extractedPath, this.sourceFileMap, filename, line);
@@ -194,13 +196,12 @@ public class TraceProcessor {
         ste.setReason(resolvedNode.getReasonText());
         ste.setKnowledge(resolvedNode.getKnowledge());
 
+        // --- RECURSION CHECK (This now works for both inline and referenced nodes) ---
         if (unifiedNode != null && unifiedNode.getReason() != null) {
             List<StackTraceElement> innerTrace = new ArrayList<>();
 
             for (Object reasonItem : unifiedNode.getReason().getTraceOrTraceRefOrInductionRef()) {
                 if (reasonItem instanceof UnifiedTrace nestedTrace) {
-                    // This is a full, inline <Trace>
-                    // We process its entries recursively
                     for (UnifiedTrace.Primary.Entry childEntry : nestedTrace.getPrimary().getEntry()) {
                         StackTraceElement innerSte = buildStackTraceElement(processEntry(childEntry), depth + 1, visited);
                         if (innerSte != null) {
@@ -208,11 +209,9 @@ public class TraceProcessor {
                         }
                     }
                 } else if (reasonItem instanceof UnifiedTraceRef traceRef) {
-                    // This is a reference to a trace in the pool
                     String refId = Integer.toString(traceRef.getId());
                     if (!refId.isEmpty() && !visited.getOrDefault(refId, false)) {
-
-                        visited.put(refId, true); // Mark as visited to prevent cycles
+                        visited.put(refId, true);
                         UnifiedTrace referencedTrace = tracePool.get(refId);
                         if (referencedTrace != null) {
                             for (UnifiedTrace.Primary.Entry childEntry : referencedTrace.getPrimary().getEntry()) {

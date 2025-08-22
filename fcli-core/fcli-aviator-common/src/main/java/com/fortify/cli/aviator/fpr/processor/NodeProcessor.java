@@ -7,6 +7,7 @@ import com.fortify.cli.aviator.fpr.jaxb.UnifiedNodePoolType;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode.Knowledge.Fact;
 import com.fortify.cli.aviator.fpr.model.Node;
 
+import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,35 +24,23 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class NodeProcessor {
     private static final Logger logger = LoggerFactory.getLogger(NodeProcessor.class);
-    /**
-     * -- GETTER --
-     *  Gets the cached node pool.
-     *
-     * @return Map of node ID to Node
-     */
-    @Getter
-    private final Map<String, Node> nodePool = new ConcurrentHashMap<>();
-    private final com.fortify.cli.aviator.fpr.utils.FileUtils fileUtils;
+    @Getter private final Map<String, Node> nodePool = new ConcurrentHashMap<>();
+    @Getter private final Map<String, UnifiedNode> rawNodePool = new ConcurrentHashMap<>();
+    private final Map<String, String> sourceFileCache = new ConcurrentHashMap<>();
+    private final FileUtils fileUtils;
     private final Map<String, String> sourceFileMap;
-    private final Path extractedPath; // Add this field
+    private final Path extractedPath;
 
 
-    /**
-     * Constructor with dependencies.
-     *
-     * @param fileUtils     For file and snippet access
-     * @param sourceFileMap Map of relative to actual file paths
-     */
-    public NodeProcessor(Path extractedPath, com.fortify.cli.aviator.fpr.utils.FileUtils fileUtils, Map<String, String> sourceFileMap) {
-        this.extractedPath = extractedPath; // Initialize it
+
+    public NodeProcessor(Path extractedPath, FileUtils fileUtils, Map<String, String> sourceFileMap) {
+        this.extractedPath = extractedPath;
         this.fileUtils = fileUtils;
         this.sourceFileMap = sourceFileMap;
     }
 
     /**
      * Processes UnifiedNodePool and populates nodePool.
-     *
-     * @param nodePoolElement JAXB UnifiedNodePoolType
      */
     public void process(UnifiedNodePoolType nodePoolElement) {
         if (nodePoolElement == null || nodePoolElement.getNode() == null) {
@@ -59,19 +48,21 @@ public class NodeProcessor {
             return;
         }
 
-        for (UnifiedNodePoolType.Node jaxbNodePoolNode : nodePoolElement.getNode()) {
-            Node node = processNode(jaxbNodePoolNode);
-            if (node != null) {
-                nodePool.put(node.getId(), node);
+        for (UnifiedNodePoolType.Node jaxbNodeFromPool : nodePoolElement.getNode()) {
+            // Store the original JAXB object in the raw pool so TraceProcessor can access it.
+            String nodeId = Integer.toString(jaxbNodeFromPool.getId());
+            rawNodePool.put(nodeId, jaxbNodeFromPool);
+
+            // Process and store the custom Node object (existing logic)
+            Node customNode = processNode(jaxbNodeFromPool);
+            if (customNode != null) {
+                nodePool.put(customNode.getId(), customNode);
             }
         }
     }
 
     /**
      * Processes a single UnifiedNode into a Node object.
-     *
-     * @param jaxbNode JAXB UnifiedNode (or extensions like UnifiedNodePoolType.Node)
-     * @return Node or null if invalid
      */
     public Node processNode(UnifiedNode jaxbNode) {
         if (jaxbNode == null) {
@@ -92,18 +83,24 @@ public class NodeProcessor {
         // Extract from base UnifiedNode
         SourceLocationType loc = jaxbNode.getSourceLocation();
         String filePath = loc != null ? loc.getPath() : "";
+
+        String snippet = "";
+        if (filePath != null && !filePath.isEmpty()) {
+            snippet = sourceFileCache.computeIfAbsent(filePath, key ->
+                    fileUtils.getSourceFileContent(this.extractedPath, sourceFileMap, key)
+                            .orElse(""));
+        }
+
         int line = loc != null && loc.getLine() != null ? loc.getLine().intValue() : 0;
         int lineEnd = loc != null && loc.getLineEnd() != null ? loc.getLineEnd().intValue() : line;
         int colStart = loc != null && loc.getColStart() != null ? loc.getColStart().intValue() : 0;
         int colEnd = loc != null && loc.getColEnd() != null ? loc.getColEnd().intValue() : 0;
         String contextId = loc != null && loc.getContextId() != null ? loc.getContextId().toString() : "";
         String snippetId = loc != null ? loc.getSnippet() : "";
-        String snippet = fileUtils.getSourceFileContent(this.extractedPath, sourceFileMap, filePath)
-                .orElseGet(() -> "");
+
         String actionType = jaxbNode.getAction() != null ? jaxbNode.getAction().getType() : "";
         String additionalInfo = jaxbNode.getAction() != null ? jaxbNode.getAction().getValue() : "";
 
-        // Extract secondary location
         SourceLocationType secondaryLoc = jaxbNode.getSecondaryLocation();
         String secondaryPath = secondaryLoc != null ? secondaryLoc.getPath() : "";
         int secondaryLine = secondaryLoc != null && secondaryLoc.getLine() != null ? secondaryLoc.getLine().intValue() : 0;
@@ -129,10 +126,7 @@ public class NodeProcessor {
                         ruleId = rule.getRuleID();
                     }
                     sb.append("Rule: ").append(rule.getRuleID()).append("\n");
-                } // Add handling for other types if defined in JAXB (e.g., Internal for reason text)
-                // Example: if (reasonItem instanceof Reason.Internal) {
-                //     sb.append(((Reason.Internal) reasonItem).getValue()).append("\n");
-                // }
+                }
             }
             reasonText = sb.toString().trim();
         }

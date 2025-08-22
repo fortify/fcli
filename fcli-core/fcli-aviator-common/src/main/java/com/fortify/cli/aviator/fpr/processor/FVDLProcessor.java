@@ -1,6 +1,7 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import com.fortify.cli.aviator.audit.model.File;
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.VulnerabilityMapper;
 import com.fortify.cli.aviator.fpr.jaxb.FVDL;
@@ -9,6 +10,8 @@ import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedTrace;
 import com.fortify.cli.aviator.fpr.model.Entry;
 import com.fortify.cli.aviator.fpr.model.ReplacementData;
+import com.fortify.cli.aviator.fpr.model.Entry;
+import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.util.StringUtil;
@@ -32,6 +35,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -55,14 +59,14 @@ public class FVDLProcessor {
     private final MetaInfoProcessor metaInfoProcessor;
     private final AuxiliaryProcessor auxiliaryProcessor;
     private final VulnFinalizer vulnFinalizer;
-    private final com.fortify.cli.aviator.fpr.utils.FileUtils fileUtils;
+    private final FileUtils fileUtils;
     private final Path extractedPath;
     @Getter
     private List<Vulnerability> vulnerabilities;
 
     public FVDLProcessor(Path extractedPath) {
         this.extractedPath = extractedPath;
-        this.fileUtils = new com.fortify.cli.aviator.fpr.utils.FileUtils();
+        this.fileUtils = new FileUtils();
         this.nodeProcessor = new NodeProcessor(this.extractedPath, fileUtils, sourceFileMap);
         this.traceProcessor = new TraceProcessor(this.extractedPath, nodeProcessor, new SnippetProcessor(), fileUtils, sourceFileMap);        this.snippetProcessor = new SnippetProcessor();
         this.descriptionProcessor = new DescriptionProcessor();
@@ -97,12 +101,12 @@ public class FVDLProcessor {
         traceProcessor.process(fvdl.getUnifiedTracePool());
         snippetProcessor.process(fvdl.getSnippets());
         descriptionProcessor.process(fvdl.getDescription());
+
         for (com.fortify.cli.aviator.fpr.jaxb.Vulnerability vulnJAXB : fvdl.getVulnerabilities().getVulnerability()) {
             Vulnerability vulnCustom = processVulnerability(vulnJAXB);
             if (vulnCustom != null) {
                 vulnerabilities.add(vulnCustom);
             }
-
         }
         this.vulnerabilities = vulnerabilities;
         return vulnerabilities;
@@ -192,14 +196,13 @@ public class FVDLProcessor {
 
     /**
      * Processes a single JAXB vulnerability into a rich, fully populated internal Vulnerability object.
-     * This method orchestrates the aggregation of data from the rule definitions (via MetaInfoProcessor),
+     * This method orchestrates the aggregation of data from the rule definitions, instance-specific overrides,
      * the vulnerability trace, and other sections of the FVDL.
      *
      * @param vulnJAXB JAXB Vulnerability object from the FVDL.
      * @return A fully processed Vulnerability object ready for filtering and auditing, or null if creation fails.
      */
     private Vulnerability processVulnerability(com.fortify.cli.aviator.fpr.jaxb.Vulnerability vulnJAXB) {
-        // Use the safe builder/mapper pattern to create the base object.
         Optional<Vulnerability> optionalVuln = VulnerabilityMapper.fromJAXB(vulnJAXB);
         if (optionalVuln.isEmpty()) {
             String instanceId = (vulnJAXB != null && vulnJAXB.getInstanceInfo() != null) ? vulnJAXB.getInstanceInfo().getInstanceID() : "UNKNOWN";
@@ -208,7 +211,6 @@ public class FVDLProcessor {
         }
         Vulnerability vulnCustom = optionalVuln.get();
 
-        // --- METADATA AGGREGATION WITH INSTANCE OVERRIDE ---
 
         // 1. Get the base metadata from the global Rule definition.
         // We create a mutable copy to allow for overrides.
@@ -218,7 +220,6 @@ public class FVDLProcessor {
         if (vulnJAXB.getInstanceInfo() != null && vulnJAXB.getInstanceInfo().getMetaInfo() != null) {
             for (MetaInfo.Group group : vulnJAXB.getInstanceInfo().getMetaInfo().getGroup()) {
                 if (group.getName() != null && group.getValue() != null) {
-                    // This will overwrite the value from the rule if the key is the same (e.g., "Probability").
                     finalMetadata.put(group.getName(), group.getValue().trim());
                     logger.trace("Overriding metadata for vuln [{}]: '{}' -> '{}'", vulnCustom.getInstanceID(), group.getName(), group.getValue());
                 }
@@ -240,9 +241,6 @@ public class FVDLProcessor {
         vulnCustom.setAudience(audience);
         vulnCustom.setFiletype(finalMetadata.getOrDefault("DefaultFile", ""));
 
-
-
-        // --- PROCESS DYNAMIC AND TRACE-RELATED DATA ---
         try {
             List<List<StackTraceElement>> stackTraces = new ArrayList<>();
             if (vulnJAXB.getAnalysisInfo() != null && vulnJAXB.getAnalysisInfo().getUnified() != null) {
@@ -255,14 +253,19 @@ public class FVDLProcessor {
             Map<String, File> uniqueFiles = new LinkedHashMap<>();
             if (!stackTraces.isEmpty()) {
                 List<StackTraceElement> firstStackTrace = stackTraces.get(0);
-                if (!firstStackTrace.isEmpty()) {
-                    processFileForElement(firstStackTrace.get(0), uniqueFiles);
-                    processFileForElement(firstStackTrace.get(firstStackTrace.size() - 1), uniqueFiles);
+                List<StackTraceElement> lastStackTrace = stackTraces.get(stackTraces.size() - 1);
+
+                if (!lastStackTrace.isEmpty()) {
+                    processFileForElement(lastStackTrace.get(0), uniqueFiles);
+                    processFileForElement(lastStackTrace.get(lastStackTrace.size() - 1), uniqueFiles);
                 }
                 processStackTraceElements(stackTraces, uniqueFiles);
+
                 vulnCustom.setFiles(new ArrayList<>(uniqueFiles.values()));
                 vulnCustom.setFirstStackTrace(firstStackTrace);
-                vulnCustom.setLastStackTraceElement(firstStackTrace.isEmpty() ? null : firstStackTrace.get(firstStackTrace.size() - 1));
+                vulnCustom.setSource(lastStackTrace.isEmpty() ? null : lastStackTrace.get(0));
+                vulnCustom.setSink(lastStackTrace.isEmpty() ? null : lastStackTrace.get(lastStackTrace.size() - 1));
+                vulnCustom.setLastStackTraceElement(lastStackTrace.isEmpty() ? null : lastStackTrace.get(lastStackTrace.size() - 1));
                 vulnCustom.setLongestStackTrace(findLongestList(stackTraces));
                 vulnCustom.setSource(firstStackTrace.isEmpty() ? null : firstStackTrace.get(0));
                 vulnCustom.setSink(firstStackTrace.isEmpty() ? null : firstStackTrace.get(firstStackTrace.size() - 1));
@@ -286,6 +289,7 @@ public class FVDLProcessor {
         vulnCustom.setExplanation(StringUtil.stripTags(descs[1], true));
 
         // The finalizer is now responsible for calculating derived fields (like likelihood and priority)
+        // and applying any necessary fallbacks for data that was missing from the rule metadata.
         vulnFinalizer.finalize(vulnCustom);
 
         return vulnCustom;
@@ -296,9 +300,7 @@ public class FVDLProcessor {
 
         String filename = element.getFilename();
         if (!StringUtil.isEmpty(filename) && sourceFileMap.containsKey(filename) && !uniqueFiles.containsKey(filename)) {
-            String sourceFilePath = sourceFileMap.get(filename); // This value is "src-archive/0"
-
-            // Resolve it directly against the root extraction path.
+            String sourceFilePath = sourceFileMap.get(filename);
             Path actualSourcePath = extractedPath.resolve(sourceFilePath);
 
             File file = new File();
@@ -321,7 +323,6 @@ public class FVDLProcessor {
                 file.setContent("");
                 file.setEndLine(0);
             }
-
             uniqueFiles.put(filename, file);
         }
     }
@@ -329,20 +330,66 @@ public class FVDLProcessor {
     private void processStackTraceElements(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) {
         for (List<StackTraceElement> stackTrace : stackTraces) {
             if (stackTrace == null) continue;
-
             for (StackTraceElement element : stackTrace) {
                 processFileForElement(element, uniqueFiles);
-                for (StackTraceElement innerElement : element.getInnerStackTrace()) {
-                    processFileForElement(innerElement, uniqueFiles);
+                if (element.getInnerStackTrace() != null) {
+                    for (StackTraceElement innerElement : element.getInnerStackTrace()) {
+                        processFileForElement(innerElement, uniqueFiles);
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Finds the stack trace with the most total nodes, including nested traces.
+     *
+     * @param listOfLists A list containing all traces for a vulnerability.
+     * @return The single trace (a list of StackTraceElement) that is the "longest".
+     */
     private List<StackTraceElement> findLongestList(List<List<StackTraceElement>> listOfLists) {
+        if (listOfLists == null || listOfLists.isEmpty()) {
+            return new ArrayList<>();
+        }
+        // This performs the same deep count as before, but in a more concise way.
         return listOfLists.stream()
-                .max((l1, l2) -> Integer.compare(l1.size(), l2.size()))
+                .max(Comparator.comparingInt(this::getTotalTraceSize))
                 .orElse(new ArrayList<>());
+    }
+
+    /**
+     * Calculates the total number of nodes in a single trace by summing the recursive
+     * size of each of its top-level elements.
+     *
+     * @param trace A list of top-level StackTraceElements.
+     * @return The total count of all nodes in the trace tree.
+     */
+    private int getTotalTraceSize(List<StackTraceElement> trace) {
+        if (trace == null) {
+            return 0;
+        }
+        return trace.stream()
+                .mapToInt(this::countNodesRecursive)
+                .sum();
+    }
+
+    /**
+     * Recursively counts a StackTraceElement and all of its descendants in inner traces.
+     *
+     * @param element The root element to start counting from.
+     * @return The total number of nodes in this element's tree.
+     */
+    private int countNodesRecursive(StackTraceElement element) {
+        if (element == null) {
+            return 0;
+        }
+        int count = 1;
+        if (element.getInnerStackTrace() != null) {
+            for (StackTraceElement inner : element.getInnerStackTrace()) {
+                count += countNodesRecursive(inner);
+            }
+        }
+        return count;
     }
 
     private void aggregateFromTraces(Vulnerability vulnCustom) {
@@ -355,12 +402,13 @@ public class FVDLProcessor {
                     allTaintFlags.addAll(Arrays.stream(ste.getTaintflags().split(",")).map(String::trim).collect(Collectors.toSet()));
                 }
                 allKnowledge.putAll(ste.getKnowledge());
-                // Recurse inner
-                for (StackTraceElement inner : ste.getInnerStackTrace()) {
-                    if (inner.getTaintflags() != null && !inner.getTaintflags().isEmpty()) {
-                        allTaintFlags.addAll(Arrays.stream(inner.getTaintflags().split(",")).map(String::trim).collect(Collectors.toSet()));
+                if (ste.getInnerStackTrace() != null) {
+                    for (StackTraceElement inner : ste.getInnerStackTrace()) {
+                        if (inner.getTaintflags() != null && !inner.getTaintflags().isEmpty()) {
+                            allTaintFlags.addAll(Arrays.stream(inner.getTaintflags().split(",")).map(String::trim).collect(Collectors.toSet()));
+                        }
+                        allKnowledge.putAll(inner.getKnowledge());
                     }
-                    allKnowledge.putAll(inner.getKnowledge());
                 }
             }
         }
@@ -368,7 +416,7 @@ public class FVDLProcessor {
         vulnCustom.setKnowledge(allKnowledge);
     }
 
-    private void processRequestRelated(Vulnerability vulnCustom, List<Map<String, String>> auxData, List<Entry> externalEntries) {
+    private void processRequestRelated(com.fortify.cli.aviator.fpr.Vulnerability vulnCustom, List<Map<String, String>> auxData, List<Entry> externalEntries) {
         for (Map<String, String> aux : auxData) {
             String contentType = aux.get("contentType");
             if (contentType != null) {
@@ -491,13 +539,6 @@ public class FVDLProcessor {
         return intersection == null || intersection.isEmpty() ? "" : String.join(",", intersection);
     }
 
-    /**
-     * Retrieves a system property with a default value.
-     *
-     * @param key          Property key
-     * @param defaultValue Default value if property not set
-     * @return Property value or default
-     */
     private static int getProperty(String key, int defaultValue) {
         return Integer.parseInt(System.getProperty(key, String.valueOf(defaultValue)));
     }

@@ -6,20 +6,23 @@ import lombok.Getter;
 /**
  * Represents the entire logical filter query as a binary tree.
  */
-@Getter
 public class SearchTree {
     public enum LogicalOperator { AND, OR }
 
+    @Getter
     private final Node root;
 
     public SearchTree(Node root) {
         this.root = root;
     }
 
+    public String toString() {
+        return root == null ? "<null>" : root.toString();
+    }
+
     /**
      * Represents a node in the search tree. Can be either a leaf (query) or an operator.
      */
-    @Getter
     public static class Node {
         private final LogicalOperator operator;
         private final SearchQuery query;
@@ -40,9 +43,30 @@ public class SearchTree {
             this.query = null;
         }
 
+        public String toString() {
+            if (isLeaf()) return query.toString();
+            return "(" + leftChild.toString() + " " + operator + " " + rightChild.toString() + ")";
+        }
+
         public boolean isLeaf() {
             return operator == null;
         }
 
+        // --- ADD THESE GETTERS ---
+        public LogicalOperator getOperator() {
+            return operator;
+        }
+
+        public SearchQuery getQuery() {
+            return query;
+        }
+
+        public Node getLeftChild() {
+            return leftChild;
+        }
+
+        public Node getRightChild() {
+            return rightChild;
+        }
     }
 }

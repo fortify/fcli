@@ -4,7 +4,8 @@ public class ContainsSearchComparer implements SearchComparer {
     private final String searchTerm;
 
     public ContainsSearchComparer(String searchTerm) {
-        this.searchTerm = searchTerm.toLowerCase();
+        String unescapedSearchTerm = searchTerm.replace("\\:", ":");
+        this.searchTerm = unescapedSearchTerm.toLowerCase();
     }
 
     @Override
@@ -12,6 +13,11 @@ public class ContainsSearchComparer implements SearchComparer {
         if (!(attributeValue instanceof String)) {
             return false;
         }
-        return ((String) attributeValue).toLowerCase().contains(searchTerm);
+        boolean result = ((String) attributeValue).toLowerCase().contains(searchTerm);
+        return result;
+    }
+
+    public String getSearchTerm() {
+        return searchTerm;
     }
 }
