@@ -26,7 +26,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public final class SSCIssueTemplateHelper {
-    private final Map<String, SSCIssueTemplateDescriptor> descriptorsById = new HashMap<>();
+    @Getter private final Map<String, SSCIssueTemplateDescriptor> descriptorsById = new HashMap<>();
     private final Map<String, SSCIssueTemplateDescriptor> descriptorsByName = new HashMap<>();
     @Getter private SSCIssueTemplateDescriptor defaultIssueTemplateDescriptor;
     
@@ -78,5 +78,5 @@ public final class SSCIssueTemplateHelper {
                 .asObject(JsonNode.class).getBody();
         return JsonHelper.treeToValue(issueTemplatesBody.get("data").get(0), SSCIssueTemplateDescriptor.class);
     }
-    
+
 }
