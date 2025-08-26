@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
 import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import org.slf4j.Logger;
@@ -80,6 +79,8 @@ public class AuditFPR {
             FPRInfo fprInfo = fprProcessor.getFprInfo();
 
             return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo, auditProcessor, fvdlProcessor);
+        } catch (AviatorSimpleException e) {
+            throw e;
         } catch (IOException e) {
             LOG.error("Failed to extract or read FPR: {}", fprFile.getPath(), e);
             throw new AviatorTechnicalException("Failed to extract or read FPR: " + e.getMessage(), e);

@@ -29,6 +29,11 @@ public final class FPRLoadingUtil {
                     .anyMatch(entry -> AUDIT_FVDL_PATTERN.matcher(entry.getName()).matches());
 
             if (!hasAuditFvdl) {
+                boolean hasWebinspectXml = zipFile.stream()
+                        .anyMatch(entry -> "webinspect.xml".equalsIgnoreCase(entry.getName()));
+                if (hasWebinspectXml) {
+                    throw new AviatorSimpleException("Invalid FPR: The provided fpr lacks the necessary SAST data. Fortify Aviator requires an FPR generated from a SAST scan.");
+                }
                 throw new AviatorSimpleException("Invalid FPR: The file does not contain 'audit.fvdl' in its root directory.");
             }
 
