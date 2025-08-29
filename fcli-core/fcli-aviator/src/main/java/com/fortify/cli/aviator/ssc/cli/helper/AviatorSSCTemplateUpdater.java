@@ -45,10 +45,7 @@ public class AviatorSSCTemplateUpdater {
             ArrayNode currentTags = currentTagsByTemplateId.get(t.getId());
             Set<Integer> existingTagIds = JsonHelper.stream(currentTags).map(tag -> tag.get("id").asInt()).collect(Collectors.toSet());
             boolean hasAllTags = existingTagIds.containsAll(requiredTagIds);
-            if (hasAllTags) {
-                counter.incrementSkipped();
-                LOG.debug("Template '{}' already has all required tags.", t.getName());
-            }
+            if (hasAllTags) counter.incrementSkipped();
             return !hasAllTags;
         }).collect(Collectors.toList());
 
@@ -63,15 +60,21 @@ public class AviatorSSCTemplateUpdater {
         progress.writeProgress("Updating %d issue templates...", templatesToUpdate.size());
         SSCBulkRequestBuilder bulkRequest = new SSCBulkRequestBuilder();
         templatesToUpdate.forEach(template -> {
-            ArrayNode currentTags = currentTagsByTemplateId.get(template.getId());
-            Set<Integer> newTagIdSet = JsonHelper.stream(currentTags).map(tag -> tag.get("id").asInt()).collect(Collectors.toSet());
-            newTagIdSet.addAll(requiredTagIds);
+            ArrayNode updatedTagsPayload = JsonHelper.getObjectMapper().createArrayNode();
 
-            ArrayNode updatedTagIdsPayload = JsonHelper.getObjectMapper().valueToTree(newTagIdSet);
-            bulkRequest.request(template.getId(), unirest.put(SSCUrls.ISSUE_TEMPLATE_CUSTOM_TAGS(template.getId())).body(updatedTagIdsPayload));
+            // Get the set of all unique tag IDs (existing + required)
+            Set<Integer> allTagIds = JsonHelper.stream(currentTagsByTemplateId.get(template.getId()))
+                    .map(tag -> tag.get("id").asInt())
+                    .collect(Collectors.toSet());
+            allTagIds.addAll(requiredTagIds);
+
+            // Build the final payload as an array of objects, each with an "id" property
+            allTagIds.forEach(id -> updatedTagsPayload.add(JsonHelper.getObjectMapper().createObjectNode().put("id", id)));
+
+            bulkRequest.request(template.getId(), unirest.put(SSCUrls.ISSUE_TEMPLATE_CUSTOM_TAGS(template.getId())).body(updatedTagsPayload));
         });
 
-        LOG.debug("Sending bulk update request for issue templates: {}", bulkRequest);
+        LOG.debug("Sending bulk update request for issue templates: {}", bulkRequest.toString());
         handleBulkUpdate(bulkRequest, templatesToUpdate, SSCIssueTemplateDescriptor::getId, SSCIssueTemplateDescriptor::getName, result, counter, "template");
         addSummaryEntry(result, "Issue Templates", counter);
     }
@@ -104,7 +107,7 @@ public class AviatorSSCTemplateUpdater {
                     LOG.debug("Successfully updated {} '{}'", entityType, nameExtractor.apply(item));
                 } else {
                     counter.incrementFailed();
-                    String failureMsg = "Failed to update " + entityType + " '" + nameExtractor.apply(item) + "': " + responseBody;
+                    String failureMsg = "Failed to update " + entityType + " '" + nameExtractor.apply(item) + "': " + responseBody.toString();
                     LOG.warn(failureMsg);
                     result.addEntry(entityType + ": " + nameExtractor.apply(item), "FAILED", responseBody.toString());
                 }
