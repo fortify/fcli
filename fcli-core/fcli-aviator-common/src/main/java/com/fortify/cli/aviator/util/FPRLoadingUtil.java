@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +20,7 @@ public class FPRLoadingUtil {
 
     private static final Pattern AUDIT_FVDL_PATTERN = Pattern.compile("^audit\\.fvdl$");
     private static final Pattern SRC_FILE_PATTERN = Pattern.compile("^src-archive(/|(\\\\+))(?!index.xml|ScanUUID).+");
+    private static final Pattern REMEDIATION_FILE_PATTERN = Pattern.compile("^remediations\\.xml$");
 
     public static boolean hasSource(File project) throws IOException {
         boolean foundSource = false;
@@ -56,6 +58,8 @@ public class FPRLoadingUtil {
         return foundSource && foundIndex;
     }
 
+
+
     public static boolean isValidFpr(String fprPath) {
         File fprFile = new File(fprPath);
 
@@ -86,5 +90,30 @@ public class FPRLoadingUtil {
         }
 
         return foundAuditFvdl;
+    }
+
+    public static boolean hasRemediations(File fprFile) throws IOException{
+        boolean foundRemediations = false;
+        try (ZipFile zipFile = new ZipFile(fprFile)) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                if (REMEDIATION_FILE_PATTERN.matcher(entry.getName()).matches()) {
+                    foundRemediations = true;
+                }
+                if (foundRemediations) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error accessing FPR file: {}", fprFile, e);
+            return false;
+        }
+
+        if (!foundRemediations) {
+            //logger.error("FPR file does not contain remediation.xml");
+            throw new AviatorTechnicalException("FPR file does not contain remediation.xml");
+        }
+        return  foundRemediations;
     }
 }

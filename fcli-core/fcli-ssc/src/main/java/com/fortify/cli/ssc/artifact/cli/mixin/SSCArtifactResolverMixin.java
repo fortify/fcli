@@ -23,6 +23,7 @@ import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Parameters;
 
 public class SSCArtifactResolverMixin {
@@ -52,6 +53,12 @@ public class SSCArtifactResolverMixin {
         public String[] getArtifactIds(UnirestInstance unirest) {
             return Stream.of(getArtifactDescriptors(unirest)).map(SSCArtifactDescriptor::getId).toArray(String[]::new);
         }
+    }
+
+    public static class RequiredOption extends AbstractSSCAppVersionArtifactResolverMixin {
+        @CommandLine.Option(names = {"--artifact-id"}, required = true, paramLabel = "artifact-id", descriptionKey = "fcli.ssc.artifact.resolver.id")
+        @Getter private String artifactId;
+
     }
     
     public static class PositionalParameter extends AbstractSSCAppVersionArtifactResolverMixin {
