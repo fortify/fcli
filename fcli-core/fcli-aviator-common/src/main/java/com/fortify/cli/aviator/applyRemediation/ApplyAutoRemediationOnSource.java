@@ -28,14 +28,9 @@ public class ApplyAutoRemediationOnSource {
             throw new AviatorTechnicalException("Unable to extract FPR file due to an I/O error.", e);
         }
 
-        try {
-            if (!FPRLoadingUtil.hasRemediations(file)) {
-                LOG.error("FPR file does not contain remediations.xml file: {}", file);
-                throw new AviatorSimpleException("FPR file does not contain remediations.xml file.");
-            }
-        } catch (IOException e) {
-            LOG.error("I/O error checking FPR remediations presence: {}", file.getPath(), e);
-            throw new AviatorTechnicalException("I/O error checking FPR remediations presence.", e);
+        if (!FPRLoadingUtil.hasRemediations(file)) {
+            LOG.error("FPR file does not contain remediations.xml file: {}", file);
+            throw new AviatorSimpleException("FPR file does not contain remediations.xml file.");
         }
         LOG.info("FPR validation successful");
 

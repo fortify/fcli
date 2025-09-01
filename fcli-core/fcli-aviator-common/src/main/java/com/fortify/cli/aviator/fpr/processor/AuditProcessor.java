@@ -722,8 +722,13 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        String originalFileContent = fvdlProcessor.getSourceFileContent(filename)
-                                .orElseThrow(() -> new AviatorTechnicalException("Could not get original content for file: " + filename));
+                        String originalFileContent = "";
+                        try {
+                            originalFileContent = String.valueOf(fvdlProcessor.getSourceFileContent(filename));
+                        } catch (RuntimeException ex){
+                            logger.error("Could not get source for autoremediation {}", ex.getMessage());
+                            continue;
+                        }
 
                         Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
                         hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
