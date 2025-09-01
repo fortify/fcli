@@ -16,12 +16,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.util.Counter;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportLicenseType;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportProcessingStatus;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCProcessedAppDescriptor;

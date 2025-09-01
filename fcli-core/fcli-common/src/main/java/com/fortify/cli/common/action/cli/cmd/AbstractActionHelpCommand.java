@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -31,7 +32,6 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureMetadata;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
@@ -90,17 +90,17 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
         var data = JsonHelper.getObjectMapper().createObjectNode();
         data.put("Origin", metadata.isCustom()?"CUSTOM":"FCLI");
         data.put("Signature status", signatureStatus.toString());
-        data.put("Author", StringUtils.ifBlank(action.getAuthor(), "N/A"));
+        data.put("Author", StringUtils.defaultIfBlank(action.getAuthor(), "N/A"));
         if ( signatureStatus!=SignatureStatus.UNSIGNED ) {
-            data.put("Signed by", StringUtils.ifBlank(signatureMetadata.getSigner(), "N/A"));
+            data.put("Signed by", StringUtils.defaultIfBlank(signatureMetadata.getSigner(), "N/A"));
         }
         switch (signatureStatus) {
         case NO_PUBLIC_KEY: 
-            data.put("Required public key", StringUtils.ifBlank(signatureDescriptor.getPublicKeyFingerprint(), "N/A"));
+            data.put("Required public key", StringUtils.defaultIfBlank(signatureDescriptor.getPublicKeyFingerprint(), "N/A"));
             break;
         case VALID:
-            data.put("Certified by", StringUtils.ifBlank(publicKeyDescriptor.getName(), 
-                    StringUtils.ifBlank(publicKeyDescriptor.getFingerprint(), "N/A")));
+            data.put("Certified by", StringUtils.defaultIfBlank(publicKeyDescriptor.getName(), 
+                    StringUtils.defaultIfBlank(publicKeyDescriptor.getFingerprint(), "N/A")));
             break;
         default: break;
         }

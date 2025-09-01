@@ -17,10 +17,11 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;

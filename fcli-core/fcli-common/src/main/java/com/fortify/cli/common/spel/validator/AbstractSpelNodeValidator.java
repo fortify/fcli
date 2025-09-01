@@ -10,13 +10,13 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.spring.expression.validator;
+package com.fortify.cli.common.spel.validator;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelNode;
 
-import com.fortify.cli.common.spring.expression.AbstractSpelNodeVisitor;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.spel.AbstractSpelNodeVisitor;
 
 /**
  * Simple abstract SpEL AST tree validator that visits the full SpEL tree until

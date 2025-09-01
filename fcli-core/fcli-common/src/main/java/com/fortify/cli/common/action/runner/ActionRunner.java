@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.ActionConfig.ActionConfigOutput;
 import com.fortify.cli.common.action.model.ActionInputMask;
@@ -35,7 +37,6 @@ import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWrite
 import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 

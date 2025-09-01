@@ -22,11 +22,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.spring.expression.wrapper;
+package com.fortify.cli.common.spel.wrapper;
 
 import java.io.IOException;
-
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,22 +32,23 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.spel.SpelHelper;
 
 /**
- * This Jackson deserializer allows for parsing String values into 
- * {@link SimpleExpression} objects
+ * This Jackson deserializer allows got parsing String values into 
+ * TemplateExpression objects.
  */
 @Reflectable
-public final class SimpleExpressionDeserializer extends StdDeserializer<SimpleExpression> {
+public final class TemplateExpressionDeserializer extends StdDeserializer<TemplateExpression> {
     private static final long serialVersionUID = 1L;
-    private static final SpelExpressionParser parser = new SpelExpressionParser();
-    public SimpleExpressionDeserializer() { this(null); } 
-    public SimpleExpressionDeserializer(Class<?> vc) { super(vc); }
+    
+    public TemplateExpressionDeserializer() { this(null); } 
+    public TemplateExpressionDeserializer(Class<?> vc) { super(vc); }
 
     @Override
-    public SimpleExpression deserialize(JsonParser jp, DeserializationContext ctxt) 
+    public TemplateExpression deserialize(JsonParser jp, DeserializationContext ctxt) 
       throws IOException, JsonProcessingException {
         JsonNode node = jp.getCodec().readTree(jp);
-        return node==null || node.isNull() ? null : new SimpleExpression(node.asText(), parser.parseExpression(node.asText()));
+        return node==null || node.isNull() ? null : SpelHelper.parseTemplateExpression(node.asText());
     }
 }

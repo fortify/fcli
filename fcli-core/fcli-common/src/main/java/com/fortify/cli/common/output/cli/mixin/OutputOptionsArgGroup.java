@@ -28,13 +28,13 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public final class OutputOptionsArgGroup implements IOutputOptions {
-    @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "type[=<args>]")
+    @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "<type+args>")
     @Getter private OutputFormatConfig outputFormatConfig;
     
-    @Option(names = {"--style"}, split = ",", order=2) @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names = {"--style"}, split = ",", order=2, paramLabel = "<style>,...", hideParamSyntax = true) @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @Getter private RecordWriterStyleElement[] outputStyleElements;
     
-    @Option(names = {"--store"}, order=3, converter = VariableStoreConfigConverter.class, paramLabel = "variableName[:<propertyNames>]")
+    @Option(names = {"--store"}, order=3, converter = VariableStoreConfigConverter.class, paramLabel = "<var>[:<prop>]")
     @Getter private VariableStoreConfig variableStoreConfig;
     
     @Option(names = {"--to-file"}, order=4)

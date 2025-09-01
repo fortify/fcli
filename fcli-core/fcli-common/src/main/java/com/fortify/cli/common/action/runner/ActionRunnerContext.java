@@ -21,12 +21,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionConfig.ActionConfigOutput;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
@@ -35,9 +34,8 @@ import com.fortify.cli.common.action.runner.processor.IActionRequestHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.spring.expression.IConfigurableSpelEvaluator;
-import com.fortify.cli.common.spring.expression.ISpelEvaluator;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
+import com.fortify.cli.common.spel.ISpelEvaluator;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -122,35 +120,7 @@ public class ActionRunnerContext implements AutoCloseable {
             var config = actionRunnerContext.getConfig();
             configureSpelContext(spelContext, config.getActionConfigSpelEvaluatorConfigurers(), config);
             configureSpelContext(spelContext, config.getActionContextSpelEvaluatorConfigurers(), actionRunnerContext);
-            spelContext.setVariable("action", new ActionUtil(actionRunnerContext));
-        }
-    }
-    
-    @Reflectable @RequiredArgsConstructor
-    public static final class ActionUtil {
-        private final ActionRunnerContext ctx;
-        public final String copyParametersFromGroup(String group) {
-            StringBuilder result = new StringBuilder();
-            for ( var e : ctx.getConfig().getAction().getCliOptions().entrySet() ) {
-                var name = e.getKey();
-                var p = e.getValue();
-                if ( group==null || group.equals(p.getGroup()) ) {
-                    var val = ctx.getParameterValues().get(name);
-                    if ( val!=null && StringUtils.isNotBlank(val.asText()) ) {
-                        result
-                          .append("\"--")
-                          .append(name)
-                          .append("=")
-                          .append(val.asText())
-                          .append("\" ");
-                    }
-                }
-            }
-            return result.toString();
-        }
-        
-        public final JsonNode fmt(String formatterName, JsonNode input) {
-            return ActionRunnerHelper.fmt(ctx, formatterName, input);
+            spelContext.setVariable("action", new ActionRunnerContextSpelFunctions(actionRunnerContext));
         }
     }
     

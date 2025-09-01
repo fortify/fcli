@@ -77,6 +77,9 @@ dependencies {
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // Commons lang3
+    implementation('org.apache.commons:commons-lang3:3.18.0')
+    
     // Required for unpacking tar.gz (debricked cli)
     implementation('org.apache.commons:commons-compress')
     

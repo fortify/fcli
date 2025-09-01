@@ -23,6 +23,7 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -34,8 +35,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.spring.expression.SpelEvaluator;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.spel.SpelEvaluator;
 
 import lombok.Getter;
 

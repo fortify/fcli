@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -28,7 +29,6 @@ import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.PicocliSpecHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

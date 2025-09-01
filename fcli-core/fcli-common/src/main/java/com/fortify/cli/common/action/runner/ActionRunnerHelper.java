@@ -14,6 +14,8 @@ package com.fortify.cli.common.action.runner;
 
 import java.util.function.BiFunction;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -21,8 +23,7 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.RequiredArgsConstructor;
 

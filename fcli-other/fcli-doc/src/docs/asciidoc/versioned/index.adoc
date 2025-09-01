@@ -191,15 +191,23 @@ As described in the link:#_environment_variables[Environment Variables] section,
 
 Note that a default value for the `+--env-prefix+` option itself can be specified through an `+FCLI_DEFAULT_ENV_PREFIX+` environment variable, for example if you want to globally override the `+FCLI_DEFAULT+` prefix.
 
+=== --log-file
+
+This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
+location in the fcli data folder.
+
 === --log-level
 
 This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the `+--log-file+` option to be specified,
 otherwise no log will be written.
 
-=== --log-file
+=== --log-mask
 
-This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
-location in the fcli data folder.
+Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.
+
+=== --debug
+
+Enable both fcli trace logging and collection of extra debugging data on applicable fcli actions and commands, for example enabling debug logging on tools invoked through fcli tool run commands, or enabling server-side debug log generation.
 
 === -o | --output
 
@@ -264,9 +272,13 @@ A full list of style elements that can be applied to the output is available in 
 |Whether the output will be represented as an array or single object depends on the fcli command being run, for example `list` commands will output arrays, and `get` commands will output a single object. For commands that output a single object, you can use the `array` style element to output a single-element array instead of a single object. Using `single` on commands that output multiple records is not supported; this may lead to exceptions or unparsable output.
 |===
 
-=== --output-to-file
+=== --store
 
-Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the `+--output+` option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like `+wait-for+` commands, the `+--output-to-file+` option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.
+Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the link:#_fcli_variables[Fcli Variables] section.
+
+=== --to-file
+
+Write command output in the format as specified through the `+--output+` option to the given file. Compared to using redirection, any status messages will still appear on the console rather than being included in the output file.
 
 === --progress
 
@@ -277,10 +289,6 @@ Various commands offer a `+--progress+` option to specify how to output progress
 * `+simple+`: Output every progress message on a separate line, effectively leaving older progress messages visible. This will be used by default if no console is available, for example during pipeline runs. Supports multi-line progress messages.
 * `+single-line+`: Uses the `+\r+` (carriage return) character to overwrite previous progress message. This will be used by default if a non-ANSI console is detected. Supports single-line progress messages only.
 * `+ansi+`: Uses ANSI escape sequences to overwrite previous progress messages. This will be used by default if ANSI capabilities are detected. Supports multi-line progress messages.
-
-=== --store
-
-Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the link:#_fcli_variables[Fcli Variables] section.
 
 === -q | --query
 

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,7 +28,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.access_control.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;

@@ -10,11 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.spring.expression;
+package com.fortify.cli.common.json;
 
-import org.springframework.expression.Expression;
+import java.util.ArrayList;
+import java.util.Collection;
 
-public interface ISpelEvaluator {
-    <R> R evaluate(Expression expression, Object input, Class<R> returnClass);
-    <R> R evaluate(String expression, Object input, Class<R> returnClass);
+/**
+ *
+ * @author Ruud Senden
+ */
+public class ArrayListWithAsJsonMethod<E> extends ArrayList<E> implements IWithAsJsonMethod {
+    private static final long serialVersionUID = 1L;
+
+    public ArrayListWithAsJsonMethod() { super(); }
+    public ArrayListWithAsJsonMethod(Collection<? extends E> c) { super(c); }
+    public ArrayListWithAsJsonMethod(int initialCapacity) { super(initialCapacity); }
+    
 }

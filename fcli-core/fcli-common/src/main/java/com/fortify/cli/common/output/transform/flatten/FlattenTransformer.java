@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -23,7 +25,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 

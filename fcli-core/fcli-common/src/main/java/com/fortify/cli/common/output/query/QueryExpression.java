@@ -16,7 +16,7 @@ import org.springframework.expression.Expression;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.spring.expression.SpelEvaluator;
+import com.fortify.cli.common.spel.SpelEvaluator;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

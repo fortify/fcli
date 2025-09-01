@@ -18,12 +18,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;

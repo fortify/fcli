@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +32,6 @@ import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.PicocliSpecHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Model.ArgSpec;
