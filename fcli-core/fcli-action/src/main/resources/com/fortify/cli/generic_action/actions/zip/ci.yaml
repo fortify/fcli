@@ -79,7 +79,7 @@ steps:
       logoutOpts: -u=SSC_USER -p=SSC_PASSWORD
   # Define some common variables, based on the above
   - var.set:
-      global.sessionName: ci-${#uuid()}
+      sessionName: ci-${#action.runID()}
       loginCmd: fcli ${module} session login
       logoutCmd: fcli ${module} session logout
       moduleUpperCase: ${module.toUpperCase()}
@@ -90,10 +90,10 @@ steps:
   # new, module-specific session.
   - with:
       sessions:
-        - login: ${#fcliCmd(loginEnvPrefix, loginCmd)} --${module}-session ${global.sessionName} ${#optsFromEnv(loginOpts)}
-          logout: ${#fcliCmd(logoutEnvPrefix, logoutCmd)} --${module}-session ${global.sessionName} ${#optsFromEnv(logoutOpts)}
+        - login: ${#fcliCmd(loginEnvPrefix, loginCmd)} --${module}-session ${sessionName} ${#optsFromEnv(loginOpts)}
+          logout: ${#fcliCmd(logoutEnvPrefix, logoutCmd)} --${module}-session ${sessionName} ${#optsFromEnv(logoutOpts)}
       do:
         - run.fcli: 
-            ci: ${#actionCmd(ciEnvPrefix, module, 'ci')} --${module}-session=${global.sessionName}
+            ci: ${#actionCmd(ciEnvPrefix, module, 'ci')} --${module}-session=${sessionName}
       
       

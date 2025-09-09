@@ -22,12 +22,19 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
 
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 
 @Reflectable @RequiredArgsConstructor
 @SpelFunctionPrefix("action.")
 public final class ActionRunnerContextSpelFunctions {
     private final ActionRunnerContext ctx;
+    private final static String RUN_ID = UUID.randomUUID().toString();
+    
+    public final String runID() {
+        return RUN_ID;
+    }
     
     @SpelFunction(cat=workflow, returns="String listing non-blank command-line options copied from the given `cli.options` group")
     public final String copyParametersFromGroup(
