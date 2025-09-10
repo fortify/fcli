@@ -43,8 +43,9 @@ steps:
             throw: SSC application version must be specified through SSC_APPVERSION environment variable
             
   - var.set:
-      # Configure scan types to run
+      # Configure session name
       sessionName: ci-${#action.runID()}
+      # Configure scan types to run
       sca.skipReason:   # TODO
       sca.skip: true
       dast.skipReason:  # TODO

@@ -32,6 +32,8 @@ public final class ActionRunnerContextSpelFunctions {
     private final ActionRunnerContext ctx;
     private final static String RUN_ID = UUID.randomUUID().toString();
     
+    @SpelFunction(cat=workflow, desc="Generates a random UUID, guarantees that each generated id is globally unique.", 
+            returns="Randomly generated UUID")
     public final String runID() {
         return RUN_ID;
     }
