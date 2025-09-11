@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250911.075642-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250911.141911-dev_v3.x" %}
 
 
 <div id="header">
@@ -50,6 +50,7 @@ fcli_version:
 <p><strong>fcli fod dast-scan setup-website</strong> [<strong>--create-login-macro</strong>]
                                  [<strong>--false-positive-removal</strong>]
                                  [<strong>--redundant-page-detection</strong>] [<strong>--restrict</strong>]
+                                 [<strong>--skip-if-exists</strong>]
                                  <strong>--assessment-type</strong>=<em>&lt;assessmentType&gt;</em>
                                  [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                                  [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
@@ -175,6 +176,10 @@ If you wish to use a Login Macro for authentication then you can upload it direc
 <dd>
 <p>Restrict the scan to the URL directory and subdirectories. If not selected then the entire host will be scanned.</p>
 </dd>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
+<dd>
+<p>Skip setup if a scan has already been set up. If not specified, any existing scan setup will be replaced based on the given setup options.</p>
+</dd>
 <dt class="hdlist1"><strong>--timebox</strong>=<em>&lt;timebox&gt;</em></dt>
 <dd>
 <p>Timebox for the scan duration (in hours).</p>
@@ -274,7 +279,7 @@ If you wish to use a Login Macro for authentication then you can upload it direc
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-09-11 07:58:50 UTC
+Last updated 2025-09-11 14:21:17 UTC
 </div>
 </div>
 </body>

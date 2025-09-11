@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250911.075642-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250911.141911-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,7 +47,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod dast-scan setup-workflow</strong> [<strong>--false-positive-removal</strong>]
+<p><strong>fcli fod dast-scan setup-workflow</strong> [<strong>--false-positive-removal</strong>] [<strong>--skip-if-exists</strong>]
                                   <strong>--assessment-type</strong>=<em>&lt;assessmentType&gt;</em>
                                   [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                                   [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
@@ -58,9 +58,7 @@ fcli_version:
          _                         e&gt;_] [<strong>-p</strong>=<em>&lt;password&gt;</em>] [<strong>--policy</strong>=<em>&lt;scanPolicy&gt;</em>]
                                   <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>]
                                   [<strong>-u</strong>=<em>&lt;username&gt;</em>] [<strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em>]
-                                  [<strong>--hosts</strong>=<em>&lt;allowedHosts&gt;</em>[,
-                                  <em>&lt;allowedHosts&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                                  [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                                  [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
                                   [<strong>--debug</strong>]] [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -118,10 +116,6 @@ In order to use a Workflow Macro you can upload it directly using the '--file' o
 <dd>
 <p>The entitlement frequency type to use. Valid values: SingleScan, Subscription.</p>
 </dd>
-<dt class="hdlist1"><strong>--hosts, --allowed-hosts</strong>=<em>&lt;allowedHosts&gt;</em>[,<em>&lt;allowedHosts&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>The FQDN and port of any hosts that that you want to be scanned, e.g. "test.mysite.com:443".</p>
-</dd>
 <dt class="hdlist1"><strong>--network-auth-type</strong>=<em>&lt;networkAuthenticationType&gt;</em></dt>
 <dd>
 <p>The Network Authentication type to use. Valid values: Basic, NTLM, Kerberos, Digest, Automatic, ADFS_CBT.</p>
@@ -137,6 +131,10 @@ In order to use a Workflow Macro you can upload it directly using the '--file' o
 <dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
 <p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
+<dd>
+<p>Skip setup if a scan has already been set up. If not specified, any existing scan setup will be replaced based on the given setup options.</p>
 </dd>
 <dt class="hdlist1"><strong>--timezone</strong>=<em>&lt;timezone&gt;</em></dt>
 <dd>
@@ -229,7 +227,7 @@ In order to use a Workflow Macro you can upload it directly using the '--file' o
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-09-11 07:58:50 UTC
+Last updated 2025-09-11 14:21:17 UTC
 </div>
 </div>
 </body>
