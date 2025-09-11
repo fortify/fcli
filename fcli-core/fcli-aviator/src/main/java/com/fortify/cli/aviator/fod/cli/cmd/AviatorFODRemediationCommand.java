@@ -15,7 +15,7 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.aviator.fod.cli.helper.AviatorFODApplyRemediationHelper;
+import com.fortify.cli.aviator.fod.helper.AviatorFODApplyRemediationHelper;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;

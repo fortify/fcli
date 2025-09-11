@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.ssc.cli.helper;
+package com.fortify.cli.aviator.ssc.helper;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;

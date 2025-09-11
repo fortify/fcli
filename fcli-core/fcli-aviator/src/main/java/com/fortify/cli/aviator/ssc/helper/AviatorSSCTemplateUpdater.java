@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.ssc.cli.helper;
+package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.ArrayList;
 import java.util.Collection;

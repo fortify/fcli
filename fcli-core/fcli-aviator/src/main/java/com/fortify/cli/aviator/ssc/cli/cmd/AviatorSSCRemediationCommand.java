@@ -3,7 +3,7 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.ssc.cli.helper.AviatorSSCApplyRemediationHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;

@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.ssc.cli.helper;
+package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;

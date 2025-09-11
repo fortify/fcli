@@ -1,4 +1,4 @@
-package com.fortify.cli.aviator.ssc.cli.helper;
+package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.List;
 import java.util.Set;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.aviator.ssc.cli.helper.AviatorSSCTagDefs.TagDefinition;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCTagDefs.TagDefinition;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
