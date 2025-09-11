@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20250815.130212-dev_v3.x
+fcli_version: 0.20250911.075642-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20250815.130212-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250815.130212-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250911.075642-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20250815.130212-dev_v3.x</span>
+<span id="revnumber">version 0.20250911.075642-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -152,6 +152,7 @@ fcli_version: 0.20250815.130212-dev_v3.x
 <li><a href="#_uuid"><code>uuid</code></a></li>
 <li><a href="#_workflow">[workflow]</a></li>
 <li><a href="#_action_copyparametersfromgroup"><code>action.copyParametersFromGroup</code></a></li>
+<li><a href="#_action_runid"><code>action.runID</code></a></li>
 <li><a href="#_actioncmd"><code>actionCmd</code></a></li>
 <li><a href="#_actioncmdskipfromenvreason"><code>actionCmdSkipFromEnvReason</code></a></li>
 <li><a href="#_actioncmdskipnoactionreason"><code>actionCmdSkipNoActionReason</code></a></li>
@@ -184,7 +185,7 @@ fcli_version: 0.20250815.130212-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20250815.130212-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20250911.075642-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.2.1</p></td>
 </tr>
 </tbody>
@@ -275,7 +276,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250815.130212-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20250911.075642-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json">2.2.1</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -3713,6 +3714,30 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </table>
 </div>
 <div class="sect2">
+<h3 id="_action_runid"><a class="anchor" href="#_action_runid"></a><code>action.runID</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.runID()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Current fcli run id in UUID format</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>This function returns the current fcli run id, which uniquely represents the current fcli invocation. Different invocations of the fcli executable are guaranteed to have a different, unique run id. Within a single fcli executable invocation, the run id remains the same, even across run.fcli instructions and any other internal fcli command invocations.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_actioncmd"><a class="anchor" href="#_actioncmd"></a><code>actionCmd</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -4058,8 +4083,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250815.130212-dev_v3.x<br>
-Last updated 2025-08-15 13:04:17 UTC
+Version 0.20250911.075642-dev_v3.x<br>
+Last updated 2025-09-11 07:58:52 UTC
 </div>
 </div>
 </body>
