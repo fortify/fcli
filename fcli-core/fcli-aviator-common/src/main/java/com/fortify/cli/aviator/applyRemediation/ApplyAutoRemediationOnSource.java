@@ -20,6 +20,11 @@ public class ApplyAutoRemediationOnSource {
     public static RemediationMetric applyRemediations(File file, String sourceCodeDirectory, IAviatorLogger logger)
             throws AviatorSimpleException, AviatorTechnicalException{
             LOG.info("Starting apply auto-remediation process for file: {}", file.getPath());
+        if (!FPRLoadingUtil.hasRemediations(file)) {
+            LOG.error("FPR file does not contain remediations.xml file: {}", file);
+            throw new AviatorSimpleException("FPR file does not contain remediations.xml file.");
+        }
+        LOG.info("FPR validation successful");
         Path extractedPath;
         try {
             extractedPath = ZipUtils.extractZip(file.getPath());
@@ -28,12 +33,6 @@ public class ApplyAutoRemediationOnSource {
             LOG.error("Failed to extract FPR file: {}", file.getPath(), e);
             throw new AviatorTechnicalException("Unable to extract FPR file due to an I/O error.", e);
         }
-
-        if (!FPRLoadingUtil.hasRemediations(file)) {
-            LOG.error("FPR file does not contain remediations.xml file: {}", file);
-            throw new AviatorSimpleException("FPR file does not contain remediations.xml file.");
-        }
-        LOG.info("FPR validation successful");
 
         RemediationProcessor remediationProcessor = new RemediationProcessor(extractedPath, sourceCodeDirectory);
         return remediationProcessor.processRemediationXML();
