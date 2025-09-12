@@ -21,12 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.mcp.MCPIgnore;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.PicocliSpecHelper;
-import com.fortify.cli.common.util.ReflectionHelper;
-import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.IMCPToolRunner;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerPlainText;
@@ -42,14 +41,15 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME) 
-@MCPIgnore // Doesn't make sense to allow mcp-server command to be called from MCP server
+@MCPIgnore // Doesn't make sense to allow mcp-server start command to be called from MCP server
 public class MCPServerStartCommand extends AbstractRunnableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(MCPServerStartCommand.class);
-    @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
+    @Mixin private CommandHelperMixin commandHelper;
+    @Option(names={"--module", "-m"}, required = true) private McpModule module;
     
     public Integer call() throws Exception {
         super.initialize(); // Initialize mixins etc
@@ -80,8 +80,8 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     }
 
     private List<SyncToolSpecification> createToolSpecs() {
-        return selectorMixin.getSelectedCommands().getSpecs().stream()
-                .filter(cs->!ignore(cs))
+        return module.getSubcommandsStream(commandHelper)
+                .filter(spec->!PicocliSpecHelper.isMcpIgnored(spec))
                 .map(cs->createToolSpec(cs))
                 .peek(s->LOG.debug("Registering tool: {}", s.tool().name()))
                 .toList();
@@ -89,22 +89,6 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     
     private static final SyncToolSpecification createToolSpec(CommandSpec spec) {
         return new CommandToolSpecHelper(spec).createToolSpec();
-    }
-    
-    private static final boolean ignore(CommandSpec cs) {
-        return ReflectionHelper.hasAnnotation(cs, MCPIgnore.class)
-                || !PicocliSpecHelper.isRunnable(cs) 
-                || PicocliSpecHelper.isHiddenSelfOrParent(cs)
-                || hasRequiredSensitiveArgs(cs);
-    }
-    
-    private static final boolean hasRequiredSensitiveArgs(CommandSpec cs) {
-        return Stream.concat(cs.options().stream(), cs.positionalParameters().stream())
-                .anyMatch(as->isRequiredSensitiveArg(as));
-    }
-
-    private static final boolean isRequiredSensitiveArg(ArgSpec as) {
-       return as.required() && MCPToolArgHandlers.isSensitive(as);
     }
 
     private static final class CommandToolSpecHelper {
@@ -153,6 +137,20 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
                 return new MCPToolFcliRunnerPlainText(toolSpecArgHelper, commandSpec);
             }
         }
-
+    }
+    
+    /** Fcli modules for which MCP server commands are exposed */
+    public static enum McpModule {
+        fod, ssc, sc_sast, sc_dast;
+        
+        @Override
+        public String toString() {
+            return name().replace('_', '-');
+        }
+        
+        public final Stream<CommandSpec> getSubcommandsStream(CommandHelperMixin commandHelper) {
+            var moduleSpec = commandHelper.getCommandSpec().root().subcommands().get(this.toString()).getCommandSpec();
+            return PicocliSpecHelper.commandTreeStream(moduleSpec);
+        }
     }
 }

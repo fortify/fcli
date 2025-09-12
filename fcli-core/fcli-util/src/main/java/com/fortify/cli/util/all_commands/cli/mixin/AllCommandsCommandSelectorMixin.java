@@ -13,8 +13,6 @@
 package com.fortify.cli.util.all_commands.cli.mixin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +31,6 @@ import com.fortify.cli.common.util.PicocliSpecHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -50,18 +47,8 @@ public class AllCommandsCommandSelectorMixin {
     
     public CommandSelectorResult getSelectedCommands() {
         CommandSelectorResult result = new CommandSelectorResult(queryExpression);
-        addCommands(result, Arrays.asList(commandHelper.getCommandSpec().root().commandLine()));
+        PicocliSpecHelper.commandTreeStream(commandHelper.getCommandSpec().root()).forEach(result::add);
         return result;
-    }
-    
-    private final void addCommands(CommandSelectorResult result, Collection<CommandLine> subcommands) {
-        if ( subcommands!=null && !subcommands.isEmpty() ) {
-            for (CommandLine cl : subcommands) {
-                CommandSpec spec = cl.getCommandSpec();
-                result.add(spec);
-                addCommands(result, spec.subcommands().values());
-            }
-        }
     }
     
     @RequiredArgsConstructor
@@ -87,6 +74,7 @@ public class AllCommandsCommandSelectorMixin {
             var hiddenParent = PicocliSpecHelper.hasHiddenParent(spec);
             var hiddenSelf = PicocliSpecHelper.isHiddenSelf(spec);
             var hidden = PicocliSpecHelper.isHiddenSelfOrParent(spec);
+            var mcpIgnored = PicocliSpecHelper.isMcpIgnored(spec);
             var nameComponents = spec.qualifiedName(" ").split(" ");
             var module = nameComponents.length>1 ? nameComponents[1] : "";
             var entity = nameComponents.length>2 ? nameComponents[2] : "";
@@ -99,6 +87,7 @@ public class AllCommandsCommandSelectorMixin {
             result.put("hidden", hidden);
             result.put("hiddenParent", hiddenParent);
             result.put("hiddenSelf", hiddenSelf);
+            result.put("mcpIgnored", mcpIgnored);
             result.put("runnable", PicocliSpecHelper.isRunnable(spec));
             result.put("usageHeader", String.join("\n", spec.usageMessage().header()));
             result.set("aliases", Stream.of(spec.aliases()).map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
