@@ -10,9 +10,9 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.runner;
+package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
-import com.fortify.cli.util.mcpserver.helper.mcp.arg.MCPToolArgHandlers;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -20,24 +20,22 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Model.CommandSpec;
-
 /**
- * {@link IMCPToolRunner} implementation that returns zero or more records as produced
- * by the fcli command being executed, in a structured JSON object as described by 
- * {@link MCPToolResultRecords}.
- * This is commonly used to run fcli commands that return either a single or small number of records.
- * See {@link MCPToolFcliRunnerRecordsPaged} for running fcli commands thta may return a large number
- * of records.
+ * {@link IMCPToolRunner} implementation that returns plain text output of the fcli command
+ * being executed in a structured JSON object as described by {@link MCPToolResultPlainText}.
+ * This is commonly used to run fcli commands that don't output structured records, like 
+ * 'fcli * action run' commands.
  *
  * @author Ruud Senden
  */
 @RequiredArgsConstructor
-public final class MCPToolFcliRunnerRecords extends AbstractMCPToolFcliRunner {
+public final class MCPToolFcliRunnerPlainText extends AbstractMCPToolFcliRunner {
     @Getter private final MCPToolArgHandlers toolSpecArgHelper;
     @Getter private final CommandSpec commandSpec;
     
     @Override
     protected CallToolResult execute(McpSyncServerExchange exchange, CallToolRequest request, String fullCmd) {
-        return MCPToolFcliRunnerHelper.collectRecords(fullCmd).asCallToolResult();
+        var result = MCPToolFcliRunnerHelper.collectStdout(fullCmd);
+        return MCPToolResultPlainText.from(result).asCallToolResult();
     }
 }

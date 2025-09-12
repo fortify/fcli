@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.cli.cmd;
+package com.fortify.cli.util.mcp_server.cli.cmd;
 
 import java.time.Duration;
 import java.util.List;
@@ -27,11 +27,11 @@ import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
-import com.fortify.cli.util.mcpserver.helper.mcp.arg.MCPToolArgHandlers;
-import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
-import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerPlainText;
-import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerRecords;
-import com.fortify.cli.util.mcpserver.helper.mcp.runner.IMCPToolRunner;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.IMCPToolRunner;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerPlainText;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecords;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
 
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;

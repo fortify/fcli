@@ -10,11 +10,8 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.runner;
+package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
-import java.util.List;
-
-import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
@@ -23,23 +20,23 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * Data class representing the output of the {@link MCPToolFcliRunnerRecords},
- * storing records, stderr, and exit code.
+ * Data class representing the output of the {@link MCPToolFcliRunnerPlainText},
+ * storing stdout, stderr, and exit code.
  * 
  * @author Ruud Senden
  */
 @Data @EqualsAndHashCode(callSuper = false) @Builder
 @Reflectable
-public class MCPToolResultRecords extends AbstractMCPToolResult {
-    private final List<JsonNode> records;
+public class MCPToolResultPlainText extends AbstractMCPToolResult {
+    private final String stdout;
     private final String stderr;
     private final int exitCode;
     
-    public static final MCPToolResultRecords from(Result result, List<JsonNode> records) {
+    public static final MCPToolResultPlainText from(Result result) {
         return builder()
             .exitCode(result.getExitCode())
             .stderr(result.getErr())
-            .records(records)
+            .stdout(result.getOut())
             .build();
     }
 }

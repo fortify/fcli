@@ -37,7 +37,7 @@ task generateMCPReflectConfig(type: JavaExec) {
     group = "GenerateMCPReflectConfig"
     description = "Generate MCP reflect-config.json"
     classpath(configurations.runtimeClasspath, sourceSets.main.runtimeClasspath)
-    main 'com.fortify.cli.util.mcpserver.helper.mcp.MCPReflectConfigGenerator'
+    main 'com.fortify.cli.util.mcp_server.helper.mcp.MCPReflectConfigGenerator'
     args "${generatedReflectConfigDir}/META-INF/native-image/mcp-reflect-config/reflect-config.json"
 }
 

@@ -10,12 +10,12 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.arg;
+package com.fortify.cli.util.mcp_server.helper.mcp.arg;
 
 import java.util.Map;
 
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util.mcpserver.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import lombok.SneakyThrows;

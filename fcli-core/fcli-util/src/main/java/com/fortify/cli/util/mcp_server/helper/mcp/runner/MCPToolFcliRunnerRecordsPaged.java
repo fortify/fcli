@@ -10,10 +10,10 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.runner;
+package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
-import com.fortify.cli.util.mcpserver.helper.mcp.arg.MCPToolArgHandlerPaging;
-import com.fortify.cli.util.mcpserver.helper.mcp.arg.MCPToolArgHandlers;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerPaging;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;

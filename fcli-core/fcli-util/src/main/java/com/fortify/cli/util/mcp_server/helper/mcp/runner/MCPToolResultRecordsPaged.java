@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.util.mcpserver.helper.mcp.runner;
+package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
 import java.util.Collections;
 import java.util.List;

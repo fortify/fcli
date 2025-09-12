@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.util.mcpserver.cli.cmd;
+package com.fortify.cli.util.mcp_server.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
