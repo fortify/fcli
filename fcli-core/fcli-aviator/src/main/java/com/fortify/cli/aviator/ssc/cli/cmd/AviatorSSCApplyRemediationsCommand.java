@@ -3,7 +3,7 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationHelper;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -26,12 +26,12 @@ import picocli.CommandLine.Option;
 import java.io.File;
 
 @Command(name = "apply-remediations")
-public class AviatorSSCRemediationCommand extends AbstractSSCJsonNodeOutputCommand  implements IRecordTransformer, IActionCommandResultSupplier {
+public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutputCommand  implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     //Downloading of the FPR will be based on artifact and not app version
     @Mixin private SSCArtifactResolverMixin.RequiredOption artifactResolver;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCRemediationCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}) private String sourceCodeDirectory;
 
     @Override
@@ -60,7 +60,7 @@ public class AviatorSSCRemediationCommand extends AbstractSSCJsonNodeOutputComma
             var remediationMetric =  ApplyAutoRemediationOnSource.applyRemediations(fprFile, sourceCodeDirectory, logger);
             String status = remediationMetric.appliedRemediations()>0 ? "Remediation-Applied" : "No-Remediation-Applied";
 
-            return AviatorSSCApplyRemediationHelper.buildResultNode(ad,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+            return AviatorSSCApplyRemediationsHelper.buildResultNode(ad,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
 
 
         } finally {

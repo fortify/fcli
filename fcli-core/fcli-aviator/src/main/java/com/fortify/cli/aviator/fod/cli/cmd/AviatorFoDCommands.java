@@ -6,9 +6,9 @@ import picocli.CommandLine;
 @CommandLine.Command(
         name = "fod",
         subcommands = {
-                AviatorFODRemediationCommand.class
+                AviatorFoDApplyRemediationsCommand.class
         }
 )
 
-public class AviatorFODCommands extends AbstractContainerCommand {
+public class AviatorFoDCommands extends AbstractContainerCommand {
 }

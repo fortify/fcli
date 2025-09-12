@@ -15,7 +15,7 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.aviator.fod.helper.AviatorFODApplyRemediationHelper;
+import com.fortify.cli.aviator.fod.helper.AviatorFoDApplyRemediationsHelper;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -29,12 +29,12 @@ import java.io.File;
 import java.nio.file.StandardCopyOption;
 
 @Command(name = "apply-remediations")
-public class AviatorFODRemediationCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     //@Mixin private CommonOptionMixins.RequiredFile outputFileMixin;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
-    private static final Logger LOG = LoggerFactory.getLogger(AviatorFODRemediationCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AviatorFoDApplyRemediationsCommand.class);
     @Option(names = {"--source-dir"}, required = false, description = "Absolute path for source code") private String sourceCodeDirectory;
 
     @Override @SneakyThrows
@@ -56,7 +56,7 @@ public class AviatorFODRemediationCommand extends AbstractFoDJsonNodeOutputComma
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
             var remediationMetric =  ApplyAutoRemediationOnSource.applyRemediations(downloadedFpr, sourceCodeDirectory, logger);
             String status = remediationMetric.appliedRemediations()>0 ? "Remediation-Applied" : "No-Remediation-Applied";
-            return AviatorFODApplyRemediationHelper.buildResultNode(rd ,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+            return AviatorFoDApplyRemediationsHelper.buildResultNode(rd ,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
 
         }finally {
             if(downloadedFpr!=null && downloadedFpr.exists() && !downloadedFpr.delete())

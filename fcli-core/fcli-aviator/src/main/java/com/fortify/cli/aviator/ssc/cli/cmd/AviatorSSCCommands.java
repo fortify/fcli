@@ -9,7 +9,7 @@ import picocli.CommandLine;
         subcommands = {
                 AviatorSSCAuditCommand.class,
                 AviatorSSCPrepareCommand.class,
-                AviatorSSCRemediationCommand.class
+                AviatorSSCApplyRemediationsCommand.class
         }
 
 )
