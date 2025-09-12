@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
-import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.PicocliSpecHelper;
@@ -45,7 +45,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME) 
-@MCPIgnore // Doesn't make sense to allow mcp-server start command to be called from MCP server
+@MCPExclude // Doesn't make sense to allow mcp-server start command to be called from MCP server
 public class MCPServerStartCommand extends AbstractRunnableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(MCPServerStartCommand.class);
     @Mixin private CommandHelperMixin commandHelper;
@@ -110,7 +110,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         
         private final Tool createTool() {
             return Tool.builder()
-                    .name(commandSpec.qualifiedName("_"))
+                    .name(commandSpec.qualifiedName("_").replace('-', '_'))
                     .description(buildToolDescription())
                     .inputSchema(toolSpecArgHelper.getSchema())
                     .build();

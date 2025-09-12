@@ -23,7 +23,8 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
-import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
 
 import picocli.CommandLine;
@@ -134,7 +135,8 @@ public class PicocliSpecHelper {
     }
     
     public static final boolean isMcpIgnored(CommandSpec spec) {
-        return findAnnotation(spec, MCPIgnore.class)!=null
+        if ( spec.userObject().getClass().isAnnotationPresent(MCPInclude.class) ) { return false; }
+        return findAnnotation(spec, MCPExclude.class)!=null
                 || isMcpIgnoredCommandName(spec)
                 || isHiddenSelfOrParent(spec)
                 || !isRunnable(spec)
@@ -147,7 +149,10 @@ public class PicocliSpecHelper {
         // entity is access-control or action
         // entity is rest and action is call
         var qualifiedName = spec.qualifiedName(" ");
-        return Pattern.compile("(^\\S+ \\S+ \\S+ (reset|revoke|delete|clear)\\S*$)|(^\\S+ \\S+ (access-control|action) \\S+$)|(^\\S+ \\S+ rest call$)")
+        return Pattern.compile(
+                "(^\\S+ \\S+ \\S+ (reset|revoke|delete|clear|purge|uninstall|cancel|disable|logout|update)\\S*$)"+
+                "|(^\\S+ \\S+ (access-control|action) \\S+$)"+
+                "|(^\\S+ \\S+ rest call$)")
                 .matcher(qualifiedName).matches();
     }
 

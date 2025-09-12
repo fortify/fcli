@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.report.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.cmd.AbstractGenerateConfigCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
@@ -21,6 +22,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+@MCPExclude
 @Command(name = OutputHelperMixins.CreateTemplateConfig.CMD_NAME) @CommandGroup("template")
 public class SSCReportTemplateCreateConfigCommand extends AbstractGenerateConfigCommand {
     @Getter @Mixin private OutputHelperMixins.CreateTemplateConfig outputHelper;

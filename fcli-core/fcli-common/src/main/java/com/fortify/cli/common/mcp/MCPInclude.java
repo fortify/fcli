@@ -23,8 +23,9 @@ import java.lang.annotation.Target;
 @Target({TYPE, FIELD})
 
 /**
- * Commands, options, ... to be ignored for MCP
+ * Commands to be included for MCP. Considered only when declared on a runnable command class, not
+ * on container commands. Overrides any ignore criteria like {@link MCPExclude} or name-based excludes.
  *
  * @author Ruud Senden
  */
-public @interface MCPIgnore {}
+public @interface MCPInclude {}

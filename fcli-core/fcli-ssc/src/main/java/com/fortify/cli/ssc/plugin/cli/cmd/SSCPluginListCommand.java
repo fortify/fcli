@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
+import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 
@@ -21,6 +22,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+@MCPInclude
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCPluginListCommand extends AbstractSSCBaseRequestOutputCommand  {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
-import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.QueryOptionsArgGroup;
 import com.fortify.cli.common.util.ReflectionHelper;
 
@@ -93,7 +93,7 @@ public final class MCPToolArgHandlers {
     }
     
     private static final boolean ignore(ArgSpec as) {
-        return ReflectionHelper.hasAnnotation(as.userObject(), MCPIgnore.class) || isSensitive(as);
+        return ReflectionHelper.hasAnnotation(as.userObject(), MCPExclude.class) || isSensitive(as);
     }
     
     public static final boolean isSensitive(ArgSpec as) {

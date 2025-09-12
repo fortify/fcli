@@ -13,9 +13,11 @@
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.mcp.MCPExclude;
 
 import picocli.CommandLine.Command;
 
+@MCPExclude
 @Command(
         name = "plugin",
         subcommands = {

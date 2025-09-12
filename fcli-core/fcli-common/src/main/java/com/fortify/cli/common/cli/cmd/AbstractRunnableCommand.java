@@ -23,7 +23,7 @@ import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskLevel;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
-import com.fortify.cli.common.mcp.MCPIgnore;
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.util.JavaHelper;
 
 import ch.qos.logback.classic.Level;
@@ -124,7 +124,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * This class (used as an {@link ArgGroup}) defines common fcli options that 
      * are available on every fcli command.
      * 
-     * We {@link MCPIgnore} all generic options, as these options only
+     * We {@link MCPExclude} all generic options, as these options only
      * take effect on top-level fcli invocation, not fcli invocations performed
      * through {@link FcliCommandExecutorFactory} as we do for MCP tools. We also
      * ignore the help option; if it's useful to have usage help returned by MCP
@@ -132,22 +132,22 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * than having a --help option on every individual tool.
      */
     public static final class GenericOptionsArgGroup {
-        @Option(names = {"-h", "--help"}, usageHelp = true) @MCPIgnore
+        @Option(names = {"-h", "--help"}, usageHelp = true) @MCPExclude
         private boolean usageHelpRequested;
         
-        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT") @MCPIgnore
+        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT") @MCPExclude
         @Getter private String envPrefix;
         
-        @Option(names = "--log-file") @MCPIgnore
+        @Option(names = "--log-file") @MCPExclude
         @Getter private File logFile;
         
-        @Option(names = "--log-level") @MCPIgnore
+        @Option(names = "--log-level") @MCPExclude
         @Getter private LogLevel logLevel;
         
-        @Option(names = "--log-mask", defaultValue = "medium") @MCPIgnore
+        @Option(names = "--log-mask", defaultValue = "medium") @MCPExclude
         @Getter private LogMaskLevel logMaskLevel;
         
-        @Option(names = "--debug") @MCPIgnore
+        @Option(names = "--debug") @MCPExclude
         @Getter private boolean debug;
     }
 }
