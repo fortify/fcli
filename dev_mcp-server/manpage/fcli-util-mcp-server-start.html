@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250811.082157-dev_mcp-server" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250912.120100-dev_mcp-server" %}
 
 
 <div id="header">
@@ -40,10 +40,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli util mcp-server start</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>]
-                           [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>]
-                           [<strong>--debug</strong>]]</p>
+<p><strong>fcli util mcp-server start</strong> <strong>-m</strong>=<em>&lt;module&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                           [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]]</p>
 </div>
 </div>
 </div>
@@ -57,18 +56,22 @@ fcli_version:
     "fcli": {
     "type": "stdio",
     "command": "/path/to/fcli",
-    "args": ["util","mcp-server","start","--query=module=='fod'"]
+    "args": ["util","mcp-server","start","--module=ssc"]
+  }, {
+    "type": "stdio",
+    "command": "/path/to/fcli",
+    "args": ["util","mcp-server","start","--module=sc-sast"]
   }
 }, &#8230;&#8203;</p>
 </div>
 <div class="paragraph">
-<p>By default, the fcli MCP server will generate an MCP tool definition for every individual fcli command, excluding commands that are not relevant or pose a security risk in the context of an LLM. For example, non-runnable (container) commands are not relevant in LLM context, and thus are not included in MCP tool definitions. Similarly, any command that accepts user credentials is not included in MCP tool definitions, to avoid users from entering their credentials in an LLM system. Note that this means that LLMs cannot run fcli session login commands; you&#8217;ll need to have an active 'default' session for each of the modules that you want to interact with through the LLM system.</p>
+<p>By default, the fcli MCP server will generate an MCP tool definition for every individual fcli command in the specified module, excluding commands that are not relevant or pose a security risk in the context of an LLM. For example, non-runnable (container) commands are not relevant in LLM context, and thus are not included in MCP tool definitions. Similarly, any command that requires sensitive data like credentials to be specified is not included in MCP tool definitions, to avoid users from entering their sensitive data in an LLM system. Note that this means that LLMs cannot run fcli session login commands; you&#8217;ll need to have an active 'default' session for each of the modules that you want to interact with through the LLM system.</p>
 </div>
 <div class="paragraph">
-<p>Note that LLMs pose limits on the number of enabled tools; enabling every fcli command as an MCP tool will most likely exceed this limit. Most LLM clients allow for enabling or disabling individual tools, however it&#8217;s recommended to utilize the --query option on this 'mcp-server start' command to have the fcli MCP server generate MCP tools for only a subset of fcli commands, for example '--query=module matches "ssc|sc-sast"' or '--query=module=="fod"'.</p>
+<p>For now, only 'fcli ssc', 'fcli sc-sast', 'fcli-sc-dast', and 'fod' commands can be exposed as MCP tools. If you require any of the other fcli modules like 'fcli tool' or 'fcli util' to be exposed through MCP, we can consider this for a future release.</p>
 </div>
 <div class="paragraph">
-<p>As clients often allow for easily enabling or disabling all tools provided by a given MCP server, you may want to define multiple fcli MCP servers with different queries. For example, with the queries shown above, you could define one MCP server for interacting with 'fcli fod' commands, and another MCP server for interacting with 'fcli ssc' and 'fcli sc-sast' commands.</p>
+<p>As LLMs pose limits on the number of enabled tools, and clients often allow for easily enabling or disabling all tools provided by a given MCP server, each fcli MCP server instance only supports a single fcli module. For example, you can configure separate MCP servers for ssc, sc-sast, and sc-dast modules, but keep the sc-dast MCP tools disabled until you need them.</p>
 </div>
 </div>
 </div>
@@ -77,9 +80,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dt class="hdlist1"><strong>-m</strong>, <strong>--module</strong>=<em>&lt;module&gt;</em></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+<p>Fcli module to expose through this MCP server instance.</p>
 </dd>
 </dl>
 </div>
@@ -122,7 +125,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-08-11 08:24:03 UTC
+Last updated 2025-09-12 12:03:18 UTC
 </div>
 </div>
 </body>
