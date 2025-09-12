@@ -4,6 +4,7 @@ import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor;
+import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
 import com.fortify.cli.aviator.util.FPRLoadingUtil;
 import com.fortify.cli.aviator.util.ZipUtils;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ import java.nio.file.Path;
 public class ApplyAutoRemediationOnSource {
     private static final Logger LOG = LoggerFactory.getLogger(ApplyAutoRemediationOnSource.class);
 
-    public static int[] applyRemediations(File file, String sourceCodeDirectory, IAviatorLogger logger)
+    public static RemediationMetric applyRemediations(File file, String sourceCodeDirectory, IAviatorLogger logger)
             throws AviatorSimpleException, AviatorTechnicalException{
             LOG.info("Starting apply auto-remediation process for file: {}", file.getPath());
         Path extractedPath;

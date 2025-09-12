@@ -57,11 +57,10 @@ public class AviatorSSCRemediationCommand extends AbstractSSCJsonNodeOutputComma
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-            int[] remediationStatus =  ApplyAutoRemediationOnSource.applyRemediations(fprFile, sourceCodeDirectory, logger);
-            String status = remediationStatus[1]>0 ? "Remediation-Applied" : "No-Remediation-Applied";
+            var remediationMetric =  ApplyAutoRemediationOnSource.applyRemediations(fprFile, sourceCodeDirectory, logger);
+            String status = remediationMetric.appliedRemediations()>0 ? "Remediation-Applied" : "No-Remediation-Applied";
 
-
-            return AviatorSSCApplyRemediationHelper.buildResultNode(ad,remediationStatus[0], remediationStatus[1], remediationStatus[0] - remediationStatus[1], status);
+            return AviatorSSCApplyRemediationHelper.buildResultNode(ad,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
 
 
         } finally {

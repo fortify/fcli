@@ -54,9 +54,9 @@ public class AviatorFODRemediationCommand extends AbstractFoDJsonNodeOutputComma
             //if(downloadedFpr==null)
               //  return AviatorFODApplyRemediationHelper.buildResultNode(rd, 0,0,0, "SKIPPED (no FPR available)");
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-            int[] remediationStatus =  ApplyAutoRemediationOnSource.applyRemediations(downloadedFpr, sourceCodeDirectory, logger);
-            String status = remediationStatus[1]>0 ? "Remediation-Applied" : "No-Remediation-Applied";
-            return AviatorFODApplyRemediationHelper.buildResultNode(rd ,remediationStatus[0], remediationStatus[1], remediationStatus[0] - remediationStatus[1], status);
+            var remediationMetric =  ApplyAutoRemediationOnSource.applyRemediations(downloadedFpr, sourceCodeDirectory, logger);
+            String status = remediationMetric.appliedRemediations()>0 ? "Remediation-Applied" : "No-Remediation-Applied";
+            return AviatorFODApplyRemediationHelper.buildResultNode(rd ,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
 
         }finally {
             if(downloadedFpr!=null && downloadedFpr.exists() && !downloadedFpr.delete())

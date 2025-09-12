@@ -32,6 +32,7 @@ public class RemediationProcessor {
 
 
     String sourceCodeDirectory;
+    public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations){}
 
     public RemediationProcessor(Path extractedPath, String sourceCodeDirectory) {
         this.extractedPath = extractedPath;
@@ -42,10 +43,11 @@ public class RemediationProcessor {
     @Getter
     private final Path extractedPath;
 
-    public int[] processRemediationXML() {
-        int[] remediationStatus = new int[2]; // First element represents total remediations and 2nd element represents Applied remediations
+    public RemediationMetric processRemediationXML() {
         Path remediationPath = extractedPath.resolve("remediations.xml");
         Document remediationDoc;
+        int totalRemediations;
+        int appliedRemediations;
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
@@ -53,7 +55,8 @@ public class RemediationProcessor {
             remediationDoc = builder.parse(remediationPath.toFile());
 
             NodeList remediationNodes = remediationDoc.getElementsByTagNameNS(NAMESPACE_URI, "Remediation");
-            remediationStatus[0] = remediationNodes.getLength();
+            totalRemediations = remediationNodes.getLength();
+            appliedRemediations=0;
             for (int i = 0; i < remediationNodes.getLength(); i++) {
                 Element remediation = (Element) remediationNodes.item(i);
                 NodeList fileChangesNodes = remediation.getElementsByTagNameNS(NAMESPACE_URI, "FileChanges");
@@ -129,7 +132,7 @@ public class RemediationProcessor {
                         logger.info("Remediation applied for {}", instanceId);
                         if(!remediationAppliedOnIssue) {
                             remediationAppliedOnIssue = true;
-                            remediationStatus[1]++;
+                            appliedRemediations++;
                         }
                     }
 
@@ -145,7 +148,7 @@ public class RemediationProcessor {
             logger.error("Unexpected error processing remediation.xml: {}", remediationPath, e);
             throw new AviatorTechnicalException("Unexpected error processing remediations.xml.", e);
         }
-        return remediationStatus;
+        return new RemediationMetric(totalRemediations, appliedRemediations, totalRemediations-appliedRemediations);
     }
 
     private boolean isFilePresent(Path path) {
