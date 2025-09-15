@@ -17,6 +17,9 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.log.LogMaskHelper;
@@ -24,6 +27,7 @@ import com.fortify.cli.common.log.LogMaskLevel;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.JavaHelper;
 
 import ch.qos.logback.classic.Level;
@@ -46,6 +50,7 @@ import picocli.CommandLine.Spec;
  * @author Ruud Senden
  */
 public abstract class AbstractRunnableCommand implements Callable<Integer> {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractRunnableCommand.class);
     // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
     
@@ -85,11 +90,17 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         if ( !initialized ) {
             registerLogMasks(commandSpec);
             initMixins(commandSpec, commandSpec.mixins());
+            logVersionAndArgs(commandSpec);
             initialized = true;
         }
     }
     
-    private void registerLogMasks(CommandSpec commandSpec) {
+    private static final void logVersionAndArgs(CommandSpec commandSpec) {
+        LOG.info("fcli version: {} ", FcliBuildProperties.INSTANCE.getFcliBuildInfo());
+        LOG.info("fcli arguments: {} {} ", commandSpec.qualifiedName(), commandSpec.commandLine().getParseResult().expandedArgs());
+    }
+
+    private static final void registerLogMasks(CommandSpec commandSpec) {
         for ( var option : commandSpec.options() ) {
             var value = option.getValue();
             if ( value!=null ) {
@@ -99,7 +110,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         }
     }
     
-    private void registerLogMask(Field field, Object value) {
+    private static final void registerLogMask(Field field, Object value) {
         LogMaskHelper.INSTANCE.registerValue(field.getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
     }
         
@@ -108,7 +119,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * This method recursively iterates over all given mixins to inject our {@link CommandSpec} 
      * into any mixins implementing the {@link ICommandAware} interface.
      */
-    private void initMixins(CommandSpec commandSpec, Map<String, CommandSpec> mixins) {
+    private static final void initMixins(CommandSpec commandSpec, Map<String, CommandSpec> mixins) {
         if ( mixins != null ) {
             for ( CommandSpec mixin : mixins.values() ) {
                 Object userObject = mixin.userObject();

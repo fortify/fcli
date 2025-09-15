@@ -134,7 +134,7 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     }
 
     private static String getPropertyDescription(String humanReadableName) {
-        return String.format("Match %s against the given regular expression", humanReadableName);
+        return String.format("Match full %s against the given regular expression; for 'contains' queries, make sure to include '.*' before and after the regex to be matched", humanReadableName);
     }
 
     private static final String getMessageString(CommandSpec spec, String schemaPropertyName, String name, String defaultValue) {
