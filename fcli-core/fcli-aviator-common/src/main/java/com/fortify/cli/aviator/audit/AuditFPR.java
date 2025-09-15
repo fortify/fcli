@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
 import com.fortify.cli.aviator.audit.model.ParsedFprData;
 import com.fortify.cli.aviator.fpr.Vulnerability;
@@ -33,29 +34,27 @@ import com.fortify.cli.aviator.util.ResourceUtil;
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
 
-    public static FPRAuditResult auditFPR(FprHandle fprHandle, String token, String url, String appVersion,
-                                          String sscAppName, String sscAppVersion,
-                                          IAviatorLogger logger, String tagMappingPath,
-                                          String filterSetNameOrId, boolean ignoreFilters,
-                                          List<String> priorities, List<String> folderNames)
+    public static FPRAuditResult auditFPR(AuditFprOptions options)
             throws AviatorSimpleException, AviatorTechnicalException {
 
-        LOG.info("Starting FPR audit process for file: {}", fprHandle.getFprPath());
-        fprHandle.validate(); // Validation is now an instance method
+        LOG.info("Starting FPR audit process for file: {}", options.getFprHandle().getFprPath());
+        options.getFprHandle().validate();
         AviatorConfigManager.getInstance();
 
         // --- STAGE 1: PARSING ---
-        ParsedFprData parsedData = prepareAndParseFpr(fprHandle);
-        TagMappingConfig tagMappingConfig = loadTagMappingConfig(tagMappingPath);
+        ParsedFprData parsedData = prepareAndParseFpr(options.getFprHandle());
+        TagMappingConfig tagMappingConfig = loadTagMappingConfig(options.getTagMappingPath());
 
         // --- STAGE 2: FILTER SELECTION (DELEGATED) ---
         FilterSelection filterSelection = FilterSetSelector.select(
-                parsedData.fprInfo, priorities, filterSetNameOrId, ignoreFilters, folderNames);
+                parsedData.fprInfo, options.getPriorities(), options.getFilterSetNameOrId(), options.isIgnoreFilters(),
+                options.getFolderNames()
+        );
 
         // --- STAGE 3: AUDITING ---
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
         AuditOutcome auditOutcome = performAviatorAudit(
-                parsedData, logger, token, appVersion, url, sscAppName, sscAppVersion,
+                parsedData, options.getLogger(), options.getToken(), options.getAppVersion(), options.getUrl(), options.getSscAppName(), options.getSscAppVersion(),
                 auditResponses, filterSelection
         );
 
@@ -65,6 +64,7 @@ public class AuditFPR {
                 tagMappingConfig, parsedData.fprInfo, parsedData.fvdlProcessor
         );
     }
+
     private static ParsedFprData prepareAndParseFpr(FprHandle fprHandle) {
         try {
             // Processors now take the FprHandle directly, no more extracted path
