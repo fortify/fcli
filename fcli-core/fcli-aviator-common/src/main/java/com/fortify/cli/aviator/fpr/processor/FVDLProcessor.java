@@ -10,10 +10,9 @@ import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedTrace;
 import com.fortify.cli.aviator.fpr.model.Entry;
 import com.fortify.cli.aviator.fpr.model.ReplacementData;
-import com.fortify.cli.aviator.fpr.model.Entry;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -29,6 +28,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -60,15 +60,15 @@ public class FVDLProcessor {
     private final AuxiliaryProcessor auxiliaryProcessor;
     private final VulnFinalizer vulnFinalizer;
     private final FileUtils fileUtils;
-    private final Path extractedPath;
+    private final FprHandle fprHandle;
     @Getter
     private List<Vulnerability> vulnerabilities;
 
-    public FVDLProcessor(Path extractedPath) {
-        this.extractedPath = extractedPath;
+    public FVDLProcessor(FprHandle fprHandle) {
+        this.fprHandle = fprHandle;
         this.fileUtils = new FileUtils();
-        this.nodeProcessor = new NodeProcessor(this.extractedPath, fileUtils, sourceFileMap);
-        this.traceProcessor = new TraceProcessor(this.extractedPath, nodeProcessor, new SnippetProcessor(), fileUtils, sourceFileMap);        this.snippetProcessor = new SnippetProcessor();
+        this.nodeProcessor = new NodeProcessor(this.fprHandle, fileUtils, sourceFileMap);
+        this.traceProcessor = new TraceProcessor(this.fprHandle, nodeProcessor, new SnippetProcessor(), fileUtils, sourceFileMap);        this.snippetProcessor = new SnippetProcessor();
         this.descriptionProcessor = new DescriptionProcessor();
         this.metaInfoProcessor = new MetaInfoProcessor();
         this.auxiliaryProcessor = new AuxiliaryProcessor();
@@ -83,17 +83,14 @@ public class FVDLProcessor {
      * @throws IOException   If file access fails
      */
     public List<Vulnerability> processXML() throws Exception {
-        Path fvdlFilePath = extractedPath.resolve("audit.fvdl");
+        Path fvdlFilePath = fprHandle.getPath("/audit.fvdl");
 
         List<Vulnerability> vulnerabilities = new ArrayList<>();
-        FVDL fvdl = unmarshalFVDL(String.valueOf(fvdlFilePath));
+        FVDL fvdl = unmarshalFVDL(fvdlFilePath);
         if (fvdl == null) {
             logger.error("Failed to unmarshal FVDL file: {}", fvdlFilePath);
             return vulnerabilities;
         }
-
-        // Load source file map
-        loadSourceFileMap();
 
         // Process global sections
         metaInfoProcessor.process(fvdl.getEngineData());
@@ -120,63 +117,12 @@ public class FVDLProcessor {
      * @throws JAXBException If unmarshalling fails
      * @throws IOException   If file access fails
      */
-    private FVDL unmarshalFVDL(String fvdlFilePath) throws JAXBException, IOException {
-        try (FileInputStream fis = new FileInputStream(fvdlFilePath)) {
+    private FVDL unmarshalFVDL(Path fvdlFilePath) throws JAXBException, IOException {
+        try (InputStream fis = Files.newInputStream(fvdlFilePath)) { // <--- THIS IS THE FIX
             JAXBContext jaxbContext = JAXBContext.newInstance(FVDL.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             return (FVDL) unmarshaller.unmarshal(fis);
         }
-    }
-
-    /**
-     * Loads the source file map from FVDL.
-     */
-    private void loadSourceFileMap() throws Exception {
-        Path srcArchiveDir = extractedPath.resolve("src-archive");
-        Path indexPath = null;
-
-        if (directoryContainsSourceFiles(srcArchiveDir)) {
-            indexPath = srcArchiveDir.resolve("index.xml");
-        }
-
-        if (indexPath == null) {
-            throw new NoSuchFileException("'src-archive' contained no source files under " + extractedPath);
-        } else if (!Files.exists(indexPath)) {
-            throw new NoSuchFileException("A source directory was found, but its 'index.xml' is missing at: " + indexPath);
-        }
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature("http://xml.org/sax/features/validation", false);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document indexDoc = builder.parse(indexPath.toFile());
-
-        NodeList entryNodes = indexDoc.getElementsByTagName("entry");
-        for (int i = 0; i < entryNodes.getLength(); i++) {
-            Element entry = (Element) entryNodes.item(i);
-            String key = entry.getAttribute("key");
-            String value = entry.getTextContent();
-            sourceFileMap.put(key, value);
-        }
-    }
-
-    private boolean directoryContainsSourceFiles(Path dirPath) throws IOException {
-        if (!Files.isDirectory(dirPath)) {
-            return false;
-        }
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
-            for (Path path : stream) {
-                boolean isRegularFile = Files.isRegularFile(path);
-                boolean isNotIndexXml = !path.getFileName().toString().equals("index.xml");
-
-                if (isRegularFile && isNotIndexXml) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     public Optional<String> getSourceFileContent(String relativePath) {
@@ -185,7 +131,7 @@ public class FVDLProcessor {
             logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
             return Optional.empty();
         }
-        Path actualSourcePath = extractedPath.resolve(fullPathInZip);
+        Path actualSourcePath = fprHandle.getPath(fullPathInZip);
         try {
             return Optional.of(String.join(System.lineSeparator(), fileUtils.readFileWithFallback(actualSourcePath)));
         } catch (RuntimeException e) {
@@ -301,7 +247,7 @@ public class FVDLProcessor {
         String filename = element.getFilename();
         if (!StringUtil.isEmpty(filename) && sourceFileMap.containsKey(filename) && !uniqueFiles.containsKey(filename)) {
             String sourceFilePath = sourceFileMap.get(filename);
-            Path actualSourcePath = extractedPath.resolve(sourceFilePath);
+            Path actualSourcePath = fprHandle.getPath(sourceFilePath);
 
             File file = new File();
             file.setName(filename);
@@ -537,9 +483,5 @@ public class FVDLProcessor {
             }
         }
         return intersection == null || intersection.isEmpty() ? "" : String.join(",", intersection);
-    }
-
-    private static int getProperty(String key, int defaultValue) {
-        return Integer.parseInt(System.getProperty(key, String.valueOf(defaultValue)));
     }
 }

@@ -8,6 +8,7 @@ import com.fortify.cli.aviator.fpr.filter.PrimaryTag;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
 import com.fortify.cli.aviator.fpr.filter.TagValue;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -24,6 +25,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -35,22 +37,22 @@ import java.util.stream.Collectors;
 
 public class FilterTemplateParser {
 
-    private final Path extractedPath;
+    private final FprHandle fprHandle;
     private static final Logger logger = LoggerFactory.getLogger(FilterTemplateParser.class);
 
     private Document doc;
     private AuditProcessor auditProcessor;
 
-    public FilterTemplateParser(Path extractedPath, AuditProcessor auditProcessor) {
-        this.extractedPath = extractedPath;
+    public FilterTemplateParser(FprHandle fprHandle, AuditProcessor auditProcessor) {
+        this.fprHandle = fprHandle;
         this.auditProcessor = auditProcessor;
     }
 
     public Optional<FilterTemplate> parseFilterTemplate() {
         try {
-            Optional<Path> filterTemplatePath = findFilterTemplatePath(extractedPath);
+            Path filterTemplatePath = fprHandle.getPath("/filtertemplate.xml");
 
-            if (!filterTemplatePath.isPresent()) {
+            if (!Files.exists(filterTemplatePath)) {
                 logger.info("filtertemplate.xml not found in FPR");
                 return Optional.empty();
             }
@@ -61,12 +63,14 @@ public class FilterTemplateParser {
             factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/validation", false);
+            factory.setValidating(false);
             factory.setNamespaceAware(true);
 
             DocumentBuilder builder = factory.newDocumentBuilder();
 
-            doc = builder.parse(filterTemplatePath.get().toFile());
+            try (InputStream templateStream = Files.newInputStream(filterTemplatePath)) {
+                doc = builder.parse(templateStream);
+            }
 
             Element root = doc.getDocumentElement();
             if (root == null) {
@@ -92,7 +96,7 @@ public class FilterTemplateParser {
             filterTemplate.setTagDefinitions(parseTagDefinitions(root));
             filterTemplate.setPrimaryTag(parsePrimaryTag(root).orElse(null));
 
-            addMissingTagDefinitions(filterTemplate, doc, filterTemplatePath.get().toFile());
+            addMissingTagDefinitions(filterTemplate, doc);
             auditProcessor.setFilterTemplateDoc(doc);
 
             return Optional.of(filterTemplate);
@@ -102,30 +106,19 @@ public class FilterTemplateParser {
         }
     }
 
-    private void addMissingTagDefinitions(FilterTemplate filterTemplate, Document doc, File filterTemplateFile) {
-        try {
-            String namespaceURI = doc.getDocumentElement().getNamespaceURI();
+    private boolean addMissingTagDefinitions(FilterTemplate filterTemplate, Document doc) {
+        String namespaceURI = doc.getDocumentElement().getNamespaceURI();
+        Element rootElement = doc.getDocumentElement();
 
-            Element rootElement = doc.getDocumentElement();
+        NodeList tagDefNodes = rootElement.getElementsByTagNameNS(namespaceURI != null ? namespaceURI : "", "TagDefinition");
+        Node lastTagDefNode = tagDefNodes.getLength() > 0 ? tagDefNodes.item(tagDefNodes.getLength() - 1) : null;
 
-            NodeList tagDefNodes = rootElement.getElementsByTagNameNS(namespaceURI != null ? namespaceURI : "", "TagDefinition");
-            Node lastTagDefNode = tagDefNodes.getLength() > 0 ? tagDefNodes.item(tagDefNodes.getLength() - 1) : null;
+        boolean needsUpdate = ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_PREDICTION_TAG_ID, "Aviator prediction", Arrays.asList(Constants.AVIATOR_NOT_AN_ISSUE, Constants.AVIATOR_REMEDIATION_REQUIRED, Constants.AVIATOR_UNSURE, Constants.AVIATOR_EXCLUDED, Constants.AVIATOR_LIKELY_TP, Constants.AVIATOR_LIKELY_FP), doc, namespaceURI, lastTagDefNode);
+        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, "Aviator status", Arrays.asList(Constants.PROCESSED_BY_AVIATOR), doc, namespaceURI, lastTagDefNode);
+        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.FOD_TAG_ID, "FoD", Arrays.asList(Constants.PENDING_REVIEW, Constants.FALSE_POSITIVE, Constants.EXPLOITABLE, Constants.SUSPICIOUS, Constants.SANITIZED), doc, namespaceURI, lastTagDefNode);
+        needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AUDITOR_STATUS_TAG_ID, "Auditor Status", Arrays.asList(Constants.PENDING_REVIEW, Constants.NOT_AN_ISSUE, Constants.UNSURE, Constants.REMEDIATION_REQUIRED, Constants.PROPOSED_NOT_AN_ISSUE, Constants.SUSPICIOUS), doc, namespaceURI, lastTagDefNode);
 
-            boolean needsUpdate = ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_PREDICTION_TAG_ID, "Aviator prediction", Arrays.asList(Constants.AVIATOR_NOT_AN_ISSUE, Constants.AVIATOR_REMEDIATION_REQUIRED, Constants.AVIATOR_UNSURE, Constants.AVIATOR_EXCLUDED, Constants.AVIATOR_LIKELY_TP, Constants.AVIATOR_LIKELY_FP), doc, namespaceURI, lastTagDefNode);
-
-            needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AVIATOR_STATUS_TAG_ID, "Aviator status", Arrays.asList(Constants.PROCESSED_BY_AVIATOR), doc, namespaceURI, lastTagDefNode);
-
-            needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.FOD_TAG_ID, "FoD", Arrays.asList(Constants.PENDING_REVIEW, Constants.FALSE_POSITIVE, Constants.EXPLOITABLE, Constants.SUSPICIOUS, Constants.SANITIZED), doc, namespaceURI, lastTagDefNode);
-
-            needsUpdate |= ensureTagDefinitionPresent(filterTemplate, Constants.AUDITOR_STATUS_TAG_ID, "Auditor Status", Arrays.asList(Constants.PENDING_REVIEW, Constants.NOT_AN_ISSUE, Constants.UNSURE, Constants.REMEDIATION_REQUIRED, Constants.PROPOSED_NOT_AN_ISSUE, Constants.SUSPICIOUS), doc, namespaceURI, lastTagDefNode);
-
-            if (needsUpdate) {
-                logger.debug("Updating filtertemplate.xml with missing tag definitions.");
-                saveDocument(doc, filterTemplateFile);
-            }
-        } catch (Exception e) {
-            logger.error("Error updating filtertemplate.xml", e);
-        }
+        return needsUpdate;
     }
 
     private boolean ensureTagDefinitionPresent(FilterTemplate filterTemplate, String tagId, String tagName, List<String> tagValues, Document doc, String namespaceURI, Node insertAfterNode) {
@@ -224,15 +217,6 @@ public class FilterTemplateParser {
         } catch (Exception e) {
             logger.error("Error saving XML document: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to save XML document", e);
-        }
-    }
-
-    public void saveFilterTemplateXml(Document doc) {
-        Optional<Path> filterTemplatePath = findFilterTemplatePath(extractedPath);
-        if (filterTemplatePath.isPresent()) {
-            saveDocument(doc, filterTemplatePath.get().toFile());
-        } else {
-            logger.error("Could not find filtertemplate.xml path for saving");
         }
     }
 

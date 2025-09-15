@@ -1,5 +1,6 @@
 package com.fortify.cli.aviator.fpr.model;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -7,6 +8,7 @@ import java.util.Optional;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,27 +38,32 @@ public class FPRInfo {
 
     Logger logger = LoggerFactory.getLogger(FPRInfo.class);
 
-    public FPRInfo(Path extractedPath, Path FPRPath) {
-        FPRName = String.valueOf(FPRPath.getFileName());
+    public FPRInfo(FprHandle fprHandle) {
+        FPRName = String.valueOf(fprHandle.getFprPath().getFileName());
         try {
-            extractInfoFromAuditFvdl(extractedPath);
+            extractInfoFromAuditFvdl(fprHandle);
         } catch (Exception e) {
-            e.printStackTrace();
+            // It's better to wrap this in a specific runtime exception
+            throw new RuntimeException("Failed to extract info from audit.fvdl", e);
         }
     }
 
-    private void extractInfoFromAuditFvdl(Path extractedPath) throws Exception {
-        Path auditPath = extractedPath.resolve("audit.fvdl");
+    private void extractInfoFromAuditFvdl(FprHandle fprHandle) throws Exception {
+        Path auditPath = fprHandle.getPath("/audit.fvdl");
 
         if (!Files.exists(auditPath)) {
-            throw new IllegalStateException("audit.fvdl not found in " + extractedPath);
+            throw new IllegalStateException("audit.fvdl not found in FPR: " + fprHandle.getFprPath());
         }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature("http://xml.org/sax/features/validation", false);
+        factory.setValidating(false);
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document auditDoc = builder.parse(auditPath.toFile());
+
+        Document auditDoc;
+        try (InputStream auditStream = Files.newInputStream(auditPath)) {
+            auditDoc = builder.parse(auditStream);
+        }
 
         NodeList uuidNodes = auditDoc.getElementsByTagName("UUID");
         if (uuidNodes.getLength() > 0) {

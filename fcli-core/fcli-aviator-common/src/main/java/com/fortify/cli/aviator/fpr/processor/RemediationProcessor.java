@@ -1,6 +1,7 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,28 +33,25 @@ public class RemediationProcessor {
     private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
 
 
-    String sourceCodeDirectory;
+    private final FprHandle fprHandle;
+    private final String sourceCodeDirectory;
     public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations){}
 
-    public RemediationProcessor(Path extractedPath, String sourceCodeDirectory) {
-        this.extractedPath = extractedPath;
+    public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
+        this.fprHandle = fprHandle;
         this.sourceCodeDirectory = sourceCodeDirectory;
-
     }
 
-    @Getter
-    private final Path extractedPath;
-
     public RemediationMetric processRemediationXML() {
-        Path remediationPath = extractedPath.resolve("remediations.xml");
+        Path remediationPath = fprHandle.getPath("/remediations.xml");
         Document remediationDoc;
         int totalRemediations;
         int appliedRemediations;
-        try {
+        try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
-            remediationDoc = builder.parse(remediationPath.toFile());
+            remediationDoc = builder.parse(remediationStream);
 
             NodeList remediationNodes = remediationDoc.getElementsByTagNameNS(NAMESPACE_URI, "Remediation");
             totalRemediations = remediationNodes.getLength();

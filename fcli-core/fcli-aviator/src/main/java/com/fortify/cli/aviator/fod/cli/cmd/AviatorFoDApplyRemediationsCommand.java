@@ -3,6 +3,7 @@ package com.fortify.cli.aviator.fod.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -25,17 +26,17 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 @Command(name = "apply-remediations")
 public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    //@Mixin private CommonOptionMixins.RequiredFile outputFileMixin;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorFoDApplyRemediationsCommand.class);
-    @Option(names = {"--source-dir"}, required = false, description = "Absolute path for source code") private String sourceCodeDirectory;
+    @Option(names = {"--source-dir"}, description = "Absolute path for source code") private String sourceCodeDirectory;
 
     @Override @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -46,32 +47,37 @@ public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
         }
     }
 
+    @SneakyThrows
     private JsonNode processFprRemediations(UnirestInstance unirest, FoDReleaseDescriptor rd, AviatorLoggerImpl logger) {
-        File downloadedFpr = null;
+        Path downloadedFprPath = null;
         try {
             logger.progress("Status: Downloading Audited FPR from FOD");
-            downloadedFpr = downloadFprFromFod(unirest, rd);
-            //if(downloadedFpr==null)
-              //  return AviatorFODApplyRemediationHelper.buildResultNode(rd, 0,0,0, "SKIPPED (no FPR available)");
+            downloadedFprPath = downloadFprFromFod(unirest, rd);
+
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-            var remediationMetric =  ApplyAutoRemediationOnSource.applyRemediations(downloadedFpr, sourceCodeDirectory, logger);
-            String status = remediationMetric.appliedRemediations()>0 ? "Remediation-Applied" : "No-Remediation-Applied";
-            return AviatorFoDApplyRemediationsHelper.buildResultNode(rd ,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
-
-        }finally {
-            if(downloadedFpr!=null && downloadedFpr.exists() && !downloadedFpr.delete())
-                LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFpr.getAbsolutePath());
-
+            try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
+                return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+            }
+        } finally {
+            if (downloadedFprPath != null) {
+                try {
+                    Files.deleteIfExists(downloadedFprPath);
+                } catch (IndexOutOfBoundsException e) {
+                    LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFprPath, e);
+                }
+            }
         }
     }
 
     @SneakyThrows
-    private File downloadFprFromFod(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor){
-        File fprFile = File.createTempFile("aviator_" + releaseDescriptor.getReleaseId() + "_" , ".fpr");
+    private Path  downloadFprFromFod(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+        Path fprPath = Files.createTempFile("aviator_" + releaseDescriptor.getReleaseId() + "_", ".fpr");
         FoDScanDescriptor scanDescriptor = FoDScanHelper.getLatestScanDescriptor(unirest, releaseDescriptor.getReleaseId(),
                 getScanType(), false);
         FoDScanHelper.validateScanDate(scanDescriptor, FoDScanHelper.MAX_RETENTION_PERIOD);
-        var file = fprFile.getAbsolutePath();
+        var file = fprPath.toString();
         GetRequest request = getDownloadRequest(unirest, releaseDescriptor, scanDescriptor);
         int status = 202;
         while ( status==202 ) {
@@ -80,7 +86,7 @@ public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
                     .getStatus();
             if ( status==202 ) { Thread.sleep(30000L); }
         }
-        return fprFile;
+        return fprPath;
     }
 
 

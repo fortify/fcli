@@ -2,9 +2,12 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.util.DisableTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,57 +67,56 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @SneakyThrows
     private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger) {
-        File downloadedFpr = null;
-        try {
-            downloadedFpr = downloadFprFromSSC(unirest, av, logger);
+        // Download the FPR to a temporary file path
+        Path downloadedFprPath = downloadFprToTempPath(unirest, av, logger);
+        if (downloadedFprPath == null) {
+            return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
+        }
 
-            if (downloadedFpr == null) {
-                return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
-            }
-
-            FPRAuditResult auditResult = performAviatorAudit(downloadedFpr, token, url, av, logger);
+        try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
+            // Perform the audit using the handle
+            FPRAuditResult auditResult = performAviatorAudit(fprHandle, token, url, av, logger);
             String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
-            String progressMessage = AviatorSSCAuditHelper.getProgressMessage(auditResult);
-            logger.progress(progressMessage);
+            logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
 
             String artifactId = "UPLOAD_SKIPPED";
-            if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(auditResult.getStatus()) && !"FAILED".equals(auditResult.getStatus())) {
+            // The AuditProcessor now creates a new updated FPR file and returns its path
+            if (auditResult.getUpdatedFile() != null) {
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av, logger);
+                // Clean up the temporary updated file
+                Files.deleteIfExists(auditResult.getUpdatedFile().toPath());
             }
 
             return AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
-
         } finally {
-            if (downloadedFpr != null && downloadedFpr.exists() && !downloadedFpr.delete()) {
-                LOG.warn("WARN: Failed to delete temporary downloaded FPR file: {}", downloadedFpr.getAbsolutePath());
-            }
+            Files.deleteIfExists(downloadedFprPath);
         }
     }
 
-    private File downloadFprFromSSC(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {
+    private Path downloadFprToTempPath(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {
         logger.progress("Status: Downloading FPR from SSC for app version: %s:%s (id: %s)", av.getApplicationName(), av.getVersionName(), av.getVersionId());
-        File fprFile = File.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
+        Path tempFpr = Files.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
         try {
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), true),
-                    fprFile,
+                    tempFpr.toFile(),
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
-            return fprFile;
+            return tempFpr;
         } catch (UnexpectedHttpResponseException e) {
+            Files.deleteIfExists(tempFpr);
             if (e.getStatus() == 400) {
                 logger.progress("Audit skipped - no FPR available to audit in SSC for app version %s:%s.", av.getApplicationName(), av.getVersionName());
                 LOG.info("SSC returned HTTP 400 when downloading FPR for app version id {}. Assuming no FPR is available.", av.getVersionId());
-                if (fprFile.exists()) fprFile.delete();
                 return null;
             }
             throw e;
         }
     }
 
-    private FPRAuditResult performAviatorAudit(File fprFile, String token, String url, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+    private FPRAuditResult performAviatorAudit(FprHandle fprHandle, String token, String url, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
         logger.progress("Status: Processing FPR with Aviator");
-        return AuditFPR.auditFPR(fprFile, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping, filterSetNameOrId, ignoreFilters, priorities, folderNames);
+        return AuditFPR.auditFPR(fprHandle, token, url, appName, av.getApplicationName(), av.getVersionName(), logger, tagMapping, filterSetNameOrId, ignoreFilters, priorities, folderNames);
     }
 
     @SneakyThrows

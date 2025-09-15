@@ -8,6 +8,7 @@ import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode.Knowledge.Fact;
 import com.fortify.cli.aviator.fpr.model.Node;
 
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.util.FprHandle;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +30,12 @@ public class NodeProcessor {
     private final Map<String, String> sourceFileCache = new ConcurrentHashMap<>();
     private final FileUtils fileUtils;
     private final Map<String, String> sourceFileMap;
-    private final Path extractedPath;
+    private final FprHandle fprHandle;
 
 
 
-    public NodeProcessor(Path extractedPath, FileUtils fileUtils, Map<String, String> sourceFileMap) {
-        this.extractedPath = extractedPath;
+    public NodeProcessor(FprHandle fprHandle, FileUtils fileUtils, Map<String, String> sourceFileMap) {
+        this.fprHandle = fprHandle;
         this.fileUtils = fileUtils;
         this.sourceFileMap = sourceFileMap;
     }
@@ -87,7 +88,7 @@ public class NodeProcessor {
         String snippet = "";
         if (filePath != null && !filePath.isEmpty()) {
             snippet = sourceFileCache.computeIfAbsent(filePath, key ->
-                    fileUtils.getSourceFileContent(this.extractedPath, sourceFileMap, key)
+                    fileUtils.getSourceFileContent(this.fprHandle, key) // Pass FprHandle
                             .orElse(""));
         }
 

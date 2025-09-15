@@ -12,6 +12,7 @@ import com.fortify.cli.aviator.audit.model.ParsedFprData;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.util.FprHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,25 +28,24 @@ import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-import com.fortify.cli.aviator.util.FPRLoadingUtil;
 import com.fortify.cli.aviator.util.ResourceUtil;
-import com.fortify.cli.aviator.util.ZipUtils;
 
 public class AuditFPR {
     private static final Logger LOG = LoggerFactory.getLogger(AuditFPR.class);
 
-    public static FPRAuditResult auditFPR(File fprFile, String token, String url, String appVersion,
+    public static FPRAuditResult auditFPR(FprHandle fprHandle, String token, String url, String appVersion,
                                           String sscAppName, String sscAppVersion,
                                           IAviatorLogger logger, String tagMappingPath,
                                           String filterSetNameOrId, boolean ignoreFilters,
                                           List<String> priorities, List<String> folderNames)
             throws AviatorSimpleException, AviatorTechnicalException {
 
-        LOG.info("Starting FPR audit process for file: {}", fprFile.getPath());
+        LOG.info("Starting FPR audit process for file: {}", fprHandle.getFprPath());
+        fprHandle.validate(); // Validation is now an instance method
         AviatorConfigManager.getInstance();
 
         // --- STAGE 1: PARSING ---
-        ParsedFprData parsedData = prepareAndParseFpr(fprFile);
+        ParsedFprData parsedData = prepareAndParseFpr(fprHandle);
         TagMappingConfig tagMappingConfig = loadTagMappingConfig(tagMappingPath);
 
         // --- STAGE 2: FILTER SELECTION (DELEGATED) ---
@@ -65,25 +65,18 @@ public class AuditFPR {
                 tagMappingConfig, parsedData.fprInfo, parsedData.fvdlProcessor
         );
     }
-    private static ParsedFprData prepareAndParseFpr(File fprFile) {
+    private static ParsedFprData prepareAndParseFpr(FprHandle fprHandle) {
         try {
-            FPRLoadingUtil.validateFpr(fprFile);
-            Path extractedPath = ZipUtils.extractZip(fprFile.getPath());
-
-            AuditProcessor auditProcessor = new AuditProcessor(extractedPath, fprFile.getPath());
-            FVDLProcessor fvdlProcessor = new FVDLProcessor(extractedPath);
+            // Processors now take the FprHandle directly, no more extracted path
+            AuditProcessor auditProcessor = new AuditProcessor(fprHandle);
+            FVDLProcessor fvdlProcessor = new FVDLProcessor(fprHandle);
 
             Map<String, AuditIssue> auditIssueMap = auditProcessor.processAuditXML();
-            FPRProcessor fprProcessor = new FPRProcessor(fprFile.getPath(), extractedPath, auditIssueMap, auditProcessor);
+            FPRProcessor fprProcessor = new FPRProcessor(fprHandle, auditIssueMap, auditProcessor);
             List<Vulnerability> vulnerabilities = fprProcessor.process(fvdlProcessor);
             FPRInfo fprInfo = fprProcessor.getFprInfo();
 
             return new ParsedFprData(auditIssueMap, vulnerabilities, fprInfo, auditProcessor, fvdlProcessor);
-        } catch (AviatorSimpleException e) {
-            throw e;
-        } catch (IOException e) {
-            LOG.error("Failed to extract or read FPR: {}", fprFile.getPath(), e);
-            throw new AviatorTechnicalException("Failed to extract or read FPR: " + e.getMessage(), e);
         } catch (Exception e) {
             LOG.error("A critical error occurred during FPR processing.", e);
             throw new AviatorTechnicalException("Failed to process FPR contents.", e);

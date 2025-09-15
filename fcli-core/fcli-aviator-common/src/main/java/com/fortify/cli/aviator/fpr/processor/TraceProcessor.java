@@ -10,6 +10,7 @@ import com.fortify.cli.aviator.fpr.model.Node;
 import com.fortify.cli.aviator.fpr.model.TraceEntry;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.util.FprHandle;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class TraceProcessor {
     private final SnippetProcessor snippetProcessor;
     private final FileUtils fileUtils;
     private final Map<String, String> sourceFileMap;
-    private final Path extractedPath;
+    private final FprHandle fprHandle;
 
     /**
      * Constructor with dependencies.
@@ -41,8 +42,8 @@ public class TraceProcessor {
      * @param fileUtils        For file fragment extraction
      * @param sourceFileMap    Map of relative to actual file paths
      */
-    public TraceProcessor(Path extractedPath, NodeProcessor nodeProcessor, SnippetProcessor snippetProcessor, FileUtils fileUtils, Map<String, String> sourceFileMap) {
-        this.extractedPath = extractedPath;
+    public TraceProcessor(FprHandle fprHandle, NodeProcessor nodeProcessor, SnippetProcessor snippetProcessor, FileUtils fileUtils, Map<String, String> sourceFileMap) {
+        this.fprHandle = fprHandle;
         this.nodeProcessor = nodeProcessor;
         this.snippetProcessor = snippetProcessor;
         this.fileUtils = fileUtils;
@@ -185,8 +186,8 @@ public class TraceProcessor {
         // --- Create the parent StackTraceElement (same as before) ---
         String filename = resolvedNode.getFilePath();
         int line = resolvedNode.getLine();
-        String codeLine = fileUtils.getLineFromFile(this.extractedPath, this.sourceFileMap, filename, line);
-        Fragment fragment = fileUtils.getFragmentFromFile(this.extractedPath, this.sourceFileMap, filename, line, 5, 2);
+        String codeLine = fileUtils.getLineFromFile(this.fprHandle, filename, line);
+        Fragment fragment = fileUtils.getFragmentFromFile(this.fprHandle, filename, line, 5, 2);
         String nodeType = resolvedNode.getActionType();
         String additionalInfo = resolvedNode.getAdditionalInfo();
         String taintFlags = String.join(", ", resolvedNode.getTaintFlags());

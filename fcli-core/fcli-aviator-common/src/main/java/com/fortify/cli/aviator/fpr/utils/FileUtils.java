@@ -2,6 +2,7 @@ package com.fortify.cli.aviator.fpr.utils;
 
 
 import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.util.FprHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +58,8 @@ public class FileUtils {
     /**
      * Extracts a single line from a file's content.
      */
-    public String getLineFromFile(Path extractedPath, Map<String, String> sourceFileMap, String relativePath, int lineNumber) {
-        Path fullSourcePath = resolveFullPath(extractedPath, sourceFileMap, relativePath);
+    public String getLineFromFile(FprHandle fprHandle, String relativePath, int lineNumber) {
+        Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) return "";
 
         List<String> lines = readFileWithFallback(fullSourcePath);
@@ -72,8 +73,8 @@ public class FileUtils {
     /**
      * Extracts a code fragment (a few lines of code) from a file.
      */
-    public Fragment getFragmentFromFile(Path extractedPath, Map<String, String> sourceFileMap, String relativePath, int lineNumber, int linesBefore, int linesAfter) {
-        Path fullSourcePath = resolveFullPath(extractedPath, sourceFileMap, relativePath);
+    public Fragment getFragmentFromFile(FprHandle fprHandle, String relativePath, int lineNumber, int linesBefore, int linesAfter) {
+        Path fullSourcePath = resolveFullPath(fprHandle, relativePath);
         if (fullSourcePath == null) {
             return new Fragment("", 0, 0);
         }
@@ -98,31 +99,23 @@ public class FileUtils {
      * Helper to resolve the full, absolute path to a source file.
      * @return Full path or null if mapping doesn't exist.
      */
-    private Path resolveFullPath(Path extractedPath, Map<String, String> sourceFileMap, String relativePath) {
-        String internalPath = sourceFileMap.get(relativePath);
+    private Path resolveFullPath(FprHandle fprHandle, String relativePath) {
+        String internalPath = fprHandle.getSourceFileMap().get(relativePath);
         if (internalPath == null) {
             logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
             return null;
         }
-        return extractedPath.resolve(internalPath);
+        // Gets the Path from the virtual file system
+        return fprHandle.getPath(internalPath);
     }
 
-    /**
-     * Reads full content of a source file using sourceFileMap.
-     *
-     * @param sourceFileMap Map of relative to actual file paths
-     * @param relativePath  Relative file path
-     * @return Optional of file content as string, or empty if not found
-     */
+
     // Assumes you have already updated the signature to accept extractedPath
-    public Optional<String> getSourceFileContent(Path extractedPath, Map<String, String> sourceFileMap, String relativePath) {
-        String internalFileName = sourceFileMap.get(relativePath);
-        if (internalFileName == null) {
-            logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
+    public Optional<String> getSourceFileContent(FprHandle fprHandle, String relativePath) {
+        Path actualSourcePath = resolveFullPath(fprHandle, relativePath);
+        if (actualSourcePath == null) {
             return Optional.empty();
         }
-
-        Path actualSourcePath = extractedPath.resolve(internalFileName);
 
         try {
             return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath)));

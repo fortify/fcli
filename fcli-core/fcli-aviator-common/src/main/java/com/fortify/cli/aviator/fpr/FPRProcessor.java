@@ -8,6 +8,7 @@ import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.fpr.processor.FilterTemplateParser;
+import com.fortify.cli.aviator.util.FprHandle;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +22,15 @@ import java.util.Optional;
 public class FPRProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(FPRProcessor.class);
-    private final Path fprPath;
-    private final Path extractedPath;
+    private final FprHandle fprHandle;
     private final Map<String, AuditIssue> auditIssueMap;
     private final AuditProcessor auditProcessor;
 
     @Getter
     private FPRInfo fprInfo;
 
-    public FPRProcessor(String fprPath, Path extractedPath, Map<String, AuditIssue> auditIssueMap, AuditProcessor auditProcessor) {
-        this.fprPath = new File(fprPath).toPath();
-        this.extractedPath = extractedPath;
+    public FPRProcessor(FprHandle fprHandle, Map<String, AuditIssue> auditIssueMap, AuditProcessor auditProcessor) {
+        this.fprHandle = fprHandle;
         this.auditIssueMap = auditIssueMap;
         this.auditProcessor = auditProcessor;
     }
@@ -45,11 +44,11 @@ public class FPRProcessor {
     public List<Vulnerability> process(FVDLProcessor fvdlProcessor) {
         logger.info("FPR Processing started");
       try{
-        // The constructor now correctly sets the name and paths.
-        this.fprInfo = new FPRInfo(this.extractedPath, this.fprPath);
+          this.fprInfo = new FPRInfo(this.fprHandle);
 
-        FilterTemplateParser filterTemplateParser = new FilterTemplateParser(extractedPath, auditProcessor);
-        Optional<FilterTemplate> filterTemplateOpt = filterTemplateParser.parseFilterTemplate();
+          FilterTemplateParser filterTemplateParser = new FilterTemplateParser(this.fprHandle, auditProcessor);
+          Optional<FilterTemplate> filterTemplateOpt = filterTemplateParser.parseFilterTemplate();
+
 
         if (filterTemplateOpt.isPresent()) {
             FilterTemplate filterTemplate = filterTemplateOpt.get();

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -24,6 +25,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Command(name = "apply-remediations")
 public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutputCommand  implements IRecordTransformer, IActionCommandResultSupplier {
@@ -46,31 +50,32 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
 
     @SneakyThrows
     private JsonNode processFprRemediations(UnirestInstance unirest, SSCArtifactDescriptor ad, AviatorLoggerImpl logger) {
-        File fprFile = File.createTempFile("aviator_" + ad.getId() + "_" , ".fpr");
-        //Downloading the Audited FPR
+        Path fprPath = Files.createTempFile("aviator_" + ad.getId() + "_", ".fpr");
         try {
             logger.progress("Status: Downloading Audited FPR from SSC");
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_ARTIFACT(ad.getId(), true),
-                    fprFile,
+                    fprPath.toFile(),
                     SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
 
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
-            var remediationMetric =  ApplyAutoRemediationOnSource.applyRemediations(fprFile, sourceCodeDirectory, logger);
-            String status = remediationMetric.appliedRemediations()>0 ? "Remediation-Applied" : "No-Remediation-Applied";
 
-            return AviatorSSCApplyRemediationsHelper.buildResultNode(ad,remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+            try (FprHandle fprHandle = new FprHandle(fprPath)) {
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
 
+                return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
+            }
 
         } finally {
-            if (fprFile.exists() && !fprFile.delete()) {
-                LOG.warn("Failed to delete temporary downloaded FPR file: {}", fprFile.getAbsolutePath());
+            try {
+                Files.deleteIfExists(fprPath);
+            } catch (IOException e) {
+                LOG.warn("Failed to delete temporary downloaded FPR file: {}", fprPath, e);
             }
         }
-
     }
-
 
     @Override
     public boolean isSingular() {return true;}
