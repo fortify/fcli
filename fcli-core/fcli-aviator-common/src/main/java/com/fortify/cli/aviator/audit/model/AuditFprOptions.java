@@ -18,7 +18,7 @@ public class AuditFprOptions {
     private final IAviatorLogger logger;
     private final String tagMappingPath;
     private final String filterSetNameOrId;
-    private final boolean ignoreFilters;
+    private final boolean noFilterSet;
     private final List<String> priorities;
     private final List<String> folderNames;
 }

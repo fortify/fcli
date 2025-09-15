@@ -47,7 +47,7 @@ public class AuditFPR {
 
         // --- STAGE 2: FILTER SELECTION (DELEGATED) ---
         FilterSelection filterSelection = FilterSetSelector.select(
-                parsedData.fprInfo, options.getPriorities(), options.getFilterSetNameOrId(), options.isIgnoreFilters(),
+                parsedData.fprInfo, options.getPriorities(), options.getFilterSetNameOrId(), options.isNoFilterSet(),
                 options.getFolderNames()
         );
 

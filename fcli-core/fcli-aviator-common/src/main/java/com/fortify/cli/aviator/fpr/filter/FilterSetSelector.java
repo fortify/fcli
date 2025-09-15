@@ -1,3 +1,4 @@
+// File: /fcli-aviator-common/src/main/java/com/fortify/cli/aviator/fpr/filter/FilterSetSelector.java
 package com.fortify.cli.aviator.fpr.filter;
 
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
@@ -19,29 +20,10 @@ public final class FilterSetSelector {
 
     private FilterSetSelector() {}
 
-    public static FilterSelection select(FPRInfo fprInfo, List<String> priorities, String filterSetNameOrId, boolean ignoreFilters, List<String> folderNames) {
-        if (ignoreFilters) {
-            LOG.info("User has chosen to ignore all filter sets.");
-            return new FilterSelection(null, null);
-        }
+    public static FilterSelection select(FPRInfo fprInfo, List<String> priorities, String filterSetNameOrId, boolean noFilterSet, List<String> folderNames) {
+        FilterSet selectedFilterSet = resolveFilterSet(fprInfo, priorities, filterSetNameOrId, noFilterSet);
 
-        FilterSet selectedFilterSet;
-
-        // Highest precedence: a direct filter by priority
-        if (priorities != null && !priorities.isEmpty()) {
-            LOG.info("User has specified a priority filter for: {}", priorities);
-            selectedFilterSet = createPriorityFilterSet(priorities);
-        }
-        // Next precedence: a filter by a named/ID'd filter set
-        else if (filterSetNameOrId != null && !filterSetNameOrId.trim().isEmpty()) {
-            LOG.info("Attempting to find user-specified filter set by name or ID: '{}'", filterSetNameOrId);
-            selectedFilterSet = findFilterSetByNameOrId(fprInfo, filterSetNameOrId);
-        }
-        // Lowest precedence: the default enabled filter set in the FPR
-        else {
-            selectedFilterSet = fprInfo.getDefaultEnabledFilterSet().orElse(null);
-        }
-
+        // The 'select' method's main responsibilities are now clear: resolve, validate, and return.
         // Final validation: if the user wants to filter by folder, a filter set must be active.
         if (folderNames != null && !folderNames.isEmpty() && selectedFilterSet == null) {
             throw new AviatorSimpleException("--folder option requires an active filter set. Please specify one with --filter-set or --priority, or ensure a default filter set is enabled in the FPR.");
@@ -55,6 +37,35 @@ public final class FilterSetSelector {
 
         return new FilterSelection(selectedFilterSet, folderNames);
     }
+
+    /**
+     * Resolves which FilterSet to use based on a clear order of precedence.
+     * This encapsulates the "choosing" logic.
+     */
+    private static FilterSet resolveFilterSet(FPRInfo fprInfo, List<String> priorities, String filterSetNameOrId, boolean noFilterSet) {
+        // 1. Highest precedence: A direct filter by --priority. This always overrides other settings.
+        if (priorities != null && !priorities.isEmpty()) {
+            LOG.info("User has specified a priority filter for: {}", priorities);
+            return createPriorityFilterSet(priorities);
+        }
+
+        // 2. Next precedence: An explicit --filterset name or ID.
+        if (filterSetNameOrId != null && !filterSetNameOrId.trim().isEmpty()) {
+            LOG.info("Attempting to find user-specified filter set by name or ID: '{}'", filterSetNameOrId);
+            return findFilterSetByNameOrId(fprInfo, filterSetNameOrId);
+        }
+
+        // 3. Next precedence: The --no-filterset flag to explicitly disable any filter set.
+        if (noFilterSet) {
+            LOG.info("User has chosen to not apply any filter sets.");
+            return null;
+        }
+
+        // 4. Lowest precedence: Fallback to the default enabled filter set in the FPR.
+        LOG.info("No explicit filter set specified; checking for a default enabled filter set in the FPR.");
+        return fprInfo.getDefaultEnabledFilterSet().orElse(null);
+    }
+
     /**
      * Finds a FilterSet by a regex/wildcard name, a partial name, or an exact ID match.
      * If no match is found, it throws a helpful exception listing available filter sets.
