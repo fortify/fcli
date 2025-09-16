@@ -2,20 +2,27 @@ apply plugin: 'java'
 
 dependencies {
 	runtimeOnly project("${fcliAppRef}")
-    // TODO May need to re-enable once patch for #2068 has been released,
-    //      but potentially the necessary dependency for picocli.AutoComplete 
-    //      is already available through the project dependency above. 
 	//runtimeOnly 'info.picocli:picocli-codegen'
 }
 
-task distAutoComplete(type: JavaExec) {
-    dependsOn(createDistDir)
-    description = "Generate fcli autocomplete"
+// Refactored tasks
+ def autoCompleteOutput = layout.buildDirectory.file("dist/fcli_completion")
+
+tasks.register('distAutoComplete', JavaExec) {
+    group = 'distribution'
+    description = 'Generate fcli autocomplete script'
+    dependsOn('createDistDir')
+    inputs.property('rootCommandsClassName', fcliRootCommandsClassName)
+    inputs.files(configurations.runtimeClasspath, configurations.annotationProcessor)
+    outputs.file(autoCompleteOutput)
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
-    main 'picocli.AutoComplete'
-    args fcliRootCommandsClassName, "-f", "--completionScript=${distDir}/fcli_completion"
+    mainClass.set('picocli.AutoComplete')
+    args fcliRootCommandsClassName, '-f', "--completionScript=${autoCompleteOutput.get().asFile.absolutePath}"
 }
 
-task dist {
-    dependsOn distAutoComplete
+tasks.register('dist') {
+    group = 'distribution'
+    description = 'Generate autocomplete distribution artifacts'
+    dependsOn('distAutoComplete')
+    outputs.file(autoCompleteOutput)
 }

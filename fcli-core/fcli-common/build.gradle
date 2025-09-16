@@ -1,36 +1,55 @@
-task zipResources_templates(type: Zip) {
-    destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/common")
-    archiveFileName = "actions.zip"
-    from("${projectDir}/src/main/resources//com/fortify/cli/common/actions/zip") {
-        // TODO We should also sign file; how do we invoke a sign operation from Gradle?
-        filter(line->project.version.startsWith('0.')
-            ? line 
-            : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.*.json", "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"))
+tasks.register('zipResources_templates', Zip) {
+    group = 'build resources'
+    description = 'Package common action template yaml definitions into a zip'
+    def srcDir = layout.projectDirectory.dir("src/main/resources/com/fortify/cli/common/actions/zip")
+    from(srcDir) {
+        filter { String line ->
+            project.version.toString().startsWith('0.')
+                ? line
+                : line.replaceAll(
+                    'https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.*.json',
+                    "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json")
+        }
+        include '*.yaml'
     }
+    destinationDirectory = layout.buildDirectory.dir("generated-zip-resources/com/fortify/cli/common").get().asFile
+    archiveFileName = 'actions.zip'
+    // Inputs/outputs
+    inputs.dir(srcDir)
+    inputs.property('projectVersion', project.version)
+    inputs.property('fcliActionSchemaVersion', fcliActionSchemaVersion)
+    outputs.file(layout.buildDirectory.file("generated-zip-resources/com/fortify/cli/common/actions.zip"))
 }
 
 apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
 
 // Generate build properties and associated resource-config.json file
 ext.buildPropertiesDir = "${buildDir}/generated-build-properties"
-task generateFcliBuildProperties {
+tasks.register('generateFcliBuildProperties') {
+    group = 'build resources'
+    description = 'Generate fcli build properties and native-image resource-config'
+    // Declare inputs (version & schema version & buildTime) and outputs (directory)
+    inputs.property('projectVersion', project.version)
+    inputs.property('fcliActionSchemaVersion', fcliActionSchemaVersion)
+    inputs.property('buildTime', buildTime)
+    def outputDirProvider = layout.buildDirectory.dir("generated-build-properties/com/fortify/cli/common")
+    def resourceConfigOutputDirProvider = layout.buildDirectory.dir("generated-build-properties/META-INF/native-image/fcli-build-properties")
+    outputs.dir(outputDirProvider)
+    outputs.dir(resourceConfigOutputDirProvider)
     doLast {
-        def outputDir = "${buildPropertiesDir}/com/fortify/cli/common"
-        mkdir "${outputDir}"
-        ant.propertyfile(file: "${outputDir}/fcli-build.properties") {
-            entry(key: "projectName", value: "fcli")
-            entry(key: "projectVersion", value: project.version)
-            entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
-            entry(key: "actionSchemaVersion", value: fcliActionSchemaVersion)
+        def outputDir = outputDirProvider.get().asFile
+        outputDir.mkdirs()
+        ant.propertyfile(file: new File(outputDir, 'fcli-build.properties')) {
+            entry(key: 'projectName', value: 'fcli')
+            entry(key: 'projectVersion', value: project.version)
+            entry(key: 'buildDate', value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
+            entry(key: 'actionSchemaVersion', value: fcliActionSchemaVersion)
         }
-        def resourceConfigOutputDir = "${buildPropertiesDir}/META-INF/native-image/fcli-build-properties"
-        mkdir "${resourceConfigOutputDir}"
-        def contents =
-            '{"resources":[\n' +
-            '  {"pattern":"com/fortify/cli/common/fcli-build.properties"}\n' +
-            ']}\n'
-        file("${resourceConfigOutputDir}/resource-config.json").text = contents;
+        def resourceConfigOutputDir = resourceConfigOutputDirProvider.get().asFile
+        resourceConfigOutputDir.mkdirs()
+        def contents = '{"resources":[\n  {"pattern":"com/fortify/cli/common/fcli-build.properties"}\n]}\n'
+        new File(resourceConfigOutputDir, 'resource-config.json').text = contents
         println contents
     }
 }
-sourceSets.main.output.dir buildPropertiesDir, builtBy: generateFcliBuildProperties
+sourceSets.main.output.dir buildPropertiesDir, builtBy: tasks.named('generateFcliBuildProperties')

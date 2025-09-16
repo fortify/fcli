@@ -168,3 +168,33 @@ tasks.named("dependencyUpdates").configure {
     isNonStable(it.candidate.version)
   }
 }
+
+// Reusable helper to register action zip tasks with consistent filtering & up-to-date checks
+ext.registerActionZipTask = { Map cfg ->
+    def taskName = cfg.name
+    def srcRel   = cfg.src  // Path relative to project root
+    def destRel  = cfg.dest // Destination relative path under generated-zip-resources
+    def archive  = cfg.get('archive', 'actions.zip')
+    tasks.register(taskName, Zip) {
+        group = 'build resources'
+        description = cfg.get('description', "Package action yaml definitions (${srcRel}) into ${archive}")
+        def srcDir = layout.projectDirectory.dir(srcRel)
+        from(srcDir) {
+            include '*.yaml'
+            filter { String line ->
+                project.version.toString().startsWith('0.')
+                    ? line
+                    : line.replaceAll(
+                        'https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.*.json',
+                        "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${project.findProperty('fcliActionSchemaVersion') ?: project.ext.fcliActionSchemaVersion}.json")
+            }
+        }
+        destinationDirectory = layout.buildDirectory.dir("generated-zip-resources/${destRel}").get().asFile
+        archiveFileName = archive
+        // Inputs & outputs
+        inputs.dir(srcDir)
+        inputs.property('projectVersion', project.version)
+        inputs.property('fcliActionSchemaVersion', project.findProperty('fcliActionSchemaVersion') ?: project.ext.fcliActionSchemaVersion)
+        outputs.file(layout.buildDirectory.file("generated-zip-resources/${destRel}/${archive}"))
+    }
+}
