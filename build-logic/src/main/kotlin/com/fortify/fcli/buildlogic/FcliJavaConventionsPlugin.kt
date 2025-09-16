@@ -95,6 +95,13 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
         val generateZipResources = tasks.register("generateZipResources")
         val buildTimeActions = tasks.register("buildTimeActions")
 
+        // Auto-register any task named buildTimeAction_* as dependency of buildTimeActions
+        tasks.whenTaskAdded {
+            if (name.startsWith("buildTimeAction_")) {
+                buildTimeActions.configure { dependsOn(this@whenTaskAdded) }
+            }
+        }
+
         // Internal reusable registration function used by auto-discovery & legacy manual registration
         fun registerActionZipTaskInternal(taskName: String, srcRel: String, destRel: String, archive: String = "actions.zip", description: String? = null) {
             val schemaVersion = (findProperty("fcliActionSchemaVersion") ?: "").toString()
