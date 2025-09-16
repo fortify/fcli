@@ -5,6 +5,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
         name = "fod",
+        hidden = true,
         subcommands = {
                 AviatorFoDApplyRemediationsCommand.class
         }

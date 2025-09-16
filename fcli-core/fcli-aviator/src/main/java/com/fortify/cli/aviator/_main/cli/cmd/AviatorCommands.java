@@ -40,7 +40,7 @@ import picocli.CommandLine.Command;
                 AviatorAppCommands.class,
                 AviatorEntitlementCommands.class,
                 AviatorSSCCommands.class,
-                AviatorFoDCommands.class,
+//                AviatorFoDCommands.class,
                 AviatorTokenCommands.class,
         }
 )
