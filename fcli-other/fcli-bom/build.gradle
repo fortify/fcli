@@ -9,17 +9,20 @@ javaPlatform {
 }
 
 dependencies {
-	api platform('com.fasterxml.jackson:jackson-bom:2.18.3')
-	api platform('org.springframework:spring-framework-bom:6.2.4')
+	api platform('com.fasterxml.jackson:jackson-bom:2.20.0')
+	api platform('org.springframework:spring-framework-bom:6.2.11')
 		
 	constraints {
 		// Picocli
+        // TODO Upgrade to 4.7.7+ requires further research as it will cause Gradle build errors
+        //      Also, we're using our own copy of Picocli, which eventually we should replace with
+        //      public release version.
 		api("info.picocli:picocli:4.7.5")
 		api("info.picocli:picocli-codegen:4.7.5")
 		
 		// Annotation-based reflect-config.json generation
 		api('com.formkiq:graalvm-annotations:1.2.0')
-        api('com.formkiq:graalvm-annotations-processor:1.4.2')
+        api('com.formkiq:graalvm-annotations-processor:1.5.0')
         
         // ANSI support
         api("org.fusesource.jansi:jansi:2.4.1")
@@ -31,6 +34,7 @@ dependencies {
         api("ch.qos.logback:logback-classic:1.5.3")
 		
 		// REST client
+        // TODO Upgrade to 4.x, but this requires various code changes
         api('com.konghq:unirest-java:3.14.5')
         api('com.konghq:unirest-objectmapper-jackson:3.14.5')
 		
@@ -49,17 +53,17 @@ dependencies {
         api('org.jasypt:jasypt:1.9.3:lite')
         
         // Test dependencies
-        api 'org.junit.jupiter:junit-jupiter-api:5.10.2'
-        api 'org.junit.jupiter:junit-jupiter-params:5.10.2'
-    	api 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+        api 'org.junit.jupiter:junit-jupiter-api:5.13.4'
+        api 'org.junit.jupiter:junit-jupiter-params:5.13.4'
+    	api 'org.junit.jupiter:junit-jupiter-engine:5.13.4'
 
         // Commons lang3
         api('org.apache.commons:commons-lang3:3.18.0')
         
         // Required for unpacking tar.gz (debricked cli)
-        api('org.apache.commons:commons-compress:1.27.1')
+        api('org.apache.commons:commons-compress:1.28.0')
             
         // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
-        api('org.jsoup:jsoup:1.19.1')
+        api('org.jsoup:jsoup:1.21.2')
 	}
 }

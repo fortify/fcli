@@ -17,6 +17,7 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -25,8 +26,10 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.FoDStartScanResponse;
+import com.fortify.cli.fod.mast_scan.helper.FoDScanConfigMobileDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
+import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -64,6 +67,14 @@ public class FoDScanMobileHelper extends FoDScanHelper {
             .put("releaseName", releaseDescriptor.getReleaseName())
             .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+    }
+
+    public static final FoDScanConfigMobileDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+        GetRequest request = unirest.get(FoDUrls.MOBILE_SCANS + "/scan-setup")
+                .routeParam("relId", relId);
+        JsonNode setup = request.asObject(ObjectNode.class).getBody()
+                .put("applicationName", "test");
+        return JsonHelper.treeToValue(setup, FoDScanConfigMobileDescriptor.class);
     }
 
 }

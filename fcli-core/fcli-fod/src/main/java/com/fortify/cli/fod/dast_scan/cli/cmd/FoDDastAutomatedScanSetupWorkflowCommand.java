@@ -14,32 +14,38 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupWorkflowRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 
-import kong.unirest.HttpRequest;
+import com.fortify.cli.fod.dast_scan.helper.FileUploadResult;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.SetupWorkflow.CMD_NAME) @CommandGroup("*-scan-setup")
-public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSetupCommand {
+public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDDastAutomatedScanSetupCommand {
+    private static final Log LOG = LogFactory.getLog(FoDDastAutomatedScanSetupWorkflowCommand.class);
     @Getter @Mixin private FoDOutputHelperMixins.SetupWorkflow outputHelper;
-
     private final static FoDEnums.DastAutomatedFileTypes dastFileType = FoDEnums.DastAutomatedFileTypes.WorkflowDrivenMacro;
 
-    @Option(names={"--hosts", "--allowed-hosts"}, split=",")
-    private ArrayList<String> allowedHosts;
+    //@Option(names={"--hosts", "--allowed-hosts"}, split=",")
+    //private ArrayList<String> allowedHosts;
     @Option(names = {"--file-id"})
     private Integer workflowMacroFileId;
     @Option(names={"--policy"}, required = true, defaultValue = "Standard")
@@ -60,46 +66,95 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
     private String fodConnectNetwork;
 
     @Override
-    protected String getScanType() {
-        return "DAST Automated";
-    }
-    @Override
     protected String getSetupType() {
         return "Workflow";
     }
 
     @Override
-    protected HttpRequest<?> getBaseRequest(UnirestInstance unirest, String releaseId) {
+    protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
+                             FoDScanConfigDastAutomatedDescriptor currentSetup) {
+        var relId = releaseDescriptor.getReleaseId();
+
         validate();
 
-        boolean requiresNetworkAuthentication = false;
-        Integer fileIdToUse = workflowMacroFileId;
+        LOG.info("Finding appropriate entitlement to use.");
+        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, FoDScanType.Dynamic,
+                entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), assessmentType);
+        var assessmentTypeId = atd.getAssessmentTypeId();
+        var entitlementIdToUse = atd.getEntitlementId();
+        assessmentTypeName = atd.getName();
+        if (currentSetup != null) validateEntitlement(currentSetup, entitlementIdToUse, relId, atd);
+        LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
-        if (uploadFileMixin != null && uploadFileMixin.getFile() != null) {
-            fileIdToUse = uploadFileToUse(unirest, releaseId, FoDScanType.Dynamic, dastFileType.name());
-        }
-        ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros = new ArrayList<>();
-        FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro workflowDrivenMacro =
-                new FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro(fileIdToUse, allowedHosts);
-        workflowDrivenMacros.add(workflowDrivenMacro);
-        FoDScanDastAutomatedSetupWorkflowRequest.NetworkAuthenticationType networkAuthenticationSettings = null;
-        if (networkAuthenticationType != null) {
-            requiresNetworkAuthentication = true;
-            networkAuthenticationSettings = new FoDScanDastAutomatedSetupWorkflowRequest.NetworkAuthenticationType(networkAuthenticationType, username, password);
-        }
-        String timeZoneToUse = FoDScanHelper.validateTimezone(unirest, timezone);
+        FileUploadResult fileUploadResult = handleFileUpload(unirest, relId);
+        ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros =
+                buildWorkflowDrivenMacros(fileUploadResult);
+
+        FoDScanDastAutomatedSetupWorkflowRequest.NetworkAuthenticationType networkAuthenticationSettings =
+                getNetworkAuthenticationSettings();
+
+        String timeZoneToUse = getTimeZoneToUse(unirest);
+
         if (fodConnectNetwork != null) {
-            // if Fortify Connect network site override environmentFacingType to Internal
             environmentFacingType = FoDEnums.DynamicScanEnvironmentFacingType.Internal;
         }
-        
-        FoDScanAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, releaseId, FoDScanType.Dynamic,
-                assessmentType, entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), entitlementId);
+
+        FoDScanAssessmentTypeDescriptor assessmentTypeDescriptor = getEntitlementToUse(unirest, relId);
+
         entitlementId = assessmentTypeDescriptor.getEntitlementId();
-        FoDScanDastAutomatedSetupWorkflowRequest setupRequest = FoDScanDastAutomatedSetupWorkflowRequest.builder()
+
+        FoDScanDastAutomatedSetupWorkflowRequest setupRequest = buildSetupRequest(
+                workflowDrivenMacros, networkAuthenticationSettings, timeZoneToUse, assessmentTypeDescriptor);
+
+        return buildResultNode(unirest, releaseDescriptor, setupRequest, fileUploadResult, workflowDrivenMacros);
+    }
+
+    private FileUploadResult handleFileUpload(UnirestInstance unirest, String relId) {
+        if (uploadFileMixin != null && uploadFileMixin.getFile() != null) {
+            return uploadFileToUse(unirest, relId, FoDScanType.Dynamic, dastFileType.name());
+        }
+        return new FileUploadResult(workflowMacroFileId != null ? workflowMacroFileId : 0, null);
+    }
+
+    private ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> buildWorkflowDrivenMacros(FileUploadResult fileUploadResult) {
+        ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros = new ArrayList<>();
+        workflowDrivenMacros.add(new FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro(
+                fileUploadResult.getFileId(), fileUploadResult.getHosts()));
+        return workflowDrivenMacros;
+    }
+
+    private FoDScanDastAutomatedSetupWorkflowRequest.NetworkAuthenticationType getNetworkAuthenticationSettings() {
+        if (networkAuthenticationType != null) {
+            return new FoDScanDastAutomatedSetupWorkflowRequest.NetworkAuthenticationType(
+                    networkAuthenticationType, username, password);
+        }
+        return null;
+    }
+
+    private String getTimeZoneToUse(UnirestInstance unirest) {
+        return FoDScanHelper.validateTimezone(unirest, timezone);
+    }
+
+    private FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId) {
+        return FoDScanHelper.getEntitlementToUse(
+                unirest, relId, FoDScanType.Dynamic,
+                assessmentType, entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
+                entitlementId != null && entitlementId > 0 ? entitlementId : 0);
+    }
+
+    private FoDScanDastAutomatedSetupWorkflowRequest buildSetupRequest(
+            ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros,
+            FoDScanDastAutomatedSetupWorkflowRequest.NetworkAuthenticationType networkAuthenticationSettings,
+            String timeZoneToUse,
+            FoDScanAssessmentTypeDescriptor assessmentTypeDescriptor) {
+
+        boolean requiresNetworkAuthentication = networkAuthenticationSettings != null;
+
+        return FoDScanDastAutomatedSetupWorkflowRequest.builder()
                 .workflowDrivenMacro(workflowDrivenMacros)
                 .policy(scanPolicy)
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ? environmentFacingType : FoDEnums.DynamicScanEnvironmentFacingType.Internal)
+                .dynamicScanEnvironmentFacingType(environmentFacingType != null ? environmentFacingType :
+                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
                 .timeZone(timeZoneToUse)
                 .requiresNetworkAuthentication(requiresNetworkAuthentication)
                 .networkAuthenticationSettings(networkAuthenticationSettings)
@@ -109,17 +164,32 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
                 .requestFalsePositiveRemoval(requestFalsePositiveRemoval != null ? requestFalsePositiveRemoval : false)
                 .networkName(fodConnectNetwork != null ? fodConnectNetwork : "")
                 .build();
+    }
 
-        return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/workflow-scan-setup")
-                .routeParam("relId", releaseId)
-                .body(setupRequest);
+    private ObjectNode buildResultNode(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
+                                       FoDScanDastAutomatedSetupWorkflowRequest setupRequest,
+                                       FileUploadResult fileUploadResult,
+                                       ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros) {
+        int fileIdToUse = (workflowMacroFileId != null ? workflowMacroFileId : 0);
+        ObjectNode node = FoDScanConfigDastAutomatedHelper.setupScan(unirest, releaseDescriptor, setupRequest,
+                "/workflow-scan-setup").asObjectNode();
+        node.put("scanType", getScanType())
+                .put("setupType", getSetupType())
+                .put("filename", (uploadFileMixin.getFile() != null ? uploadFileMixin.getFile().getName() : "N/A"))
+                .put("entitlementId", entitlementId)
+                .put("fileId", (fileIdToUse != 0 ? fileIdToUse : (fileUploadResult != null ? fileUploadResult.getFileId() : 0)))
+                .put("applicationName", releaseDescriptor.getApplicationName())
+                .put("releaseName", releaseDescriptor.getReleaseName())
+                .put("microserviceName", releaseDescriptor.getMicroserviceName());
+        return node;
     }
 
     private void validate() {
         // check we have a valid workflow file
         if (uploadFileMixin == null || uploadFileMixin.getFile() == null) {
             throw new FcliSimpleException("A valid workflow macro file needs to be provided.");
-        } else {
+        }
+        /*else {
             if (allowedHosts == null || allowedHosts.isEmpty()) {
                 throw new FcliSimpleException("Please specify at least one '--allowed-hosts'.");
             }
@@ -131,7 +201,7 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
                     throw new FcliSimpleException("The 'allowedHosts' options should not include 'http://' or 'https://'.");
                 }
             });
-        }
+        }*/
     }
 
 }

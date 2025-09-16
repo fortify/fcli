@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.microservice.helper;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.AllArgsConstructor;
@@ -25,4 +26,6 @@ import lombok.ToString;
 @Getter @ToString @Builder
 public class FoDMicroserviceUpdateRequest {
     private String microserviceName;
+    private JsonNode attributes;
+    private Boolean autoRequiredAttrs;
 }

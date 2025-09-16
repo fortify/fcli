@@ -74,7 +74,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
     @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption relAttrs;
-    
+
     @ArgGroup(exclusive = false, headingKey = "fcli.fod.release.create.app-options") 
     private FoDReleaseAppCreateOptionsArgGroup appCreateOptions = new FoDReleaseAppCreateOptionsArgGroup();
 
@@ -138,7 +138,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
             if ( StringUtils.isBlank(microserviceName) ) {
                 throw new FcliSimpleException("Microservice name must be specified for microservices application");
             }
-            microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName());
+            microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName(), relAttrs, autoRequiredAttrs);
             msCreated = true;
         }
         return createRelease(unirest, appDescriptor, microserviceDescriptor, msCreated);

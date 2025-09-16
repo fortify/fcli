@@ -12,12 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod.app.attr.helper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,25 +91,43 @@ public class FoDAttributeHelper {
     }
 
     public static JsonNode mergeAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType,
-                                           ArrayList<FoDAttributeDescriptor> current,
-                                           Map<String, String> updates) {
+                                               ArrayList<FoDAttributeDescriptor> current,
+                                               Map<String, String> updates) {
         ArrayNode attrArray = objectMapper.createArrayNode();
         if (updates == null || updates.isEmpty()) return attrArray;
+
+        // Map attribute id to value from updates
         Map<Integer, String> updatesWithId = new HashMap<>();
         for (Map.Entry<String, String> attr : updates.entrySet()) {
-            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
-            updatesWithId.put(Integer.valueOf(attributeDescriptor.getId()), attr.getValue());
+            FoDAttributeDescriptor desc = getAttributeDescriptor(unirest, attr.getKey(), true);
+            updatesWithId.put(desc.getId(), attr.getValue());
         }
-        for (FoDAttributeDescriptor attr : current) {
-            ObjectNode attrObj = objectMapper.createObjectNode();
-            attrObj.put("id", attr.getId());
-            if (updatesWithId.containsKey(Integer.valueOf(attr.getId()))) {
-                attrObj.put("value", updatesWithId.get(Integer.valueOf(attr.getId())));
-            } else {
-                attrObj.put("value", attr.getValue());
+
+        // Track which ids have been processed
+        Set<Integer> processedIds = new HashSet<>();
+
+        // Add current attributes, updating values if present in updates
+        if (current != null) {
+            for (FoDAttributeDescriptor attr : current) {
+                int id = attr.getId();
+                ObjectNode attrObj = objectMapper.createObjectNode();
+                attrObj.put("id", id);
+                attrObj.put("value", updatesWithId.getOrDefault(id, attr.getValue()));
+                attrArray.add(attrObj);
+                processedIds.add(id);
             }
-            attrArray.add(attrObj);
         }
+
+        // Add new attributes from updates not already in current
+        for (Map.Entry<Integer, String> entry : updatesWithId.entrySet()) {
+            if (!processedIds.contains(entry.getKey())) {
+                ObjectNode attrObj = objectMapper.createObjectNode();
+                attrObj.put("id", entry.getKey());
+                attrObj.put("value", entry.getValue());
+                attrArray.add(attrObj);
+            }
+        }
+
         return attrArray;
     }
 

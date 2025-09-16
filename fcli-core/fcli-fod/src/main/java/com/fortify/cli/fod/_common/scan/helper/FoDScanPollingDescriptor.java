@@ -28,6 +28,7 @@ public class FoDScanPollingDescriptor extends JsonNodeHolder {
     private String TenantId;
     private String AnalysisStatusId;
     private String OpenSourceStatusId;
+    private String QueuePositionWithinApplication;
     private String AnalysisStatusTypeValue;
     private String AnalysisStatusReasonId;
     private String AnalysisStatusReason;

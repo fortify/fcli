@@ -23,5 +23,9 @@ public class FoDInProgressScanActionTypeMixins {
         @Option(names = {"--in-progress", "--in-progress-action"}, required = false, descriptionKey = "fcli.fod.scan.in-progress-action")
         @Getter private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
+    public static class DefaultOption {
+        @Option(names = {"--in-progress", "--in-progress-action"}, required = false, defaultValue = "DoNotStartScan", descriptionKey = "fcli.fod.scan.in-progress-action")
+        @Getter private FoDEnums.InProgressScanActionType inProgressScanActionType;
+    }
 
 }

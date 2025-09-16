@@ -43,12 +43,12 @@ public abstract class AbstractFoDScanStartCommand extends AbstractFoDJsonNodeOut
     protected abstract FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor);
 
     @Override
-    public final String getActionCommandResult() {
+    public String getActionCommandResult() {
         return "STARTED";
     }
 
     @Override
-    public final boolean isSingular() {
+    public boolean isSingular() {
         return true;
     }
 }
