@@ -101,16 +101,16 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
             val srcRel = cfg["src"] as String
             val destRel = cfg["dest"] as String
             val archive = cfg["archive"] as? String ?: "actions.zip"
-            tasks.register<Zip>(taskName) {
+            val schemaVersion = (findProperty("fcliActionSchemaVersion") ?: "").toString()
+            val srcDir = layout.projectDirectory.dir(srcRel)
+            val zipTask = tasks.register<Zip>(taskName) {
                 group = "build resources"
                 description = (cfg["description"] as? String)
                     ?: "Package action yaml definitions ($srcRel) into $archive"
-                val srcDir = layout.projectDirectory.dir(srcRel)
                 from(srcDir) {
                     include("*.yaml")
-                    filter {
-                        val schemaVersion = (findProperty("fcliActionSchemaVersion") ?: "").toString()
-                        if (project.version.toString().startsWith("0.")) it else it.replace(
+                    filter { line: String ->
+                        if (project.version.toString().startsWith("0.")) line else line.replace(
                             Regex("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.*.json"),
                             "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-$schemaVersion.json"
                         )
@@ -120,10 +120,12 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 archiveFileName.set(archive)
                 inputs.dir(srcDir)
                 inputs.property("projectVersion", project.version)
-                inputs.property("fcliActionSchemaVersion", findProperty("fcliActionSchemaVersion") ?: "")
+                inputs.property("fcliActionSchemaVersion", schemaVersion)
                 outputs.file(layout.buildDirectory.file("generated-zip-resources/$destRel/$archive"))
-                generateZipResources.configure { dependsOn(this@register) }
             }
+            // Link to aggregator outside of task configuration block to avoid nested configuration issues
+            tasks.named("generateZipResources").configure { dependsOn(zipTask) }
+            zipTask
         })
 
         // Resource-config generation incremental
