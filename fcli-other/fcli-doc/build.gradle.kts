@@ -90,7 +90,6 @@ val generateAsciiDocManPage = tasks.register<JavaExec>("generateAsciiDocManPage"
         project.javaexec {
             classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
             systemProperties(docProperties)
-            jvmArgs("--add-opens=java.base/java.io=ALL-UNNAMED", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
             mainClass.set("picocli.codegen.docgen.manpage.ManPageGenerator")
             args(fcliRootCommandsClassName, "--outdir=${asciiDocManPageOutDir.get().asFile}", "-v")
         }

@@ -50,19 +50,6 @@ allprojects {
             releaseAssetsDir.get().asFile.mkdirs()
         }
     }
-    // Add JVM argument to suppress JDK IO subsystem warning
-    tasks.withType<JavaExec>().configureEach {
-        val addOpens = listOf("--add-opens=java.base/java.io=ALL-UNNAMED", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
-        val current = (jvmArgs ?: listOf()).toMutableList()
-        addOpens.forEach { if (!current.contains(it)) current += it }
-        jvmArgs = current
-    }
-    tasks.withType<Test>().configureEach {
-        jvmArgs(
-            "--add-opens=java.base/java.io=ALL-UNNAMED",
-            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
-        )
-    }
 }
 
 // Root tasks mirroring previous Groovy implementation
@@ -120,4 +107,14 @@ tasks.register("distAll") {
         "distFcliCompletion",
         ":fcli-other:fcli-doc:dist"
     )
+}
+
+// Aggregate root build task (root project has no Java/Base plugin applied)
+tasks.register("build") {
+    group = "build"
+    description = "Aggregate build for all subprojects with a build task and copy fcli.jar to build/libs"
+    // Collect only subprojects that actually have a 'build' task (skip synthetic container projects like :fcli-core)
+    val buildTaskPaths = subprojects.mapNotNull { sp -> sp.tasks.findByName("build")?.path }
+    dependsOn(buildTaskPaths)
+    dependsOn("collectAppJar")
 }
