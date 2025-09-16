@@ -10,6 +10,7 @@ import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCAuditHelper;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetOptionMixin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,9 +48,9 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
+    @Mixin private SSCIssueFilterSetOptionMixin filterSetOptions;
     @Option(names = {"--app"}) private String appName;
     @Option(names = {"--tag-mapping"}) private String tagMapping;
-    @Option(names = {"--filterset", "--fs"}) private String filterSetNameOrId;
     @Option(names = {"--no-filterset"}) private boolean noFilterSet;
     @Option(names = {"--priority", "-p"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> priorities;
     @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
@@ -80,15 +81,18 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                                         .sscAppName(av.getApplicationName())
                                         .sscAppVersion(av.getVersionName())
                                         .logger(logger)
-                                        .tagMappingPath(tagMapping).filterSetNameOrId(filterSetNameOrId)
-                                        .noFilterSet(noFilterSet)                                        .priorities(priorities).folderNames(folderNames)
+                                        .tagMappingPath(tagMapping)
+                                        .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
+                                        .noFilterSet(noFilterSet)
+                                        .priorities(priorities)
+                                        .folderNames(folderNames)
                                         .build());
             String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
             logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
 
             String artifactId = "UPLOAD_SKIPPED";
             if (auditResult.getUpdatedFile() != null) {
-                artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av, logger);
+                artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
                 Files.deleteIfExists(auditResult.getUpdatedFile().toPath());
             }
 
@@ -120,7 +124,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     }
 
     @SneakyThrows
-    private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) {
+    private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av) {
         JsonNode uploadResponse = SSCFileTransferHelper.upload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr,
                 SSCFileTransferHelper.ISSCAddUploadTokenFunction.QUERYSTRING_MAT, JsonNode.class);
         return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
