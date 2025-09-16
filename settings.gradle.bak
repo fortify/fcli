@@ -1,0 +1,3 @@
+// Deprecated: migrated to settings.gradle.kts
+// rootProject.name="fcli"
+// Includes now declared in settings.gradle.kts

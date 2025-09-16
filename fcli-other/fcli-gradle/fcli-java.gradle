@@ -135,26 +135,41 @@ sourceSets.main.output.dir generatedActionOutputResourcesDir, builtBy: buildTime
     
 // Generate resource-config.json
 ext.generatedResourceConfigDir = "${buildDir}/generated-resource-config"
+// Ensure zip resources dir exists to satisfy input validation
+if ( !file(generatedZipResourcesDir).exists() ) { file(generatedZipResourcesDir).mkdirs() }
+// Re-register task unconditionally (safe even if already exists in this script context)
 tasks.register('generateResourceConfig') {
     dependsOn = [generateZipResources, buildTimeActions]
-	doLast {
-		def outputDir = "${generatedResourceConfigDir}/META-INF/native-image/fcli-generated/${project.name}";
-		mkdir "${outputDir}"
-		def entries = [];
-		fileTree(dir: 'src/main/resources', excludes: ['**/i18n/**', 'META-INF/**', '**/zip/**'])
-			.visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
-        fileTree(dir: generatedZipResourcesDir)
-            .visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
-        fileTree(dir: generatedActionOutputResourcesDir)
-            .visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
-		if ( entries.size>0 ) {
-			def contents = '{"resources":[' + entries.join(",") + '\n]}';
-			file("${outputDir}/resource-config.json").text = contents;
-			println contents
-		}
-	}
+    // Declare inputs & outputs explicitly for caching
+    inputs.files(project.provider { file(generatedZipResourcesDir).exists() ? project.fileTree(generatedZipResourcesDir) : project.files() })
+    inputs.files(project.provider { def dir=file(generatedActionOutputResourcesDir); dir.exists()?project.fileTree(dir):project.files() })
+    // Optional main resources directory
+    inputs.files(project.provider { def dir=file('src/main/resources'); dir.exists()?project.fileTree(dir){ exclude '**/i18n/**','META-INF/**','**/zip/**'}:project.files() })
+    def outputDirProvider = layout.buildDirectory.dir("generated-resource-config/META-INF/native-image/fcli-generated/${project.name}")
+    outputs.dir(outputDirProvider)
+    doLast {
+        def entries = []
+        def mainResDir = file('src/main/resources')
+        if ( mainResDir.exists() ) {
+            fileTree(dir: 'src/main/resources', excludes: ['**/i18n/**', 'META-INF/**', '**/zip/**']).visit { e -> if (!e.isDirectory()) { entries << '\n  {"pattern":"' + e.relativePath + '"}' } }
+        }
+        if ( file(generatedZipResourcesDir).exists() ) {
+            fileTree(dir: generatedZipResourcesDir).visit { e -> if (!e.isDirectory()) { entries << '\n  {"pattern":"' + e.relativePath + '"}' } }
+        }
+        def gaorDir = file(generatedActionOutputResourcesDir)
+        if ( gaorDir.exists() ) {
+            fileTree(dir: generatedActionOutputResourcesDir).visit { e -> if (!e.isDirectory()) { entries << '\n  {"pattern":"' + e.relativePath + '"}' } }
+        }
+        if (!entries.isEmpty()) {
+            def contents = '{"resources":[' + entries.join(",") + '\n]}'
+            def outputDir = outputDirProvider.get().asFile
+            outputDir.mkdirs()
+            def outputFile = new File(outputDir, 'resource-config.json')
+            if (!outputFile.exists() || outputFile.text != contents) { outputFile.text = contents }
+        }
+    }
 }
-sourceSets.main.output.dir generatedResourceConfigDir, builtBy: generateResourceConfig
+sourceSets.main.output.dir generatedResourceConfigDir, builtBy: tasks.named('generateResourceConfig')
 
 
 def isNonStable = { String version ->
