@@ -95,18 +95,14 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
         val generateZipResources = tasks.register("generateZipResources")
         val buildTimeActions = tasks.register("buildTimeActions")
 
-        // Expose helper for other builds
-        project.extensions.extraProperties.set("registerActionZipTask", { cfg: Map<String, Any?> ->
-            val taskName = cfg["name"] as String
-            val srcRel = cfg["src"] as String
-            val destRel = cfg["dest"] as String
-            val archive = cfg["archive"] as? String ?: "actions.zip"
+        // Internal reusable registration function used by auto-discovery & legacy manual registration
+        fun registerActionZipTaskInternal(taskName: String, srcRel: String, destRel: String, archive: String = "actions.zip", description: String? = null) {
             val schemaVersion = (findProperty("fcliActionSchemaVersion") ?: "").toString()
             val srcDir = layout.projectDirectory.dir(srcRel)
+            if (!srcDir.asFile.exists()) return
             val zipTask = tasks.register<Zip>(taskName) {
                 group = "build resources"
-                description = (cfg["description"] as? String)
-                    ?: "Package action yaml definitions ($srcRel) into $archive"
+                this.description = description ?: "Package action yaml definitions ($srcRel) into $archive"
                 from(srcDir) {
                     include("*.yaml")
                     filter { line: String ->
@@ -123,10 +119,40 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 inputs.property("fcliActionSchemaVersion", schemaVersion)
                 outputs.file(layout.buildDirectory.file("generated-zip-resources/$destRel/$archive"))
             }
-            // Link to aggregator outside of task configuration block to avoid nested configuration issues
             tasks.named("generateZipResources").configure { dependsOn(zipTask) }
-            zipTask
+        }
+
+        // Expose legacy helper (still used by older module scripts if any remain)
+        project.extensions.extraProperties.set("registerActionZipTask", { cfg: Map<String, Any?> ->
+            registerActionZipTaskInternal(
+                taskName = cfg["name"] as String,
+                srcRel = cfg["src"] as String,
+                destRel = cfg["dest"] as String,
+                archive = (cfg["archive"] as? String) ?: "actions.zip",
+                description = cfg["description"] as? String
+            )
         })
+
+        // Auto-discover action definition directories: src/main/resources/com/fortify/cli/<moduleName>/actions/zip
+        run {
+            val cliRoot = project.file("src/main/resources/com/fortify/cli")
+            if (cliRoot.isDirectory) {
+                val discovered = cliRoot.listFiles()?.filter { dir ->
+                    dir.isDirectory && project.file("${dir.path}/actions/zip").isDirectory
+                }?.sortedBy { it.name } ?: emptyList()
+                discovered.forEach { moduleDir ->
+                    val name = moduleDir.name
+                    val srcRel = "src/main/resources/com/fortify/cli/${name}/actions/zip"
+                    val destRel = "com/fortify/cli/${name}"
+                    val defaultTaskName = if (discovered.size == 1) "zipResources_actions" else "zipResources_${name}" // avoid clashes if multiple
+                    // Only register if there is at least one yaml file to include
+                    val hasYaml = project.fileTree(project.file(srcRel)) { include("*.yaml") }.files.any()
+                    if (hasYaml && tasks.names.none { it == defaultTaskName }) {
+                        registerActionZipTaskInternal(defaultTaskName, srcRel, destRel)
+                    }
+                }
+            }
+        }
 
         // Resource-config generation incremental
         tasks.register("generateResourceConfig") {

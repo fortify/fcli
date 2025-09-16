@@ -1,15 +1,5 @@
 plugins { id("fcli.module-conventions") }
 
-@Suppress("UNCHECKED_CAST")
-val registerActionZipTask = project.extra["registerActionZipTask"] as (Map<String, Any?>) -> Unit
-
-// Zip resources (actions)
-registerActionZipTask(mapOf(
-    "name" to "zipResources_actions",
-    "src" to "src/main/resources/com/fortify/cli/generic_action/actions/zip",
-    "dest" to "com/fortify/cli/generic_action"
-))
-
 // Build-time action to generate CI env vars output
 val buildTimeActionCiEnvvars = tasks.register<JavaExec>("buildTimeAction_ci_envvars") {
     group = "build resources"
