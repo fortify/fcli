@@ -52,7 +52,16 @@ allprojects {
     }
     // Add JVM argument to suppress JDK IO subsystem warning
     tasks.withType<JavaExec>().configureEach {
-        jvmArgs = (jvmArgs ?: listOf()) + "--add-opens=java.base/java.io=ALL-UNNAMED"
+        val addOpens = listOf("--add-opens=java.base/java.io=ALL-UNNAMED", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
+        val current = (jvmArgs ?: listOf()).toMutableList()
+        addOpens.forEach { if (!current.contains(it)) current += it }
+        jvmArgs = current
+    }
+    tasks.withType<Test>().configureEach {
+        jvmArgs(
+            "--add-opens=java.base/java.io=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+        )
     }
 }
 
@@ -75,7 +84,7 @@ tasks.register<Copy>("collectAppJar") {
 }
 
 tasks.register<Copy>("dist") {
-    dependsOn("createDistDir")
+    dependsOn("createDistDir", "distFcliCompletion")
     from(projectDir) { include("LICENSE.txt") }
     into(layout.buildDirectory.dir("dist/release-assets"))
 }
@@ -88,8 +97,17 @@ tasks.register<Copy>("distFcliCompletion") {
     group = "distribution"
     description = "Copy fcli_completion to dist directory"
     dependsOn(":fcli-other:fcli-autocomplete:dist")
-    from("fcli-other/fcli-autocomplete/build/dist/fcli_completion")
+    val srcFile = providers.provider { file("fcli-other/fcli-autocomplete/build/dist/fcli_completion") }
+    from(srcFile)
     into(layout.buildDirectory.dir("dist"))
+    // Declare inputs/outputs for up-to-date checking
+    inputs.file(srcFile)
+    outputs.file(layout.buildDirectory.file("dist/fcli_completion"))
+    doFirst {
+        if (!srcFile.get().exists()) {
+            throw GradleException("Expected autocomplete script not found: ${'$'}{srcFile.get()} - ensure :fcli-other:fcli-autocomplete:dist ran successfully")
+        }
+    }
 }
 
 tasks.register("distAll") {
