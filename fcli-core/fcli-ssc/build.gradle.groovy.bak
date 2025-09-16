@@ -1,7 +1,0 @@
-apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
-
-registerActionZipTask(
-    name: 'zipResources_actions',
-    src: 'src/main/resources/com/fortify/cli/ssc/actions/zip',
-    dest: 'com/fortify/cli/ssc'
-)

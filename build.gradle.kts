@@ -31,7 +31,6 @@ allprojects {
     val releaseAssetsDir = distDir.map { it.dir("release-assets") }
     extra["distDir"] = distDir.get().asFile.absolutePath
     extra["releaseAssetsDir"] = releaseAssetsDir.get().asFile.absolutePath
-    extra["sharedGradleScriptsDir"] = "${rootDir}/${property("sharedGradleScriptsRelativeDir")}"
     extra["gradleHelpersLocation"] = "https://raw.githubusercontent.com/fortify/shared-gradle-helpers/1.8"
 
     // Derive *RefDir properties for every *Ref matching refPatterns
