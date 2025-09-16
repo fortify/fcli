@@ -41,9 +41,7 @@ val generateFcliBuildProperties = tasks.register("generateFcliBuildProperties") 
     description = "Generate fcli build properties and native-image resource-config"
     val outputDirProvider = layout.buildDirectory.dir("generated-build-properties/com/fortify/cli/common")
     val resourceConfigOutputDirProvider = layout.buildDirectory.dir("generated-build-properties/META-INF/native-image/fcli-build-properties")
-    // Capture providers to avoid querying project in task action
-    val projectVersionProvider = providers.provider { project.version.toString() }
-    inputs.property("projectVersion", projectVersionProvider)
+    inputs.property("projectVersion", project.version)
     inputs.property("fcliActionSchemaVersion", fcliActionSchemaVersion)
     inputs.property("buildTime", buildTime.toString())
     outputs.dir(outputDirProvider)
@@ -53,7 +51,7 @@ val generateFcliBuildProperties = tasks.register("generateFcliBuildProperties") 
         val propsFile = outputDir.resolve("fcli-build.properties")
         val propsContent = buildString {
             appendLine("projectName=fcli")
-            appendLine("projectVersion=${projectVersionProvider.get()}")
+            appendLine("projectVersion=${project.version}")
             val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             appendLine("buildDate=${buildTime.format(fmt)}")
             appendLine("actionSchemaVersion=$fcliActionSchemaVersion")
