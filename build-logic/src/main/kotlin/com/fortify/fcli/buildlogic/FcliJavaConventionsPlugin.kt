@@ -66,7 +66,9 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
         }
 
         tasks.withType(org.gradle.api.tasks.compile.JavaCompile::class).configureEach {
-            options.compilerArgs.addAll(listOf("-Averbose=true", "-Adisable.reflect.config=true"))
+            if (name == "compileJava") {
+                options.compilerArgs.addAll(listOf("-Averbose=true", "-Adisable.reflect.config=true"))
+            }
         }
 
         tasks.withType(org.gradle.api.tasks.testing.Test::class).configureEach {
