@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 public class FoDScanConfigMobileSetupRequest {
     private Integer assessmentTypeId;
     private String auditPreferenceType;
+    private String entitlementFrequencyType;
     private String frameworkType;
     private String platformType;
     private String timeZone;

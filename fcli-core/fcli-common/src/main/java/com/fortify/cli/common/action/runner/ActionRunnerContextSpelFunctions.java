@@ -22,12 +22,21 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
 
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 
 @Reflectable @RequiredArgsConstructor
 @SpelFunctionPrefix("action.")
 public final class ActionRunnerContextSpelFunctions {
     private final ActionRunnerContext ctx;
+    private final static String RUN_ID = UUID.randomUUID().toString();
+    
+    @SpelFunction(cat = workflow, desc = "This function returns the current fcli run id, which uniquely represents the current fcli invocation. Different invocations of the fcli executable are guaranteed to have a different, unique run id. Within a single fcli executable invocation, the run id remains the same, even across run.fcli instructions and any other internal fcli command invocations.", 
+            returns = "Current fcli run id in UUID format")
+    public final String runID() {
+        return RUN_ID;
+    }
     
     @SpelFunction(cat=workflow, returns="String listing non-blank command-line options copied from the given `cli.options` group")
     public final String copyParametersFromGroup(

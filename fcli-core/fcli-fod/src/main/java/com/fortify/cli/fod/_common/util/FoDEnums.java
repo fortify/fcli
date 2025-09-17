@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 // TODO Any good reason for having one big class defining many enums? Was this somehow generated from FoD?
 // TODO Are all these enums actually used?
@@ -142,42 +141,31 @@ public class FoDEnums {
     }
 
     public enum InProgressScanActionType {
-        DoNotStartScan(0),
-        CancelScanInProgress(1),
-        Queue(2);
+        DoNotStartScan(0, "DoNotStartScan"),
+        CancelScanInProgress(1, "CancelScanInProgress"),
+        Queue(2, "Queue");
 
-        private final int _val;
+        @Getter
+        private final int value;
+        private final String displayName;
 
-        InProgressScanActionType(int val) {
-            this._val = val;
+        InProgressScanActionType(int value, String displayName) {
+            this.value = value;
+            this.displayName = displayName;
         }
 
-        public int getValue() {
-            return this._val;
-        }
-
+        @Override
         public String toString() {
-            switch (this._val) {
-                case 1:
-                    return "CancelInProgressScan";
-                case 2:
-                    return "Queue";
-                case 0:
-                default:
-                    return "DoNotStartScan";
-            }
+            return displayName;
         }
 
-        public static InProgressScanActionType fromInt(int val) {
-            switch (val) {
-                case 2:
-                    return Queue;
-                case 1:
-                    return CancelScanInProgress;
-                case 0:
-                default:
-                    return DoNotStartScan;
+        public static InProgressScanActionType fromInt(int value) {
+            for (InProgressScanActionType type : values()) {
+                if (type.value == value) {
+                    return type;
+                }
             }
+            return DoNotStartScan;
         }
     }
 

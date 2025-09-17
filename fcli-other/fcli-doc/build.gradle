@@ -7,8 +7,8 @@ dependencies {
     implementation project("${fcliCommonRef}")
 	implementation project("${fcliAppRef}")
 	runtimeOnly 'info.picocli:picocli-codegen'
-    implementation 'com.github.victools:jsonschema-generator:4.35.0'
-    implementation 'com.github.victools:jsonschema-module-jackson:4.35.0'
+    implementation 'com.github.victools:jsonschema-generator:4.38.0'
+    implementation 'com.github.victools:jsonschema-module-jackson:4.38.0'
 }
 
 ext {
@@ -16,26 +16,43 @@ ext {
 	staticAsciiDocSrcDir      = "${docsSrcDir}/asciidoc/static"
     versionedAsciiDocSrcDir   = "${docsSrcDir}/asciidoc/versioned"
 	asciiDocTemplatesSrcDir   = "${docsSrcDir}/asciidoc/templates"
-	docsBuildDir              = "${buildDir}/generated-docs"
-	manpageAsciiDocDir        = "${docsBuildDir}/manpage/asciidoc"
-	manpageOutputDir          = "${docsBuildDir}/manpage/output"
-	htmlAsciiDocDir           = "${docsBuildDir}/html/asciidoc"
-	htmlOutputDir             = "${docsBuildDir}/html/output"
-	ghPagesStaticOutputDir    = "${docsBuildDir}/gh-pages/static/output"
-    schemaOutputDir           = "${ghPagesStaticOutputDir}/schemas"
-    actionSchemaOutputDir     = "${schemaOutputDir}/action"
-	ghPagesVersionedOutputDir = "${docsBuildDir}/gh-pages/versioned/output"
+	docsOutDir                = "${buildDir}/generated-docs"
+    asciiDocOutDir            = "${docsOutDir}/asciidoc"
+	asciiDocManPageOutDir     = "${asciiDocOutDir}/manpage"
+	manpageOutDir             = "${docsOutDir}/manpage/output"
+	htmlOutDir                = "${docsOutDir}/html"
+	ghPagesOutDir             = "${docsOutDir}/gh-pages"
+    ghPagesVersionedOutDir    = "${ghPagesOutDir}/versioned"
+    ghPagesStaticOutDir       = "${ghPagesOutDir}/static"
+    actionSchemaOutDir        = "${ghPagesStaticOutDir}/schemas/action"
+}
+
+task prepare {
+    dependsOn(build)
+    doLast {
+        [docsOutDir, asciiDocOutDir, asciiDocManPageOutDir, manpageOutDir, htmlOutDir, ghPagesOutDir, actionSchemaOutDir].forEach {
+            d -> mkdir d
+        }
+    }
 }
 
 task generateActionSchema(type: JavaExec) {
-    dependsOn('build')
+    dependsOn(prepare)
     classpath(sourceSets.main.runtimeClasspath, configurations.runtimeClasspath)
     main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
     // Pass whether this is an (fcli) development release, schema version and output dir
-    args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutputDir
+    args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutDir
 }
 
-task generateManpageAsciiDoc(type: JavaExec) {
+task generateAsciiDocActionDevelopment(type: JavaExec) {
+    dependsOn(prepare)
+    classpath = sourceSets.main.runtimeClasspath
+    main 'com.fortify.cli.app.FortifyCLI'
+    args 'action', 'run', '--on-unsigned=ignore', '--on-invalid-version=ignore', "${projectDir}/src/actions/generate-action-dev-doc.yaml", "--file=${asciiDocOutDir}/action-development.adoc"
+}
+
+task generateAsciiDocManPage(type: JavaExec) {
+    dependsOn(prepare)
     // Outer task collects resource bundle properties by executing FortifyCLIResourceBundlePropertiesHelper,
     // which are then passed as system properties to the man page generator. This allows generated man pages
     // to list property values that are usually generated at fcli runtime.
@@ -55,79 +72,67 @@ task generateManpageAsciiDoc(type: JavaExec) {
           classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
           systemProperties = docProperties
           main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-          args fcliRootCommandsClassName, "--outdir=${manpageAsciiDocDir}", "-v"
+          args fcliRootCommandsClassName, "--outdir=${asciiDocManPageOutDir}", "-v"
       }
     }
 }
 
+task generateAsciiDocGenericActions(type: JavaExec) {
+    dependsOn(generateAsciiDocManPage)
+    group = "Documentation"
+    description = "Generate Generic Action AsciiDoc"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    main 'com.fortify.cli.app.FortifyCLI'
+    args "action", "asciidoc", "-d=${asciiDocManPageOutDir}", "-f=${asciiDocOutDir}/generic-actions.adoc"
+}
+
+task generateAsciiDocSSCActions(type: JavaExec) {
+    dependsOn(generateAsciiDocManPage)
+    group = "Documentation"
+    description = "Generate SSC Action AsciiDoc"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    main 'com.fortify.cli.app.FortifyCLI'
+    args "ssc", "action", "asciidoc", "-d=${asciiDocManPageOutDir}", "-f=${asciiDocOutDir}/ssc-actions.adoc"
+}
+
+task generateAsciiDocFoDActions(type: JavaExec) {
+    dependsOn(generateAsciiDocManPage)
+    group = "Documentation"
+    description = "Generate FoD Action AsciiDoc"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    main 'com.fortify.cli.app.FortifyCLI'
+    args "fod", "action", "asciidoc", "-d=${asciiDocManPageOutDir}", "-f=${asciiDocOutDir}/fod-actions.adoc"
+}
+
+task generateAsciiDocAll(type: Copy) {
+    dependsOn(generateAsciiDocActionDevelopment, generateAsciiDocManPage, generateAsciiDocGenericActions, generateAsciiDocSSCActions, generateAsciiDocFoDActions)
+	into "${asciiDocOutDir}"
+	from("${versionedAsciiDocSrcDir}") {
+        include "*.adoc"
+    }
+}
 
 task generateManpageOutput(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	dependsOn(generateManpageAsciiDoc)
-	forkOptions {
+    dependsOn(generateAsciiDocAll)
+    forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
-    sourceDir = file("${manpageAsciiDocDir}")  
-    outputDir = file("${manpageOutputDir}")
+    sourceDir = file("${asciiDocManPageOutDir}")
+    outputDir = file("${manpageOutDir}")
     logDocuments = true
     outputOptions {
         backends = ['manpage']
     }
 }
 
-task prepareAsciiDocForVersionedHtml(type: Copy) {
-	dependsOn 'generateManpageAsciiDoc'
-	into "${htmlAsciiDocDir}"
-	from("${versionedAsciiDocSrcDir}") {
-        include "*.adoc"
-    }
-    from("${manpageAsciiDocDir}") {
-        include "*.adoc"
-		into "manpage"
-    }
-}
-
-task generateActionDevDoc(type: JavaExec) {
-    dependsOn 'build', 'prepareAsciiDocForVersionedHtml'
-    classpath = sourceSets.main.runtimeClasspath
-    main 'com.fortify.cli.app.FortifyCLI'
-    args 'action', 'run', '--on-unsigned=ignore', '--on-invalid-version=ignore', "${projectDir}/src/actions/generate-action-dev-doc.yaml", "--file=${htmlAsciiDocDir}/action-development.adoc"
-}
-
-task generateGenericActionAsciiDoc(type: JavaExec) {
-    dependsOn(generateManpageAsciiDoc, prepareAsciiDocForVersionedHtml)
-    group = "Documentation"
-    description = "Generate Generic Action AsciiDoc"
-    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
-    main 'com.fortify.cli.app.FortifyCLI'
-    args "action", "asciidoc", "-d=${manpageAsciiDocDir}", "-f=${htmlAsciiDocDir}/generic-actions.adoc"
-}
-
-task generateSSCActionAsciiDoc(type: JavaExec) {
-    dependsOn(generateManpageAsciiDoc, prepareAsciiDocForVersionedHtml)
-    group = "Documentation"
-    description = "Generate SSC Action AsciiDoc"
-    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
-    main 'com.fortify.cli.app.FortifyCLI'
-    args "ssc", "action", "asciidoc", "-d=${manpageAsciiDocDir}", "-f=${htmlAsciiDocDir}/ssc-actions.adoc"
-}
-
-task generateFoDActionAsciiDoc(type: JavaExec) {
-    dependsOn(generateManpageAsciiDoc, prepareAsciiDocForVersionedHtml)
-    group = "Documentation"
-    description = "Generate FoD Action AsciiDoc"
-    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
-    main 'com.fortify.cli.app.FortifyCLI'
-    args "fod", "action", "asciidoc", "-d=${manpageAsciiDocDir}", "-f=${htmlAsciiDocDir}/fod-actions.adoc"
-}
-
 // Generate HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml
 task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-    dependsOn(prepareAsciiDocForVersionedHtml, generateActionDevDoc, generateGenericActionAsciiDoc, generateSSCActionAsciiDoc, generateFoDActionAsciiDoc)
+    dependsOn(generateAsciiDocAll)
     forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
-    sourceDir = file("${htmlAsciiDocDir}")
-    outputDir = file("${htmlOutputDir}")
+    sourceDir = file("${asciiDocOutDir}")
+    outputDir = file("${htmlOutDir}")
     logDocuments = true
     outputOptions {
         backends = ['html5']
@@ -150,12 +155,12 @@ task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) 
 // Generate Jekyll HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml,
 // to be deployed to a version-specific directory on the fcli gh-pages site
 task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	dependsOn(prepareAsciiDocForVersionedHtml)
+	dependsOn(generateAsciiDocAll)
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
-    sourceDir = file("${htmlAsciiDocDir}")
-    outputDir = file("${ghPagesVersionedOutputDir}")
+    sourceDir = file("${asciiDocOutDir}")
+    outputDir = file("${ghPagesVersionedOutDir}")
     logDocuments = true
     outputOptions {
         backends = ['html5']
@@ -183,7 +188,7 @@ task asciiDoctorStaticJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
     sourceDir = file("${staticAsciiDocSrcDir}")
-    outputDir = file("${ghPagesStaticOutputDir}")
+    outputDir = file("${ghPagesStaticOutDir}")
     logDocuments = true
     outputOptions {
         backends = ['html5']
@@ -208,7 +213,7 @@ task distDocsVersionedHtml(type: Zip) {
     dependsOn 'asciiDoctorVersionedHtml'
     archiveFileName = "docs-html.zip"
     destinationDirectory = file("$releaseAssetsDir")
-    from layout.buildDirectory.dir("${htmlOutputDir}")
+    from layout.buildDirectory.dir("${htmlOutDir}")
 }
 
 // Zip the output of the generateManpageOutput task into ${releaseAssetsDir}
@@ -216,23 +221,23 @@ task distDocsManpage(type: Zip) {
     dependsOn 'generateManpageOutput'
     archiveFileName = "docs-manpage.zip"
     destinationDirectory = file("$releaseAssetsDir")
-    from layout.buildDirectory.dir("${manpageOutputDir}")
+    from layout.buildDirectory.dir("${manpageOutDir}")
 }
 
 // Zip the output of the asciiDoctorVersionJekyll task into ${releaseAssetsDir}
 task distDocsVersionedJekyll(type: Zip) {
     dependsOn 'asciiDoctorVersionedJekyll'
-    archiveFileName = "docs-jekyll.zip"
+    archiveFileName = "docs-gh-pages-versioned.zip"
     destinationDirectory = file("$distDir")
-    from layout.buildDirectory.dir("${ghPagesVersionedOutputDir}")
+    from layout.buildDirectory.dir("${ghPagesVersionedOutDir}")
 }
 
 // Zip the output of the asciiDoctorStaticJekyl task into ${releaseAssetsDir}
 task distDocsStaticJekyll(type: Zip) {
     dependsOn 'asciiDoctorStaticJekyll', 'generateActionSchema'
-    archiveFileName = "docs-gh-pages.zip"
+    archiveFileName = "docs-gh-pages-static.zip"
     destinationDirectory = file("$distDir")
-    from layout.buildDirectory.dir("${ghPagesStaticOutputDir}")
+    from layout.buildDirectory.dir("${ghPagesStaticOutDir}")
 }
 
 // Task to combine all distDocs* tasks

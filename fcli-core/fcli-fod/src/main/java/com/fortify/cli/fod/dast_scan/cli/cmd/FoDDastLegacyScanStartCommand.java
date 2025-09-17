@@ -150,7 +150,6 @@ public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
                     .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
                     .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion()).build();
 
-            //System.out.println(startScanRequest);
             return FoDScanDastLegacyHelper.startScan(unirest, releaseDescriptor, startScanRequest);
         }
     }
