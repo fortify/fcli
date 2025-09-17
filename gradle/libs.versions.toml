@@ -1,9 +1,0 @@
-[versions]
-# Library versions (where not coming from BOM)
-
-[plugins]
-licenseReport = { id = "com.github.jk1.dependency-license-report", version = "2.9" }
-shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
-asciidoctor = { id = "org.asciidoctor.jvm.convert", version = "4.0.4" }
-lombok = { id = "io.freefair.lombok", version = "8.13" }
-versions = { id = "com.github.ben-manes.versions", version = "0.52.0" }

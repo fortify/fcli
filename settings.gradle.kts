@@ -19,12 +19,6 @@ pluginManagement {
     includeBuild("build-logic")
 }
 
-dependencyResolutionManagement {
-    versionCatalogs {
-        create("fcliLibs") { from(files("gradle/libs.versions.toml")) }
-    }
-}
-
 // Load gradle.properties so we can dynamically include projects based on *Ref entries
 val props = Properties().apply { file("gradle.properties").inputStream().use { load(it) } }
 val refPatterns = props.getProperty("refPatterns").split(',').map { it.trim().toRegex() }
