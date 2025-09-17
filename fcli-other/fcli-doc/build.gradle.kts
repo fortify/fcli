@@ -70,29 +70,47 @@ val generateActionSchema = tasks.register<JavaExec>("generateActionSchema") {
     args(project.version.toString().startsWith("0."), fcliActionSchemaVersion, actionSchemaOutDir.get().asFile.absolutePath)
 }
 
-// Man page resources -> generateAsciiDocManPage
+// Replace original generateAsciiDocManPage implementation with two-step process avoiding deprecated project.javaexec
 val fcliRootCommandsClassName = project.property("fcliRootCommandsClassName") as String
-val generateAsciiDocManPage = tasks.register<JavaExec>("generateAsciiDocManPage") {
+val manPageDocPropsFile = layout.buildDirectory.file("generated-docs/manpage/docprops.properties")
+
+// First, collect doc properties output
+val collectManPageDocProps = tasks.register<JavaExec>("collectManPageDocProps") {
     group = "documentation"
-    description = "Generate intermediate AsciiDoc man pages"
+    description = "Collect man page doc properties"
     dependsOn(prepare)
     inputs.property("rootCommandsClassName", fcliRootCommandsClassName)
-    outputs.dir(asciiDocManPageOutDir)
+    outputs.file(manPageDocPropsFile)
     val capture = ByteArrayOutputStream()
     standardOutput = capture
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
     mainClass.set("com.fortify.cli.app.runner.util.FortifyCLIResourceBundlePropertiesHelper")
     doLast {
-        val docProperties = capture.toString().lineSequence()
-            .filter { line -> line.contains(":") }
-            .map { line -> line.split(":", limit = 2) }
-            .associate { parts -> parts[0] to parts[1] }
-        project.javaexec {
-            classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
-            systemProperties(docProperties)
-            mainClass.set("picocli.codegen.docgen.manpage.ManPageGenerator")
-            args(fcliRootCommandsClassName, "--outdir=${asciiDocManPageOutDir.get().asFile}", "-v")
-        }
+        val propsLines = capture.toString().lineSequence()
+            .filter { it.contains(":") }
+            .map { it.split(":", limit = 2) }
+            .joinToString("\n") { (k,v) -> "$k=$v" }
+        val file = manPageDocPropsFile.get().asFile
+        file.parentFile.mkdirs()
+        file.writeText(propsLines)
+    }
+}
+
+// Second, generate the intermediate AsciiDoc man pages using collected properties
+val generateAsciiDocManPage = tasks.register<JavaExec>("generateAsciiDocManPage") {
+    group = "documentation"
+    description = "Generate intermediate AsciiDoc man pages"
+    dependsOn(collectManPageDocProps)
+    inputs.file(manPageDocPropsFile)
+    outputs.dir(asciiDocManPageOutDir)
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    mainClass.set("picocli.codegen.docgen.manpage.ManPageGenerator")
+    doFirst {
+        val props = manPageDocPropsFile.get().asFile.readLines().mapNotNull { line ->
+            if (!line.contains("=")) null else line.split("=", limit = 2).let { it[0] to it[1] }
+        }.toMap()
+        systemProperties(props)
+        args = listOf(fcliRootCommandsClassName, "--outdir=${asciiDocManPageOutDir.get().asFile}", "-v")
     }
 }
 

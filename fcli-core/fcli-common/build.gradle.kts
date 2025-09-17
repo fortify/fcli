@@ -5,15 +5,20 @@ import java.time.format.DateTimeFormatter
 val fcliActionSchemaVersion = property("fcliActionSchemaVersion") as String
 val buildTime = rootProject.extra["buildTime"] as java.time.LocalDateTime
 
+// Pre-compute constant values to avoid accessing Task.project during execution
+val buildVersion = project.version.toString()
+val buildTimeString = buildTime.toString()
+val buildDateFormatted by lazy { buildTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) }
+
 // Generate build properties (incremental & avoiding unnecessary rewrites)
 val generateFcliBuildProperties = tasks.register("generateFcliBuildProperties") {
     group = "build resources"
     description = "Generate fcli build properties and native-image resource-config"
     val outputDirProvider = layout.buildDirectory.dir("generated-build-properties/com/fortify/cli/common")
     val resourceConfigOutputDirProvider = layout.buildDirectory.dir("generated-build-properties/META-INF/native-image/fcli-build-properties")
-    inputs.property("projectVersion", project.version)
+    inputs.property("projectVersion", buildVersion)
     inputs.property("fcliActionSchemaVersion", fcliActionSchemaVersion)
-    inputs.property("buildTime", buildTime.toString())
+    inputs.property("buildTime", buildTimeString)
     outputs.dir(outputDirProvider)
     outputs.dir(resourceConfigOutputDirProvider)
     doLast {
@@ -21,9 +26,8 @@ val generateFcliBuildProperties = tasks.register("generateFcliBuildProperties") 
         val propsFile = outputDir.resolve("fcli-build.properties")
         val propsContent = buildString {
             appendLine("projectName=fcli")
-            appendLine("projectVersion=${project.version}")
-            val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            appendLine("buildDate=${buildTime.format(fmt)}")
+            appendLine("projectVersion=$buildVersion")
+            appendLine("buildDate=$buildDateFormatted")
             appendLine("actionSchemaVersion=$fcliActionSchemaVersion")
         }
         if (!propsFile.exists() || propsFile.readText() != propsContent) {

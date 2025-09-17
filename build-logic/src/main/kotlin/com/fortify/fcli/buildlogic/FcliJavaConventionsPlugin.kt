@@ -8,6 +8,8 @@ import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.*
 import java.io.File
+import org.gradle.api.tasks.JavaExec
+import org.asciidoctor.gradle.jvm.AsciidoctorTask
 
 class FcliJavaConventionsPlugin: Plugin<Project> {
     override fun apply(project: Project) = project.run {
@@ -205,6 +207,29 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 output.dir(generatedZipResourcesDir, "builtBy" to generateZipResources.getName())
                 output.dir(generatedActionOutputResourcesDir, "builtBy" to buildTimeActions.getName())
                 output.dir(generatedResourceConfigDir, "builtBy" to "generateResourceConfig")
+            }
+        }
+
+        tasks.withType(JavaExec::class).configureEach {
+            fun ensureAddOpens(target: String) {
+                val current = this.jvmArgs ?: emptyList()
+                if (!current.contains(target)) {
+                    jvmArgs("--add-opens", target)
+                }
+            }
+            ensureAddOpens("java.base/java.io=ALL-UNNAMED")
+            ensureAddOpens("java.base/sun.nio.ch=ALL-UNNAMED")
+        }
+        // Apply same opens to Asciidoctor JVM (using deprecated forkOptions with suppression until new API exposed)
+        tasks.withType(AsciidoctorTask::class).configureEach {
+            @Suppress("DEPRECATION")
+            forkOptions {
+                val needed = listOf(
+                    "--add-opens=java.base/java.io=ALL-UNNAMED",
+                    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+                )
+                val current = jvmArgs ?: emptyList()
+                needed.filter { n -> !current.contains(n) }.forEach { jvmArgs(it) }
             }
         }
     }
