@@ -5,7 +5,8 @@
       "type" : "object",
       "properties" : {
         "default" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Default value for this CLI option if no value is specified by the user. For example, this can be used to read a default value from an environment variable using ${#env('ENV_NAME')}\n"
         },
         "description" : {
@@ -68,27 +69,33 @@
           "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of one or more checks was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to conditionally execute additional checks based on earlier check outcome. Note that if the same check name (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} will contain the status of the last executed check for the given check name.\n"
         },
         "exit" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Terminate action execution and return the given exit code.\n"
         },
         "if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "log.debug" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Write a debug message to log file (if enabled)."
         },
         "log.info" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
         },
         "log.progress" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Write a progress message. Progress messages are usually written to console and log file directly. Depending on progress writer configuration, progress messages may disappear when the next progress message is written, or after all action steps have been executed. If you need to write an information message that is always displayed to the end user, without the possibility of the message being removed, please use log.info instead.\n"
         },
         "log.warn" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
         },
         "out.write" : {
@@ -100,7 +107,8 @@
             "type" : "object",
             "properties" : {
               "breakIf" : {
-                "$ref" : "#/$defs/TemplateExpression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
                 "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
               },
               "do" : {
@@ -111,11 +119,13 @@
                 }
               },
               "from" : {
-                "$ref" : "#/$defs/TemplateExpression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
                 "description" : "Required SpEL template expression, evaluating to either an array of values to be iterated over, or an IActionStepForEachProcessor instance like returned by ${#ssc.ruleDescriptionsProcessor(appVersionId)}. For each of the records in the given array or as produced by the IActionStepForEachProcessor, the steps given in the 'do' instruction will be executed until the breakIf condition (is specified) evaluates to true. The steps in the 'do' instruction may reference the current record through the action variable name specified through 'record.var-name'.\n"
               },
               "if" : {
-                "$ref" : "#/$defs/TemplateExpression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "record.var-name" : {
@@ -159,14 +169,16 @@
           }
         },
         "throw" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Throw an exception, thereby terminating action execution.\n"
         },
         "var.rm" : {
           "description" : "Remove one or more local or global variables. Variable names to remove can be provided as plain text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.\n",
           "type" : "array",
           "items" : {
-            "$ref" : "#/$defs/TemplateExpression"
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ]
           }
         },
         "var.set" : {
@@ -185,7 +197,8 @@
                 }
               },
               "if" : {
-                "$ref" : "#/$defs/TemplateExpression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number", "null" ],
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "sessions" : {
@@ -195,15 +208,18 @@
                   "type" : "object",
                   "properties" : {
                     "if" : {
-                      "$ref" : "#/$defs/TemplateExpression",
+                      "format" : "spelTemplateExpression",
+                      "type" : [ "boolean", "integer", "string", "number", "null" ],
                       "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
                     },
                     "login" : {
-                      "$ref" : "#/$defs/TemplateExpression",
+                      "format" : "spelTemplateExpression",
+                      "type" : [ "boolean", "integer", "string", "number", "null" ],
                       "description" : "Required SpEL template expression; the session login command to run before running the steps specified in the do-block.\n"
                     },
                     "logout" : {
-                      "$ref" : "#/$defs/TemplateExpression",
+                      "format" : "spelTemplateExpression",
+                      "type" : [ "boolean", "integer", "string", "number", "null" ],
                       "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
                     }
                   },
@@ -246,11 +262,13 @@
           "description" : "Optional string: Display name of this check, to be displayed in PASS/FAIL messages. If not defined, the display name will be set to the map key under which this check is defined.\n"
         },
         "fail.if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
         },
         "if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "ifSkipped" : {
@@ -259,7 +277,8 @@
           "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
         },
         "pass.if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
         }
       },
@@ -271,26 +290,31 @@
       "type" : "object",
       "properties" : {
         "body" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Request body to send with the REST request.\n"
         },
         "if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "log.progress" : {
           "type" : "object",
           "properties" : {
             "page.post-load" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Log a progress message after a page has been loaded.\n"
             },
             "page.post-process" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Log a progress message after a page has been processed.\n"
             },
             "page.pre-load" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Log a progress message before loading the next page.\n"
             }
           },
@@ -323,7 +347,8 @@
           "type" : "object",
           "properties" : {
             "breakIf" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
             },
             "do" : {
@@ -341,7 +366,8 @@
               "description" : "Optional map: Allows for making additional REST calls for each individual record being processed. Map values define the REST call to be executed, map keys define under which property the response will be embedded into the variable specified through the 'set.record-var' instruction, with similar behavior as described for the rest.call step, i.e., processed data will be available through a property named after the map key, whereas raw response data will be available through a property named [map key]_raw.\n"
             },
             "if" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
             "record.var-name" : {
@@ -363,7 +389,8 @@
           "description" : "Optional enum value: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (for now only supported for built-in request targets like 'fod' or 'ssc'), the request will be repeated with the appropriate paging request parameters to load and process all available pages. Defaults value: simple.\n"
         },
         "uri" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${var.id}' to be appended to the base URL provided by the given 'target'.\n"
         }
       },
@@ -375,7 +402,8 @@
       "type" : "object",
       "properties" : {
         "baseUrl" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target.\n"
         },
         "headers" : {
@@ -383,7 +411,8 @@
           "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.\n"
         },
         "if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         }
       },
@@ -392,20 +421,22 @@
       "additionalProperties" : false
     },
     "ActionStepRunFcliEntry" : {
-      "format" : "expression or object",
+      "format" : "spelTemplateExpression or object",
       "type" : [ "object", "string" ],
       "properties" : {
         "skip.if-reason" : {
           "type" : "array",
           "items" : {
-            "$ref" : "#/$defs/TemplateExpression"
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ]
           }
         },
         "group" : {
           "type" : "string"
         },
         "cmd" : {
-          "$ref" : "#/$defs/TemplateExpression"
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ]
         },
         "stdout" : {
           "type" : "string",
@@ -440,7 +471,8 @@
           "type" : "object",
           "properties" : {
             "breakIf" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
             },
             "do" : {
@@ -451,7 +483,8 @@
               }
             },
             "if" : {
-              "$ref" : "#/$defs/TemplateExpression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number", "null" ],
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
             "record.var-name" : {
@@ -470,23 +503,28 @@
       "type" : "object",
       "properties" : {
         "if" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "style" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression defining the writer style. If specified, the expression should evaluate to a comma-separated list of style elements to be applied to the output. Supported style elements:\nheader, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border"
         },
         "to" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified as one of the following:\n\n- A file name to write the output to\n- 'stdout' to write the output to stdout\n- 'stderr' to write the output to stderr\n- 'var:varName' to write the output as text into the given 'varName' action variable\n\nWith 'var:varName', the given variable name will be available to steps after the current 'with' block has completed.\n"
         },
         "type" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Required SpEL template expression defining the writer type. The evaluated expression must evaluate to one of the following types:\ncsv, table, expr, json, xml, yaml"
         },
         "type-args" : {
-          "$ref" : "#/$defs/TemplateExpression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ],
           "description" : "Optional SpEL template expression defining arguments for the given writer type. In most cases, it's much easier to just pass an already formatted object to the 'writer.append' step; this 'type-args' instruction is just meant to provide feature parity with the fcli '--output type=args' command line option. See fcli documentation for details on supported options for the various writer types.\n"
         }
       },
@@ -497,7 +535,8 @@
     "LinkedHashMap(String,TemplateExpression)" : {
       "type" : "object",
       "additionalProperties" : {
-        "$ref" : "#/$defs/TemplateExpression"
+        "format" : "spelTemplateExpression",
+        "type" : [ "boolean", "integer", "string", "number", "null" ]
       }
     },
     "LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)" : {
@@ -506,20 +545,17 @@
         "$ref" : "#/$defs/TemplateExpressionWithFormatter"
       }
     },
-    "TemplateExpression" : {
-      "format" : "spelTemplateExpression",
-      "description" : "Spring template expression, like 'Hello ${name}'.\nSee https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html for expression language reference. Expressions may invoke the following fcli-provided functions: \nstring #currentDateTime()\nobject #date(string input)\nstring #formatDateTime(string fmt[, string input])\nstring #formatDateTimeAsUTC(string fmt, string input)\nstring #formatDateTimeWithZoneId(string fmt, string input, object tz)\nstring #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)\nobject #now([string period])\nobject #action.fmt(string formatterName, object input)\nobject #actionSchema()\nobject #actionSpelFunctions()\nstring #copyright()\nstring #decrypt(string input)\nstring #encrypt(string input)\nobject #fcliBuildProperties()\nboolean #isDebugEnabled()\nobject #var(string name)\nstring #cleanIssueDescription(string issueDescription)\nstring #cleanRuleDescription(string ruleDescription)\nstring #fod.appBrowserUrl(object rel)\nstring #fod.issueBrowserUrl(object issue)\nobject #fod.release(string nameOrId)\nstring #fod.releaseBrowserUrl(object rel)\nobject #issueSourceFileResolver(map config)\nobject #normalizeAndMergeTraceNodes(object input)\nobject #normalizeTraceNodes(object input)\nobject #ssc.appVersion(string nameOrId)\nstring #ssc.appversionBrowserUrl(object av, object fs)\nobject #ssc.filterSet(object av, string titleOrId)\nstring #ssc.issueBrowserUrl(object issue, object fs)\nobject #ssc.ruleDescriptionsProcessor(string avId)\nstring #abbreviate(string input, object maxLength)\nstring #fmt(string fmt, array args)\nstring #htmlToSingleLineText(string html)\nstring #htmlToText(string html)\nboolean #isBlank(string input)\nboolean #isNotBlank(string input)\nstring #join(string delimiter, array input)\nstring #joinOrNull(string delimiter, array input)\nstring #numberedList(array input)\nstring #regexQuote(string input)\nstring #repeat(string input, object count)\nstring #replaceAllFromRegExMap(string input, map<string,string> replacements)\nstring #substringAfter(string input, string separator)\nstring #substringBefore(string input, string separator)\nstring #env(string name)\nobject #properties(object input)\nstring #resolveAgainstCurrentWorkDir(string path)\nstring #uriPart(string uri, string part)\nstring #uuid()\nstring #action.copyParametersFromGroup(string group)\nstring #action.runID()\nstring #actionCmd(string envPrefix, string moduleName, string actionName)\nstring #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)\nstring #actionOrNull(string moduleName, string actionName)\nboolean #check(boolean throwError, string msg)\nstring #extraOpts(string envPrefix)\nstring #fcliCmd(string envPrefix, string cmd)\nstring #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #optsFromEnv(string input)\nstring #skipBlankEnvReason(string arg0)\nstring #skipReasonIf(boolean skip, string reason)\nSee fcli custom action development documentation for more information.\n",
-      "type" : [ "boolean", "integer", "string", "number", "null" ]
-    },
     "TemplateExpressionWithFormatter" : {
-      "format" : "expression or object",
+      "format" : "spelTemplateExpression or object",
       "type" : [ "object", "boolean", "integer", "string", "number", "null" ],
       "properties" : {
         "value" : {
-          "$ref" : "#/$defs/TemplateExpression"
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ]
         },
         "fmt" : {
-          "$ref" : "#/$defs/TemplateExpression"
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number", "null" ]
         }
       },
       "description" : "Define a value that is optionally formatted or generated by a given formatter. This can be supplied as either a set of YAML properties or as a simple (string, boolean, ...) value, in which case the simple value is used to set the 'value' property.\n",
@@ -602,7 +638,8 @@
         "type" : "object",
         "properties" : {
           "description" : {
-            "$ref" : "#/$defs/TemplateExpression",
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number", "null" ],
             "description" : "Required SpEL template expression: Action usage description, displayed in help output and online documentation. The template expression can reference the 'isAsciiDoc' and 'isPlainText' properties to determine whether the contents are to be rendered as AsciiDoc (for online documentation) or plain text (for help output). For internal use only, the template expression can utilize the '#include('path/to/classpath/resource') function to include contents of a class path resource.\n"
           },
           "header" : {
