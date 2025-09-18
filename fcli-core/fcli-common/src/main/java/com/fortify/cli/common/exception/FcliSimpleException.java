@@ -53,7 +53,12 @@ public class FcliSimpleException extends AbstractFcliException {
     private static String getSummary(Throwable e) {
         var firstElt = getFirstStackTraceElement(e);
         var stackTraceString = firstElt==null ? "" : String.format("\n\tat "+firstElt);
-        return String.format("%s: %s%s", e.getClass().getSimpleName(), e.getMessage(), stackTraceString);
+        var prefix = String.format("%s: ", e.getClass().getSimpleName());
+        return String.format("%s%s%s", prefix, indentNewLines(e.getMessage(), prefix.length()), stackTraceString);
+    }
+
+    private static final String indentNewLines(String message, int indent) {
+        return message.replace("\n", "\n"+" ".repeat(indent));
     }
 
     private static StackTraceElement getFirstStackTraceElement(Throwable e) {

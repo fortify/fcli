@@ -57,7 +57,12 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         McpServer.sync(new StdioServerTransportProvider())
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
-                .instructions("Fcli MCP Server")
+                .instructions("""
+                        - For tools that accept a --*-session option and user hasn't asked for a specific \
+                        session, inform the user that the 'default' session will be used.
+                        - If error messages reported by MCP tools ask the user to to run an fcli command, \
+                        show that command to the user and tell the user to run this in a separate terminal window. 
+                        """)
                 .capabilities(getServerCapabilities())
                 .tools(createToolSpecs())
                 .build();
@@ -65,13 +70,21 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         LOG.info("Fcli MCP server running on stdio");
         System.err.println("Fcli MCP server running on stdio. Hit Ctrl-C to exit.");
         
-        // Keep server running forever until killed
-        while(true) {
-            Thread.sleep(5000L);
-        }
+        // Join all non-daemon threads to ensure proper shutdown of MCP server
+        Thread.getAllStackTraces().keySet().stream()
+            .filter(t->!t.isDaemon() && t!=Thread.currentThread())
+            .forEach(t-> {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    LOG.warn("Interrupted while joining thread "+t.getName(), e);
+                }
+            });
+        
+        return 0;
     }
 
-    private ServerCapabilities getServerCapabilities() {
+    private static final ServerCapabilities getServerCapabilities() {
         return ServerCapabilities.builder()
                 .resources(false, false)
                 .prompts(false)

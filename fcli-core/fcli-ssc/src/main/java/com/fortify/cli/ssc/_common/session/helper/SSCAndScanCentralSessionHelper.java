@@ -23,6 +23,11 @@ public class SSCAndScanCentralSessionHelper extends AbstractSessionHelper<SSCAnd
     public String getType() {
         return "SSC";
     }
+    
+    @Override
+    protected String getLoginCmd() {
+        return "fcli ssc session login";
+    }
 
     @Override
     protected Class<SSCAndScanCentralSessionDescriptor> getSessionDescriptorType() {
