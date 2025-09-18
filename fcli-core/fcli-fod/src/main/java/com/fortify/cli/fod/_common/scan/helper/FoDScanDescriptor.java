@@ -34,6 +34,7 @@ public class FoDScanDescriptor extends JsonNodeHolder {
     private String applicationId;
     private String releaseId;
     private String microserviceName;
+    private String analysisStatusType;
     private String status;
 
     @JsonIgnore

@@ -1,5 +1,0 @@
-apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
-
-dependencies {
-	implementation project("${fcliCommonRef}")
-}

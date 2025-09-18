@@ -432,7 +432,7 @@ jobs:
           # Extract top-level documentation resources
           # TODO Should we do this only when building a release, or also for dev_v3.x,
           #      or for all (dev & release) versions like we do now?
-          unzip -o tmp/docs-gh-pages.zip -d "."
+          unzip -o tmp/docs-gh-pages-static.zip -d "."
           
           # Define the output directory, based on tag/branch name
           versionDir=${{ needs.build.outputs.release_tag }}
@@ -441,7 +441,7 @@ jobs:
           # while leaving documentation for other tags/branches intact (as checked out above)
           rm -rf "${versionDir}"
           mkdir -p "${versionDir}"
-          unzip tmp/docs-jekyll.zip -d "${versionDir}"
+          unzip tmp/docs-gh-pages-versioned.zip -d "${versionDir}"
           
           # Update symlinks based on available versions, processing versions in ascending order
           # to replace previous links with a newer version if appropriate. For example, 'latest'

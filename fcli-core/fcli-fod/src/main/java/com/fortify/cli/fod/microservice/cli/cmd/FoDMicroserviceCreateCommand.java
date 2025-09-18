@@ -18,6 +18,9 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceByQualifiedNameResolverMixin;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
@@ -40,6 +43,10 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
 
     @Option(names={"--skip-if-exists"})
     private boolean skipIfExists = false;
+    @Option(names={"--auto-required-attrs"}, required = false)
+    private boolean autoRequiredAttrs = false;
+
+    @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption msAttrs;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -51,6 +58,8 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
         FoDQualifiedMicroserviceNameDescriptor qualifiedMicroserviceNameDescriptor = qualifiedMicroserviceNameResolver.getQualifiedMicroserviceNameDescriptor();
         FoDMicroserviceUpdateRequest msCreateRequest = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,
+                                msAttrs.getAttributes(), autoRequiredAttrs))
                 .build();
         return FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, msCreateRequest).asJsonNode();
     }

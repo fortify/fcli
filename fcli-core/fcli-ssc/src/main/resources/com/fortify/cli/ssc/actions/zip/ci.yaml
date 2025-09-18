@@ -43,6 +43,8 @@ steps:
             throw: SSC application version must be specified through SSC_APPVERSION environment variable
             
   - var.set:
+      # Configure session name
+      sessionName: ci-${#action.runID()}
       # Configure scan types to run
       sca.skipReason:   # TODO
       sca.skip: true
@@ -69,8 +71,8 @@ steps:
   - with:
       sessions:
         - if: ${#isBlank(aviator.skipReason)}
-          login: ${#fcliCmd('AVIATOR_LOGIN', 'fcli aviator session login')} --aviator-session ${global.sessionName} --token=env:AVIATOR_TOKEN ${#optsFromEnv(aviator.loginOpts)}
-          logout: ${#fcliCmd('AVIATOR_LOGOUT', 'fcli aviator session logout')} --aviator-session ${global.sessionName}
+          login: ${#fcliCmd('AVIATOR_LOGIN', 'fcli aviator session login')} --aviator-session ${sessionName} --token=env:AVIATOR_TOKEN ${#optsFromEnv(aviator.loginOpts)}
+          logout: ${#fcliCmd('AVIATOR_LOGOUT', 'fcli aviator session logout')} --aviator-session ${sessionName}
       do:
         # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
         # continue to run on failures due to config:run.fcli.status.check.default being set to false.
@@ -137,7 +139,7 @@ steps:
                 - ${SAST_WAIT.dependencySkipReason}                      # Skip if SAST_WAIT was skipped or failed
               
             AVIATOR_AUDIT:
-              cmd: ${#fcliCmd('AVIATOR_AUDIT', 'aviator ssc audit')} --aviator-session ${global.sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_audit
+              cmd: ${#fcliCmd('AVIATOR_AUDIT', 'aviator ssc audit')} --aviator-session ${sessionName} --av "${global.ci.av}" --app "${aviator.app}" --store aviator_audit
               skip.if-reason:
                 - ${aviator.skipReason}                                # Skip if Aviator audit is to be skipped
                 - ${postScan.skipReason}                               # Skip if no scans were run

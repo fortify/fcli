@@ -45,7 +45,7 @@ public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputComm
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(FoDUrls.MICROSERVICES)
                 .routeParam("appId", appResolver.getAppId(unirest))
-                .queryString("includeReleases", "false");
+                .queryString("includeReleases", "true");
     }
 
     @Override
