@@ -1,8 +1,6 @@
 package com.fortify.cli.aviator.audit;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
