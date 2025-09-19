@@ -13,10 +13,15 @@ fcli_version:
 
 {% include asciidoc-head.html %}
 
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.141431-dev_mcp-server" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.150706-dev_mcp-server" %}
 
 
 <div id="header">
@@ -27,8 +32,8 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_output_options">Output options</a></li>
-<li><a href="#_generic_fcli_options">Generic fcli options</a></li>
+<li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
 </ul>
 </div>
 <h2>Name</h2>
@@ -42,15 +47,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli license msp-report create-config</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;outputFileName&gt;</em>] [[<strong>-h</strong>]
-                                      [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                      [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                                      [<strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em>] [<strong>--debug</strong>]]
-                                      <em class="[<strong>-o</strong>=_type[=&lt;args&gt;">]
-                                      [<strong>--style</strong>=</em>&lt;outputStyleElements&gt;_[,
-                                      <em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                                      <em class="<strong>--store</strong>=_variableName[:&lt;propertyNames&gt;">]
-                                      [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                                      [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                                      [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
+                                      [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:_
+                               _       &lt;prop&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -78,58 +81,58 @@ fcli_version:
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options</h2>
+<h2 id="_output_options_also_see_documentation_link_below"><a class="anchor" href="#_output_options_also_see_documentation_link_below"></a>Output options (also see documentation link below)</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>type[=&lt;args&gt;]</em></dt>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;type+args&gt;</em></dt>
 <dd>
-<p>Specify output type and optional type arguments. Available output formats: csv, table, expr, json, xml, yaml. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output.</p>
+<p>Select output type (csv, table, expr, json, xml, yaml) and optional type arguments.</p>
 </dd>
-<dt class="hdlist1"><strong>--store</strong>=<em>variableName[:&lt;propertyNames&gt;]</em></dt>
+<dt class="hdlist1"><strong>--store</strong>=<em>&lt;var&gt;[:&lt;prop&gt;]</em></dt>
 <dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+<p>Store JSON results in an fcli variable for later reference.</p>
 </dd>
-<dt class="hdlist1"><strong>--style</strong>=<em>&lt;outputStyleElements&gt;</em>[,<em>&lt;outputStyleElements&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
 <dd>
-<p>Comma-separated list of style elements to apply to the selected output format. Allowed values: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border.</p>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
-<p>Write command output to the specified file instead of stdout.</p>
+<p>Write output to the specified file.</p>
 </dd>
 </dl>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options</h2>
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>--debug</strong></dt>
 <dd>
-<p>Enable both fcli trace logging and collection of extra debugging data on applicable fcli actions and commands, for example enabling debug logging on tools invoked through fcli tool run commands, or enabling server-side debug log generation.</p>
+<p>Enable collection of debug logs.</p>
 </dd>
-<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
 <dd>
-<p>Environment variable prefix for resolving default option and parameter values. Default value: FCLI_DEFAULT.</p>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
 </dd>
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
-<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
 </dd>
 <dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
 <dd>
-<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
 </dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
 </dd>
-<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;logMaskLevel&gt;</em></dt>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
 <dd>
-<p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
 </dd>
 </dl>
 </div>
@@ -139,7 +142,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-09-19 14:16:45 UTC
+Last updated 2025-09-19 15:09:34 UTC
 </div>
 </div>
 </body>

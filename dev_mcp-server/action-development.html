@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20250919.141431-dev_mcp-server
+fcli_version: 0.20250919.150706-dev_mcp-server
 ---
 
 <!DOCTYPE html>
@@ -13,16 +13,21 @@ fcli_version: 0.20250919.141431-dev_mcp-server
 
 {% include asciidoc-head.html %}
 
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.141431-dev_mcp-server" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.150706-dev_mcp-server" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20250919.141431-dev_mcp-server</span>
+<span id="revnumber">version 0.20250919.150706-dev_mcp-server</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -91,6 +96,74 @@ fcli_version: 0.20250919.141431-dev_mcp-server
 <ul class="sectlevel2">
 <li><a href="#_expression_syntax">Expression Syntax</a></li>
 <li><a href="#_spel_functions">SpEL Functions</a></li>
+<li><a href="#_date">[date]</a></li>
+<li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
+<li><a href="#_date_2"><code>date</code></a></li>
+<li><a href="#_formatdatetime"><code>formatDateTime</code></a></li>
+<li><a href="#_formatdatetimeasutc"><code>formatDateTimeAsUTC</code></a></li>
+<li><a href="#_formatdatetimewithzoneid"><code>formatDateTimeWithZoneId</code></a></li>
+<li><a href="#_formatdatetimewithzoneidasutc"><code>formatDateTimewithZoneIdAsUTC</code></a></li>
+<li><a href="#_now"><code>now</code></a></li>
+<li><a href="#_fcli">[fcli]</a></li>
+<li><a href="#_action_fmt"><code>action.fmt</code></a></li>
+<li><a href="#_actionschema"><code>actionSchema</code></a></li>
+<li><a href="#_actionspelfunctions"><code>actionSpelFunctions</code></a></li>
+<li><a href="#_copyright"><code>copyright</code></a></li>
+<li><a href="#_decrypt"><code>decrypt</code></a></li>
+<li><a href="#_encrypt"><code>encrypt</code></a></li>
+<li><a href="#_fclibuildproperties"><code>fcliBuildProperties</code></a></li>
+<li><a href="#_isdebugenabled"><code>isDebugEnabled</code></a></li>
+<li><a href="#_var"><code>var</code></a></li>
+<li><a href="#_fortify">[fortify]</a></li>
+<li><a href="#_cleanissuedescription"><code>cleanIssueDescription</code></a></li>
+<li><a href="#_cleanruledescription"><code>cleanRuleDescription</code></a></li>
+<li><a href="#_fod_appbrowserurl"><code>fod.appBrowserUrl</code></a></li>
+<li><a href="#_fod_issuebrowserurl"><code>fod.issueBrowserUrl</code></a></li>
+<li><a href="#_fod_release"><code>fod.release</code></a></li>
+<li><a href="#_fod_releasebrowserurl"><code>fod.releaseBrowserUrl</code></a></li>
+<li><a href="#_issuesourcefileresolver"><code>issueSourceFileResolver</code></a></li>
+<li><a href="#_normalizeandmergetracenodes"><code>normalizeAndMergeTraceNodes</code></a></li>
+<li><a href="#_normalizetracenodes"><code>normalizeTraceNodes</code></a></li>
+<li><a href="#_ssc_appversion"><code>ssc.appVersion</code></a></li>
+<li><a href="#_ssc_appversionbrowserurl"><code>ssc.appversionBrowserUrl</code></a></li>
+<li><a href="#_ssc_filterset"><code>ssc.filterSet</code></a></li>
+<li><a href="#_ssc_issuebrowserurl"><code>ssc.issueBrowserUrl</code></a></li>
+<li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
+<li><a href="#_txt">[txt]</a></li>
+<li><a href="#_abbreviate"><code>abbreviate</code></a></li>
+<li><a href="#_fmt"><code>fmt</code></a></li>
+<li><a href="#_htmltosinglelinetext"><code>htmlToSingleLineText</code></a></li>
+<li><a href="#_htmltotext"><code>htmlToText</code></a></li>
+<li><a href="#_isblank"><code>isBlank</code></a></li>
+<li><a href="#_isnotblank"><code>isNotBlank</code></a></li>
+<li><a href="#_join"><code>join</code></a></li>
+<li><a href="#_joinornull"><code>joinOrNull</code></a></li>
+<li><a href="#_numberedlist"><code>numberedList</code></a></li>
+<li><a href="#_regexquote"><code>regexQuote</code></a></li>
+<li><a href="#_repeat"><code>repeat</code></a></li>
+<li><a href="#_replaceallfromregexmap"><code>replaceAllFromRegExMap</code></a></li>
+<li><a href="#_substringafter"><code>substringAfter</code></a></li>
+<li><a href="#_substringbefore"><code>substringBefore</code></a></li>
+<li><a href="#_util">[util]</a></li>
+<li><a href="#_env"><code>env</code></a></li>
+<li><a href="#_properties"><code>properties</code></a></li>
+<li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
+<li><a href="#_uripart"><code>uriPart</code></a></li>
+<li><a href="#_uuid"><code>uuid</code></a></li>
+<li><a href="#_workflow">[workflow]</a></li>
+<li><a href="#_action_copyparametersfromgroup"><code>action.copyParametersFromGroup</code></a></li>
+<li><a href="#_action_runid"><code>action.runID</code></a></li>
+<li><a href="#_actioncmd"><code>actionCmd</code></a></li>
+<li><a href="#_actioncmdskipfromenvreason"><code>actionCmdSkipFromEnvReason</code></a></li>
+<li><a href="#_actioncmdskipnoactionreason"><code>actionCmdSkipNoActionReason</code></a></li>
+<li><a href="#_actionornull"><code>actionOrNull</code></a></li>
+<li><a href="#_check"><code>check</code></a></li>
+<li><a href="#_extraopts"><code>extraOpts</code></a></li>
+<li><a href="#_fclicmd"><code>fcliCmd</code></a></li>
+<li><a href="#_fclicmdskipfromenvreason"><code>fcliCmdSkipFromEnvReason</code></a></li>
+<li><a href="#_optsfromenv"><code>optsFromEnv</code></a></li>
+<li><a href="#_skipblankenvreason"><code>skipBlankEnvReason</code></a></li>
+<li><a href="#_skipreasonif"><code>skipReasonIf</code></a></li>
 </ul>
 </li>
 </ul>
@@ -112,8 +185,8 @@ fcli_version: 0.20250919.141431-dev_mcp-server
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20250919.141431-dev_mcp-server</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.2.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20250919.150706-dev_mcp-server</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.2.1</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,7 +255,7 @@ associations listed below:</p>
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</pre>
 </div>
 </div>
 </li>
@@ -190,7 +263,7 @@ associations listed below:</p>
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</pre>
 </div>
 </div>
 </li>
@@ -203,8 +276,8 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250919.141431-dev_mcp-server supports
-schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json">2.2.0</a>. Other
+<p>As shown in the sample schema statements above, the current fcli version 0.20250919.150706-dev_mcp-server supports
+schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json">2.2.1</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
 same schema minor version range.</p>
@@ -296,12 +369,12 @@ provide more details on the expected contents for each property type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -2298,7 +2371,7 @@ by <code>${</code> and <code>}</code>. Some examples:</p>
 <p>Evaluation blocks may be simple references to action variables that were previously set through a <code>var.set</code> step,
 or can be complex code blocks that utilize
 <a href="https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html">Spring Expression Language (SpEL)</a>,
-possibly combined with fcli-provided SpEL functions.</p>
+possibly combined with fcli-provided SpEL functions as described in the next sections.</p>
 </div>
 </div>
 <div class="sect2">
@@ -2308,65 +2381,1710 @@ possibly combined with fcli-provided SpEL functions.</p>
 for example:</p>
 </div>
 <div class="paragraph">
-<p><code>${#join('
-', records}</code></p>
-</div>
-<div class="admonitionblock caution">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Caution</div>
-</td>
-<td class="content">
-Until SpEL functions have been documented and categorized based on stability &amp; intended use (stable, unstable,
-preview, internal-use, &#8230;&#8203;), there&#8217;s no guarantee on the stability of SpEL functions; we may add, remove, or change SpEL
-functions between fcli releases without any notification, potentially causing errors or failures when running an fcli custom
-action on a different fcli version.
-</td>
-</tr>
-</table>
+<p><code>${#join('&#92;n', records}</code></p>
 </div>
 <div class="paragraph">
-<p>Later versions of this documentation may add an overview of fcli-provided SpEL functions that can be used in SpEL expressions.
-Until then, to see what SpEL functions are available in the current fcli version, you can either:</p>
+<p>The sections below describe the available SpEL functions.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_date"><a class="anchor" href="#_date"></a>[date]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_currentdatetime"><a class="anchor" href="#_currentdatetime"></a><code>currentDateTime</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #currentDateTime()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The current date/time as <code>yyyy-MM-dd HH:mm:ss</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_date_2"><a class="anchor" href="#_date_2"></a><code>date</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #date(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to parse into an <code>OffsetDateTime</code>; may be <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The parsed <code>OffsetDateTime</code> instance representing the date/time encoded in the string, or <code>null</code> if input is <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Parses the given string as a Java <code>OffsetDateTime</code> object, for example to allow for date/time comparisons, formatting, or retrieval of individual elements like month or year. See <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/OffsetDateTime.html" class="bare">https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/OffsetDateTime.html</a> for information on methods that can be invoked on the returned object.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetime"><a class="anchor" href="#_formatdatetime"></a><code>formatDateTime</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #formatDateTime(string fmt[, string input])</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string fmt</em> - formatter pattern used to format given or current date/time<br>
+<em>string input</em> - optional date/time in JSON format to be formatted; if not specified, current date/time will be formatted</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Formatted date/time</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns either current or given date/time formatted according to the given formatter pattern. See
+'Patterns for Formatting and Parsing' section at
+<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html" class="bare">https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html</a>
+for details on formatter pattern syntax. If the given date/time doesn&#8217;t include time zone, system
+   default time zone will be assumed.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetimeasutc"><a class="anchor" href="#_formatdatetimeasutc"></a><code>formatDateTimeAsUTC</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #formatDateTimeAsUTC(string fmt, string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string fmt</em> - formatter pattern used to format given date/time<br>
+<em>string input</em> - date/time in JSON format to be formatted</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Formatted date/time</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Converts given date/time to UTC time zone and formats the result according to the given formatter pattern.
+See 'Patterns for Formatting and Parsing' section at
+<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html" class="bare">https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html</a>
+for details on formatter pattern syntax. If the given date/time doesn&#8217;t include time zone, system
+default time zone will be assumed.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetimewithzoneid"><a class="anchor" href="#_formatdatetimewithzoneid"></a><code>formatDateTimeWithZoneId</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #formatDateTimeWithZoneId(string fmt, string input, object tz)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string fmt</em> - formatter pattern used to format given date/time<br>
+<em>string input</em> - date/time in JSON format to be formatted<br>
+<em>object tz</em> - default time zone id if given date/time doesn&#8217;t include time zone</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Formatted date/time</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns given date/time formatted according to the given formatter pattern. See 'Patterns for Formatting
+and Parsing' section at
+<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html" class="bare">https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html</a>
+   for details on formatter pattern syntax. If the given date/time doesn&#8217;t include time zone, the given
+   default time zone id will be used.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetimewithzoneidasutc"><a class="anchor" href="#_formatdatetimewithzoneidasutc"></a><code>formatDateTimewithZoneIdAsUTC</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string fmt</em> - formatter pattern used to format given date/time<br>
+<em>string input</em> - date/time in JSON format to be formatted<br>
+<em>object tz</em> - default time zone id if given date/time doesn&#8217;t include time zone</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Formatted date/time</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Converts given date/time to UTC time zone and formats the result according to the given formatter pattern.
+See 'Patterns for Formatting and Parsing' section at
+<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html" class="bare">https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html</a>
+for details on formatter pattern syntax. If the given date/time doesn&#8217;t include time zone, the given
+default time zone id will be used.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_now"><a class="anchor" href="#_now"></a><code>now</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #now([string period])</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string period</em> - optional period string like +1d or -5m to adjust the current time</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The current date/time as a Java <code>OffsetDateTime</code> object, optionally adjusted by the given period</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fcli"><a class="anchor" href="#_fcli"></a>[fcli]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_action_fmt"><a class="anchor" href="#_action_fmt"></a><code>action.fmt</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.fmt(string formatterName, object input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string formatterName</em> - the name of the formatter to apply<br>
+<em>object input</em> - the input to be formatted</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The formatted value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Formats the input value using the specified formatter as declared through the <code>formatters</code> YAML instruction</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_actionschema"><a class="anchor" href="#_actionschema"></a><code>actionSchema</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #actionSchema()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An object describing the fcli action YAML schema</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_actionspelfunctions"><a class="anchor" href="#_actionspelfunctions"></a><code>actionSpelFunctions</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #actionSpelFunctions()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An array listing all available SpEL functions</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_copyright"><a class="anchor" href="#_copyright"></a><code>copyright</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #copyright()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Copyright notice with the current year</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_decrypt"><a class="anchor" href="#_decrypt"></a><code>decrypt</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #decrypt(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the encrypted string to decrypt</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The decrypted form of the input string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Decrypts the given encrypted string using the fcli decryption mechanism, compatible with the 'fcli util crypto' commands.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_encrypt"><a class="anchor" href="#_encrypt"></a><code>encrypt</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #encrypt(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to encrypt</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The encrypted form of the input string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Encrypts the given string using the fcli encryption mechanism, compatible with the 'fcli util crypto' commands.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fclibuildproperties"><a class="anchor" href="#_fclibuildproperties"></a><code>fcliBuildProperties</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcliBuildProperties()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fcli build properties like version number and build date</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_isdebugenabled"><a class="anchor" href="#_isdebugenabled"></a><code>isDebugEnabled</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #isDebugEnabled()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if debug logging is enabled; <code>false</code> otherwise</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_var"><a class="anchor" href="#_var"></a><code>var</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #var(string name)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - the name of the variable to retrieve</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The JSON contents for the given fcli variable name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Retrieves the contents of an fcli variable that was stored through the --store option on a previous fcli invocation, throwing an error if the variable does not exist.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fortify"><a class="anchor" href="#_fortify"></a>[fortify]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_cleanissuedescription"><a class="anchor" href="#_cleanissuedescription"></a><code>cleanIssueDescription</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #cleanIssueDescription(string issueDescription)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string issueDescription</em> - the issue description string to be cleaned</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The cleaned issue description, or empty string if input is <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Cleans the given issue description and returns it as plain text.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_cleanruledescription"><a class="anchor" href="#_cleanruledescription"></a><code>cleanRuleDescription</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #cleanRuleDescription(string ruleDescription)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string ruleDescription</em> - the rule description string to be cleaned; may be <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The cleaned rule description, or empty string if input is <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Cleans the given rule description and returns it as plain text.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fod_appbrowserurl"><a class="anchor" href="#_fod_appbrowserurl"></a><code>fod.appBrowserUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fod.appBrowserUrl(object rel)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object rel</em> - an FoD release object, for example as returned by <code>#fod.release(&#8230;&#8203;)</code>, containing at least the <code>applicationId</code> field</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Browser-accessible URL pointing to the FoD application page for the given release</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fod_issuebrowserurl"><a class="anchor" href="#_fod_issuebrowserurl"></a><code>fod.issueBrowserUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fod.issueBrowserUrl(object issue)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object issue</em> - an FoD issue object, containing at least the <code>vulnId</code> field</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Browser-accessible URL pointing to the FoD issue details page for the given issue</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fod_release"><a class="anchor" href="#_fod_release"></a><code>fod.release</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fod.release(string nameOrId)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string nameOrId</em> - the name or ID of the release to load</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FoD release object for the given release name or id</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fod_releasebrowserurl"><a class="anchor" href="#_fod_releasebrowserurl"></a><code>fod.releaseBrowserUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fod.releaseBrowserUrl(object rel)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object rel</em> - an FoD release object, for example as returned by <code>#fod.release(&#8230;&#8203;)</code>, containing at least the <code>releaseId</code> field</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Browser-accessible URL pointing to the FoD release page for the given release</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_issuesourcefileresolver"><a class="anchor" href="#_issuesourcefileresolver"></a><code>issueSourceFileResolver</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #issueSourceFileResolver(map config)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>map config</em> - configuration; for now, this must contain a single <code>sourceDir</code> property</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Issue source file resolver</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Instantiates an issue source file resolver, allowing source file paths as reported by Fortify to be resolved against a locally cloned source code repository.</p>
+</div>
+<div class="paragraph">
+<p>In some cases, there is a mismatch between source file paths as reported by SSC or FoD and actual repository source file paths, with Fortify either inserting or stripping leading directories. When third-party systems like GitHub or GitLab ingest fcli-generated reports, such mismatches may prevent third-party systems from properly rendering source code snippets or links.</p>
+</div>
+<div class="paragraph">
+<p>The issue source file resolver can be initialized like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code>- var.set:
+    issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once initialized, Fortify-reported issue file paths can be matched and relativized against the given <code>sourceDir</code> through either:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Have a look at fcli built-in actions to see which SpEL functions they are invoking</p>
+<p>SSC: <code>${issueSourceFileResolver.resolve(issue.fullFileName)}</code></p>
 </li>
 <li>
-<p>Have a look at the Java classes that define the SpEL functions:</p>
+<p>FoD: `${issueSourceFileResolver.resolve(issue.primaryLocationFull)}</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Of course, the same approach can be used to resolve other Fortify-reported source file paths, for example in trace node entries. See the various fcli built-in <code>*-report</code> actions in SSC and FoD modules for examples.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_normalizeandmergetracenodes"><a class="anchor" href="#_normalizeandmergetracenodes"></a><code>normalizeAndMergeTraceNodes</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #normalizeAndMergeTraceNodes(object input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object input</em> - the original, non-normalized array of trace nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">normalized and merged array of trace nodes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_normalizetracenodes"><a class="anchor" href="#_normalizetracenodes"></a><code>normalizeTraceNodes</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #normalizeTraceNodes(object input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object input</em> - the original, non-normalized array of trace nodes</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">normalized array of trace nodes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_appversion"><a class="anchor" href="#_ssc_appversion"></a><code>ssc.appVersion</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ssc.appVersion(string nameOrId)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string nameOrId</em> - the name or ID of the application version to load</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC application version object for the given application version name or id</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_appversionbrowserurl"><a class="anchor" href="#_ssc_appversionbrowserurl"></a><code>ssc.appversionBrowserUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ssc.appversionBrowserUrl(object av, object fs)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object av</em> - an SSC application version object, for example as returned by <code>#ssc.appVersion(&#8230;&#8203;)</code>, containing at least the <code>id</code> field<br>
+<em>object fs</em> - <code>null</code> to use default filter set, or an SSC filter set object, for example as returned by <code>#ssc.filterSet(&#8230;&#8203;)</code>, containing at least the <code>guid</code> field</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Browser-accessible URL pointing to the SSC application version page for the given application version</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_filterset"><a class="anchor" href="#_ssc_filterset"></a><code>ssc.filterSet</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ssc.filterSet(object av, string titleOrId)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object av</em> - an SSC application version object, for example as returned by <code>#ssc.appVersion(&#8230;&#8203;)</code>, containing at least the <code>id</code> field<br>
+<em>string titleOrId</em> - the title or ID of the filter set to load; may be blank to load the default filter set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC filter set object for the given application version and filter set title or id</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_issuebrowserurl"><a class="anchor" href="#_ssc_issuebrowserurl"></a><code>ssc.issueBrowserUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ssc.issueBrowserUrl(object issue, object fs)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object issue</em> - an SSC issue object, containing at least <code>projectVersionId</code>, <code>id</code>, <code>engineType</code>, and <code>issueInstanceId</code> fields<br>
+<em>object fs</em> - <code>null</code> to use default filter set, or an SSC filter set object, for example as returned by <code>#ssc.filterSet(&#8230;&#8203;)</code>, containing at least the <code>guid</code> field</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Browser-accessible URL pointing to the SSC issue details page for the given issue</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_ruledescriptionsprocessor"><a class="anchor" href="#_ssc_ruledescriptionsprocessor"></a><code>ssc.ruleDescriptionsProcessor</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ssc.ruleDescriptionsProcessor(string avId)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string avId</em> - the application version ID as a string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over rule descriptions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>The return value of this function can be passed to a <code>records.for-each::from</code> instruction to iterate over all rule descriptions that are referenced by issues in the given application version. See built-in SSC sarif-sast-report.yaml action for sample usage.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_txt"><a class="anchor" href="#_txt"></a>[txt]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_abbreviate"><a class="anchor" href="#_abbreviate"></a><code>abbreviate</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #abbreviate(string input, object maxLength)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to abbreviate<br>
+<em>object maxLength</em> - the maximum length of the result string, must be at least 4</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The input string abbreviated to the given maximum length, with any remaining text replaced by '&#8230;&#8203;'</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fmt"><a class="anchor" href="#_fmt"></a><code>fmt</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fmt(string fmt, array args)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string fmt</em> - the format string<br>
+<em>array args</em> - the arguments referenced by the format specifiers in the format string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The formatted string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Formats a string using the specified format string and arguments, returning the formatted string. See <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Formatter.html#syntax" class="bare">https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Formatter.html#syntax</a> for details on format string syntax.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_htmltosinglelinetext"><a class="anchor" href="#_htmltosinglelinetext"></a><code>htmlToSingleLineText</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #htmlToSingleLineText(string html)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string html</em> - the HTML string to convert to single-line plain text</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The plain text representation of the given HTML input, or <code>null</code> if the input is <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Converts the given HTML string into a single-line plain text string by removing all HTML tags.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_htmltotext"><a class="anchor" href="#_htmltotext"></a><code>htmlToText</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #htmlToText(string html)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string html</em> - the HTML string to convert to plain text; may be <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The plain text extracted from the input HTML, or <code>null</code> if the input is <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Converts the given HTML string into plain text.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_isblank"><a class="anchor" href="#_isblank"></a><code>isBlank</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #isBlank(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if given string is null or blank, <code>false</code> otherwise</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_isnotblank"><a class="anchor" href="#_isnotblank"></a><code>isNotBlank</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #isNotBlank(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false</code> if given string is null or blank, <code>true</code> otherwise</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_join"><a class="anchor" href="#_join"></a><code>join</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #join(string delimiter, array input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string delimiter</em> - the delimiter to be used between each element<br>
+<em>array input</em> - the elements to join</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String consisting of the joined elements, separated by the given delimiter</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_joinornull"><a class="anchor" href="#_joinornull"></a><code>joinOrNull</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #joinOrNull(string delimiter, array input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string delimiter</em> - the delimiter to be used between each element<br>
+<em>array input</em> - the elements to join</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String consisting of the joined elements separated by the given delimiter <em>if all elements are non-null</em>; otherwise <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_numberedlist"><a class="anchor" href="#_numberedlist"></a><code>numberedList</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #numberedList(array input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>array input</em> - the list of elements to be numbered and joined</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Numbered list of input elements, each on a new line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Generates a numbered list from the given list of elements.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_regexquote"><a class="anchor" href="#_regexquote"></a><code>regexQuote</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #regexQuote(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to be quoted</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The regex-quoted string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns a literal regex pattern string for the given input string, escaping any characters that have a special meaning in regular expressions.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_repeat"><a class="anchor" href="#_repeat"></a><code>repeat</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #repeat(string input, object count)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the text to repeat.<br>
+<em>object count</em> - the number of times to repeat the text; if &#8656;0, an empty string will be returned</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The input text repeated the given number of times</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Repeats the input text a specified number of times.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_replaceallfromregexmap"><a class="anchor" href="#_replaceallfromregexmap"></a><code>replaceAllFromRegExMap</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #replaceAllFromRegExMap(string input, map&lt;string,string&gt; replacements)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the input string on which to apply replacements<br>
+<em>map&lt;string,string&gt; replacements</em> - map containing regex patterns as keys and replacement strings as values</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The input string with all replacements applied</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Replaces all occurrences in the input string based on regex patterns and replacement
+values provided in the mapping object.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_substringafter"><a class="anchor" href="#_substringafter"></a><code>substringAfter</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #substringAfter(string input, string separator)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to get a substring from<br>
+<em>string separator</em> - the separator to search for</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The substring after the first occurrence of the separator, or <code>null</code> if input string is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_substringbefore"><a class="anchor" href="#_substringbefore"></a><code>substringBefore</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #substringBefore(string input, string separator)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - the string to get a substring from<br>
+<em>string separator</em> - the separator to search for</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The substring before the first occurrence of the separator, or <code>null</code> if input string is <code>null</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_util"><a class="anchor" href="#_util"></a>[util]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #env(string name)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - the name of the environment variable to retrieve</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The value of the given environment variable, or <code>null</code> if the environment variable is not set or its value is blank</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_properties"><a class="anchor" href="#_properties"></a><code>properties</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #properties(object input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object input</em> - the object to convert to an array</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Array representation of the given object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Converts the given object into an array of key-value pairs. For example, an object <code>{p1: v1, p2: v2}</code> will be converted into an array <code>[{key: p1, value: v1}, {key: p2, value: v2}</code>. This can for example be
+used with <code>records.for-each::from</code> to iterate over object properties.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_resolveagainstcurrentworkdir"><a class="anchor" href="#_resolveagainstcurrentworkdir"></a><code>resolveAgainstCurrentWorkDir</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #resolveAgainstCurrentWorkDir(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the path to resolve against the current working directory</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The absolute, normalized path</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Resolves the given path against the current working directory.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #uriPart(string uri, string part)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string uri</em> - URI from which to retrieve the requested part<br>
+<em>string part</em> - URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requested part of the given URI, or <code>null</code> if part name is not valid or not present</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Retrieves a given part of the given URI</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_uuid"><a class="anchor" href="#_uuid"></a><code>uuid</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #uuid()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A randomly generated UUID string in standard 36-character format</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_workflow"><a class="anchor" href="#_workflow"></a>[workflow]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_action_copyparametersfromgroup"><a class="anchor" href="#_action_copyparametersfromgroup"></a><code>action.copyParametersFromGroup</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.copyParametersFromGroup(string group)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string group</em> - the <code>cli.options</code> group name from which to copy CLI options</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String listing non-blank command-line options copied from the given <code>cli.options</code> group</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_action_runid"><a class="anchor" href="#_action_runid"></a><code>action.runID</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.runID()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Current fcli run id in UUID format</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>This function returns the current fcli run id, which uniquely represents the current fcli invocation. Different invocations of the fcli executable are guaranteed to have a different, unique run id. Within a single fcli executable invocation, the run id remains the same, even across run.fcli instructions and any other internal fcli command invocations.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_actioncmd"><a class="anchor" href="#_actioncmd"></a><code>actionCmd</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #actionCmd(string envPrefix, string moduleName, string actionName)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string envPrefix</em> - environment variable prefix<br>
+<em>string moduleName</em> - fcli module name<br>
+<em>string actionName</em> - fcli action name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli &lt;module&gt; action run &lt;action&gt; &lt;extra-opts&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Constructs an fcli command for running an fcli action based on function arguments combined with
+      user-supplied environment variables. Example environment variable names:</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/util/StringUtils.java">StringUtils</a></p>
+<p>If <code>envPrefix</code> is <code>SETUP</code>, we look for <code>SETUP_ACTION</code> and <code>SETUP_EXTRA_OPTS</code></p>
 </li>
 <li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/spring/expression/SpelFunctionsStandard.java">SpelFunctionsStandard</a></p>
-</li>
-<li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/action/runner/ActionSpelFunctions.java">ActionSpelFunctions</a></p>
-</li>
-<li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java">FoDActionSpelFunctions</a> (only available for actions run through <code>fcli fod action run</code>)</p>
-</li>
-<li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java">SSCActionSpelFunctions</a> (only available for actions run through <code>fcli ssc action run</code>)</p>
+<p>If <code>envPrefix</code> is <code>PACKAGE_ACTION</code>, we look for <code>PACKAGE_ACTION</code> and <code>PACKAGE_ACTION_EXTRA_OPTS</code></p>
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>As can be seen in the second example, if the given envPrefix already ends with <code>_ACTION</code>, the extra <code>_ACTION</code> suffix is skipped to avoid variable names like <code>PACKAGE_ACTION_ACTION</code>. Note though that we do keep <code>_ACTION</code> in <code>*_ACTION_EXTRA_OPTS</code>, to allow for having both PACKAGE_EXTRA_OPTS (on the <code>scancentral package</code> command), and PACKAGE_ACTION_EXTRA_OPTS (on the <code>fcli * action run package</code> command).</p>
+</div>
+<div class="paragraph">
+<p>This function returns an fcli command like <code>fcli &lt;module&gt; action run &lt;action&gt; &lt;extra-opts&gt;</code>,
+where:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>&lt;module&gt;</code> is taken from the corresponding function argument</p>
+</li>
+<li>
+<p><code>&lt;action&gt;</code> is taken from either environment variable (if defined) or function argument,   allowing the user to run a custom	fcli action instead of built-in action</p>
+</li>
+<li>
+<p><code>&lt;extra-opts&gt;</code> is taken from environment variable</p>
 </li>
 </ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="sect2">
+<h3 id="_actioncmdskipfromenvreason"><a class="anchor" href="#_actioncmdskipfromenvreason"></a><code>actionCmdSkipFromEnvReason</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string envPrefix</em> - the environment variable prefix used to construct related environment variable names<br>
+<em>boolean skipByDefault</em> - flag indicating whether to skip by default when no relevant environment variables are set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Skip reason or <code>null</code> if no reason to skip</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>For use with <code>run.fcli::skip.if-reason</code>, returns a skip reason if either user explicitly set <code>DO_&lt;envPrefix&gt;</code> to <code>false</code>, or if <code>skipByDefault</code> is <code>true</code> and user didn&#8217;t explicitly set <code>DO_&lt;envPrefix&gt;</code> to <code>true</code>. Note that <code>DO_&lt;envPrefix&gt;: true</code> is implied if either <code>&lt;envPrefix&gt;_ACTION</code> or <code>&lt;envPrefix&gt;_EXTRA_OPTS</code> have been set.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_actioncmdskipnoactionreason"><a class="anchor" href="#_actioncmdskipnoactionreason"></a><code>actionCmdSkipNoActionReason</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string envPrefix</em> - the environment variable prefix used to check the action environment variable<br>
+<em>string moduleName</em> - the name of the module to check for built-in actions<br>
+<em>string actionName</em> - the name of the action to check for availability</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Skip reason or <code>null</code> if no reason to skip</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns a skip reason if there&#8217;s no action available to be run. If user configured a custom action for the given <code>envPrefix</code> (also see <code>#actionCmd(&#8230;&#8203;)</code>, we assume that the action exists and thus return <code>null</code>. Otherwise, we check whether the given (built-in) action name is not blank and exists;
+if not, we return an appropriate skip reason.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_actionornull"><a class="anchor" href="#_actionornull"></a><code>actionOrNull</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #actionOrNull(string moduleName, string actionName)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string moduleName</em> - fcli module to check for action existence<br>
+<em>string actionName</em> - fcli action to check for existence</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The given fcli action name if it exists in the given fcli module, <code>null</code> otherwise.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_check"><a class="anchor" href="#_check"></a><code>check</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #check(boolean throwError, string msg)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>boolean throwError</em> - if <code>true</code>, an error will be thrown<br>
+<em>string msg</em> - the error message</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if no error is thrown</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Throws an error with the given message if the first argument evaluates to true.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_extraopts"><a class="anchor" href="#_extraopts"></a><code>extraOpts</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #extraOpts(string envPrefix)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string envPrefix</em> - the environment variable prefix used to construct the full <code>EXTRA_OPTS</code> variable name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Value of <code>&lt;envPrefix&gt;_EXTRA_OPTS</code> environment variable, or empty string if not defined</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fclicmd"><a class="anchor" href="#_fclicmd"></a><code>fcliCmd</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fcliCmd(string envPrefix, string cmd)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string envPrefix</em> - the environment variable prefix used to determine extra options<br>
+<em>string cmd</em> - the base command to be executed</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;cmd&gt; &lt;extra-opts&gt;</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns the given fcli command, amended with extra options specified in an optional,
+user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</code>.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fclicmdskipfromenvreason"><a class="anchor" href="#_fclicmdskipfromenvreason"></a><code>fcliCmdSkipFromEnvReason</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string envPrefix</em> - the environment variable prefix used to construct related environment variable names<br>
+<em>boolean skipByDefault</em> - flag indicating whether to skip by default when no relevant environment variables are set</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Skip reason or <code>null</code> if no reason to skip</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>For use with <code>run.fcli::skip.if-reason</code>, returns a skip reason if either user explicitly set <code>DO_&lt;envPrefix&gt;</code> to <code>false</code>, or if <code>skipByDefault</code> is <code>true</code> and user didn&#8217;t explicitly set <code>DO_&lt;envPrefix&gt;</code> to <code>true</code>. Note that <code>DO_&lt;envPrefix&gt;==true</code> is implied if <code>&lt;envPrefix&gt;_EXTRA_OPTS</code> has been set.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_optsfromenv"><a class="anchor" href="#_optsfromenv"></a><code>optsFromEnv</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #optsFromEnv(string input)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string input</em> - options to be resolved from environment variables</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Replaces environment variable references in the given options string with the corresponding environment variable values, removing any options for which the environment variable doesn&#8217;t exist or its value is blank. For example, given <code>--opt1=ENV1 --opt2=ENV2</code>, this function will return <code>"--opt1=SomeValue"</code> if <code>ENV1</code> is set to <code>SomeValue</code> and <code>ENV2</code> is either blank or doesn&#8217;t exist.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_skipblankenvreason"><a class="anchor" href="#_skipblankenvreason"></a><code>skipBlankEnvReason</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #skipBlankEnvReason(string arg0)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string arg0</em> - the name of the environment variable to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Skip reason or <code>null</code> if no reason to skip</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>For use with <code>run.fcli::skip.if-reason</code>, returns a skip reason if the given environment variable hasn&#8217;t been set, otherwise <code>null</code> is returned.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_skipreasonif"><a class="anchor" href="#_skipreasonif"></a><code>skipReasonIf</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #skipReasonIf(boolean skip, string reason)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>boolean skip</em> - the condition indicating whether to skip<br>
+<em>string reason</em> - the reason to return if skipping</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Skip reason or <code>null</code> if no reason to skip</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>For use with <code>run.fcli::skip.if-reason</code>, returns the given skip reason if <code>skip</code> is <code>true</code>, otherwise <code>null</code> is returned.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250919.141431-dev_mcp-server<br>
-Last updated 2025-09-19 14:16:48 UTC
+Version 0.20250919.150706-dev_mcp-server<br>
+Last updated 2025-09-19 15:09:41 UTC
 </div>
 </div>
 </body>

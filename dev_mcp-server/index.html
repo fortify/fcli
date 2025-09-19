@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20250919.141431-dev_mcp-server
+fcli_version: 0.20250919.150706-dev_mcp-server
 ---
 
 <!DOCTYPE html>
@@ -13,16 +13,21 @@ fcli_version: 0.20250919.141431-dev_mcp-server
 
 {% include asciidoc-head.html %}
 
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.141431-dev_mcp-server" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.150706-dev_mcp-server" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20250919.141431-dev_mcp-server</span>
+<span id="revnumber">version 0.20250919.150706-dev_mcp-server</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -42,13 +47,15 @@ fcli_version: 0.20250919.141431-dev_mcp-server
 <ul class="sectlevel2">
 <li><a href="#_h_help">-h | --help</a></li>
 <li><a href="#_env_prefix">--env-prefix</a></li>
-<li><a href="#_log_level">--log-level</a></li>
 <li><a href="#_log_file">--log-file</a></li>
+<li><a href="#_log_level">--log-level</a></li>
+<li><a href="#_log_mask">--log-mask</a></li>
+<li><a href="#_debug">--debug</a></li>
 <li><a href="#_o_output">-o | --output</a></li>
 <li><a href="#_style">--style</a></li>
-<li><a href="#_output_to_file">--output-to-file</a></li>
-<li><a href="#_progress">--progress</a></li>
 <li><a href="#_store">--store</a></li>
+<li><a href="#_to_file">--to-file</a></li>
+<li><a href="#_progress">--progress</a></li>
 <li><a href="#_q_query">-q | --query</a></li>
 <li><a href="#_option_expressions">Option Expressions</a></li>
 </ul>
@@ -548,6 +555,13 @@ found, please try with the Java version as it may be an issue specific to the na
 </div>
 </div>
 <div class="sect2">
+<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>--log-file</h3>
+<div class="paragraph">
+<p>This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
+location in the fcli data folder.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_log_level"><a class="anchor" href="#_log_level"></a>--log-level</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the <code>--log-file</code> option to be specified,
@@ -555,10 +569,15 @@ otherwise no log will be written.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>--log-file</h3>
+<h3 id="_log_mask"><a class="anchor" href="#_log_mask"></a>--log-mask</h3>
 <div class="paragraph">
-<p>This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
-location in the fcli data folder.</p>
+<p>Masking level to apply to logging data. Allowed values: high, medium, low, none. Default value: medium. Note that this is on a best-effort basis; you should always check log contents for sensitive data before sharing or publishing logs.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_debug"><a class="anchor" href="#_debug"></a>--debug</h3>
+<div class="paragraph">
+<p>Enable both fcli trace logging and collection of extra debugging data on applicable fcli actions and commands, for example enabling debug logging on tools invoked through fcli tool run commands, or enabling server-side debug log generation.</p>
 </div>
 </div>
 <div class="sect2">
@@ -665,9 +684,15 @@ location in the fcli data folder.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>--output-to-file</h3>
+<h3 id="_store"><a class="anchor" href="#_store"></a>--store</h3>
 <div class="paragraph">
-<p>Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the <code>--output</code> option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like <code>wait-for</code> commands, the <code>--output-to-file</code> option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.</p>
+<p>Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the <a href="#_fcli_variables">Fcli Variables</a> section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_to_file"><a class="anchor" href="#_to_file"></a>--to-file</h3>
+<div class="paragraph">
+<p>Write command output in the format as specified through the <code>--output</code> option to the given file. Compared to using redirection, any status messages will still appear on the console rather than being included in the output file.</p>
 </div>
 </div>
 <div class="sect2">
@@ -693,12 +718,6 @@ location in the fcli data folder.</p>
 <p><code>ansi</code>: Uses ANSI escape sequences to overwrite previous progress messages. This will be used by default if ANSI capabilities are detected. Supports multi-line progress messages.</p>
 </li>
 </ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_store"><a class="anchor" href="#_store"></a>--store</h3>
-<div class="paragraph">
-<p>Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the <a href="#_fcli_variables">Fcli Variables</a> section.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1541,8 +1560,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250919.141431-dev_mcp-server<br>
-Last updated 2025-09-19 14:16:45 UTC
+Version 0.20250919.150706-dev_mcp-server<br>
+Last updated 2025-09-19 15:09:56 UTC
 </div>
 </div>
 </body>
