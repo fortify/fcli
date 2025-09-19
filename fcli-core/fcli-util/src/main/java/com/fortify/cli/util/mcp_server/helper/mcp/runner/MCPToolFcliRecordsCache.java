@@ -38,7 +38,11 @@ public class MCPToolFcliRecordsCache {
                     : cacheEntry.getFullResult();
             if ( result==null ) {
                 result = MCPToolFcliRunnerHelper.collectRecords(fullCmd);
-                cache.put(fullCmd, new CacheEntry(result));
+                // Don't cache failed results. For example, if failed due to no session being available,
+                // users want to retry after logging in.
+                if ( result.getExitCode()==0 ) {
+                    cache.put(fullCmd, new CacheEntry(result));
+                }
             }
             return result;
         }
