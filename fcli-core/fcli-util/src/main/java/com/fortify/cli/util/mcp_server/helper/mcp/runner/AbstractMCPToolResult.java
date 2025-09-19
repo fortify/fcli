@@ -12,7 +12,12 @@
  */
 package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.session.helper.FcliNoSessionException;
+import com.fortify.cli.common.util.StringUtils;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
@@ -26,11 +31,24 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
  * @author Ruud Senden
  */
 public abstract class AbstractMCPToolResult {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMCPToolResult.class);
+    
     public final String asJsonString() {
         return JsonHelper.getObjectMapper().valueToTree(this).toPrettyString();
     }
     public final CallToolResult asCallToolResult() {
-        return new CallToolResult(asJsonString(), getExitCode()!=0);
+        var output = asJsonString();
+        var hasError = getExitCode()!=0;
+        if ( hasError && output.contains(FcliNoSessionException.class.getSimpleName()) ) {
+            var loginCmd = FcliNoSessionException.getLoginCmd(output);
+            output = String.format("""
+                    Tell user that command failed due to missing or invalid session, \
+                    and ask them to run the '%s' command from a terminal window. Please \
+                    show the command to be run on a separate line for better visibility.
+                    """, loginCmd);
+        }
+        LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringUtils.indent(output, "\t"));
+        return new CallToolResult(output, hasError);
     }
     public abstract int getExitCode();
     public abstract String getStderr();

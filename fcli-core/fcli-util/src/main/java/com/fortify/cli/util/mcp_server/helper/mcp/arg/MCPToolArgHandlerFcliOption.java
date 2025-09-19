@@ -40,4 +40,9 @@ public final class MCPToolArgHandlerFcliOption extends AbstractMCPToolArgHandler
     protected String combineFcliCmdArgs(String name, Stream<String> values) {
         return String.format("\"%s=%s\"", name, values.collect(Collectors.joining(",")));
     }
+    @Override
+    protected boolean isRequired() {
+        // We always require session name to be specified, so we can inform the user about the session that will be used
+        return getName().matches("--[a-z-]*session|--admin-config") ? true : super.isRequired();
+    }
 }

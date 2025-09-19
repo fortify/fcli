@@ -44,7 +44,7 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
     public void updateSchema(JsonSchema schema) {
         var argSpec = getArgSpec();
         schema.properties().put(getName(), createProperty(argSpec));
-        if ( isRequired(argSpec) ) {
+        if ( isRequired() ) {
             schema.required().add(getName());
         }
     }
@@ -70,12 +70,9 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
         return os.filter(Objects::nonNull).map(Object::toString);
     }
     
-    private static final boolean isRequired(ArgSpec argSpec) {
-        return argSpec.required(); // TODO If option is contained in exclusive arggroup, we need to consider it as optional
-    }
-    private static final ObjectNode createProperty(ArgSpec argSpec) {
+    private final ObjectNode createProperty(ArgSpec argSpec) {
         return JsonHelper.getObjectMapper().createObjectNode()
-                .put("description", getDescription(argSpec))
+                .put("description", getDescription())
                 .set("type", getPropertyType(argSpec.typeInfo()));
     }
 
@@ -105,8 +102,12 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
         return new TextNode("string");
     }
 
-    private static String getDescription(ArgSpec argSpec) {
-        String[] descElts = argSpec.description(); 
+    protected boolean isRequired() {
+        return getArgSpec().required(); // TODO If option is contained in exclusive arggroup, we need to consider it as optional
+    }
+    
+    protected String getDescription() {
+        String[] descElts = getArgSpec().description(); 
         return descElts==null || descElts.length<1 ? "" : String.join(" ", descElts);
     }
 }

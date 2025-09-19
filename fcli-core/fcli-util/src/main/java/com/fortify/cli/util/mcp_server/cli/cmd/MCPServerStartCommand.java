@@ -60,8 +60,6 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
                 .instructions("""
                         - For tools that accept a --*-session option and user hasn't asked for a specific \
                         session, inform the user that the 'default' session will be used.
-                        - If error messages reported by MCP tools ask the user to to run an fcli command, \
-                        show that command to the user and tell the user to run this in a separate terminal window. 
                         """)
                 .capabilities(getServerCapabilities())
                 .tools(createToolSpecs())

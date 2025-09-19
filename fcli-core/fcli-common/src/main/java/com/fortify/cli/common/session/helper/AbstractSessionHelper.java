@@ -164,13 +164,13 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
     private void checkNonExpiredSessionAvailable(String sessionName, boolean failIfUnavailable, T sessionDescriptor) {
         if ( failIfUnavailable && isExpiredOrUnavailable(sessionDescriptor) )
         {
-            throw new FcliSessionException("%s session '%s' cannot be retrieved or has expired.\nPlease login again using the '%s' command", getType(), sessionName, getLoginCmd());
+            throw new FcliNoSessionException(getLoginCmd(), "%s session '%s' cannot be retrieved or has expired.", getType(), sessionName);
         }
     }
 
     private void checkSessionExists(String sessionName, boolean failIfUnavailable) {
         if ( failIfUnavailable && !exists(sessionName) ) {
-            throw new FcliSessionException("%s session '%s' not found.\nPlease login using the '%s' command", getType(), sessionName, getLoginCmd());
+            throw new FcliNoSessionException(getLoginCmd(), "%s session '%s' not found.", getType(), sessionName);
         }
     }
     
