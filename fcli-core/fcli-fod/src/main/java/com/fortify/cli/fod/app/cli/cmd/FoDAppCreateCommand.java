@@ -16,6 +16,8 @@ import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_
 
 import java.util.ArrayList;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
@@ -23,7 +25,6 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions;

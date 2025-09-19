@@ -15,11 +15,12 @@ package com.fortify.cli.ssc.performance_indicator.helper;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;

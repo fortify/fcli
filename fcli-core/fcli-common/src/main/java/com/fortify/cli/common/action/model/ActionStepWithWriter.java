@@ -23,7 +23,7 @@ import com.fortify.cli.common.action.schema.SampleYamlSnippets;
 import com.fortify.cli.common.json.JsonPropertyDescriptionAppend;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

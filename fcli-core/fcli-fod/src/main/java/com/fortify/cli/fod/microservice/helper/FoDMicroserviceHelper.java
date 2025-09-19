@@ -23,6 +23,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
@@ -43,7 +46,7 @@ public class FoDMicroserviceHelper {
             FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
         var microservices = (ArrayNode)unirest.get(FoDUrls.MICROSERVICES)
                 .routeParam("appId", appDescriptor.getApplicationId())
-                .queryString("includeReleases", "false")
+                .queryString("includeReleases", "true")
                 .asObject(JsonNode.class).getBody().get("items");
         var matching = JsonHelper.stream(microservices)
                 .filter(match(microserviceNameDescriptor))
@@ -92,8 +95,14 @@ public class FoDMicroserviceHelper {
         return getDescriptor(appDescriptor, response, msRequest.getMicroserviceName());
     }
     
-    public static final FoDMicroserviceDescriptor createMicroservice(UnirestInstance unirest, FoDAppDescriptor appDescriptor, String microserviceName) {
-        var request = FoDMicroserviceUpdateRequest.builder().microserviceName(microserviceName).build();
+    public static final FoDMicroserviceDescriptor createMicroservice(UnirestInstance unirest, FoDAppDescriptor appDescriptor,
+                                                                     String microserviceName, FoDAttributeUpdateOptions.OptionalAttrOption msAttrs,
+                                                                     boolean autoRequiredAttrs) {
+        var request = FoDMicroserviceUpdateRequest.builder()
+                .microserviceName(microserviceName)
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,
+                        msAttrs.getAttributes(), autoRequiredAttrs))
+                .build();
         return createMicroservice(unirest, appDescriptor, request);
     }
 

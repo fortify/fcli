@@ -29,7 +29,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.impl.RecordWriterExpr.ExpressionWriter;
-import com.fortify.cli.common.spring.expression.validator.AbstractSimpleSpelNodeValidator;
+import com.fortify.cli.common.spel.validator.AbstractSimpleSpelNodeValidator;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

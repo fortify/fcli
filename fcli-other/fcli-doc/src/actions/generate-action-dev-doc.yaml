@@ -102,7 +102,30 @@ steps:
         # Store current type in `jsonTypesByName` variable, indexed by name, for later reference 
         - var.set:
             jsonTypesByName.${jsonType.name}: ${jsonType}
-      
+
+   # Process SpEL Functions
+  - records.for-each:
+     from: ${#actionSpelFunctions()}
+     record.var-name: fn
+     do:
+        - var.rm:
+            - paramTableRows
+        - if: ${fn.params != null && fn.params.size() > 0}
+          records.for-each:
+              from: ${fn.params}
+              record.var-name: param
+              do:
+                 - var.set:
+                    paramTableRows..: "__${param.type} ${param.name}__ - ${param.description}"
+                          
+        - var.set:
+           fn.paramTableRows: ${paramTableRows}
+           fn.hideCategory: ${displayedCategories?.contains(fn.category)?:false}
+           spelFunctionDescriptionSections..:
+             fmt: spelFunctionDescriptionSection
+             value: ${fn}
+           displayedCategories..: ${fn.category}
+                       
   - out.write:
       ${cli.outputFile}: {fmt: result}
 
@@ -251,30 +274,18 @@ formatters:
     Evaluation blocks may be simple references to action variables that were previously set through a `var.set` step,
     or can be complex code blocks that utilize 
     link:https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html[Spring Expression Language (SpEL)],
-    possibly combined with fcli-provided SpEL functions.
+    possibly combined with fcli-provided SpEL functions as described in the next sections.
     
     === SpEL Functions
     
     Fcli provides many functions that can be invoked from expressions. Function calls are identified by the `#` sign,
     for example: 
         
-    `${"${#join('\n', records}"}`
+    `${"${#join('&#92;n', records}"}`
     
-    CAUTION: Until SpEL functions have been documented and categorized based on stability & intended use (stable, unstable,
-    preview, internal-use, ...), there's no guarantee on the stability of SpEL functions; we may add, remove, or change SpEL
-    functions between fcli releases without any notification, potentially causing errors or failures when running an fcli custom
-    action on a different fcli version. 
+    The sections below describe the available SpEL functions.
     
-    Later versions of this documentation may add an overview of fcli-provided SpEL functions that can be used in SpEL expressions.
-    Until then, to see what SpEL functions are available in the current fcli version, you can either:
-        
-    * Have a look at fcli built-in actions to see which SpEL functions they are invoking
-    * Have a look at the Java classes that define the SpEL functions:
-    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/util/StringUtils.java[StringUtils]
-    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/spring/expression/SpelFunctionsStandard.java[SpelFunctionsStandard]
-    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/java/com/fortify/cli/common/action/runner/ActionSpelFunctions.java[ActionSpelFunctions]
-    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/java/com/fortify/cli/fod/action/helper/FoDActionSpelFunctions.java[FoDActionSpelFunctions] (only available for actions run through `fcli fod action run`)
-    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/java/com/fortify/cli/ssc/action/helper/SSCActionSpelFunctions.java[SSCActionSpelFunctions] (only available for actions run through `fcli ssc action run`)
+    ${#join("\n\n", spelFunctionDescriptionSections)}
     
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
   formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!fcli-action-schema-url!!!',#fcliBuildProperties().fcliActionSchemaUrl)+'\n----\n']))} 
@@ -310,5 +321,19 @@ formatters:
     
     ${#isBlank(formattedSampleSnippets)?'':'*Supported properties*'}
     ${propertyTable}
+  spelFunctionDescriptionSection: |
+    ${hideCategory?'':'=== ['+category+']'}
+    === `${name?:'-'}`
+    [%noheader,%autowidth.stretch,cols="1,~"]
+    |===
+    |**Signature**
+    |**`${signature}`**
     
+    ${paramTableRows==null ? '' : ('|**Parameters**\n|'+#join(' +\n', paramTableRows))}
+    
+    |**Returns**
+    |${returns != null ? returns.description : ''}
+    
+    ${#isBlank(description)?'':('2+a|'+description)}
+    |===
     

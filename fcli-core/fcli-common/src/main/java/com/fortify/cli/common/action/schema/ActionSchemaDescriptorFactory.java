@@ -22,33 +22,28 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.json.IWithAsJsonMethod;
 import com.fortify.cli.common.util.ReflectionHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 public class ActionSchemaDescriptorFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(ActionSchemaDescriptorFactory.class);
-    
     public static final ActionSchemaDescriptor getActionSchemaDescriptor() {
         return new ActionSchemaDescriptor();
     }
     
     @Data @Reflectable
-    public static final class ActionSchemaDescriptor {
+    public static final class ActionSchemaDescriptor implements IWithAsJsonMethod {
         @JsonIgnore private final Map<Class<?>, ActionSchemaJsonTypeDescriptor> typesByJavaType = new LinkedHashMap<>();
         private final Map<String, ActionSchemaJsonTypeDescriptor> typesByName = new LinkedHashMap<>();
         private final List<ActionSchemaJsonTypeDescriptor> types = new ArrayList<>();
@@ -57,14 +52,6 @@ public class ActionSchemaDescriptorFactory {
         public ActionSchemaDescriptor() {
             collectActionElementTypes(Action.class, null);
             types.sort((a,b)->a.name.compareTo(b.name));
-        }
-        
-        @JsonIgnore public final JsonNode asJson() {
-            var result = JsonHelper.getObjectMapper().valueToTree(this);
-            if ( LOG.isDebugEnabled() ) {
-                LOG.trace(result.toPrettyString());
-            }
-            return result;
         }
 
         /**

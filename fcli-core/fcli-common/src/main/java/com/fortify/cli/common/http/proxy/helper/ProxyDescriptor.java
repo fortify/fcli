@@ -15,10 +15,11 @@ package com.fortify.cli.common.http.proxy.helper;
 import java.net.URI;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

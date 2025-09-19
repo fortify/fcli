@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.query.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.expression.Expression;
@@ -23,7 +24,6 @@ import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.output.query.QueryExpression;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
 import lombok.Getter;

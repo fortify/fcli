@@ -17,13 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.github.GitHubPagingHelper;
 import com.fortify.cli.common.rest.gitlab.GitLabPagingHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryBranchCommitCollector;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryProcessor;
 import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;

@@ -15,6 +15,7 @@ package com.fortify.cli.fod.sast_scan.cli.cmd;
 
 import java.util.Objects;
 
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -25,18 +26,13 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -55,18 +51,10 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false) @CommandGroup("*-scan-setup")
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
-public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScanConfigSastDescriptor> implements IRecordTransformer {
     private static final Log LOG = LogFactory.getLog(FoDSastScanSetupCommand.class);
     @Getter @Mixin private OutputHelperMixins.Setup outputHelper;
 
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
-
-    @Option(names = {"--assessment-type"}, required = true)
-    private String staticAssessmentType; // Plain text name as custom assessment types can be created
-    @Mixin  private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
-    @Option(names = {"--entitlement-id"})
-    private Integer entitlementId;
     @Option(names = {"--technology-stack"}, required = true, defaultValue = "Auto Detect")
     private String technologyStack;
     @Option(names = {"--language-level"})
@@ -79,8 +67,6 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     private final Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
     private final Boolean useSourceControl = false;
-    @Option(names={"--skip-if-exists"})
-    private Boolean skipIfExists = false;
     @Option(names={"--use-aviator"})
     private Boolean useAviator = false;
 
@@ -91,28 +77,39 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     //      using this of course.
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
-    private String assessmentTypeName;
-
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        try (var progressWriter = progressWriterFactory.create()) {
-            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-            var setupDescriptor = FoDScanSastHelper.getSetupDescriptor(unirest, releaseDescriptor.getReleaseId());
-            if ( skipIfExists && setupDescriptor.getAssessmentTypeId()!=0 ) {
-                return setupDescriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING");
-            } else {
-                return setup(unirest, releaseDescriptor, setupDescriptor).asObjectNode();
-            }
-        }
+    protected String getScanType() {
+        return "Static Assessment";
     }
 
-    private FoDScanConfigSastDescriptor setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanConfigSastDescriptor currentSetup) {
+    @Override
+    protected String getSetupType() {
+        return auditPreferenceType.name();
+    }
+
+    @Override
+    protected FoDScanConfigSastDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {
+        return FoDScanSastHelper.getSetupDescriptor(unirest, releaseId);
+    }
+
+    @Override
+    protected boolean isExistingSetup(FoDScanConfigSastDescriptor setupDescriptor) {
+        return (setupDescriptor != null && setupDescriptor.getAssessmentTypeId() != 0);
+    }
+
+    @Override
+    protected ObjectNode convertToObjectNode(FoDScanConfigSastDescriptor setupDescriptor) {
+        return setupDescriptor.asObjectNode();
+    }
+
+    @Override
+    protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanConfigSastDescriptor currentSetup) {
         var relId = releaseDescriptor.getReleaseId();
 
         LOG.info("Finding appropriate entitlement to use.");
 
-        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, FoDScanType.Static, 
-        entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), staticAssessmentType);
+        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, FoDScanType.Static,
+                entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), assessmentType);
         var assessmentTypeId = atd.getAssessmentTypeId();
         var entitlementIdToUse = atd.getEntitlementId();
         assessmentTypeName = atd.getName();
@@ -135,7 +132,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 .useSourceControl(useSourceControl)
                 .includeFortifyAviator(useAviator).build();
 
-        return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest);
+        return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
     }
 
     private Integer getLanguageLevelId(UnirestInstance unirest, Integer technologyStackId) {
@@ -192,21 +189,12 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(getUnirestInstance());
         return ((ObjectNode)record)
         // Start partial fix for (#598)
-                        .put("scanType", assessmentTypeName)
-                        .put("setupType", auditPreferenceType.name())
+                        .put("scanType", getScanType())
+                        .put("setupType", getSetupType())
         // End               
                         .put("applicationName", releaseDescriptor.getApplicationName())
                         .put("releaseName", releaseDescriptor.getReleaseName())
                         .put("microserviceName", releaseDescriptor.getMicroserviceName());
     }
 
-    @Override
-    public String getActionCommandResult() {
-        return "SETUP";
-    }
-
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
 }

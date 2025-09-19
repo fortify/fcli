@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.common.util.StringUtils;
 
 public final class AviatorJwtUtils {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorJwtUtils.class);

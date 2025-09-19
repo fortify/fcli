@@ -147,11 +147,15 @@ h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
 @media screen and (min-width: 768px) {
   #toc.toc2 {
     top: 70px !important;
-    padding-bottom: 100px;
   }
 }
 </style>
 <% end %>
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
 </head>
 <body<%= @id && %( id="#{@id}") %> class="<%= [(attr :doctype),((attr? 'toc-class') && (attr? :toc) && (attr? 'toc-placement', 'auto') ? %(#{attr 'toc-class'} toc-#{attr 'toc-position', 'left'}) : nil)].compact * ' ' %>"<%= (attr? 'max-width') ? %( style="max-width: #{attr 'max-width'};") : nil %>><%
 unless noheader %>

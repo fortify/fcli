@@ -55,7 +55,7 @@ import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor
 import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpressionKeyDeserializer;
+import com.fortify.cli.common.spel.wrapper.TemplateExpressionKeyDeserializer;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDataHelper;

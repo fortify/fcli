@@ -17,6 +17,7 @@ import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_
 
 import java.util.ArrayList;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,7 +28,6 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -74,7 +74,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
     @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption relAttrs;
-    
+
     @ArgGroup(exclusive = false, headingKey = "fcli.fod.release.create.app-options") 
     private FoDReleaseAppCreateOptionsArgGroup appCreateOptions = new FoDReleaseAppCreateOptionsArgGroup();
 
@@ -138,7 +138,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
             if ( StringUtils.isBlank(microserviceName) ) {
                 throw new FcliSimpleException("Microservice name must be specified for microservices application");
             }
-            microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName());
+            microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName(), relAttrs, autoRequiredAttrs);
             msCreated = true;
         }
         return createRelease(unirest, appDescriptor, microserviceDescriptor, msCreated);

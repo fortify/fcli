@@ -19,6 +19,8 @@ import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.log.LogSensitivityLevel;

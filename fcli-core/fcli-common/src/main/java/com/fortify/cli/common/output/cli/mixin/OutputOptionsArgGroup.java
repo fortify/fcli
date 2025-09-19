@@ -38,16 +38,15 @@ import picocli.CommandLine.Option;
  * MCP responses, and other options are (likely) not relevant in LLM/MCP environments. 
  */
 public final class OutputOptionsArgGroup implements IOutputOptions {
-    @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "type[=<args>]")
+    @Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "<type+args>")
     @MCPExclude
     @Getter private OutputFormatConfig outputFormatConfig;
     
-    @Option(names = {"--style"}, split = ",", order=2) @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names = {"--style"}, split = ",", order=2, paramLabel = "<style>,...", hideParamSyntax = true) @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @MCPExclude
     @Getter private RecordWriterStyleElement[] outputStyleElements;
     
-    @Option(names = {"--store"}, order=3, converter = VariableStoreConfigConverter.class, paramLabel = "variableName[:<propertyNames>]")
-    @MCPExclude
+    @Option(names = {"--store"}, order=3, converter = VariableStoreConfigConverter.class, paramLabel = "<var>[:<prop>]")
     @Getter private VariableStoreConfig variableStoreConfig;
     
     @Option(names = {"--to-file"}, order=4)

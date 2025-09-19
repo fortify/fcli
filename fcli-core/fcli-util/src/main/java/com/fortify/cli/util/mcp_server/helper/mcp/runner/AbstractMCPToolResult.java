@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.session.helper.FcliNoSessionException;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.util.StringHelper;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
@@ -47,7 +47,7 @@ public abstract class AbstractMCPToolResult {
                     show the command to be run on a separate line for better visibility.
                     """, loginCmd);
         }
-        LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringUtils.indent(output, "\t"));
+        LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringHelper.indent(output, "\t"));
         return new CallToolResult(output, hasError);
     }
     public abstract int getExitCode();

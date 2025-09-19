@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.schema.SampleYamlSnippets;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
