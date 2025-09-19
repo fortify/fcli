@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.134843-dev_mcp-server" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.141431-dev_mcp-server" %}
 
 
 <div id="header">
@@ -96,6 +96,9 @@ fcli_version:
 <div class="paragraph">
 <p>As LLMs pose limits on the number of enabled tools, and clients often allow for easily enabling or disabling all tools provided by a given MCP server, each fcli MCP server instance only supports a single fcli module. For example, you can configure separate MCP servers for ssc, sc-sast, and sc-dast modules, but keep the sc-dast MCP tools disabled until you need them.</p>
 </div>
+<div class="paragraph">
+<p>In a future fcli version, we plan on adding support for registering fcli actions as MCP tools, as well as adding new fcli actions for running various tpes of scans. For example, once we&#8217;ve introduced a sast-scan or debricked-scan action, LLMs would then be able to simply invoke a single MCP tool to run such a scan, with the fcli action taking care of combining commands for installing and running tools, submitting scan requests, and optionally waiting for scan completion and importing results into SSC.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -148,7 +151,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-09-19 13:50:55 UTC
+Last updated 2025-09-19 14:16:45 UTC
 </div>
 </div>
 </body>
