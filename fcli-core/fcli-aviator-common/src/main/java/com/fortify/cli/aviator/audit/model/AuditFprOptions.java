@@ -19,6 +19,5 @@ public class AuditFprOptions {
     private final String tagMappingPath;
     private final String filterSetNameOrId;
     private final boolean noFilterSet;
-    private final List<String> priorities;
     private final List<String> folderNames;
 }

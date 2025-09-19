@@ -52,7 +52,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--app"}) private String appName;
     @Option(names = {"--tag-mapping"}) private String tagMapping;
     @Option(names = {"--no-filterset"}) private boolean noFilterSet;
-    @Option(names = {"--priority", "-p"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> priorities;
     @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
@@ -84,7 +83,6 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                                         .tagMappingPath(tagMapping)
                                         .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
                                         .noFilterSet(noFilterSet)
-                                        .priorities(priorities)
                                         .folderNames(folderNames)
                                         .build());
             String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);

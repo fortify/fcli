@@ -20,8 +20,8 @@ public final class FilterSetSelector {
 
     private FilterSetSelector() {}
 
-    public static FilterSelection select(FPRInfo fprInfo, List<String> priorities, String filterSetNameOrId, boolean noFilterSet, List<String> folderNames) {
-        FilterSet selectedFilterSet = resolveFilterSet(fprInfo, priorities, filterSetNameOrId, noFilterSet);
+    public static FilterSelection select(FPRInfo fprInfo, String filterSetNameOrId, boolean noFilterSet, List<String> folderNames) {
+        FilterSet selectedFilterSet = resolveFilterSet(fprInfo, filterSetNameOrId, noFilterSet);
 
         // The 'select' method's main responsibilities are now clear: resolve, validate, and return.
         // Final validation: if the user wants to filter by folder, a filter set must be active.
@@ -42,26 +42,18 @@ public final class FilterSetSelector {
      * Resolves which FilterSet to use based on a clear order of precedence.
      * This encapsulates the "choosing" logic.
      */
-    private static FilterSet resolveFilterSet(FPRInfo fprInfo, List<String> priorities, String filterSetNameOrId, boolean noFilterSet) {
-        // 1. Highest precedence: A direct filter by --priority. This always overrides other settings.
-        if (priorities != null && !priorities.isEmpty()) {
-            LOG.info("User has specified a priority filter for: {}", priorities);
-            return createPriorityFilterSet(priorities);
-        }
+    private static FilterSet resolveFilterSet(FPRInfo fprInfo, String filterSetNameOrId, boolean noFilterSet) {
 
-        // 2. Next precedence: An explicit --filterset name or ID.
         if (filterSetNameOrId != null && !filterSetNameOrId.trim().isEmpty()) {
             LOG.info("Attempting to find user-specified filter set by name or ID: '{}'", filterSetNameOrId);
             return findFilterSetByNameOrId(fprInfo, filterSetNameOrId);
         }
 
-        // 3. Next precedence: The --no-filterset flag to explicitly disable any filter set.
         if (noFilterSet) {
             LOG.info("User has chosen to not apply any filter sets.");
             return null;
         }
 
-        // 4. Lowest precedence: Fallback to the default enabled filter set in the FPR.
         LOG.info("No explicit filter set specified; checking for a default enabled filter set in the FPR.");
         return fprInfo.getDefaultEnabledFilterSet().orElse(null);
     }
