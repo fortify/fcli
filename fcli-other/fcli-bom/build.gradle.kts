@@ -27,6 +27,6 @@ dependencies {
         api("org.apache.commons:commons-lang3:3.18.0")
         api("org.apache.commons:commons-compress:1.28.0")
         api("org.jsoup:jsoup:1.21.2")
-        api("io.modelcontextprotocol.sdk:mcp:0.11.0")
+        api("io.modelcontextprotocol.sdk:mcp:0.12.0")
     }
 }
