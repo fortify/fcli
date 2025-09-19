@@ -64,7 +64,8 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 add("implementation", "org.apache.commons:commons-lang3:3.18.0")
                 add("implementation", "org.apache.commons:commons-compress")
                 add("implementation", "org.jsoup:jsoup")
-                add("implementation", "io.modelcontextprotocol.sdk:mcp")
+                add("implementation", "io.modelcontextprotocol.sdk:mcp-core")
+                add("implementation", "io.modelcontextprotocol.sdk:mcp-json-jackson2")
             }
         }
 

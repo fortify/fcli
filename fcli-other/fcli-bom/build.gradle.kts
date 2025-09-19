@@ -7,6 +7,7 @@ javaPlatform { allowDependencies() }
 dependencies {
     api(platform("com.fasterxml.jackson:jackson-bom:2.20.0"))
     api(platform("org.springframework:spring-framework-bom:6.2.11"))
+    api(platform("io.modelcontextprotocol.sdk:mcp-bom:0.13.0"))
     constraints {
         api("info.picocli:picocli:4.7.5")
         api("info.picocli:picocli-codegen:4.7.5")
@@ -27,6 +28,5 @@ dependencies {
         api("org.apache.commons:commons-lang3:3.18.0")
         api("org.apache.commons:commons-compress:1.28.0")
         api("org.jsoup:jsoup:1.21.2")
-        api("io.modelcontextprotocol.sdk:mcp:0.12.0")
     }
 }
