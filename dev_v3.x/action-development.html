@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20250919.161929-dev_v3.x
+fcli_version: 0.20250922.132157-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20250919.161929-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250919.161929-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250922.132157-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20250919.161929-dev_v3.x</span>
+<span id="revnumber">version 0.20250922.132157-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -185,8 +185,8 @@ fcli_version: 0.20250919.161929-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20250919.161929-dev_v3.x</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.2.1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20250922.132157-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.3.0</p></td>
 </tr>
 </tbody>
 </table>
@@ -255,7 +255,7 @@ associations listed below:</p>
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.3.0.json</pre>
 </div>
 </div>
 </li>
@@ -263,7 +263,7 @@ associations listed below:</p>
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.3.0.json</pre>
 </div>
 </div>
 </li>
@@ -276,8 +276,8 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20250919.161929-dev_v3.x supports
-schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json">2.2.1</a>. Other
+<p>As shown in the sample schema statements above, the current fcli version 0.20250922.132157-dev_v3.x supports
+schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.3.0.json">2.3.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
 same schema minor version range.</p>
@@ -369,12 +369,12 @@ provide more details on the expected contents for each property type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.3.0.json</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.2.1.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.3.0.json</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -1364,6 +1364,11 @@ options: --option, -o<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional string: Allows for defining groups of options, which can for example be used with ${#action.copyParametersFromGroup("optionGroupName")}<br></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mcp</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional enum value: If set to 'include' (default), this CLI option is included as an MCP tool argument. If set to 'exclude', this CLI option is not included as an MCP tool argument. Only non-required options may be excluded as MCP tool arguments. Also see <code>config::mcp</code> property to include/exclude the action itself as an MCP tool.<br></p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -1429,6 +1434,11 @@ options: --option, -o<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">output</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' is specified by the user) to avoid such output from interfering with progress messages.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mcp</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">enum</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional enum value: If set to 'include' (default), this action is included as an MCP tool on the <code>fcli util mcp-server start</code> command.  If set to 'exclude' this action won&#8217;t be available as an MCP tool.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mask.env-vars</p></td>
@@ -4083,8 +4093,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20250919.161929-dev_v3.x<br>
-Last updated 2025-09-19 16:22:07 UTC
+Version 0.20250922.132157-dev_v3.x<br>
+Last updated 2025-09-22 13:24:34 UTC
 </div>
 </div>
 </body>

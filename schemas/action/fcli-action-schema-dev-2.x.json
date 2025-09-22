@@ -20,6 +20,10 @@
           "$ref" : "#/$defs/ActionInputMask",
           "description" : "Optional object: Mask option value in the fcli log file using the given mask configuration.\n"
         },
+        "mcp" : {
+          "$ref" : "#/$defs/ActionMcpIncludeExclude",
+          "description" : "Optional enum value: If set to 'include' (default), this CLI option is included as an MCP tool argument. If set to 'exclude', this CLI option is not included as an MCP tool argument. Only non-required options may be excluded as MCP tool arguments. Also see `config::mcp` property to include/exclude the action itself as an MCP tool.\n"
+        },
         "names" : {
           "type" : "string",
           "description" : "Required string: The option names allowed on the command line to specify a value for this option. Multi-letter option names should be preceded by double dashes like --option-name, single-letter option names should be preceded by a single dash like-o. Multiple option names may be separated by a comma and optional whitespace, for example:\noptions: --option, -o\n"
@@ -56,6 +60,10 @@
       },
       "description" : "Define log masking settings.",
       "additionalProperties" : false
+    },
+    "ActionMcpIncludeExclude" : {
+      "type" : "string",
+      "enum" : [ "include", "exclude" ]
     },
     "ActionStep" : {
       "type" : "object",
@@ -553,6 +561,10 @@
               "$ref" : "#/$defs/ActionInputMask"
             },
             "description" : "Optional map: Environment variables used by this action for which values should be masked in the fcli log file. Map keys define environment variables names, map values define masking configuration.\n"
+          },
+          "mcp" : {
+            "$ref" : "#/$defs/ActionMcpIncludeExclude",
+            "description" : "Optional enum value: If set to 'include' (default), this action is included as an MCP tool on the `fcli util mcp-server start` command.  If set to 'exclude' this action won't be available as an MCP tool.\n"
           },
           "output" : {
             "type" : "string",
