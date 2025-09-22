@@ -12,12 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.ssc._common.rest.ssc.query.cli.mixin;
 
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.rest.query.cli.mixin.AbstractServerSideQueryMixin;
 
 import picocli.CommandLine.Option;
 
 public class SSCQParamMixin extends AbstractServerSideQueryMixin {
     @Option(names="--q-param", required=false, descriptionKey="fcli.ssc.q-param")
+    @MCPExclude // Not suitable for LLM, as LLM doesn't know option syntax/fields
     private String qParam;
     
     @Override

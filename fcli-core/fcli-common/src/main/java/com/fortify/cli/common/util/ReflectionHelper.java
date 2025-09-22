@@ -58,12 +58,20 @@ public final class ReflectionHelper {
         return Arrays.copyOfRange(allTypes, 1, allTypes.length);
     }
     
-    public static final <A extends Annotation,R> R getAnnotationValue(AnnotatedElement annotatedElement, Class<A> annotationType, Function<A,R> valueRetriever, Supplier<R> defaultValueSupplier) {
-        A annotation = annotatedElement==null ? null : annotatedElement.getAnnotation(annotationType);
-        R annotationValue = annotation==null ? null : valueRetriever.apply(annotation);
+    public static final <A extends Annotation,R> R getAnnotationValue(Object o, Class<A> annotationType, Function<A,R> valueRetriever, Supplier<R> defaultValueSupplier) {
+        R annotationValue = JavaHelper.as(o,AnnotatedElement.class)
+                .map(ae->ae.getAnnotation(annotationType))
+                .map(a->valueRetriever.apply(a))
+                .orElse(null);
         return annotationValue==null || (annotationValue instanceof String && StringUtils.isBlank((String)annotationValue) || AnnotationDefaultClassValue.class.equals(annotationValue)) 
-                ? defaultValueSupplier.get() 
+                ? defaultValueSupplier==null ? null : defaultValueSupplier.get() 
                 : annotationValue;
+    }
+    
+    public static final boolean hasAnnotation(Object o, Class<? extends Annotation> annotation) {
+        return JavaHelper.as(o, AnnotatedElement.class)
+                .map(e->e.isAnnotationPresent(annotation))
+                .orElse(false);
     }
     
     public static interface AnnotationDefaultClassValue {}

@@ -23,6 +23,11 @@ public class FoDSessionHelper extends AbstractSessionHelper<FoDSessionDescriptor
     public String getType() {
         return "FoD";
     }
+    
+    @Override
+    protected String getLoginCmd() {
+        return "fcli fod session login";
+    }
 
     @Override
     protected Class<FoDSessionDescriptor> getSessionDescriptorType() {

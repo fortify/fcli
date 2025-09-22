@@ -8,6 +8,7 @@ usage:
 
 config:
   output: immediate
+  mcp: exclude
   
 cli.options:
   outputDir:

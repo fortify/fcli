@@ -23,6 +23,11 @@ public class AviatorAdminConfigHelper extends AbstractSessionHelper<AviatorAdmin
     public String getType() {
         return "aviator-admin-config";
     }
+    
+    @Override
+    protected String getLoginCmd() {
+        return "fcli aviator admin-config create";
+    }
 
     @Override
     protected Class<AviatorAdminConfigDescriptor> getSessionDescriptorType() {

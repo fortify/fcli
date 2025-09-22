@@ -12,12 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.rest.query.cli.mixin;
 
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.rest.query.cli.mixin.AbstractServerSideQueryMixin;
 
 import picocli.CommandLine.Option;
 
 public class FoDFiltersParamMixin extends AbstractServerSideQueryMixin {
     @Option(names="--filters-param", required=false, descriptionKey="fcli.fod.filters-param")
+    @MCPExclude // Not suitable for LLM, as LLM doesn't know option syntax/fields
     private String filtersParam;
     
     @Override

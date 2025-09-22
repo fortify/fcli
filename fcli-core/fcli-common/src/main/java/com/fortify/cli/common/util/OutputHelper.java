@@ -23,6 +23,8 @@ import java.util.function.Function;
 
 import org.apache.commons.io.output.NullOutputStream;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +71,7 @@ public class OutputHelper {
         private final BiFunction<OutputStream,Charset,String> stringFunction;
     }
     
-    @Data
+    @Data @Reflectable
     public static final class Result {
         private final int exitCode;
         private final String out;

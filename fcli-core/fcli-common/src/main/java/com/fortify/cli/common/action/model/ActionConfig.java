@@ -75,6 +75,13 @@ public final class ActionConfig implements IActionElement {
     @JsonProperty(value = "output", required = false) private ActionConfigOutput output = ActionConfigOutput.delayed;
     
     @JsonPropertyDescription("""
+            Optional enum value: If set to 'include' (default), this action is included as an MCP tool on \
+            the `fcli util mcp-server start` command.  If set to 'exclude' this action won't be available \
+            as an MCP tool.   
+            """)
+    @JsonProperty(value = "mcp", required = false) private ActionMcpIncludeExclude mcp = ActionMcpIncludeExclude.include;
+    
+    @JsonPropertyDescription("""
         Optional map: Environment variables used by this action for which values should be masked in the fcli \
         log file. Map keys define environment variables names, map values define masking configuration.    
         """)

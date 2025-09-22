@@ -23,6 +23,11 @@ public class AviatorUserSessionHelper extends AbstractSessionHelper<AviatorUserS
     public String getType() {
         return "aviator-user";
     }
+    
+    @Override
+    protected String getLoginCmd() {
+        return "fcli aviator session login";
+    }
 
     @Override
     protected Class<AviatorUserSessionDescriptor> getSessionDescriptorType() {
