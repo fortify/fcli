@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250922.132157-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20250925.085956-dev_v3.x" %}
 
 
 <div id="header">
@@ -53,9 +53,11 @@ fcli_version:
                            [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                            [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>]
                            [<strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em>]
+                           [<strong>--add-tags</strong>=<em>&lt;tagSpecs&gt;</em>[,<em>&lt;tagSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                            [<strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,
                            <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--attrs</strong>=<em>ATTR=VALUE</em>[,
-                           <em>ATTR=VALUE</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                           <em>ATTR=VALUE</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--rm-tags</strong>=<em>&lt;tagSpecs&gt;</em>[,
+                           <em>&lt;tagSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                            [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                            [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
@@ -85,6 +87,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--active</strong>=<em>&lt;active&gt;</em></dt>
 <dd>
 <p>Specify whether application version should be activated (true, default) or not (false).</p>
+</dd>
+<dt class="hdlist1"><strong>--add-tags</strong>=<em>&lt;tagSpecs&gt;</em>[,<em>&lt;tagSpecs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of custom tag names or GUIDs to add.</p>
 </dd>
 <dt class="hdlist1"><strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
@@ -137,6 +143,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
 <dd>
 <p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default value: 60s</p>
+</dd>
+<dt class="hdlist1"><strong>--rm-tags</strong>=<em>&lt;tagSpecs&gt;</em>[,<em>&lt;tagSpecs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of custom tag names or GUIDs to remove.</p>
 </dd>
 <dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
 <dd>
@@ -234,7 +244,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-09-22 13:24:25 UTC
+Last updated 2025-09-25 09:02:33 UTC
 </div>
 </div>
 </body>
