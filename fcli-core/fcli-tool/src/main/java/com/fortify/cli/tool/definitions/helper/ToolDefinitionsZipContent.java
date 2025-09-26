@@ -15,16 +15,10 @@ import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
 import java.util.stream.Collectors;
 
-/**
- * Utility class to load zip file contents and provide access to file data and metadata.
- */
 public class ToolDefinitionsZipContent {
     private final Map<String, byte[]> fileContents = new HashMap<>();
     private final Map<String, FileTime> fileTimes = new HashMap<>();
 
-    /**
-     * Loads zip file from a file path.
-     */
     public ToolDefinitionsZipContent(Path zipPath) throws IOException {
         if (Files.exists(zipPath)) {
             try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
@@ -43,9 +37,6 @@ public class ToolDefinitionsZipContent {
         }
     }
 
-    /**
-     * Loads zip file from an InputStream (for internal resources).
-     */
     public ToolDefinitionsZipContent(InputStream zipStream) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(zipStream)) {
             ZipEntry entry;
