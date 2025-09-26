@@ -23,10 +23,10 @@ public class AviatorSSCPrepareCommand extends AbstractSSCJsonNodeOutputCommand i
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         AviatorSSCPrepareHelper.PrepareOptions options = AviatorSSCPrepareHelper.PrepareOptions.builder()
-                .templateNameOrId(updateOptions.getTemplateNameOrId())
-                .updateAllTemplates(updateOptions.isUpdateAllTemplates())
+                .issueTemplateNameOrId(updateOptions.getIssueTemplateNameOrId())
+                .allIssueTemplates(updateOptions.isAllIssueTemplates())
                 .appVersionNameOrId(updateOptions.getAppVersionNameOrId())
-                .updateAllAvs(updateOptions.isUpdateAllAvs())
+                .allAppVersions(updateOptions.isAllAppVersions())
                 .build();
 
         AviatorSSCPrepareHelper helper = new AviatorSSCPrepareHelper(unirest);

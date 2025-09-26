@@ -6,15 +6,15 @@ import picocli.CommandLine.Option;
 
 @Getter
 public class AviatorSSCPrepareOptionsMixin {
-    @Option(names = {"--update-template"}, descriptionKey = "fcli.aviator.ssc.prepare.update-template")
-    private String templateNameOrId;
+    @Option(names = {"--issue-template"}, descriptionKey = "fcli.aviator.ssc.prepare.issue-template")
+    private String issueTemplateNameOrId;
 
-    @Option(names = {"--update-all-templates"}, descriptionKey = "fcli.aviator.ssc.prepare.update-all-templates")
-    private boolean updateAllTemplates;
+    @Option(names = {"--all-issue-templates"}, descriptionKey = "fcli.aviator.ssc.prepare.all-issue-templates")
+    private boolean allIssueTemplates;
 
-    @Option(names = {"--update-av"}, descriptionKey = "fcli.aviator.ssc.prepare.update-av")
+    @Option(names = {"--av", "--appversion"}, descriptionKey = "fcli.aviator.ssc.prepare.appversion")
     private String appVersionNameOrId;
 
-    @Option(names = {"--update-all-avs"}, descriptionKey = "fcli.aviator.ssc.prepare.update-all-avs")
-    private boolean updateAllAvs;
+    @Option(names = {"--all-avs", "--all-appversions"}, descriptionKey = "fcli.aviator.ssc.prepare.all-appversions")
+    private boolean allAppVersions;
 }

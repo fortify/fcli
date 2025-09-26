@@ -89,10 +89,10 @@ public class AviatorSSCTemplateUpdater {
 
     private Collection<SSCIssueTemplateDescriptor> getTargetTemplates(AviatorSSCPrepareHelper.PrepareOptions options) {
         SSCIssueTemplateHelper helper = new SSCIssueTemplateHelper(unirest);
-        if (options.isUpdateAllTemplates()) {
+        if (options.isAllIssueTemplates()) {
             return new ArrayList<>(helper.getDescriptorsById().values());
         } else {
-            return List.of(helper.getDescriptorByNameOrId(options.getTemplateNameOrId(), true));
+            return List.of(helper.getDescriptorByNameOrId(options.getIssueTemplateNameOrId(), true));
         }
     }
 

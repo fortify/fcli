@@ -18,10 +18,10 @@ public class AviatorSSCPrepareHelper {
 
     @Builder @Data
     public static class PrepareOptions {
-        private String templateNameOrId;
-        private boolean updateAllTemplates;
+        private String issueTemplateNameOrId;
+        private boolean allIssueTemplates;
         private String appVersionNameOrId;
-        private boolean updateAllAvs;
+        private boolean allAppVersions;
     }
 
     @Data
@@ -64,11 +64,11 @@ public class AviatorSSCPrepareHelper {
             }
             List<JsonNode> requiredTags = List.of(predictionTag, statusTag);
 
-            if (options.isUpdateAllTemplates() || options.getTemplateNameOrId() != null) {
+            if (options.isAllIssueTemplates() || options.getIssueTemplateNameOrId() != null) {
                 new AviatorSSCTemplateUpdater(unirest).process(options, result, requiredTags, progress);
             }
 
-            if (options.isUpdateAllAvs() || options.getAppVersionNameOrId() != null) {
+            if (options.isAllAppVersions() || options.getAppVersionNameOrId() != null) {
                 new AviatorSSCAppVersionUpdater(unirest).process(options, result, requiredTags, progress);
             }
         }

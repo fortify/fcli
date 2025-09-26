@@ -79,7 +79,7 @@ public class AviatorSSCAppVersionUpdater {
 
     private List<SSCAppVersionDescriptor> getTargetAppVersions(AviatorSSCPrepareHelper.PrepareOptions options) {
         GetRequest request = unirest.get(SSCUrls.PROJECT_VERSIONS).queryString("limit", "-1").queryString("fields", "id,name,project");
-        if (!options.isUpdateAllAvs()) {
+        if (!options.isAllAppVersions()) {
             request.queryString("q", String.format("id:%d", SSCAppVersionHelper.getRequiredAppVersion(unirest, options.getAppVersionNameOrId(), ":").getIntVersionId()));
         }
         ArrayNode avsNode = (ArrayNode) request.asObject(JsonNode.class).getBody().get("data");
