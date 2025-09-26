@@ -127,19 +127,16 @@ public final class ToolDefinitionsHelper {
 		for (String yamlFile : yamlFileNames) {
 			boolean found = false;
 			Path outFile = DEFINITIONS_STATE_DIR.resolve(yamlFile);
-			// Try user zip
 			if (!found && toolDefinitionCustomFilePath != null && Files.exists(Path.of(toolDefinitionCustomFilePath))) {
 				try (InputStream is = Files.newInputStream(Path.of(toolDefinitionCustomFilePath))) {
 					found = extractYamlFromZip(is, yamlFile, outFile);
 				}
 			}
-			// Try state zip
 			if (!found && Files.exists(DEFINITIONS_STATE_ZIP)) {
 				try (InputStream is = Files.newInputStream(DEFINITIONS_STATE_ZIP)) {
 					found = extractYamlFromZip(is, yamlFile, outFile);
 				}
 			}
-			// Try internal zip
 			if (!found) {
 				try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
 					found = extractYamlFromZip(is, yamlFile, outFile);
@@ -150,15 +147,12 @@ public final class ToolDefinitionsHelper {
 			}
 		}
 
-		// 2. Create the zip file with all required YAMLs and track latest last modified
-		// time
 		FileTime latestTime = null;
 		try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(Files.newOutputStream(dest))) {
 			for (String yamlFile : yamlFileNames) {
 				Path filePath = DEFINITIONS_STATE_DIR.resolve(yamlFile);
 				if (Files.exists(filePath)) {
 					java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(yamlFile);
-					// Set the entry's last modified time to the file's last modified time
 					FileTime fileTime = Files.getLastModifiedTime(filePath);
 					zipEntry.setLastModifiedTime(fileTime);
 					zos.putNextEntry(zipEntry);
@@ -170,12 +164,10 @@ public final class ToolDefinitionsHelper {
 				}
 			}
 		}
-		// Set the zip file's last modified time to the latest YAML file's time
 		if (latestTime != null) {
 			Files.setLastModifiedTime(dest, latestTime);
 		}
 
-		// 3. Optionally, remove loose YAML files from state dir (keep only the zip)
 		for (String yamlFile : yamlFileNames) {
 			Path filePath = DEFINITIONS_STATE_DIR.resolve(yamlFile);
 			try {
@@ -208,7 +200,6 @@ public final class ToolDefinitionsHelper {
 	private static final void addZipOutputDescriptor(List<ToolDefinitionsOutputDescriptor> result) {
 		var stateDescriptor = FcliDataHelper.readFile(DESCRIPTOR_PATH, ToolDefinitionsStateDescriptor.class, false);
 		if (stateDescriptor != null) {
-			// Show the full path to the user-provided zip if available
 			String source = toolDefinitionCustomFilePath != null ? toolDefinitionCustomFilePath : ZIP_FILE_NAME;
 			result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, source, stateDescriptor.getLastUpdate(),
 					"UPDATED"));
@@ -218,7 +209,6 @@ public final class ToolDefinitionsHelper {
 		}
 	}
 
-	// Utility method to get required YAML file names
 	private static Set<String> getRequiredYamlNames() {
 		Set<String> requiredYamlNames = new HashSet<>();
 		for (String tool : ToolRegistry.getRegisteredToolNames()) {
@@ -230,7 +220,6 @@ public final class ToolDefinitionsHelper {
 	private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result) {
 		Set<String> requiredYamlNames = getRequiredYamlNames();
 		if (isUpdateDefault()) {
-			// Downloaded from URL: all present YAMLs are UPDATED
 			try (InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is)) {
 				ZipEntry entry;
 				while ((entry = zis.getNextEntry()) != null) {
@@ -245,8 +234,6 @@ public final class ToolDefinitionsHelper {
 				throw new FcliSimpleException("Error loading tool definitions", e);
 			}
 		} else {
-			// User-provided zip: single pass for UPDATED/IGNORED, then NOT_PRESENT for
-			// missing
 			Set<String> foundYamlNames = new HashSet<>();
 			String zipPathOnly = toolDefinitionCustomFilePath != null
 					? Path.of(toolDefinitionCustomFilePath).getFileName().toString()
@@ -260,12 +247,10 @@ public final class ToolDefinitionsHelper {
 							String name = Path.of(entry.getName()).getFileName().toString();
 							Date lastModified = new Date(entry.getLastModifiedTime().toMillis());
 							if (requiredYamlNames.contains(name)) {
-								// For UPDATED, show only the zip file name as source
 								result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified,
 										"UPDATED"));
 								foundYamlNames.add(name);
 							} else {
-								// For IGNORED, show only the zip file name as source
 								result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified,
 										"IGNORED"));
 							}
@@ -275,10 +260,8 @@ public final class ToolDefinitionsHelper {
 					throw new FcliSimpleException("Error loading files from user definitions", e);
 				}
 			}
-			// Add NOT_PRESENT for required YAMLs not found
 			for (String required : requiredYamlNames) {
 				if (!foundYamlNames.contains(required)) {
-					// For NOT_PRESENT, show tool-definitions.yaml.zip as source
 					String source = ZIP_FILE_NAME;
 					Date lastModified = null;
 					Path destFile = DEFINITIONS_STATE_DIR.resolve(required);
@@ -286,7 +269,7 @@ public final class ToolDefinitionsHelper {
 						try {
 							lastModified = new Date(Files.getLastModifiedTime(destFile).toMillis());
 						} catch (IOException e) {
-							// fallback to null
+							throw new FcliSimpleException("Error getting last modified time for: " + destFile, e);
 						}
 					} else {
 						lastModified = getInternalResourceZipEntryLastModified(required);
@@ -301,7 +284,6 @@ public final class ToolDefinitionsHelper {
 		return toolDefinitionCustomFilePath != null && toolDefinitionCustomFilePath.contains("https://");
 	}
 
-	// Utility: Get last modified time for a file from the internal resource zip
 	private static Date getInternalResourceZipEntryLastModified(String fileName) {
 		try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
 				ZipInputStream zis = new ZipInputStream(is)) {
@@ -312,7 +294,7 @@ public final class ToolDefinitionsHelper {
 				}
 			}
 		} catch (IOException e) {
-			// Ignore, fallback to null
+			throw new FcliSimpleException("Error reading internal resource zip entry for: " + fileName, e);
 		}
 		return null;
 	}
