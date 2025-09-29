@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Run Debricked Scan
+  description: |
+    This action can be used to run a debricked scan of the project.
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true    # By default, we log all exit statuses
+  run.fcli.status.check.default: false
+
+cli.options:
+  appVersion:
+    names: --app-version, --av
+    description: |
+      Application Version to which the debricked report must be imported to.
+    required: true 
+    default: ${#env('SSC_APPVERSION')}   
+  debrickedAccessToken:
+    names: --access-token, -t
+    description: |
+      Access tokens required for Debricked authentication.
+    required: true 
+    default: ${#env('DEBRICKED_ACCESS_TOKEN')}
+    mask: {sensitivity: high}
+  dcliVersion:
+    names: --debricked-cli-version, -v
+    description: |
+      Specify the Debricked CLI version to be used for scanning. Defaults to the value of the DCLI_VERSION environment variable, or 'latest' if not
+      specified.
+    required: false
+    default: ${#extraOpts('DEBRICKED_SCAN_EXTRA_OPTS')?:'latest'}
+  sourceDir:
+    names: --source-dir, -d
+    description: |
+      Specify the source directory to be scanned for Open Source vulnerabilities. Defaults to the value of the SOURCE_DIR environment variable, or current working directory if not specified.
+    default: ${#env('SOURCE_DIR')?:'.'}
+    required: true
+  toolDefinitions:
+    names: --tool-definitions
+    description: |
+      Custom tool definitions to use for identifying available Debricked CLI tool versions and download URLs. Defaults to the value of the TOOL_DEFINITIONS environment variable, or the built-in default if not specified.
+    required: false 
+    default: ${#env('TOOL_DEFINITIONS')}
+  debrickedRepository:
+    names: --debricked-repository, -r
+    description: |
+      Debricked repository name or ID.
+    required: true 
+    default: ${#env('DEBRICKED_REPOSITORY')}
+  debrickedBranch:
+    names: --debricked-branch, -b
+    description: |
+      Debricked branch name or ID.
+    required: true 
+    default: ${#env('DEBRICKED_BRANCH')}
+  debrickedWait:
+    names: --debricked-wait
+    description: |
+      An option to be passed to make the action wait until `fcli ssc artifact import-debricked` completes. 
+    required: false
+    default: ${#env('DO_DEBRICKED_WAIT')}
+
+steps:
+  - run.fcli:
+      UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${cli.toolDefinitions?:""}
+      INSTALL_DEBRICKED: fcli tool dcli install -v ${cli.dcliVersion}
+      RUN_DEBRICKED_CLI: 
+        cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository} -b ${cli.debrickedBranch}
+        stdout: collect
+        stderr: collect
+  - out.write:
+      stdout: ${RUN_DEBRICKED_CLI.stdout}
+      stderr: ${RUN_DEBRICKED_CLI.stderr}      
+  - run.fcli:
+      IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${cli.appVersion} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository} -b ${cli.debrickedBranch} --store debricked_scan
+  - if: ${#isBlank(debrickedWait)} || ${debrickedWait} == 'true'
+    run.fcli:
+      WAIT: 'fcli ssc artifact wait-for ::debricked_scan::'

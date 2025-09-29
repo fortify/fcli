@@ -53,6 +53,8 @@ config:
       sensitivity: high
     SSC_TOKEN:
       sensitivity: high
+    DEBRICKED_ACCESS_TOKEN:
+      sensitivity: high
     SC_SAST_TOKEN:
       sensitivity: high
   
