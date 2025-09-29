@@ -16,23 +16,22 @@ cli.options:
   appVersion:
     names: --app-version, --av
     description: |
-      Application Version to which the debricked report must be imported to.
+      Application Version to which the debricked report must be imported to. Defaults to the value of the SSC_APPVERSION environment variable.
     required: true 
     default: ${#env('SSC_APPVERSION')}   
   debrickedAccessToken:
     names: --access-token, -t
     description: |
-      Access tokens required for Debricked authentication.
+      Access tokens required for Debricked authentication. Defaults to the value of the DEBRICKED_ACCESS_TOKEN environment variable.
     required: true 
     default: ${#env('DEBRICKED_ACCESS_TOKEN')}
     mask: {sensitivity: high}
   dcliVersion:
     names: --debricked-cli-version, -v
     description: |
-      Specify the Debricked CLI version to be used for scanning. Defaults to the value of the DCLI_VERSION environment variable, or 'latest' if not
-      specified.
+      Specify the Debricked CLI tool version version to be installed that shall be used for scanning. Defaults to the value of the DEBRICKED_CLI_VERSION environment variable, or 'latest' if not specified.
     required: false
-    default: ${#extraOpts('DEBRICKED_SCAN_EXTRA_OPTS')?:'latest'}
+    default: ${#env('DEBRICKED_CLI_VERSION')?:'latest'}
   sourceDir:
     names: --source-dir, -d
     description: |
@@ -48,19 +47,19 @@ cli.options:
   debrickedRepository:
     names: --debricked-repository, -r
     description: |
-      Debricked repository name or ID.
+      Debricked repository name or ID. Defaults to the value of the DEBRICKED_REPOSITORY environment variable.
     required: true 
     default: ${#env('DEBRICKED_REPOSITORY')}
   debrickedBranch:
     names: --debricked-branch, -b
     description: |
-      Debricked branch name or ID.
+      Debricked branch name or ID. Defaults to the value of the DEBRICKED_BRANCH environment variable.
     required: true 
     default: ${#env('DEBRICKED_BRANCH')}
   debrickedWait:
     names: --debricked-wait
     description: |
-      An option to be passed to make the action wait until `fcli ssc artifact import-debricked` completes. 
+      An option to be passed to make the action wait until `fcli ssc artifact import-debricked` completes. Defaults to the value of the DO_DEBRICKED_WAIT environment variable.
     required: false
     default: ${#env('DO_DEBRICKED_WAIT')}
 

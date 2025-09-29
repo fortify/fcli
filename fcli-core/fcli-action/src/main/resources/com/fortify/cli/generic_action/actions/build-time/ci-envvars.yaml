@@ -194,9 +194,12 @@ formatters:
         desc: >-
             Extra SSC login options, for example for disabling SSL checks or changing connection time-outs; 
             see `fcli ssc session login` documentation.
-      - names: DEBRICKED_CLI_VERSION
+      - names: DEBRICKED_ACCESS_TOKEN
         desc: >-
-            Debricked CLI application version to be installed.        
+            Authentication token required to access Debricked (OpenText Core SCA) services. It must be set in 
+            the environment when running a Debricked scan or integrating the Debricked CLI into your CI/CD pipeline. 
+            The value should be an access token generated from your Debricked account, and it is necessary for all 
+            authentication and API requests during vulnerability scans or compliance checks.
     preScan:
       - names: SSC_APPVERSION
         desc: >-
@@ -210,6 +213,15 @@ formatters:
           environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
           application version representing your default branch by passing the `--copy-from` option through
           `SETUP_EXTRA_OPTS`.
+      - names: DEBRICKED_CLI_VERSION
+        desc: >-
+            Debricked CLI tool version to be installed to perform the debricked scan.
+      - names: DEBRICKED_REPOSITORY
+        desc: >-
+            Debricked repository name or ID.
+      - names: DEBRICKED_BRANCH
+        desc: >-
+            Debricked branch name or ID.
     scan:
       - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
@@ -224,17 +236,11 @@ formatters:
           overridden by setting `DO_SAST_WAIT` to `false`, but note that doing so will skip any post-scan
           tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to
           the `fcli sc-sast scan wait-for` command, for example to adjust the polling interval or timeout.
-      - names: DEBRICKED_ACCESS_TOKEN
-        desc: >-
-            Authentication token required to access Debricked (OpenText Core SCA) services. It must be set in 
-            the environment when running a Debricked scan or integrating the Debricked CLI into your CI/CD pipeline. 
-            The value should be an access token generated from your Debricked account, and it is necessary for all 
-            authentication and API requests during vulnerability scans or compliance checks.
       - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS
         desc: >-
           The fcli `ci` action supports running a DEBRICKED scan, which is enabled by default.
           The `DEBRICKED_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to the
-          `fcli tool dcli install` command, for example to specify debricked cli tool version to install.
+          `fcli tool dcli install` command.
       - names: DO_DEBRICKED_WAIT\nDEBRICKED_WAIT_EXTRA_OPTS
         desc: >-
           By default, the fcli `ci` action will wait for the Debricked scan to complete. This behavior can be
