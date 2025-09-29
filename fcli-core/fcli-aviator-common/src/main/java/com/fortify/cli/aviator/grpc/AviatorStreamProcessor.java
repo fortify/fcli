@@ -526,49 +526,41 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         LOG.info("Entering processRequestQueue loop, queue size: " + processingQueue.size() + ", permits: " + requestSemaphore.availablePermits() + ", outstanding: " + outstandingRequests.get());
 
-        while (!client.isShutdown.get() && !requestHandler.isCompleted()) {
-            if (outstandingRequests.get() < 0) {
-                outstandingRequests.set(0);
-            }
-
+        while (!client.isShutdown.get() && !requestHandler.isCompleted() && !resultFuture.isDone()) {
+            RequestWrapper wrapper = null;
             try {
-                if (processingQueue.isEmpty()) {
-                    if (processedRequests.get() >= totalRequests) {
-                        logger.info("All requests processed successfully. Exiting processing loop.");
-                        break;
-                    }
-
-                    if (outstandingRequests.get() == 0) {
-                        LOG.warn("WARN: No outstanding requests and queue is empty, but processed count ({}) is less than total ({}). " +
-                                "Some requests may have been permanently failed.", processedRequests.get(), totalRequests);
-                        break;
-                    }
-
-                    try {
-                        Thread.sleep(100);
-                        continue;
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        throw new AviatorTechnicalException("Thread interrupted while waiting for retry queue", ie);
-                    }
+                if (outstandingRequests.get() < 0) {
+                    outstandingRequests.set(0);
                 }
 
-                LOG.debug("Acquiring semaphore, available: " + requestSemaphore.availablePermits());
-                requestSemaphore.acquire();
+                if (processingQueue.isEmpty()) {
+                    if (processedRequests.get() >= totalRequests || outstandingRequests.get() == 0) {
+                        logger.info("Processing complete as queue is empty with no outstanding requests. Exiting loop.");
+                        break;
+                    }
+                    Thread.sleep(100);
+                    continue;
+                }
+
+                if (!requestSemaphore.tryAcquire(1, 10, TimeUnit.SECONDS)) {
+                    LOG.warn("WARN: Timed out waiting for semaphore permit. Will retry.");
+                    continue;
+                }
 
                 if (requestHandler.isCompleted()) {
                     requestSemaphore.release();
                     break;
                 }
 
-                LOG.debug("Polling queue, size: {}", processingQueue.size());
-                RequestWrapper wrapper = processingQueue.poll();
+                wrapper = processingQueue.poll();
                 if (wrapper == null) {
                     requestSemaphore.release();
                     continue;
                 }
 
-                if (currentStreamState.processedIssueIds.contains(wrapper.userPrompt.getIssueData().getInstanceID())) {
+                String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+
+                if (currentStreamState.processedIssueIds.contains(instanceId)) {
                     requestSemaphore.release();
                     continue;
                 }
@@ -581,22 +573,59 @@ class AviatorStreamProcessor implements AutoCloseable {
                     long delay = (long) (Constants.BASE_DELAY_MS * Math.pow(2, wrapper.attemptCount - 1));
                     delay = Math.min(delay, Constants.MAX_DELAY_MS) + ThreadLocalRandom.current().nextLong(100);
                     LOG.warn("WARN: Applying retry delay of {}ms for instance {} (attempt {}/{})",
-                            delay, wrapper.userPrompt.getIssueData().getInstanceID(),
+                            delay, instanceId,
                             wrapper.attemptCount + 1, Constants.MAX_RETRIES);
                     Thread.sleep(delay);
                 }
 
-                LOG.info("Submitting request for instance " + wrapper.userPrompt.getIssueData().getInstanceID());
+                LOG.info("Submitting request for instance " + instanceId);
                 submitUserPrompt(wrapper);
 
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                throw new AviatorTechnicalException("Thread interrupted while processing queue", ie);
-            } catch (Exception e) {
-                if (!requestHandler.isCompleted()) {
-                    LOG.error("Error in processing loop: {}", e.getMessage(), e);
-                    throw new AviatorTechnicalException("Error in processing loop", e);
+                if (!resultFuture.isDone()) {
+                    resultFuture.completeExceptionally(new AviatorTechnicalException("Thread interrupted while processing queue", ie));
                 }
+                break;
+            } catch (AviatorSimpleException e) {
+                if (wrapper != null) {
+                    String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+                    LOG.error("Permanently failing request for issue {} due to a client-side error: {}", instanceId, e.getMessage());
+
+                    AuditResponse failedResponse = new AuditResponse();
+                    failedResponse.setIssueId(instanceId);
+                    failedResponse.setStatus("FAILED");
+                    failedResponse.setStatusMessage("Client-side pre-processing error: " + e.getMessage());
+                    responses.put(instanceId, failedResponse);
+
+                    currentStreamState.processedIssueIds.add(instanceId);
+                    currentStreamState.pendingIssueIds.remove(instanceId);
+
+                    int completed = processedRequests.incrementAndGet();
+                    outstandingRequests.decrementAndGet();
+                    requestSemaphore.release();
+
+                    logger.progress("Processed " + completed + " out of " + totalRequests + " issues (1 failed).");
+                } else {
+                    LOG.error("Caught AviatorSimpleException but the request wrapper was null.", e);
+                }
+            } catch (Exception e) {
+                if (!resultFuture.isDone()) {
+                    LOG.error("Unexpected error in processing loop, failing entire operation.", e);
+                    resultFuture.completeExceptionally(new AviatorTechnicalException("Unexpected error in processing loop", e));
+                }
+                break;
+            }
+        }
+
+        if (!resultFuture.isDone() && (processedRequests.get() >= totalRequests || (processingQueue.isEmpty() && outstandingRequests.get() == 0))) {
+            logger.info("All requests have been accounted for. Completing operation and closing stream.");
+            resultFuture.complete(responses);
+            if (requestHandler != null && !requestHandler.isCompleted()) {
+                requestHandler.complete();
+            }
+            if (streamLatch != null) {
+                streamLatch.countDown();
             }
         }
 
