@@ -76,14 +76,12 @@ public class SSCFileTransferHelper {
         if ( isHtmlEndpoint(endpoint) ) {
             throw new FcliBugException("Uploads to %s should be done through SSCFileTransferHelper::htmlUpload", endpoint);
         }
-        try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.UPLOAD); ) {
-            try ( SSCProgressMonitor uploadMonitor = new SSCProgressMonitor("Upload") ) {
-                return unirest.post(endpoint)
+        try ( SSCProgressMonitor uploadMonitor = new SSCProgressMonitor("Upload") ) {
+            return unirest.post(endpoint)
                     .multiPartContent() // Force multipart request with correct Content-Type header
                     .field("file", filePath)
                     .uploadMonitor(uploadMonitor)
                     .asObject(returnType).getBody();
-            }
         }
     }
 
