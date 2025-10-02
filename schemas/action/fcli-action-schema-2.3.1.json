@@ -1,0 +1,636 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "$defs" : {
+    "ActionCliOption" : {
+      "type" : "object",
+      "properties" : {
+        "default" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Default value for this CLI option if no value is specified by the user. For example, this can be used to read a default value from an environment variable using ${#env('ENV_NAME')}\n"
+        },
+        "description" : {
+          "type" : "string",
+          "description" : "Required string: Action parameter description to be shown in action usage help.\n"
+        },
+        "group" : {
+          "type" : "string",
+          "description" : "Optional string: Allows for defining groups of options, which can for example be used with ${#action.copyParametersFromGroup(\"optionGroupName\")}\n"
+        },
+        "mask" : {
+          "$ref" : "#/$defs/ActionInputMask",
+          "description" : "Optional object: Mask option value in the fcli log file using the given mask configuration.\n"
+        },
+        "mcp" : {
+          "$ref" : "#/$defs/ActionMcpIncludeExclude",
+          "description" : "Optional enum value: If set to 'include' (default), this CLI option is included as an MCP tool argument. If set to 'exclude', this CLI option is not included as an MCP tool argument. Only non-required options may be excluded as MCP tool arguments. Also see `config::mcp` property to include/exclude the action itself as an MCP tool.\n"
+        },
+        "names" : {
+          "type" : "string",
+          "description" : "Required string: The option names allowed on the command line to specify a value for this option. Multi-letter option names should be preceded by double dashes like --option-name, single-letter option names should be preceded by a single dash like-o. Multiple option names may be separated by a comma and optional whitespace, for example:\noptions: --option, -o\n"
+        },
+        "required" : {
+          "type" : "boolean",
+          "description" : "Optional boolean: CLI options are required by default, unless this property is set to false.\n"
+        },
+        "type" : {
+          "type" : "string",
+          "description" : "Optional string: Action parameter type: string (default), boolean, int, long, double, float, or array.\n"
+        }
+      },
+      "required" : [ "description", "names" ],
+      "description" : "Define command-line options supported by this action.",
+      "additionalProperties" : false
+    },
+    "ActionInputMask" : {
+      "type" : "object",
+      "properties" : {
+        "description" : {
+          "type" : "string",
+          "description" : "Optional string: Mask description, used to generate the masked output.\n"
+        },
+        "pattern" : {
+          "type" : "string",
+          "description" : "Optional string: Pattern for fine-tuning which value contents should be\nmasked. Every matching regex group will be masked using the given description.\nIf no pattern is defined, or if the pattern doesn't contain any groups, the\nfull value will be masked.\n"
+        },
+        "sensitivity" : {
+          "type" : "string",
+          "enum" : [ "high", "medium", "low" ],
+          "description" : "Optional enum value: Value sensitivity; high/medium/low. Default value: high\n"
+        }
+      },
+      "description" : "Define log masking settings.",
+      "additionalProperties" : false
+    },
+    "ActionMcpIncludeExclude" : {
+      "type" : "string",
+      "enum" : [ "include", "exclude" ]
+    },
+    "ActionStep" : {
+      "type" : "object",
+      "properties" : {
+        "check" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepCheckEntry"
+          },
+          "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of one or more checks was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to conditionally execute additional checks based on earlier check outcome. Note that if the same check name (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} will contain the status of the last executed check for the given check name.\n"
+        },
+        "exit" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Terminate action execution and return the given exit code.\n"
+        },
+        "if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "log.debug" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Write a debug message to log file (if enabled)."
+        },
+        "log.info" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
+        },
+        "log.progress" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Write a progress message. Progress messages are usually written to console and log file directly. Depending on progress writer configuration, progress messages may disappear when the next progress message is written, or after all action steps have been executed. If you need to write an information message that is always displayed to the end user, without the possibility of the message being removed, please use log.info instead.\n"
+        },
+        "log.warn" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
+        },
+        "out.write" : {
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)",
+          "description" : "Write data to a file, stdout, or stderr. This step takes a map, with map keys defining the destination, and map values defining the data to write to the destination. Destination can be specified as either stdout, stderr, or a file name. If a file already exists, it will be overwritten. Note that depending on the config:output setting, data written to stdout or stderr may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n\nMap values may be specified as either an SpEL template expression, or as 'value' and 'fmt' properties. An 'if' property is also supported to conditionally write to the output. If formatter is specified, the given formatter from the 'formatters' section will be used to format the given value, or, if no value is given, the formatter will be evaluated against the set of all variables. Some examples:\n\n/path/to/myFile1: Hello ${name}\n/path/to/myFile2: {fmt: myFormatter, if: \"${someExpression}\"}\n/path/to/myFile3: {value: \"${myVar}\", fmt: \"${myVarFormatterExpression}\"}\n"
+        },
+        "records.for-each" : {
+          "allOf" : [ {
+            "type" : "object",
+            "properties" : {
+              "breakIf" : {
+                "$ref" : "#/$defs/TemplateExpression",
+                "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+              },
+              "do" : {
+                "description" : "Required list: Steps to be executed for each individual record.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
+              },
+              "from" : {
+                "$ref" : "#/$defs/TemplateExpression",
+                "description" : "Required SpEL template expression, evaluating to either an array of values to be iterated over, or an IActionStepForEachProcessor instance like returned by ${#ssc.ruleDescriptionsProcessor(appVersionId)}. For each of the records in the given array or as produced by the IActionStepForEachProcessor, the steps given in the 'do' instruction will be executed until the breakIf condition (is specified) evaluates to true. The steps in the 'do' instruction may reference the current record through the action variable name specified through 'record.var-name'.\n"
+              },
+              "if" : {
+                "$ref" : "#/$defs/TemplateExpression",
+                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+              },
+              "record.var-name" : {
+                "type" : "string",
+                "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
+              }
+            },
+            "required" : [ "do", "from", "record.var-name" ],
+            "description" : "Repeat the steps listed in the `do` block for each record provided by the `from` instruction.",
+            "additionalProperties" : false
+          }, {
+            "description" : "Execute the steps defined in the 'do' block for every record provided by the 'from' expression.\n"
+          } ]
+        },
+        "rest.call" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepRestCallEntry"
+          },
+          "description" : "Execute one or more REST calls. This step takes a map, with keys defining an indentifier for the REST call, and values defining the request data and how to process the response. For paged REST requests, a single 'rest.call' instruction will execute multiple REST requests to load the individual pages. The response of each individual REST request will be stored as local action variables. For example, given a rest.call identifier 'x' the following local action variables will be set:\n\nx: The processed response\nx_raw: The raw, unprocessed response\nx_exception: Java Exception instance if the request failed\n\nThese variables can be referenced only within the current 'rest.call' map entry, for example by 'log.progress', 'on.success', and 'records.for-each'. They are not accessible\nby later steps or other map entries within the same 'rest.call' step. If you wish to make any data produced by the REST call available to later steps, you'll need to use 'var.*' steps in either 'on.success' or 'records.for-each' instructions.\n\nNote that multiple REST calls defined within a single 'rest.call' step will be executed in the specified order, but the requests are built independent of each other. As such, within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be accessed in the request definition (uri, query, body, ...) of another map entry. The reason is that for target systems that supports bulk requests (like SSC), multiple requests within a single 'rest.call' instruction may be combined into a single bulk request, so none of the REST responses will be available yet while building the bulk request. If you need to use the output from one REST call as input for another REST call, these REST calls should be defined in separate 'rest.call' steps.\n"
+        },
+        "rest.target" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepRestTargetEntry"
+          },
+          "description" : "Add REST request targets for use in 'rest.call' steps. This step takes a map, with keys defining REST target names, and values defining the REST target definition.\n"
+        },
+        "run.fcli" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/ActionStepRunFcliEntry"
+          },
+          "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n\nThe following action variables may also be set by this fcli step, but these are considered preview functionality and may be removed or renamed at any time. For now, these are meant to be used only by built-in fcli actions; custom actions using these action variables may fail to run on other fcli 3.x versions.\n\nx.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration\nx.skipReason: Reason why execution was skipped; will be null if x.skipped==true (deprecated; see x.statusReason)\nx.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)\nx.statusReason: Reason why execution failed or was skipped; will be null if step was executed successfully\nx.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation\nx.success: Set to true if fcli invocation was successful, false if failed\nx.failed: Set to true if fcli invocation failed, false if successfull\n\n"
+        },
+        "steps" : {
+          "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "throw" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Throw an exception, thereby terminating action execution.\n"
+        },
+        "var.rm" : {
+          "description" : "Remove one or more local or global variables. Variable names to remove can be provided as plain text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/TemplateExpression"
+          }
+        },
+        "var.set" : {
+          "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)",
+          "description" : "Set one or more variables values for use in later action steps. This step takes a list of variables to set, with each list item taking a single yaml property that represents the variable name to set, which may be specified as an SpEL template expression.\n\nBased on the format of the variable name, this step can either set/replace a single-value variable, set/replace a property on a variable containing a set of properties, or append a value to an array-type variable. By default, variables are only accessible by the current fcli action, unless they are prefixed with 'global.', in which case they are also accessible by other actions that execute within the context of a single fcli command-line invocation. For example, if action 1 uses the run.fcli step to execute action 2, any global variables set in action 1 will be accessibly by action 2, and vice versa.\n\nFollowing are some examples that show how to specify the operation to perform, and thereby implicitly declaring the variable type:\n\n# Set/replace the single-value variable named 'var1'\nvar1: ...\n\n# Set/replace properties 'prop1' and 'prop2' on variable 'var2'\nvar2.prop1: ...\nvar2.prop2: ...\n\n# Append two items to the array-type variable 'var3' (two trailing dots)\nvar3..: ...\nvar3..: ...\n\n# Same as above, but setting global variables:\nglobal.var1: ...\nglobal.var2.prop1: ...\nglobal.var2.prop2: ...\nglobal.var3..: ...\nglobal.var3..: ...\n\n# The following would be illegal, as a variable cannot contain both\n# a set of properties and an array:\nvar4.prop1: ...\nvar4..: ...\n\nDue to this syntax, variable names cannot contain dots like 'var.1', as '1' would be interpreted as a property name on the 'var' variable. Property names may contain dots though, so 'var5.x.y' would be intepreted as property name 'x.y' on 'var5'.\n\nValues may be specified as either an SpEL template expression, or as 'value' and 'fmt' properties. An 'if' property is also supported to conditionally set the variable. If formatter is specified, the given formatter from the 'formatters' section will be used to format the given value, or, if no value is given, the formatter will be evaluated against the set of all variables. Some examples:\n\nglobal.name: John Doe\nsimpleValue1: Hello ${global.name}\nformattedValue1: {fmt: myFormatter, if: \"${someExpression}\"}\nformatterValue2: {value: \"${myVar}\", fmt: \"${myVarFormatterExpression}\"}\n\nWithin a single 'var.set*' step, variables are processed in the order that they are declared, allowing earlier declared variables to be referenced by variables or formatters that are declared later in the same step.\n"
+        },
+        "with" : {
+          "allOf" : [ {
+            "type" : "object",
+            "properties" : {
+              "do" : {
+                "description" : "Required list of steps to be run within the context of the given configuration.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
+              },
+              "if" : {
+                "$ref" : "#/$defs/TemplateExpression",
+                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+              },
+              "sessions" : {
+                "description" : "This instruction allows for setting up one or more sessions before running the steps specified in the do-block, and logging out of those sessions once the steps in the do-block have completed wither successfully or with failure.\n\nNote that for now, these sessions can only be referenced by explicitly specifying the --session option on 'run.fcli' instructions. The 'rest.call' instructions and any SpEL functions that are dependent on an fcli session will use the session that was specified through the --session option on the 'fcli * action run' command; they will ignore sessions created through the 'with:session' instruction.\n",
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "if" : {
+                      "$ref" : "#/$defs/TemplateExpression",
+                      "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+                    },
+                    "login" : {
+                      "$ref" : "#/$defs/TemplateExpression",
+                      "description" : "Required SpEL template expression; the session login command to run before running the steps specified in the do-block.\n"
+                    },
+                    "logout" : {
+                      "$ref" : "#/$defs/TemplateExpression",
+                      "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
+                    }
+                  },
+                  "required" : [ "login", "logout" ],
+                  "description" : "Define session login and logout commands, respectively executed before and after the steps listed in the `do` block.",
+                  "additionalProperties" : false
+                }
+              },
+              "writers" : {
+                "type" : "object",
+                "additionalProperties" : {
+                  "$ref" : "#/$defs/ActionStepWithWriter"
+                },
+                "description" : "This instruction allows for setting up one or more record writers that can referenced by writer.append steps in the associated do-block. After all steps in the do-block have been executed, the writer will be closed. This instruction takes a map, with map keys defining writer identifiers, and map values defining the writer configurations. The number of records that have been appended to the current writer can be accessed through the 'writerId.count' variable.\n"
+              }
+            },
+            "required" : [ "do" ],
+            "description" : "Run the steps in the `do` block within the context of one or more writers or sessions.",
+            "additionalProperties" : false
+          }, {
+            "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. This includes the ability to run the do-block within the context of an fcli session, with the session being created before running the do-block and being terminated afterwards, and the ability to define writers than can output data in various formats like CSV, appending data to those writers in the do-block, and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, these writers support more output formats, and, depending on writer type and configuration, allows for streaming output, rather than having to collect all data in memory first.\n"
+          } ]
+        },
+        "writer.append" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "$ref" : "#/$defs/TemplateExpressionWithFormatter"
+          },
+          "description" : "This instruction may only be used from within a with:do, with the with:writers instruction defining the writers that the writer.append instruction can append data to. The given data will be formatted an written according to the corresponding writer configuration.\n"
+        }
+      },
+      "description" : "Define a step to be executed by this action.",
+      "additionalProperties" : false
+    },
+    "ActionStepCheckEntry" : {
+      "type" : "object",
+      "properties" : {
+        "display-name" : {
+          "type" : "string",
+          "description" : "Optional string: Display name of this check, to be displayed in PASS/FAIL messages. If not defined, the display name will be set to the map key under which this check is defined.\n"
+        },
+        "fail.if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
+        },
+        "if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "ifSkipped" : {
+          "type" : "string",
+          "enum" : [ "FAIL", "PASS", "SKIP", "HIDE" ],
+          "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
+        },
+        "pass.if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
+        }
+      },
+      "required" : [ "display-name" ],
+      "description" : "Define a (policy) check to be evaluated.",
+      "additionalProperties" : false
+    },
+    "ActionStepRestCallEntry" : {
+      "type" : "object",
+      "properties" : {
+        "body" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Request body to send with the REST request.\n"
+        },
+        "if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "log.progress" : {
+          "type" : "object",
+          "properties" : {
+            "page.post-load" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Log a progress message after a page has been loaded.\n"
+            },
+            "page.post-process" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Log a progress message after a page has been processed.\n"
+            },
+            "page.pre-load" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Log a progress message before loading the next page.\n"
+            }
+          },
+          "additionalProperties" : false,
+          "description" : "Optional object: Log progress messages during the various stages of request/response processing.\n"
+        },
+        "method" : {
+          "type" : "string",
+          "description" : "Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.\n"
+        },
+        "on.fail" : {
+          "description" : "Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure. Steps can reference a variable named after the identifier for this REST call, for example 'x_exception', to access the Java Exception object that represents the failure that occurred.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.success" : {
+          "description" : "Optional list: Steps to be executed on each successfull REST response. For simple requests, these steps will be executed once. For paged requests, these steps will be executed after every individual page has been received. Steps can reference the [requestName] and [requestName]_raw variables to access processed and raw response data respectively. Any steps define in 'on.success' will be executed before processing individual response records through the 'records.for-each' instruction.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "query" : {
+          "$ref" : "#/$defs/LinkedHashMap(String,TemplateExpression)",
+          "description" : "Optional map: Query parameters to be added to the request. Map keys specify the query parameter name, map values specify the query parameter value. Keys must be plain strings, values are evaluated as SpEL template expressions, for example 'someParam: ${var1.prop1]}'.\n"
+        },
+        "records.for-each" : {
+          "type" : "object",
+          "properties" : {
+            "breakIf" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+            },
+            "do" : {
+              "description" : "Required list: Steps to be executed for each individual record.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "embed" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/$defs/ActionStepRestCallEntry"
+              },
+              "description" : "Optional map: Allows for making additional REST calls for each individual record being processed. Map values define the REST call to be executed, map keys define under which property the response will be embedded into the variable specified through the 'set.record-var' instruction, with similar behavior as described for the rest.call step, i.e., processed data will be available through a property named after the map key, whereas raw response data will be available through a property named [map key]_raw.\n"
+            },
+            "if" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "record.var-name" : {
+              "type" : "string",
+              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
+            }
+          },
+          "required" : [ "do", "record.var-name" ],
+          "additionalProperties" : false,
+          "description" : "Optional object: If the processed (successfull) REST response provides an array of records, this instruction allows for executing the steps provided in the 'do' block for each individual record.\n"
+        },
+        "target" : {
+          "type" : "string",
+          "description" : "Required string if no default target has been configured through config:rest.target.default. Target on which to execute the REST request. Third-party request targets can be configured through 'rest.target' steps; such steps should appear before the 'rest.call' steps that reference these request targets. In additionan, fcli provides the 'fod' target for actions run through 'fcli fod action run', and the 'ssc', 'sc-sast', and 'sc-dast' targets for actions run through the 'fcli ssc action run' command. These fcli-provided targets integrate with fcli session management.\n"
+        },
+        "type" : {
+          "type" : "string",
+          "enum" : [ "simple", "paged" ],
+          "description" : "Optional enum value: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (for now only supported for built-in request targets like 'fod' or 'ssc'), the request will be repeated with the appropriate paging request parameters to load and process all available pages. Defaults value: simple.\n"
+        },
+        "uri" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${var.id}' to be appended to the base URL provided by the given 'target'.\n"
+        }
+      },
+      "required" : [ "uri" ],
+      "description" : "Define a REST call, like request method, URI, ...",
+      "additionalProperties" : false
+    },
+    "ActionStepRestTargetEntry" : {
+      "type" : "object",
+      "properties" : {
+        "baseUrl" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Required SpEL template expression: Base URL to use for REST requests to this request target.\n"
+        },
+        "headers" : {
+          "$ref" : "#/$defs/LinkedHashMap(String,TemplateExpression)",
+          "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.\n"
+        },
+        "if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        }
+      },
+      "required" : [ "baseUrl" ],
+      "description" : "Define a (third-party) REST target against which REST calls can be executed.",
+      "additionalProperties" : false
+    },
+    "ActionStepRunFcliEntry" : {
+      "format" : "expression or object",
+      "type" : [ "object", "string" ],
+      "properties" : {
+        "skip.if-reason" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/TemplateExpression"
+          }
+        },
+        "group" : {
+          "type" : "string"
+        },
+        "cmd" : {
+          "$ref" : "#/$defs/TemplateExpression"
+        },
+        "stdout" : {
+          "type" : "string",
+          "enum" : [ "show", "collect", "suppress" ]
+        },
+        "stderr" : {
+          "type" : "string",
+          "enum" : [ "show", "collect", "suppress" ]
+        },
+        "on.success" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.fail" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "status.check" : {
+          "type" : "boolean"
+        },
+        "status.log" : {
+          "type" : "boolean"
+        },
+        "records.collect" : {
+          "type" : "boolean"
+        },
+        "records.for-each" : {
+          "type" : "object",
+          "properties" : {
+            "breakIf" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Stop execution of the steps configured in the 'do' instruction if the breakIf expression evaluates to 'true'.\n"
+            },
+            "do" : {
+              "description" : "Required list: Steps to be executed for each individual record.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "if" : {
+              "$ref" : "#/$defs/TemplateExpression",
+              "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "record.var-name" : {
+              "type" : "string",
+              "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
+            }
+          },
+          "required" : [ "do", "record.var-name" ],
+          "additionalProperties" : false
+        }
+      },
+      "description" : "Define an fcli command to be (optionally) executed. This can be supplied as either a set of YAML properties or as a plain expression,\nin which case the expression outcome is interpreted as the fcli command to run,\nwith default values for all other properties.\n",
+      "additionalProperties" : false
+    },
+    "ActionStepWithWriter" : {
+      "type" : "object",
+      "properties" : {
+        "if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "style" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression defining the writer style. If specified, the expression should evaluate to a comma-separated list of style elements to be applied to the output. Supported style elements:\nheader, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border"
+        },
+        "to" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Required SpEL template expression; destination where to write the output of this writer. Destination can be specified as one of the following:\n\n- A file name to write the output to\n- 'stdout' to write the output to stdout\n- 'stderr' to write the output to stderr\n- 'var:varName' to write the output as text into the given 'varName' action variable\n\nWith 'var:varName', the given variable name will be available to steps after the current 'with' block has completed.\n"
+        },
+        "type" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Required SpEL template expression defining the writer type. The evaluated expression must evaluate to one of the following types:\ncsv, table, expr, json, xml, yaml"
+        },
+        "type-args" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression defining arguments for the given writer type. In most cases, it's much easier to just pass an already formatted object to the 'writer.append' step; this 'type-args' instruction is just meant to provide feature parity with the fcli '--output type=args' command line option. See fcli documentation for details on supported options for the various writer types.\n"
+        }
+      },
+      "required" : [ "to", "type" ],
+      "description" : "Define a writer that can be referenced by steps in the `do` block, automatically closing the writer once the steps in the `do` block have completed.",
+      "additionalProperties" : false
+    },
+    "LinkedHashMap(String,TemplateExpression)" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "$ref" : "#/$defs/TemplateExpression"
+      }
+    },
+    "LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "$ref" : "#/$defs/TemplateExpressionWithFormatter"
+      }
+    },
+    "TemplateExpression" : {
+      "format" : "spelTemplateExpression",
+      "description" : "Spring template expression, like 'Hello ${name}'.\nSee https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html for expression language reference. Expressions may invoke the following fcli-provided functions: \nstring #currentDateTime()\nobject #date(string input)\nstring #formatDateTime(string fmt[, string input])\nstring #formatDateTimeAsUTC(string fmt, string input)\nstring #formatDateTimeWithZoneId(string fmt, string input, object tz)\nstring #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)\nobject #now([string period])\nobject #action.fmt(string formatterName, object input)\nobject #actionSchema()\nobject #actionSpelFunctions()\nstring #copyright()\nstring #decrypt(string input)\nstring #encrypt(string input)\nobject #fcliBuildProperties()\nboolean #isDebugEnabled()\nobject #var(string name)\nstring #cleanIssueDescription(string issueDescription)\nstring #cleanRuleDescription(string ruleDescription)\nstring #fod.appBrowserUrl(object rel)\nstring #fod.issueBrowserUrl(object issue)\nobject #fod.release(string nameOrId)\nstring #fod.releaseBrowserUrl(object rel)\nobject #issueSourceFileResolver(map config)\nobject #normalizeAndMergeTraceNodes(object input)\nobject #normalizeTraceNodes(object input)\nobject #ssc.appVersion(string nameOrId)\nstring #ssc.appversionBrowserUrl(object av, object fs)\nobject #ssc.filterSet(object av, string titleOrId)\nstring #ssc.issueBrowserUrl(object issue, object fs)\nobject #ssc.ruleDescriptionsProcessor(string avId)\nstring #abbreviate(string input, object maxLength)\nstring #fmt(string fmt, array args)\nstring #htmlToSingleLineText(string html)\nstring #htmlToText(string html)\nboolean #isBlank(string input)\nboolean #isNotBlank(string input)\nstring #join(string delimiter, array input)\nstring #joinOrNull(string delimiter, array input)\nstring #numberedList(array input)\nstring #regexQuote(string input)\nstring #repeat(string input, object count)\nstring #replaceAllFromRegExMap(string input, map<string,string> replacements)\nstring #substringAfter(string input, string separator)\nstring #substringBefore(string input, string separator)\nstring #env(string name)\nobject #properties(object input)\nstring #resolveAgainstCurrentWorkDir(string path)\nstring #uriPart(string uri, string part)\nstring #uuid()\nstring #action.copyParametersFromGroup(string group)\nstring #action.runID()\nstring #actionCmd(string envPrefix, string moduleName, string actionName)\nstring #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)\nstring #actionOrNull(string moduleName, string actionName)\nboolean #check(boolean throwError, string msg)\nstring #extraOpts(string envPrefix)\nstring #fcliCmd(string envPrefix, string cmd)\nstring #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #optsFromEnv(string input)\nstring #skipBlankEnvReason(string arg0)\nstring #skipReasonIf(boolean skip, string reason)\nSee fcli custom action development documentation for more information.\n",
+      "type" : [ "boolean", "integer", "string", "number", "null" ]
+    },
+    "TemplateExpressionWithFormatter" : {
+      "format" : "expression or object",
+      "type" : [ "object", "boolean", "integer", "string", "number", "null" ],
+      "properties" : {
+        "value" : {
+          "$ref" : "#/$defs/TemplateExpression"
+        },
+        "fmt" : {
+          "$ref" : "#/$defs/TemplateExpression"
+        }
+      },
+      "description" : "Define a value that is optionally formatted or generated by a given formatter. This can be supplied as either a set of YAML properties or as a simple (string, boolean, ...) value, in which case the simple value is used to set the 'value' property.\n",
+      "additionalProperties" : false
+    }
+  },
+  "type" : "object",
+  "properties" : {
+    "$schema" : {
+      "type" : "string",
+      "description" : "Required string unless `yaml-language-server` comment with schema location is provided: Defines the fcli action YAML schema version used by this action. When a user tries to run this action, fcli will check whether the current fcli version is compatible with the given action schema version.\n"
+    },
+    "author" : {
+      "type" : "string",
+      "description" : "Required string: Author of this action. This is a free-format string, allowing action users to see who provided this action.\n"
+    },
+    "cli.options" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "$ref" : "#/$defs/ActionCliOption"
+      },
+      "description" : "Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values define option definitions like option names that can be specified on the command line, option description, ...\n"
+    },
+    "config" : {
+      "allOf" : [ {
+        "type" : "object",
+        "properties" : {
+          "mask.env-vars" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/$defs/ActionInputMask"
+            },
+            "description" : "Optional map: Environment variables used by this action for which values should be masked in the fcli log file. Map keys define environment variables names, map values define masking configuration.\n"
+          },
+          "mcp" : {
+            "$ref" : "#/$defs/ActionMcpIncludeExclude",
+            "description" : "Optional enum value: If set to 'include' (default), this action is included as an MCP tool on the `fcli util mcp-server start` command.  If set to 'exclude' this action won't be available as an MCP tool.\n"
+          },
+          "output" : {
+            "type" : "string",
+            "enum" : [ "immediate", "delayed" ],
+            "description" : "(DEPRECATED/IGNORED) Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress messages will be delayed until the end of action execution. If set to 'immediate', output will be written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' is specified by the user) to avoid such output from interfering with progress messages.\n"
+          },
+          "rest.target.default" : {
+            "type" : "string",
+            "description" : "Optional string: Default target to use for rest.call steps.\n"
+          },
+          "run.fcli.group.default" : {
+            "type" : "string",
+            "description" : "    (PREVIEW) Optional string: Default value for 'group' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          },
+          "run.fcli.status.check.default" : {
+            "type" : "boolean",
+            "description" : "    (PREVIEW) Optional boolean: Default value for 'status.check' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          },
+          "run.fcli.status.log.default" : {
+            "type" : "boolean",
+            "description" : "    (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          }
+        },
+        "description" : "Define configuration settings for this action.",
+        "additionalProperties" : false
+      }, {
+        "description" : "Optional object: Action configuration properties. This includes configuration properties for setting default values to be used by some action steps, or how action output should be processed.\n"
+      } ]
+    },
+    "formatters" : {
+      "type" : "object",
+      "additionalProperties" : {
+        "additionalProperties" : { },
+        "type" : [ "object", "string" ]
+      },
+      "description" : "Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter name, map values define how the data should be formatted. Each formatter can be defined as either a single string or a structured YAML object. Every string value in the formatter will be processed as a Spring Expression Language expression, allowing access to current action variables and SpEL functions. For example, if action variable 'name' is currently set to 'John Doe', a formatter node like 'hello: Hello ${name}' will set the property 'hello' to 'Hello John Doe'.\n"
+    },
+    "steps" : {
+      "description" : "Required list: Steps to be executed when this action is being run. Each list item should consist of a single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional execution. Note that the YAML schema allows for multiple instructions to be present within a single list item, but this will result in an error.\n",
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/ActionStep"
+      }
+    },
+    "usage" : {
+      "allOf" : [ {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "$ref" : "#/$defs/TemplateExpression",
+            "description" : "Required SpEL template expression: Action usage description, displayed in help output and online documentation. The template expression can reference the 'isAsciiDoc' and 'isPlainText' properties to determine whether the contents are to be rendered as AsciiDoc (for online documentation) or plain text (for help output). For internal use only, the template expression can utilize the '#include('path/to/classpath/resource') function to include contents of a class path resource.\n"
+          },
+          "header" : {
+            "type" : "string",
+            "description" : "Required string: Action usage header, displayed in list and help outputs"
+          }
+        },
+        "required" : [ "description", "header" ],
+        "description" : "Define action usage help.",
+        "additionalProperties" : false
+      }, {
+        "description" : "Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the 'fcli * action help' command.\n"
+      } ]
+    }
+  },
+  "required" : [ "author", "steps", "usage" ],
+  "description" : "Fortify CLI action definition",
+  "additionalProperties" : false
+}
