@@ -22,7 +22,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
-import com.fortify.cli.common.progress.helper.IProgressWriterFactory;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spel.ISpelEvaluator;
 
@@ -39,8 +39,8 @@ import lombok.Singular;
  */
 @Builder @Getter
 public class ActionRunnerConfig {
-    /** Progress writer factory */
-    @NonNull private final IProgressWriterFactory progressWriterFactory;
+    /** Progress writer instance */
+    @NonNull private final IProgressWriterI18n progressWriter;
     /** Action to run */
     @NonNull private final Action action;
     /** Callback to handle validation errors */

@@ -21,7 +21,7 @@ dependencies {
 }
 
 // Picocli reflect config generation
-val generatedPicocliReflectConfigDir = layout.buildDirectory.dir("generated-reflect-config")
+val generatedReflectConfigDir = layout.buildDirectory.dir("generated-reflect-config")
 
 val generatePicocliReflectConfig = tasks.register<JavaExec>("generatePicocliReflectConfig") {
     group = "code generation"
@@ -35,15 +35,27 @@ val generatePicocliReflectConfig = tasks.register<JavaExec>("generatePicocliRefl
     args(project.property("fcliRootCommandsClassName"), "-o", outputFile.get().asFile.absolutePath)
 }
 
+// Generate reflect-config.json for MCP-related classes
+val generateMCPReflectConfig = tasks.register<JavaExec>("generateMCPReflectConfig") {
+    group = "code generation"
+    description = "Generate MCP reflect-config.json"
+    val outputFile = layout.buildDirectory.file("generated-reflect-config/META-INF/native-image/mcp-reflect-config/reflect-config.json")
+    inputs.files(configurations.runtimeClasspath, sourceSets.main.get().runtimeClasspath)
+    outputs.file(outputFile)
+    classpath(configurations.runtimeClasspath, sourceSets.main.get().runtimeClasspath)
+    mainClass.set("com.fortify.cli.util.mcp_server.helper.mcp.MCPReflectConfigGenerator")
+    args(outputFile.get().asFile.absolutePath)
+}
+
 application { mainClass.set(project.property("fcliMainClassName") as String) }
 
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    dependsOn(generatePicocliReflectConfig)
+    dependsOn(generatePicocliReflectConfig, generateMCPReflectConfig)
     mergeServiceFiles()
     archiveBaseName.set("fcli")
     archiveClassifier.set("")
     archiveVersion.set("")
-    from(generatedPicocliReflectConfigDir)
+    from(generatedReflectConfigDir)
 }
 
 // Third-party helper

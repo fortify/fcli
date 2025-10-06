@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +19,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;

@@ -17,11 +17,17 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.common.cli.mixin.ICommandAware;
+import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskLevel;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
+import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.JavaHelper;
 
 import ch.qos.logback.classic.Level;
@@ -44,6 +50,7 @@ import picocli.CommandLine.Spec;
  * @author Ruud Senden
  */
 public abstract class AbstractRunnableCommand implements Callable<Integer> {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractRunnableCommand.class);
     // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
     
@@ -83,11 +90,17 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         if ( !initialized ) {
             registerLogMasks(commandSpec);
             initMixins(commandSpec, commandSpec.mixins());
+            logVersionAndArgs(commandSpec);
             initialized = true;
         }
     }
     
-    private void registerLogMasks(CommandSpec commandSpec) {
+    private static final void logVersionAndArgs(CommandSpec commandSpec) {
+        LOG.info("fcli version: {} ", FcliBuildProperties.INSTANCE.getFcliBuildInfo());
+        LOG.info("fcli arguments: {} {} ", commandSpec.qualifiedName(), commandSpec.commandLine().getParseResult().expandedArgs());
+    }
+
+    private static final void registerLogMasks(CommandSpec commandSpec) {
         for ( var option : commandSpec.options() ) {
             var value = option.getValue();
             if ( value!=null ) {
@@ -97,7 +110,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
         }
     }
     
-    private void registerLogMask(Field field, Object value) {
+    private static final void registerLogMask(Field field, Object value) {
         LogMaskHelper.INSTANCE.registerValue(field.getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
     }
         
@@ -106,7 +119,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * This method recursively iterates over all given mixins to inject our {@link CommandSpec} 
      * into any mixins implementing the {@link ICommandAware} interface.
      */
-    private void initMixins(CommandSpec commandSpec, Map<String, CommandSpec> mixins) {
+    private static final void initMixins(CommandSpec commandSpec, Map<String, CommandSpec> mixins) {
         if ( mixins != null ) {
             for ( CommandSpec mixin : mixins.values() ) {
                 Object userObject = mixin.userObject();
@@ -121,24 +134,31 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
     /**
      * This class (used as an {@link ArgGroup}) defines common fcli options that 
      * are available on every fcli command.
+     * 
+     * We {@link MCPExclude} all generic options, as these options only
+     * take effect on top-level fcli invocation, not fcli invocations performed
+     * through {@link FcliCommandExecutorFactory} as we do for MCP tools. We also
+     * ignore the help option; if it's useful to have usage help returned by MCP
+     * tools, it's probably better to define a separate usageHelp(cmd) tool, rather
+     * than having a --help option on every individual tool.
      */
     public static final class GenericOptionsArgGroup {
-        @Option(names = {"-h", "--help"}, usageHelp = true)
+        @Option(names = {"-h", "--help"}, usageHelp = true) @MCPExclude
         private boolean usageHelpRequested;
         
-        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT", paramLabel = "<prefix>")
+        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT", paramLabel = "<prefix>") @MCPExclude
         @Getter private String envPrefix;
         
-        @Option(names = "--log-file")
+        @Option(names = "--log-file") @MCPExclude
         @Getter private File logFile;
         
-        @Option(names = "--log-level")
+        @Option(names = "--log-level") @MCPExclude
         @Getter private LogLevel logLevel;
         
-        @Option(names = "--log-mask", defaultValue = "medium", paramLabel = "<level>")
+        @Option(names = "--log-mask", defaultValue = "medium", paramLabel = "<level>") @MCPExclude
         @Getter private LogMaskLevel logMaskLevel;
         
-        @Option(names = "--debug")
+        @Option(names = "--debug") @MCPExclude
         @Getter private boolean debug;
     }
 }

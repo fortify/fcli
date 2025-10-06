@@ -75,21 +75,21 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
         try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
             FPRAuditResult auditResult = AuditFPR.auditFPR(AuditFprOptions.builder()
-                                        .fprHandle(fprHandle).token(token).url(url)
-                                        .appVersion(appName)
-                                        .sscAppName(av.getApplicationName())
-                                        .sscAppVersion(av.getVersionName())
-                                        .logger(logger)
-                                        .tagMappingPath(tagMapping)
-                                        .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
-                                        .noFilterSet(noFilterSet)
-                                        .folderNames(folderNames)
-                                        .build());
+                    .fprHandle(fprHandle).token(token).url(url)
+                    .appVersion(appName)
+                    .sscAppName(av.getApplicationName())
+                    .sscAppVersion(av.getVersionName())
+                    .logger(logger)
+                    .tagMappingPath(tagMapping)
+                    .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
+                    .noFilterSet(noFilterSet)
+                    .folderNames(folderNames)
+                    .build());
             String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
             logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
 
             String artifactId = "UPLOAD_SKIPPED";
-            if (auditResult.getUpdatedFile() != null) {
+            if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(auditResult.getStatus()) && !"FAILED".equals(auditResult.getStatus())) {
                 artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
                 Files.deleteIfExists(auditResult.getUpdatedFile().toPath());
             }
@@ -123,8 +123,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @SneakyThrows
     private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av) {
-        JsonNode uploadResponse = SSCFileTransferHelper.upload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr,
-                SSCFileTransferHelper.ISSCAddUploadTokenFunction.QUERYSTRING_MAT, JsonNode.class);
+        JsonNode uploadResponse = SSCFileTransferHelper.restUpload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr, JsonNode.class);
         return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
     }
 

@@ -20,10 +20,10 @@ import org.springframework.expression.Expression;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.cli.mixin.AbstractOutputHelperMixin;
-import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
-import com.fortify.cli.common.output.query.QueryExpression;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.spel.query.QueryExpression;
 
 import kong.unirest.HttpRequest;
 import lombok.Getter;

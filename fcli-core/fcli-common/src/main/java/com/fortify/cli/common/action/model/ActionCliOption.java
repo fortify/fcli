@@ -86,6 +86,14 @@ public final class ActionCliOption implements IActionElement, IMapKeyAware<Strin
         """)
     @JsonProperty(value = "group", required = false) private String group;
     
+    @JsonPropertyDescription("""
+            Optional enum value: If set to 'include' (default), this CLI option is included as an MCP tool \
+            argument. If set to 'exclude', this CLI option is not included as an MCP tool argument. Only \
+            non-required options may be excluded as MCP tool arguments. Also see `config::mcp` property to \
+            include/exclude the action itself as an MCP tool.
+            """)
+    @JsonProperty(value = "mcp", required = false) private ActionMcpIncludeExclude mcp = ActionMcpIncludeExclude.include;
+    
     @JsonIgnore public final String[] getNamesAsArray() {
         return names==null ? null : names.split("[\\s,]+");
     }

@@ -47,6 +47,7 @@ class FoDBuiltinActionRunSpec extends FcliBaseSpec {
             action << ['release-summary',
                        'github-sast-report',
                        'gitlab-dast-report',
+                       'gitlab-debricked-report',
                        'gitlab-sast-report',
                        'gitlab-codequality-report',
                        'sarif-sast-report',

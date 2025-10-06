@@ -15,11 +15,11 @@ package com.fortify.cli.common.output.writer.output.query;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputWriterWithQueryFactoryMixin;
-import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
-import com.fortify.cli.common.output.query.QueryExpression;
 import com.fortify.cli.common.output.writer.output.standard.IOutputOptions;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.spel.query.QueryExpression;
 
 import picocli.CommandLine.Model.CommandSpec;
 

@@ -13,12 +13,12 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
-import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
-import com.fortify.cli.common.output.query.QueryExpression;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQuery;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.spel.query.QueryExpression;
 
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;

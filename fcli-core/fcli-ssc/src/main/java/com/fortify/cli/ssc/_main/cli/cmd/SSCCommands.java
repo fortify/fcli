@@ -21,7 +21,9 @@ import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.artifact.cli.cmd.SSCArtifactCommands;
 import com.fortify.cli.ssc.attribute.cli.cmd.SSCAttributeCommands;
+import com.fortify.cli.ssc.custom_tag.cli.cmd.SSCCustomTagCommands;
 import com.fortify.cli.ssc.issue.cli.cmd.SSCIssueCommands;
+import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
 import com.fortify.cli.ssc.performance_indicator.cli.cmd.SSCPerformanceIndicatorCommands;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommands;
 import com.fortify.cli.ssc.report.cli.cmd.SSCReportCommands;
@@ -51,7 +53,9 @@ import picocli.CommandLine.Command;
                 SSCAppVersionCommands.class,
                 SSCArtifactCommands.class,
                 SSCAttributeCommands.class,
+                SSCCustomTagCommands.class,
                 SSCIssueCommands.class,
+                SSCIssueTemplateCommands.class,
                 SSCPerformanceIndicatorCommands.class,
                 SSCVariableCommands.class,
                 SSCPluginCommands.class,

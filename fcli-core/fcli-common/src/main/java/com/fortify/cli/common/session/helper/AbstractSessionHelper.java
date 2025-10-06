@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
@@ -54,7 +54,7 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
             return registerLogMasks(sessionDescriptor);
         } catch ( Exception e ) {
             FcliDataHelper.deleteFile(sessionDescriptorPath, false);
-            conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading session descriptor, please try logging in again", e));
+            conditionalThrow(failIfUnavailable, ()->new FcliTechnicalException("Error reading session descriptor, please try logging in again", e));
             LOG.warn("Error reading session descriptor from {}; session descriptor has been deleted", sessionDescriptorPath);
             LOG.warn("Exception details: ", e);
             return null;
@@ -164,13 +164,13 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
     private void checkNonExpiredSessionAvailable(String sessionName, boolean failIfUnavailable, T sessionDescriptor) {
         if ( failIfUnavailable && isExpiredOrUnavailable(sessionDescriptor) )
         {
-            throw new FcliSimpleException(getType()+" session '"+sessionName+"' cannot be retrieved or has expired, please login again");
+            throw new FcliNoSessionException(getLoginCmd(), "%s session '%s' cannot be retrieved or has expired.", getType(), sessionName);
         }
     }
 
     private void checkSessionExists(String sessionName, boolean failIfUnavailable) {
         if ( failIfUnavailable && !exists(sessionName) ) {
-            throw new FcliSimpleException(getType()+" session '"+sessionName+"' not found, please login first");
+            throw new FcliNoSessionException(getLoginCmd(), "%s session '%s' not found.", getType(), sessionName);
         }
     }
     
@@ -181,6 +181,7 @@ public abstract class AbstractSessionHelper<T extends ISessionDescriptor> {
     }
     
     public abstract String getType();
+    protected abstract String getLoginCmd();
     
     protected abstract Class<T> getSessionDescriptorType();
 }

@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -43,12 +44,14 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin.SSCAppVersionCopyFromDescriptor;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin.SSCAppVersionCopyOption;
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCustomTagUpdater;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
-import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateHelper;
+import com.fortify.cli.ssc.custom_tag.cli.mixin.SSCCustomTagAddRemoveMixin;
+import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -66,6 +69,8 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
     @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
+    @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagAddOption tagAddMixin;
+    @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagRemoveOption tagRemoveMixin;
     @Option(names={"--description","-d"}, required = false)
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
@@ -95,7 +100,14 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
             .request("copyState", buildCopyStateRequest(unirest, descriptor, copyFromDescriptor))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
-        return bulkResponse.body("updatedVersion");
+        JsonNode updatedVersion = bulkResponse.body("updatedVersion");
+        // Perform custom tag update AFTER commit/copy to ensure we see final server-assigned tags
+        HttpRequest<?> customTagUpdate = buildPostCommitCustomTagUpdateRequest(unirest, copyFromDescriptor, descriptor);
+        if ( customTagUpdate!=null ) {
+            customTagUpdate.asObject(JsonNode.class).getBody(); // execute, no need to interpret body
+            updatedVersion = unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).asObject(JsonNode.class).getBody().get("data");
+        }
+        return updatedVersion;
     }
 
     @Override
@@ -250,4 +262,8 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
                 .put("previousProjectVersionId", copyFrom.getVersionId());
     }
 
+    private HttpRequest<?> buildPostCommitCustomTagUpdateRequest(UnirestInstance unirest, SSCAppVersionCopyFromDescriptor copyFromDescriptor, SSCAppVersionDescriptor descriptor) {
+        return new SSCAppVersionCustomTagUpdater(unirest)
+                .buildRequest(descriptor.getVersionId(), tagAddMixin.getTagSpecs(), tagRemoveMixin.getTagSpecs());
+    }
 }

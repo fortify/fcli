@@ -12,7 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.app;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
+
+import lombok.SneakyThrows;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
@@ -33,10 +38,17 @@ public class FortifyCLI {
     }
 
     private static final int execute(String[] args) {
+        var orgOut = System.out;
+        var orgErr = System.err;
         try ( var runner = new DefaultFortifyCLIRunner() ) {
             installAnsiConsole();
+            // Avoid any fcli code from closing stdout/stderr streams
+            System.setOut(new NonClosingPrintStream(orgOut));
+            System.setErr(new NonClosingPrintStream(orgErr));
             return runner.run(args);
         } finally {
+            System.setOut(orgOut);
+            System.setErr(orgErr);
             uninstallAnsiConsole();
         }
     }
@@ -65,5 +77,17 @@ public class FortifyCLI {
 	    		t.printStackTrace();
 	    	}
     	}
+    }
+    
+    private static final class NonClosingPrintStream extends PrintStream {
+        public NonClosingPrintStream(OutputStream out) {
+            super(out); 
+        }
+        
+        @Override @SneakyThrows
+        public void close() {
+            out.flush();
+            // Only flush, don't close underlying stream
+        }
     }
 }

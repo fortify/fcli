@@ -10,8 +10,15 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.query;
+package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-public interface IQueryExpressionSupplier {
-    QueryExpression getQueryExpression();
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+@Command(name = OutputHelperMixins.Get.CMD_NAME)
+public class SSCIssueTemplateGetCommand extends AbstractSSCIssueTemplateGetCommand {
+    @Getter @Mixin private OutputHelperMixins.Get outputHelper;
 }

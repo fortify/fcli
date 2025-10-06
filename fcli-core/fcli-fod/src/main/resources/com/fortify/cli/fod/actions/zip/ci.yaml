@@ -23,6 +23,7 @@ config:
   run.fcli.status.log.default: true    # By default, we log all exit statuses
   run.fcli.status.check.default: false # By default, we want to continue on fcli failures
   run.fcli.group.default: ciGroup
+  mcp: exclude
       
 steps:
   # Configure module; allows for copying/re-using similar #actionCmd invocations in FoD ci action

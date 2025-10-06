@@ -12,6 +12,13 @@
  *******************************************************************************/
 package com.fortify.cli.common.action.runner;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.date;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.txt;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
+
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -62,8 +69,6 @@ import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
 import com.fortify.cli.common.util.StringHelper;
-
-import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
 
 import lombok.NoArgsConstructor;
 

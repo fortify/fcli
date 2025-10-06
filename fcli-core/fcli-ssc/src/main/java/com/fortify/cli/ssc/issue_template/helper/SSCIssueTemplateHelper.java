@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.issue.helper;
+package com.fortify.cli.ssc.issue_template.helper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +22,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
@@ -78,5 +79,8 @@ public final class SSCIssueTemplateHelper {
                 .asObject(JsonNode.class).getBody();
         return JsonHelper.treeToValue(issueTemplatesBody.get("data").get(0), SSCIssueTemplateDescriptor.class);
     }
-
+    
+    public static final GetRequest getCustomTagsRequest(UnirestInstance unirest, String issueTemplateId) {
+        return unirest.get(SSCUrls.ISSUE_TEMPLATE_CUSTOM_TAGS(issueTemplateId)).queryString("limit", "-1");
+    }
 }

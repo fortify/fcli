@@ -56,7 +56,8 @@ public final class SelectedFieldsTransformer extends AbstractJsonNodeTransformer
         }
     }
     
-    private static final Map<String,String> parsePropertyNames(String propertyNamesString) {
+    // TODO Move this method to more logical place for re-use in MCP Server implementation?
+    public static final Map<String,String> parsePropertyNames(String propertyNamesString) {
         return propertyNamesString==null 
                 ? null
                 : Arrays.stream(propertyNamesString.split("\\s*,\\s*"))

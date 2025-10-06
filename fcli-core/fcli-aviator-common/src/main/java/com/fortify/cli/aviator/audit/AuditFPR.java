@@ -18,15 +18,15 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.fpr.FPRProcessor;
+import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.fpr.FPRProcessor;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.util.ResourceUtil;
 
 public class AuditFPR {
@@ -111,19 +111,47 @@ public class AuditFPR {
             FPRInfo fprInfo, FVDLProcessor fvdlProcessor) {
 
         int totalIssuesToAudit = auditOutcome.getTotalIssuesToAudit();
-        if (auditResponses.isEmpty() && totalIssuesToAudit == 0) {
-            LOG.info("No issues were audited, skipping update and upload");
-            return new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, totalIssuesToAudit);
+        if (auditResponses.isEmpty()) {
+            if (totalIssuesToAudit == 0) {
+                LOG.info("No issues were audited, skipping update and upload");
+                return new FPRAuditResult(null, "SKIPPED", "No issues to audit", 0, totalIssuesToAudit);
+            } else {
+                LOG.error("No audit responses received for {} issues", totalIssuesToAudit);
+                return new FPRAuditResult(null, "FAILED", "No audit responses received from server", 0, totalIssuesToAudit);
+            }
         }
 
         long issuesSuccessfullyAudited = auditResponses.values().stream()
-                .filter(response -> "SUCCESS".equals(response.getStatus())).count();
+                .filter(response -> "SUCCESS".equalsIgnoreCase(response.getStatus()))
+                .count();
 
-        String status = (issuesSuccessfullyAudited == totalIssuesToAudit) ? "AUDITED" :
-                (issuesSuccessfullyAudited > 0) ? "PARTIALLY_AUDITED" : "FAILED";
+        String status;
+        String message = null;
 
-        File updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, fprInfo, fvdlProcessor);
+        if (issuesSuccessfullyAudited == totalIssuesToAudit) {
+            status = "AUDITED";
+        } else if (issuesSuccessfullyAudited > 0) {
+            status = "PARTIALLY_AUDITED";
+        } else {
+            status = "FAILED";
+            String commonFailureReason = auditResponses.values().stream()
+                    .map(AuditResponse::getStatusMessage)
+                    .filter(msg -> msg != null && !msg.isBlank())
+                    .findFirst()
+                    .orElse("see logs for details");
+
+            if (commonFailureReason.startsWith("Client-side pre-processing error: ")) {
+                commonFailureReason = commonFailureReason.substring("Client-side pre-processing error: ".length());
+            }
+            message = String.format("All %d issues failed (%s)", totalIssuesToAudit, commonFailureReason);
+        }
+
+        File updatedFile = null;
+        if (issuesSuccessfullyAudited > 0) {
+            updatedFile = auditProcessor.updateAndSaveAuditAndRemediationsXml(auditResponses, tagMappingConfig, fprInfo, fvdlProcessor);
+        }
+
         LOG.info("FPR audit process completed with status: {}", status);
-        return new FPRAuditResult(updatedFile, status, null, (int) issuesSuccessfullyAudited, totalIssuesToAudit);
+        return new FPRAuditResult(updatedFile, status, message, (int) issuesSuccessfullyAudited, totalIssuesToAudit);
     }
 }

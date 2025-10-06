@@ -1,5 +1,42 @@
 # Changelog
 
+## [3.9.1](https://github.com/fortify/fcli/compare/v3.9.0...v3.9.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit`: Improve cleanup of temporary files ([6175f54](https://github.com/fortify/fcli/commit/6175f5426f8be139798382f97d1f19d787d27ec4))
+* `fcli aviator ssc audit`: Resolve file token leak during Aviator artifact uploads, to avoid SSC errors due to reaching maximum number of allowed file tokens ([6d2e28c](https://github.com/fortify/fcli/commit/6d2e28ccc4b27c7ba33a255ae31f1e5081e38a48))
+* `fcli ssc`: Reduce bulk request batch size to prevent potential networking timeouts due to SSC taking too long to process large bulk requests ([eae7948](https://github.com/fortify/fcli/commit/eae7948035f7d60db90c00fb30ad5e83501bc704))
+* `fcli util mcp-server start`: Improve usage help ([d4225ce](https://github.com/fortify/fcli/commit/d4225ce0dd7a4cb728988614c34716be706fe231))
+* Improve progress message handling ([9af8e67](https://github.com/fortify/fcli/commit/9af8e679c16bc6736b9c3403d3d20e4dd27e1ee6))
+
+## [3.9.0](https://github.com/fortify/fcli/compare/v3.8.1...v3.9.0) (2025-09-29)
+
+
+### Features
+
+* `fcli fod *-scan setup`: Implement `--skip-if-exists` option for all scan types (resolves [#593](https://github.com/fortify/fcli/issues/593)) ([219c6f6](https://github.com/fortify/fcli/commit/219c6f603f819e6bfd2d246919ac57957fa13e52))
+* `fcli fod microservice`: Add `--attrs` and `--auto-required-attrs` options on applicable micro service commands (resolves [#640](https://github.com/fortify/fcli/issues/640)) ([5b7eb7e](https://github.com/fortify/fcli/commit/5b7eb7e1031237773c737cfe76357d4ba0332dc6))
+* `fcli ssc appversion create`: Add `--add-tags` and `--rm-tags` options ([6c3a5a4](https://github.com/fortify/fcli/commit/6c3a5a41280d404e3f7b227893af29229ae796f0))
+* `fcli ssc appversion update`: Add `--add-tags` and `--rm-tags` options ([6c3a5a4](https://github.com/fortify/fcli/commit/6c3a5a41280d404e3f7b227893af29229ae796f0))
+* `fcli ssc issue-template create`: Add `--add-tags` and `--rm-tags` options ([6c3a5a4](https://github.com/fortify/fcli/commit/6c3a5a41280d404e3f7b227893af29229ae796f0))
+* `fcli ssc issue-template update`: Add `--add-tags` and `--rm-tags` options ([6c3a5a4](https://github.com/fortify/fcli/commit/6c3a5a41280d404e3f7b227893af29229ae796f0))
+* Add `fcli ssc custom-tag` commands for creating, listing, and updating custom tags ([6c3a5a4](https://github.com/fortify/fcli/commit/6c3a5a41280d404e3f7b227893af29229ae796f0))
+* Add `fcli ssc issue-template` commands for managing issue templates, deprecate corresponding `fcli ssc issue *-template(s)` commands ([6c3a5a4](https://github.com/fortify/fcli/commit/6c3a5a41280d404e3f7b227893af29229ae796f0))
+* Add `fcli util mcp-server start` command to allow LLMs to interact with Fortify products through fcli ([#806](https://github.com/fortify/fcli/issues/806)) ([92131a6](https://github.com/fortify/fcli/commit/92131a653d416d693c0449931768d3093e1a7f9f))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit`: Prevent command from stalling on errors & other error handling improvements ([#811](https://github.com/fortify/fcli/issues/811)) ([4deff48](https://github.com/fortify/fcli/commit/4deff4843f276f2de6e21b0b35a465f03a2d7773))
+* `fcli fod *-scan wait-for`: Add scan queue position (see [#677](https://github.com/fortify/fcli/issues/677)) ([219c6f6](https://github.com/fortify/fcli/commit/219c6f603f819e6bfd2d246919ac57957fa13e52))
+* `fcli fod access-control update-user`: Change action field to `REQUESTED` instead of `UPDATED`, as changes may not be applied immediately by FoD ([09e39bf](https://github.com/fortify/fcli/commit/09e39bf1984f19990e1495997adab6705663a1ab))
+* `fcli fod dast-scan cancel` not working ([ba59f6f](https://github.com/fortify/fcli/commit/ba59f6f6d358bf7bf64ceb5e663b75314e05d52d))
+* `fcli fod dast-scan start`: Implemented DAST Automated scan queuing/cancelling to avoid error if scan already running (fixes [#565](https://github.com/fortify/fcli/issues/565)) ([51aa462](https://github.com/fortify/fcli/commit/51aa462186f4cbc9b322600c3fc423ee534fa5a3))
+* `fcli ssc action run ci`: Fix failure when Aviator audit is enabled (fixes [#789](https://github.com/fortify/fcli/issues/789)) ([103263a](https://github.com/fortify/fcli/commit/103263ad1b5cdc017ec59d5fdf62b6427b2dad53))
+* Add fcli action SpEL functions documentation ([#791](https://github.com/fortify/fcli/issues/791)) ([daf54a5](https://github.com/fortify/fcli/commit/daf54a5b48898bd916e8b018a8aba5b14571c82e))
+
 ## [3.8.1](https://github.com/fortify/fcli/compare/v3.8.0...v3.8.1) (2025-07-25)
 
 

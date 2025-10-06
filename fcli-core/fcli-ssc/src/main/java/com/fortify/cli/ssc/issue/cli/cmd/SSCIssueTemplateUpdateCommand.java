@@ -12,55 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue.cli.cmd;
 
-import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
-import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateHelper;
+import com.fortify.cli.ssc.issue_template.cli.cmd.AbstractSSCIssueTemplateUpdateCommand;
 
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.UpdateTemplate.CMD_NAME) @CommandGroup("template")
-public class SSCIssueTemplateUpdateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.UpdateTemplate outputHelper; 
-    @Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
-    @Option(names={"--name","-n"}, required = false)
-    private String name;
-    @Option(names={"--description","-d"}, required = false)
-    private String description;
-    @Option(names={"--set-as-default"})
-    private boolean setAsDefault;
-
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
-        ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
-        if ( StringUtils.isNotBlank(name) ) { updateData.put("name", name); }
-        if ( StringUtils.isNotBlank(description) ) { updateData.put("description", description); }
-        if ( setAsDefault ) { updateData.put("defaultTemplate", true); }
-        unirest.put(SSCUrls.ISSUE_TEMPLATE(descriptor.getId()))
-            .body(updateData).asObject(JsonNode.class).getBody();
-        return new SSCIssueTemplateHelper(unirest).getDescriptorByNameOrId(descriptor.getId(), true).asJsonNode();
-    }
-    
-    @Override
-    public String getActionCommandResult() {
-        return "UPDATED";
-    }
-    
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
+@Command(name = OutputHelperMixins.UpdateTemplate.CMD_NAME) @CommandGroup("issue-template")
+public class SSCIssueTemplateUpdateCommand extends AbstractSSCIssueTemplateUpdateCommand {
+    @Getter @Mixin private OutputHelperMixins.UpdateTemplate outputHelper;
 }

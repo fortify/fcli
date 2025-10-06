@@ -20,7 +20,6 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
-import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 
 import kong.unirest.UnirestInstance;
@@ -40,11 +39,10 @@ public class SSCPluginInstallCommand extends AbstractSSCJsonNodeOutputCommand im
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        JsonNode pluginBody = SSCFileTransferHelper.upload(
+        JsonNode pluginBody = SSCFileTransferHelper.restUpload(
                 unirest,
                 SSCUrls.PLUGINS,
                 pluginFileMixin.getFile(),
-                ISSCAddUploadTokenFunction.QUERYSTRING_MAT,
                 JsonNode.class
         );
         

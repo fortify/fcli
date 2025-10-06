@@ -29,12 +29,14 @@ import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder.SSCBulkRe
 import com.fortify.cli.ssc.access_control.cli.mixin.SSCAppVersionUserMixin;
 import com.fortify.cli.ssc.access_control.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCustomTagUpdater;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
-import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.custom_tag.cli.mixin.SSCCustomTagAddRemoveMixin;
+import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -51,6 +53,8 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserRemoveOption userDelMixin;
+    @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagAddOption tagAddMixin;
+    @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagRemoveOption tagRemoveMixin;
     @Option(names={"--name","-n"}, required = false)
     private String name;
     @Option(names={"--description","-d"}, required = false)
@@ -65,6 +69,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
             .request("versionUpdate", getAppVersionUpdateRequest(unirest, descriptor))
             .request("attrUpdate", getAttrUpdateRequest(unirest, descriptor))
             .request("userUpdate", getUserUpdateRequest(unirest, descriptor))
+            .request("customTagUpdate", getCustomTagUpdateRequest(unirest, descriptor))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
         return bulkResponse.body("updatedVersion");
@@ -111,6 +116,11 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
         return hasUpdate 
                 ? unirest.put(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).body(updateData)
                 : null;
+    }
+    
+    private final HttpRequest<?> getCustomTagUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        return new SSCAppVersionCustomTagUpdater(unirest)
+                .buildRequest(descriptor.getVersionId(), tagAddMixin.getTagSpecs(), tagRemoveMixin.getTagSpecs());
     }
     
     private boolean optionalUpdate(ObjectNode updateData, String name, String value) {

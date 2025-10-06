@@ -25,7 +25,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * @author Ruud Senden
  */
 public enum LogMessageType {
-    FCLI, HTTP, HTTP_IN, HTTP_OUT, GRPC, GRPC_IN, GRPC_OUT, OTHER;
+    FCLI, HTTP, HTTP_IN, HTTP_OUT, GRPC, GRPC_IN, GRPC_OUT, MCP, OTHER;
     
     private final String fixedLengthString;
     /** Constructor to generate a fixed length string for the current
@@ -68,6 +68,8 @@ public enum LogMessageType {
                 if ( msg.contains("INBOUND") ) { return LogMessageType.GRPC_IN; }
                 else if ( msg.contains("OUTBOUND") ) { return LogMessageType.GRPC_OUT; }
                 else { return LogMessageType.GRPC; }
+            } else if ( loggerName.startsWith("io.modelcontextprotocol") ) {
+                return LogMessageType.MCP;
             }
         }
         return LogMessageType.OTHER;

@@ -19,7 +19,8 @@
  import org.slf4j.LoggerFactory;
  
  import com.fasterxml.jackson.databind.JsonNode;
- import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.mcp.MCPInclude;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
  import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
  import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
  import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
@@ -38,6 +39,7 @@
  import picocli.CommandLine.Mixin;
  import picocli.CommandLine.Option;
  
+ @MCPInclude
  @Command(name = OutputHelperMixins.Update.CMD_NAME)
  public class FoDIssueUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
      private static final Logger LOG = LoggerFactory.getLogger(FoDIssueUpdateCommand.class);

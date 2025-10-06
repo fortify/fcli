@@ -10,23 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.issue.helper;
+package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import picocli.CommandLine.Command;
 
-@Reflectable @NoArgsConstructor
-@Data @EqualsAndHashCode(callSuper=true)
-public class SSCIssueTemplateDescriptor extends JsonNodeHolder {
-    private String id;
-    private String name;
-    private String description;
-    private boolean inUse;
-    private boolean defaultTemplate;
-    private String publishVersion;
-    private String originalFileName;
+@Command(
+        name = "issue-template",
+        subcommands = {
+                SSCIssueTemplateCreateCommand.class,
+                SSCIssueTemplateDeleteCommand.class,
+                SSCIssueTemplateDownloadCommand.class,
+                SSCIssueTemplateGetCommand.class,
+                SSCIssueTemplateListCommand.class,
+                SSCIssueTemplateUpdateCommand.class,
+        }
+)
+public class SSCIssueTemplateCommands extends AbstractContainerCommand {
 }

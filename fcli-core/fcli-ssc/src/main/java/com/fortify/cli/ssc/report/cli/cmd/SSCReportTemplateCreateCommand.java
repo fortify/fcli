@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
@@ -40,6 +41,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+@MCPExclude
 @Command(name = OutputHelperMixins.CreateTemplate.CMD_NAME) @CommandGroup("template")
 public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.CreateTemplate outputHelper;
@@ -78,7 +80,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
     }
     
     private final String uploadTemplateFile(UnirestInstance unirest) {
-        ObjectNode uploadResponse = SSCFileTransferHelper.upload(
+        ObjectNode uploadResponse = SSCFileTransferHelper.htmlUpload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
                 templatePath,

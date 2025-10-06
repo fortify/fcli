@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+ * Copyright 2021, 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,11 +10,15 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.query;
+package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
-@FunctionalInterface
-public interface IJsonNodeMatcher {
-    public boolean matches(JsonNode input, String propertyPath, String valueToMatch);
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+@Command(name = OutputHelperMixins.List.CMD_NAME)
+public class SSCIssueTemplateListCommand extends AbstractSSCIssueTemplateListCommand {
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
 }

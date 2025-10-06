@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -23,6 +26,7 @@ import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -89,6 +93,23 @@ public class SSCAppVersionHelper {
                 .asObject(ObjectNode.class)
                 .getBody()
                 .get("data");
+    }
+
+    public static final GetRequest getCustomTagsRequest(UnirestInstance unirest, String versionId) {
+        return unirest.get(SSCUrls.PROJECT_VERSION_CUSTOM_TAGS(versionId)).queryString("limit", "-1");
+    }
+
+    public static final JsonNode getCustomTags(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        return getCustomTagsRequest(unirest, descriptor.getVersionId())
+                .asObject(ObjectNode.class)
+                .getBody()
+                .get("data");
+    }
+
+    // TODO We may want to use this method for Aviator 25.4 ssc prepare command, but if not, need to remove it
+    public static final HttpRequest<?> updateCustomTags(UnirestInstance unirest, String appVersionId, Collection<String> tagSpecsToAdd, Collection<String> tagSpecsToRemove) {
+        var updater = new SSCAppVersionCustomTagUpdater(unirest);
+        return updater.buildRequest(appVersionId, List.copyOf(tagSpecsToAdd), List.copyOf(tagSpecsToRemove));
     }
     
     public static final SSCJobDescriptor refreshMetrics(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {

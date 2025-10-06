@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.3.0.json
+
+author: Fortify
+usage:
+  header: Generate a GitLab Dependency Scanning report listing FoD SCA (Debricked) vulnerabilities. 
+  description: |
+    For information on how to import this report into GitLab, see 
+    https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning
+  
+config:
+  rest.target.default: fod
+  
+cli.options:
+  file:
+    names: --file, -f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-debricked-depscan.json"
+    required: false
+    default: gl-fortify-debricked-depscan.json
+  release:
+    names: --release, --rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+
+steps:
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+      issueListQuery: "Category=='Open Source'"
+  - log.progress: Loading latest FoD SCA (Debricked) scan
+  - run.fcli:
+      artifacts:
+        cmd:  fod oss-scan ls --release=${rel.releaseId} --query="analysisStatusType=='Completed'"
+        records.for-each:
+          record.var-name: artifact
+          breakIf: ${lastDebrickedScan!=null}
+          do:
+            - var.set:
+                lastDebrickedScan: ${artifact}
+  - log.progress: Processing issue data
+  - rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities
+        query:
+          limit: 50
+          filters: "Category:Open Source"
+        log.progress:
+          page.post-process: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+        records.for-each:
+          record.var-name: issue
+          embed:
+            details:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.id}/details
+            recommendations:
+              uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.id}/recommendations
+          do:
+            - var.set:
+                vulnerabilities..: {fmt: vulnerabilities}
+  - out.write:
+      ${cli.file}: {fmt: gitlab-debricked-report}
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
+
+formatters:
+  gitlab-debricked-report:
+      schema: https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/raw/v15.0.0/dist/dependency-scanning-report-format.json
+      version: 15.0.0
+      scan:
+        start_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", lastDebrickedScan?.startedDateTime?:'1970-01-01T00:00:00')}
+        end_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", lastDebrickedScan?.completedDateTime?:'1970-01-01T00:00:00')}
+        status: success
+        type: dependency_scanning
+        analyzer:
+          id: fortify-debricked
+          name: ${lastDebrickedScan?.scanTool?:'tool unknown'}
+          url: https://www.opentext.com/products/application-security
+          version: ${lastDebrickedScan?.scanToolVersion?:'version unknown'}
+          vendor:
+            name: Fortify+Debricked
+        scanner:
+          id: fortify-debricked
+          name: ${lastDebrickedScan?.scanTool?:'tool unknown'}
+          url: https://www.opentext.com/products/application-security
+          version: ${lastDebrickedScan?.scanToolVersion?:'version unknown'}
+          vendor: 
+            name: Fortify+Debricked
+      dependency_files: ${{}}
+      vulnerabilities: ${vulnerabilities?:{}} 
+
+  vulnerabilities:
+      id: ${#fmt('%s', issue.id)}
+      category: dependency_scanning
+      name: ${issue.checkId}
+      message: ${issue.category}
+      description: ${#abbreviate(#htmlToText(issue.details?.summary?:""), 15000)}
+      cve: ${issue.details.ruleId?:""}
+      severity: ${issue.severityString}
+      confidence: ${(issue.severityString matches "(Critical|High)") ? "High":"Low" }
+      scanner:
+        id: fortify-debricked
+        name: Fortify/Debricked
+      identifiers:
+        - name:  "Instance id: ${issue.details?.instanceId}"
+          type:  instanceId
+          value: ${issue.details?.instanceId}
+          url:   ${#fod.issueBrowserUrl(issue)}
+        - name:  ${issue.details.ruleId?:""}
+          type:  cve
+          value: ${issue.details.ruleId?:""}
+          url:   "https://cve.mitre.org/cgi-bin/cvename.cgi?name=${issue.details.ruleId?:''}"
+      links:
+        - name: Additional issue details, including analysis trace, in Fortify on Demand
+          url:  ${#fod.issueBrowserUrl(issue)}
+        #- name: CWE URL
+        #  url:  ${issue.details?.customAttributes?.externalUrl}
+      location:
+        file:           ${issue.primaryLocation}
+        dependency:
+          package:
+            name: ${issue.primaryLocation?.replaceAll('([\w\d.:-]*)@([1-9.]*)', '$1')?:'Not Set'}
+          version:      ${issue.primaryLocation?.replaceAll('([\w\d.:-]*)@([1-9.]*)', '$2')?:'Not Set'}
+      solution: ${#abbreviate(#htmlToText(issue.recommendations?.recommendations?:""), 15000)}    

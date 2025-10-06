@@ -12,14 +12,16 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.cli.mixin;
 
-import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
-import com.fortify.cli.common.output.query.QueryExpression;
-import com.fortify.cli.common.output.query.QueryExpressionTypeConverter;
+import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.spel.query.QueryExpression;
+import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
 
 import lombok.Getter;
 import picocli.CommandLine;
 
 public final class QueryOptionsArgGroup implements IQueryExpressionSupplier {
     @CommandLine.Option(names = {"-q", "--query"}, order=1, converter = QueryExpressionTypeConverter.class, paramLabel = "<SpEL expression>")
+    @MCPExclude // Not suitable for LLM, as LLM doesn't know option syntax/fields
     @Getter private QueryExpression queryExpression;
 }

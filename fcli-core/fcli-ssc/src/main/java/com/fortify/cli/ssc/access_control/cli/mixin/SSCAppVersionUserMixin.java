@@ -12,11 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.access_control.cli.mixin;
 
-import com.fortify.cli.common.cli.util.EnvSuffix;
-
 import lombok.Getter;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionUserMixin {
     public static abstract class AbstractSSCAppVersionAuthEntityMixin {
@@ -30,11 +27,6 @@ public class SSCAppVersionUserMixin {
     
     public static class OptionalUserRemoveOption extends AbstractSSCAppVersionAuthEntityMixin {
         @Option(names = {"--rm-users"}, required = false, split = ",", descriptionKey = "fcli.ssc.access-control.appversion-auth-entity.rm.specs")
-        @Getter private String[] authEntitySpecs;
-    }
-    
-    public static class RequiredPositionalParameter extends AbstractSSCAppVersionAuthEntityMixin {
-        @EnvSuffix("USERS") @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.access-control.appversion-auth-entity.specs")
         @Getter private String[] authEntitySpecs;
     }
 }

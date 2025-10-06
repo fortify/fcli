@@ -27,6 +27,7 @@ usage:
     
 config:
   output: immediate
+  mcp: exclude
   mask.env-vars:
     FOD_URL:
       description: FOD HOST NAME

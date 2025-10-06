@@ -39,6 +39,13 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 }
             }
             dependencies.apply {
+                // Exclude slf4j transitive dependency for io.modelcontextprotocol
+                add("implementation", "io.modelcontextprotocol.sdk:mcp-core") {
+                    exclude(group = "org.slf4j", module = "slf4j-api")
+                }
+                add("implementation", "io.modelcontextprotocol.sdk:mcp-json-jackson2") {
+                    exclude(group = "org.slf4j", module = "slf4j-api")
+                }
                 add("annotationProcessor", "info.picocli:picocli-codegen")
                 add("compileOnly", "com.formkiq:graalvm-annotations")
                 add("annotationProcessor", "com.formkiq:graalvm-annotations-processor")

@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
@@ -26,7 +27,6 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
-import kong.unirest.ObjectMapper;
 import kong.unirest.ProgressMonitor;
 import kong.unirest.UnirestInstance;
 import kong.unirest.jackson.JacksonObjectMapper;
@@ -54,26 +54,39 @@ public class SSCFileTransferHelper {
     }
 
     @SneakyThrows
-    public static final <T> T upload(UnirestInstance unirest, String endpoint, File filePath, ISSCAddUploadTokenFunction addTokenFunction, Class<T> returnType) {
+    public static final <T> T htmlUpload(UnirestInstance unirest, String endpoint, File filePath, ISSCAddUploadTokenFunction addTokenFunction, Class<T> returnType) {
+        if ( !isHtmlEndpoint(endpoint) ) {
+            throw new FcliBugException("Uploads to %s should be done through SSCFileTransferHelper::restUpload", endpoint);
+        }
         try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.UPLOAD); ) {
-            String acceptHeaderValue = unirest.config().getDefaultHeaders().getFirst("Accept");
-            ObjectMapper objectMapper = unirest.config().getObjectMapper();
-            if ( endpoint.startsWith("/upload") ) {
-                // SSC always returns XML data on these endpoints, so we use the appropriate Accept header and ObjectMapper
-                acceptHeaderValue = "application/xml";
-                objectMapper = XMLMAPPER;
-            }
-            
             try ( SSCProgressMonitor uploadMonitor = new SSCProgressMonitor("Upload") ) {
                 return addTokenFunction.apply(tokenSupplier.get(), unirest.post(endpoint))
                     .multiPartContent() // Force multipart request with correct Content-Type header
                     .field("file", filePath)
                     .uploadMonitor(uploadMonitor)
-                    .headerReplace("Accept", acceptHeaderValue) 
-                    .withObjectMapper(objectMapper)
+                    .headerReplace("Accept", "application/xml") 
+                    .withObjectMapper(XMLMAPPER)
                     .asObject(returnType).getBody();
             }
         }
+    }
+    
+    @SneakyThrows
+    public static final <T> T restUpload(UnirestInstance unirest, String endpoint, File filePath, Class<T> returnType) {
+        if ( isHtmlEndpoint(endpoint) ) {
+            throw new FcliBugException("Uploads to %s should be done through SSCFileTransferHelper::htmlUpload", endpoint);
+        }
+        try ( SSCProgressMonitor uploadMonitor = new SSCProgressMonitor("Upload") ) {
+            return unirest.post(endpoint)
+                    .multiPartContent() // Force multipart request with correct Content-Type header
+                    .field("file", filePath)
+                    .uploadMonitor(uploadMonitor)
+                    .asObject(returnType).getBody();
+        }
+    }
+
+    private static final boolean isHtmlEndpoint(String endpoint) {
+        return endpoint.startsWith("/upload");
     }
     
     @FunctionalInterface

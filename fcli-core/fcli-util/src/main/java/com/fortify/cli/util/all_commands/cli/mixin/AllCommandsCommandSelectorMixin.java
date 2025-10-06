@@ -13,12 +13,9 @@
 package com.fortify.cli.util.all_commands.cli.mixin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,12 +25,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.query.QueryExpression;
-import com.fortify.cli.common.output.query.QueryExpressionTypeConverter;
+import com.fortify.cli.common.spel.query.QueryExpression;
+import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
+import com.fortify.cli.common.util.PicocliSpecHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -50,18 +47,8 @@ public class AllCommandsCommandSelectorMixin {
     
     public CommandSelectorResult getSelectedCommands() {
         CommandSelectorResult result = new CommandSelectorResult(queryExpression);
-        addCommands(result, Arrays.asList(commandHelper.getCommandSpec().root().commandLine()));
+        PicocliSpecHelper.commandTreeStream(commandHelper.getCommandSpec().root()).forEach(result::add);
         return result;
-    }
-    
-    private final void addCommands(CommandSelectorResult result, Collection<CommandLine> subcommands) {
-        if ( subcommands!=null && !subcommands.isEmpty() ) {
-            for (CommandLine cl : subcommands) {
-                CommandSpec spec = cl.getCommandSpec();
-                result.add(spec);
-                addCommands(result, spec.subcommands().values());
-            }
-        }
     }
     
     @RequiredArgsConstructor
@@ -84,8 +71,10 @@ public class AllCommandsCommandSelectorMixin {
         }
         
         private static final ObjectNode createNode(CommandSpec spec) {
-            var hiddenParent = hasHiddenParent(spec);
-            var hiddenSelf = spec.usageMessage().hidden();
+            var hiddenParent = PicocliSpecHelper.hasHiddenParent(spec);
+            var hiddenSelf = PicocliSpecHelper.isHiddenSelf(spec);
+            var hidden = PicocliSpecHelper.isHiddenSelfOrParent(spec);
+            var mcpIgnored = PicocliSpecHelper.isMcpIgnored(spec);
             var nameComponents = spec.qualifiedName(" ").split(" ");
             var module = nameComponents.length>1 ? nameComponents[1] : "";
             var entity = nameComponents.length>2 ? nameComponents[2] : "";
@@ -95,23 +84,17 @@ public class AllCommandsCommandSelectorMixin {
             result.put("module", module);
             result.put("entity", entity);
             result.put("action", action);
-            result.put("hidden", hiddenParent || hiddenSelf);
+            result.put("hidden", hidden);
             result.put("hiddenParent", hiddenParent);
             result.put("hiddenSelf", hiddenSelf);
-            result.put("runnable", spec.userObject() instanceof Runnable || spec.userObject() instanceof Callable);
+            result.put("mcpIgnored", mcpIgnored);
+            result.put("runnable", PicocliSpecHelper.isRunnable(spec));
             result.put("usageHeader", String.join("\n", spec.usageMessage().header()));
             result.set("aliases", Stream.of(spec.aliases()).map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
             result.put("aliasesString", Stream.of(spec.aliases()).collect(Collectors.joining(", ")));
             result.set("options", spec.optionsMap().keySet().stream().map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
             result.put("optionsString", spec.optionsMap().keySet().stream().collect(Collectors.joining(", ")));
             return result;
-        }
-        
-        private static final boolean hasHiddenParent(CommandSpec spec) {
-            var parent = spec.parent();
-            if ( parent==null ) { return false; }
-            if ( parent.usageMessage().hidden() ) { return true; }
-            return hasHiddenParent(parent);
         }
     }
 }

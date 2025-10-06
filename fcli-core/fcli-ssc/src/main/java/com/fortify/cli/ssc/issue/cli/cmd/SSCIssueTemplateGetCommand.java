@@ -12,29 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
+import com.fortify.cli.ssc.issue_template.cli.cmd.AbstractSSCIssueTemplateGetCommand;
 
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.GetTemplate.CMD_NAME) @CommandGroup("template")
-public class SSCIssueTemplateGetCommand extends AbstractSSCJsonNodeOutputCommand {
-    @Getter @Mixin private OutputHelperMixins.GetTemplate outputHelper; 
-    @Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
-    
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return issueTemplateResolver.getIssueTemplateDescriptor(unirest).asJsonNode();
-    }
-    
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
+@Command(name = OutputHelperMixins.GetTemplate.CMD_NAME) @CommandGroup("issue-template")
+public class SSCIssueTemplateGetCommand extends AbstractSSCIssueTemplateGetCommand {
+    @Getter @Mixin private OutputHelperMixins.GetTemplate outputHelper;
 }

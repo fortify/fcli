@@ -127,7 +127,7 @@ class FoDAccessControlUserSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("${user.get().userName}") && it.contains("UPDATED") }
+                it.any { it.contains("${user.get().userName}") && it.contains("REQUESTED") }
             }
     }
     

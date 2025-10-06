@@ -14,38 +14,15 @@ package com.fortify.cli.ssc.issue.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
-import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
-import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
-import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
-import com.fortify.cli.ssc._common.rest.ssc.query.cli.mixin.SSCQParamMixin;
+import com.fortify.cli.ssc.issue_template.cli.cmd.AbstractSSCIssueTemplateListCommand;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.ListTemplates.CMD_NAME) @CommandGroup("template")
-public class SSCIssueTemplateListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
-    @Getter @Mixin private OutputHelperMixins.ListTemplates outputHelper; 
-    @Mixin private SSCQParamMixin qParamMixin;
-    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
-                .add("id", SSCQParamValueGenerators::plain)
-                .add("name", SSCQParamValueGenerators::wrapInQuotes)
-                .add("defaultTemplate", SSCQParamValueGenerators::plain)
-                .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::wrapInQuotes)
-                .add("required", SSCQParamValueGenerators::plain);
-    
+@Command(name = OutputHelperMixins.ListTemplates.CMD_NAME) @CommandGroup("issue-template")
+public class SSCIssueTemplateListCommand extends AbstractSSCIssueTemplateListCommand {
+    @Mixin private OutputHelperMixins.ListTemplates outputHelper;
+
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ISSUE_TEMPLATES);
-    }
-    
-    @Override
-    public boolean isSingular() {
-        return false;
-    }
+    public OutputHelperMixins.ListTemplates getOutputHelper() { return outputHelper; }
 }

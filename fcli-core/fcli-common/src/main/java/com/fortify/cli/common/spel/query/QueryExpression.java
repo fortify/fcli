@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.query;
+package com.fortify.cli.common.spel.query;
 
 import org.springframework.expression.Expression;
 

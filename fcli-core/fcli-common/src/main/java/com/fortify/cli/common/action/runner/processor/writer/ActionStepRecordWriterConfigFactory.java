@@ -41,12 +41,11 @@ public class ActionStepRecordWriterConfigFactory {
     @SneakyThrows
     public static final Writer createWriter(WithWriterConfig config) {
         var to = config.getTo();
-        var ctx = config.getCtx();
         var vars = config.getVars();
         if ( "stdout".equals(to) ) {
-            return new OutputStreamWriter(ctx.getStdout());
+            return new OutputStreamWriter(System.out);
         } else if ( "stderr".equals(to) ) {
-            return new OutputStreamWriter(ctx.getStderr());
+            return new OutputStreamWriter(System.err);
         } else if ( to.startsWith("var:") ) {
             return new FcliActionVariableWriter(vars, to.replaceAll("^var:", ""));
         } else {

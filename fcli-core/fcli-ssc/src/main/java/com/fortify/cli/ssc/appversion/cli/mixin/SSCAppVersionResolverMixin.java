@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
@@ -28,7 +30,8 @@ public class SSCAppVersionResolverMixin {
         public abstract String getAppVersionNameOrId();
 
         public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppVersionHelper.getRequiredAppVersion(unirest, getAppVersionNameOrId(), delimiterMixin.getDelimiter(), fields);
+            var nameOrId = getAppVersionNameOrId();
+            return StringUtils.isBlank(nameOrId) ? null : SSCAppVersionHelper.getRequiredAppVersion(unirest, getAppVersionNameOrId(), delimiterMixin.getDelimiter(), fields);
         }
         
         public String getAppVersionId(UnirestInstance unirest) {
@@ -38,6 +41,11 @@ public class SSCAppVersionResolverMixin {
     
     public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--appversion", "--av"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
+        @Getter private String appVersionNameOrId;
+    }
+    
+    public static class OptionalOption extends AbstractSSCAppVersionResolverMixin {
+        @Option(names = {"--appversion", "--av"}, required = false, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
     }
     

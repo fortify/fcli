@@ -20,6 +20,10 @@ public class FcliBugException extends FcliTechnicalException {
     private static final long serialVersionUID = 1L;
 
     public FcliBugException() {}
+    
+    public FcliBugException(String fmt, Object... args) {
+        super(fmt, args);
+    }
 
     public FcliBugException(String message) {
         super(message);

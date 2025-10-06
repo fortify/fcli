@@ -20,6 +20,7 @@ import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TempFile
 import com.fortify.cli.ftest._common.spec.TestResource
+import com.fortify.cli.ftest.ssc._common.SSCCustomTagSupplier
 
 import spock.lang.Shared
 import spock.lang.Stepwise
@@ -30,7 +31,8 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     @Shared @TempFile("issueTemplateSpec/download.xml") String downloadedTemplateFile
     private static final String random = System.currentTimeMillis()
     private static final String templateName = "fcli-test-Template"+random
-    
+    @Shared SSCCustomTagSupplier tagSupplier = new SSCCustomTagSupplier()
+
     def "list"() {
         def args = "ssc issue list-templates"
         when:
@@ -110,6 +112,46 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it.last().contains("DOWNLOADED")
+            }
+    }
+
+    def "customTag_add"() {
+        def args = "ssc issue-template update ::template::id --add-tags=${tagSupplier.tag.get("id")}"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it.contains("UPDATED") }
+            }
+    }
+
+    def "customTag_list_contains"() {
+        def args = "ssc custom-tag list --issue-template=::template::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+           verifyAll(result.stdout) {
+                it.any { it.contains(tagSupplier.tag.get("name")) }
+            }
+    }
+
+    def "customTag_remove"() {
+        def args = "ssc issue-template update ::template::id --rm-tags="+tagSupplier.tag["id"]
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it.contains("UPDATED") }
+            }
+    }
+
+    def "customTag_list_not_contains"() {
+        def args = "ssc custom-tag list --issue-template=::template::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                !it.any { it.contains(tagSupplier.tag.get("name")) }
             }
     }
     

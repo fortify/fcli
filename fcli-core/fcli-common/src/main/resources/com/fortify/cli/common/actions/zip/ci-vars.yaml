@@ -12,6 +12,7 @@ usage:
 
 config:
   output: immediate
+  mcp: exclude
   
 steps:
   # Set default ci values. Where possible, steps below should override these

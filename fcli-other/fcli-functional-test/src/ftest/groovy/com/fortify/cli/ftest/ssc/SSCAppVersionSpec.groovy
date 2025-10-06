@@ -8,6 +8,7 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
+import com.fortify.cli.ftest.ssc._common.SSCCustomTagSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -17,7 +18,8 @@ import spock.lang.Stepwise
 class SSCAppVersionSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier2 = new SSCAppVersionSupplier()
-    
+    @Shared SSCCustomTagSupplier tagSupplier = new SSCCustomTagSupplier()
+
     def "list"() {
         def args = "ssc appversion list"
         when:
@@ -94,54 +96,44 @@ class SSCAppVersionSpec extends FcliBaseSpec {
                 it[0].contains("--name option must contain either a plain name or ${versionSupplier.version.appName}:<new name>, current: nonExistingAppversion123:updatedVersionName3")
             }
     }
-    
-    /*
-    def "createWithCopy"() {
-        def args = "ssc appversion create --from=10060 --auto-required-attrs --issue-template=Prioritized\\ High\\ Risk\\ Issue\\ Template ${versionSupplier.version.appName}:copied --store=copied"
+
+    def "customTag_add"() {
+        def args = "ssc av update ${versionSupplier.version.get("id")} --add-tags ${tagSupplier.tag.get("guid")}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==2
-                it[1].endsWith("CREATED ")
+                it.any { it.contains("UPDATED") }
             }
     }
-    
-    def "verifyCopy"() {
-        Thread.sleep(5000)
-        def args = "ssc issue count --appversion=::copied::id"
+
+    def "customTag_list_contains"() {
+        def args = "ssc custom-tag list --av="+versionSupplier.version.get("id")
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==3
-                it[1].contains("High        2")
+                it.any { it.contains(tagSupplier.tag.get("name")) }
             }
     }
-    
-    def "copy-state"() {
-        def args = "ssc appversion copy-state --from=10060 --to=${versionSupplier2.version.get("id")}"
+
+    def "customTag_remove"() {
+        def args = "ssc av update ${versionSupplier.version.get("id")} --rm-tags ${tagSupplier.tag.get("name")}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==2
-                it[1].endsWith("COPY_REQUESTED ")
+                it.any { it.contains("UPDATED") }
             }
     }
-    
-    def "verifyCopy2"() {
-        Thread.sleep(5000)
-        def args = "ssc issue count --appversion=${versionSupplier2.version.get("id")}"
+
+    def "customTag_list_not_contains"() {
+        def args = "ssc custom-tag list --av="+versionSupplier.version.get("id")
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==3
-                it[1].contains("High        2")
+                !it.any { it.contains(tagSupplier.tag.get("name")) }
             }
-    }*/
-    //TODO add tests to verify copying of attributes once that is implemented 
-    //the copy action in the UI using the /bulk endpoint sets a copyVersionAttributes flag which doesnt seem to do anything atm
-    //waiting for feedback from PM if that is supposed to be working, if not Alex plans to implement it client side
+    }
 }

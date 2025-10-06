@@ -10,13 +10,13 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.issue.cli.mixin;
+package com.fortify.cli.ssc.issue_template.cli.mixin;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.cli.util.EnvSuffix;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
-import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateHelper;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
