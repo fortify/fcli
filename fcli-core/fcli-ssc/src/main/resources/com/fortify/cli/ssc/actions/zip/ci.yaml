@@ -54,7 +54,6 @@ steps:
             #skipReasonIf(#env('DO_SAST_SCAN')=='false', 'SAST scan disabled as DO_SAST_SCAN==false')
             ?:#skipReasonIf(#env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip), 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested')
         }
-      debricked.skip: true  
       debricked.skipReason: > # Disabled by default, unless explicitly enabled
         ${
             #skipReasonIf(#env('DO_DEBRICKED_SCAN')=='false', 'Debricked scan disabled as DO_DEBRICKED_SCAN==false')
