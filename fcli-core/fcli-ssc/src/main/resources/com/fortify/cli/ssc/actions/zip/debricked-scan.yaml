@@ -27,7 +27,7 @@ cli.options:
     default: ${#env('DEBRICKED_ACCESS_TOKEN')}
     mask: {sensitivity: high}
   dcliVersion:
-    names: --debricked-cli-version, -v
+    names: --cli-version, -v
     description: |
       Specify the Debricked CLI tool version version to be installed that shall be used for scanning. Defaults to the value of the DEBRICKED_CLI_VERSION environment variable, or 'latest' if not specified.
     required: false
@@ -45,25 +45,29 @@ cli.options:
     required: false 
     default: ${#env('TOOL_DEFINITIONS')}
   debrickedRepository:
-    names: --debricked-repository, -r
+    names: --repository, -r
     description: |
-      Debricked repository name or ID. Defaults to the value of the DEBRICKED_REPOSITORY environment variable.
+      Debricked source repository name or ID.
     required: true 
-    default: ${#env('DEBRICKED_REPOSITORY')}
+    default: ${#env('REPOSITORY_NAME')}
   debrickedBranch:
-    names: --debricked-branch, -b
+    names: --branch, -b
     description: |
-      Debricked branch name or ID. Defaults to the value of the DEBRICKED_BRANCH environment variable.
+      Debricked source branch name or ID.
     required: true 
-    default: ${#env('DEBRICKED_BRANCH')}
+    default: ${#env('BRANCH_NAME')}
   debrickedWait:
-    names: --debricked-wait
+    names: --wait
     description: |
       An option to be passed to make the action wait until `fcli ssc artifact import-debricked` completes. Defaults to the value of the DO_DEBRICKED_WAIT environment variable.
     required: false
     default: ${#env('DO_DEBRICKED_WAIT')}
+    type: boolean
 
 steps:
+  - var.set:
+      global.debrickedPublish.fcliVarName: debricked_scan_${#action.runID().replace('-','_')} # fcli variable to store the artifact name to be used in next command to wait-for artifact upload command 
+      global.debrickedPublish.waitForCmd: 'fcli ssc artifact wait-for ::${global.debrickedPublish.fcliVarName}::'
   - run.fcli:
       UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${cli.toolDefinitions?:""}
       INSTALL_DEBRICKED: fcli tool dcli install -v ${cli.dcliVersion}
@@ -75,7 +79,7 @@ steps:
       stdout: ${RUN_DEBRICKED_CLI.stdout}
       stderr: ${RUN_DEBRICKED_CLI.stderr}      
   - run.fcli:
-      IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${cli.appVersion} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository} -b ${cli.debrickedBranch} --store debricked_scan
-  - if: ${#isBlank(debrickedWait)} || ${debrickedWait} == 'true'
+      IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${cli.appVersion} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository} -b ${cli.debrickedBranch} --store ${global.debrickedPublish.fcliVarName}
+  - if: ${cli.debrickedWait}
     run.fcli:
-      WAIT: 'fcli ssc artifact wait-for ::debricked_scan::'
+      WAIT: ${global.debrickedPublish.waitForCmd}

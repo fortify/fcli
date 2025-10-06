@@ -216,10 +216,10 @@ formatters:
       - names: DEBRICKED_CLI_VERSION
         desc: >-
             Debricked CLI tool version to be installed to perform the debricked scan.
-      - names: DEBRICKED_REPOSITORY
+      - names: REPOSITORY_NAME
         desc: >-
             Debricked repository name or ID.
-      - names: DEBRICKED_BRANCH
+      - names: BRANCH_NAME
         desc: >-
             Debricked branch name or ID.
     scan:

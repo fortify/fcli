@@ -47,8 +47,6 @@ steps:
       # Configure session name
       sessionName: ci-${#action.runID()}
       # Configure scan types to run
-      sca.skipReason:   # TODO
-      sca.skip: true
       dast.skipReason:  # TODO
       dast.skip: true
       sast.skipReason: > # Enabled by default, unless explicitly disabled or other scan type requested
@@ -56,12 +54,13 @@ steps:
             #skipReasonIf(#env('DO_SAST_SCAN')=='false', 'SAST scan disabled as DO_SAST_SCAN==false')
             ?:#skipReasonIf(#env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip), 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested')
         }
-      debricked.skipReason: > # Enabled by default, unless explicitly disabled
+      debricked.skip: true  
+      debricked.skipReason: > # Disabled by default, unless explicitly enabled
         ${
             #skipReasonIf(#env('DO_DEBRICKED_SCAN')=='false', 'Debricked scan disabled as DO_DEBRICKED_SCAN==false')
-            ?:#skipReasonIf(#env('DO_DEBRICKED_SCAN')!='true' && (!sca.skip || !dast.skip), 'Debricked scan disabled as DO_DEBRICKED_SCAN!=true and other scan type requested')
+            ?:#skipReasonIf(#env('DO_DEBRICKED_SCAN')!='true' && !dast.skip, 'Debricked scan disabled as DO_DEBRICKED_SCAN!=true and other scan type requested')
+            ?:#skipBlankEnvReason('DEBRICKED_ACCESS_TOKEN')
         }
-      debrickedAccessToken: ${#env('DEBRICKED_ACCESS_TOKEN')}
       aviator.skipReason: >
         ${
             #fcliCmdSkipFromEnvReason('AVIATOR_AUDIT', false)
@@ -116,11 +115,19 @@ steps:
                 - ${sast.skipReason}                     # Skip if SAST scan is skipped
                 - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
             
-            DEBRICKED_SCAN: 
-              cmd: ${#actionCmd('DEBRICKED_SCAN', 'ssc', 'debricked-scan')} --source-dir "${global.ci.sourceDir}" --av "${global.ci.av}" -t env:DEBRICKED_ACCESS_TOKEN -r env:DEBRICKED_REPOSITORY -b env:DEBRICKED_BRANCH --tool-definitions env:TOOL_DEFINITIONS -v env:DEBRICKED_CLI_VERSION --debricked-wait env:DO_DEBRICKED_WAIT
+            DEBRICKED_SCAN_ACTION: 
+              cmd: ${#actionCmd('DEBRICKED_SCAN', 'ssc', 'debricked-scan')} --source-dir "${global.ci.sourceDir}" --av "${global.ci.av}" --repository "${global.ci.qualifiedRepoName}" --branch "${global.ci.sourceBranch}" --wait
               skip.if-reason:
                 - ${debricked.skipReason} # Skip if Debricked scan is skipped
-                          
+            
+            DEBRICKED_WAIT:
+              cmd: "${#fcliCmd('DEBRICKED_WAIT', global.debrickedPublish.waitForCmd)}"
+              skip.if-reason:
+                - ${#fcliCmdSkipFromEnvReason('DO_DEBRICKED_WAIT', false)}        # Skip if DO_DEBRICKED_WAIT==false
+                - ${DEBRICKED_SCAN_ACTION.dependencySkipReason}                   # Skip if DEBRICKED_SCAN_ACTION was skipped or failed
+              on.success:
+                - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run       
+            
             # TODO Improve this to:
             # - Wait for scan completion (but not publish completion)
             # - Download logs/fpr if debugging is enabled
