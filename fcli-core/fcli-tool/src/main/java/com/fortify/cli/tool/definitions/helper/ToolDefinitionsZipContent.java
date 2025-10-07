@@ -14,12 +14,13 @@ import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
 import java.util.stream.Collectors;
+import com.fortify.cli.common.exception.FcliSimpleException;
 
 public class ToolDefinitionsZipContent {
     private final Map<String, byte[]> fileContents = new HashMap<>();
     private final Map<String, FileTime> fileTimes = new HashMap<>();
 
-    public ToolDefinitionsZipContent(Path zipPath) throws IOException {
+    public ToolDefinitionsZipContent(Path zipPath, Set<String> requiredYamlNames) throws IOException {
         if (Files.exists(zipPath)) {
             try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -35,9 +36,10 @@ public class ToolDefinitionsZipContent {
                 }
             }
         }
+        validateRequiredYaml(requiredYamlNames);
     }
 
-    public ToolDefinitionsZipContent(InputStream zipStream) throws IOException {
+    public ToolDefinitionsZipContent(InputStream zipStream, Set<String> requiredYamlNames) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(zipStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -48,6 +50,14 @@ public class ToolDefinitionsZipContent {
                     fileTimes.put(name, (ft != null) ? ft : FileTime.fromMillis(0));
                 }
             }
+        }
+        validateRequiredYaml(requiredYamlNames);
+    }
+
+    private void validateRequiredYaml(Set<String> requiredYamlNames) {
+        boolean found = requiredYamlNames.stream().anyMatch(fileContents::containsKey);
+        if (!found) {
+            throw new FcliSimpleException("Invalid zip: missing all required YAML files: " + requiredYamlNames);
         }
     }
 

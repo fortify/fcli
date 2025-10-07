@@ -13,6 +13,7 @@ import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsOutputDescriptor;
 
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -23,12 +24,30 @@ public class ToolDefinitionsUpdateCommand extends AbstractOutputCommand implemen
     private static final String DEFAULT_URL = "https://github.com/fortify/tool-definitions/releases/download/v1/tool-definitions.yaml.zip";
     @Getter @Option(names={"-s", "--source"}, required = false, descriptionKey="fcli.tool.definitions.update.definitions-source") 
     private String source = DEFAULT_URL;
+    static class UpdateMode {
+        @Option(names={"-f", "--force"}, required = false, descriptionKey="fcli.tool.definitions.update.force", paramLabel = "Force Update")
+        boolean forceUpdates;
+        @Option(names={"--max-age"}, required = false, descriptionKey="fcli.tool.definitions.update.max-age", paramLabel = "timeout")
+        String maxAge;
+    }
+    @ArgGroup(exclusive = true, multiplicity = "0..1")
+    @Getter private UpdateMode updateMode = new UpdateMode();
+
     @JsonIgnore
     private List<ToolDefinitionsOutputDescriptor> updateToolDefinitions;
     
     @Override
     public JsonNode getJsonNode() {
-        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.updateToolDefinitions(source));
+        if (updateMode.forceUpdates && updateMode.maxAge != null && !updateMode.maxAge.isEmpty()) {
+            throw new IllegalArgumentException("You must specify only one of --force or --max-age, not both.");
+        }
+        return JsonHelper.getObjectMapper().valueToTree(
+            ToolDefinitionsHelper.updateToolDefinitions(
+                source,
+                updateMode.forceUpdates,
+                updateMode.maxAge
+            )
+        );
     }
     
     @Override

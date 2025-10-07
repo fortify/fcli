@@ -31,8 +31,8 @@ public final class ToolDefinitionsOutputDescriptor {
     private final String lastUpdate;
     @JsonProperty(IActionCommandResultSupplier.actionFieldName) private final String actionResult;
     
-    public ToolDefinitionsOutputDescriptor(String name, ToolDefinitionsStateDescriptor stateDescriptor) {
-        this(name, stateDescriptor.getSource(), stateDescriptor.getLastUpdate(), "UPDATED");
+    public ToolDefinitionsOutputDescriptor(String name, ToolDefinitionsStateDescriptor stateDescriptor, String actionResult) {
+        this(name, stateDescriptor.getSource(), stateDescriptor.getLastUpdate(), actionResult);
     }
     
     public ToolDefinitionsOutputDescriptor(String name, String source, Date lastUpdate, String actionResult) {

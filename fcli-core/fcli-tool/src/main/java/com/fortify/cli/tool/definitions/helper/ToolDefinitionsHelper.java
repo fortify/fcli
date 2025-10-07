@@ -50,8 +50,9 @@ public final class ToolDefinitionsHelper {
 	private static final Path DESCRIPTOR_PATH = ToolDefinitionsHelper.DEFINITIONS_STATE_DIR.resolve("state.json");
 	private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
 	private static String toolDefinitionCustomFilePath;
+    private static boolean shouldUpdate = false;
 
-	public static final List<ToolDefinitionsOutputDescriptor> getOutputDescriptors() {
+    public static final List<ToolDefinitionsOutputDescriptor> getOutputDescriptors() {
 		List<ToolDefinitionsOutputDescriptor> result = new ArrayList<>();
 		addZipOutputDescriptor(result);
 		addYamlOutputDescriptors(result);
@@ -59,12 +60,15 @@ public final class ToolDefinitionsHelper {
 	}
 
 	@SneakyThrows
-	public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source) {
+	public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source, boolean forceUpdate, String maxAge) {
 		toolDefinitionCustomFilePath = source;
+        shouldUpdate = shouldUpdateToolDefinitions(forceUpdate, maxAge);
+        if (shouldUpdate) {
 		createDefinitionsStateDir(ToolDefinitionsHelper.DEFINITIONS_STATE_DIR);
 		var zip = ToolDefinitionsHelper.DEFINITIONS_STATE_ZIP;
 		var descriptor = update(source, zip);
 		FcliDataHelper.saveFile(DESCRIPTOR_PATH, descriptor, true);
+        }
 		return getOutputDescriptors();
 	}
 
@@ -147,7 +151,7 @@ public final class ToolDefinitionsHelper {
 			}
 		}
 
-		FileTime latestTime = null;
+		FileTime currentTime = FileTime.fromMillis(System.currentTimeMillis());
 		try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(Files.newOutputStream(dest))) {
 			for (String yamlFile : yamlFileNames) {
 				Path filePath = DEFINITIONS_STATE_DIR.resolve(yamlFile);
@@ -158,15 +162,10 @@ public final class ToolDefinitionsHelper {
 					zos.putNextEntry(zipEntry);
 					Files.copy(filePath, zos);
 					zos.closeEntry();
-					if (latestTime == null || fileTime.compareTo(latestTime) > 0) {
-						latestTime = fileTime;
-					}
 				}
 			}
 		}
-		if (latestTime != null) {
-			Files.setLastModifiedTime(dest, latestTime);
-		}
+        Files.setLastModifiedTime(dest, currentTime);
 
 		for (String yamlFile : yamlFileNames) {
 			Path filePath = DEFINITIONS_STATE_DIR.resolve(yamlFile);
@@ -198,15 +197,13 @@ public final class ToolDefinitionsHelper {
 	}
 
 	private static final void addZipOutputDescriptor(List<ToolDefinitionsOutputDescriptor> result) {
-		var stateDescriptor = FcliDataHelper.readFile(DESCRIPTOR_PATH, ToolDefinitionsStateDescriptor.class, false);
-		if (stateDescriptor != null) {
-			String source = toolDefinitionCustomFilePath != null ? toolDefinitionCustomFilePath : ZIP_FILE_NAME;
-			result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, source, stateDescriptor.getLastUpdate(),
-					"UPDATED"));
-		} else {
-			result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, "INTERNAL",
-					FcliBuildProperties.INSTANCE.getFcliBuildDate(), "UPDATED"));
-		}
+	    var stateDescriptor = FcliDataHelper.readFile(DESCRIPTOR_PATH, ToolDefinitionsStateDescriptor.class, false);
+	    String actionResult = shouldUpdate ? "UPDATED" : "SKIPPED_BY_AGE";
+        if ( stateDescriptor!=null ) {
+            result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, stateDescriptor, actionResult));
+        } else {
+            result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, "INTERNAL", FcliBuildProperties.INSTANCE.getFcliBuildDate(), actionResult));
+        }
 	}
 
 	private static Set<String> getRequiredYamlNames() {
@@ -219,66 +216,77 @@ public final class ToolDefinitionsHelper {
 
 	private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result) {
 		Set<String> requiredYamlNames = getRequiredYamlNames();
-		if (isUpdateDefault()) {
-			try (InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is)) {
-				ZipEntry entry;
-				while ((entry = zis.getNextEntry()) != null) {
-					String name = Path.of(entry.getName()).getFileName().toString();
-					if (requiredYamlNames.contains(name)) {
-						var source = ZIP_FILE_NAME;
-						var lastModified = new Date(entry.getLastModifiedTime().toMillis());
-						result.add(new ToolDefinitionsOutputDescriptor(name, source, lastModified, "UPDATED"));
-					}
-				}
-			} catch (IOException e) {
-				throw new FcliSimpleException("Error loading tool definitions", e);
-			}
-		} else {
+		if (!shouldUpdate) {
+		    addDefaultYamlDescriptor(result, requiredYamlNames, "SKIPPED_BY_AGE");
+		}
+		else if (isUpdateDefault()) {
+            addDefaultYamlDescriptor(result, requiredYamlNames, "UPDATED");
+		}
+        else {
 			Set<String> foundYamlNames = new HashSet<>();
 			String zipPathOnly = toolDefinitionCustomFilePath != null
-					? Path.of(toolDefinitionCustomFilePath).getFileName().toString()
-					: null;
+				? Path.of(toolDefinitionCustomFilePath).getFileName().toString()
+				: null;
+			ToolDefinitionsZipContent userZipContent = null;
 			if (toolDefinitionCustomFilePath != null) {
-				try (ZipFile userZip = new ZipFile(toolDefinitionCustomFilePath)) {
-					Enumeration<? extends ZipEntry> entries = userZip.entries();
-					while (entries.hasMoreElements()) {
-						ZipEntry entry = entries.nextElement();
-						if (!entry.isDirectory()) {
-							String name = Path.of(entry.getName()).getFileName().toString();
-							Date lastModified = new Date(entry.getLastModifiedTime().toMillis());
-							if (requiredYamlNames.contains(name)) {
-								result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified,
-										"UPDATED"));
-								foundYamlNames.add(name);
-							} else {
-								result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified,
-										"IGNORED"));
-							}
+				try {
+					userZipContent = new ToolDefinitionsZipContent(Path.of(toolDefinitionCustomFilePath), requiredYamlNames);
+					for (String name : userZipContent.getFileNames()) {
+						Date lastModified = userZipContent.getFileDate(name);
+						if (requiredYamlNames.contains(name)) {
+							result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "UPDATED"));
+							foundYamlNames.add(name);
+						} else {
+							result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "IGNORED"));
 						}
 					}
 				} catch (IOException e) {
 					throw new FcliSimpleException("Error loading files from user definitions", e);
 				}
 			}
+			ToolDefinitionsZipContent internalZipContent = null;
 			for (String required : requiredYamlNames) {
-				if (!foundYamlNames.contains(required)) {
-					String source = ZIP_FILE_NAME;
-					Date lastModified = null;
-					Path destFile = DEFINITIONS_STATE_DIR.resolve(required);
-					if (Files.exists(destFile)) {
-						try {
-							lastModified = new Date(Files.getLastModifiedTime(destFile).toMillis());
-						} catch (IOException e) {
-							throw new FcliSimpleException("Error getting last modified time for: " + destFile, e);
-						}
-					} else {
-						lastModified = getInternalResourceZipEntryLastModified(required);
+				if (foundYamlNames.contains(required)) continue;
+				String source = ZIP_FILE_NAME;
+				Date lastModified = null;
+				Path destFile = DEFINITIONS_STATE_DIR.resolve(required);
+				if (Files.exists(destFile)) {
+					try {
+						lastModified = new Date(Files.getLastModifiedTime(destFile).toMillis());
+					} catch (IOException e) {
+						throw new FcliSimpleException("Error getting last modified time for: " + destFile, e);
 					}
-					result.add(new ToolDefinitionsOutputDescriptor(required, source, lastModified, "NOT_PRESENT"));
+				} else {
+					if (internalZipContent == null) {
+						try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
+							internalZipContent = new ToolDefinitionsZipContent(is, requiredYamlNames);
+						} catch (IOException e) {
+							throw new FcliSimpleException("Error loading internal resource zip", e);
+						}
+					}
+					lastModified = internalZipContent.getFileDate(required);
 				}
+				result.add(new ToolDefinitionsOutputDescriptor(required, source, lastModified, "NOT_PRESENT"));
 			}
 		}
 	}
+
+    private static void addDefaultYamlDescriptor(List<ToolDefinitionsOutputDescriptor> result,
+            Set<String> requiredYamlNames, String action) {
+        try (InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is)) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                String name = Path.of(entry.getName()).getFileName().toString();
+                if (requiredYamlNames.contains(name)) {
+                    var source = ZIP_FILE_NAME;
+                    var lastModified = new Date(entry.getLastModifiedTime().toMillis());
+                    result.add(new ToolDefinitionsOutputDescriptor(name, source, lastModified, action));
+                }
+            }
+        } catch (IOException e) {
+            throw new FcliSimpleException("Error loading tool definitions", e);
+        }
+    }
 
 	private static boolean isUpdateDefault() {
 		return toolDefinitionCustomFilePath != null && toolDefinitionCustomFilePath.contains("https://");
@@ -297,5 +305,60 @@ public final class ToolDefinitionsHelper {
 			throw new FcliSimpleException("Error reading internal resource zip entry for: " + fileName, e);
 		}
 		return null;
-	}
+    }
+
+    private static boolean shouldUpdateToolDefinitions(boolean forceUpdate, String maxAge) throws IOException {
+        if (forceUpdate) {
+            return true;
+        }
+        if (maxAge != null && !maxAge.isEmpty()) {
+            Date threshold = parseDurationToDate(maxAge);
+            if (!Files.exists(DEFINITIONS_STATE_ZIP)) {
+                return true;
+            }
+            if (getModifiedTime(DEFINITIONS_STATE_ZIP).toMillis() < threshold.getTime()) {
+                return true;
+            }
+            return false;
+        }
+        long sixHoursMillis = 6L * 60 * 60 * 1000;
+        long now = System.currentTimeMillis();
+        if (!Files.exists(DEFINITIONS_STATE_ZIP)) {
+            return true;
+        }
+        long lastModified = getModifiedTime(DEFINITIONS_STATE_ZIP).toMillis();
+        return (now - lastModified) > sixHoursMillis;
+    }
+
+    private static Date parseDurationToDate(String duration) {
+        long now = System.currentTimeMillis();
+        long millis = 0L;
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)([dhm])");
+        java.util.regex.Matcher matcher = pattern.matcher(duration);
+        int matched = 0;
+        while (matcher.find()) {
+            matched++;
+            int value = Integer.parseInt(matcher.group(1));
+            switch (matcher.group(2)) {
+            case "d":
+                millis += value * 24L * 60 * 60 * 1000;
+                break;
+            case "h":
+                millis += value * 60L * 60 * 1000;
+                break;
+            case "m":
+                millis += value * 60L * 1000;
+                break;
+            }
+        }
+        if (duration.matches(".*\\d+s.*")) {
+            throw new IllegalArgumentException(
+                    "Invalid duration format: seconds (s) are not supported. Use only d, h, m.");
+        }
+        if (millis == 0L || matched == 0) {
+            throw new IllegalArgumentException("Invalid duration format: " + duration + ". Use only d, h, m.");
+        }
+        return new Date(now - millis);
+    }
+
 }
