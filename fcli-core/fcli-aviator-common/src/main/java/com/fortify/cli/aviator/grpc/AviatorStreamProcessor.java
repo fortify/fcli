@@ -394,7 +394,14 @@ class AviatorStreamProcessor implements AutoCloseable {
                         if (processingTask != null) {
                             processingTask.cancel(true);
                         }
-                        processingExecutor.submit(() -> startStreamWithRetry(responses, processedRequests, resultFuture));
+                        if (!processingExecutor.isShutdown()) {
+                            processingExecutor.submit(() -> startStreamWithRetry(responses, processedRequests, resultFuture));
+                        } else {
+                            LOG.warn("Cannot retry stream, as the processing executor is already shut down.");
+                            if (!resultFuture.isDone()) {
+                                resultFuture.completeExceptionally(new AviatorTechnicalException("Cannot retry stream, executor is shut down.", t));
+                            }
+                        }
                     } else {
                         if (!resultFuture.isDone()) {
                             LOG.error("Stream error occurred: {}", t.getMessage(), t);
