@@ -115,7 +115,7 @@ steps:
                 - ${PACKAGE_ACTION.dependencySkipReason} # Skip if PACKAGE_ACTION was skipped or failed
             
             DEBRICKED_SCAN_ACTION: 
-              cmd: ${#actionCmd('DEBRICKED_SCAN', 'ssc', 'debricked-scan')} --source-dir "${global.ci.sourceDir}" --av "${global.ci.av}" --repository "${global.ci.qualifiedRepoName}" --branch "${global.ci.sourceBranch}" --wait
+              cmd: ${#actionCmd('DEBRICKED_SCAN', 'ssc', 'debricked-scan')} --source-dir "${global.ci.sourceDir}" --av "${global.ci.av}" --repository "${global.ci.qualifiedRepoName}" --branch "${global.ci.sourceBranch}"
               skip.if-reason:
                 - ${debricked.skipReason} # Skip if Debricked scan is skipped
             
