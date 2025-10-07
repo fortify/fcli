@@ -68,6 +68,12 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @SneakyThrows
     private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger) {
+        long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, noFilterSet, filterSetOptions, folderNames);
+        if (auditableIssueCount == 0) {
+            logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
+            return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no auditable issues)");
+        }
+
         Path downloadedFprPath = downloadFprToTempPath(unirest, av, logger);
         if (downloadedFprPath == null) {
             return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
