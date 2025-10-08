@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.tool.definitions.helper;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -27,9 +28,10 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -99,7 +101,7 @@ public final class ToolDefinitionsHelper {
 		try {
 			UnirestHelper.download("tool", new URL(source).toString(), dest.toFile());
 		} catch (MalformedURLException e) {
-			if (!source.toLowerCase().endsWith(".zip") && !source.toLowerCase().endsWith(".yaml")) {
+			if (!source.toLowerCase().endsWith(".zip") && !isValidZip(source)) {
 				throw new FcliSimpleException("Invalid Tools definitions file");
 			}
 			mergeDefinitionsZip(dest);
@@ -107,74 +109,96 @@ public final class ToolDefinitionsHelper {
 		return new ToolDefinitionsStateDescriptor(source, new Date(getModifiedTime(dest).toMillis()));
 	}
 
-	@SneakyThrows
-	private static boolean extractYamlFromZip(InputStream is, String yamlFile, Path outFile) {
+	private static boolean isValidZip(String source) {
+    Path zipPath = Path.of(source);
+    if (!Files.exists(zipPath)) {
+        return false;
+    }
+    Set<String> requiredYamlFiles = getRequiredYamlFileNames();
+    try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            if (!entry.isDirectory()) {
+                String name = Path.of(entry.getName()).getFileName().toString();
+                if (requiredYamlFiles.contains(name)) {
+                    return true;
+                }
+            }
+        }
+    } catch (IOException e) {
+        throw new FcliSimpleException("Error Loading User ZIP file: " + zipPath);
+    }
+    return false;
+}
+
+    @SneakyThrows
+	private static File extractYamlFromZip(InputStream is, String yamlFile) {
+	    Path outFile = DEFINITIONS_STATE_DIR.resolve(yamlFile);
 		try (ZipInputStream zis = new ZipInputStream(is)) {
 			ZipEntry entry;
 			while ((entry = zis.getNextEntry()) != null) {
 				if (entry.getName().equals(yamlFile)) {
+					Files.createDirectories(outFile.getParent());
 					Files.copy(zis, outFile, StandardCopyOption.REPLACE_EXISTING);
-					if (entry.getLastModifiedTime() != null) {
-						Files.setLastModifiedTime(outFile, entry.getLastModifiedTime());
+                    if (entry.getLastModifiedTime() != null) {
+						Files.setLastModifiedTime(outFile , entry.getLastModifiedTime());
 					}
-					return true;
+					return outFile.toFile();
 				}
 			}
 		}
-		return false;
+		return null;
 	}
 
+	/**
+	 * This function finds the tool definition yaml files in the following order:
+	 * 1. Zip file specified by user
+	 * 2. Zip file in state directory
+	 * 3. Internal resource zip file from the fcli jar
+	 * It also extracts the required yaml files from the zip file where they are found.
+	 * If a required yaml file is not found in any of the zip files, an exception is thrown.
+	 * @param dest
+	 */
 	@SneakyThrows
-	private static void mergeDefinitionsZip(Path dest) {
-		var yamlFileNames = new ArrayList<>(getRequiredYamlNames());
-		createDefinitionsStateDir(DEFINITIONS_STATE_DIR);
-		for (String yamlFile : yamlFileNames) {
-			boolean found = false;
-			Path outFile = DEFINITIONS_STATE_DIR.resolve(yamlFile);
-			if (!found && toolDefinitionCustomFilePath != null && Files.exists(Path.of(toolDefinitionCustomFilePath))) {
-				try (InputStream is = Files.newInputStream(Path.of(toolDefinitionCustomFilePath))) {
-					found = extractYamlFromZip(is, yamlFile, outFile);
-				}
-			}
-			if (!found && Files.exists(DEFINITIONS_STATE_ZIP)) {
-				try (InputStream is = Files.newInputStream(DEFINITIONS_STATE_ZIP)) {
-					found = extractYamlFromZip(is, yamlFile, outFile);
-				}
-			}
-			if (!found) {
-				try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
-					found = extractYamlFromZip(is, yamlFile, outFile);
-				}
-			}
-			if (!found) {
-				throw new FcliSimpleException("Required tool definition file missing: " + yamlFile);
-			}
-		}
+    private static void mergeDefinitionsZip(Path dest) {
+        createDefinitionsStateDir(DEFINITIONS_STATE_DIR);
+        try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(Files.newOutputStream(dest))) {
+            for (String yamlFileName : getRequiredYamlFileNames()) {
+                File file = null;
+                if (toolDefinitionCustomFilePath != null && Files.exists(Path.of(toolDefinitionCustomFilePath))) {
+                    try (InputStream is = Files.newInputStream(Path.of(toolDefinitionCustomFilePath))) {
+                        file = extractYamlFromZip(is, yamlFileName);
+                        createZipEntry(zos, file);
+                    }
+                }
 
-		FileTime currentTime = FileTime.fromMillis(System.currentTimeMillis());
-		try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(Files.newOutputStream(dest))) {
-			for (String yamlFile : yamlFileNames) {
-				Path filePath = DEFINITIONS_STATE_DIR.resolve(yamlFile);
-				if (Files.exists(filePath)) {
-					java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(yamlFile);
-					FileTime fileTime = Files.getLastModifiedTime(filePath);
-					zipEntry.setLastModifiedTime(fileTime);
-					zos.putNextEntry(zipEntry);
-					Files.copy(filePath, zos);
-					zos.closeEntry();
-				}
-			}
-		}
+                if (file == null && Files.exists(DEFINITIONS_STATE_ZIP)) {
+                    try (InputStream is = Files.newInputStream(DEFINITIONS_STATE_ZIP)) {
+                        file = extractYamlFromZip(is, yamlFileName);
+                        createZipEntry(zos, file);
+                    }
+                }
+
+                if (file == null) {
+                    try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
+                        file = extractYamlFromZip(is, yamlFileName);
+                        createZipEntry(zos, file);
+                    }
+                }
+            }
+        }
+        FileTime currentTime = FileTime.fromMillis(System.currentTimeMillis());
         Files.setLastModifiedTime(dest, currentTime);
+    }
 
-		for (String yamlFile : yamlFileNames) {
-			Path filePath = DEFINITIONS_STATE_DIR.resolve(yamlFile);
-			try {
-				Files.deleteIfExists(filePath);
-			} catch (Exception ignore) {
-			}
-		}
-	}
+    private static void createZipEntry(java.util.zip.ZipOutputStream zos, File file) throws IOException {
+        if (file != null) {
+            zos.putNextEntry(new ZipEntry(file.getName()));
+            Files.copy(file.toPath(), zos);
+            zos.closeEntry();
+        }
+    }
 
 	public static final ToolDefinitionRootDescriptor getToolDefinitionRootDescriptor(String toolName) {
 		String yamlFileName = toolName + ".yaml";
@@ -206,72 +230,90 @@ public final class ToolDefinitionsHelper {
         }
 	}
 
-	private static Set<String> getRequiredYamlNames() {
-		Set<String> requiredYamlNames = new HashSet<>();
-		for (String tool : ToolRegistry.getRegisteredToolNames()) {
-			requiredYamlNames.add(tool + ".yaml");
-		}
-		return requiredYamlNames;
-	}
+    private static Set<String> getRequiredYamlFileNames() {
+        return ToolRegistry.getRegisteredToolNames().stream().map(s -> s + ".yaml").collect(Collectors.toSet());
+    }
 
 	private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result) {
-		Set<String> requiredYamlNames = getRequiredYamlNames();
+		Set<String> requiredYamlNames = getRequiredYamlFileNames();
 		if (!shouldUpdate) {
-		    addDefaultYamlDescriptor(result, requiredYamlNames, "SKIPPED_BY_AGE");
+		    addYamlDescriptor(result, requiredYamlNames, "SKIPPED_BY_AGE");
 		}
-		else if (isUpdateDefault()) {
-            addDefaultYamlDescriptor(result, requiredYamlNames, "UPDATED");
+		else if (toolDefinitionCustomFilePath != null && toolDefinitionCustomFilePath.contains("https://")) {
+            addYamlDescriptor(result, requiredYamlNames, "UPDATED");
 		}
         else {
 			Set<String> foundYamlNames = new HashSet<>();
 			String zipPathOnly = toolDefinitionCustomFilePath != null
 				? Path.of(toolDefinitionCustomFilePath).getFileName().toString()
 				: null;
-			ToolDefinitionsZipContent userZipContent = null;
-			if (toolDefinitionCustomFilePath != null) {
-				try {
-					userZipContent = new ToolDefinitionsZipContent(Path.of(toolDefinitionCustomFilePath), requiredYamlNames);
-					for (String name : userZipContent.getFileNames()) {
-						Date lastModified = userZipContent.getFileDate(name);
-						if (requiredYamlNames.contains(name)) {
-							result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "UPDATED"));
-							foundYamlNames.add(name);
-						} else {
-							result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "IGNORED"));
-						}
-					}
-				} catch (IOException e) {
-					throw new FcliSimpleException("Error loading files from user definitions", e);
-				}
-			}
-			ToolDefinitionsZipContent internalZipContent = null;
-			for (String required : requiredYamlNames) {
-				if (foundYamlNames.contains(required)) continue;
-				String source = ZIP_FILE_NAME;
-				Date lastModified = null;
-				Path destFile = DEFINITIONS_STATE_DIR.resolve(required);
-				if (Files.exists(destFile)) {
-					try {
-						lastModified = new Date(Files.getLastModifiedTime(destFile).toMillis());
-					} catch (IOException e) {
-						throw new FcliSimpleException("Error getting last modified time for: " + destFile, e);
-					}
-				} else {
-					if (internalZipContent == null) {
-						try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP)) {
-							internalZipContent = new ToolDefinitionsZipContent(is, requiredYamlNames);
-						} catch (IOException e) {
-							throw new FcliSimpleException("Error loading internal resource zip", e);
-						}
-					}
-					lastModified = internalZipContent.getFileDate(required);
-				}
-				result.add(new ToolDefinitionsOutputDescriptor(required, source, lastModified, "NOT_PRESENT"));
-			}
-		}
+            if (toolDefinitionCustomFilePath != null) {
+                updateActionResultForUserFile(result, requiredYamlNames, foundYamlNames, zipPathOnly);
+            }
+
+            updateActionResultForMissingFiles(result, requiredYamlNames, foundYamlNames);
+        }
+    }
+
+    private static void updateActionResultForUserFile(List<ToolDefinitionsOutputDescriptor> result,
+            Set<String> requiredYamlNames, Set<String> foundYamlNames, String zipPathOnly) {
+
+        Path zipPath = Path.of(toolDefinitionCustomFilePath);
+
+        if (!Files.exists(zipPath)) {
+            throw new FcliSimpleException("User ZIP file not found: " + zipPath);
+        }
+
+	    try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+	        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                if (entry.isDirectory())
+                    continue;
+
+                String name = Path.of(entry.getName()).getFileName().toString();
+                Date lastModified = entry.getLastModifiedTime() != null
+                        ? new Date(entry.getLastModifiedTime().toMillis())
+                        : null;
+
+                if (requiredYamlNames.contains(name)) {
+                    result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "UPDATED"));
+                    foundYamlNames.add(name);
+	            } else {
+	                result.add(new ToolDefinitionsOutputDescriptor(name, zipPathOnly, lastModified, "IGNORED"));
+	            }
+	        }
+
+	    } catch (IOException e) {
+	        throw new FcliSimpleException("Error loading files from user ZIP: " + zipPath, e);
+	    }
 	}
 
-    private static void addDefaultYamlDescriptor(List<ToolDefinitionsOutputDescriptor> result,
+    private static void updateActionResultForMissingFiles(
+            List<ToolDefinitionsOutputDescriptor> result, Set<String> requiredYamlNames, Set<String> foundYamlNames) {
+        for (String required : requiredYamlNames) {
+            if (foundYamlNames.contains(required)) {
+                continue;
+            }
+
+            String source = ZIP_FILE_NAME;
+            Date lastModified = null;
+            Path destFile = DEFINITIONS_STATE_DIR.resolve(required);
+            try {
+                if (Files.exists(destFile)) {
+                    lastModified = new Date(Files.getLastModifiedTime(destFile).toMillis());
+                } else {
+                    lastModified = getInternalResourceZipEntryLastModified(required);
+                }
+            } catch (IOException e) {
+                throw new FcliSimpleException("Error getting last modified time for: " + destFile, e);
+            }
+            result.add(new ToolDefinitionsOutputDescriptor(required, source, lastModified, "NOT_PRESENT"));
+        }
+    }
+
+    private static void addYamlDescriptor(List<ToolDefinitionsOutputDescriptor> result,
             Set<String> requiredYamlNames, String action) {
         try (InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
@@ -288,9 +330,6 @@ public final class ToolDefinitionsHelper {
         }
     }
 
-	private static boolean isUpdateDefault() {
-		return toolDefinitionCustomFilePath != null && toolDefinitionCustomFilePath.contains("https://");
-	}
 
 	private static Date getInternalResourceZipEntryLastModified(String fileName) {
 		try (InputStream is = FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);

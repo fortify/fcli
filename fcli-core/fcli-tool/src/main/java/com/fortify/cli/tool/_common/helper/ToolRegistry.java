@@ -1,21 +1,16 @@
 package com.fortify.cli.tool._common.helper;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ToolRegistry {
-	private static final Set<String> REGISTERED_TOOLS = new HashSet<>();
-	
-	static {
-		REGISTERED_TOOLS.add("bugtracker-utility");
-		REGISTERED_TOOLS.add("debricked-cli");
-		REGISTERED_TOOLS.add("fcli");
-		REGISTERED_TOOLS.add("fod-uploader");
-		REGISTERED_TOOLS.add("jre");
-		REGISTERED_TOOLS.add("sc-client");
-		REGISTERED_TOOLS.add("vuln-exporter");
-	}
+	private static final Set<String> REGISTERED_TOOLS = registerTools();
+	// TODO Whenever support for a given tool is added or removed, update this list
+	// TODO Any way to have tools register themselves, to avoid this list becoming out of sync with tool commands?
 
     public static Set<String> getRegisteredToolNames() {
         return REGISTERED_TOOLS;
+    }
+
+    private static Set<String> registerTools() {
+        return Set.of("bugtracker-utility", "debricked-cli", "fcli", "fod-uploader", "jre", "sc-client", "vuln-exporter");
     }
 }

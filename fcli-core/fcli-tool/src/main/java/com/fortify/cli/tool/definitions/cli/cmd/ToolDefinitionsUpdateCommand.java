@@ -2,7 +2,6 @@ package com.fortify.cli.tool.definitions.cli.cmd;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -10,7 +9,6 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsOutputDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -33,9 +31,6 @@ public class ToolDefinitionsUpdateCommand extends AbstractOutputCommand implemen
     @ArgGroup(exclusive = true, multiplicity = "0..1")
     @Getter private UpdateMode updateMode = new UpdateMode();
 
-    @JsonIgnore
-    private List<ToolDefinitionsOutputDescriptor> updateToolDefinitions;
-    
     @Override
     public JsonNode getJsonNode() {
         if (updateMode.forceUpdates && updateMode.maxAge != null && !updateMode.maxAge.isEmpty()) {
