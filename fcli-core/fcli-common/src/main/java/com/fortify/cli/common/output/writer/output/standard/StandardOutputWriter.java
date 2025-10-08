@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
@@ -40,7 +41,6 @@ import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IfFailureHandler;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -491,9 +491,9 @@ public class StandardOutputWriter implements IOutputWriter {
         private VariableDefinition createVariableDefinition(VariableStoreConfig variableStoreConfig) {
             String variableName = variableStoreConfig.getVariableName();
             String recordWriterArgs = variableStoreConfig.getRecordWriterArgs();
-            DefaultVariablePropertyName defaultPropertyNameAnnotation = PicocliSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
+            DefaultVariablePropertyName defaultPropertyNameAnnotation = FcliCommandSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
             String defaultPropertyName = defaultPropertyNameAnnotation==null ? null : defaultPropertyNameAnnotation.value();
-            boolean encrypt = PicocliSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
+            boolean encrypt = FcliCommandSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
             return VariableDefinition.builder()
                     .variableName(variableName)
                     .recordWriterArgs(recordWriterArgs)

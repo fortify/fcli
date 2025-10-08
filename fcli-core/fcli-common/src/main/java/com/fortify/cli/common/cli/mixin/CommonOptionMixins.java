@@ -22,13 +22,13 @@ import java.util.function.Function;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.EnvHelper;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -61,10 +61,10 @@ public class CommonOptionMixins {
                 CommandSpec spec = commandHelper.getCommandSpec();
                 if ( System.console()==null ) {
                     throw new ParameterException(spec.commandLine(), 
-                            PicocliSpecHelper.getRequiredMessageString(spec, 
+                            FcliCommandSpecHelper.getRequiredMessageString(spec, 
                                     "error.missing.confirmation", getPlainPrompt(spec, promptArgs).replace("\n", "\n  ")));
                 } else {
-                    String expectedResponse = PicocliSpecHelper.getRequiredMessageString(spec, "expectedConfirmPromptResponse");
+                    String expectedResponse = FcliCommandSpecHelper.getRequiredMessageString(spec, "expectedConfirmPromptResponse");
                     System.out.print(""); // Ensure any progress output is cleared before prompting
                     String response = System.console().readLine(getPrompt(spec, promptArgs));
                     if ( response.equalsIgnoreCase(expectedResponse) ) {
@@ -78,12 +78,12 @@ public class CommonOptionMixins {
         
         private String getPrompt(CommandSpec spec, Object... promptArgs) {
             String prompt = getPlainPrompt(spec, promptArgs);
-            String promptOptions = PicocliSpecHelper.getRequiredMessageString(spec, "confirmPromptOptions");
+            String promptOptions = FcliCommandSpecHelper.getRequiredMessageString(spec, "confirmPromptOptions");
             return String.format("%s (%s) ", prompt, promptOptions);
         }
 
         private String getPlainPrompt(CommandSpec spec, Object... promptArgs) {
-            String prompt = PicocliSpecHelper.getMessageString(spec, "confirmPrompt", promptArgs);
+            String prompt = FcliCommandSpecHelper.getMessageString(spec, "confirmPrompt", promptArgs);
             if ( StringUtils.isBlank(prompt) ) {
                 String[] descriptionLines = spec.optionsMap().get("-y").description();
                 if ( descriptionLines==null || descriptionLines.length<1 ) {

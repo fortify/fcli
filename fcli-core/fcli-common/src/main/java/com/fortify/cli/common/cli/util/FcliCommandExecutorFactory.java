@@ -27,20 +27,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.Setter;
 import picocli.CommandLine;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.Model.CommandSpec;
@@ -48,8 +45,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
 @Builder @Data
-public final class FcliCommandExecutorFactory {
-    @Setter private static CommandLine rootCommandLine;
+public final class FcliCommandExecutorFactory { 
     @NonNull private final String cmd;
     private final Consumer<ObjectNode> recordConsumer;
     @Builder.Default private final OutputType stdoutOutputType = OutputType.show;
@@ -63,10 +59,11 @@ public final class FcliCommandExecutorFactory {
     public final String progressOptionValueIfNotPresent; // TODO Should we integrate this into defaultOptionsIfNotPresent?
     public final Map<String, String> defaultOptionsIfNotPresent;
     
+    private static final CommandLine getRootCommandLine() {
+        return FcliCommandSpecHelper.getRootCommandLine();
+    }
+    
     public final FcliCommandExecutor create() {
-        if ( rootCommandLine==null ) {
-            throw new FcliBugException("Root command line hasn't been configured upon fcli initialization");
-        }
         if ( StringUtils.isBlank(cmd) ) {
             throw new FcliSimpleException("Fcli command to be run may not be blank");
         }
@@ -86,7 +83,7 @@ public final class FcliCommandExecutorFactory {
 
         private ParseResult parseArgs(String[] resolvedArgs) {
             try {
-                return rootCommandLine.parseArgs(resolvedArgs);
+                return getRootCommandLine().parseArgs(resolvedArgs);
             } catch ( ParameterException e ) {
                 this.parseErrorResult = call(()->handleParseException(resolvedArgs, e));
                 return null;
@@ -95,9 +92,9 @@ public final class FcliCommandExecutorFactory {
 
         private int handleParseException(String[] resolvedArgs, ParameterException e) {
             try {
-                return rootCommandLine.getParameterExceptionHandler().handleParseException(e, resolvedArgs);
+                return getRootCommandLine().getParameterExceptionHandler().handleParseException(e, resolvedArgs);
             } catch ( Exception e2 ) {
-                return FcliExecutionExceptionHandler.INSTANCE.handleException(e2, rootCommandLine);
+                return FcliExecutionExceptionHandler.INSTANCE.handleException(e2, getRootCommandLine());
             }
         }
 
@@ -176,7 +173,7 @@ public final class FcliCommandExecutorFactory {
         }
 
         public final boolean canCollectRecords() {
-            return PicocliSpecHelper.canCollectRecords(replicatedLeafCommandSpec);
+            return FcliCommandSpecHelper.canCollectRecords(replicatedLeafCommandSpec);
         }
         
         private <T> void consume(T value, Consumer<T> consumer, Consumer<T> defaultConsumer) {

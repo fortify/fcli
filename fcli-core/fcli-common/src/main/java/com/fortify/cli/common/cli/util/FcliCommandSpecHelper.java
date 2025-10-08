@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.util;
+package com.fortify.cli.common.cli.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
@@ -21,20 +21,51 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
+import com.fortify.cli.common.util.JavaHelper;
+import com.fortify.cli.common.util.ReflectionHelper;
 
+import lombok.Setter;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.Messages;
 
-public class PicocliSpecHelper {
+public class FcliCommandSpecHelper {
+    @Setter // Injected by DefaultFortifyCLIRunner
+    private static CommandLine rootCommandLine;
+    
+    public static final CommandLine getRootCommandLine() {
+        if ( rootCommandLine==null ) {
+            throw new FcliBugException("Root command line hasn't been configured upon fcli initialization");
+        }
+        return rootCommandLine;
+    }
+    
+    public static final CommandSpec getRootCommandSpec() {
+        return getRootCommandLine().getCommandSpec().root();
+    }
+    
+    public static final CommandSpec getCommandSpec(String cmd) {
+        var currentSpec = getRootCommandSpec();
+        if ( StringUtils.isBlank(cmd) ) { return currentSpec; }
+        for ( var elt : cmd.replaceAll("^fcli\\s+", "").split("\\s+") ) {
+            var cl = currentSpec.subcommands().get(elt);
+            if ( cl==null ) { return null; }
+            currentSpec = cl.getCommandSpec();
+        }
+        return currentSpec;
+    }
+    
+    public static final Stream<CommandSpec> rootCommandTreeStream() {
+        return commandTreeStream(getRootCommandSpec());
+    } 
+    
     public static final Stream<CommandSpec> commandTreeStream(CommandSpec commandSpec) {
         if (commandSpec == null) { return Stream.empty(); }
         var subcommands = commandSpec.subcommands();
@@ -42,7 +73,7 @@ public class PicocliSpecHelper {
                 ? Stream.empty()
                 : subcommands.values().stream()
                     .map(CommandLine::getCommandSpec)
-                    .flatMap(PicocliSpecHelper::commandTreeStream);
+                    .flatMap(FcliCommandSpecHelper::commandTreeStream);
         return Stream.concat(Stream.of(commandSpec), subcommandStreams).distinct();
     }
     
