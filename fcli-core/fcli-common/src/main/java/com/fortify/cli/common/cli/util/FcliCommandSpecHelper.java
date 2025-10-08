@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliNotInitializedException;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPExclude;
@@ -42,7 +43,7 @@ public class FcliCommandSpecHelper {
     
     public static final CommandLine getRootCommandLine() {
         if ( rootCommandLine==null ) {
-            throw new FcliBugException("Root command line hasn't been configured upon fcli initialization");
+            throw new FcliNotInitializedException("Root command line hasn't been configured upon fcli initialization");
         }
         return rootCommandLine;
     }

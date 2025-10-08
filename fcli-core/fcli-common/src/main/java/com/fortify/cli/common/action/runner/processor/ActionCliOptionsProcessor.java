@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.model.ActionCliOption;
+import com.fortify.cli.common.action.model.ActionCliOptionEntry;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser;
@@ -81,7 +81,7 @@ public final class ActionCliOptionsProcessor {
         config.getAction().getCliOptions().values().forEach(o->addValidationMessages(parseResult, o));
     }
     
-    private final void addDefaultValue(OptionsParseResult parseResult, ActionCliOption option, ObjectNode parameterValues) {
+    private final void addDefaultValue(OptionsParseResult parseResult, ActionCliOptionEntry option, ObjectNode parameterValues) {
         var value = getOptionValue(parseResult, option);
         if ( value==null ) {
             var defaultValueExpression = option.getDefaultValue();
@@ -92,14 +92,14 @@ public final class ActionCliOptionsProcessor {
         parseResult.getOptionValuesById().put(option.getKey(), value);
     }
     
-    private final void addValidationMessages(OptionsParseResult parseResult, ActionCliOption option) {
+    private final void addValidationMessages(OptionsParseResult parseResult, ActionCliOptionEntry option) {
         if ( option.isRequired() && StringUtils.isBlank(getOptionValue(parseResult, option)) ) {
             parseResult.getValidationErrors().add("No value provided for required option "+
                 Arrays.stream(option.getNamesAsArray()).collect(Collectors.joining(" | ")));           
         }
     }
 
-    private final void addOptionValues(OptionsParseResult optionsParseResult, ActionCliOption option, ObjectNode optionValues) {
+    private final void addOptionValues(OptionsParseResult optionsParseResult, ActionCliOptionEntry option, ObjectNode optionValues) {
         var value = getOptionValue(optionsParseResult, option);
         if ( value==null ) {
             var defaultValueExpression = option.getDefaultValue();
@@ -117,11 +117,11 @@ public final class ActionCliOptionsProcessor {
         }
         optionValues.set(option.getKey(), convertOptionValue(value, option, optionValues));
     }
-    private String getOptionValue(OptionsParseResult parseResult, ActionCliOption option) {
+    private String getOptionValue(OptionsParseResult parseResult, ActionCliOptionEntry option) {
         return parseResult.getOptionValuesById().get(option.getKey());
     }
     
-    private JsonNode convertOptionValue(String value, ActionCliOption option, ObjectNode optionValues) {
+    private JsonNode convertOptionValue(String value, ActionCliOptionEntry option, ObjectNode optionValues) {
         var type = StringUtils.isBlank(option.getType()) ? "string" : option.getType();
         var optionValueConverter = optionValueConverters.get(type);
         if ( optionValueConverter==null ) {
@@ -142,7 +142,7 @@ public final class ActionCliOptionsProcessor {
             return result;
         }
 
-        private static final void addOptionDescriptor(List<IOptionDescriptor> result, ActionCliOption cliOption) {
+        private static final void addOptionDescriptor(List<IOptionDescriptor> result, ActionCliOptionEntry cliOption) {
             result.add(OptionDescriptor.builder()
                     .id(cliOption.getKey())
                     .optionNames(cliOption.getNamesAsArray())

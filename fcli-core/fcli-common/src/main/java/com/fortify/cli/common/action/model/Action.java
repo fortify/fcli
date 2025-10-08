@@ -102,12 +102,32 @@ public class Action implements IActionElement {
     @JsonProperty(value = "config", required = false) private ActionConfig config= new ActionConfig();
     
     @JsonPropertyDescription("""
+        Optional map: fcli actions to be imported for reference in this action. Similar to import statements \
+        in programming languages, this allows referencing actions from other modules to copy CLI option \
+        definitions or other action properties. Map keys define the identifier for the imported action, which \
+        can be used to reference the imported action elsewhere. Map values define the action to import, \
+        either as a simple 'module:action' string or as a structured object with validation options.
+        """)
+    @SampleYamlSnippets(copyFrom = ActionImportFcliActionEntry.class)
+    @JsonProperty(value = "import.fcli.actions", required = false) private Map<String, ActionImportFcliActionEntry> importActions = Collections.emptyMap();
+    
+    @JsonPropertyDescription("""
+        Optional map: fcli commands to be imported for reference in this action. Similar to import statements \
+        in programming languages, this allows referencing fcli commands to copy CLI option definitions or \
+        other command properties. Map keys define the identifier for the imported command, which can be used \
+        to reference the imported command elsewhere. Map values define the command to import, either as a \
+        simple command string or as a structured object.
+        """)
+    @SampleYamlSnippets(copyFrom = ActionImportFcliCommandEntry.class)
+    @JsonProperty(value = "import.fcli.commands", required = false) private Map<String, ActionImportFcliCommandEntry> importCommands = Collections.emptyMap();
+    
+    @JsonPropertyDescription("""
         Optional map: CLI options accepted by this action. Map keys define the identifier for an option, which \
         can be used in later instructions through the ${cli.optionIdentifier} SpEL template expression. Map values \
         define option definitions like option names that can be specified on the command line, option description, ...
         """)
-    @SampleYamlSnippets(copyFrom = ActionCliOption.class)
-    @JsonProperty(value = "cli.options", required = false) private Map<String, ActionCliOption> cliOptions = Collections.emptyMap();
+    @SampleYamlSnippets(copyFrom = ActionCliOptionEntry.class)
+    @JsonProperty(value = "cli.options", required = false) private Map<String, ActionCliOptionEntry> cliOptions = Collections.emptyMap();
     
     @JsonPropertyDescription("""
         Required list: Steps to be executed when this action is being run. Each list item should consist of a \

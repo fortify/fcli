@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -478,9 +479,13 @@ public class ActionLoaderHelper {
         
         @RequiredArgsConstructor
         public static enum ActionInvalidSignatureHandler implements BiConsumer<ActionMetadata, SignedTextDescriptor> {
+            @JsonPropertyDescription("Ignore validation issues and continue silently")
             ignore((p,d)->{}),
+            @JsonPropertyDescription("Issue a warning but continue execution")
             warn((p,d)->_warn(signatureFailureMessage(p,d))),
+            @JsonPropertyDescription("Fail execution on validation issues")
             fail((p,d)->_throw(signatureFailureMessage(p,d))),
+            @JsonPropertyDescription("Prompt user for action on validation issues")
             prompt((p,d)->_prompt(signatureFailureMessage(p,d)));
             private final BiConsumer<ActionMetadata, SignedTextDescriptor> onInvalidSignature;
             
@@ -496,9 +501,13 @@ public class ActionLoaderHelper {
         
         @RequiredArgsConstructor
         public static enum ActionInvalidSchemaVersionHandler implements BiConsumer<ActionMetadata, String> {
+            @JsonPropertyDescription("Ignore validation issues and continue silently")
             ignore((p,v)->{}),
+            @JsonPropertyDescription("Issue a warning but continue execution")
             warn((p,v)->_warn(unsupportedSchemaMessage(p,v))),
+            @JsonPropertyDescription("Fail execution on validation issues")
             fail((p,v)->_throw(unsupportedSchemaMessage(p,v))),
+            @JsonPropertyDescription("Prompt user for action on validation issues")
             prompt((p,v)->_prompt(unsupportedSchemaMessage(p,v)));
             private final BiConsumer<ActionMetadata, String> onInvalidSchemaVersion;
             

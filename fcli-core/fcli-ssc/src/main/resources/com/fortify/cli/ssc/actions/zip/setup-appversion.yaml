@@ -25,6 +25,9 @@ usage:
 config:
   rest.target.default: ssc
   output: immediate
+
+import.fcli.commands:
+  sscAvCreate: fcli ssc appversion create
   
 cli.options:
   appversion:
@@ -32,50 +35,42 @@ cli.options:
     required: true
     description: "Required application version name as <appName>:<versionName>"
   add-users:
+    copy.from: sscAvCreate
     names: --add-users
     group: av_create_opts
-    required: false
-    description: "See `fcli ssc appversion create`"
   attrs:
+    copy.from: sscAvCreate
     names: --attrs, --attributes
     group: av_create_opts
-    required: false
-    description: "See `fcli ssc appversion create`"
   copy:
+    copy.from: sscAvCreate
     names: --copy
     group: av_create_opts
-    required: false 
-    description: "See `fcli ssc appversion create`"
   description:
+    copy.from: sscAvCreate
     names: --description, -d
     group: av_create_opts
-    required: false
-    description: "See `fcli ssc appversion create`"
   copy-from:
+    copy.from: sscAvCreate
     names: --copy-from, --from
     group: av_create_opts
-    required: false
-    description: "See `fcli ssc appversion create`"
   issue-template:
+    copy.from: sscAvCreate
     names: --issue-template
     group: av_create_opts
-    required: false
-    description: "See `fcli ssc appversion create`"
   refresh-timeout:
+    copy.from: sscAvCreate
     names: --refresh-timeout
     group: av_create_opts
-    required: false
     default: "300s"
-    description: "See `fcli ssc appversion create`. Default value: 300s"
+    description: "Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default value: 300s"
   store:
+    copy.from: sscAvCreate
     names: --store
     group: av_create_opts
-    required: false
-    description: "See `fcli ssc appversion create`"
   
 steps:
   - log.progress: "Creating SSC application version if non-existing"
   - run.fcli:
       createAppVersion:
-        cmd: ssc av create "${cli.appversion}" --skip-if-exists --auto-required-attrs --refresh ${#action.copyParametersFromGroup("av_create_opts")}
-      
+        cmd: ssc av create "${cli.appversion}" --skip-if-exists --auto-required-attrs --refresh ${#action.copyParametersFromGroup("av_create_opts")}"

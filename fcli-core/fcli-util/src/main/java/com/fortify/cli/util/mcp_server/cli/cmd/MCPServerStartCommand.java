@@ -28,7 +28,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.action.model.ActionCliOption;
+import com.fortify.cli.common.action.model.ActionCliOptionEntry;
 import com.fortify.cli.common.action.model.ActionMcpIncludeExclude;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
@@ -220,7 +220,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         private List<IMCPToolArgHandler> createArgHandlers() {
             var result = new ArrayList<IMCPToolArgHandler>();
             if ( action.getCliOptions()!=null ) {
-                for ( Map.Entry<String, ActionCliOption> e : action.getCliOptions().entrySet() ) {
+                for ( Map.Entry<String, ActionCliOptionEntry> e : action.getCliOptions().entrySet() ) {
                     var opt = e.getValue();
                     if ( opt.getMcp()==ActionMcpIncludeExclude.exclude ) { continue; }
                     var name = getLongestName(opt);
@@ -246,7 +246,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             return usage!=null ? usage.getHeader() : action.getMetadata().getName();
         }
         
-        private String getLongestName(ActionCliOption opt) {
+        private String getLongestName(ActionCliOptionEntry opt) {
             var names = opt.getNamesAsArray();
             if ( names==null || names.length==0 ) { return null; }
             String longest = null;

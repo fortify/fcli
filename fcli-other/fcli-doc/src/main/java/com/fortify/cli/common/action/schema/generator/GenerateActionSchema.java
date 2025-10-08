@@ -31,7 +31,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ActionSchemaVersionHelper;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model.ActionImportFcliActionEntry;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
+import com.fortify.cli.common.action.model.ActionImportFcliCommandEntry;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.action.schema.ActionSchemaHelper;
 import com.fortify.cli.common.json.JsonHelper;
@@ -158,6 +160,26 @@ public class GenerateActionSchema {
                 var properties = getProperties(type, context, resolver);
                 var custom = context.getGeneratorConfig().createObjectNode();
                 custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "expression or object")
+                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
+                custom.set(context.getKeyword(SchemaKeyword.TAG_PROPERTIES), properties);
+                return new CustomDefinition(custom, false);
+            } else if (type.getErasedType() == ActionImportFcliActionEntry.class) {
+                var resolver = new TypeResolver();
+                var properties = getProperties(type, context, resolver);
+                var custom = context.getGeneratorConfig().createObjectNode();
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "[module:]action string or object")
+                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
+                custom.set(context.getKeyword(SchemaKeyword.TAG_PROPERTIES), properties);
+                return new CustomDefinition(custom, false);
+            } else if (type.getErasedType() == ActionImportFcliCommandEntry.class) {
+                var resolver = new TypeResolver();
+                var properties = getProperties(type, context, resolver);
+                var custom = context.getGeneratorConfig().createObjectNode();
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "command string or object")
                     .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
                         .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
