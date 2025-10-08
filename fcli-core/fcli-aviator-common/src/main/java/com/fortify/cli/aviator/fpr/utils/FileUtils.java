@@ -66,7 +66,7 @@ public class FileUtils {
         if (lineNumber > 0 && lines.size() >= lineNumber) {
             return lines.get(lineNumber - 1);
         }
-        logger.warn("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
+        logger.info("Could not get line {} from file {} (total lines: {})", lineNumber, fullSourcePath, lines.size());
         return "";
     }
 
