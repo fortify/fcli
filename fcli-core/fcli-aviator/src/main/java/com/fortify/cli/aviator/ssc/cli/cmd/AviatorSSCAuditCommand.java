@@ -59,28 +59,36 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
         var sessionDescriptor = sessionDescriptorSupplier.getSessionDescriptor();
+        Path downloadedFprPath = null;
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
-            return processFpr(unirest, av, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger);
+
+            downloadedFprPath = downloadFpr(unirest, av, logger);
+            if (downloadedFprPath == null) {
+                return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
+            }
+
+            return processFpr(unirest, av, sessionDescriptor.getAviatorToken(), sessionDescriptor.getAviatorUrl(), logger, downloadedFprPath);
+        } finally {
+            if (downloadedFprPath != null) {
+                Files.deleteIfExists(downloadedFprPath);
+            }
         }
     }
 
     @SneakyThrows
-    private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger) {
+    private JsonNode processFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, String token, String url, AviatorLoggerImpl logger, Path downloadedFprPath) {
         long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, noFilterSet, filterSetOptions, folderNames);
         if (auditableIssueCount == 0) {
             logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
             return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no auditable issues)");
         }
 
-        Path downloadedFprPath = downloadFprToTempPath(unirest, av, logger);
-        if (downloadedFprPath == null) {
-            return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no FPR available to audit)");
-        }
+        FPRAuditResult auditResult;
 
         try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
-            FPRAuditResult auditResult = AuditFPR.auditFPR(AuditFprOptions.builder()
+            auditResult = AuditFPR.auditFPR(AuditFprOptions.builder()
                     .fprHandle(fprHandle).token(token).url(url)
                     .appVersion(appName)
                     .sscAppName(av.getApplicationName())
@@ -91,24 +99,25 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .noFilterSet(noFilterSet)
                     .folderNames(folderNames)
                     .build());
-            String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
-            logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
-
-            String artifactId = "UPLOAD_SKIPPED";
-            if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(auditResult.getStatus()) && !"FAILED".equals(auditResult.getStatus())) {
-                artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
-                Files.deleteIfExists(auditResult.getUpdatedFile().toPath());
-            }
-
-            return AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
-        } finally {
-            Files.deleteIfExists(downloadedFprPath);
         }
+
+        String action = AviatorSSCAuditHelper.getDetailedAction(auditResult);
+        logger.progress(AviatorSSCAuditHelper.getProgressMessage(auditResult));
+
+        String artifactId = "UPLOAD_SKIPPED";
+        if (auditResult.getUpdatedFile() != null && !"SKIPPED".equals(auditResult.getStatus()) && !"FAILED".equals(auditResult.getStatus())) {
+            artifactId = uploadAuditedFprToSSC(unirest, auditResult.getUpdatedFile(), av);
+        }
+
+        return AviatorSSCAuditHelper.buildResultNode(av, artifactId, action);
     }
 
-    private Path downloadFprToTempPath(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {
+    private Path downloadFpr(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger) throws IOException {
         logger.progress("Status: Downloading FPR from SSC for app version: %s:%s (id: %s)", av.getApplicationName(), av.getVersionName(), av.getVersionId());
-        Path tempFpr = Files.createTempFile("aviator_" + av.getApplicationName() + "_" + av.getVersionName(), ".fpr");
+
+        String prefix = String.format("aviator_%s_%s_", av.getApplicationName().replaceAll("[^a-zA-Z0-9.-]", "_"), av.getVersionName().replaceAll("[^a-zA-Z0-9.-]", "_"));
+        Path tempFpr = Files.createTempFile(prefix, ".fpr");
+
         try {
             SSCFileTransferHelper.download(
                     unirest,

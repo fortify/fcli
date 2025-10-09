@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -621,24 +620,51 @@ public class AuditProcessor {
                                                      TagMappingConfig tagMappingConfig,
                                                      FPRInfo fprInfo,
                                                      FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+        // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
         Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
 
+        // Step 2: Check if there are any remediations to generate.
         boolean hasRemediations = auditResponses.values().stream()
                 .anyMatch(ar -> ar.getAuditResult() != null &&
                         ar.getAuditResult().getAutoremediation() != null &&
                         ar.getAuditResult().getAutoremediation().getChanges() != null &&
                         !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
 
+        // Step 3: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo, fvdlProcessor);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
-                logger.warn("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
+                logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
             }
         }
 
-        return createUpdatedFprCopy();
+        // Step 4: Write the modified XML documents directly back into the open FPR file system.
+        try {
+            if (auditDoc != null) {
+                // Get the path to 'audit.xml' *inside* the zip and overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+                    transformDomToStream(auditDoc, os);
+                }
+            }
+            if (remediationsDoc != null) {
+                // Get the path to 'remediations.xml' *inside* the zip and create/overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/remediations.xml"))) {
+                    transformDomToStream(remediationsDoc, os);
+                }
+            }
+            if (filterTemplateDoc != null) {
+                // Get the path to 'filtertemplate.xml' *inside* the zip and overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/filtertemplate.xml"))) {
+                    transformDomToStream(filterTemplateDoc, os);
+                }
+            }
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to write updated audit/remediation data back into the FPR file.", e);
+        }
+
+        return fprHandle.getFprPath().toFile();
     }
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
@@ -932,34 +958,6 @@ public class AuditProcessor {
         } catch (Exception e) {
             logger.error("Failed to serialize XML element for logging", e);
             return "Error converting element to string: " + e.getMessage();
-        }
-    }
-
-    private File createUpdatedFprCopy() throws AviatorTechnicalException {
-        try {
-            Path newFprPath = Files.createTempFile("updated-", ".fpr");
-            Files.copy(fprHandle.getFprPath(), newFprPath, StandardCopyOption.REPLACE_EXISTING);
-
-            try (java.nio.file.FileSystem newZipfs = java.nio.file.FileSystems.newFileSystem(newFprPath, (ClassLoader) null)) {
-                if (auditDoc != null) {
-                    try (OutputStream os = Files.newOutputStream(newZipfs.getPath("/audit.xml"))) {
-                        transformDomToStream(auditDoc, os);
-                    }
-                }
-                if (remediationsDoc != null) {
-                    try (OutputStream os = Files.newOutputStream(newZipfs.getPath("/remediations.xml"))) {
-                        transformDomToStream(remediationsDoc, os);
-                    }
-                }
-                if (filterTemplateDoc != null) {
-                    try (OutputStream os = Files.newOutputStream(newZipfs.getPath("/filtertemplate.xml"))) {
-                        transformDomToStream(filterTemplateDoc, os);
-                    }
-                }
-            }
-            return newFprPath.toFile();
-        } catch (Exception e) {
-            throw new AviatorTechnicalException("Failed to create updated FPR file.", e);
         }
     }
 
