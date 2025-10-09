@@ -1,0 +1,164 @@
+---
+title: fcli-util-mcp-server-start(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-util-mcp-server-start(1)</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.10.0" %}
+
+
+<div id="header">
+<h1>fcli-util-mcp-server-start(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-util-mcp-server-start - (PREVIEW) Start fcli MCP server for LLM integration</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli util mcp-server start</strong> <strong>-m</strong>=<em>&lt;module&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                           [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The fcli MCP (Model Context Protocol) server allows an LLM to interact with Fortify products by executing fcli commands and actions. Contrary to most other fcli commands, the 'fcli util mcp-server start' command is not meant to be invoked from the command line; instead, an LLM client can run this command to start the fcli MCP server and then interact with this MCP server through stdio (standard input/output). For more information about MCP, please see
+<a href="https://modelcontextprotocol.io/" class="bare">https://modelcontextprotocol.io/</a>.</p>
+</div>
+<div class="paragraph">
+<p>MCP server configuration may vary across IDEs and other LLM clients; the following snippet shows how to configure two MCP servers covering respectively 'fcli ssc' and 'fcli sc-sast' commands in IDEs like Visual Studio Code or Eclipse:</p>
+</div>
+<div class="paragraph">
+<p>{
+  "servers": {
+    "fcli-ssc": {
+      "type": "stdio",
+      "command": "/path/to/fcli",
+      "args": ["util","mcp-server","start","--module=ssc"]
+    },
+    "fcli-sc-sast": {
+      "type": "stdio",
+      "command": "/path/to/fcli",
+      "args": ["util","mcp-server","start","--module=sc-sast"]
+    }
+  }
+}</p>
+</div>
+<div class="paragraph">
+<p>By default, the fcli MCP server will generate an MCP tool definition for every individual fcli command in the specified module, excluding:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Non-runnable (container) commands, as these are not relevant in LLM context</p>
+</li>
+<li>
+<p>Potentially disruptive or destructive commands like (most) update, delete, clear, and purge commands</p>
+</li>
+<li>
+<p>Any command that requires sensitive data like credentials to be specified, to avoid users from entering their sensitive data in an LLM system</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that the latter means that LLMs cannot run fcli session login commands; you&#8217;ll need to have one or more active sessions for each of the products that you want to interact with through the LLM. In your LLM chat, you can ask for a specific session to be used for executing a given operation.</p>
+</div>
+<div class="paragraph">
+<p>For now, only commands from product-related fcli modules like 'fod' or 'ssc' can be exposed as MCP tools. If you require any of the other fcli modules like 'fcli tool' or 'fcli util' to be exposed as MCP tools, we can consider this for a future release.</p>
+</div>
+<div class="paragraph">
+<p>As LLMs pose limits on the number of enabled tools, and clients often allow for easily enabling or disabling all tools provided by a given MCP server, each fcli MCP server instance only supports a single fcli module. For example, you can configure separate MCP servers for ssc, sc-sast, and sc-dast modules, but keep the sc-dast MCP tools disabled until you need them.</p>
+</div>
+<div class="paragraph">
+<p>In a future fcli version, we plan on adding support for registering fcli actions as MCP tools, as well as adding new fcli actions for running various types of scans. For example, once we&#8217;ve introduced a sast-scan or debricked-scan action, LLMs would then be able to simply invoke a single MCP tool to run such a scan, with the fcli action taking care of combining commands for installing and running tools, submitting scan requests, and optionally waiting for scan completion and importing results into SSC.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-m</strong>, <strong>--module</strong>=<em>&lt;module&gt;</em></dt>
+<dd>
+<p>Fcli module to expose through this MCP server instance.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-10-09 22:24:36 UTC
+</div>
+</div>
+</body>
+</html>
