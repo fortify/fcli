@@ -18,6 +18,7 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
+import com.fortify.cli.debricked._main.cli.cmd.DebrickedCommands;
 import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
 import com.fortify.cli.generic_action._main.cli.cmd.GenericActionCommands;
 import com.fortify.cli.license._main.cli.cmd.LicenseCommands;
@@ -48,6 +49,7 @@ import picocli.CommandLine.ScopeType;
             GenericActionCommands.class,
             AviatorCommands.class,
             ConfigCommands.class,
+            DebrickedCommands.class,
             FoDCommands.class,
             SCDastCommands.class,
             SCSastCommands.class,

@@ -1,0 +1,25 @@
+/*******************************************************************************
+ * Copyright 2021, 2023 Open Text.
+ *
+ * The only warranties for products and services of Open Text 
+ * and its affiliates and licensors ("Open Text") are as may 
+ * be set forth in the express warranty statements accompanying 
+ * such products and services. Nothing herein should be construed 
+ * as constituting an additional warranty. Open Text shall not be 
+ * liable for technical or editorial errors or omissions contained 
+ * herein. The information contained herein is subject to change 
+ * without notice.
+ *******************************************************************************/
+package com.fortify.cli.debricked._common.session.cli.mixin;
+
+import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
+
+import lombok.Getter;
+import picocli.CommandLine.Option;
+
+public class DebrickedSessionNameArgGroup implements ISessionNameSupplier {
+    public static final String DEFAULT_SESSION_NAME = "default";
+    
+    @Getter @Option(names = {"--debricked-session"}, defaultValue = DEFAULT_SESSION_NAME, required = false, descriptionKey = "debricked.session.name")
+    private String sessionName;
+}

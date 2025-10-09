@@ -7,7 +7,7 @@ plugins {
 
 // Inter-project dependencies
 val refs = listOf(
-    "fcliCommonRef","fcliActionRef","fcliAviatorRef","fcliConfigRef","fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef","fcliToolRef","fcliLicenseRef","fcliUtilRef"
+    "fcliCommonRef","fcliActionRef","fcliAviatorRef","fcliConfigRef","fcliDebrickedRef","fcliFoDRef","fcliSSCRef","fcliSCSastRef","fcliSCDastRef","fcliToolRef","fcliLicenseRef","fcliUtilRef"
 )
 references@ for (r in refs) {
     val p = project.findProperty(r) as String? ?: continue@references
