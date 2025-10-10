@@ -26,52 +26,52 @@ import com.fortify.cli.debricked._common.session.helper.IDebrickedLoginOptions.I
 
 import kong.unirest.UnirestInstance;
 public final class DebrickedAuthHelper  {
-
-	public static final void configureAuthenticatedUnirest(UnirestInstance unirest, IDebrickedLoginOptions debrickedLoginOptions) {
-	    configureNonAuthenticatedUnirest(unirest, debrickedLoginOptions.getUrlConfigOptions());
-		String debrickedJwtToken = getJwtToken(unirest, debrickedLoginOptions);
+	public static final void configureAdHocUnirestInstance(UnirestInstance unirest, IDebrickedLoginOptions debrickedLoginOptions) {
+		String debrickedJwtToken = getJwtTokenResponse(unirest, debrickedLoginOptions).getToken();
+		UnirestJsonHeaderConfigurer.configure(unirest); // This must be done after getJwtTokenResponse
         String authHeader = String.format("Bearer %s", debrickedJwtToken);
         unirest.config().setDefaultHeader("Authorization", authHeader);
-        UnirestJsonHeaderConfigurer.configure(unirest);
 	}
 	
-	public static final void configureNonAuthenticatedUnirest(UnirestInstance unirest, IUrlConfig urlConfig) {
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
-        UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
-        ProxyHelper.configureProxy(unirest, "fod", urlConfig.getUrl());
-    }
-
-	public static final String getJwtToken(UnirestInstance debrickedUnirest, IDebrickedLoginOptions debrickedLoginOptions) {
-		return getJwtTokenResponse(debrickedUnirest, debrickedLoginOptions).getToken();
+	public static final DebrickedJwtTokenResponse getJwtTokenResponse(UnirestInstance unirest, IUrlConfig urlConfig, String refreshToken) {
+        configureNonAuthenticatedUnirestInstance(unirest, urlConfig);
+        return authenticate(unirest, refreshToken);
 	}
 	
-	public static final DebrickedJwtTokenResponse getJwtTokenResponse(UnirestInstance debrickedUnirest, IDebrickedLoginOptions debrickedLoginOptions) {
+	public static final DebrickedJwtTokenResponse getJwtTokenResponse(UnirestInstance unirest, IDebrickedLoginOptions debrickedLoginOptions) {
+	    configureNonAuthenticatedUnirestInstance(unirest, debrickedLoginOptions.getUrlConfigOptions());
         IDebrickedAuthOptions authOptions = debrickedLoginOptions.getAuthOptions();
         IDebrickedUserCredentialOptions userCredentialsOptions = authOptions.getUserCredentialsOptions();
         IDebrickedAccessTokenCredentialOptions tokenOptions = authOptions.getTokenOptions();
         if ( userCredentialsOptions!=null && StringUtils.isNotBlank(userCredentialsOptions.getUser()) ) {
-            return getJwtTokenResponse(debrickedUnirest, userCredentialsOptions);
+            return authenticate(unirest, userCredentialsOptions);
         } else if ( tokenOptions!=null && tokenOptions.getAccessToken()!=null ) {
-            return getJwtTokenResponse(debrickedUnirest, tokenOptions);
+            return authenticate(unirest, new String(tokenOptions.getAccessToken()));
         } else {
             throw new FcliSimpleException("Either Debricked user credentials or access token need to be specified");
         }
     }
-
-    private static DebrickedJwtTokenResponse getJwtTokenResponse(UnirestInstance debrickedUnirest, IDebrickedAccessTokenCredentialOptions tokenOptions) {
+    
+    private static final DebrickedJwtTokenResponse authenticate(UnirestInstance debrickedUnirest, String accessOrRefreshToken) {
         return debrickedUnirest.post("/api/login_refresh")
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.field("refresh_token", new String(tokenOptions.getAccessToken()))
-				.asObject(DebrickedJwtTokenResponse.class)
-				.getBody();
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .field("refresh_token", accessOrRefreshToken)
+                .asObject(DebrickedJwtTokenResponse.class)
+                .getBody();
     }
 
-    private static DebrickedJwtTokenResponse getJwtTokenResponse(UnirestInstance debrickedUnirest, IDebrickedUserCredentialOptions userCredentialsOptions) {
+    private static final DebrickedJwtTokenResponse authenticate(UnirestInstance debrickedUnirest, IDebrickedUserCredentialOptions userCredentialsOptions) {
         return debrickedUnirest.post("/api/login_check")
 				.header("Content-Type", "application/x-www-form-urlencoded")
 				.field("_username", userCredentialsOptions.getUser())
 				.field("_password", new String(userCredentialsOptions.getPassword()))
 				.asObject(DebrickedJwtTokenResponse.class)
 				.getBody();
+    }
+    
+    private static final void configureNonAuthenticatedUnirestInstance(UnirestInstance unirest, IUrlConfig urlConfig) {
+        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
+        UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
+        ProxyHelper.configureProxy(unirest, "debricked", urlConfig.getUrl());
     }
 }

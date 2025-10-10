@@ -19,6 +19,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.session.cli.mixin.AbstractSessionDescriptorSupplierMixin;
+import com.fortify.cli.debricked._common.session.helper.DebrickedAuthHelper;
 import com.fortify.cli.debricked._common.session.helper.DebrickedSessionDescriptor;
 import com.fortify.cli.debricked._common.session.helper.DebrickedSessionHelper;
 
@@ -32,7 +33,11 @@ public class DebrickedUnirestInstanceSupplierMixin extends AbstractSessionDescri
     
     @Override
     protected final DebrickedSessionDescriptor getSessionDescriptor(String sessionName) {
-        return DebrickedSessionHelper.instance().get(sessionName, true);
+        var descriptor = DebrickedSessionHelper.instance().get(sessionName, true);
+        if ( !descriptor.hasActiveJwtToken() ) {
+            descriptor = refreshJwtToken(sessionName, descriptor);
+        }
+        return descriptor;
     }
     
     @Override
@@ -53,11 +58,21 @@ public class DebrickedUnirestInstanceSupplierMixin extends AbstractSessionDescri
         ProxyHelper.configureProxy(unirest, "debricked", sessionDescriptor.getUrlConfig().getUrl());
         
         String jwtToken = sessionDescriptor.getActiveJwtToken();
-        // TODO if token is null, try to refresh using refresh token
         if (jwtToken != null) {
             String authHeader = String.format("Bearer %s", jwtToken);
             unirest.config().setDefaultHeader("Authorization", authHeader);
             UnirestJsonHeaderConfigurer.configure(unirest);
         }
+    }
+    
+    private static final DebrickedSessionDescriptor refreshJwtToken(String sessionName, DebrickedSessionDescriptor descriptor) {
+        var urlConfig = descriptor.getUrlConfig();
+        var refreshToken = descriptor.getRefreshToken();
+        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+            var jwtTokenResponse = DebrickedAuthHelper.getJwtTokenResponse(unirest, urlConfig, refreshToken);
+            descriptor = new DebrickedSessionDescriptor(descriptor.getUrlConfig(), jwtTokenResponse.getToken(), jwtTokenResponse.getRefreshToken());
+            DebrickedSessionHelper.instance().save(sessionName, descriptor);
+        }
+        return descriptor;
     }
 }

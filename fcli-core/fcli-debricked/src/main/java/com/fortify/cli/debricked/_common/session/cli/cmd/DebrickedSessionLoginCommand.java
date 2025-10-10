@@ -48,8 +48,6 @@ public class DebrickedSessionLoginCommand extends AbstractSessionLoginCommand<De
         
         try (var unirest = GenericUnirestFactory.createUnirestInstance()) {
             // Create a temporary DebrickedHelper to get JWT token
-            DebrickedAuthHelper.configureNonAuthenticatedUnirest(unirest, loginOptions.getUrlConfigOptions());
-            // TODO Do we also want to store refreshToken? (in which case we should call getJwtTokenResponse instead)
             DebrickedJwtTokenResponse jwtTokenResponse = DebrickedAuthHelper.getJwtTokenResponse(unirest, loginOptions);
             sessionDescriptor = new DebrickedSessionDescriptor(
                 loginOptions.getUrlConfigOptions(), 

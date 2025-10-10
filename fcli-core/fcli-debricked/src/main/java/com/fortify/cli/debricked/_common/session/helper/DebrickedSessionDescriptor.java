@@ -60,7 +60,11 @@ public class DebrickedSessionDescriptor extends AbstractSessionDescriptorWithSin
         return "Debricked";
     }
     
-    @JsonIgnore
+    @JsonIgnore 
+    //TODO Remove code duplication between this and AviatorJwtUtils, 
+    //     for example by creating a JwtTokenHelper class in fcli-common
+    //     that takes a JWT token as constructor argument, then provides
+    //     utility methods like getJsonNode(), getAsDate(String fieldName), etc.
     private static final Date getExpiry(String jwtToken) {
         var payload = JsonHelper.parseJwtToken(jwtToken);
         var exp = payload.get("exp");

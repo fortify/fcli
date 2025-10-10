@@ -41,7 +41,7 @@ public final class DebrickedNoSessionRepoHelper  {
 	}
 
     public final void downloadSbom(UnirestInstance debrickedUnirest, File file) {
-    	DebrickedAuthHelper.configureAuthenticatedUnirest(debrickedUnirest, loginOptions);
+    	DebrickedAuthHelper.configureAdHocUnirestInstance(debrickedUnirest, loginOptions);
     	String reportUuid = startSbomGeneration(debrickedUnirest);
     	waitSbomGeneration(debrickedUnirest, reportUuid, file);
     }
