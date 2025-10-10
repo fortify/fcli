@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.debricked._common.session.cli.mixin;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
@@ -66,13 +67,17 @@ public class DebrickedUnirestInstanceSupplierMixin extends AbstractSessionDescri
     }
     
     private static final DebrickedSessionDescriptor refreshJwtToken(String sessionName, DebrickedSessionDescriptor descriptor) {
-        var urlConfig = descriptor.getUrlConfig();
-        var refreshToken = descriptor.getRefreshToken();
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            var jwtTokenResponse = DebrickedAuthHelper.getJwtTokenResponse(unirest, urlConfig, refreshToken);
-            descriptor = new DebrickedSessionDescriptor(descriptor.getUrlConfig(), jwtTokenResponse.getToken(), jwtTokenResponse.getRefreshToken());
-            DebrickedSessionHelper.instance().save(sessionName, descriptor);
+        try {
+            var urlConfig = descriptor.getUrlConfig();
+            var refreshToken = descriptor.getRefreshToken();
+            try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+                var jwtTokenResponse = DebrickedAuthHelper.getJwtTokenResponse(unirest, urlConfig, refreshToken);
+                descriptor = new DebrickedSessionDescriptor(descriptor.getUrlConfig(), jwtTokenResponse.getToken(), jwtTokenResponse.getRefreshToken());
+                DebrickedSessionHelper.instance().save(sessionName, descriptor);
+            }
+            return descriptor;
+        } catch ( Exception e ) {
+            throw new FcliSimpleException("Unable to refresh Debricked JWT token", e);
         }
-        return descriptor;
     }
 }

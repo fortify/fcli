@@ -18,6 +18,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptorWithSingleUrlConfig;
 import com.fortify.cli.common.session.helper.SessionSummary;
@@ -29,20 +31,25 @@ import lombok.NoArgsConstructor;
 @Data @EqualsAndHashCode(callSuper = true) @JsonIgnoreProperties(ignoreUnknown = true)
 @Reflectable @NoArgsConstructor
 public class DebrickedSessionDescriptor extends AbstractSessionDescriptorWithSingleUrlConfig {
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "DEBRICKED JWT TOKEN") 
     private String jwtToken;
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "DEBRICKED REFRESH TOKEN")
     private String refreshToken;
-    private Date tokenExpiryDate;
+    private Date jwtTokenExpiryDate;
+    private Date refreshTokenExpiryDate;
     
     public DebrickedSessionDescriptor(IUrlConfig urlConfig, String jwtToken, String refreshToken) {
         super(urlConfig);
         this.jwtToken = jwtToken;
         this.refreshToken = refreshToken;
-        this.tokenExpiryDate = getExpiry(jwtToken);
+        this.jwtTokenExpiryDate = getExpiry(jwtToken);
+        // Set refresh token expiry to 23h59m from now,
+        this.refreshTokenExpiryDate = new Date(System.currentTimeMillis() + 23*3600_000L + 59*60_000L);
     }
     
     @JsonIgnore
     public final boolean hasActiveJwtToken() {
-        return jwtToken != null && (tokenExpiryDate == null || tokenExpiryDate.after(new Date()));
+        return jwtToken != null && (jwtTokenExpiryDate == null || jwtTokenExpiryDate.after(new Date()));
     }
     
     @JsonIgnore 
@@ -52,7 +59,7 @@ public class DebrickedSessionDescriptor extends AbstractSessionDescriptorWithSin
     
     @JsonIgnore @Override
     public Date getExpiryDate() {
-        return tokenExpiryDate != null ? tokenExpiryDate : SessionSummary.EXPIRES_UNKNOWN;
+        return refreshTokenExpiryDate != null ? refreshTokenExpiryDate : SessionSummary.EXPIRES_UNKNOWN;
     }
     
     @JsonIgnore @Override
