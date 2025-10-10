@@ -16,12 +16,13 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.debricked._common.session.cli.mixin.DebrickedSessionLoginOptions;
 import com.fortify.cli.debricked._common.session.cli.mixin.DebrickedSessionNameArgGroup;
+import com.fortify.cli.debricked._common.session.cli.mixin.DebrickedShortLoginOptions;
 import com.fortify.cli.debricked._common.session.cli.mixin.DebrickedUnirestInstanceSupplierMixin;
+import com.fortify.cli.debricked._common.session.helper.DebrickedAuthHelper;
+import com.fortify.cli.debricked._common.session.helper.DebrickedJwtTokenResponse;
 import com.fortify.cli.debricked._common.session.helper.DebrickedSessionDescriptor;
 import com.fortify.cli.debricked._common.session.helper.DebrickedSessionHelper;
-import com.fortify.cli.common.debricked.DebrickedHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -32,7 +33,7 @@ import picocli.CommandLine.Mixin;
 public class DebrickedSessionLoginCommand extends AbstractSessionLoginCommand<DebrickedSessionDescriptor> {
     @Getter @Mixin private OutputHelperMixins.Login outputHelper;
     @Getter private DebrickedSessionHelper sessionHelper = DebrickedSessionHelper.instance();
-    @Mixin private DebrickedSessionLoginOptions loginOptions;
+    @Mixin private DebrickedShortLoginOptions loginOptions;
     @Getter @ArgGroup(headingKey = "debricked.session.name.arggroup") 
     private DebrickedSessionNameArgGroup sessionNameSupplier;
     
@@ -47,13 +48,13 @@ public class DebrickedSessionLoginCommand extends AbstractSessionLoginCommand<De
         
         try (var unirest = GenericUnirestFactory.createUnirestInstance()) {
             // Create a temporary DebrickedHelper to get JWT token
-            DebrickedHelper debrickedHelper = new DebrickedHelper(loginOptions.getDebrickedLoginOptions(), null, null);
-            debrickedHelper.configureDebrickedUnirest(unirest);
-            String jwtToken = debrickedHelper.getDebrickedJwtToken(unirest);
-            
+            DebrickedAuthHelper.configureNonAuthenticatedUnirest(unirest, loginOptions.getUrlConfigOptions());
+            // TODO Do we also want to store refreshToken? (in which case we should call getJwtTokenResponse instead)
+            DebrickedJwtTokenResponse jwtTokenResponse = DebrickedAuthHelper.getJwtTokenResponse(unirest, loginOptions);
             sessionDescriptor = new DebrickedSessionDescriptor(
-                loginOptions.getDebrickedLoginOptions().getUrlConfigOptions(), 
-                jwtToken
+                loginOptions.getUrlConfigOptions(), 
+                jwtTokenResponse.getToken(),
+                jwtTokenResponse.getRefreshToken()
             );
         } catch (Exception e) {
             throw new FcliSimpleException("Unable to authenticate with Debricked", e);

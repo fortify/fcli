@@ -16,11 +16,11 @@ import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.common.debricked.DebrickedHelper;
-import com.fortify.cli.common.debricked.DebrickedLoginOptions;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.debricked._common.repo.helper.DebrickedNoSessionRepoHelper;
+import com.fortify.cli.debricked._common.session.cli.mixin.DebrickedLongLoginOptions;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -32,7 +32,7 @@ import picocli.CommandLine.Option;
 @Command(name = "import-debricked")
 public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUploadCommand {
     @Mixin @Getter private OutputHelperMixins.TableNoQuery outputHelper;
-    @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
+    @Mixin private DebrickedLongLoginOptions debrickedLoginOptions; 
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")
     @Getter private String engineType;
@@ -65,7 +65,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
     
     @Override
     protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	DebrickedHelper debrickedHelper = new DebrickedHelper(debrickedLoginOptions, repository, branch);
+        DebrickedNoSessionRepoHelper debrickedHelper = new DebrickedNoSessionRepoHelper(debrickedLoginOptions, repository, branch);
 		progressWriter.writeProgress("Status: Generating & downloading SBOM");
     	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
     	    debrickedHelper.downloadSbom(debrickedUnirest, file);

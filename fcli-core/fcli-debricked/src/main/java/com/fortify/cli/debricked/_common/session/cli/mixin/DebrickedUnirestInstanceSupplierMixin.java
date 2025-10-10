@@ -51,12 +51,13 @@ public class DebrickedUnirestInstanceSupplierMixin extends AbstractSessionDescri
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getUrlConfig());
         ProxyHelper.configureProxy(unirest, "debricked", sessionDescriptor.getUrlConfig().getUrl());
-        UnirestJsonHeaderConfigurer.configure(unirest);
         
         String jwtToken = sessionDescriptor.getActiveJwtToken();
+        // TODO if token is null, try to refresh using refresh token
         if (jwtToken != null) {
             String authHeader = String.format("Bearer %s", jwtToken);
             unirest.config().setDefaultHeader("Authorization", authHeader);
+            UnirestJsonHeaderConfigurer.configure(unirest);
         }
     }
 }

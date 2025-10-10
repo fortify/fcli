@@ -17,6 +17,7 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptorWithSingleUrlConfig;
 import com.fortify.cli.common.session.helper.SessionSummary;
@@ -29,14 +30,14 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 public class DebrickedSessionDescriptor extends AbstractSessionDescriptorWithSingleUrlConfig {
     private String jwtToken;
+    private String refreshToken;
     private Date tokenExpiryDate;
     
-    public DebrickedSessionDescriptor(IUrlConfig urlConfig, String jwtToken) {
+    public DebrickedSessionDescriptor(IUrlConfig urlConfig, String jwtToken, String refreshToken) {
         super(urlConfig);
         this.jwtToken = jwtToken;
-        // Debricked JWT tokens typically expire after 24 hours, but we don't have exact expiry info
-        // Set a conservative 8-hour expiry to ensure token refresh
-        this.tokenExpiryDate = new Date(System.currentTimeMillis() + (8 * 60 * 60 * 1000));
+        this.refreshToken = refreshToken;
+        this.tokenExpiryDate = getExpiry(jwtToken);
     }
     
     @JsonIgnore
@@ -57,5 +58,18 @@ public class DebrickedSessionDescriptor extends AbstractSessionDescriptorWithSin
     @JsonIgnore @Override
     public String getType() {
         return "Debricked";
+    }
+    
+    @JsonIgnore
+    private static final Date getExpiry(String jwtToken) {
+        var payload = JsonHelper.parseJwtToken(jwtToken);
+        var exp = payload.get("exp");
+        if ( exp!=null && exp.isNumber() ) {
+            long expSeconds = exp.asLong();
+            if ( expSeconds>0 ) {
+                return new Date(expSeconds*1000L);
+            }
+        }
+        return null;
     }
 }

@@ -10,94 +10,41 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.debricked;
+package com.fortify.cli.debricked._common.repo.helper;
 
 import java.io.File;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
-import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedAuthOptions;
-import com.fortify.cli.common.debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
+import com.fortify.cli.debricked._common.session.helper.DebrickedAuthHelper;
+import com.fortify.cli.debricked._common.session.helper.IDebrickedLoginOptions;
 
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
-public final class DebrickedHelper  {
-    
-	private DebrickedLoginOptions debrickedLoginOptions;
+public final class DebrickedNoSessionRepoHelper  {
+	private IDebrickedLoginOptions loginOptions;
 	private String repository;
 	private String branch;
 
-	public DebrickedHelper(DebrickedLoginOptions debrickedLoginOptions, String repository, String branch) {
-		this.debrickedLoginOptions = debrickedLoginOptions;
+	public DebrickedNoSessionRepoHelper(IDebrickedLoginOptions loginOptions, String repository, String branch) {
+		this.loginOptions = loginOptions;
 		this.repository = repository;
 		this.branch = branch;
 	}
 
     public final void downloadSbom(UnirestInstance debrickedUnirest, File file) {
-    	configureDebrickedUnirest(debrickedUnirest);
+    	DebrickedAuthHelper.configureAuthenticatedUnirest(debrickedUnirest, loginOptions);
     	String reportUuid = startSbomGeneration(debrickedUnirest);
     	waitSbomGeneration(debrickedUnirest, reportUuid, file);
     }
-
-	public final void configureDebrickedUnirest(UnirestInstance debrickedUnirest) {
-		UnirestUnexpectedHttpResponseConfigurer.configure(debrickedUnirest);
-        DebrickedUrlConfigOptions debrickedUrlConfig = debrickedLoginOptions.getUrlConfigOptions();
-		UnirestUrlConfigConfigurer.configure(debrickedUnirest, debrickedUrlConfig);
-        ProxyHelper.configureProxy(debrickedUnirest, "debricked", debrickedUrlConfig.getUrl());
-        String debrickedJwtToken = getDebrickedJwtToken(debrickedUnirest);
-        UnirestJsonHeaderConfigurer.configure(debrickedUnirest);
-		String authHeader = String.format("Bearer %s", debrickedJwtToken);
-        debrickedUnirest.config().setDefaultHeader("Authorization", authHeader);
-	}
-
-	public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest) {
-		DebrickedAuthOptions authOptions = debrickedLoginOptions.getAuthOptions();
-		DebrickedUserCredentialOptions userCredentialsOptions = authOptions.getUserCredentialsOptions();
-		DebrickedAccessTokenCredentialOptions tokenOptions = authOptions.getTokenOptions();
-		if ( userCredentialsOptions!=null && StringUtils.isNotBlank(userCredentialsOptions.getUser()) ) {
-			return getDebrickedJwtToken(debrickedUnirest, userCredentialsOptions);
-		} else if ( tokenOptions!=null && tokenOptions.getAccessToken()!=null ) {
-			return getDebrickedJwtToken(debrickedUnirest, tokenOptions);
-		} else {
-			throw new FcliSimpleException("Either Debricked user credentials or access token need to be specified");
-		}
-	}
-
-	public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedAccessTokenCredentialOptions tokenOptions) {
-		return debrickedUnirest.post("/api/login_refresh")
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.field("refresh_token", new String(tokenOptions.getAccessToken()))
-				.asObject(JsonNode.class)
-				.getBody()
-				.get("token")
-				.asText();
-	}
-
-	public final String getDebrickedJwtToken(UnirestInstance debrickedUnirest, DebrickedUserCredentialOptions userCredentialsOptions) {
-		return debrickedUnirest.post("/api/login_check")
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.field("_username", userCredentialsOptions.getUser())
-				.field("_password", new String(userCredentialsOptions.getPassword()))
-				.asObject(JsonNode.class)
-				.getBody()
-				.get("token")
-				.asText();
-	}
 	
 	public final String getRepositoryId(UnirestInstance debrickedUnirest) {
 		try {

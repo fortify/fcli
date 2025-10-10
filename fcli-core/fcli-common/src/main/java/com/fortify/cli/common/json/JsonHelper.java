@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.json;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.spel.SpelEvaluator;
 
@@ -111,6 +114,34 @@ public class JsonHelper {
             return treeToValue(objectMapper.readTree(jsonString), returnType);
         } catch (JsonProcessingException jpe) {
             throw new FcliTechnicalException("Error processing JSON data", jpe);
+        }
+    }
+    
+    public static JsonNode parseJwtToken(String token) {
+        if (StringUtils.isBlank(token)) {
+            throw new FcliSimpleException("Provided token is null or blank, cannot extract payload.");
+        }
+        try {
+            String[] chunks = token.split("\\.");
+            if (chunks.length < 2) {
+                throw new FcliSimpleException(String.format("Invalid token structure: expected at least 2 parts, but found %d.", chunks.length));
+            }
+
+            Base64.Decoder decoder = Base64.getUrlDecoder();
+            String payloadJson;
+            try {
+                payloadJson = new String(decoder.decode(chunks[1]));
+            } catch (IllegalArgumentException e) {
+                throw new FcliSimpleException("The token's payload is not valid Base64URL.", e);
+            }
+
+            try {
+                return objectMapper.readTree(payloadJson);
+            } catch (IOException e) {
+                throw new FcliSimpleException("The token's payload is not valid JSON.", e);
+            }
+        } catch (IllegalArgumentException e) {
+            throw new FcliSimpleException("Invalid JWT token: failed to parse payload JSON.", e);
         }
     }
     

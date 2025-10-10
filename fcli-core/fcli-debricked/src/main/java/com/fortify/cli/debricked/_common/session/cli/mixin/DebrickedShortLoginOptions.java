@@ -10,42 +10,42 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.debricked;
+package com.fortify.cli.debricked._common.session.cli.mixin;
 
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
-import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
+import com.fortify.cli.debricked._common.session.helper.IDebrickedLoginOptions;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-public class DebrickedLoginOptions {
+public class DebrickedShortLoginOptions implements IDebrickedLoginOptions {
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
-    @Getter private DebrickedUrlConfigOptions urlConfigOptions = new DebrickedUrlConfigOptions();
+    @Getter private DebrickedShortUrlConfigOptions urlConfigOptions = new DebrickedShortUrlConfigOptions();
     
     @ArgGroup(exclusive = true, multiplicity = "1", order = 2)
-    @Getter private DebrickedAuthOptions authOptions = new DebrickedAuthOptions();
+    @Getter private DebrickedShortAuthOptions authOptions = new DebrickedShortAuthOptions();
     
-    public static class DebrickedAuthOptions {
+    public static class DebrickedShortAuthOptions implements IDebrickedLoginOptions.IDebrickedAuthOptions {
         @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-        @Getter private DebrickedUserCredentialOptions userCredentialsOptions;
+        @Getter private DebrickedShortUserCredentialOptions userCredentialsOptions;
         @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
-        @Getter private DebrickedAccessTokenCredentialOptions tokenOptions;
+        @Getter private DebrickedShortAccessTokenCredentialOptions tokenOptions;
     }
     
-    public static class DebrickedUserCredentialOptions implements IUserCredentialsConfig {
-    	@Option(names = {"--debricked-user", "-u"}, required = true)
-    	@MaskValue(sensitivity = LogSensitivityLevel.medium, description = "DEBRICKED USER")
+    public static class DebrickedShortUserCredentialOptions implements IDebrickedLoginOptions.IDebrickedUserCredentialOptions {
+        @Option(names = {"--user", "-u"}, required = true)
+        @MaskValue(sensitivity = LogSensitivityLevel.medium, description = "DEBRICKED USER")
         @Getter private String user;
         
-        @Option(names = {"--debricked-password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
+        @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
         @MaskValue(sensitivity = LogSensitivityLevel.high, description = "DEBRICKED PASSWORD")
         @Getter private char[] password;
     }
     
-    public static class DebrickedAccessTokenCredentialOptions {
-        @Option(names = {"--debricked-access-token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
+    public static class DebrickedShortAccessTokenCredentialOptions implements IDebrickedLoginOptions.IDebrickedAccessTokenCredentialOptions {
+        @Option(names = {"--access-token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
         @MaskValue(sensitivity = LogSensitivityLevel.high, description = "DEBRICKED TOKEN")
         @Getter private char[] accessToken;
     }

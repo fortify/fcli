@@ -12,12 +12,19 @@
  *******************************************************************************/
 package com.fortify.cli.debricked._common.session.cli.mixin;
 
-import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
+import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
+import com.fortify.cli.debricked._common.session.helper.IDebrickedUrlConfigOptions;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class DebrickedSessionNameArgGroup implements ISessionNameSupplier {
-    @Getter @Option(names = {"--debricked-session"}, defaultValue = "default", required = false)
-    private String sessionName;
+public class DebrickedLongUrlConfigOptions extends ConnectionConfigOptions implements IDebrickedUrlConfigOptions {
+	// For now, this option is hidden as there is only the single debricked.com SaaS instance
+    @Option(names = {"--debricked-url"}, required = true, order=1, defaultValue = "https://debricked.com", hidden = true)
+    // @MaskValue(sensitivity = LogSensitivityLevel.low, description = "DEBRICKED HOST NAME", pattern = LogMaskHelper.URL_HOSTNAME_PATTERN)
+    @Getter private String url;
+    
+    public boolean hasUrlConfig() {
+        return url!=null;
+    }
 }

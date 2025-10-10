@@ -10,18 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.debricked._common.output.cli.cmd;
+package com.fortify.cli.debricked._common.rest.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.product.IProductHelper;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.UnirestInstance;
-
-public abstract class AbstractDebrickedBaseRequestOutputCommand extends AbstractDebrickedJsonNodeOutputCommand {
-    public abstract HttpRequestWithBody getBaseRequest(UnirestInstance unirest);
-    
+//IMPORTANT: When updating/adding any methods in this class, SSCRestCallCommand
+//also likely needs to be updated
+public class DebrickedProductHelper implements IProductHelper, INextPageUrlProducerSupplier
+{
+    public static final DebrickedProductHelper INSTANCE = new DebrickedProductHelper();
+    private DebrickedProductHelper() {}
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return getBaseRequest(unirest).asObject(JsonNode.class).getBody();
+    public INextPageUrlProducer getNextPageUrlProducer() {
+        return null;
     }
 }

@@ -10,18 +10,11 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.debricked._common.output.cli.cmd;
+package com.fortify.cli.debricked._common.session.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.UnirestInstance;
-
-public abstract class AbstractDebrickedBaseRequestOutputCommand extends AbstractDebrickedJsonNodeOutputCommand {
-    public abstract HttpRequestWithBody getBaseRequest(UnirestInstance unirest);
-    
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return getBaseRequest(unirest).asObject(JsonNode.class).getBody();
-    }
+public interface IDebrickedUrlConfigOptions extends IUrlConfig {
+    String getUrl();
+    boolean hasUrlConfig();
 }

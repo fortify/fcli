@@ -14,6 +14,7 @@ package com.fortify.cli.debricked._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.debricked._common.session.cli.cmd.DebrickedSessionCommands;
+import com.fortify.cli.debricked.rest.cli.cmd.DebrickedRestCommands;
 
 import picocli.CommandLine.Command;
 
@@ -21,7 +22,8 @@ import picocli.CommandLine.Command;
         name = "debricked",
         resourceBundle = "com.fortify.cli.debricked.i18n.DebrickedMessages",
         subcommands = {
-                DebrickedSessionCommands.class
+                DebrickedSessionCommands.class,
+                DebrickedRestCommands.class
         }
 )
 public class DebrickedCommands extends AbstractContainerCommand {

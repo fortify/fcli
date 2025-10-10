@@ -10,14 +10,18 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.debricked._common.session.cli.mixin;
+package com.fortify.cli.debricked.rest.cli.cmd;
 
-import com.fortify.cli.common.debricked.DebrickedLoginOptions;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Command;
 
-public class DebrickedSessionLoginOptions {
-    @Getter @Mixin 
-    private DebrickedLoginOptions debrickedLoginOptions = new DebrickedLoginOptions();
+@Command(
+        name = "rest",
+        subcommands = {
+                DebrickedRestCallCommand.class
+        }
+
+)
+public class DebrickedRestCommands extends AbstractContainerCommand {
 }
