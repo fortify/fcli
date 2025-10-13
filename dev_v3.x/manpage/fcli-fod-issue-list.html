@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251013.074720-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251013.113415-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,10 +47,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod issue list</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>]
-                    <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
-                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                    [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+<p><strong>fcli fod issue list</strong> [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                    [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>] [<strong>--rel</strong>=<em>id|app[:ms]:rel</em>]
+                    [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                    [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                    [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                     [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                     [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
@@ -62,13 +63,25 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows for listing FoD vulnerability data for a given release. By default, only visible issues will be returned; the --include option can be used to (also) include suppressed or fixed issues. If any such issues are included, the default table output will show (S) and/or (F) for respectively suppressed and fixed issues.</p>
+<p>This command allows for listing FoD vulnerability data for a given application or release. By default, only visible issues will be returned; the --include option can be used to (also) include suppressed or fixed issues. If any such issues are included, the default table output will show (S) and/or (F) for respectively suppressed and fixed issues.</p>
 </div>
 <div class="paragraph">
 <p>Optionally, additional details may be included in the output using the --embed option, but please note that this may have a significant impact on performance as this will result in additional HTTP requests to FoD for every individual issue, and FoD rate limits may apply to those requests.</p>
 </div>
 <div class="paragraph">
 <p>In general, performance of this command is largely dependent on the number of issues being retrieved from FoD. The default table output collects all data in memory until all issues have been processed, so it may take a long time before you see any output, and there&#8217;s a small risk of running out of memory. Most other output formats (like json, yaml, or csv) output data immediately after each page of issues has been loaded from FoD, resulting in more immediate output.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+The --app option is currently in PREVIEW. If you wish to use this option it is recommended to use server-side filtering, via use of the --filters-param or --query options. For example, if you are only interested in issues with a specific severity, you can use a query like --filters-param "severityString:Critical" or --query "severityString='Critical'".
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -77,6 +90,10 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--app</strong>=<em>&lt;appNameOrId&gt;</em></dt>
+<dd>
+<p>Application id or name. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id.</p>
+</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
@@ -180,7 +197,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-10-13 07:49:49 UTC
+Last updated 2025-10-13 11:36:48 UTC
 </div>
 </div>
 </body>
