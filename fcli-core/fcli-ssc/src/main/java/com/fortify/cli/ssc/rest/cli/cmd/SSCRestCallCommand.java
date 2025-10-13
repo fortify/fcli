@@ -34,10 +34,17 @@ public final class SSCRestCallCommand extends AbstractRestCallCommand {
     @Getter private final SSCProductHelper productHelper = SSCProductHelper.INSTANCE;
 
     @Override
-    protected String formatUri(String uri) {
-        if (uri != null && !uri.startsWith("/api/v1")) {
-            return "/api/v1" + uri;
-        }
-        return uri;
-    }
+	protected String formatUri(String uri) {
+		if (uri == null || uri.isBlank()) {
+			return uri;
+		}
+		if (!uri.startsWith("/")) {
+			uri = "/" + uri;
+		}
+		if (!uri.startsWith("/api/v1")) {
+			uri = "/api/v1" + uri;
+		}
+		return uri;
+	}
+
 }
