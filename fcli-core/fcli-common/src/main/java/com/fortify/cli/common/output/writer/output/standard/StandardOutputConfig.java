@@ -41,11 +41,11 @@ public class StandardOutputConfig {
         return this;
     }
     
-    final JsonNode applyInputTransformations(JsonNode input) {
+    public final JsonNode applyInputTransformations(JsonNode input) {
         return applyTransformations(inputTransformers, input);
     }
     
-    final JsonNode applyRecordTransformations(JsonNode record) {
+    public final JsonNode applyRecordTransformations(JsonNode record) {
         return applyTransformations(recordTransformers, record);
     }
     

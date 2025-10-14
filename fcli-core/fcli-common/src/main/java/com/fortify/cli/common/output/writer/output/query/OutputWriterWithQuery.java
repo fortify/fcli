@@ -18,6 +18,9 @@ import com.fortify.cli.common.output.cli.mixin.OutputWriterWithQueryFactoryMixin
 import com.fortify.cli.common.output.writer.output.standard.IOutputOptions;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
+import com.fortify.cli.common.output.writer.output.IOutputWriter;
+import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.record.IRecordConsumer;
 import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.spel.query.QueryExpression;
 
@@ -31,18 +34,26 @@ import picocli.CommandLine.Model.CommandSpec;
  * @author rsenden
  *
  */
-public class OutputWriterWithQuery extends StandardOutputWriter {
+public class OutputWriterWithQuery implements IOutputWriter {
+    private final StandardOutputWriter delegate;
     private final IQueryExpressionSupplier queryExpressionSupplier;
-    
     public OutputWriterWithQuery(CommandSpec mixee, IOutputOptions outputOptions, IQueryExpressionSupplier queryExpressionSupplier, StandardOutputConfig defaultOutputConfig) {
-        super(mixee, outputOptions, defaultOutputConfig);
+        this.delegate = new StandardOutputWriter(mixee, outputOptions, defaultOutputConfig);
         this.queryExpressionSupplier = queryExpressionSupplier;
     }
-    
     @Override
-    protected JsonNode applyRecordOutputFilters(JsonNode record) {
-        QueryExpression queryExpression = queryExpressionSupplier.getQueryExpression();
-        return queryExpression==null || queryExpression.matches(record)
-                ? record : null;
+    public void write(IRecordProducer recordProducer) {
+        QueryExpression qe = queryExpressionSupplier.getQueryExpression();
+        if ( qe==null ) {
+            delegate.write(recordProducer);
+        } else {
+            delegate.write(consumer -> recordProducer.forEach(filteringConsumer(qe, consumer)));
+        }
+    }
+    private IRecordConsumer filteringConsumer(QueryExpression qe, IRecordConsumer consumer) {
+        return record -> {
+            JsonNode node = record; // ObjectNode extends JsonNode
+            return qe.matches(node) ? consumer.accept(record) : com.fortify.cli.common.util.Break.FALSE;
+        };
     }
 }

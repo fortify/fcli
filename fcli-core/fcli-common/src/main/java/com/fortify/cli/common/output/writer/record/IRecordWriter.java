@@ -16,7 +16,7 @@ import java.io.Closeable;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface IRecordWriter extends Closeable, AutoCloseable {
+public interface IRecordWriter extends Closeable {
     void append(ObjectNode node);
     void close();
 }

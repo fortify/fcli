@@ -70,12 +70,10 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     @Override
     public final void write(HttpRequest<?> baseRequest) {
         HttpRequest<?> request = updateRequest(baseRequest);
-        INextPageRequestProducer nextPageRequestProducer = getNextPageRequestProducer();
-        if ( nextPageRequestProducer!=null ) {
-            createOutputWriter().write(request, nextPageRequestProducer);
-        } else {
-            createOutputWriter().write(request, getNextPageUrlProducer());
-        }
+        var nextPageRequestProducer = getNextPageRequestProducer();
+        var nextPageUrlProducer = nextPageRequestProducer==null ? getNextPageUrlProducer() : null;
+        var producer = new com.fortify.cli.common.json.record.producer.RequestRecordProducer(getOutputConfig(), request, nextPageRequestProducer, nextPageUrlProducer);
+        createOutputWriter().write(producer);
     }
 
     /**
@@ -87,7 +85,8 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     @Override
     public final void write(JsonNode jsonNode) {
-        createOutputWriter().write(jsonNode);
+        var producer = new com.fortify.cli.common.json.record.producer.JsonNodeRecordProducer(getOutputConfig(), jsonNode);
+        createOutputWriter().write(producer);
     }
     
     /**
@@ -281,9 +280,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * method.
      * @return {@link IOutputWriter} instance retrieved from an {@link IOutputWriterFactory} instance
      */
-    private final IOutputWriter createOutputWriter() {
-        return getOutputWriterFactory().createOutputWriter(getOutputConfig());
-    }
+    private final IOutputWriter createOutputWriter() { return getOutputWriterFactory().createOutputWriter(getOutputConfig()); }
     
     /** 
      * This method returns an {@link StandardOutputConfig} instance that is

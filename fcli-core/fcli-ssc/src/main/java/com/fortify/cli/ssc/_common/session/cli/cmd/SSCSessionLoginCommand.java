@@ -66,11 +66,13 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
     }
 
     private void checkUrl(String url, String type) {
-        try {
-            new URL(url);
-        } catch (MalformedURLException e) {
-            throw new FcliSimpleException("Malformed %s URL - %s", type, e.getMessage());
-        }
+        if ( StringUtils.isNotBlank(url) ) {
+            try {
+                new URL(url);
+            } catch (MalformedURLException e) {
+                throw new FcliSimpleException("Malformed %s URL - %s", type, e.getMessage());
+            }
+       }
     }
 
     @Override
