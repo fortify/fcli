@@ -17,7 +17,7 @@ import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
@@ -48,7 +48,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
         } else if (isInstance(IJsonNodeSupplier.class)) {
             outputHelper.write(((IJsonNodeSupplier) this).getJsonNode());
         } else if (isInstance(ObjectNodeProducerSupplier.class)) {
-            ObjectNodeProducer rp = ((ObjectNodeProducerSupplier) this).getObjectNodeProducer();
+            IObjectNodeProducer rp = ((ObjectNodeProducerSupplier) this).getObjectNodeProducer();
             outputHelper.write(rp);
         } else {
             throw new FcliBugException(this.getClass().getName() + " must implement exactly one of " + supportedInterfaces);

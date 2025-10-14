@@ -10,14 +10,13 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.output.writer.output;
+package com.fortify.cli.common.output.cli.cmd;
 
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 
-public interface IOutputWriter {
-    /**
-     * Write records provided by the given {@link ObjectNodeProducer} to the configured output(s).
-     */
-    void write(IObjectNodeProducer recordProducer);
-
+/**
+ * Supplies an {@link ObjectNodeProducer} for streaming records.
+ */
+public interface IObjectNodeProducerSupplier {
+    IObjectNodeProducer getObjectNodeProducer();
 }

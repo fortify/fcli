@@ -13,7 +13,7 @@
 package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunner;
 import com.fortify.cli.common.output.processing.IRecordProducerConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
@@ -24,7 +24,7 @@ import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Getter;
 
-public class RequestRecordProducer implements ObjectNodeProducer {
+public class RequestRecordProducer implements IObjectNodeProducer {
     @Getter private final HttpRequest<?> initialRequest;
     @Getter private final INextPageRequestProducer nextPageRequestProducer;
     @Getter private final INextPageUrlProducer nextPageUrlProducer;
@@ -37,7 +37,7 @@ public class RequestRecordProducer implements ObjectNodeProducer {
         this.runner = new TransformationPipelineRunner(recordProducerConfig);
     }
     @Override
-    public void forEach(JsonNodeConsumers.ObjectNodeConsumer consumer) {
+    public void forEach(IObjectNodeProducer.IObjectNodeConsumer consumer) {
         if (nextPageRequestProducer != null) {
             PagingHelper.processPages(initialRequest, nextPageRequestProducer, r -> handleResponse(r, consumer));
         } else if (nextPageUrlProducer != null) {
@@ -47,5 +47,5 @@ public class RequestRecordProducer implements ObjectNodeProducer {
             initialRequest.asObject(JsonNode.class).ifSuccess(r -> handleResponse(r, consumer)).ifFailure(IfFailureHandler::handle);
         }
     }
-    private void handleResponse(HttpResponse<JsonNode> r, JsonNodeConsumers.ObjectNodeConsumer consumer) { runner.process(r.getBody(), consumer::accept); }
+    private void handleResponse(HttpResponse<JsonNode> r, IObjectNodeProducer.IObjectNodeConsumer consumer) { runner.process(r.getBody(), consumer::accept); }
 }

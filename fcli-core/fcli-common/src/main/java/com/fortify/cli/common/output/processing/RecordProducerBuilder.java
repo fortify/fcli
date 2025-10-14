@@ -14,7 +14,7 @@ package com.fortify.cli.common.output.processing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.JsonNodeRecordProducer;
 import com.fortify.cli.common.json.producer.RequestRecordProducer;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
@@ -32,16 +32,16 @@ public final class RecordProducerBuilder {
     private RecordProducerBuilder() {
     }
 
-    public static ObjectNodeProducer forRequest(StandardOutputConfig cfg, HttpRequest<?> request,
+    public static IObjectNodeProducer forRequest(StandardOutputConfig cfg, HttpRequest<?> request,
             INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
     return new RequestRecordProducer(cfg, request, nextPageRequestProducer, nextPageUrlProducer);
     }
 
-    public static ObjectNodeProducer forJsonNode(StandardOutputConfig cfg, JsonNode node) {
+    public static IObjectNodeProducer forJsonNode(StandardOutputConfig cfg, JsonNode node) {
         return JsonNodeRecordProducer.of(cfg, node);
     }
 
-    public static ObjectNodeProducer forJsonNodeHolder(StandardOutputConfig cfg, JsonNodeHolder holder) {
+    public static IObjectNodeProducer forJsonNodeHolder(StandardOutputConfig cfg, JsonNodeHolder holder) {
         return forJsonNode(cfg, holder.asJsonNode());
     }
 }

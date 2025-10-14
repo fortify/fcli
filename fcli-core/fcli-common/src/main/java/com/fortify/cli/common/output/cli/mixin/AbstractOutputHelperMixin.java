@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.processing.QueryStageConfigurator;
 import com.fortify.cli.common.output.processing.RecordProducerBuilder;
@@ -74,7 +74,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         HttpRequest<?> request = updateRequest(baseRequest);
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
-    ObjectNodeProducer producer = RecordProducerBuilder.forRequest(getOutputConfig(), request, nextPageRequestProducer,
+    IObjectNodeProducer producer = RecordProducerBuilder.forRequest(getOutputConfig(), request, nextPageRequestProducer,
                 nextPageUrlProducer);
         createOutputWriter().write(producer);
     }
@@ -88,7 +88,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     @Override
     public final void write(JsonNode jsonNode) {
-    ObjectNodeProducer producer = RecordProducerBuilder.forJsonNode(getOutputConfig(), jsonNode);
+    IObjectNodeProducer producer = RecordProducerBuilder.forJsonNode(getOutputConfig(), jsonNode);
         createOutputWriter().write(producer);
     }
 
@@ -104,7 +104,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
 
     /** Write records produced by the given producer using the configured output writer. */
     @Override
-    public final void write(ObjectNodeProducer recordProducer) {
+    public final void write(IObjectNodeProducer recordProducer) {
         createOutputWriter().write(recordProducer);
     }
 

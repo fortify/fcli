@@ -10,14 +10,17 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.output.writer.output;
+package com.fortify.cli.common.json.producer;
 
-import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.util.Break;
 
-public interface IOutputWriter {
-    /**
-     * Write records provided by the given {@link ObjectNodeProducer} to the configured output(s).
-     */
-    void write(IObjectNodeProducer recordProducer);
+/**
+ * Combined producer/consumer interfaces for iterating over generic {@link JsonNode} instances.
+ */
+public interface IJsonNodeProducer {
+    void forEach(IJsonNodeConsumer consumer);
 
+    @FunctionalInterface
+    interface IJsonNodeConsumer { Break accept(JsonNode node); }
 }

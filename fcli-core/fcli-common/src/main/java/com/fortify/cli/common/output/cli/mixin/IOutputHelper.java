@@ -14,7 +14,7 @@ package com.fortify.cli.common.output.cli.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.writer.IBasicOutputConfigSupplier;
 import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
@@ -26,5 +26,5 @@ public interface IOutputHelper extends IBasicOutputConfigSupplier, IOutputWriter
     void write(HttpRequest<?> baseRequest);
     void write(JsonNodeHolder jsonNodeHolder);
     void write(JsonNode jsonNode);
-    void write(ObjectNodeProducer recordProducer);
+    void write(IObjectNodeProducer recordProducer);
 }

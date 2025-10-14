@@ -13,14 +13,14 @@
 package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunner;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class JsonNodeRecordProducer implements ObjectNodeProducer {
+public class JsonNodeRecordProducer implements IObjectNodeProducer {
     @Getter private final StandardOutputConfig recordProducerConfig;
     private final JsonNode jsonNode;
     private final TransformationPipelineRunner runner;
@@ -31,6 +31,6 @@ public class JsonNodeRecordProducer implements ObjectNodeProducer {
         this.runner = new TransformationPipelineRunner(recordProducerConfig);
     }
     @Override
-    public void forEach(JsonNodeConsumers.ObjectNodeConsumer consumer) { runner.process(jsonNode, consumer::accept); }
+    public void forEach(IObjectNodeProducer.IObjectNodeConsumer consumer) { runner.process(jsonNode, consumer::accept); }
     public JsonNode jsonNode() { return jsonNode; }
 }

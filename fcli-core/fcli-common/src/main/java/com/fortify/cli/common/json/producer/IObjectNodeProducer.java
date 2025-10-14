@@ -12,11 +12,15 @@
  */
 package com.fortify.cli.common.json.producer;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.util.Break;
+
 /**
- *
- * @author Ruud Senden
+ * Combined producer/consumer interfaces for iterating over {@link ObjectNode} instances.
  */
-@FunctionalInterface
-public interface IRecordProducer {
-    void forEach(IRecordConsumer consumer);
+public interface IObjectNodeProducer {
+    void forEach(IObjectNodeConsumer consumer);
+
+    @FunctionalInterface
+    interface IObjectNodeConsumer { Break accept(ObjectNode node); }
 }

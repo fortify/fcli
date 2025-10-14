@@ -13,8 +13,8 @@
 package com.fortify.cli.common.output.writer.output.query;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.producer.JsonNodeConsumers.ObjectNodeConsumer;
-import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer.IObjectNodeConsumer;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputWriterWithQueryFactoryMixin;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
@@ -46,7 +46,7 @@ public class OutputWriterWithQuery implements IOutputWriter {
         this.queryExpressionSupplier = queryExpressionSupplier;
     }
     @Override
-    public void write(ObjectNodeProducer recordProducer) {
+    public void write(IObjectNodeProducer recordProducer) {
         QueryExpression qe = queryExpressionSupplier.getQueryExpression();
         if (qe == null) {
             delegate.write(recordProducer);
@@ -54,7 +54,7 @@ public class OutputWriterWithQuery implements IOutputWriter {
             delegate.write(c -> recordProducer.forEach(filteringConsumer(qe, c)));
         }
     }
-    private ObjectNodeConsumer filteringConsumer(QueryExpression qe, ObjectNodeConsumer consumer) {
+    private IObjectNodeConsumer filteringConsumer(QueryExpression qe, IObjectNodeConsumer consumer) {
         return record -> {
             JsonNode node = record; // ObjectNode extends JsonNode
             return qe.matches(node) ? consumer.accept(record) : com.fortify.cli.common.util.Break.FALSE;

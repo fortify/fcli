@@ -10,14 +10,14 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.json.producer;
+package com.fortify.cli.common.json.producer.pipeline;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer.IObjectNodeConsumer;
 import com.fortify.cli.common.output.processing.IRecordProducerConfig;
 import com.fortify.cli.common.util.Break;
 
@@ -27,19 +27,19 @@ import com.fortify.cli.common.util.Break;
  * respect to page index progression, so they should not be shared across different
  * logical producer instances.
  */
-final class TransformationPipelineRunner {
+public final class TransformationPipelineRunner {
     private static final ObjectMapper OM = new ObjectMapper();
     private final IRecordProducerConfig cfg;
     private boolean stopRequested; // default false
     private long currentPageIndex; // default 0
-    TransformationPipelineRunner(IRecordProducerConfig cfg) { this.cfg = cfg; }
+    public TransformationPipelineRunner(IRecordProducerConfig cfg) { this.cfg = cfg; }
 
-    public void process(JsonNode rawInput, IRecordConsumer consumer) {
+    public void process(JsonNode rawInput, IObjectNodeConsumer consumer) {
         if (stopRequested) { return; }
         processRawInput(rawInput, consumer, context(false, currentPageIndex++));
     }
 
-    private void processRawInput(JsonNode rawInput, IRecordConsumer consumer, PipelineContext baseCtx) {
+    private void processRawInput(JsonNode rawInput, IObjectNodeConsumer consumer, PipelineContext baseCtx) {
         JsonNode transformed = cfg.applyInputTransformations(rawInput);
         transformed = applyStages(cfg.inputStages(), transformed, baseCtx);
         if (stopRequested || transformed == null) { return; }
@@ -56,7 +56,7 @@ final class TransformationPipelineRunner {
         }
     }
 
-    private Break processPotentialRecord(JsonNode node, IRecordConsumer consumer, PipelineContext ctx) {
+    private Break processPotentialRecord(JsonNode node, IObjectNodeConsumer consumer, PipelineContext ctx) {
         if (node == null) { return Break.FALSE; }
         JsonNode record = cfg.applyRecordTransformations(node);
         if (record == null) { return Break.FALSE; }
