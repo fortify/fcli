@@ -101,6 +101,15 @@ allprojects {
                 )
             }
         }
+        // Optionally auto-apply formatting when -PautoFormat=true (or property set in gradle.properties)
+        val autoFormat = (findProperty("autoFormat") as String?)?.toBoolean() == true
+        if (autoFormat) {
+            // Ensure spotlessApply runs before any Java compilation tasks in this project
+            tasks.matching { it.name == "spotlessApply" }.configureEach {
+                // no-op placeholder for potential logging
+            }
+            tasks.withType<JavaCompile>().configureEach { dependsOn("spotlessApply") }
+        }
     }
     tasks.register("createDistDir") {
         doFirst {
