@@ -16,13 +16,17 @@ import com.fortify.cli.common.util.Break;
  * input {@link JsonNode} objects (for example a single JsonNode or multiple paged
  * request responses) by invoking {@link #produceRawInputs(RawInputConsumer)}.
  */
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * Abstract base for building record producers that apply configured input & record transformations.
+ * Subclasses use Lombok-generated builders for easier manual construction.
+ */
+@SuperBuilder
 public abstract class AbstractTransformingRecordProducer implements IRecordProducer {
-    protected final StandardOutputConfig outputConfig;
+    @Getter protected final StandardOutputConfig outputConfig;
     private static final ObjectMapper OM = new ObjectMapper();
-    
-    protected AbstractTransformingRecordProducer(StandardOutputConfig outputConfig) {
-        this.outputConfig = outputConfig;
-    }
     
     @Override
     public final void forEach(IRecordConsumer consumer) {

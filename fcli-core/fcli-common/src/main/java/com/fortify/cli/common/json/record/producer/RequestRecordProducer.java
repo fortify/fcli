@@ -1,7 +1,6 @@
 package com.fortify.cli.common.json.record.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
@@ -9,18 +8,14 @@ import com.fortify.cli.common.rest.unirest.IfFailureHandler;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
+@SuperBuilder
 public class RequestRecordProducer extends AbstractTransformingRecordProducer {
-    private final HttpRequest<?> initialRequest;
-    private final INextPageRequestProducer nextPageRequestProducer;
-    private final INextPageUrlProducer nextPageUrlProducer;
-    
-    public RequestRecordProducer(StandardOutputConfig outputConfig, HttpRequest<?> initialRequest, INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
-        super(outputConfig);
-        this.initialRequest = initialRequest;
-        this.nextPageRequestProducer = nextPageRequestProducer;
-        this.nextPageUrlProducer = nextPageUrlProducer;
-    }
+    @Getter private final HttpRequest<?> initialRequest;
+    @Getter private final INextPageRequestProducer nextPageRequestProducer;
+    @Getter private final INextPageUrlProducer nextPageUrlProducer;
     
     @Override
     protected void produceRawInputs(RawInputConsumer consumer) {

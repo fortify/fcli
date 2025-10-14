@@ -36,6 +36,9 @@ import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.record.producer.JsonNodeRecordProducer;
+import com.fortify.cli.common.json.record.producer.RequestRecordProducer;
+import com.fortify.cli.common.output.transform.QueryExpressionRecordFilter;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
@@ -72,8 +75,13 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         HttpRequest<?> request = updateRequest(baseRequest);
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer==null ? getNextPageUrlProducer() : null;
-        var producer = new com.fortify.cli.common.json.record.producer.RequestRecordProducer(getOutputConfig(), request, nextPageRequestProducer, nextPageUrlProducer);
-        createOutputWriter().write(producer);
+    IRecordProducer producer = RequestRecordProducer.builder()
+        .outputConfig(getOutputConfig())
+        .initialRequest(request)
+        .nextPageRequestProducer(nextPageRequestProducer)
+        .nextPageUrlProducer(nextPageUrlProducer)
+        .build();
+    createOutputWriter().write(producer);
     }
 
     /**
@@ -85,8 +93,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     @Override
     public final void write(JsonNode jsonNode) {
-        var producer = new com.fortify.cli.common.json.record.producer.JsonNodeRecordProducer(getOutputConfig(), jsonNode);
-        createOutputWriter().write(producer);
+    IRecordProducer producer = JsonNodeRecordProducer.builder()
+        .outputConfig(getOutputConfig())
+        .jsonNode(jsonNode)
+        .build();
+    createOutputWriter().write(producer);
     }
     
     /**
@@ -295,6 +306,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         StandardOutputConfig standardOutputConfig = getBasicOutputConfig(cmd);
         addInputTransformersForCommand(standardOutputConfig, cmd);
         addRecordTransformersForCommand(standardOutputConfig, cmd);
+        // Integrate query filtering as a record transformer (Option A)
+        commandHelper.getCommandAs(com.fortify.cli.common.spel.query.IQueryExpressionSupplier.class)
+            .map(com.fortify.cli.common.spel.query.IQueryExpressionSupplier::getQueryExpression)
+            .filter(qe->qe!=null)
+            .ifPresent(qe->standardOutputConfig.recordTransformer(new QueryExpressionRecordFilter(qe)::transformRecord));
         addCommandActionResultRecordTransformer(standardOutputConfig, cmd);
         return standardOutputConfig;
     }

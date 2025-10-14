@@ -36,10 +36,9 @@ public class StandardOutputConfig {
         return this;
     }
     
-    public final StandardOutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
-        recordTransformers.add(transformer);
-        return this;
-    }
+    public final StandardOutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) { recordTransformers.add(transformer); return this; }
+    // Convenience for adding any Function<JsonNode,JsonNode>
+    public final StandardOutputConfig recordTransformer(Function<JsonNode,JsonNode> transformer) { recordTransformers.add(transformer); return this; }
     
     public final JsonNode applyInputTransformations(JsonNode input) {
         return applyTransformations(inputTransformers, input);
