@@ -15,7 +15,6 @@ package com.fortify.cli.common.rest.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
-import com.fortify.cli.common.output.processing.RecordProducerBuilder;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
@@ -59,8 +58,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, arrayNode -> {
                         var cfg = outputHelper.getBasicOutputConfig();
                         var writerFactory = outputHelper.getOutputWriterFactory();
-                        var pipelineCfg = transformationPipelineRunnerConfigFactoryMixin.getPipelineConfig(writerFactory);
-                        var producer = RecordProducerBuilder.forJsonNode(cfg, pipelineCfg, arrayNode);
+                        var producer = transformationPipelineRunnerConfigFactoryMixin.createProducerForJsonNode(cfg, arrayNode, writerFactory);
                         transformationPipelineRunnerConfigFactoryMixin.writeProducer(cfg, producer, writerFactory);
                     })
             ).build().wait(unirest);

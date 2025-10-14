@@ -33,12 +33,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     @Mixin
     private CommandHelperMixin commandHelper;
 
+    // TODO This should move to TransformationPipelineConfigFactoryMixin (after rename)
     public IProductHelper getProductHelper() {
         return commandHelper.getCommandAs(IProductHelperSupplier.class).map(IProductHelperSupplier::getProductHelper)
                 .orElse(NoOpProductHelper.instance());
     }
-
-    // No write methods; transformation & request handling moved to TransformationPipelineRunnerConfigFactoryMixin.
 
     /**
      * This default implementation of {@link IOutputHelper#getBasicOutputConfig()}
@@ -80,45 +79,6 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
 
     /**
-     * This method retrieves an {@link IOutputWriterFactory} by calling the
-     * {@link #getOutputWriterFactory()} method, then returns the
-     * {@link IOutputWriter} returned by the
-     * {@link IOutputWriterFactory#createOutputWriter(StandardOutputConfig)} method.
-     *
-     * @return {@link IOutputWriter} instance retrieved from an
-     *         {@link IOutputWriterFactory} instance
-     */
-    // Writer creation no longer used within this mixin; subclasses interact through StandardOutputConfig only.
-
-    /**
-     * Return the effective {@link StandardOutputConfig} used purely for output formatting.
-     * <p>
-     * Transformation (input & record) concerns have been moved to the separate
-     * {@link TransformationPipelineRunnerConfig} constructed in {@link #getPipelineConfig()}.
-     * This method now only resolves (and if necessary derives) the formatting-related
-     * configuration starting from a command-specific basic configuration.
-     * </p>
-     *
-     * @return formatting configuration (never null)
-     */
-    // No local usage; formatting config resolved externally where needed.
-
-    /**
-     * If the command being invoked implements {@link IBasicOutputConfigSupplier},
-     * the {@link IBasicOutputConfigSupplier#getBasicOutputConfig()} method is
-     * called on the command to retrieve the command-specific basic output
-     * configuration. If the command doesn't implement
-     * {@link IBasicOutputConfigSupplier}, or if the
-     * {@link IBasicOutputConfigSupplier#getBasicOutputConfig()} method provided by
-     * the command returns null, the {@link #getBasicOutputConfig()} method in this
-     * class will be called to retrieve the basic output configuration.
-     *
-     * @param cmd
-     * @return
-     */
-    // getBasicOutputConfig(Object) no longer required; direct calls to getBasicOutputConfig() expected externally.
-
-    /**
      * Utility method for applying the given function on the given object and
      * returning the result, if the given object is an instance of the given type.
      * If the given object is not of the given type, or if the provided function
@@ -138,21 +98,4 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         if (defaultValueSupplier != null) { result = result.or(() -> Optional.of(defaultValueSupplier.get())); }
         return result.orElse(null);
     }
-
-    /**
-     * Utility method for applying the given function on the given object and
-     * returning the result, if the given object is an instance of the given type.
-     * If the given object is not of the given type, or if the provided function
-     * returns null, this method returns the provided default value.
-     *
-     * @param <T>
-     * @param <R>
-     * @param obj
-     * @param type
-     * @param function
-     * @param defaultValue
-     * @return
-     */
-    // Utility left for existing basic config resolution only
-
 }

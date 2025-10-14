@@ -74,6 +74,15 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     public final void writeProducer(StandardOutputConfig outputCfg, IObjectNodeProducer producer, IOutputWriterFactory outputWriterFactory) {
         createOutputWriter(outputWriterFactory, outputCfg).write(producer);
     }
+    public final void writeJsonNode(StandardOutputConfig outputCfg, JsonNode node, IOutputWriterFactory outputWriterFactory) {
+        writeProducer(outputCfg, createProducerForJsonNode(outputCfg, node, outputWriterFactory), outputWriterFactory);
+    }
+    public final IObjectNodeProducer createProducerForJsonNode(StandardOutputConfig outputCfg, JsonNode node, IOutputWriterFactory outputWriterFactory) {
+        return RecordProducerBuilder.forJsonNode(outputCfg, getPipelineConfig(outputWriterFactory), node);
+    }
+    public final IObjectNodeProducer createProducerForJsonNodeHolder(StandardOutputConfig outputCfg, com.fortify.cli.common.json.JsonNodeHolder holder, IOutputWriterFactory outputWriterFactory) {
+        return RecordProducerBuilder.forJsonNodeHolder(outputCfg, getPipelineConfig(outputWriterFactory), holder);
+    }
 
     // ----- Pipeline Config -----
     public final TransformationPipelineRunnerConfig getPipelineConfig(IOutputWriterFactory outputWriterFactory) {

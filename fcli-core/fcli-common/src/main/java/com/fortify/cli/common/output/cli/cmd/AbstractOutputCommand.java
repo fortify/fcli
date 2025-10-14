@@ -54,8 +54,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
         if (isInstance(IBaseRequestSupplier.class)) {
             pipelineMixin.writeRequest(outputCfg, ((IBaseRequestSupplier) this).getBaseRequest(), writerFactory);
         } else if (isInstance(IJsonNodeSupplier.class)) {
-            var producer = com.fortify.cli.common.output.processing.RecordProducerBuilder.forJsonNode(outputCfg, pipelineMixin.getPipelineConfig(writerFactory), ((IJsonNodeSupplier) this).getJsonNode());
-            pipelineMixin.writeProducer(outputCfg, producer, writerFactory);
+            pipelineMixin.writeJsonNode(outputCfg, ((IJsonNodeSupplier) this).getJsonNode(), writerFactory);
         } else if (isInstance(ObjectNodeProducerSupplier.class)) {
             IObjectNodeProducer rp = ((ObjectNodeProducerSupplier) this).getObjectNodeProducer();
             // Provided producer assumed already constructed with correct pipeline config elsewhere; if not, wrap?
