@@ -17,7 +17,7 @@ import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
+import com.fortify.cli.common.json.transform.PropertyPathFormatter;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.util.Counter;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVersionDescriptor;

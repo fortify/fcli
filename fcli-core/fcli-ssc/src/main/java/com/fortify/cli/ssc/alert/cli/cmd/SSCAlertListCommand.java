@@ -13,9 +13,9 @@
 package com.fortify.cli.ssc.alert.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;

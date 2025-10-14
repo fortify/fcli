@@ -37,10 +37,13 @@ import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.util.AppendOnCloseWriterWrapper;
 import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
+import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.record.IRecordConsumer;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IfFailureHandler;
+import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -152,6 +155,19 @@ public class StandardOutputWriter implements IOutputWriter {
             writeRecords(recordWriter, httpResponse);
         }
     }
+
+    /**
+     * Write records produced by the given {@link IRecordProducer} instance.
+     * Input transformations are NOT applied (as the producer is assumed to already
+     * provide individual records). Record transformations & filters ARE applied.
+     */
+    @Override
+    public void write(IRecordProducer recordProducer) {
+        if ( recordProducer==null ) { return; }
+        try ( IRecordWriter recordWriter = new OutputAndVariableRecordWriter() ) {
+            writeRecords(recordWriter, recordProducer);
+        }
+    }
     
     /**
      * Write records returned by the given {@link HttpRequest} to the given
@@ -225,6 +241,16 @@ public class StandardOutputWriter implements IOutputWriter {
     }
 
     /**
+     * Write records produced by the given {@link IRecordProducer} to the given {@link IRecordWriter}.
+     * No input transformations are applied; record transformations & output filters are applied per record.
+     * @param recordWriter Destination writer
+     * @param recordProducer Source of records
+     */
+    private final void writeRecords(IRecordWriter recordWriter, IRecordProducer recordProducer) {
+        recordProducer.forEach(r->writeRecord(recordWriter, r));
+    }
+
+    /**
      * Transform the given {@link JsonNode} using the configured record transformers and filters, 
      * then write the transformed record to the given {@link IRecordWriter}. If the transformed 
      * record is null or an empty array, nothing will be written. If the transformed record is a 
@@ -234,7 +260,7 @@ public class StandardOutputWriter implements IOutputWriter {
      * @param record
      */
     @SneakyThrows // TODO Do we want to use SneakyThrows?
-    private final void writeRecord(IRecordWriter recordWriter, JsonNode record) {
+    private final Break writeRecord(IRecordWriter recordWriter, JsonNode record) {
         // TODO Add null checks in case any input or record transformation returns null?
         record = record==null ? null : outputConfig.applyRecordTransformations(record);
         record = record==null ? null : applyRecordOutputFilters(record);
@@ -247,6 +273,7 @@ public class StandardOutputWriter implements IOutputWriter {
             default: throw new FcliBugException("Invalid node type: "+nodeType);
             }
         }
+        return Break.FALSE;
     }
     
     /**

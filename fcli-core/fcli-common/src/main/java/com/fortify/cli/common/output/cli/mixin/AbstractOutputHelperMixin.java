@@ -23,18 +23,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.product.NoOpProductHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.output.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.writer.IBasicOutputConfigSupplier;
 import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.json.record.IRecordProducer;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
@@ -97,6 +98,15 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     @Override
     public final void write(JsonNodeHolder jsonNodeHolder) {
         write(jsonNodeHolder.asJsonNode());
+    }
+
+    /**
+     * Write records produced by the given {@link IRecordProducer} instance using the configured output writer.
+     * @param recordProducer
+     */
+    @Override
+    public final void write(IRecordProducer recordProducer) {
+        createOutputWriter().write(recordProducer);
     }
     
     /**

@@ -10,14 +10,11 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.transform.identity;
+package com.fortify.cli.common.json.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
 
-public class IdentityTransformer implements IJsonNodeTransformer {
-    @Override
-    public JsonNode transform(JsonNode input) {
-        return input;
-    }
+@FunctionalInterface
+public interface IJsonNodeTransformer {
+    public JsonNode transform(JsonNode input);
 }

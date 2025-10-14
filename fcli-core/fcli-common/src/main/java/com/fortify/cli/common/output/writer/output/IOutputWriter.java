@@ -15,6 +15,7 @@ package com.fortify.cli.common.output.writer.output;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
+import com.fortify.cli.common.json.record.IRecordProducer;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
@@ -30,5 +31,13 @@ public interface IOutputWriter {
     void write(HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer);
 
     void write(HttpResponse<JsonNode> httpResponse);
+
+    /**
+     * Write records provided by the given {@link IRecordProducer} to the configured output(s).
+     * Implementations are expected to apply record transformations & filters similarly to
+     * how individual records from a Json array/object are processed.
+     * @param recordProducer {@link IRecordProducer} supplying records
+     */
+    void write(IRecordProducer recordProducer);
 
 }

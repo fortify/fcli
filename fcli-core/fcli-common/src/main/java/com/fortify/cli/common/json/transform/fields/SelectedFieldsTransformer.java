@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.output.transform.fields;
+package com.fortify.cli.common.json.transform.fields;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.AbstractJsonNodeTransformer;
 
 public final class SelectedFieldsTransformer extends AbstractJsonNodeTransformer {
     private static final JsonNode NA_NODE = new TextNode("N/A");

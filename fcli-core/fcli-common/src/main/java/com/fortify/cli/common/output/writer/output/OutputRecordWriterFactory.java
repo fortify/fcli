@@ -18,8 +18,8 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.cli.common.json.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;

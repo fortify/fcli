@@ -17,6 +17,7 @@ import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.writer.IBasicOutputConfigSupplier;
 import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
+import com.fortify.cli.common.json.record.IRecordProducer;
 
 import kong.unirest.HttpRequest;
 
@@ -25,4 +26,5 @@ public interface IOutputHelper extends IBasicOutputConfigSupplier, IOutputWriter
     void write(HttpRequest<?> baseRequest);
     void write(JsonNodeHolder jsonNodeHolder);
     void write(JsonNode jsonNode);
+    void write(IRecordProducer recordProducer);
 }

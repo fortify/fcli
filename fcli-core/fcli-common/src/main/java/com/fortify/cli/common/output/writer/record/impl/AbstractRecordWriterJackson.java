@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
+import com.fortify.cli.common.json.transform.PropertyPathFormatter;
 
 import lombok.RequiredArgsConstructor;
 

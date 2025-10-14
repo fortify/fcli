@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.transform.flatten;
+package com.fortify.cli.common.json.transform.flatten;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.AbstractJsonNodeTransformer;
 
 import lombok.RequiredArgsConstructor;
 

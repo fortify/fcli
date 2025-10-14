@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.transform;
+package com.fortify.cli.common.json.transform;
 
 import java.util.function.Function;
 

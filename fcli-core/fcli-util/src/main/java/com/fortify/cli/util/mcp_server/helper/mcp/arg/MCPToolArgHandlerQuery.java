@@ -24,8 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
-import com.fortify.cli.common.output.transform.fields.SelectedFieldsTransformer;
+import com.fortify.cli.common.json.transform.PropertyPathFormatter;
+import com.fortify.cli.common.json.transform.fields.SelectedFieldsTransformer;
 import com.networknt.schema.utils.StringUtils;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;

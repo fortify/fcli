@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
 
 import kong.unirest.UnirestInstance;
 

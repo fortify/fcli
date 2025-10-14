@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+/**
+ * Copyright 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -9,12 +9,14 @@
  * liable for technical or editorial errors or omissions contained 
  * herein. The information contained herein is subject to change 
  * without notice.
- *******************************************************************************/
-package com.fortify.cli.common.output.transform;
+ */
+package com.fortify.cli.common.json.record;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
+/**
+ *
+ * @author Ruud Senden
+ */
 @FunctionalInterface
-public interface IJsonNodeTransformer {
-    public JsonNode transform(JsonNode input);
+public interface IRecordProducer {
+    void forEach(IRecordConsumer consumer);
 }

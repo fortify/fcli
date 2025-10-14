@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.output.transform.fields;
+package com.fortify.cli.common.json.transform.fields;
 
 import java.util.Collections;
 import java.util.Map;
@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
-import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.AbstractJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
 
 /**
  * This {@link IJsonNodeTransformer} allows for renaming fields in JSON objects or arrays.

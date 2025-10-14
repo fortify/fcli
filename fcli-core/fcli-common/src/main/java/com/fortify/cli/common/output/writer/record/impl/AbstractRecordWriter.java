@@ -19,8 +19,8 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.transform.fields.SelectedFieldsTransformer;
-import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
+import com.fortify.cli.common.json.transform.fields.SelectedFieldsTransformer;
+import com.fortify.cli.common.json.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 
