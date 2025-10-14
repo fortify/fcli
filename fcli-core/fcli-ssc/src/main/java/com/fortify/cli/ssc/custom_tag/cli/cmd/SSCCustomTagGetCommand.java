@@ -17,6 +17,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc.custom_tag.cli.mixin.SSCCustomTagResolverMixin;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDescriptor;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;

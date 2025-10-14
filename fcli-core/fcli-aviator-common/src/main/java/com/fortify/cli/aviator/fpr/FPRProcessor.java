@@ -12,6 +12,13 @@
  */
 package com.fortify.cli.aviator.fpr;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
@@ -21,15 +28,8 @@ import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.fpr.processor.FilterTemplateParser;
 import com.fortify.cli.aviator.util.FprHandle;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import lombok.Getter;
 
 public class FPRProcessor {
 

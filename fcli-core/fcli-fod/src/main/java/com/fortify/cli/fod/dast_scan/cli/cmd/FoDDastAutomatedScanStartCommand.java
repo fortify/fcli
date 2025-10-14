@@ -24,8 +24,8 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
 public class FoDDastAutomatedScanStartCommand extends AbstractFoDScanStartCommand {

@@ -13,6 +13,14 @@
 package com.fortify.cli.aviator.fpr.filter.engine;
 
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.fortify.cli.aviator.fpr.filter.AttributeMapper;
 import com.fortify.cli.aviator.fpr.filter.SearchQuery;
 import com.fortify.cli.aviator.fpr.filter.SearchTree;
@@ -23,14 +31,6 @@ import com.fortify.cli.aviator.fpr.filter.comparer.IsNotSearchComparer;
 import com.fortify.cli.aviator.fpr.filter.comparer.NumberRangeComparer;
 import com.fortify.cli.aviator.fpr.filter.comparer.RegexComparer;
 import com.fortify.cli.aviator.fpr.filter.comparer.SearchComparer;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class FilterParser {
 

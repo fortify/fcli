@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.config;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Data;
 
 @Data @Reflectable

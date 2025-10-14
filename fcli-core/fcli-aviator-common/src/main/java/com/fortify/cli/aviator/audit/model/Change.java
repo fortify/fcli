@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.audit.model;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -12,10 +12,11 @@
  */
 package com.fortify.cli.fod._common.rest.query.cli.mixin;
 
+import org.springframework.expression.Expression;
+
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.rest.query.cli.mixin.AbstractServerSideQueryMixin;
 
-import org.springframework.expression.Expression;
 import picocli.CommandLine.Option;
 
 public class FoDFiltersParamMixin extends AbstractServerSideQueryMixin {

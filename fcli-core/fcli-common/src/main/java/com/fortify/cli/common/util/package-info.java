@@ -3,4 +3,3 @@
  * usually shouldn't depend on any other fcli functionality or packages. 
  */
 package com.fortify.cli.common.util;
-

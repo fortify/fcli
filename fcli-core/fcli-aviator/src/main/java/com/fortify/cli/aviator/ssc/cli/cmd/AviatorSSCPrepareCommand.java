@@ -13,8 +13,8 @@
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.aviator.ssc.helper.AviatorSSCPrepareHelper;
 import com.fortify.cli.aviator.ssc.cli.mixin.AviatorSSCPrepareOptionsMixin;
+import com.fortify.cli.aviator.ssc.helper.AviatorSSCPrepareHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;

@@ -11,12 +11,13 @@
  * without notice.
  */
 package com.fortify.cli.aviator.audit.model;
-import com.fortify.cli.aviator.config.IAviatorLogger;
+import java.util.List;
 
+import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.util.FprHandle;
+
 import lombok.Builder;
 import lombok.Getter;
-import java.util.List;
 
 @Getter
 @Builder

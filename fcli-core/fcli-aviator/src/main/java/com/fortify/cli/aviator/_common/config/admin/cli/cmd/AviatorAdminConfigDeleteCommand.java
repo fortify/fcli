@@ -17,7 +17,7 @@ import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigDes
 import com.fortify.cli.aviator._common.config.admin.helper.AviatorAdminConfigHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
-import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier; // Import ISessionNameSupplier
+import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;

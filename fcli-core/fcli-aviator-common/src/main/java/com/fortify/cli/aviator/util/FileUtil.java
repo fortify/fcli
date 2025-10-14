@@ -25,9 +25,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 public final class FileUtil {
 

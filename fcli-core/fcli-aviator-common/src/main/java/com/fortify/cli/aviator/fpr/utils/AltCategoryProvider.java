@@ -12,11 +12,11 @@
  */
 package com.fortify.cli.aviator.fpr.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provider for alternative category mappings and fallback meta values (accuracy, impact, probability, remediation).

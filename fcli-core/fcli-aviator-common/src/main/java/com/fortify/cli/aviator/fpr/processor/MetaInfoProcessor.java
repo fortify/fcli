@@ -12,14 +12,15 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
-import com.fortify.cli.aviator.fpr.jaxb.EngineData;
-import com.fortify.cli.aviator.fpr.jaxb.MetaInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator.fpr.jaxb.EngineData;
+import com.fortify.cli.aviator.fpr.jaxb.MetaInfo;
 
 /**
  * Processor for extracting and caching ALL meta information from FVDL EngineData/RuleInfo.

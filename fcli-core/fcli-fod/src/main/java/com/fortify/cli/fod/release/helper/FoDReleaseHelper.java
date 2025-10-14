@@ -17,28 +17,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
-import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
-import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
-import kong.unirest.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
+import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
+import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
+import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 public class FoDReleaseHelper {
     private static final Log LOG = LogFactory.getLog(FoDReleaseHelper.class);

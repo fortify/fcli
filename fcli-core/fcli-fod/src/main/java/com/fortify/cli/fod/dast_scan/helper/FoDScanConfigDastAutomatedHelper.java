@@ -12,6 +12,10 @@
  */
 package com.fortify.cli.fod.dast_scan.helper;
 
+import java.util.ArrayList;
+
+import org.springframework.beans.BeanUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -21,9 +25,6 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
-import org.springframework.beans.BeanUtils;
-
-import java.util.ArrayList;
 
 public class FoDScanConfigDastAutomatedHelper {
     public static FoDScanConfigDastAutomatedDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {

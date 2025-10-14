@@ -12,11 +12,11 @@
  */
 package com.fortify.cli.aviator.fpr.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for search operations, such as string contains/matches and pattern matching.

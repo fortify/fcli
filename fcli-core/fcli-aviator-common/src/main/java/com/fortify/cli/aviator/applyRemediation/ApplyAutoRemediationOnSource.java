@@ -12,14 +12,15 @@
  */
 package com.fortify.cli.aviator.applyRemediation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor;
 import com.fortify.cli.aviator.fpr.processor.RemediationProcessor.RemediationMetric;
 import com.fortify.cli.aviator.util.FprHandle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class ApplyAutoRemediationOnSource {

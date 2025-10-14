@@ -12,6 +12,14 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator.fpr.jaxb.AuxiliaryData;
 import com.fortify.cli.aviator.fpr.jaxb.Entry;
 import com.fortify.cli.aviator.fpr.jaxb.ExternalEntries;
@@ -19,13 +27,6 @@ import com.fortify.cli.aviator.fpr.jaxb.ExternalID;
 import com.fortify.cli.aviator.fpr.jaxb.Field;
 import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
 import com.fortify.cli.aviator.fpr.jaxb.Vulnerability;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Processor for AuxiliaryData and ExternalEntries in FVDL Vulnerability.

@@ -13,13 +13,15 @@
 package com.fortify.cli.ssc.custom_tag.cli.mixin;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagDescriptor;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import com.fortify.cli.common.cli.util.EnvSuffix;
 
 public class SSCCustomTagResolverMixin {
     private static abstract class AbstractSSCCustomTagResolverMixin {

@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.List;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

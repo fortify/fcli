@@ -12,12 +12,12 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fortify.cli.aviator.fpr.jaxb.ReplacementDefinitions;
 import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
 import com.fortify.cli.aviator.fpr.model.ReplacementData;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Parses the <ReplacementDefinitions> section of a vulnerability's AnalysisInfo

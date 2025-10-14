@@ -12,12 +12,13 @@
  */
 package com.fortify.cli.aviator.fpr.utils;
 
-import com.fortify.cli.aviator.fpr.jaxb.EngineData;
-import com.fortify.cli.aviator.fpr.jaxb.MetaInfo;
+import java.math.BigDecimal;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
+import com.fortify.cli.aviator.fpr.jaxb.EngineData;
+import com.fortify.cli.aviator.fpr.jaxb.MetaInfo;
 
 /**
  * Utility class for XML-related operations, such as safe parsing of numbers

@@ -12,7 +12,10 @@
  */
 package com.fortify.cli.ssc.custom_tag.cli.cmd;
 
+import java.util.LinkedHashMap;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -28,9 +31,6 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.LinkedHashMap;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class SSCCustomTagUpdateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {

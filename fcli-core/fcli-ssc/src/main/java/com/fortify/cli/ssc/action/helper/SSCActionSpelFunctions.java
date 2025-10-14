@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.ssc.action.helper;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
+
 import java.io.InputStream;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -43,8 +45,6 @@ import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFi
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFileTransferTokenType;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
-
-import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
 
 import kong.unirest.RawResponse;
 import kong.unirest.UnirestInstance;

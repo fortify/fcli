@@ -12,8 +12,11 @@
  */
 package com.fortify.cli.aviator.ssc.helper;
 
+import java.util.ArrayList;
 import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
@@ -21,8 +24,6 @@ import kong.unirest.UnirestInstance;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import java.util.ArrayList;
-import com.fortify.cli.common.json.JsonHelper;
 
 @RequiredArgsConstructor
 public class AviatorSSCPrepareHelper {

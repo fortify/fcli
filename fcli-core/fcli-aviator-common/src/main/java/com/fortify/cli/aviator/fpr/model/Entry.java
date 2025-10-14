@@ -12,13 +12,14 @@
  */
 package com.fortify.cli.aviator.fpr.model;
 
-import com.fortify.cli.aviator.fpr.jaxb.Function;
-import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fortify.cli.aviator.fpr.jaxb.Function;
+import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Represents an ExternalEntries Entry from FVDL, containing URL, fields, function, and location.

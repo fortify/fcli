@@ -12,6 +12,12 @@
  */
 package com.fortify.cli.fod.issue.helper;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -28,16 +34,12 @@ import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueIncludeMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
+
 import io.micrometer.common.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class FoDIssueHelper {
     private static final Log LOG = LogFactory.getLog(FoDIssueHelper.class);

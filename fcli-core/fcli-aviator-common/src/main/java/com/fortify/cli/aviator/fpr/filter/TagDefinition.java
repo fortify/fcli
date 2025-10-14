@@ -12,13 +12,12 @@
  */
 package com.fortify.cli.aviator.fpr.filter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter

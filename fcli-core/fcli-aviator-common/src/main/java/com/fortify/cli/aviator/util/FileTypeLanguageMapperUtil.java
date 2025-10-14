@@ -12,10 +12,11 @@
  */
 package com.fortify.cli.aviator.util;
 
-import com.fortify.cli.aviator._common.exception.AviatorBugException;
-import com.fortify.cli.aviator.config.ExtensionsConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator._common.exception.AviatorBugException;
+import com.fortify.cli.aviator.config.ExtensionsConfig;
 
 public class FileTypeLanguageMapperUtil {
     private static final Logger LOG = LoggerFactory.getLogger(FileTypeLanguageMapperUtil.class);

@@ -12,9 +12,17 @@
  */
 package com.fortify.cli.aviator.grpc;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.aviator.grpc.AnalysisInfo;
-import com.fortify.aviator.grpc.AuditorResponse;
 import com.fortify.aviator.grpc.AuditRequest;
+import com.fortify.aviator.grpc.AuditorResponse;
 import com.fortify.aviator.grpc.File;
 import com.fortify.aviator.grpc.Fragment;
 import com.fortify.aviator.grpc.IssueData;
@@ -27,16 +35,10 @@ import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.util.Constants;
+
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 class GrpcUtil {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcUtil.class);

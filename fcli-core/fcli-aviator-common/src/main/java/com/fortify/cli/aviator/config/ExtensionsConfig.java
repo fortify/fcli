@@ -16,8 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-
 import com.fortify.cli.aviator.util.StringUtil;
+
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor @Reflectable

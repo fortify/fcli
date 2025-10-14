@@ -12,11 +12,11 @@
  */
 package com.fortify.cli.aviator.fpr.filter.comparer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NumberRangeComparer implements SearchComparer {
     private static final Logger logger = LoggerFactory.getLogger(NumberRangeComparer.class);

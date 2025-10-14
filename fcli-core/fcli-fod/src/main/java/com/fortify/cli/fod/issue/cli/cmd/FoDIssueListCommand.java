@@ -15,17 +15,12 @@ package com.fortify.cli.fod.issue.cli.cmd;
 import java.util.List;
 import java.util.Optional;
 
-import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
@@ -34,11 +29,17 @@ import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueIncludeMixin;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
+
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class FoDIssueListCommand extends AbstractFoDJsonNodeOutputCommand implements IServerSideQueryParamGeneratorSupplier {

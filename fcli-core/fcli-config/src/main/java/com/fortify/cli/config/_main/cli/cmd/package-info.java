@@ -3,4 +3,3 @@
  * classes like mixins and (abstract) base classes.
  */
 package com.fortify.cli.config._main.cli.cmd;
-

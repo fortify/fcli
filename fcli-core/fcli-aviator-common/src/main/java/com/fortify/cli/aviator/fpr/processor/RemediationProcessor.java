@@ -12,19 +12,6 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.FuzzyContextSearcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.MalformedInputException;
@@ -38,6 +25,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
 public class RemediationProcessor {
     Logger logger = LoggerFactory.getLogger(RemediationProcessor.class);
@@ -193,4 +195,3 @@ public class RemediationProcessor {
 
     }
 }
-

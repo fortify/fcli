@@ -12,9 +12,9 @@
  */
 package com.fortify.cli.aviator.audit.model;
 
-import com.fortify.cli.aviator.fpr.filter.FilterSet;
-
 import java.util.List;
+
+import com.fortify.cli.aviator.fpr.filter.FilterSet;
 
 public final class FilterSelection {
     private final FilterSet activeFilterSet;

@@ -57,6 +57,9 @@ allprojects {
                 target("**/src/**/java/com/fortify/**/*.java")
                 targetExclude("**/build/**", "**/bin/**", "**/generated-sources/**", "**/generated-test-sources/**")
                 // Minimal normalization per request: only ensure standard license header; no other formatting tweaks
+                // Re-introduced: import cleanup (order + unused removal) as requested
+                removeUnusedImports()
+                importOrder("java", "javax", "org", "com", "")
                 // Step 1: Replace any tabs with 4 spaces (preserving visual width)
                 custom("tabsToSpaces") { content: String ->
                     if (!content.contains('\t')) content else content.replace("\t", "    ")

@@ -15,7 +15,6 @@ package com.fortify.cli.fod.release.helper;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

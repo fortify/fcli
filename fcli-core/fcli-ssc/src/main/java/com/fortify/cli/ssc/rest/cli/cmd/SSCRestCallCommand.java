@@ -19,9 +19,6 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.ssc._common.rest.ssc.cli.mixin.SSCUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.ssc.helper.SSCProductHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
-
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

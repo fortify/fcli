@@ -12,24 +12,25 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
-import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
-import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
-import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode.Reason;
-import com.fortify.cli.aviator.fpr.jaxb.UnifiedNodePoolType;
-import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode.Knowledge.Fact;
-import com.fortify.cli.aviator.fpr.model.Node;
-
-import com.fortify.cli.aviator.fpr.utils.FileUtils;
-import com.fortify.cli.aviator.util.FprHandle;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
+import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
+import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode.Knowledge.Fact;
+import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode.Reason;
+import com.fortify.cli.aviator.fpr.jaxb.UnifiedNodePoolType;
+import com.fortify.cli.aviator.fpr.model.Node;
+import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.util.FprHandle;
+
+import lombok.Getter;
 
 /**
  * Processor for UnifiedNodePool in FVDL. Extracts Node objects and caches them by ID.

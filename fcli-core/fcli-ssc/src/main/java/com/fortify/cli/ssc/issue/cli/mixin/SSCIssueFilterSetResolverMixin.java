@@ -19,7 +19,6 @@ import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCIssueFilterSetResolverMixin {

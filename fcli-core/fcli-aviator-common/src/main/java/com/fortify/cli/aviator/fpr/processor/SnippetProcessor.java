@@ -12,12 +12,13 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
-import com.fortify.cli.aviator.fpr.jaxb.Snippets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.fortify.cli.aviator.fpr.jaxb.Snippets;
 
 /**
  * Processor for Snippets section in FVDL. Caches snippet ID to text for use in traces.

@@ -47,10 +47,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.util.FprHandle;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -60,8 +56,13 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
+
+import lombok.Setter;
 
 
 public class AuditProcessor {

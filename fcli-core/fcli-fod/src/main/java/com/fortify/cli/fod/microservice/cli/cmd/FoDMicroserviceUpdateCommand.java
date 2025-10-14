@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.fod.microservice.cli.cmd;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -32,9 +35,6 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.ArrayList;
-import java.util.Map;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDMicroserviceUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {

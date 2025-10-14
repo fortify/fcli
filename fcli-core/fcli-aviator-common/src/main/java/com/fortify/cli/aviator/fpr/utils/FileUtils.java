@@ -13,11 +13,6 @@
 package com.fortify.cli.aviator.fpr.utils;
 
 
-import com.fortify.cli.aviator.audit.model.Fragment;
-import com.fortify.cli.aviator.util.FprHandle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.util.FprHandle;
 
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);

@@ -13,17 +13,18 @@
 package com.fortify.cli.aviator.audit.model;
 
 
-import com.fortify.cli.aviator.fpr.utils.Searchable;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.aviator.fpr.utils.Searchable;
+
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @EqualsAndHashCode

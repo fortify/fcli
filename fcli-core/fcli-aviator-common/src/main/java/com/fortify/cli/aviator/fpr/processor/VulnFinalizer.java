@@ -12,11 +12,12 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.utils.AltCategoryProvider;
 import com.fortify.cli.aviator.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**

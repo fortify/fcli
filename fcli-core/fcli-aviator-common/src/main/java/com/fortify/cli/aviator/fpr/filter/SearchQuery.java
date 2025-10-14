@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.filter;
 
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.comparer.SearchComparer;
+
 import lombok.Getter;
 
 /**

@@ -12,16 +12,17 @@
  */
 package com.fortify.cli.aviator.fpr.model;
 
-import com.fortify.cli.aviator.fpr.utils.Searchable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import com.fortify.cli.aviator.fpr.utils.Searchable;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Represents a node in the FVDL UnifiedNodePool or trace entry.

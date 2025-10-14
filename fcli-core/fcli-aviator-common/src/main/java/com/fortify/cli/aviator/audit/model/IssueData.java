@@ -37,4 +37,3 @@ public class IssueData {
     private String subType;
     private String type;
 }
-

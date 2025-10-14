@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.model;
 
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedNodeRef;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

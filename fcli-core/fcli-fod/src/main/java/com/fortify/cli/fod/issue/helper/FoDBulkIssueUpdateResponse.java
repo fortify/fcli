@@ -13,8 +13,10 @@
 package com.fortify.cli.fod.issue.helper;
 
 import java.util.ArrayList;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
