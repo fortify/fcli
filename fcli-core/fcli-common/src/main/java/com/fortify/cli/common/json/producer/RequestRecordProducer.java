@@ -14,7 +14,7 @@ package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunner;
-import com.fortify.cli.common.output.processing.IRecordProducerConfig;
+import com.fortify.cli.common.output.processing.ITransformationPipelineRunnerConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
@@ -29,7 +29,7 @@ public class RequestRecordProducer implements IObjectNodeProducer {
     @Getter private final INextPageRequestProducer nextPageRequestProducer;
     @Getter private final INextPageUrlProducer nextPageUrlProducer;
     private final TransformationPipelineRunner runner;
-    public RequestRecordProducer(IRecordProducerConfig recordProducerConfig, HttpRequest<?> initialRequest,
+    public RequestRecordProducer(ITransformationPipelineRunnerConfig recordProducerConfig, HttpRequest<?> initialRequest,
             INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
         this.initialRequest = initialRequest;
         this.nextPageRequestProducer = nextPageRequestProducer;

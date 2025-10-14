@@ -14,18 +14,18 @@ package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunner;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.output.processing.ITransformationPipelineRunnerConfig;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class JsonNodeRecordProducer implements IObjectNodeProducer {
-    @Getter private final StandardOutputConfig recordProducerConfig;
+    @Getter private final ITransformationPipelineRunnerConfig recordProducerConfig;
     private final JsonNode jsonNode;
     private final TransformationPipelineRunner runner;
-    public static JsonNodeRecordProducer of(StandardOutputConfig cfg, JsonNode node) { return new JsonNodeRecordProducer(cfg, node); }
-    public JsonNodeRecordProducer(StandardOutputConfig recordProducerConfig, JsonNode jsonNode) {
+    public static JsonNodeRecordProducer of(ITransformationPipelineRunnerConfig cfg, JsonNode node) { return new JsonNodeRecordProducer(cfg, node); }
+    public JsonNodeRecordProducer(ITransformationPipelineRunnerConfig recordProducerConfig, JsonNode jsonNode) {
         this.recordProducerConfig = recordProducerConfig;
         this.jsonNode = jsonNode;
         this.runner = new TransformationPipelineRunner(recordProducerConfig);

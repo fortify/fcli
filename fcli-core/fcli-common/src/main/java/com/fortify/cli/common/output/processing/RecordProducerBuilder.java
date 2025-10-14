@@ -32,16 +32,16 @@ public final class RecordProducerBuilder {
     private RecordProducerBuilder() {
     }
 
-    public static IObjectNodeProducer forRequest(StandardOutputConfig cfg, HttpRequest<?> request,
+    public static IObjectNodeProducer forRequest(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, HttpRequest<?> request,
             INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
-    return new RequestRecordProducer(cfg, request, nextPageRequestProducer, nextPageUrlProducer);
+    return new RequestRecordProducer(pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
     }
 
-    public static IObjectNodeProducer forJsonNode(StandardOutputConfig cfg, JsonNode node) {
-        return JsonNodeRecordProducer.of(cfg, node);
+    public static IObjectNodeProducer forJsonNode(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, JsonNode node) {
+        return JsonNodeRecordProducer.of(pipelineCfg, node);
     }
 
-    public static IObjectNodeProducer forJsonNodeHolder(StandardOutputConfig cfg, JsonNodeHolder holder) {
-        return forJsonNode(cfg, holder.asJsonNode());
+    public static IObjectNodeProducer forJsonNodeHolder(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, JsonNodeHolder holder) {
+        return forJsonNode(outputCfg, pipelineCfg, holder.asJsonNode());
     }
 }

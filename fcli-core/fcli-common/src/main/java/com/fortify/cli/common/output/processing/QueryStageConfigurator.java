@@ -13,7 +13,6 @@
 package com.fortify.cli.common.output.processing;
 
 import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 
 import picocli.CommandLine;
@@ -25,11 +24,9 @@ import picocli.CommandLine;
 public final class QueryStageConfigurator {
     private QueryStageConfigurator() {
     }
-    public static void configure(StandardOutputConfig cfg, CommandLine.Model.CommandSpec commandSpec, Object command,
-            Object outputWriterFactory) {
-        if (cfg.recordStages().stream().anyMatch(s -> s instanceof QueryFilterStage)) {
-            return;
-        }
+    public static void configure(TransformationPipelineRunnerConfig cfg, CommandLine.Model.CommandSpec commandSpec, Object command,
+        Object outputWriterFactory) {
+        for (var stage : cfg.recordStages()) { if (stage instanceof QueryFilterStage) { return; } }
         // Scan mixins
         for (var mixin : commandSpec.mixins().values()) {
             var o = mixin.userObject();
@@ -44,7 +41,7 @@ public final class QueryStageConfigurator {
         // Writer factory (may hold arg groups)
         addIfSupplier(cfg, outputWriterFactory);
     }
-    private static boolean addIfSupplier(StandardOutputConfig cfg, Object o) {
+    private static boolean addIfSupplier(TransformationPipelineRunnerConfig cfg, Object o) {
         if (o instanceof IQueryExpressionSupplier s && s.getQueryExpression() != null) {
             cfg.recordStage(new QueryFilterStage(s.getQueryExpression()));
             return true;

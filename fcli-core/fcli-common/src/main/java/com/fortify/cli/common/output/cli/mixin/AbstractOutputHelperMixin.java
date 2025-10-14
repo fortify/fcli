@@ -27,6 +27,7 @@ import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.processing.QueryStageConfigurator;
 import com.fortify.cli.common.output.processing.RecordProducerBuilder;
+import com.fortify.cli.common.output.processing.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.product.NoOpProductHelper;
@@ -74,7 +75,8 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         HttpRequest<?> request = updateRequest(baseRequest);
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
-    IObjectNodeProducer producer = RecordProducerBuilder.forRequest(getOutputConfig(), request, nextPageRequestProducer,
+    var pipelineCfg = getPipelineConfig();
+    IObjectNodeProducer producer = RecordProducerBuilder.forRequest(getOutputConfig(), pipelineCfg, request, nextPageRequestProducer,
                 nextPageUrlProducer);
         createOutputWriter().write(producer);
     }
@@ -88,7 +90,8 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     @Override
     public final void write(JsonNode jsonNode) {
-    IObjectNodeProducer producer = RecordProducerBuilder.forJsonNode(getOutputConfig(), jsonNode);
+    var pipelineCfg = getPipelineConfig();
+    IObjectNodeProducer producer = RecordProducerBuilder.forJsonNode(getOutputConfig(), pipelineCfg, jsonNode);
         createOutputWriter().write(producer);
     }
 
@@ -175,13 +178,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param standardOutputConfig
      * @param cmd
      */
-    protected final void addRecordTransformersForCommand(StandardOutputConfig standardOutputConfig, Object cmd) {
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) {
-            addRecordTransformersFromObject(standardOutputConfig, mixin.userObject());
-        }
-        addRecordTransformersFromObject(standardOutputConfig, getProductHelper());
-        addRecordTransformersFromObject(standardOutputConfig, cmd);
-        addCommandActionResultRecordTransformer(standardOutputConfig, cmd);
+    protected final void addRecordTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
+        for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addRecordTransformersFromObject(cfg, mixin.userObject()); }
+        addRecordTransformersFromObject(cfg, getProductHelper());
+        addRecordTransformersFromObject(cfg, cmd);
+        addCommandActionResultRecordTransformer(cfg, cmd);
     }
 
     /**
@@ -202,12 +203,10 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param standardOutputConfig
      * @param cmd
      */
-    protected final void addInputTransformersForCommand(StandardOutputConfig standardOutputConfig, Object cmd) {
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) {
-            addInputTransformersFromObject(standardOutputConfig, mixin.userObject());
-        }
-        addInputTransformersFromObject(standardOutputConfig, getProductHelper());
-        addInputTransformersFromObject(standardOutputConfig, cmd);
+    protected final void addInputTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
+        for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addInputTransformersFromObject(cfg, mixin.userObject()); }
+        addInputTransformersFromObject(cfg, getProductHelper());
+        addInputTransformersFromObject(cfg, cmd);
     }
 
     /**
@@ -309,16 +308,16 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      *
      * @return
      */
-    private final StandardOutputConfig getOutputConfig() {
+    private final StandardOutputConfig getOutputConfig() { return getBasicOutputConfig(commandHelper.getCommand()); }
+
+    private final TransformationPipelineRunnerConfig getPipelineConfig() {
         Object cmd = commandHelper.getCommand();
-        StandardOutputConfig standardOutputConfig = getBasicOutputConfig(cmd);
-        addInputTransformersForCommand(standardOutputConfig, cmd);
-        addRecordTransformersForCommand(standardOutputConfig, cmd);
-        // Integrate query filtering as a native pipeline stage via dedicated
-        // configurator to keep this class focused.
-        QueryStageConfigurator.configure(standardOutputConfig, commandHelper.getCommandSpec(), cmd, getOutputWriterFactory());
-        addCommandActionResultRecordTransformer(standardOutputConfig, cmd);
-        return standardOutputConfig;
+    var pipelineCfg = TransformationPipelineRunnerConfig.builder().build();
+    addInputTransformersForCommand(pipelineCfg, cmd);
+    addRecordTransformersForCommand(pipelineCfg, cmd);
+        QueryStageConfigurator.configure(pipelineCfg, commandHelper.getCommandSpec(), cmd, getOutputWriterFactory());
+        addCommandActionResultRecordTransformer(pipelineCfg, cmd);
+        return pipelineCfg;
     }
 
     /**
@@ -406,8 +405,8 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param obj
      */
     @SuppressWarnings("deprecation")
-    private static final void addRecordTransformersFromObject(StandardOutputConfig standardOutputConfig, Object obj) {
-        apply(obj, IRecordTransformer.class, s -> standardOutputConfig.recordTransformer(s::transformRecord));
+    private static final void addRecordTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
+        apply(obj, IRecordTransformer.class, s -> cfg.recordTransformer(s::transformRecord));
     }
 
     /**
@@ -418,13 +417,13 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param obj
      */
     @SuppressWarnings("deprecation")
-    private static final void addInputTransformersFromObject(StandardOutputConfig standardOutputConfig, Object obj) {
-        apply(obj, IInputTransformer.class, s -> standardOutputConfig.inputTransformer(s::transformInput));
+    private static final void addInputTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
+        apply(obj, IInputTransformer.class, s -> cfg.inputTransformer(s::transformInput));
     }
 
-    private static final void addCommandActionResultRecordTransformer(StandardOutputConfig standardOutputConfig, Object cmd) {
+    private static final void addCommandActionResultRecordTransformer(TransformationPipelineRunnerConfig cfg, Object cmd) {
         apply(cmd, IActionCommandResultSupplier.class,
-                s -> standardOutputConfig.recordTransformer(createCommandActionResultRecordTransformer(s)));
+                s -> cfg.recordTransformer(createCommandActionResultRecordTransformer(s)));
     }
 
     private static final UnaryOperator<JsonNode> createCommandActionResultRecordTransformer(IActionCommandResultSupplier supplier) {
