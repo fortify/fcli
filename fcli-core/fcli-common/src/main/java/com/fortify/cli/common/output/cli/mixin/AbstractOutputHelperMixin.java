@@ -38,7 +38,8 @@ import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig
 import com.fortify.cli.common.json.record.IRecordProducer;
 import com.fortify.cli.common.json.record.producer.JsonNodeRecordProducer;
 import com.fortify.cli.common.json.record.producer.RequestRecordProducer;
-import com.fortify.cli.common.output.transform.QueryExpressionRecordFilter;
+import com.fortify.cli.common.output.transform.pipeline.QueryFilterStage;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
@@ -306,11 +307,29 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         StandardOutputConfig standardOutputConfig = getBasicOutputConfig(cmd);
         addInputTransformersForCommand(standardOutputConfig, cmd);
         addRecordTransformersForCommand(standardOutputConfig, cmd);
-        // Integrate query filtering as a record transformer (Option A)
-        commandHelper.getCommandAs(com.fortify.cli.common.spel.query.IQueryExpressionSupplier.class)
-            .map(com.fortify.cli.common.spel.query.IQueryExpressionSupplier::getQueryExpression)
-            .filter(qe->qe!=null)
-            .ifPresent(qe->standardOutputConfig.recordTransformer(new QueryExpressionRecordFilter(qe)::transformRecord));
+        // Integrate query filtering as a native pipeline stage. Scan command and mixins.
+        // First check mixins so command-level supplier can override if needed.
+        for ( var mixin : commandHelper.getCommandSpec().mixins().values() ) {
+            var mixinObj = mixin.userObject();
+            if ( mixinObj instanceof IQueryExpressionSupplier supplier && supplier.getQueryExpression()!=null ) {
+                standardOutputConfig.recordStage(new QueryFilterStage(supplier.getQueryExpression()));
+                break; // Use first non-null
+            }
+        }
+        // If not added yet, check command itself
+        if ( standardOutputConfig.recordStages().stream().noneMatch(s->s instanceof QueryFilterStage) ) {
+            commandHelper.getCommandAs(IQueryExpressionSupplier.class)
+                .map(IQueryExpressionSupplier::getQueryExpression)
+                .filter(qe->qe!=null)
+                .ifPresent(qe->standardOutputConfig.recordStage(new QueryFilterStage(qe)));
+        }
+        // If still not added (e.g. query supplier lives in nested mixin like outputWriterFactory), check writer factory
+        if ( standardOutputConfig.recordStages().stream().noneMatch(s->s instanceof QueryFilterStage) ) {
+            var owf = getOutputWriterFactory();
+            if ( owf instanceof IQueryExpressionSupplier supplier && supplier.getQueryExpression()!=null ) {
+                standardOutputConfig.recordStage(new QueryFilterStage(supplier.getQueryExpression()));
+            }
+        }
         addCommandActionResultRecordTransformer(standardOutputConfig, cmd);
         return standardOutputConfig;
     }

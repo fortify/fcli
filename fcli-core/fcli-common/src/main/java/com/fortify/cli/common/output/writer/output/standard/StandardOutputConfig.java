@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+import com.fortify.cli.common.output.transform.pipeline.JsonNodePipelineStage;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 
@@ -28,8 +30,12 @@ import lombok.experimental.Accessors;
 // TODO Add null checks in case any input or record transformation returns null?
 public class StandardOutputConfig {
     @Getter @Setter private RecordWriterFactory defaultFormat;
+    // Legacy transformer lists retained for backward compatibility; wrapped into pipeline stages lazily
     private final List<Function<JsonNode,JsonNode>> inputTransformers = new ArrayList<>();
     private final List<Function<JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
+    // New unified stage lists
+    private final List<JsonNodePipelineStage> inputStages = new ArrayList<>();
+    private final List<JsonNodePipelineStage> recordStages = new ArrayList<>();
     
     public final StandardOutputConfig inputTransformer(UnaryOperator<JsonNode> transformer) {
         inputTransformers.add(transformer);
@@ -37,15 +43,25 @@ public class StandardOutputConfig {
     }
     
     public final StandardOutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) { recordTransformers.add(transformer); return this; }
-    // Convenience for adding any Function<JsonNode,JsonNode>
     public final StandardOutputConfig recordTransformer(Function<JsonNode,JsonNode> transformer) { recordTransformers.add(transformer); return this; }
+
+    // New stage registration methods
+    public final StandardOutputConfig inputStage(JsonNodePipelineStage stage) { inputStages.add(stage); return this; }
+    public final StandardOutputConfig recordStage(JsonNodePipelineStage stage) { recordStages.add(stage); return this; }
+
+    public final List<JsonNodePipelineStage> inputStages() { return inputStages; }
+    public final List<JsonNodePipelineStage> recordStages() { return recordStages; }
     
     public final JsonNode applyInputTransformations(JsonNode input) {
-        return applyTransformations(inputTransformers, input);
+        // First legacy transformers
+        JsonNode transformed = applyTransformations(inputTransformers, input);
+        // Stages run later in producer with context; here we only apply legacy ones
+        return transformed;
     }
     
     public final JsonNode applyRecordTransformations(JsonNode record) {
-        return applyTransformations(recordTransformers, record);
+        JsonNode transformed = applyTransformations(recordTransformers, record);
+        return transformed;
     }
     
     private final JsonNode applyTransformations(List<Function<JsonNode, JsonNode>> transformations, JsonNode input) {
