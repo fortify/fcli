@@ -18,8 +18,8 @@ import java.io.Writer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
-import com.fortify.cli.common.json.record.IRecordConsumer;
-import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.producer.JsonNodeConsumers.ObjectNodeConsumer;
+import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
 import com.fortify.cli.common.output.cli.cmd.IRecordCollectionSupport;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
@@ -82,7 +82,7 @@ public class StandardOutputWriter implements IOutputWriter {
     // it
 
     @Override
-    public void write(IRecordProducer recordProducer) {
+    public void write(ObjectNodeProducer recordProducer) {
         if (recordProducer == null) {
             return;
         }
@@ -91,7 +91,7 @@ public class StandardOutputWriter implements IOutputWriter {
         }
     }
 
-    private IRecordConsumer recordConsumer(IRecordWriter rw) {
+    private ObjectNodeConsumer recordConsumer(IRecordWriter rw) {
         return r -> {
             rw.append(r);
             return com.fortify.cli.common.util.Break.FALSE;

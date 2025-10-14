@@ -14,9 +14,9 @@ package com.fortify.cli.common.output.processing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.json.record.IRecordProducer;
-import com.fortify.cli.common.json.record.producer.JsonNodeRecordProducer;
-import com.fortify.cli.common.json.record.producer.RequestRecordProducer;
+import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.json.producer.JsonNodeRecordProducer;
+import com.fortify.cli.common.json.producer.RequestRecordProducer;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
@@ -32,17 +32,16 @@ public final class RecordProducerBuilder {
     private RecordProducerBuilder() {
     }
 
-    public static IRecordProducer forRequest(StandardOutputConfig cfg, HttpRequest<?> request,
+    public static ObjectNodeProducer forRequest(StandardOutputConfig cfg, HttpRequest<?> request,
             INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
-        return RequestRecordProducer.builder().outputConfig(cfg).initialRequest(request).nextPageRequestProducer(nextPageRequestProducer)
-                .nextPageUrlProducer(nextPageUrlProducer).build();
+    return new RequestRecordProducer(cfg, request, nextPageRequestProducer, nextPageUrlProducer);
     }
 
-    public static IRecordProducer forJsonNode(StandardOutputConfig cfg, JsonNode node) {
-        return JsonNodeRecordProducer.builder().outputConfig(cfg).jsonNode(node).build();
+    public static ObjectNodeProducer forJsonNode(StandardOutputConfig cfg, JsonNode node) {
+        return JsonNodeRecordProducer.of(cfg, node);
     }
 
-    public static IRecordProducer forJsonNodeHolder(StandardOutputConfig cfg, JsonNodeHolder holder) {
+    public static ObjectNodeProducer forJsonNodeHolder(StandardOutputConfig cfg, JsonNodeHolder holder) {
         return forJsonNode(cfg, holder.asJsonNode());
     }
 }

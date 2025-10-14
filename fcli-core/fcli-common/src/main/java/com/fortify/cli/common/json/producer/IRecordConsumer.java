@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.json.record;
+package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.util.Break;

@@ -12,8 +12,11 @@
  */
 package com.fortify.cli.common.output.cli.cmd;
 
-import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
 
-public interface IRecordProducerSupplier {
-    IRecordProducer getRecordProducer();
+/**
+ * Supplies an {@link ObjectNodeProducer} for streaming records.
+ */
+public interface ObjectNodeProducerSupplier {
+    ObjectNodeProducer getObjectNodeProducer();
 }

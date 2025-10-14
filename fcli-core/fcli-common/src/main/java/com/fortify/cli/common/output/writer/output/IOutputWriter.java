@@ -12,13 +12,12 @@
  */
 package com.fortify.cli.common.output.writer.output;
 
-import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
 
 public interface IOutputWriter {
     /**
-     * Write records provided by the given {@link IRecordProducer} to the configured
-     * output(s).
+     * Write records provided by the given {@link ObjectNodeProducer} to the configured output(s).
      */
-    void write(IRecordProducer recordProducer);
+    void write(ObjectNodeProducer recordProducer);
 
 }

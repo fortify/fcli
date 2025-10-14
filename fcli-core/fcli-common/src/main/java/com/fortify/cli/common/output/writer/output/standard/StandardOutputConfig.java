@@ -18,8 +18,8 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.processing.IRecordProcessingConfig;
-import com.fortify.cli.common.output.transform.pipeline.JsonNodePipelineStage;
+import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
+import com.fortify.cli.common.output.processing.IRecordProducerConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 
 import lombok.Getter;
@@ -28,7 +28,7 @@ import lombok.experimental.Accessors;
 
 @Accessors(fluent = true)
 // TODO Add null checks in case any input or record transformation returns null?
-public class StandardOutputConfig implements IRecordProcessingConfig {
+public class StandardOutputConfig implements IRecordProducerConfig {
     @Getter
     @Setter
     private RecordWriterFactory defaultFormat;

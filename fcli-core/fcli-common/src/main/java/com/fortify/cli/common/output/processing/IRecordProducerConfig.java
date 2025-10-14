@@ -13,14 +13,14 @@
 package com.fortify.cli.common.output.processing;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.transform.pipeline.JsonNodePipelineStage;
+import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
 
 /**
  * Defines the configuration for record processing independent from output
  * formatting. Implementations provide legacy transformation application plus
  * unified pipeline stages.
  */
-public interface IRecordProcessingConfig {
+public interface IRecordProducerConfig {
     JsonNode applyInputTransformations(JsonNode input);
     JsonNode applyRecordTransformations(JsonNode record);
     Iterable<JsonNodePipelineStage> inputStages();

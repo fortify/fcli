@@ -17,7 +17,7 @@ import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.json.record.IRecordProducer;
+import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
@@ -27,7 +27,7 @@ import com.fortify.cli.common.output.writer.ISingularSupplier;
  * <ul>
  * <li>{@link IBaseRequestSupplier} - to execute an HTTP request</li>
  * <li>{@link IJsonNodeSupplier} - to supply a JsonNode directly</li>
- * <li>{@link IRecordProducerSupplier} - to stream individual records</li>
+ * <li>{@link ObjectNodeProducerSupplier} - to stream individual records</li>
  * </ul>
  */
 public abstract class AbstractOutputCommand extends AbstractRunnableCommand
@@ -38,7 +38,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
     private java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> recordConsumer;
     private boolean suppressStdoutForRecordCollection;
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(IBaseRequestSupplier.class, IJsonNodeSupplier.class,
-            IRecordProducerSupplier.class);
+        ObjectNodeProducerSupplier.class);
     @Override
     public final Integer call() {
         initialize();
@@ -47,8 +47,8 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
             outputHelper.write(((IBaseRequestSupplier) this).getBaseRequest());
         } else if (isInstance(IJsonNodeSupplier.class)) {
             outputHelper.write(((IJsonNodeSupplier) this).getJsonNode());
-        } else if (isInstance(IRecordProducerSupplier.class)) {
-            IRecordProducer rp = ((IRecordProducerSupplier) this).getRecordProducer();
+        } else if (isInstance(ObjectNodeProducerSupplier.class)) {
+            ObjectNodeProducer rp = ((ObjectNodeProducerSupplier) this).getObjectNodeProducer();
             outputHelper.write(rp);
         } else {
             throw new FcliBugException(this.getClass().getName() + " must implement exactly one of " + supportedInterfaces);

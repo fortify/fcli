@@ -28,7 +28,7 @@
 - No unused imports; remove immediately.
 
 ### Naming
-- Classes: PascalCase. Interfaces describing capabilities may use verbs/adjectives (e.g., `IRecordProducer`, `RecordWriterFactory`).
+- Classes: PascalCase. Interfaces describing capabilities may use verbs/adjectives (e.g., `ObjectNodeProducerSupplier`, `RecordWriterFactory`).
 - Methods: camelCase verbs. Accessors for booleans use `is`/`has` prefixes.
 - Constants: `UPPER_SNAKE_CASE`.
 - Avoid abbreviations unless industry-standard (e.g., `ID`, `URL`, `JSON`).

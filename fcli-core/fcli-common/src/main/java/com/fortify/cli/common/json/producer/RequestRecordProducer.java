@@ -10,9 +10,11 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.json.record.producer;
+package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.producer.JsonNodeProducers.ObjectNodeProducer;
+import com.fortify.cli.common.output.processing.IRecordProducerConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
@@ -21,19 +23,21 @@ import com.fortify.cli.common.rest.unirest.IfFailureHandler;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
-@SuperBuilder
-public class RequestRecordProducer extends AbstractTransformingRecordProducer {
-    @Getter
-    private final HttpRequest<?> initialRequest;
-    @Getter
-    private final INextPageRequestProducer nextPageRequestProducer;
-    @Getter
-    private final INextPageUrlProducer nextPageUrlProducer;
-
+public class RequestRecordProducer implements ObjectNodeProducer {
+    @Getter private final HttpRequest<?> initialRequest;
+    @Getter private final INextPageRequestProducer nextPageRequestProducer;
+    @Getter private final INextPageUrlProducer nextPageUrlProducer;
+    private final TransformationPipelineRunner runner;
+    public RequestRecordProducer(IRecordProducerConfig recordProducerConfig, HttpRequest<?> initialRequest,
+            INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
+        this.initialRequest = initialRequest;
+        this.nextPageRequestProducer = nextPageRequestProducer;
+        this.nextPageUrlProducer = nextPageUrlProducer;
+        this.runner = new TransformationPipelineRunner(recordProducerConfig);
+    }
     @Override
-    protected void produceRawInputs(RawInputConsumer consumer) {
+    public void forEach(JsonNodeConsumers.ObjectNodeConsumer consumer) {
         if (nextPageRequestProducer != null) {
             PagingHelper.processPages(initialRequest, nextPageRequestProducer, r -> handleResponse(r, consumer));
         } else if (nextPageUrlProducer != null) {
@@ -43,8 +47,5 @@ public class RequestRecordProducer extends AbstractTransformingRecordProducer {
             initialRequest.asObject(JsonNode.class).ifSuccess(r -> handleResponse(r, consumer)).ifFailure(IfFailureHandler::handle);
         }
     }
-
-    private void handleResponse(HttpResponse<JsonNode> r, RawInputConsumer consumer) {
-        consumer.accept(r.getBody());
-    }
+    private void handleResponse(HttpResponse<JsonNode> r, JsonNodeConsumers.ObjectNodeConsumer consumer) { runner.process(r.getBody(), consumer::accept); }
 }

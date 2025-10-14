@@ -14,6 +14,11 @@ package com.fortify.cli.common.output.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * @deprecated Prefer registering a {@code JsonNodePipelineStage} via
+ * {@link com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig#recordStage}.
+ */
+@Deprecated(forRemoval = false)
 public interface IRecordTransformer {
     JsonNode transformRecord(JsonNode record);
 }

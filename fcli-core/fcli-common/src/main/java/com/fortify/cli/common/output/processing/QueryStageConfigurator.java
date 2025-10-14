@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.common.output.processing;
 
-import com.fortify.cli.common.output.transform.pipeline.QueryFilterStage;
+import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 

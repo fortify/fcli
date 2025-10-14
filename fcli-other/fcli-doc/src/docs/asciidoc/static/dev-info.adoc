@@ -271,8 +271,9 @@ public class <Module><Entity><Action>Command extends <SuperClass> implements <Co
 ** `IBaseRequestSupplier`: Supply a Unirest `HttpRequest` instance for retrieving command output data.
 ** `IJsonNodeSupplier`: Supply a `JsonNode` instance representing the command output.
 ** `IActionCommandResultSupplier`: Supply data for a result column to be included in the output, like `DELETED`, `CREATED`, ...
-** `IInputTransformer`: Allows for transforming the full JSON data before it is being processed for output.
-** `IRecordTransformer`: Allows for transforming individual records before they are being processed for output.
+** `IInputTransformer` (deprecated): Legacy hook to transform the full JSON data before it is processed. Prefer registering a `JsonNodePipelineStage` via `StandardOutputConfig#inputStage()`.
+** `IRecordTransformer` (deprecated): Legacy hook to transform individual records. Prefer registering a `JsonNodePipelineStage` via `StandardOutputConfig#recordStage()`.
+** `JsonNodePipelineStage`: Unified pipeline stage abstraction (package `com.fortify.cli.common.json.producer.pipeline`) that can operate in both input and record phases.
 
 Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent `<module>` and `<entity>` have a very different (easier) structure as they don't have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.
 

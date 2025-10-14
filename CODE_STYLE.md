@@ -20,7 +20,7 @@ This project enforces a consistent style for both manual and AI-assisted edits. 
 
 ## Naming
 - Classes & Records: PascalCase.
-- Interfaces that describe a capability may use adjectives/verbs (e.g., `IRecordProducer`).
+- Interfaces that describe a capability may use adjectives/verbs (e.g., `ObjectNodeProducerSupplier`).
 - Methods: camelCase verbs (`calculateTotal`).
 - Booleans: `is`, `has`, `can`, `should` prefixes where appropriate.
 - Constants: UPPER_SNAKE_CASE.
