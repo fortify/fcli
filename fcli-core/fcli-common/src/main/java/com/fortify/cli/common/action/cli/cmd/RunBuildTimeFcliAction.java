@@ -23,8 +23,6 @@ import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
-import com.fortify.cli.common.progress.helper.IProgressWriterFactory;
-import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
@@ -42,24 +40,26 @@ public class RunBuildTimeFcliAction {
         if ( args.length<2 ) {
             throw new RuntimeException("Usage: RunBuildTimeFcliAction <log file> <action-path> [action args]");
         }
-        var logFile = args[0];
-        var actionPath = args[1];
-        var actionArgs = args.length==2 ? new String[]{} : Arrays.copyOfRange(args, 2, args.length);
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-        rootLogger.detachAndStopAllAppenders();
-        rootLogger.setLevel(Level.TRACE);
-        configureLogFile(rootLogger, logFile);
-        var action = ActionLoaderHelper.load(
-            ActionSource.externalActionSources(null),
-            actionPath,
-            ActionValidationHandler.IGNORE).getAction();
-        var config = ActionRunnerConfig.builder()
-                .action(action)
-                .progressWriterFactory(new SimpleProgressWriterFactory())
-                .onValidationErrors(RunBuildTimeFcliAction::onValidationErrors)
-                .build();
-        new ActionRunner(config).run(actionArgs);
+        try (var progressWriter = new ProgressWriterI18n(ProgressWriterType.simple, null) ) {
+            var logFile = args[0];
+            var actionPath = args[1];
+            var actionArgs = args.length==2 ? new String[]{} : Arrays.copyOfRange(args, 2, args.length);
+            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+            rootLogger.detachAndStopAllAppenders();
+            rootLogger.setLevel(Level.TRACE);
+            configureLogFile(rootLogger, logFile);
+            var action = ActionLoaderHelper.load(
+                ActionSource.externalActionSources(null),
+                actionPath,
+                ActionValidationHandler.IGNORE).getAction();
+            var config = ActionRunnerConfig.builder()
+                    .action(action)
+                    .progressWriter(progressWriter)
+                    .onValidationErrors(RunBuildTimeFcliAction::onValidationErrors)
+                    .build();
+            new ActionRunner(config).run(actionArgs);
+        }
     }
     
     private static final void configureLogFile(Logger rootLogger, String logFile) {
@@ -84,23 +84,5 @@ public class RunBuildTimeFcliAction {
         var supportedOptionsString = ActionOptionHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
         var msg = String.format("Option errors:\n %s\nSupported options:\n%s\n", errorsString, supportedOptionsString);
         return new RuntimeException(msg);
-    }
-    
-    public static final class SimpleProgressWriterFactory implements IProgressWriterFactory {
-        @Override
-        public ProgressWriterType getType() {
-            return ProgressWriterType.simple;
-        }
-
-        @Override
-        public IProgressWriterI18n create() {
-            return new ProgressWriterI18n(getType(), null);
-        }
-
-        @Override
-        public IProgressWriterI18n create(ProgressWriterType progressWriterType) {
-            return new ProgressWriterI18n(progressWriterType, null);
-        }
-        
     }
 }

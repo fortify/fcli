@@ -21,11 +21,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.fields.SelectedFieldsTransformer;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.networknt.schema.utils.StringUtils;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
@@ -55,8 +55,8 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     
     private static final Map<String, String> generateFieldsBySchemaPropertyName(CommandSpec spec) {
         var result = new LinkedHashMap<String, String>();
-        var fieldsFromTableArgs = PicocliSpecHelper.getMessageString(spec, "output.table.args");
-        var fieldsFromMCPFields = PicocliSpecHelper.getMessageString(spec, "mcp.fields");
+        var fieldsFromTableArgs = FcliCommandSpecHelper.getMessageString(spec, "output.table.args");
+        var fieldsFromMCPFields = FcliCommandSpecHelper.getMessageString(spec, "mcp.fields");
         var fields = Stream.of(fieldsFromTableArgs, fieldsFromMCPFields).filter(StringUtils::isNotBlank).collect(Collectors.joining(","));
         if ( StringUtils.isNotBlank(fields) ) {
             SelectedFieldsTransformer.parsePropertyNames(fields)
@@ -138,7 +138,7 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
     }
 
     private static final String getMessageString(CommandSpec spec, String schemaPropertyName, String name, String defaultValue) {
-        var result = PicocliSpecHelper.getMessageString(spec, String.format("mcp.%s.%s", schemaPropertyName, name));
+        var result = FcliCommandSpecHelper.getMessageString(spec, String.format("mcp.%s.%s", schemaPropertyName, name));
         return StringUtils.isNotBlank(result) ? result : defaultValue;
     }
 

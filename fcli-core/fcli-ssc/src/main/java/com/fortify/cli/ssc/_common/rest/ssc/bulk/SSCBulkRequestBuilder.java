@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.exception.FcliTechnicalException;
-import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.Body;
 import kong.unirest.HttpRequest;
@@ -122,46 +121,85 @@ public class SSCBulkRequestBuilder {
     /**
      * Execute the bulk requests that were previously added using the 
      * {@link #request(String, String)} or {@link #request(String, String, Object)}
-     * methods.
+     * methods. To avoid gateway or read timeouts if SSC is slow to respond on
+     * large bulk requests, the requests are executed in batches of 10.
      * 
      * @return {@link SSCBulkResponse} containing the results for each of the requests in the bulk request
      */
     public SSCBulkResponse execute(UnirestInstance unirest) {
-        ObjectNode bulkRequest = objectMapper.createObjectNode();
-        bulkRequest.set("requests", this.requests);
-        var result = new SSCBulkResponse(nameToIndexMap, 
-                unirest.post("/api/v1/bulk").body(bulkRequest)
-                .asObject(JsonNode.class).getBody().get("data"));
-        consumers.entrySet().forEach(e->
-            e.getValue().accept(result.data(e.getKey())));
+        int batchSize = 10;
+        int totalRequests = requests.size();
+        String[] indexToName = buildIndexToNameMap(totalRequests);
+        Map<String, ObjectNode> nameToResponseMap = new HashMap<>();
+        for (var batch : batches(totalRequests, batchSize)) {
+            ArrayNode batchRequests = getBatchRequests(batch.start, batch.end);
+            JsonNode batchResponse = sendBatch(unirest, batchRequests);
+            mapBatchResponses(nameToResponseMap, batchResponse, indexToName, batch.start);
+        }
+        var result = new SSCBulkResponse(nameToResponseMap);
+        consumers.forEach((k, v) -> v.accept(result.data(k)));
         return result;
     }
-    
-    public static final class SSCBulkResponse {
-        private final JsonNode bulkResponse;
-        private final Map<String, Integer> nameToIndexMap;
 
-        private SSCBulkResponse(Map<String, Integer> nameToIndexMap, JsonNode bulkResponse) {
-            this.nameToIndexMap = nameToIndexMap;
-            this.bulkResponse = bulkResponse;
+    private String[] buildIndexToNameMap(int totalRequests) {
+        String[] indexToName = new String[totalRequests];
+        nameToIndexMap.forEach((name, idx) -> indexToName[idx] = name);
+        return indexToName;
+    }
+
+    private record Batch(int start, int end) {}
+
+    private java.util.List<Batch> batches(int totalRequests, int batchSize) {
+        return java.util.stream.IntStream.range(0, totalRequests)
+                .filter(i -> i % batchSize == 0)
+                .mapToObj(i -> new Batch(i, Math.min(i + batchSize, totalRequests)))
+                .toList();
+    }
+
+    private ArrayNode getBatchRequests(int start, int end) {
+        var batchRequests = objectMapper.createArrayNode();
+        for (int j = start; j < end; j++) {
+            batchRequests.add(requests.get(j));
         }
-        
-        public JsonNode fullBody() {
-            return bulkResponse;
+        return batchRequests;
+    }
+
+    private JsonNode sendBatch(UnirestInstance unirest, ArrayNode batchRequests) {
+        var bulkRequest = objectMapper.createObjectNode();
+        bulkRequest.set("requests", batchRequests);
+        return unirest.post("/api/v1/bulk").body(bulkRequest)
+                .asObject(JsonNode.class).getBody().get("data");
+    }
+
+    private void mapBatchResponses(Map<String, ObjectNode> nameToResponseMap, JsonNode batchResponse, String[] indexToName, int batchStart) {
+        if (batchResponse != null && batchResponse.isArray()) {
+            for (int j = 0; j < batchResponse.size(); j++) {
+                nameToResponseMap.put(indexToName[batchStart + j], getResponseBody(batchResponse.get(j)));
+            }
+        }
+    }
+
+    private ObjectNode getResponseBody(JsonNode rawResponse) {
+        if (rawResponse == null || !rawResponse.has("responses") || !rawResponse.get("responses").isArray() || rawResponse.get("responses").isEmpty()) {
+            return null;
+        }
+        return (ObjectNode) rawResponse.get("responses").get(0).get("body");
+    }
+
+    public static final class SSCBulkResponse {
+        private final Map<String, ObjectNode> nameToResponseMap;
+
+        private SSCBulkResponse(Map<String, ObjectNode> nameToResponseMap) {
+            this.nameToResponseMap = nameToResponseMap;
         }
         
         public ObjectNode body(String requestName) {
-            Integer index = nameToIndexMap.get(requestName);
-            // TODO Calling 'get(%s)' works, but ideally we should be able to use
-            //      standard SpEL indexing '[%s]'. Any way to make this work? The
-            //      SpEL Indexer class seems to explicitly check for arrays or 
-            //      collections, and throws an exception if we use '[%s]'.
-            String path = String.format("get(%s).responses[0].body", index);
-            return JsonHelper.evaluateSpelExpression(bulkResponse, path, ObjectNode.class);
+            return nameToResponseMap.get(requestName);
         }
         
         public JsonNode data(String requestName) {
-            return body(requestName).get("data");
+            ObjectNode body = body(requestName);
+            return body != null ? body.get("data") : null;
         }
     }
 }

@@ -3,6 +3,7 @@
   "methods" : [ 
     {"name" : "<init>", "parameterTypes" : [ ]},
     {"name" : "systemInstall", "parameterTypes" : [ ]},
-    {"name" : "systemUninstall", "parameterTypes" : [ ]}
+    {"name" : "systemUninstall", "parameterTypes" : [ ]},
+    {"name" : "getTerminalWidth", "parameterTypes" : [ ]}
   ]
 }]

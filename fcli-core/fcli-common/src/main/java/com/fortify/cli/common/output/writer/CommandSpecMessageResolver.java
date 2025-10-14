@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.writer;
 
-import com.fortify.cli.common.util.PicocliSpecHelper;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Model.CommandSpec;
@@ -23,6 +23,6 @@ public final class CommandSpecMessageResolver implements IMessageResolver {
     
     @Override
     public String getMessageString(String keySuffix) {
-        return PicocliSpecHelper.getMessageString(commandSpec, keySuffix);
+        return FcliCommandSpecHelper.getMessageString(commandSpec, keySuffix);
     }
 }

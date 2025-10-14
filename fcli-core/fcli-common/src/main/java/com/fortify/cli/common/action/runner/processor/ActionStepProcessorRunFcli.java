@@ -84,10 +84,10 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         try {
             return FcliCommandExecutorFactory.builder()
                     .cmd(cmd)
-                    .progressOptionValueIfNotPresent(ctx.getConfig().getProgressWriterFactory().getType().name())
+                    .progressOptionValueIfNotPresent(ctx.getConfig().getProgressWriter().type())
                     .defaultOptionsIfNotPresent(ctx.getConfig().getDefaultFcliRunOptions())
-                    .stdout(ctx.getStdout())
-                    .stderr(ctx.getStderr())
+                    .stdout(System.out)
+                    .stderr(System.err)
                     .stdoutOutputType(stdoutOutputType)
                     .stderrOutputType(stderrOutputType)
                     .onResult(r->onFcliResult(entry, recordConsumer, r))
@@ -113,7 +113,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
             var fullSkipMessage = String.format("SKIPPED: %s: %s", entry.getKey(), plainSkipMessage);
             var dependencySkipReason = String.format("%s was skipped", entry.getKey());
             LOG.info(fullSkipMessage);
-            ctx.getStdout().println(fullSkipMessage);
+            System.out.println(fullSkipMessage);
             vars.set(String.format(FMT_STATUS, entry.getKey()), new TextNode("SKIPPED"));
             vars.set(String.format(FMT_SKIPPED, entry.getKey()), BooleanNode.TRUE);
             vars.set(String.format(FMT_SKIP_REASON, entry.getKey()), new TextNode(plainSkipMessage)); // Legacy; see statusReason below
@@ -188,7 +188,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         if ( failOnError(fcli) ) {
             throw new FcliActionStepException("Fcli command terminated with an exception", t);
         } else {
-            t.printStackTrace(ctx.getStderr());
+            t.printStackTrace();
         }
     }
     
@@ -229,7 +229,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         LOG.info(msg);
         boolean statusLogPrimitive = isLogStatus(fcli);
         if ( statusLogPrimitive ) {
-            ctx.getStdout().println(msg);
+            System.out.println(msg);
         }
     }
 

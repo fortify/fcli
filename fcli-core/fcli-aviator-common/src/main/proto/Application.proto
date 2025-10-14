@@ -17,6 +17,8 @@ message Application {
   google.protobuf.Timestamp updated_at = 5;
   bool is_deleted = 6;
   string legalTermsOfService=7;
+  string quota_last_updated=8;
+  int64 quota=9;
 }
 
 message CreateApplicationRequest {

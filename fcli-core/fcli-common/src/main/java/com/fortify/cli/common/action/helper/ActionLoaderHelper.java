@@ -517,8 +517,12 @@ public class ActionLoaderHelper {
         private static final void _prompt(String msg) {
             if ( System.console()==null ) {
                 _throw(msg);
-            } else if (!"Y".equalsIgnoreCase(System.console().readLine(String.format("WARN: %s\n  Do you want to continue? (Y/N) ", msg))) ) {
-                throw new FcliAbortedByUserException("Aborting: operation aborted by user");
+            } else { 
+                System.out.print(""); // Ensure any progress output is cleared before prompting
+                var response = System.console().readLine(String.format("WARN: %s\n  Do you want to continue? (Y/N) ", msg));
+                if (!"Y".equalsIgnoreCase(response) ) {
+                    throw new FcliAbortedByUserException("Aborting: operation aborted by user");
+                }
             }
         }
     }

@@ -45,8 +45,8 @@ public class ActionStepProcessorOutWrite extends AbstractActionStepProcessorMapE
         var value = asString(valueObject);
         try {
             switch (destination.toLowerCase()) {
-            case "stdout": ctx.getStdout().print(value); break;
-            case "stderr": ctx.getStderr().print(value); break;
+            case "stdout": System.out.print(value); break;
+            case "stderr": System.err.print(value); break;
             default: write(new File(destination), value);
             }
         } catch (IOException e) {

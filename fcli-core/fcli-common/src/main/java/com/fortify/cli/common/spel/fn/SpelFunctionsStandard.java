@@ -46,6 +46,14 @@ public class SpelFunctionsStandard {
         return StringUtils.isBlank(s);
     }
     
+    @SpelFunction(cat=txt, returns="The first string if it's not blank, otherwise the second string")
+    public static final String ifBlank(
+            @SpelFunctionParam(name="input", desc="the string to return if not blank") String s1,
+            @SpelFunctionParam(name="default", desc="the string to return if first string is blank") String s2)
+    {
+        return StringUtils.defaultIfBlank(s1, s2);
+    }
+    
     @SpelFunction(cat=txt, returns="`false` if given string is null or blank, `true` otherwise")
     public static final boolean isNotBlank(
             @SpelFunctionParam(name="input", desc="the string to check") String s) 

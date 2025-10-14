@@ -1,14 +1,32 @@
 package com.fortify.cli.aviator.fpr.processor;
 
+import com.fortify.cli.aviator.audit.model.File;
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
+import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.fpr.VulnerabilityMapper;
+import com.fortify.cli.aviator.fpr.jaxb.FVDL;
+import com.fortify.cli.aviator.fpr.jaxb.MetaInfo;
+import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
+import com.fortify.cli.aviator.fpr.jaxb.UnifiedTrace;
+import com.fortify.cli.aviator.fpr.model.Entry;
+import com.fortify.cli.aviator.fpr.model.ReplacementData;
+import com.fortify.cli.aviator.fpr.utils.FileUtils;
+import com.fortify.cli.aviator.fpr.utils.XmlUtils;
+import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.StringUtil;
+import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 import java.io.IOException;
-import java.nio.charset.MalformedInputException;
-import java.nio.file.DirectoryStream;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,286 +36,210 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import com.fortify.cli.aviator.fpr.model.Node;
-import com.fortify.cli.aviator.fpr.model.Vulnerability;
-import com.fortify.cli.common.exception.FcliBugException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator.audit.model.File;
-import com.fortify.cli.aviator.audit.model.Fragment;
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
-import com.fortify.cli.aviator.fpr.filter.AnalyzerType;
-import com.fortify.cli.aviator.util.StringUtil;
-
-import lombok.Getter;
-
+/**
+ * Orchestrates the processing of an FVDL file, extracting and finalizing vulnerabilities.
+ */
 public class FVDLProcessor {
-
-    Logger logger = LoggerFactory.getLogger(FVDLProcessor.class);
-    private static Path extractedPath = null;
+    private static final Logger logger = LoggerFactory.getLogger(FVDLProcessor.class);
+    private final Map<String, String> sourceFileMap = new ConcurrentHashMap<>();
+    private final NodeProcessor nodeProcessor;
+    private final TraceProcessor traceProcessor;
+    private final SnippetProcessor snippetProcessor;
+    private final DescriptionProcessor descriptionProcessor;
+    private final MetaInfoProcessor metaInfoProcessor;
+    private final AuxiliaryProcessor auxiliaryProcessor;
+    private final VulnFinalizer vulnFinalizer;
+    private final FileUtils fileUtils;
+    private final FprHandle fprHandle;
     @Getter
-    private final List<Vulnerability> vulnerabilities = new ArrayList<>();
-    private static Map<String, String> sourceFileMap;
-    private Map<String, Node> nodePool = new HashMap<>();
-    private Document inputDoc;
-    private final Map<Path, List<String>> fileContentCache = new ConcurrentHashMap<>();
-    private final Map<String, Element> ruleInfoCache = new HashMap<>();
-    private final Map<String, String[]> metaInfoCache = new HashMap<>();
-    private Map<String, Element> descriptionCache;
-    private final Map<String, String> tagReplacementMap;
-    private Map<String, Element> nodeElementMap = new HashMap<>();
-    private Map<String, Element> tracePool = new HashMap<>();
-    private static final Pattern IFDEF_PATTERN = Pattern.compile("(?s)<IfDef[^>]*>.*?</IfDef>\\r?\\n?");
+    private List<Vulnerability> vulnerabilities;
 
-    public FVDLProcessor(Path extractedPath) {
-        FVDLProcessor.extractedPath = extractedPath;
-        this.descriptionCache = new HashMap<>();
-        this.tagReplacementMap = initializeTagReplacementMap();
+    public FVDLProcessor(FprHandle fprHandle) {
+        this.fprHandle = fprHandle;
+        this.fileUtils = new FileUtils();
+        this.nodeProcessor = new NodeProcessor(this.fprHandle, fileUtils, sourceFileMap);
+        this.traceProcessor = new TraceProcessor(this.fprHandle, nodeProcessor, new SnippetProcessor(), fileUtils, sourceFileMap);        this.snippetProcessor = new SnippetProcessor();
+        this.descriptionProcessor = new DescriptionProcessor();
+        this.metaInfoProcessor = new MetaInfoProcessor();
+        this.auxiliaryProcessor = new AuxiliaryProcessor();
+        this.vulnFinalizer = new VulnFinalizer();
     }
 
-    public void processXML() throws Exception {
-        Path auditPath = extractedPath.resolve("audit.fvdl");
+    /**
+     * Processes an FVDL file and returns a list of vulnerabilities.
+     *
+     * @return List of processed Vulnerability objects
+     * @throws JAXBException If XML unmarshalling fails
+     * @throws IOException   If file access fails
+     */
+    public List<Vulnerability> processXML() throws Exception {
+        Path fvdlFilePath = fprHandle.getPath("/audit.fvdl");
 
-        if (!Files.exists(auditPath)) {
-            throw new AviatorSimpleException(" audit.fvdl not found in " + extractedPath);
+        List<Vulnerability> vulnerabilities = new ArrayList<>();
+        FVDL fvdl = unmarshalFVDL(fvdlFilePath);
+        if (fvdl == null) {
+            logger.error("Failed to unmarshal FVDL file: {}", fvdlFilePath);
+            return vulnerabilities;
         }
 
-        loadSourceFileMap();
+        // Process global sections
+        metaInfoProcessor.process(fvdl.getEngineData());
+        nodeProcessor.process(fvdl.getUnifiedNodePool());
+        traceProcessor.process(fvdl.getUnifiedTracePool());
+        snippetProcessor.process(fvdl.getSnippets());
+        descriptionProcessor.process(fvdl.getDescription());
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature("http://xml.org/sax/features/validation", false);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        inputDoc = builder.parse(auditPath.toFile());
-
-        optimizedPopulateNodePool();
-
-        NodeList vulnerabilityNodes = inputDoc.getElementsByTagName("Vulnerability");
-        for (int i = 0; i < vulnerabilityNodes.getLength(); i++) {
-            Element vulnerabilityElement = (Element) vulnerabilityNodes.item(i);
-            Vulnerability vulnerability = processVulnerability(vulnerabilityElement);
-            vulnerabilities.add(vulnerability);
-        }
-
-        nodeElementMap.clear();
-    }
-
-    private void optimizedPopulateNodePool() {
-        Element nodePoolElement = (Element) inputDoc.getElementsByTagName("UnifiedNodePool").item(0);
-        if (nodePoolElement == null) {
-            logger.debug("No UnifiedNodePool found in the document");
-            return;
-        }
-
-        NodeList nodes = nodePoolElement.getElementsByTagName("Node");
-        logger.debug("Processing {} nodes", nodes.getLength());
-
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Element nodeElement = (Element) nodes.item(i);
-            processNodeElement(nodeElement);
-        }
-
-        Element unifiedTracePoolElement = (Element) inputDoc.getElementsByTagName("UnifiedTracePool").item(0);
-        if (unifiedTracePoolElement != null) {
-            NodeList traceNodes = unifiedTracePoolElement.getElementsByTagName("Trace");
-            for (int i = 0; i < traceNodes.getLength(); i++) {
-                Element traceElement = (Element) traceNodes.item(i);
-                String id = traceElement.getAttribute("id");
-                tracePool.put(id, traceElement);
+        for (com.fortify.cli.aviator.fpr.jaxb.Vulnerability vulnJAXB : fvdl.getVulnerabilities().getVulnerability()) {
+            Vulnerability vulnCustom = processVulnerability(vulnJAXB);
+            if (vulnCustom != null) {
+                vulnerabilities.add(vulnCustom);
             }
         }
+        this.vulnerabilities = vulnerabilities;
+        return vulnerabilities;
     }
 
-    private void processNodeElement(Element nodeElement) {
-        String id = nodeElement.getAttribute("id");
-        if (nodePool.containsKey(id)) {
-            logger.debug("Skipping duplicate node ID: {}", id);
-            return;
+    /**
+     * Unmarshals the FVDL file into a JAXB object.
+     *
+     * @param fvdlFilePath Path to the FVDL file
+     * @return FVDL object or null if unmarshalling fails
+     * @throws JAXBException If unmarshalling fails
+     * @throws IOException   If file access fails
+     */
+    private FVDL unmarshalFVDL(Path fvdlFilePath) throws JAXBException, IOException {
+        try (InputStream fis = Files.newInputStream(fvdlFilePath)) { // <--- THIS IS THE FIX
+            JAXBContext jaxbContext = JAXBContext.newInstance(FVDL.class);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            return (FVDL) unmarshaller.unmarshal(fis);
         }
-
-        Element sourceLocation = getFirstChildElement(nodeElement, "SourceLocation");
-        if (sourceLocation == null) {
-            logger.debug("Skipping node {} - no SourceLocation found", id);
-            return;
-        }
-
-        Element action = getFirstChildElement(nodeElement, "Action");
-        if (action == null) {
-            logger.debug("Skipping node {} - no Action found", id);
-            return;
-        }
-
-        String filePath = sourceLocation.getAttribute("path");
-        int line = parseInt(sourceLocation.getAttribute("line"), 0);
-        int lineEnd = parseInt(sourceLocation.getAttribute("lineEnd"), 0);
-        int colStart = parseInt(sourceLocation.getAttribute("colStart"), 0);
-        int colEnd = parseInt(sourceLocation.getAttribute("colEnd"), 0);
-        String contextId = sourceLocation.getAttribute("contextId");
-        String snippet = sourceLocation.getAttribute("snippet");
-        String actionType = StringUtil.isEmpty(action.getAttribute("type")) ? "GENERIC" : action.getAttribute("type");
-        String additionalInfo = action.getTextContent();
-        String ruleId = extractRuleId(nodeElement);
-
-        Node node = new Node(
-                id, filePath, line, lineEnd, colStart, colEnd,
-                contextId, snippet, actionType, additionalInfo, ruleId
-        );
-
-        nodePool.put(id, node);
-        nodeElementMap.put(id, nodeElement);
     }
 
-    private Element getFirstChildElement(Element parent, String tagName) {
-        NodeList nodes = parent.getElementsByTagName(tagName);
-        return nodes.getLength() > 0 ? (Element) nodes.item(0) : null;
-    }
-
-    private String extractRuleId(Element nodeElement) {
-        Element reasonElement = getFirstChildElement(nodeElement, "Reason");
-        if (reasonElement != null) {
-            Element ruleElement = getFirstChildElement(reasonElement, "Rule");
-            if (ruleElement != null) {
-                return ruleElement.getAttribute("ruleID");
-            }
+    public Optional<String> getSourceFileContent(String relativePath) {
+        String fullPathInZip = sourceFileMap.get(relativePath);
+        if (fullPathInZip == null) {
+            logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
+            return Optional.empty();
         }
-        return null;
-    }
-
-    private int parseInt(String value, int defaultValue) {
+        Path actualSourcePath = fprHandle.getPath(fullPathInZip);
         try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            logger.debug("Failed to parse integer value: {}, using default: {}", value, defaultValue);
-            return defaultValue;
+            return Optional.of(String.join(System.lineSeparator(), fileUtils.readFileWithFallback(actualSourcePath)));
+        } catch (RuntimeException e) {
+            logger.warn("WARN: Could not read source file content: {}", relativePath, e);
+            return Optional.empty();
         }
     }
 
-    public Vulnerability processVulnerability(Element vulnerabilityElement) {
-        Vulnerability.VulnerabilityBuilder vulnerabilityBuilder = Vulnerability.builder();
+    /**
+     * Processes a single JAXB vulnerability into a rich, fully populated internal Vulnerability object.
+     * This method orchestrates the aggregation of data from the rule definitions, instance-specific overrides,
+     * the vulnerability trace, and other sections of the FVDL.
+     *
+     * @param vulnJAXB JAXB Vulnerability object from the FVDL.
+     * @return A fully processed Vulnerability object ready for filtering and auditing, or null if creation fails.
+     */
+    private Vulnerability processVulnerability(com.fortify.cli.aviator.fpr.jaxb.Vulnerability vulnJAXB) {
+        Optional<Vulnerability> optionalVuln = VulnerabilityMapper.fromJAXB(vulnJAXB);
+        if (optionalVuln.isEmpty()) {
+            String instanceId = (vulnJAXB != null && vulnJAXB.getInstanceInfo() != null) ? vulnJAXB.getInstanceInfo().getInstanceID() : "UNKNOWN";
+            logger.warn("Skipping vulnerability with instance ID [{}] due to missing critical data.", instanceId);
+            return null;
+        }
+        Vulnerability vulnCustom = optionalVuln.get();
 
-        Optional.ofNullable(vulnerabilityElement.getElementsByTagName("ClassInfo").item(0))
-                .map(Element.class::cast)
-                .ifPresent(classInfo -> {
-                    String classID = getFirstElementContent(classInfo, "ClassID", "").orElse(null);
-                    vulnerabilityBuilder.classID(classID);
-                    String legacyAnalyzerName = getFirstElementContent(classInfo, "AnalyzerName", "").orElse(null);
-                    vulnerabilityBuilder.analyzerName(legacyAnalyzerName == null ? null : AnalyzerType.canonicalizeAnalyzerName(legacyAnalyzerName));
-                    vulnerabilityBuilder.defaultSeverity(parseIntegerContent(getFirstElementContent(classInfo, "DefaultSeverity", "0").orElse("0")));
-                    vulnerabilityBuilder.kingdom(getFirstElementContent(classInfo, "Kingdom", "").orElse(null));
-                    String type = getFirstElementContent(classInfo, "Type", "").orElse(null);
-                    vulnerabilityBuilder.type(type);
-                    String subType = getFirstElementContent(classInfo, "Subtype", "").orElse(null);
-                    vulnerabilityBuilder.subType(subType);
-                });
 
-        Optional.ofNullable(vulnerabilityElement.getElementsByTagName("InstanceInfo").item(0))
-                .map(Element.class::cast)
-                .ifPresent(instanceInfo -> {
-                    Integer confidence = parseIntegerContent(getFirstElementContent(instanceInfo, "Confidence", "0").orElse("0"));
-                    vulnerabilityBuilder.confidence(confidence);
-                    vulnerabilityBuilder.instanceID(getFirstElementContent(instanceInfo, "InstanceID", "").orElse(null));
-                    vulnerabilityBuilder.instanceSeverity(parseIntegerContent(getFirstElementContent(instanceInfo, "InstanceSeverity", "0").orElse("0")));
-                });
+        // 1. Get the base metadata from the global Rule definition.
+        // We create a mutable copy to allow for overrides.
+        Map<String, String> finalMetadata = new HashMap<>(metaInfoProcessor.getMetadataForRule(vulnCustom.getClassID()));
 
-        String classID = vulnerabilityBuilder.build().getClassID();
-        String type = vulnerabilityBuilder.build().getType();
-        String subType = vulnerabilityBuilder.build().getSubType();
-        Integer confidence = vulnerabilityBuilder.build().getConfidence();
-
-        String audience = processVulnerabilityAudience(vulnerabilityElement);
-        String[] metaInfo = getMetaInfo(classID);
-        Double accuracy = parseDoubleContent(metaInfo[0]);
-        Double impact = parseDoubleContent(metaInfo[1]);
-        Double probability = parseDoubleContent(metaInfo[2]);
-
-        vulnerabilityBuilder.accuracy(accuracy);
-        vulnerabilityBuilder.impact(impact);
-        vulnerabilityBuilder.probability(probability);
-        vulnerabilityBuilder.audience(audience);
-
-        String category = getCategory(type, subType);
-        Double likelihood = getLikelihood(accuracy, confidence, probability);
-        String priority = getFriority(impact, likelihood);
-        vulnerabilityBuilder.likelihood(String.valueOf(likelihood));
-        vulnerabilityBuilder.priority(priority);
-        vulnerabilityBuilder.category(category);
-        vulnerabilityBuilder.filetype("");
-
-        Optional.ofNullable(vulnerabilityElement.getElementsByTagName("AnalysisInfo").item(0))
-                .map(Element.class::cast)
-                .ifPresent(analysisInfo -> {
-                    try {
-                        List<List<StackTraceElement>> stackTraces = processAnalysisInfo(analysisInfo);
-                        vulnerabilityBuilder.stackTrace(stackTraces);
-
-                        Map<String, File> uniqueFiles = new LinkedHashMap<>();
-                        if (!stackTraces.isEmpty()) {
-                            List<StackTraceElement> firstStackTrace = stackTraces.get(0);
-                            if (!firstStackTrace.isEmpty()) {
-                                processFileForElement(firstStackTrace.get(0), uniqueFiles);
-                                processFileForElement(firstStackTrace.get(firstStackTrace.size() - 1), uniqueFiles);
-                            }
-                        }
-                        processStackTraceElements(stackTraces, uniqueFiles);
-                        vulnerabilityBuilder.files(new ArrayList<>(uniqueFiles.values()));
-
-                        if (!stackTraces.isEmpty()) {
-                            List<StackTraceElement> firstStackTrace = stackTraces.get(0);
-                            vulnerabilityBuilder.firstStackTrace(firstStackTrace);
-                            vulnerabilityBuilder.lastStackTraceElement(firstStackTrace.isEmpty() ? null : firstStackTrace.get(firstStackTrace.size() - 1));
-                            vulnerabilityBuilder.longestStackTrace(findLongestList(stackTraces));
-                            vulnerabilityBuilder.source(firstStackTrace.isEmpty() ? null : firstStackTrace.get(0));
-                            vulnerabilityBuilder.sink(firstStackTrace.isEmpty() ? null : firstStackTrace.get(firstStackTrace.size() - 1));
-                        }
-                    } catch (Exception e) {
-                        logger.error("Error processing AnalysisInfo for vulnerability: {}", classID, e);
-                        vulnerabilityBuilder.files(Collections.emptyList());
-                    }
-                });
-
-        addDescriptionElements(vulnerabilityBuilder, classID, vulnerabilityElement);
-        return vulnerabilityBuilder.build();
-    }
-
-    private void processStackTraceElements(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) {
-        for (List<StackTraceElement> stackTrace : stackTraces) {
-            if (stackTrace == null) continue;
-
-            for (StackTraceElement element : stackTrace) {
-                processFileForElement(element, uniqueFiles);
-                processInnerStackTraceElements(element, uniqueFiles);
+        // 2. Check for and apply any instance-specific metadata overrides from <InstanceInfo>.
+        if (vulnJAXB.getInstanceInfo() != null && vulnJAXB.getInstanceInfo().getMetaInfo() != null) {
+            for (MetaInfo.Group group : vulnJAXB.getInstanceInfo().getMetaInfo().getGroup()) {
+                if (group.getName() != null && group.getValue() != null) {
+                    finalMetadata.put(group.getName(), group.getValue().trim());
+                    logger.trace("Overriding metadata for vuln [{}]: '{}' -> '{}'", vulnCustom.getInstanceID(), group.getName(), group.getValue());
+                }
             }
         }
-    }
 
-    private void processInnerStackTraceElements(StackTraceElement element, Map<String, File> uniqueFiles) {
-        if (element == null || element.getInnerStackTrace() == null || element.getInnerStackTrace().isEmpty()) return;
+        // 3. Merge the final, combined metadata into the vulnerability's central knowledge map.
+        vulnCustom.getKnowledge().putAll(finalMetadata);
 
-        for (StackTraceElement innerElement : element.getInnerStackTrace()) {
-            processFileForElement(innerElement, uniqueFiles);
-            processInnerStackTraceElements(innerElement, uniqueFiles);
+        // 4. Populate the specific, high-level fields using the final merged data.
+        vulnCustom.setAccuracy(XmlUtils.safeParseDouble(finalMetadata.get("Accuracy"), 0.0));
+        vulnCustom.setImpact(XmlUtils.safeParseDouble(finalMetadata.get("Impact"), 0.0));
+        vulnCustom.setProbability(XmlUtils.safeParseDouble(finalMetadata.get("Probability"), 0.0));
+
+        String audience = finalMetadata.getOrDefault("audience", "");
+        if (StringUtil.isEmpty(audience)) {
+            audience = processVulnerabilityAudienceFromJAXB(vulnJAXB);
         }
+        vulnCustom.setAudience(audience);
+        vulnCustom.setFiletype(finalMetadata.getOrDefault("DefaultFile", ""));
+
+        try {
+            List<List<StackTraceElement>> stackTraces = new ArrayList<>();
+            if (vulnJAXB.getAnalysisInfo() != null && vulnJAXB.getAnalysisInfo().getUnified() != null) {
+                for (UnifiedTrace trace : vulnJAXB.getAnalysisInfo().getUnified().getTrace()) {
+                    stackTraces.addAll(traceProcessor.resolveTrace(trace));
+                }
+            }
+            vulnCustom.setStackTrace(stackTraces);
+
+            Map<String, File> uniqueFiles = new LinkedHashMap<>();
+            if (!stackTraces.isEmpty()) {
+                List<StackTraceElement> firstStackTrace = stackTraces.get(0);
+                List<StackTraceElement> lastStackTrace = stackTraces.get(stackTraces.size() - 1);
+
+                if (!lastStackTrace.isEmpty()) {
+                    processFileForElement(lastStackTrace.get(0), uniqueFiles);
+                    processFileForElement(lastStackTrace.get(lastStackTrace.size() - 1), uniqueFiles);
+                }
+                processStackTraceElements(stackTraces, uniqueFiles);
+
+                vulnCustom.setFiles(new ArrayList<>(uniqueFiles.values()));
+                vulnCustom.setFirstStackTrace(firstStackTrace);
+                vulnCustom.setSource(lastStackTrace.isEmpty() ? null : lastStackTrace.get(0));
+                vulnCustom.setSink(lastStackTrace.isEmpty() ? null : lastStackTrace.get(lastStackTrace.size() - 1));
+                vulnCustom.setLastStackTraceElement(lastStackTrace.isEmpty() ? null : lastStackTrace.get(lastStackTrace.size() - 1));
+                vulnCustom.setLongestStackTrace(findLongestList(stackTraces));
+                vulnCustom.setSource(firstStackTrace.isEmpty() ? null : firstStackTrace.get(0));
+                vulnCustom.setSink(firstStackTrace.isEmpty() ? null : firstStackTrace.get(firstStackTrace.size() - 1));
+            }
+        } catch (IOException e) {
+            logger.error("Failed to resolve traces for vuln ID: {}", vulnCustom.getInstanceID(), e);
+            vulnCustom.setFiles(new ArrayList<>());
+        }
+
+        // Aggregate dynamic knowledge (like TaintFlags) from the processed trace nodes up to the vulnerability level.
+        aggregateFromTraces(vulnCustom);
+
+        // Process DAST / Auxiliary data into their respective fields
+        auxiliaryProcessor.process(vulnJAXB, vulnCustom);
+        processRequestRelated(vulnCustom, vulnCustom.getAuxiliaryData(), vulnCustom.getExternalEntries());
+
+        // Process descriptions, providing the replacement data for rendering.
+        ReplacementData replacementData = ReplacementParser.parse(vulnJAXB.getAnalysisInfo().getUnified().getReplacementDefinitions());
+        String[] descs = descriptionProcessor.processForVuln(vulnCustom, vulnCustom.getClassID(), replacementData);
+        vulnCustom.setShortDescription(StringUtil.stripTags(descs[0], true));
+        vulnCustom.setExplanation(StringUtil.stripTags(descs[1], true));
+
+        // The finalizer is now responsible for calculating derived fields (like likelihood and priority)
+        // and applying any necessary fallbacks for data that was missing from the rule metadata.
+        vulnFinalizer.finalize(vulnCustom);
+
+        return vulnCustom;
     }
 
-    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles){
+    private void processFileForElement(StackTraceElement element, Map<String, File> uniqueFiles) {
         if (element == null) return;
 
         String filename = element.getFilename();
         if (!StringUtil.isEmpty(filename) && sourceFileMap.containsKey(filename) && !uniqueFiles.containsKey(filename)) {
             String sourceFilePath = sourceFileMap.get(filename);
-            Path actualSourcePath = extractedPath.resolve(sourceFilePath);
+            Path actualSourcePath = fprHandle.getPath(sourceFilePath);
 
             File file = new File();
             file.setName(filename);
@@ -306,787 +248,232 @@ public class FVDLProcessor {
 
             try {
                 if (Files.exists(actualSourcePath)) {
-                    byte[] encodedBytes = Files.readAllBytes(Paths.get(actualSourcePath.toUri()));
+                    byte[] encodedBytes = Files.readAllBytes(actualSourcePath);
                     file.setContent(new String(encodedBytes));
-                    file.setEndLine(countLines(actualSourcePath));
+                    file.setEndLine(fileUtils.countLines(actualSourcePath));
                 } else {
-                    logger.warn("WARN: Source file not found: {}", actualSourcePath);
+                    logger.warn("Source file not found: {}", actualSourcePath);
                     file.setContent("");
                     file.setEndLine(0);
                 }
-            } catch (MalformedInputException e) {
-                logger.warn("WARN: Malformed input while reading file: {}", filename, e);
-                file.setContent("");
-                file.setEndLine(0);
             } catch (IOException e) {
-                logger.warn("WARN: Error processing file: {}", filename, e);
+                logger.warn("Error processing file: {}", filename, e);
                 file.setContent("");
                 file.setEndLine(0);
             }
-
             uniqueFiles.put(filename, file);
         }
     }
 
-    public Double getLikelihood(Double accuracy, Integer confidence, Double probability) {
-        return Optional.ofNullable(accuracy).orElse(0.0) *
-                Optional.ofNullable(confidence).map(Integer::doubleValue).orElse(0.0) *
-                Optional.ofNullable(probability).orElse(0.0) / 25.0;
-    }
-
-    public String getFriority(Double impact, Double likelihood) {
-        double impactValue = Optional.ofNullable(impact).orElse(0.0);
-        double likelihoodValue = Optional.ofNullable(likelihood).orElse(0.0);
-
-        if (impactValue >= 2.5) {
-            return likelihoodValue >= 2.5 ? "Critical" : "High";
-        } else {
-            return likelihoodValue >= 2.5 ? "Medium" : "Low";
+    private void processStackTraceElements(List<List<StackTraceElement>> stackTraces, Map<String, File> uniqueFiles) {
+        for (List<StackTraceElement> stackTrace : stackTraces) {
+            if (stackTrace == null) continue;
+            for (StackTraceElement element : stackTrace) {
+                processFileForElement(element, uniqueFiles);
+                if (element.getInnerStackTrace() != null) {
+                    for (StackTraceElement innerElement : element.getInnerStackTrace()) {
+                        processFileForElement(innerElement, uniqueFiles);
+                    }
+                }
+            }
         }
     }
 
-    private int countLines(Path filePath) throws IOException {
-        try {
-            return readFileWithFallback(filePath).size();
-        } catch (IOException e) {
-            logger.error("Error counting lines in file: {}", filePath, e);
-            return 0;
-        }
-    }
-
-    private List<List<StackTraceElement>> processAnalysisInfo(Element analysisInfoElement) throws IOException {
-        if (analysisInfoElement == null) {
-            logger.warn("WARN: AnalysisInfo element is null; returning empty stack traces");
+    /**
+     * Finds the stack trace with the most total nodes, including nested traces.
+     *
+     * @param listOfLists A list containing all traces for a vulnerability.
+     * @return The single trace (a list of StackTraceElement) that is the "longest".
+     */
+    private List<StackTraceElement> findLongestList(List<List<StackTraceElement>> listOfLists) {
+        if (listOfLists == null || listOfLists.isEmpty()) {
             return new ArrayList<>();
         }
-
-        List<List<StackTraceElement>> stackTraces = new ArrayList<>();
-        NodeList traceNodes = analysisInfoElement.getElementsByTagName("Trace");
-        if (traceNodes.getLength() == 0) {
-            logger.debug("No Trace elements found in AnalysisInfo");
-        }
-
-        for (int i = 0; i < traceNodes.getLength(); i++) {
-            Element traceElement = (Element) traceNodes.item(i);
-            if (traceElement == null) {
-                logger.debug("Trace element at index {} is null; skipping", i);
-                continue;
-            }
-
-            List<StackTraceElement> stackTrace = processTraceElement(traceElement);
-            if (!stackTrace.isEmpty()) {
-                stackTraces.add(stackTrace);
-            } else {
-                logger.debug("Empty stack trace for Trace {}; omitted from result", i);
-            }
-        }
-
-        return stackTraces;
-    }
-
-    private List<StackTraceElement> processTraceElement(Element traceElement) throws IOException {
-        List<StackTraceElement> stackTrace = new ArrayList<>();
-        NodeList entryNodes = traceElement.getElementsByTagName("Entry");
-        for (int i = 0; i < entryNodes.getLength(); i++) {
-            Element entryElement = (Element) entryNodes.item(i);
-            Element nodeRefElement = getFirstChildElement(entryElement, "NodeRef");
-            Element nodeElement = getFirstChildElement(entryElement, "Node");
-
-            if (nodeRefElement != null) {
-                String nodeId = nodeRefElement.getAttribute("id");
-                Node node = nodePool.get(nodeId);
-                if (node != null) {
-                    StackTraceElement ste = createStackTraceElement(node);
-                    stackTrace.add(ste);
-                } else {
-                    logger.warn("WARN: Node ID {} not found in nodePool", nodeId);
-                }
-            } else if (nodeElement != null) {
-                Element sourceLocation = getFirstChildElement(nodeElement, "SourceLocation");
-                if (sourceLocation != null) {
-                    StackTraceElement ste = createStackTraceElementFromNode(nodeElement);
-                    stackTrace.add(ste);
-                } else {
-                    logger.warn("WARN: SourceLocation missing in inline Node for Trace entry {}", i);
-                }
-            }
-        }
-        return stackTrace;
-    }
-
-    private StackTraceElement createStackTraceElement(Node node) throws IOException {
-        String codeSnippet = getCodeSnippet(node.getSnippet(), node.getFilePath()).orElse("");
-        StackTraceElement element = new StackTraceElement(
-                node.getFilePath(),
-                node.getLine(),
-                codeSnippet,
-                node.getActionType(),
-                getFragmentFromFile(node.getFilePath(), node.getLine(), 5, 2),
-                node.getAdditionalInfo(),
-                null
-        );
-
-        List<StackTraceElement> innerStackTrace = new ArrayList<>();
-        Element nodeElement = nodeElementMap.get(node.getId());
-        if (nodeElement != null) {
-            Element reason = getFirstChildElement(nodeElement, "Reason");
-            if (reason != null) {
-                Element traceRef = getFirstChildElement(reason, "TraceRef");
-                if (traceRef != null) {
-                    String traceId = traceRef.getAttribute("id");
-                    Element traceElement = tracePool.get(traceId);
-                    if (traceElement != null) {
-                        innerStackTrace.addAll(processTraceElement(traceElement));
-                    } else {
-                        logger.warn("WARN: Trace ID {} not found in UnifiedTracePool", traceId);
-                    }
-                } else {
-                    Element trace = getFirstChildElement(reason, "Trace");
-                    if (trace != null) {
-                        innerStackTrace.addAll(processTraceElement(trace));
-                    }
-                }
-            }
-        }
-        element.setInnerStackTrace(innerStackTrace);
-        return element;
-    }
-
-    private StackTraceElement createStackTraceElementFromNode(Element nodeElement) throws IOException {
-        Element sourceLocation = getFirstChildElement(nodeElement, "SourceLocation");
-        Element action = getFirstChildElement(nodeElement, "Action");
-        Element knowledge = getFirstChildElement(nodeElement, "Knowledge");
-        String taintFlags = getTaintFlags(knowledge);
-
-        String filePath = sourceLocation.getAttribute("path");
-        int line = parseInt(sourceLocation.getAttribute("line"), 0);
-        String codeSnippet = sourceLocation.getAttribute("snippet");
-        String actionType = (action != null && !StringUtil.isEmpty(action.getAttribute("type"))) ? action.getAttribute("type") : "GENERIC";
-        String actionContent = (action != null) ? action.getTextContent() : "";
-
-        StackTraceElement element = new StackTraceElement(
-                filePath,
-                line,
-                getCodeSnippet(codeSnippet, filePath).orElse(""),
-                actionType,
-                getFragmentFromFile(filePath, line, 5, 2),
-                actionContent,
-                taintFlags
-        );
-
-        List<StackTraceElement> innerStackTrace = new ArrayList<>();
-        Element reason = getFirstChildElement(nodeElement, "Reason");
-        if (reason != null) {
-            Element traceRef = getFirstChildElement(reason, "TraceRef");
-            if (traceRef != null) {
-                String traceId = traceRef.getAttribute("id");
-                Element traceElement = tracePool.get(traceId);
-                if (traceElement != null) {
-                    innerStackTrace.addAll(processTraceElement(traceElement));
-                } else {
-                    logger.warn("WARN: Trace ID {} not found in UnifiedTracePool", traceId);
-                }
-            } else {
-                Element trace = getFirstChildElement(reason, "Trace");
-                if (trace != null) {
-                    innerStackTrace.addAll(processTraceElement(trace));
-                }
-            }
-        }
-        element.setInnerStackTrace(innerStackTrace);
-        return element;
-    }
-
-
-    private String getTaintFlags(Element knowledgeElement) {
-        if (knowledgeElement != null) {
-            NodeList facts = knowledgeElement.getElementsByTagName("Fact");
-            for (int i = 0; i < facts.getLength(); i++) {
-                Element factNode = (Element) facts.item(i);
-                if (factNode != null) {
-                    Element fact = (Element) factNode;
-                    if ("TaintFlags".equalsIgnoreCase(fact.getAttribute("type"))) {
-                        return fact.getTextContent();
-                    }
-                }
-            }
-        }
-        return "";
-    }
-
-    private Optional<String> getCodeSnippet(String snippetId, String filePath) {
-        try {
-            if (snippetId == null || snippetId.isEmpty()) { // Use isEmpty()
-                return Optional.empty();
-            }
-
-            String[] parts = snippetId.split("#");
-            if (parts.length != 2) {
-                return Optional.empty();
-            }
-
-            String file = parts[1];
-            Matcher matcher = Pattern.compile("(.+):(\\d+):(\\d+)").matcher(file);
-            if (!matcher.find()) {
-                return Optional.empty();
-            }
-
-            String filename = matcher.group(1);
-            int startLine = Integer.parseInt(matcher.group(2));
-
-            String sourceFilePath = sourceFileMap.get(filename);
-            if (sourceFilePath == null) {
-                return Optional.empty();
-            }
-
-            Path actualSourcePath = extractedPath.resolve(sourceFilePath);
-            List<String> lines = readFileWithFallback(actualSourcePath); // Use updated readFile
-
-            if (startLine > 0 && startLine <= lines.size()) {
-                return Optional.of(lines.get(startLine - 1));
-            } else {
-                return Optional.empty();
-            }
-        } catch (Exception e) {
-            logger.error("Error getting code snippet for snippet ID: {}, file path: {}", snippetId, filePath, e);
-            return Optional.empty();
-        }
-    }
-
-    private Fragment getFragmentFromFile(String filename, int linenumber, int maxBefore, int maxAfter) {
-        String sourceFilePath = sourceFileMap.get(filename);
-        if (sourceFilePath == null) {
-            return new Fragment("", 0, 0);
-        }
-
-        Path actualSourcePath = extractedPath.resolve(sourceFilePath);
-        if (!Files.exists(actualSourcePath)) {
-            logger.warn("WARN: Source file not found: " + actualSourcePath);
-            return new Fragment("", 0, 0);
-        }
-
-        try {
-            List<String> lines = readFileWithFallback(actualSourcePath);
-            String[] linesArray = lines.toArray(new String[0]);
-
-            int first = Math.max(1, linenumber - maxBefore);
-            int last = Math.min(linesArray.length, linenumber + maxAfter);
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = first; i <= last; i++) {
-                if (i >= 1 && i <= linesArray.length) {
-                    sb.append(linesArray[i - 1]).append(System.lineSeparator());
-                }
-            }
-
-            return new Fragment(sb.toString(), first, last);
-        } catch (IOException e) {
-            logger.error("Error reading fragment from file: {}", actualSourcePath, e);
-            return new Fragment("", 0, 0);
-        }
-    }
-
-    public String processVulnerabilityAudience(Element vulnerabilityElement) {
-        String mainRuleId = Optional.ofNullable(vulnerabilityElement.getElementsByTagName("ClassInfo").item(0))
-                .map(Element.class::cast)
-                .flatMap(classInfo -> getFirstElementContent(classInfo, "ClassID", ""))
-                .orElse("");
-
-        Set<String> allRuleIds = new HashSet<>();
-        allRuleIds.add(mainRuleId);
-
-        Optional.ofNullable(vulnerabilityElement.getElementsByTagName("AnalysisInfo").item(0))
-                .map(Element.class::cast)
-                .ifPresent(analysisInfo -> collectRuleIdsFromTraces(analysisInfo, allRuleIds));
-
-        return intersectAudiences(allRuleIds);
-    }
-
-    private void collectRuleIdsFromTraces(Element analysisInfo, Set<String> ruleIds) {
-        NodeList traceNodes = analysisInfo.getElementsByTagName("Trace");
-        for (int i = 0; i < traceNodes.getLength(); i++) {
-            Element traceElement = (Element) traceNodes.item(i);
-            NodeList entryNodes = traceElement.getElementsByTagName("Entry");
-            for (int j = 0; j < entryNodes.getLength(); j++) {
-                Element entryElement = (Element) entryNodes.item(j);
-                Element nodeRef = getFirstChildElement(entryElement, "NodeRef");
-                if (nodeRef != null) {
-                    String nodeId = nodeRef.getAttribute("id");
-                    Node node = nodePool.get(nodeId);
-                    if (node != null && node.getAssociatedRuleId() != null) {
-                        ruleIds.add(node.getAssociatedRuleId());
-                    }
-                }
-                Element nodeElement = getFirstChildElement(entryElement, "Node");
-                if (nodeElement != null) {
-                    Optional.ofNullable(getFirstChildElement(nodeElement, "Reason"))
-                            .map(reason -> getFirstChildElement(reason, "Rule"))
-                            .map(rule -> rule.getAttribute("ruleID"))
-                            .ifPresent(ruleIds::add);
-                }
-            }
-        }
-    }
-
-    private String intersectAudiences(Set<String> ruleIds) {
-        Set<String> intersection = null;
-        Element rulesInfo = (Element) inputDoc.getElementsByTagName("RuleInfo").item(0);
-        if (rulesInfo == null) return "";
-
-        for (String ruleId : ruleIds) {
-            Set<String> currentAudience = getAudienceForRule(rulesInfo, ruleId);
-            if (currentAudience == null || currentAudience.isEmpty()) {
-                continue;
-            }
-            if (intersection == null) {
-                intersection = new HashSet<>(currentAudience);
-            } else {
-                intersection.retainAll(currentAudience);
-            }
-            if (intersection.isEmpty()) {
-                return "";
-            }
-        }
-        return intersection == null ? "" : String.join(",", intersection);
-    }
-
-    private Set<String> getAudienceForRule(Element rulesInfo, String ruleId) {
-        return Optional.ofNullable(rulesInfo)
-                .map(ri -> {
-                    NodeList rules = ri.getElementsByTagName("Rule");
-                    for (int i = 0; i < rules.getLength(); i++) {
-                        Element rule = (Element) rules.item(i);
-                        if (ruleId.equals(rule.getAttribute("id"))) {
-                            return Optional.ofNullable(getFirstChildElement(rule, "MetaInfo"))
-                                    .map(metaInfo -> {
-                                        NodeList groups = metaInfo.getElementsByTagName("Group");
-                                        for (int j = 0; j < groups.getLength(); j++) {
-                                            Element group = (Element) groups.item(j);
-                                            if ("audience".equals(group.getAttribute("name"))) {
-                                                return Arrays.stream(group.getTextContent().split(","))
-                                                        .map(String::trim)
-                                                        .collect(Collectors.toSet());
-                                            }
-                                        }
-                                        return Collections.<String>emptySet();
-                                    })
-                                    .orElse(Collections.emptySet());
-                        }
-                    }
-                    return Collections.<String>emptySet();
-                })
-                .orElse(Collections.emptySet());
-    }
-
-    private List<StackTraceElement> findLongestList(List<List<StackTraceElement>> listOfLists) {
+        // This performs the same deep count as before, but in a more concise way.
         return listOfLists.stream()
-                .max(Comparator.comparingInt(list -> list == null ? 0 : list.size()))
+                .max(Comparator.comparingInt(this::getTotalTraceSize))
                 .orElse(new ArrayList<>());
     }
 
-    private String getCategory(String type, String subType) {
-        return Optional.ofNullable(subType)
-                .filter(s -> !s.isEmpty())
-                .map(s -> type + ": " + s)
-                .orElse(type);
-    }
-
-    private Optional<String> getFirstElementContent(Element parent, String tagName, String defaultValue) {
-        NodeList nodes = parent.getElementsByTagName(tagName);
-        if (nodes != null && nodes.getLength() > 0 && nodes.item(0) != null) {
-            return Optional.of(nodes.item(0).getTextContent());
-        }
-        return Optional.of(defaultValue);
-    }
-
-    private List<String> readFileWithFallback(Path filePath) throws IOException {
-        return fileContentCache.computeIfAbsent(filePath, path -> {
-            try {
-                byte[] fileBytes = Files.readAllBytes(path);
-                String content = new String(fileBytes);
-                return Arrays.asList(content.split("\\r?\\n"));
-            } catch (MalformedInputException e) {
-                logger.error("Malformed input reading file: {}", path, e);
-                throw new RuntimeException(new IOException("Unable to read file due to encoding: " + path, e));
-            } catch (IOException e) {
-                logger.error("Failed to read file: {}", path, e);
-                throw new RuntimeException(new IOException("Unable to read file: " + path, e));
-            }
-        });
-    }
-
-    private int parseIntegerContent(String content) {
-        try {
-            return (int) Double.parseDouble(content);
-        } catch (NumberFormatException e) {
-            logger.error("Error parsing integer: {}", content, e);
+    /**
+     * Calculates the total number of nodes in a single trace by summing the recursive
+     * size of each of its top-level elements.
+     *
+     * @param trace A list of top-level StackTraceElements.
+     * @return The total count of all nodes in the trace tree.
+     */
+    private int getTotalTraceSize(List<StackTraceElement> trace) {
+        if (trace == null) {
             return 0;
         }
+        return trace.stream()
+                .mapToInt(this::countNodesRecursive)
+                .sum();
     }
 
-    private Double parseDoubleContent(String content) {
-        try {
-            return Double.parseDouble(content);
-        } catch (NumberFormatException e) {
-            logger.error("Error parsing double: {}", content, e);
-            return 0.0;
+    /**
+     * Recursively counts a StackTraceElement and all of its descendants in inner traces.
+     *
+     * @param element The root element to start counting from.
+     * @return The total number of nodes in this element's tree.
+     */
+    private int countNodesRecursive(StackTraceElement element) {
+        if (element == null) {
+            return 0;
+        }
+        int count = 1;
+        if (element.getInnerStackTrace() != null) {
+            for (StackTraceElement inner : element.getInnerStackTrace()) {
+                count += countNodesRecursive(inner);
+            }
+        }
+        return count;
+    }
+
+    private void aggregateFromTraces(Vulnerability vulnCustom) {
+        Set<String> allTaintFlags = new HashSet<>();
+        Map<String, String> allKnowledge = new HashMap<>();
+        for (List<StackTraceElement> trace : vulnCustom.getStackTrace()) {
+            for (StackTraceElement ste : trace) {
+                // TODO Fix names
+                if (ste.getTaintflags() != null && !ste.getTaintflags().isEmpty()) {
+                    allTaintFlags.addAll(Arrays.stream(ste.getTaintflags().split(",")).map(String::trim).collect(Collectors.toSet()));
+                }
+                allKnowledge.putAll(ste.getKnowledge());
+                if (ste.getInnerStackTrace() != null) {
+                    for (StackTraceElement inner : ste.getInnerStackTrace()) {
+                        if (inner.getTaintflags() != null && !inner.getTaintflags().isEmpty()) {
+                            allTaintFlags.addAll(Arrays.stream(inner.getTaintflags().split(",")).map(String::trim).collect(Collectors.toSet()));
+                        }
+                        allKnowledge.putAll(inner.getKnowledge());
+                    }
+                }
+            }
+        }
+        vulnCustom.setTaintFlags(new ArrayList<>(allTaintFlags));
+        vulnCustom.setKnowledge(allKnowledge);
+    }
+
+    private void processRequestRelated(com.fortify.cli.aviator.fpr.Vulnerability vulnCustom, List<Map<String, String>> auxData, List<Entry> externalEntries) {
+        for (Map<String, String> aux : auxData) {
+            String contentType = aux.get("contentType");
+            if (contentType != null) {
+                switch (contentType.toLowerCase()) {
+                    case "requestheaders":
+                        vulnCustom.setRequestHeaders(aux.values().stream().filter(v -> !v.equals(contentType)).collect(Collectors.joining(",")));
+                        break;
+                    case "requestparameters":
+                        vulnCustom.setRequestParameters(aux.values().stream().filter(v -> !v.equals(contentType)).collect(Collectors.joining(",")));
+                        break;
+                    case "requestbody":
+                        vulnCustom.setRequestBody(aux.get("value"));
+                        break;
+                    case "requestmethod":
+                        vulnCustom.setRequestMethod(aux.get("value"));
+                        break;
+                    case "requestcookies":
+                        vulnCustom.setRequestCookies(aux.get("value"));
+                        break;
+                    case "requesthttpversion":
+                        vulnCustom.setRequestHttpVersion(aux.get("value"));
+                        break;
+                    case "attackpayload":
+                        vulnCustom.setAttackPayload(aux.get("value"));
+                        break;
+                    case "attacktype":
+                        vulnCustom.setAttackType(aux.get("value"));
+                        break;
+                    case "response":
+                        vulnCustom.setResponse(aux.get("value"));
+                        break;
+                    case "trigger":
+                        vulnCustom.setTrigger(aux.get("value"));
+                        break;
+                    case "vulnerableparameter":
+                        vulnCustom.setVulnerableParameter(aux.get("value"));
+                        break;
+                }
+            }
+        }
+        for (Entry entry : externalEntries) {
+            if (entry.getUrl() != null && entry.getUrl().toLowerCase().contains("request")) {
+                for (Entry.Field field : entry.getFields()) {
+                    switch (field.getName().toLowerCase()) {
+                        case "requestheaders":
+                            vulnCustom.setRequestHeaders(field.getValue());
+                            break;
+                        case "requestparameters":
+                            vulnCustom.setRequestParameters(field.getValue());
+                            break;
+                        case "requestbody":
+                            vulnCustom.setRequestBody(field.getValue());
+                            break;
+                        case "requestmethod":
+                            vulnCustom.setRequestMethod(field.getValue());
+                            break;
+                        case "requestcookies":
+                            vulnCustom.setRequestCookies(field.getValue());
+                            break;
+                        case "requesthttpversion":
+                            vulnCustom.setRequestHttpVersion(field.getValue());
+                            break;
+                        case "attackpayload":
+                            vulnCustom.setAttackPayload(field.getValue());
+                            break;
+                        case "attacktype":
+                            vulnCustom.setAttackType(field.getValue());
+                            break;
+                        case "response":
+                            vulnCustom.setResponse(field.getValue());
+                            break;
+                        case "trigger":
+                            vulnCustom.setTrigger(field.getValue());
+                            break;
+                        case "vulnerableparameter":
+                            vulnCustom.setVulnerableParameter(field.getValue());
+                            break;
+                    }
+                }
+            }
         }
     }
 
-    private String[] getMetaInfo(String ruleId) {
-        return metaInfoCache.computeIfAbsent(ruleId, id -> {
-            String[] metaInfo = new String[]{"0", "0", "0", ""};
-            Element ruleElement = getRuleInfo(id);
-            if (ruleElement != null) {
-                Element metaInfoElement = getFirstChildElement(ruleElement, "MetaInfo");
-                if (metaInfoElement != null) {
-                    NodeList groups = metaInfoElement.getElementsByTagName("Group");
-                    for (int i = 0; i < groups.getLength(); i++) {
-                        Element group = (Element) groups.item(i);
-                        String groupName = group.getAttribute("name");
-                        String content = group.getTextContent();
-                        switch (groupName.toLowerCase()) {
-                            case "accuracy": metaInfo[0] = content; break;
-                            case "impact": metaInfo[1] = content; break;
-                            case "probability": metaInfo[2] = content; break;
-                            case "audience": metaInfo[3] = content; break;
+    private String processVulnerabilityAudienceFromJAXB(com.fortify.cli.aviator.fpr.jaxb.Vulnerability vulnJAXB) {
+        Set<String> allRuleIds = new HashSet<>();
+        allRuleIds.add(vulnJAXB.getClassInfo().getClassID());
+        if (vulnJAXB.getAnalysisInfo().getUnified() != null && !vulnJAXB.getAnalysisInfo().getUnified().getTrace().isEmpty()) {
+            for (UnifiedTrace trace : vulnJAXB.getAnalysisInfo().getUnified().getTrace()) {
+                if (trace.getPrimary() == null) continue;
+                for (UnifiedTrace.Primary.Entry entry : trace.getPrimary().getEntry()) {
+                    if (entry.getNode() != null) {
+                        UnifiedNode node = entry.getNode();
+                        if (node.getReason() != null && node.getReason().getTraceOrTraceRefOrInductionRef() != null) {
+                            for (Object reasonObj : node.getReason().getTraceOrTraceRefOrInductionRef()) {
+                                if (reasonObj instanceof UnifiedNode.Reason.Rule rule) {
+                                    allRuleIds.add(rule.getRuleID());
+                                }
+                            }
                         }
                     }
                 }
             }
-            return metaInfo;
-        });
-    }
-
-    private Element getRuleInfo(String ruleId) {
-        return ruleInfoCache.computeIfAbsent(ruleId, id -> {
-            NodeList ruleInfoNodes = inputDoc.getElementsByTagName("RuleInfo");
-            for (int i = 0; i < ruleInfoNodes.getLength(); i++) {
-                Element ruleInfoElement = (Element) ruleInfoNodes.item(i);
-                NodeList rules = ruleInfoElement.getElementsByTagName("Rule");
-                for (int j = 0; j < rules.getLength(); j++) {
-                    Element rule = (Element) rules.item(j);
-                    if (ruleId.equals(rule.getAttribute("id"))) {
-                        return rule;
-                    }
-                }
-            }
-            return null;
-        });
-    }
-
-    private Map<String, String> initializeTagReplacementMap() {
-        Map<String, String> map = new HashMap<>();
-        map.put("<pre>", "<code>");
-        map.put("</pre>", "</code>");
-        map.put("<p>", "");
-        map.put("</p>", "\n");
-        map.put("<table>", "");
-        map.put("</table>", "");
-        map.put("<tr>", "");
-        map.put("</tr>", "");
-        map.put("<td>", "\t");
-        map.put("</td>", "");
-        map.put("<th>", "<b>\t");
-        map.put("</th>", "</b>");
-        map.put("<li>", "-");
-        map.put("</li>", "");
-        map.put("<blockquote>", "");
-        map.put("</blockquote>", "");
-        map.put("<b>", "");
-        map.put("</b>", "");
-        map.put("<code>", "");
-        map.put("</code>", "");
-        map.put("<h1>", "");
-        map.put("</h1>", "");
-        map.put("<ul>", "");
-        map.put("</ul>", "");
-        map.put("<Content>", "");
-        map.put("</Content>", "");
-        map.put("<Paragraph>", "");
-        map.put("</Paragraph>", "");
-        return map;
-    }
-
-    private void addDescriptionElements(Vulnerability.VulnerabilityBuilder vulnerabilityBuilder, String classId, Element vulnerabilityElement) {
-        Element descriptionElement = descriptionCache.computeIfAbsent(classId, this::findDescriptionElement);
-        if (descriptionElement == null) {
-            vulnerabilityBuilder.shortDescription(" ");
-            vulnerabilityBuilder.explanation(" ");
-            return;
         }
 
-        ReplacementData replacementData = computeReplacementsForVulnerability(vulnerabilityElement);
+        Set<String> intersection = null;
+        for (String ruleId : allRuleIds) {
+            Map<String, String> ruleMetadata = metaInfoProcessor.getMetadataForRule(ruleId);
+            String aud = ruleMetadata.get("audience");
 
-        Element abstractElement = (Element) descriptionElement.getElementsByTagName("Abstract").item(0);
-        if (abstractElement != null) {
-            String shortDescription = processText(abstractElement.getTextContent(), replacementData);
-            vulnerabilityBuilder.shortDescription(shortDescription);
-        }
-
-        Element explanationElement = (Element) descriptionElement.getElementsByTagName("Explanation").item(0);
-        if (explanationElement != null) {
-            String explanation = processText(explanationElement.getTextContent(), replacementData);
-            if (explanation.contains("Example")) {
-                String[] lines = explanation.split("\n");
-                StringBuilder formatted = new StringBuilder();
-                for (String line : lines) {
-                    if (line.matches(".*<b>Example\\s+\\d+:</b>.*") || line.matches(".*Example\\s+\\d+:.*")) {
-                        String exampleLine = line.replaceAll("(<b>)?Example\\s+(\\d+):(\\s*</b>)?", "Example $2:");
-                        formatted.append(exampleLine).append("\n");
-                    } else {
-                        formatted.append(line).append("\n");
-                    }
-                }
-                explanation = formatted.toString();
-            }
-            vulnerabilityBuilder.explanation(explanation.trim());
-        }
-    }
-
-    private Element findDescriptionElement(String classId) {
-        NodeList descriptions = inputDoc.getElementsByTagName("Description");
-        int length = descriptions.getLength();
-        for (int i = 0; i < length; i++) {
-            Element desc = (Element) descriptions.item(i);
-            if (classId.equals(desc.getAttribute("classID"))) {
-                return desc;
-            }
-        }
-        return null;
-    }
-
-    record Replacement(String value, String path, String line, String colStart, String colEnd) {
-        public boolean hasLocation() {
-            return path != null && line != null && colStart != null && colEnd != null;
-        }
-    }
-
-    private static class ReplacementData {
-        final Map<String, Replacement> replacements;
-        final Map<String, Map<String, String>> locationReplacements;
-
-        ReplacementData(Map<String, Replacement> replacements, Map<String, Map<String, String>> locationReplacements) {
-            this.replacements = replacements;
-            this.locationReplacements = locationReplacements;
-        }
-    }
-
-    private ReplacementData computeReplacementsForVulnerability(Element vulnerabilityElement) {
-        Map<String, Replacement> replacements = new HashMap<>();
-        Map<String, Map<String, String>> locationReplacements = new HashMap<>();
-
-        Element analysisInfoElement = (Element) vulnerabilityElement.getElementsByTagName("AnalysisInfo").item(0);
-        if (analysisInfoElement != null) {
-            Element replacementDefsElement = (Element) analysisInfoElement.getElementsByTagName("ReplacementDefinitions").item(0);
-            if (replacementDefsElement != null) {
-                NodeList defNodes = replacementDefsElement.getElementsByTagName("Def");
-                for (int i = 0; i < defNodes.getLength(); i++) {
-                    Element def = (Element) defNodes.item(i);
-                    String key = def.getAttribute("key");
-                    String value = def.getAttribute("value");
-                    Element sourceLocation = (Element) def.getElementsByTagName("SourceLocation").item(0);
-                    if (sourceLocation != null) {
-                        String path = sourceLocation.getAttribute("path");
-                        String line = sourceLocation.getAttribute("line");
-                        String colStart = sourceLocation.getAttribute("colStart");
-                        String colEnd = sourceLocation.getAttribute("colEnd");
-                        replacements.put(key, new Replacement(value, path, line, colStart, colEnd));
-                    } else {
-                        replacements.put(key, new Replacement(value, null, null, null, null));
-                    }
-                }
-
-                NodeList locationDefNodes = replacementDefsElement.getElementsByTagName("LocationDef");
-                for (int i = 0; i < locationDefNodes.getLength(); i++) {
-                    Element loc = (Element) locationDefNodes.item(i);
-                    String key = loc.getAttribute("key");
-                    Map<String, String> attrs = Map.of(
-                            "path", loc.getAttribute("path"),
-                            "line", loc.getAttribute("line"),
-                            "colStart", loc.getAttribute("colStart"),
-                            "colEnd", loc.getAttribute("colEnd")
-                    );
-                    locationReplacements.put(key, attrs);
-                }
-            }
-        }
-        return new ReplacementData(replacements, locationReplacements);
-    }
-
-    private String processText(String text, ReplacementData replacementData) {
-        if (text == null || replacementData == null) {
-            return "";
-        }
-
-        text = IFDEF_PATTERN.matcher(text).replaceAll("");
-        StringBuilder processedText = new StringBuilder();
-        Pattern paragraphPattern = Pattern.compile("<Paragraph>(.*?)</Paragraph>", Pattern.DOTALL);
-        Matcher paragraphMatcher = paragraphPattern.matcher(text);
-        int lastEnd = 0;
-
-        while (paragraphMatcher.find()) {
-            processedText.append(text.substring(lastEnd, paragraphMatcher.start()));
-
-            String paragraphContent = paragraphMatcher.group(1);
-            String altParagraphContent = "";
-            Pattern altPattern = Pattern.compile("<AltParagraph>(.*?)</AltParagraph>", Pattern.DOTALL);
-            Matcher altMatcher = altPattern.matcher(paragraphContent);
-            if (altMatcher.find()) {
-                altParagraphContent = altMatcher.group(1);
-            }
-
-            Pattern replacePattern = Pattern.compile("<Replace\\s+key=\"([^\"]+)\"[^>]*>");
-            Matcher replaceMatcher = replacePattern.matcher(paragraphContent);
-            boolean allKeysDefined = true;
-            while (replaceMatcher.find()) {
-                String key = replaceMatcher.group(1);
-                if (!replacementData.replacements.containsKey(key)) {
-                    allKeysDefined = false;
-                    break;
-                }
-            }
-
-            if (allKeysDefined) {
-                String cleanedParagraph = paragraphContent.replaceAll("<AltParagraph>.*?</AltParagraph>", "");
-                processedText.append("<Paragraph>").append(cleanedParagraph).append("</Paragraph>");
-            } else if (!altParagraphContent.isEmpty()) {
-                processedText.append(altParagraphContent);
-            }
-
-            lastEnd = paragraphMatcher.end();
-        }
-        processedText.append(text.substring(lastEnd));
-
-        String result = replacePlaceholders(processedText.toString(), replacementData);
-        return stripTags(result);
-    }
-
-    private String stripTags(String text) {
-        if (text == null || text.isEmpty()) {
-            return text;
-        }
-
-        String result = text;
-        for (Map.Entry<String, String> entry : tagReplacementMap.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-        }
-        return result.replace(" ", " ");
-    }
-
-    private String replacePlaceholders(String text, ReplacementData replacementData) {
-        if (!text.contains("<Replace")) {
-            return text;
-        }
-
-        Pattern pattern = Pattern.compile("<Replace key=\"([^\"]+)\"(?: link=\"([^\"]+)\")?/>");
-        Matcher matcher = pattern.matcher(text);
-        StringBuffer sb = new StringBuffer();
-
-        while (matcher.find()) {
-            String key = matcher.group(1);
-            String link = matcher.group(2);
-            Replacement replacement = replacementData.replacements.get(key);
-            if (replacement != null) {
-                String value = replacement.value();
-                Map<String, String> locAttrs = null;
-                if (link != null) {
-                    locAttrs = replacementData.locationReplacements.get(link);
-                } else if (replacement.hasLocation()) {
-                    locAttrs = Map.of(
-                            "path", replacement.path(),
-                            "line", replacement.line(),
-                            "colStart", replacement.colStart(),
-                            "colEnd", replacement.colEnd()
-                    );
-                }
-                if (locAttrs != null) {
-                    String href = String.format("location://%s###%s###%s###%s",
-                            locAttrs.get("path"),
-                            locAttrs.get("line"),
-                            locAttrs.get("colStart"),
-                            locAttrs.get("colEnd")
-                    );
-                    String linkHtml = "<a href=\"" + href + "\">" + Matcher.quoteReplacement(value) + "</a>";
-                    matcher.appendReplacement(sb, linkHtml);
+            if (!StringUtil.isEmpty(aud)) {
+                Set<String> current = Arrays.stream(aud.split(",")).map(String::trim).collect(Collectors.toSet());
+                if (intersection == null) {
+                    intersection = new HashSet<>(current);
                 } else {
-                    matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
+                    intersection.retainAll(current);
                 }
-            } else {
-                matcher.appendReplacement(sb, "");
+                if (intersection.isEmpty()) break;
             }
         }
-        matcher.appendTail(sb);
-        return sb.toString();
-    }
-
-    private boolean directoryContainsSourceFiles(Path dirPath) throws IOException {
-        if (!Files.isDirectory(dirPath)) {
-            return false;
-        }
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
-            for (Path path : stream) {
-                boolean isRegularFile = Files.isRegularFile(path);
-                boolean isNotIndexXml = !path.getFileName().toString().equals("index.xml");
-
-                if (isRegularFile && isNotIndexXml) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-
-    private void loadSourceFileMap() throws Exception {
-        sourceFileMap = new HashMap<>();
-        Path srcArchiveDir = extractedPath.resolve("src-archive");
-
-        Path indexPath = null;
-
-
-        // Step 1: Check if the primary directory ('src-archive') is valid.
-        if (directoryContainsSourceFiles(srcArchiveDir)) {
-            indexPath = srcArchiveDir.resolve("index.xml");
-        }
-
-        // Step 3: After checking the directory, verify that we actually found a valid
-        // directory AND that its corresponding index.xml file exists.
-        if (indexPath == null) {
-            throw new FcliBugException("'src-archive' contained no source files under " + extractedPath);
-        } else if (!Files.exists(indexPath)) {
-            throw new FcliBugException("A source directory was found, but its 'index.xml' is missing at: " + indexPath);
-        }
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature("http://xml.org/sax/features/validation", false);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document indexDoc = builder.parse(indexPath.toFile());
-
-        NodeList entryNodes = indexDoc.getElementsByTagName("entry");
-        for (int i = 0; i < entryNodes.getLength(); i++) {
-            Element entry = (Element) entryNodes.item(i);
-            String key = entry.getAttribute("key");
-            String value = entry.getTextContent();
-            sourceFileMap.put(key, value);
-        }
-    }
-
-    public Optional<String> getSourceFileContent(String relativePath) {
-        String fullPathInZip = sourceFileMap.get(relativePath);
-        if (fullPathInZip == null) {
-            logger.warn("WARN: Source file key not found in sourceFileMap: {}", relativePath);
-            return Optional.empty();
-        }
-        Path actualSourcePath = extractedPath.resolve(fullPathInZip);
-        try {
-            return Optional.of(String.join(System.lineSeparator(), readFileWithFallback(actualSourcePath)));
-        } catch (IOException | RuntimeException e) {
-            logger.warn("WARN: Could not read source file content: {}", relativePath, e);
-            return Optional.empty();
-        }
+        return intersection == null || intersection.isEmpty() ? "" : String.join(",", intersection);
     }
 }

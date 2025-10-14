@@ -7,7 +7,9 @@ import picocli.CommandLine;
 @CommandLine.Command(
         name = "ssc",
         subcommands = {
-                AviatorSSCAuditCommand.class
+                AviatorSSCAuditCommand.class,
+                AviatorSSCPrepareCommand.class,
+                AviatorSSCApplyRemediationsCommand.class
         }
 
 )

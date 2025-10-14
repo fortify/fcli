@@ -22,6 +22,10 @@ public class FcliTechnicalException extends AbstractFcliException {
     private static final long serialVersionUID = 1L;
 
     public FcliTechnicalException() {}
+    
+    public FcliTechnicalException(String fmt, Object... args) {
+        super(fmt, args);
+    }
 
     public FcliTechnicalException(String message) {
         super(message);

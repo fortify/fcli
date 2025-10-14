@@ -71,6 +71,7 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 add("implementation", "org.apache.commons:commons-lang3:3.18.0")
                 add("implementation", "org.apache.commons:commons-compress")
                 add("implementation", "org.jsoup:jsoup")
+                add("implementation", "org.eclipse.jgit:org.eclipse.jgit");
             }
         }
 
@@ -237,6 +238,18 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 )
                 val current = jvmArgs ?: emptyList()
                 needed.filter { n -> !current.contains(n) }.forEach { jvmArgs(it) }
+            }
+        }
+        
+        tasks.named("dependencyUpdates").configure {
+            // Helper to check for non-stable versions
+            fun isNonStable(version: String): Boolean {
+                val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
+                val regex = ".*[.\\-](RC|M|ALPHA|BETA|SNAPSHOT)[.\\-]?\\d*.*".toRegex(RegexOption.IGNORE_CASE)
+                return !stableKeyword && regex.matches(version)
+            }
+            (this as com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask).rejectVersionIf {
+                isNonStable(candidate.version) && !isNonStable(currentVersion)
             }
         }
     }

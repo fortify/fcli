@@ -22,7 +22,7 @@ public class FcliSimpleException extends AbstractFcliException {
     public FcliSimpleException() {}
     
     public FcliSimpleException(String fmt, Object... args) {
-        super(String.format(fmt, args));
+        super(fmt, args);
     }
 
     public FcliSimpleException(String message) {

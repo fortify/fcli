@@ -67,7 +67,7 @@ public final class ActionConfig implements IActionElement {
     @JsonProperty(value = "run.fcli.group.default", required = false) private String runFcliGroupDefault;
     
     @JsonPropertyDescription("""
-        Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress \
+        (DEPRECATED/IGNORED) Optional enum value: If set to 'delayed' (default), all output to stdout/stderr except for progress \
         messages will be delayed until the end of action execution. If set to 'immediate', output will be \
         written immediately and progress writer will be configured to 'simple' mode (unless '--progress=none' \
         is specified by the user) to avoid such output from interfering with progress messages.    

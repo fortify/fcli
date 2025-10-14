@@ -80,7 +80,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
     }
     
     private final String uploadTemplateFile(UnirestInstance unirest) {
-        ObjectNode uploadResponse = SSCFileTransferHelper.upload(
+        ObjectNode uploadResponse = SSCFileTransferHelper.htmlUpload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
                 templatePath,

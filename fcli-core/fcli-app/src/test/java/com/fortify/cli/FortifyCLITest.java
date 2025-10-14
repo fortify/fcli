@@ -28,10 +28,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Model.ArgSpec;
@@ -347,8 +347,8 @@ public class FortifyCLITest {
         }
         
         private boolean isDisabled(TestType type, CommandSpec cmdSpec, ArgSpec optionSpec) {
-            return isDisabled(type, PicocliSpecHelper.getAnnotation(cmdSpec, DisableTest.class))
-                    || isDisabled(type, PicocliSpecHelper.getAnnotation(optionSpec, DisableTest.class));
+            return isDisabled(type, FcliCommandSpecHelper.getAnnotation(cmdSpec, DisableTest.class))
+                    || isDisabled(type, FcliCommandSpecHelper.getAnnotation(optionSpec, DisableTest.class));
         }
         
         private boolean isDisabled(TestType type, DisableTest annotation) {

@@ -1,8 +1,6 @@
 package com.fortify.cli.aviator.fpr.processor;
 
-import java.io.EOFException;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,23 +8,17 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -45,6 +37,7 @@ import javax.xml.validation.Validator;
 
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.util.FprHandle;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +50,6 @@ import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.config.TagMappingConfig;
-
-import lombok.Getter;
 
 
 public class AuditProcessor {
@@ -77,33 +68,30 @@ public class AuditProcessor {
     private Document remediationsDoc;
 
     private final Map<String, AuditIssue> auditIssueMap = new HashMap<>();
-    private final String fprFilePath;
+    private final FprHandle fprHandle;
 
-    public AuditProcessor(Path extractedPath, String fprFilePath) {
-        this.extractedPath = extractedPath;
-        this.fprFilePath = fprFilePath;
+    public AuditProcessor(FprHandle fprHandle) {
+        this.fprHandle = fprHandle;
     }
 
-    @Getter
-    private final Path extractedPath;
-
     public Map<String, AuditIssue> processAuditXML() throws AviatorTechnicalException {
-        Path auditPath = extractedPath.resolve("audit.xml");
+        Path auditPath = fprHandle.getPath("/audit.xml");
 
         try {
             if (!Files.exists(auditPath)) {
                 logger.debug("audit.xml not found. Creating a default audit.xml.");
-                createDefaultAuditXml(auditPath);
+                auditDoc = createDefaultAuditXml();
             }
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             factory.setFeature("http://xml.org/sax/features/validation", false);
             factory.setNamespaceAware(true);
-
             DocumentBuilder builder = factory.newDocumentBuilder();
-            auditDoc = builder.parse(auditPath.toFile());
 
+            try (InputStream auditStream = Files.newInputStream(auditPath)) {
+                auditDoc = builder.parse(auditStream);
+            }
             NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
             for (int i = 0; i < issueNodes.getLength(); i++) {
                 Element issueElement = (Element) issueNodes.item(i);
@@ -123,7 +111,7 @@ public class AuditProcessor {
         return auditIssueMap;
     }
 
-    private void createDefaultAuditXml(Path auditPath) throws AviatorTechnicalException {
+    private Document createDefaultAuditXml() throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -163,21 +151,10 @@ public class AuditProcessor {
             Element issueListElement = doc.createElementNS(AUDIT_NAMESPACE_URI, "ns2:IssueList");
             rootElement.appendChild(issueListElement);
 
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            transformerFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            DOMSource source = new DOMSource(doc);
-            try (FileOutputStream fos = new FileOutputStream(auditPath.toFile())) {
-                StreamResult result = new StreamResult(fos);
-                transformer.transform(source, result);
-            }
-        } catch (ParserConfigurationException | TransformerException | IOException e) {
-            logger.error("Failed to create default audit.xml at {}", auditPath, e);
-            throw new AviatorTechnicalException("Failed to create default audit.xml.", e);
-        } catch (Exception e) {
-            logger.error("Unexpected error creating default audit.xml at {}", auditPath, e);
-            throw new AviatorTechnicalException("Unexpected error creating default audit.xml.", e);
+            return doc;
+
+        } catch (ParserConfigurationException e) {
+            throw new AviatorTechnicalException("Failed to create default audit.xml document.", e);
         }
     }
 
@@ -643,24 +620,51 @@ public class AuditProcessor {
                                                      TagMappingConfig tagMappingConfig,
                                                      FPRInfo fprInfo,
                                                      FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+        // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
         Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
 
+        // Step 2: Check if there are any remediations to generate.
         boolean hasRemediations = auditResponses.values().stream()
                 .anyMatch(ar -> ar.getAuditResult() != null &&
                         ar.getAuditResult().getAutoremediation() != null &&
                         ar.getAuditResult().getAutoremediation().getChanges() != null &&
                         !ar.getAuditResult().getAutoremediation().getChanges().isEmpty());
 
+        // Step 3: Generate the in-memory remediations.xml document if needed.
         if (hasRemediations && !remediationCommentTimestamps.isEmpty()) {
             this.remediationsDoc = generateRemediationsXml(auditResponses, remediationCommentTimestamps, fprInfo, fvdlProcessor);
         } else {
             this.remediationsDoc = null;
             if (hasRemediations) {
-                logger.warn("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
+                logger.info("WARN: Remediation data found, but could not associate timestamps for all. remediations.xml will not be generated.");
             }
         }
 
-        return updateContentInOriginalFpr();
+        // Step 4: Write the modified XML documents directly back into the open FPR file system.
+        try {
+            if (auditDoc != null) {
+                // Get the path to 'audit.xml' *inside* the zip and overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+                    transformDomToStream(auditDoc, os);
+                }
+            }
+            if (remediationsDoc != null) {
+                // Get the path to 'remediations.xml' *inside* the zip and create/overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/remediations.xml"))) {
+                    transformDomToStream(remediationsDoc, os);
+                }
+            }
+            if (filterTemplateDoc != null) {
+                // Get the path to 'filtertemplate.xml' *inside* the zip and overwrite it.
+                try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/filtertemplate.xml"))) {
+                    transformDomToStream(filterTemplateDoc, os);
+                }
+            }
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to write updated audit/remediation data back into the FPR file.", e);
+        }
+
+        return fprHandle.getFprPath().toFile();
     }
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
@@ -723,8 +727,13 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        String originalFileContent = fvdlProcessor.getSourceFileContent(filename)
-                                .orElseThrow(() -> new AviatorTechnicalException("Could not get original content for file: " + filename));
+                        String originalFileContent = "";
+                        try {
+                            originalFileContent = String.valueOf(fvdlProcessor.getSourceFileContent(filename));
+                        } catch (RuntimeException ex){
+                            logger.error("Could not get source for autoremediation {}", ex.getMessage());
+                            continue;
+                        }
 
                         Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
                         hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
@@ -952,124 +961,20 @@ public class AuditProcessor {
         }
     }
 
-    private File updateContentInOriginalFpr() throws AviatorTechnicalException {
-        Path originalPath = Paths.get(this.fprFilePath);
-        Path newFprPath = Paths.get(this.fprFilePath + ".new");
-
-        logger.debug("Starting secure update of FPR file: {}", originalPath);
-
-        try {
-            try (ZipFile zipFile = new ZipFile(originalPath.toFile());
-                 FileOutputStream fos = new FileOutputStream(newFprPath.toFile());
-                 ZipOutputStream zos = new ZipOutputStream(fos)) {
-                writeFprEntries(zipFile, zos);
-            }
-
-            Files.move(newFprPath, originalPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            logger.info("Successfully updated FPR file: {}", originalPath);
-            return originalPath.toFile();
-
-        } catch (Exception e) {
-            try {
-                Files.deleteIfExists(newFprPath);
-            } catch (IOException cleanupEx) {
-                e.addSuppressed(cleanupEx);
-            }
-            throw new AviatorTechnicalException("Failed to update FPR file. Original file has been preserved.", e);
-        }
-    }
-
-    /**
-     * Writes entries from a source ZipFile to a ZipOutputStream, intelligently replacing
-     * specific files (audit.xml, etc.) if their corresponding Document objects are not null.
-     * If a Document object is null, the original file from the source zip is copied.
-     *
-     * This version includes a defensive copy loop to handle potentially malformed
-     * zero-byte compressed entries found in some FPR files, which can cause EOFExceptions
-     * with standard stream transfer methods.
-     */
-    private void writeFprEntries(ZipFile zipFile, ZipOutputStream zos) throws IOException {
-        final String AUDIT_XML = "audit.xml";
-        final String FILTER_XML = "filtertemplate.xml";
-        final String REMEDIATIONS_XML = "remediations.xml";
-
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            String entryName = entry.getName();
-
-            boolean shouldSkip = (entryName.equals(AUDIT_XML) && auditDoc != null) ||
-                    (entryName.equals(FILTER_XML) && filterTemplateDoc != null) ||
-                    (entryName.equals(REMEDIATIONS_XML) && remediationsDoc != null);
-
-            if (shouldSkip) {
-                continue;
-            }
-
-            ZipEntry newEntry = new ZipEntry(entry);
-            zos.putNextEntry(newEntry);
-
-            // Only attempt to read content if the size is > 0.
-            if (!entry.isDirectory() && entry.getSize() > 0) {
-                try (InputStream is = zipFile.getInputStream(entry)) {
-                    byte[] buffer = new byte[8192];
-                    int len;
-                    while ((len = is.read(buffer)) > 0) {
-                        zos.write(buffer, 0, len);
-                    }
-                } catch (java.io.EOFException | java.util.zip.ZipException e) {
-                    // This defensive catch block handles corrupted entries.
-                    logger.warn("WARN: Content of zip entry '{}' seems corrupted ({}). A zero-byte placeholder will be written.",
-                            entry.getName(), e.getMessage());
-                }
-            }
-            // For directories or zero-byte files, doing nothing after putNextEntry is correct.
-            zos.closeEntry();
-        }
-
-        try {
-            if (auditDoc != null) {
-                zos.putNextEntry(new ZipEntry(AUDIT_XML));
-                transformDomToStream(auditDoc, zos);
-                zos.closeEntry();
-            }
-            if (filterTemplateDoc != null) {
-                zos.putNextEntry(new ZipEntry(FILTER_XML));
-                transformDomToStream(filterTemplateDoc, zos);
-                zos.closeEntry();
-            }
-            if (remediationsDoc != null) {
-                zos.putNextEntry(new ZipEntry(REMEDIATIONS_XML));
-                transformDomToStream(remediationsDoc, zos);
-                zos.closeEntry();
-            }
-        } catch (TransformerException e) {
-            throw new IOException("Failed to write XML document to ZIP stream", e);
-        }
-    }
-
-
-    /**
-     * Securely transforms a DOM Document to a stream (part of the ZipOutputStream).
-     */
-    private void transformDomToStream(Document doc, ZipOutputStream zos) throws TransformerException {
+    private void transformDomToStream(Document doc, OutputStream os) throws TransformerException {
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         try {
+            transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
-            transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         } catch (TransformerConfigurationException e) {
-            logger.warn("WARN: Security feature {} not fully supported by TransformerFactory. This is unexpected.",
-                    XMLConstants.FEATURE_SECURE_PROCESSING, e);
+            logger.warn("WARN: Security feature not fully supported by TransformerFactory.", e);
         }
-
         Transformer transformer = transformerFactory.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-
         DOMSource source = new DOMSource(doc);
-        // Use a NonClosingOutputStream to prevent the transformer from closing the Zip stream
-        StreamResult result = new StreamResult(new NonClosingOutputStream(zos));
+        StreamResult result = new StreamResult(os);
         transformer.transform(source, result);
     }
 

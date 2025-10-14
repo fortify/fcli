@@ -14,9 +14,9 @@ package com.fortify.cli.util.mcp_server.cli.cmd;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,38 +24,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
-import com.fortify.cli.common.mcp.MCPExclude;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.util.FcliBuildProperties;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionCliOption;
 import com.fortify.cli.common.action.model.ActionMcpIncludeExclude;
-import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.mcp.MCPExclude;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.IMCPToolArgHandler;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerActionOption;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.IMCPToolRunner;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerAction;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerPlainText;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecords;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
-import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerAction;
 
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
+import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
-import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
@@ -63,7 +62,6 @@ import picocli.CommandLine.Option;
 @MCPExclude // Doesn't make sense to allow mcp-server start command to be called from MCP server
 public class MCPServerStartCommand extends AbstractRunnableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(MCPServerStartCommand.class);
-    @Mixin private CommandHelperMixin commandHelper;
     @Option(names={"--module", "-m"}, required = true) private McpModule module;
     
     public Integer call() throws Exception {
@@ -107,14 +105,16 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
 
     private List<SyncToolSpecification> createToolSpecs() {
         var result = new ArrayList<SyncToolSpecification>();
-        // Existing Picocli command-based tools
-        result.addAll(module.getSubcommandsStream(commandHelper)
-                .filter(spec->!PicocliSpecHelper.isMcpIgnored(spec))
+        // Picocli command-based tools
+        result.addAll(module.getSubcommandsStream()
+                .filter(spec->!FcliCommandSpecHelper.isMcpIgnored(spec))
                 .map(cs->createCommandToolSpec(cs))
                 .peek(s->LOG.debug("Registering cmd tool: {}", s.tool().name()))
                 .toList());
-        // New action-based tools
-        result.addAll(createActionToolSpecs());
+        // Fcli action tools
+        if ( module.hasActionCmd() ) {
+            result.addAll(createActionToolSpecs());
+        }
         return result;
     }
     
@@ -173,12 +173,12 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             // apply to LLM context (for example because some options are not rendered or 
             // use a different syntax, like --query). As such, we only include an MCP-specific
             // description (if defined).
-            var mcpToolDescription = PicocliSpecHelper.getMessageString(commandSpec, "mcp.description");
+            var mcpToolDescription = FcliCommandSpecHelper.getMessageString(commandSpec, "mcp.description");
             return StringUtils.isBlank(mcpToolDescription) ? cmdHeader : String.format("%s\n%s", cmdHeader, mcpToolDescription);
         }
         
         private final IMCPToolRunner createRunner() {
-            if ( PicocliSpecHelper.canCollectRecords(commandSpec) ) {
+            if ( FcliCommandSpecHelper.canCollectRecords(commandSpec) ) {
                 if ( toolSpecArgHelper.isPaged() ) {
                     return new MCPToolFcliRunnerRecordsPaged(toolSpecArgHelper, commandSpec);
                 } else {
@@ -266,9 +266,21 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             return name().replace('_', '-');
         }
         
-        public final Stream<CommandSpec> getSubcommandsStream(CommandHelperMixin commandHelper) {
-            var moduleSpec = commandHelper.getCommandSpec().root().subcommands().get(this.toString()).getCommandSpec();
-            return PicocliSpecHelper.commandTreeStream(moduleSpec);
+        public boolean hasActionCmd() {
+            return getModuleSpec().subcommands().containsKey("action");
+        }
+
+        public final Stream<CommandSpec> getSubcommandsStream() {
+            return FcliCommandSpecHelper.commandTreeStream(getModuleSpec());
+        }
+
+        private CommandSpec getModuleSpec() {
+            var moduleName = this.toString();
+            var moduleSpec = FcliCommandSpecHelper.getCommandSpec(moduleName);
+            if ( moduleSpec==null ) {
+                throw new FcliBugException("No command spec found for module: "+moduleName);
+            }
+            return moduleSpec;
         }
     }
 }

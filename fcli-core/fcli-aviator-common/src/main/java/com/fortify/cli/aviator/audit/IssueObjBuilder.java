@@ -7,7 +7,7 @@ import com.fortify.cli.aviator.audit.model.AnalysisInfo;
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.IssueData;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.fpr.model.Vulnerability;
+import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.StringUtil;

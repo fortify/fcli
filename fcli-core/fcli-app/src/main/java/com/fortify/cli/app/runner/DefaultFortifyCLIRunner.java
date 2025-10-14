@@ -19,7 +19,7 @@ import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
 import com.fortify.cli.app.runner.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.app.runner.util.FortifyCLIDynamicInitializer;
 import com.fortify.cli.app.runner.util.FortifyCLIStaticInitializer;
-import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -35,16 +35,16 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	//private final CommandLine commandLine = createCommandLine();
 	
 	private CommandLine createCommandLine() {
-	    FortifyCLIStaticInitializer.getInstance().initialize();
-	    CommandLine cl = new CommandLine(FCLIRootCommands.class);
-	    FcliCommandExecutorFactory.setRootCommandLine(cl);
-	    // Custom parameter exception handler is disabled for now as it causes https://github.com/fortify/fcli/issues/434.
-	    // See comments in I18nParameterExceptionHandler for more detail.
-	    //cl.setParameterExceptionHandler(new I18nParameterExceptionHandler(cl.getParameterExceptionHandler()));
-	    cl.setExecutionExceptionHandler(FcliExecutionExceptionHandler.INSTANCE);
-	    cl.setDefaultValueProvider(FortifyCLIDefaultValueProvider.getInstance());
-	    cl.setHelpFactory((commandSpec, colorScheme)->new FcliHelp(commandSpec, colorScheme));
-	    return cl;
+        FortifyCLIStaticInitializer.getInstance().initialize();
+        CommandLine cl = new CommandLine(FCLIRootCommands.class);
+        FcliCommandSpecHelper.setRootCommandLine(cl);
+        // Custom parameter exception handler is disabled for now as it causes https://github.com/fortify/fcli/issues/434.
+        // See comments in I18nParameterExceptionHandler for more detail.
+        //cl.setParameterExceptionHandler(new I18nParameterExceptionHandler(cl.getParameterExceptionHandler()));
+        cl.setExecutionExceptionHandler(FcliExecutionExceptionHandler.INSTANCE);
+        cl.setDefaultValueProvider(FortifyCLIDefaultValueProvider.getInstance());
+        cl.setHelpFactory((commandSpec, colorScheme)->new FcliHelp(commandSpec, colorScheme));
+        return cl;
     }
 	
 	@Override

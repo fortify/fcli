@@ -46,19 +46,18 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Override @SneakyThrows
     public final Integer call() {
         initialize();
-        ActionRunnerConfig config;
         try (var progressWriter = progressWriterFactory.create()) {
             progressWriter.writeProgress("Loading action %s", actionResolver.getAction());
             var action = actionResolver.loadAction(getType(), actionValidationMixin.getActionValidationHandler());
             var configBuilder = ActionRunnerConfig.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(action)
-                .progressWriterFactory(progressWriterFactory);
+                .progressWriter(progressWriter);
             configure(configBuilder);
-            config = configBuilder.build();
+            var config = configBuilder.build();
             progressWriter.writeProgress("Executing action %s", config.getAction().getMetadata().getName());
+            return run(config, new ActionRunner(config));
         }
-        return run(config, new ActionRunner(config));
     }
     
     private final Integer run(ActionRunnerConfig config, ActionRunner actionRunner) {

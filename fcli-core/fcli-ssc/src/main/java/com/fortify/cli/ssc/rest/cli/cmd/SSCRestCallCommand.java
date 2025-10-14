@@ -19,6 +19,9 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.ssc._common.rest.ssc.cli.mixin.SSCUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.ssc.helper.SSCProductHelper;
 
+import kong.unirest.HttpRequest;
+import kong.unirest.UnirestInstance;
+
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -29,4 +32,19 @@ public final class SSCRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private OutputHelperMixins.RestCall outputHelper;
     @Getter @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
     @Getter private final SSCProductHelper productHelper = SSCProductHelper.INSTANCE;
+
+    @Override
+	protected String formatUri(String uri) {
+		if (uri == null || uri.isBlank()) {
+			return uri;
+		}
+		if (!uri.startsWith("/")) {
+			uri = "/" + uri;
+		}
+		if (!uri.startsWith("/api/v1")) {
+			uri = "/api/v1" + uri;
+		}
+		return uri;
+	}
+
 }

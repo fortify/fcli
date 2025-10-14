@@ -23,15 +23,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
-import com.fortify.cli.common.util.PicocliSpecHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
@@ -41,13 +39,12 @@ import picocli.CommandLine.Option;
  */
 public class AllCommandsCommandSelectorMixin {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    @Mixin private CommandHelperMixin commandHelper;
     @Option(names = {"-q", "--query"}, order=1, converter = QueryExpressionTypeConverter.class, paramLabel = "<SpEL expression>")
     @Getter private QueryExpression queryExpression;
     
     public CommandSelectorResult getSelectedCommands() {
         CommandSelectorResult result = new CommandSelectorResult(queryExpression);
-        PicocliSpecHelper.commandTreeStream(commandHelper.getCommandSpec().root()).forEach(result::add);
+        FcliCommandSpecHelper.rootCommandTreeStream().forEach(result::add);
         return result;
     }
     
@@ -71,10 +68,10 @@ public class AllCommandsCommandSelectorMixin {
         }
         
         private static final ObjectNode createNode(CommandSpec spec) {
-            var hiddenParent = PicocliSpecHelper.hasHiddenParent(spec);
-            var hiddenSelf = PicocliSpecHelper.isHiddenSelf(spec);
-            var hidden = PicocliSpecHelper.isHiddenSelfOrParent(spec);
-            var mcpIgnored = PicocliSpecHelper.isMcpIgnored(spec);
+            var hiddenParent = FcliCommandSpecHelper.hasHiddenParent(spec);
+            var hiddenSelf = FcliCommandSpecHelper.isHiddenSelf(spec);
+            var hidden = FcliCommandSpecHelper.isHiddenSelfOrParent(spec);
+            var mcpIgnored = FcliCommandSpecHelper.isMcpIgnored(spec);
             var nameComponents = spec.qualifiedName(" ").split(" ");
             var module = nameComponents.length>1 ? nameComponents[1] : "";
             var entity = nameComponents.length>2 ? nameComponents[2] : "";
@@ -88,7 +85,7 @@ public class AllCommandsCommandSelectorMixin {
             result.put("hiddenParent", hiddenParent);
             result.put("hiddenSelf", hiddenSelf);
             result.put("mcpIgnored", mcpIgnored);
-            result.put("runnable", PicocliSpecHelper.isRunnable(spec));
+            result.put("runnable", FcliCommandSpecHelper.isRunnable(spec));
             result.put("usageHeader", String.join("\n", spec.usageMessage().header()));
             result.set("aliases", Stream.of(spec.aliases()).map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
             result.put("aliasesString", Stream.of(spec.aliases()).collect(Collectors.joining(", ")));

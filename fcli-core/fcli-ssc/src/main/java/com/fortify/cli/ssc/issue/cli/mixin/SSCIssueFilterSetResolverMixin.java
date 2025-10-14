@@ -18,6 +18,7 @@ import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -35,8 +36,12 @@ public class SSCIssueFilterSetResolverMixin {
     }
     
     public static class FilterSetOption extends AbstractSSCFilterSetResolverMixin {
-        @Option(names={"--filterset", "--fs"}, descriptionKey = "fcli.ssc.issue.filterset.resolver.titleOrId")
-        @Getter private String filterSetTitleOrId;
+        @Mixin private SSCIssueFilterSetOptionMixin options;
+
+        @Override
+        public String getFilterSetTitleOrId() {
+            return options.getFilterSetTitleOrId();
+        }
     }
     
     public static class PositionalParameterSingle extends AbstractSSCFilterSetResolverMixin {

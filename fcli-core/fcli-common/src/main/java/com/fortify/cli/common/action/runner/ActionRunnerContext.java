@@ -12,13 +12,8 @@
  */
 package com.fortify.cli.common.action.runner;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +21,6 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.model.ActionConfig.ActionConfigOutput;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -42,7 +36,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.SneakyThrows;
 
 /**
  * This class holds action execution context
@@ -60,18 +53,6 @@ public class ActionRunnerContext implements AutoCloseable {
     private final ObjectNode parameterValues;
     /** Check statuses */
     private final Map<ActionStepCheckEntry, CheckStatus> checkStatuses = new LinkedHashMap<>(); 
-    
-    /** If output needs to be delayed (to not interfere with progress writer), these
-     *  runnables will write the collected output. */
-    private final List<Runnable> delayedConsoleWriterRunnables = new ArrayList<>();
-    /** Save original stdout for delayed output operations */
-    private final PrintStream orgStdout = System.out;
-    /** Save original stderr for delayed output operations */
-    private final PrintStream orgStderr = System.err;
-    /** PrintStream for writing to stdout, either delayed or immediately depending on configuration */
-    @Getter(lazy=true) private final PrintStream stdout = createImmediateOrDelayedPrintStream(orgStdout);
-    /** PrintStream for writing to stderr, either delayed or immediately depending on configuration */
-    @Getter(lazy=true) private final PrintStream stderr = createImmediateOrDelayedPrintStream(orgStderr);
     @Setter @Builder.Default private int exitCode = 0;
     @Setter @Builder.Default boolean exitRequested = false;
     
@@ -124,36 +105,8 @@ public class ActionRunnerContext implements AutoCloseable {
         }
     }
     
-    public final boolean isDelayed() {
-        // TODO Should we check progress writer as well here? 
-        //      I.e., if simple progress writer, we don't need to delay output.
-        return getConfig().getAction().getConfig().getOutput()==ActionConfigOutput.delayed;
-    }
-    
-    private final PrintStream createImmediateOrDelayedPrintStream(PrintStream orgOut) {
-        return isDelayed() ? createDelayedPrintStream(orgOut) : new NonClosingPrintStream(orgOut);
-    }
-    
-    private final PrintStream createDelayedPrintStream(PrintStream orgOut) {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        delayedConsoleWriterRunnables.add(()->orgOut.print(baos.toString()));
-        return new PrintStream(baos, true);
-    }
-
     @Override
     public void close() {
         getRequestHelpers().values().forEach(IActionRequestHelper::close);
-    }
-    
-    private static final class NonClosingPrintStream extends PrintStream {
-        public NonClosingPrintStream(OutputStream out) {
-            super(out); 
-        }
-        
-        @Override @SneakyThrows
-        public void close() {
-            out.flush();
-            // Only flush, don't close underlying stream
-        }
     }
 }

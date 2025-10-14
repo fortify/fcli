@@ -16,7 +16,13 @@ package com.fortify.cli.fod.release.helper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
+import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
+import kong.unirest.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,8 +38,11 @@ import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class FoDReleaseHelper {
+    private static final Log LOG = LogFactory.getLog(FoDReleaseHelper.class);
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     private static String[] defaultFields = {"releaseId", "releaseName", "applicationName", "microserviceName"};
@@ -84,6 +93,34 @@ public class FoDReleaseHelper {
         return getReleaseDescriptorFromId(unirest, Integer.parseInt(relId), true);
     }
 
+    public static final List<String> getAllReleaseIdsForApp(UnirestInstance unirest, String appId, boolean failOnError) {
+        LOG.debug("Retrieving all releases for application id: " + appId);
+        // Get all releases for the application
+        try {
+            List<JsonNode> releases = FoDPagingHelper.pagedRequest(
+                            unirest.get(FoDUrls.RELEASES).queryString("filters", "applicationId:"+appId)
+                    ).stream()
+                    .map(HttpResponse::getBody)
+                    .map(FoDInputTransformer::getItems)
+                    .map(ArrayNode.class::cast)
+                    .flatMap(JsonHelper::stream)
+                    .collect(Collectors.toList());
+
+            // Extract releaseIds
+            return releases.stream()
+                    .map(release -> release.get("releaseId").asText())
+                    .collect(Collectors.toList());
+        } catch (UnexpectedHttpResponseException e) {
+            if (failOnError) {
+                throw e;
+            }
+            LOG.error("Error retrieving releases for application " +
+                    (StringUtils.isNotEmpty(appId) ? appId : "<null>") +
+                    ": " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
     private static final GetRequest addFieldsParam(GetRequest req, String... fields) {
         if ( fields!=null && fields.length>0 ) {
             ArrayList<String> allFields = new ArrayList<>(Arrays.asList(fields));
@@ -102,4 +139,5 @@ public class FoDReleaseHelper {
             return JsonHelper.treeToValue(result, FoDReleaseDescriptor.class);
         }
     }
+    
 }

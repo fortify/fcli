@@ -1,12 +1,14 @@
 package com.fortify.cli.aviator.fpr.filter;
 
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+
+import java.util.List;
 
 @Getter
 @Setter
+@ToString
 public class FilterSet {
     private String type;
     private String id;
@@ -16,4 +18,5 @@ public class FilterSet {
     private String description;
     private List<String> enabledFolders;
     private List<Filter> filters;
+    private List<FolderDefinition> folderDefinitions;
 }

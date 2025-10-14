@@ -1,17 +1,16 @@
 package com.fortify.cli.aviator.fpr.filter;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
 public class TagDefinition {
     private String id;
     private String type;
@@ -26,7 +25,7 @@ public class TagDefinition {
     private List<TagValue> values;
     private List<String> valuesStr;
 
-    public TagDefinition(String name, String id, List<String> values, boolean extensible) {
+    public TagDefinition(String name, String id, List<String> values, boolean extensible){
         this.name = name;
         this.id = id;
         this.valuesStr = values;

@@ -12,6 +12,13 @@
  *******************************************************************************/
 package com.fortify.cli.common.action.runner;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.date;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.txt;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
+
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -33,6 +40,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -63,13 +74,10 @@ import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
 import com.fortify.cli.common.util.StringHelper;
 
-import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
-
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 public class ActionSpelFunctions {
-    //private static final Logger LOG = LoggerFactory.getLogger(ActionSpelFunctions.class);
     private static final String CODE_START = "\n===== CODE START =====\n";
     private static final String CODE_END   = "\n===== CODE END =====\n";
     private static final Pattern CODE_PATTERN = Pattern.compile(String.format("%s(.*?)%s", CODE_START, CODE_END), Pattern.DOTALL);
@@ -134,7 +142,7 @@ public class ActionSpelFunctions {
 	{
 		var mappingNode = mappingObject instanceof ObjectNode ? (ObjectNode) mappingObject
 				: mappingObject instanceof JsonNodeWrapper ? ((JsonNodeWrapper<?>) mappingObject).getRealNode()
-						: JsonHelper.getObjectMapper().valueToTree(mappingObject);
+					: JsonHelper.getObjectMapper().valueToTree(mappingObject);
 		if (!mappingNode.isObject()) {
 			throw new FcliTechnicalException("replaceAllFromRegExMap must be called with Map or ObjectNode, actual type: "
 					+ mappingObject.getClass().getSimpleName());
@@ -239,7 +247,6 @@ public class ActionSpelFunctions {
             @SpelFunctionParam(name="part", desc="URI part to be returned; may be one of serverUrl, protocol, host, port, path, relativePath, query, fragment") String part)
 	{
         if ( StringUtils.isBlank(uriString) ) {return null;}
-        // We use a regex as WebInspect results may contain URL's that contain invalid characters according to URI class
         Matcher matcher = uriPartsPattern.matcher(uriString);
         return matcher.matches() ? matcher.group(part) : null;
     }
@@ -346,8 +353,6 @@ public class ActionSpelFunctions {
 	{
         return String.format("fcli %s action run \"%s\" %s",
                 moduleName,
-                // If envPrefix is <cmd>_ACTION, we remove want to avoid <cmd>_ACTION_ACTION,
-                // however we'd still use <cmd>_ACTION_EXTRA_OPTS
                 ActionSpelFunctionsHelper.envOrDefault(envPrefix.replaceAll("_ACTION$", ""), "ACTION", actionName),
                 extraOpts(envPrefix));
     }
@@ -483,12 +488,7 @@ public class ActionSpelFunctions {
 		return ActionSpelFunctionsHelper.hasBuiltInAction(moduleName, actionName) ? actionName : null;
 	}
     
-    /**
-     * This method takes a string in the format "--opt1=ENV1 -o=ENV2 ...", outputting a string
-     * with environment variable names replaced by the corresponding values. Options for which
-     * the environment variable value is null or empty will be removed.
-     */
-	@SpelFunction(cat=workflow, desc = """
+    @SpelFunction(cat=workflow, desc = """
             Replaces environment variable references in the given options string with the corresponding \
             environment variable values, removing any options for which the environment variable doesn't \
             exist or its value is blank. For example, given `--opt1=ENV1 --opt2=ENV2`, this function will \
@@ -569,11 +569,9 @@ public class ActionSpelFunctions {
 		var sourceDir = config.get("sourceDir");
 		var builder = IssueSourceFileResolver.builder()
 				.sourcePath(StringUtils.isBlank(sourceDir) ? null : Path.of(sourceDir));
-		// TODO Update builder based on other config properties
 		return new POJONode(builder.build());
 	}
 
-	// TODO Add proper description, explaining what 'normalizing' means
 	@SpelFunction(cat=fortify, returns="normalized array of trace nodes") 
 	public static final ArrayNode normalizeTraceNodes(
 			@SpelFunctionParam(name="input", desc="the original, non-normalized array of trace nodes") ArrayNode traceNodes)
@@ -581,7 +579,6 @@ public class ActionSpelFunctions {
 		return FortifyTraceNodeHelper.normalize(traceNodes);
 	}
 
-	// TODO Add proper description, explaining what 'normalizing and merging' means
 	@SpelFunction(cat=fortify, returns="normalized and merged array of trace nodes") 
 	public static final ArrayNode normalizeAndMergeTraceNodes(
 			@SpelFunctionParam(name="input", desc="the original, non-normalized array of trace nodes") ArrayNode traceNodes)
@@ -609,6 +606,80 @@ public class ActionSpelFunctions {
 		return String.format("Copyright (c) %s Open Text", Year.now().getValue());
 	}
 	
+	   @SpelFunction(cat=util, desc="""
+	            Returns basic information about the local git repository for the given source directory, or null if the
+	            directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
+	            Structure:
+	            {
+	              repository: { workDir, remoteUrl?, name: { short, full? } },
+	              branch: { full?, short? },
+	              commit: {
+	                id: { full, short },
+	                message: { short, full },
+	                author: { name, email, when },
+	                committer: { name, email, when }
+	              }
+	            }
+	            """, returns="Git repository information or null if not a git work dir")
+	    public static final ObjectNode localRepo(
+	            @SpelFunctionParam(name="sourceDir", desc="directory assumed to be inside a git working tree") String sourceDir) {
+	        if (StringUtils.isBlank(sourceDir)) { return null; }
+	        var dir = Path.of(sourceDir).toAbsolutePath().normalize().toFile();
+	        if (!dir.exists()) { return null; }
+	        FileRepositoryBuilder builder = new FileRepositoryBuilder().findGitDir(dir);
+	        if (builder.getGitDir()==null) { return null; }
+	        try (Repository repo = builder.build()) {
+	            var mapper = JsonHelper.getObjectMapper();
+	            var root = mapper.createObjectNode();
+	            var repoNode = root.putObject("repository");
+	            repoNode.put("workDir", repo.getWorkTree().getAbsolutePath());
+	            var remote = ActionSpelFunctionsJGitHelper.selectRemote(repo);
+	            var remoteUrl = remote==null?null:repo.getConfig().getString("remote", remote, "url");
+	            if (StringUtils.isNotBlank(remoteUrl)) { repoNode.put("remoteUrl", remoteUrl); }
+	            var nameNode = repoNode.putObject("name");
+	            var names = ActionSpelFunctionsJGitHelper.deriveRepoNames(dir.getName(), remoteUrl);
+	            nameNode.put("short", names[0]);
+	            if (names[1]!=null) { nameNode.put("full", names[1]); }
+	            var branchNode = root.putObject("branch");
+	            try {
+	                String fullBranch = repo.getFullBranch();
+	                if (fullBranch!=null) {
+	                    branchNode.put("full", fullBranch);
+	                    branchNode.put("short", Repository.shortenRefName(fullBranch));
+	                }
+	            } catch (Exception e) { }
+	            var headId = repo.resolve("HEAD");
+	            if (headId!=null) {
+	                try (var walk = new RevWalk(repo)) {
+	                    RevCommit commit = walk.parseCommit(headId);
+	                    var commitNode = root.putObject("commit");
+	                    var idNode = commitNode.putObject("id");
+	                    idNode.put("full", commit.getId().getName());
+	                    try { var abbrev = repo.newObjectReader().abbreviate(commit.getId(), 8); idNode.put("short", abbrev.name()); }
+	                    catch (Exception ex) { idNode.put("short", commit.getId().getName().substring(0,8)); }
+	                    var msgNode = commitNode.putObject("message");
+	                    msgNode.put("short", commit.getShortMessage());
+	                    msgNode.put("full", commit.getFullMessage());
+	                    var authorIdent = commit.getAuthorIdent();
+	                    if (authorIdent!=null) {
+	                        var authorNode = commitNode.putObject("author");
+	                        authorNode.put("name", authorIdent.getName());
+	                        authorNode.put("email", authorIdent.getEmailAddress());
+	                        authorNode.put("when", authorIdent.getWhenAsInstant().toString());
+	                    }
+	                    var committerIdent = commit.getCommitterIdent();
+	                    if (committerIdent!=null) {
+	                        var committerNode = commitNode.putObject("committer");
+	                        committerNode.put("name", committerIdent.getName());
+	                        committerNode.put("email", committerIdent.getEmailAddress());
+	                        committerNode.put("when", committerIdent.getWhenAsInstant().toString());
+	                    }
+	                } catch (Exception e) { }
+	            }
+	            return root;
+	        } catch (Exception e) { return null; }
+	    }
+	
 	private static final class ActionSpelFunctionsJsoupHelper {
         private static final void replaceCode(Element e) {
             var text = e.text();
@@ -622,7 +693,7 @@ public class ActionSpelFunctions {
 
         private static final Document asDocument(String html) {
             Document document = Jsoup.parse(html);
-            document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
+            document.outputSettings(new Document.OutputSettings().prettyPrint(false));
             return document;
         }
 
@@ -630,34 +701,58 @@ public class ActionSpelFunctions {
             document.select("li").append("\\n");
             document.select("br").forEach(e->e.replaceWith(new TextNode("\n")));
             document.select("p").prepend("\\n\\n");
-            // Replace code blocks, either embedding in backticks if inline (no newline characters)
-            // or indenting with 4 spaces and fencing with CODE_START and CODE_END, which will remain
-            // in place when cleaning all HTML tags, and removed using pattern matching below.
             document.select("span.code").forEach(ActionSpelFunctionsJsoupHelper::replaceCode);
             document.select("code").forEach(ActionSpelFunctionsJsoupHelper::replaceCode);
             document.select("pre").forEach(ActionSpelFunctionsJsoupHelper::replaceCode);
-            
-            // Remove all HTML tags. Note that for now, this keeps escaped characters like &gt;
-            // We may want to have separate methods or method parameter to allow for escaped
-            // characters to be unescaped.
             var s = Jsoup.clean(document.html().replaceAll("\\\\n", "\n"), "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
-            
             var sb = new StringBuilder();
-            // Remove CODE_START and CODE_END fences
             Matcher m = CODE_PATTERN.matcher(s);
             while(m.find()){
                 String code = m.group(1);
-                // Code may contain regex-related characters like ${..}, which we don't
-                // want to interpret as regex groups. So, we append an empty replacement
-                // (have Matcher append all text before the code block), then manually 
-                // append the code block. See https://stackoverflow.com/a/948381
                 m.appendReplacement(sb, "");
                 sb.append(Parser.unescapeEntities(code, false));
             }
             m.appendTail(sb);
             return sb.toString();
         }
-	    
+	}
+	
+	private static final class ActionSpelFunctionsJGitHelper {
+	       private static String selectRemote(Repository repo) {
+	            try {
+	                var remotes = repo.getRemoteNames();
+	                if (remotes==null || remotes.isEmpty()) { return null; }
+	                if (remotes.contains("origin")) { return "origin"; }
+	                return remotes.iterator().next();
+	            } catch (Exception e) { return null; }
+	        }
+	        
+	        private static String[] deriveRepoNames(String fallbackShort, String remoteUrl) {
+	            if (StringUtils.isBlank(remoteUrl)) { return new String[]{fallbackShort, null}; }
+	            try {
+	                var cleaned = remoteUrl.trim();
+	                if (cleaned.endsWith(".git")) { cleaned = cleaned.substring(0, cleaned.length()-4); }
+	                String pathPart;
+	                if (cleaned.startsWith("git@")) {
+	                    int idx = cleaned.indexOf(":");
+	                    pathPart = idx>=0 ? cleaned.substring(idx+1) : cleaned;
+	                } else {
+	                    try {
+	                        var uri = java.net.URI.create(cleaned);
+	                        pathPart = uri.getPath();
+	                        if (pathPart==null) { pathPart = cleaned; }
+	                    } catch (Exception ex) { pathPart = cleaned; }
+	                }
+	                if (pathPart.startsWith("/")) { pathPart = pathPart.substring(1); }
+	                if (pathPart.endsWith("/")) { pathPart = pathPart.substring(0, pathPart.length()-1); }
+	                if (pathPart.contains("/")) {
+	                    var shortName = pathPart.substring(pathPart.lastIndexOf('/')+1);
+	                    return new String[]{shortName, pathPart};
+	                }
+	                return new String[]{pathPart, pathPart};
+	            } catch (Exception e) { return new String[]{fallbackShort, null}; }
+	        }
+
 	}
 	
 	private static final class ActionSpelFunctionsHelper {
@@ -671,12 +766,7 @@ public class ActionSpelFunctions {
             }
         }
     	
-    	/**
-         * Given an environment variable prefix and suffix, this method will return
-         * the value of the combined environment variable name, or the given default
-         * value if the combined environment variable is not defined. 
-         */
-        private static final String envOrDefault(String prefix, String suffix, String defaultValue) {
+    	private static final String envOrDefault(String prefix, String suffix, String defaultValue) {
             var envName = String.format("%s_%s", prefix, suffix).toUpperCase().replace('-', '_');
             var envValue = EnvHelper.env(envName);
             return StringUtils.isNotBlank(envValue) ? envValue : defaultValue; 
@@ -693,6 +783,6 @@ public class ActionSpelFunctions {
             return ActionLoaderHelper
                         .streamAsNames(ActionSource.defaultActionSources(moduleName), ActionValidationHandler.IGNORE)
                         .collect(Collectors.toSet());
-        }
-	}
+        }       
+ 	}
 }

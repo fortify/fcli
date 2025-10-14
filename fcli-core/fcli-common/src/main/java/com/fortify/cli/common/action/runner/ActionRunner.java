@@ -14,13 +14,11 @@ package com.fortify.cli.common.action.runner;
 
 import java.io.OutputStreamWriter;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.model.ActionConfig.ActionConfigOutput;
 import com.fortify.cli.common.action.model.ActionInputMask;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
@@ -36,7 +34,6 @@ import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
 import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -56,41 +53,23 @@ public class ActionRunner {
     // TODO Review try/close/finally blocks and handling of output in delayed console writers
     //      to see whether anything can be simplified, and whether there are any bugs.
     public final Integer _run(String[] args) {
-        List<Runnable> delayedConsoleWriterRunnables = Collections.emptyList();
         Map<ActionStepCheckEntry, CheckStatus> checkStatuses = Collections.emptyMap();
         CheckStatus overallCheckstatus = CheckStatus.SKIP;
         int exitCode = 0;
-        try ( var progressWriter = createProgressWriter() ) {
-            var parameterValues = getParameterValues(args);
-            try ( var ctx = createContext(progressWriter, parameterValues) ) {
-                initializeCheckStatuses(ctx);
-                ActionRunnerVars vars = new ActionRunnerVars(ctx.getSpelEvaluator(), ctx.getParameterValues());
-                try {
-                    new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
-                } finally {
-                    // Collect outputs from context; we can't write any of these outputs
-                    // until after the progress writer has been closed.
-                    delayedConsoleWriterRunnables = ctx.getDelayedConsoleWriterRunnables();
-                    checkStatuses = ctx.getCheckStatuses();
-                    exitCode = ctx.getExitCode();
-                }
+        var progressWriter = config.getProgressWriter();
+        var parameterValues = getParameterValues(args);
+        try ( var ctx = createContext(progressWriter, parameterValues) ) {
+            initializeCheckStatuses(ctx);
+            ActionRunnerVars vars = new ActionRunnerVars(ctx.getSpelEvaluator(), ctx.getParameterValues());
+            try {
+                new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
+            } finally {
+                processAndPrintCheckStatuses(ctx.getCheckStatuses());
+                overallCheckstatus = processAndPrintCheckStatuses(checkStatuses);
             }
-        } finally {
-            // Write delayed console output and check statuses, now that progress writer has been closed
-            delayedConsoleWriterRunnables.forEach(Runnable::run);
-            overallCheckstatus = processAndPrintCheckStatuses(checkStatuses);
         }
         // Determine final exit code
         return exitCode==0 && overallCheckstatus==CheckStatus.FAIL ? 100 : exitCode;
-    }
-
-    private IProgressWriterI18n createProgressWriter() {
-        var factory = config.getProgressWriterFactory();
-        var type = factory.getType();
-        if ( config.getAction().getConfig().getOutput()==ActionConfigOutput.immediate && type!=ProgressWriterType.none) {
-            type = ProgressWriterType.simple;
-        }
-        return factory.create(type);
     }
 
     private ActionRunnerContext createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {

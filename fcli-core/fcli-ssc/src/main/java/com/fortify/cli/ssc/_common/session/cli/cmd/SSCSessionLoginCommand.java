@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.ssc._common.session.cli.cmd;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -52,10 +55,24 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
     @Override
     protected SSCAndScanCentralSessionDescriptor login(String sessionName) {
         ISSCAndScanCentralUrlConfig urlConfig = sessionLoginOptions.getSscAndScanCentralUrlConfigOptions();
+        checkUrl(urlConfig);
         ISSCAndScanCentralCredentialsConfig credentialsConfig = sessionLoginOptions.getSscAndScanCentralCredentialConfigOptions();
         return SSCAndScanCentralSessionDescriptor.create(urlConfig, credentialsConfig);
     }
     
+    private void checkUrl(ISSCAndScanCentralUrlConfig urlConfig) {
+        checkUrl(urlConfig.getSscUrl(), "SSC");
+        checkUrl(urlConfig.getScSastControllerUrl(), "SC-SAST Controller");
+    }
+
+    private void checkUrl(String url, String type) {
+        try {
+            new URL(url);
+        } catch (MalformedURLException e) {
+            throw new FcliSimpleException("Malformed %s URL - %s", type, e.getMessage());
+        }
+    }
+
     @Override
     protected void testAuthenticatedConnection(String sessionName) {
         // SSC connection will already have been validated during login, so we only need to

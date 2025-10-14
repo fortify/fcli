@@ -12,6 +12,11 @@
  */
 package com.fortify.cli.common.action.runner;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
+
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,10 +24,6 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
-
-import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
-
-import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 

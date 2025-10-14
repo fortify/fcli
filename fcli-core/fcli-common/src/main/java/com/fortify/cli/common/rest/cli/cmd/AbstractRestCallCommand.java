@@ -128,12 +128,17 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
         return applyOnProductHelper(INextPageUrlProducerSupplier.class, s->s.getNextPageUrlProducer(), null);
     }
 
+    protected String formatUri(String uri) {
+        return uri;
+    }
+
     @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
         if ( StringUtils.isBlank(uri) ) {
             throw new FcliSimpleException("Uri must be specified");
         }
-        HttpRequest<?> request = unirest.request(httpMethod, uri);
+        String processedUri = formatUri(uri);
+        HttpRequest<?> request = unirest.request(httpMethod, processedUri);
         if ( StringUtils.isNotBlank(data) ) {
             if ( "GET".equals(httpMethod) || !(request instanceof HttpRequestWithBody) ) {
                 throw new FcliSimpleException("Request body not supported for "+httpMethod+" requests");

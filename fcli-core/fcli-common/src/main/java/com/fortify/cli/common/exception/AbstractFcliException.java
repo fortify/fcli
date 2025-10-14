@@ -21,6 +21,10 @@ public abstract class AbstractFcliException extends RuntimeException {
     @Getter @Setter @Accessors(fluent=true) private Integer exitCode;
 
     public AbstractFcliException() {}
+    
+    public AbstractFcliException(String fmt, Object... args) {
+        super(String.format(fmt, args));
+    }
 
     public AbstractFcliException(String message) {
         super(message);
