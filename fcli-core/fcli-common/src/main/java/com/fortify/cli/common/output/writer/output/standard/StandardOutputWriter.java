@@ -86,15 +86,30 @@ public class StandardOutputWriter implements IOutputWriter {
     }
 
     private final class OutputAndVariableRecordWriter implements IRecordWriter {
-    private final IRecordWriter outputRecordWriter = createOutputRecordWriter();
-    private final IRecordWriter rc = recordCollector;
+        private final IRecordWriter outputRecordWriter = createOutputRecordWriter();
+        private final IRecordWriter rc = recordCollector;
         private final VariableRecordWriter variableRecordWriter = new VariableRecordWriter();
-        @Override public void append(ObjectNode record) { if(outputRecordWriter!=null)outputRecordWriter.append(record); if(rc!=null)rc.append(record); if(variableRecordWriter.isEnabled())variableRecordWriter.append(record);}        
-        @Override public void close() { if(outputRecordWriter!=null)outputRecordWriter.close(); if(rc!=null)rc.close(); if(variableRecordWriter.isEnabled())variableRecordWriter.close(); }
-    private IRecordWriter createOutputRecordWriter() { return suppressOutput ? null : createUnsuppressed(); }
+
+        @Override
+        public void append(ObjectNode record) {
+            if ( outputRecordWriter != null ) { outputRecordWriter.append(record); }
+            if ( rc != null ) { rc.append(record); }
+            if ( variableRecordWriter.isEnabled() ) { variableRecordWriter.append(record); }
+        }
+
+        @Override
+        public void close() {
+            if ( outputRecordWriter != null ) { outputRecordWriter.close(); }
+            if ( rc != null ) { rc.close(); }
+            if ( variableRecordWriter.isEnabled() ) { variableRecordWriter.close(); }
+        }
+
+        private IRecordWriter createOutputRecordWriter() { return suppressOutput ? null : createUnsuppressed(); }
+
         private IRecordWriter createUnsuppressed() {
             Object cmd = commandSpec.userObject();
-            var recordWriterArgs = outputOptions==null || outputOptions.getOutputFormatConfig()==null ? null : outputOptions.getOutputFormatConfig().getRecordWriterArgs();
+            var recordWriterArgs = outputOptions==null || outputOptions.getOutputFormatConfig()==null
+                    ? null : outputOptions.getOutputFormatConfig().getRecordWriterArgs();
             return OutputRecordWriterFactory.builder()
                     .singular(isSingularOutput())
                     .messageResolver(messageResolver)
@@ -103,28 +118,89 @@ public class StandardOutputWriter implements IOutputWriter {
                     .recordWriterFactory(recordWriterFactory)
                     .recordWriterStyle(RecordWriterStyle.apply(outputOptions.getOutputStyleElements()))
                     .writerSupplier(this::createWriter)
-                    .build().createRecordWriter();
+                    .build()
+                    .createRecordWriter();
         }
-        @SneakyThrows private Writer createWriter() { var outputFile = outputOptions.getOutputFile(); return outputFile==null ? new AppendOnCloseWriterWrapper("\n\n", new NonClosingWriterWrapper(new OutputStreamWriter(System.out))) : new FileWriter(outputFile); }
+
+        @SneakyThrows
+        private Writer createWriter() {
+            var outputFile = outputOptions.getOutputFile();
+            return outputFile==null
+                    ? new AppendOnCloseWriterWrapper("\n\n", new NonClosingWriterWrapper(new OutputStreamWriter(System.out)))
+                    : new FileWriter(outputFile);
+        }
     }
 
     private abstract class AbstractRecordWriterWrapper implements IRecordWriter {
-        @Override public final void append(ObjectNode record) { getWrappedRecordWriter().append(record); }
-        @Override public final void close() { getWrappedRecordWriter().close(); }
-        protected final OutputRecordWriterFactoryBuilder createRecordWriterConfigBuilder() { Object cmd = commandSpec.userObject(); return OutputRecordWriterFactory.builder().singular(isSingularOutput()).messageResolver(messageResolver).addActionColumn(cmd!=null && cmd instanceof IActionCommandResultSupplier); }
+        @Override
+        public final void append(ObjectNode record) { getWrappedRecordWriter().append(record); }
+        @Override
+        public final void close() { getWrappedRecordWriter().close(); }
+
+        protected final OutputRecordWriterFactoryBuilder createRecordWriterConfigBuilder() {
+            Object cmd = commandSpec.userObject();
+            return OutputRecordWriterFactory.builder()
+                    .singular(isSingularOutput())
+                    .messageResolver(messageResolver)
+                    .addActionColumn(cmd!=null && cmd instanceof IActionCommandResultSupplier);
+        }
+
         protected abstract IRecordWriter getWrappedRecordWriter();
     }
 
     private final class VariableRecordWriter extends AbstractRecordWriterWrapper {
-        private final VariableDefinition variableDefinition; @Getter private final IRecordWriter wrappedRecordWriter;
-        public VariableRecordWriter() { var cfg = outputOptions.getVariableStoreConfig(); this.variableDefinition = cfg==null ? null : createVariableDefinition(cfg); this.wrappedRecordWriter = cfg==null ? null : createOutputRecordWriterFactory().createRecordWriter(); }
-        public final boolean isEnabled() { return variableDefinition!=null; }
-        private OutputRecordWriterFactory createOutputRecordWriterFactory() { return createRecordWriterConfigBuilder().writerSupplier(()->createWriter(variableDefinition)).recordWriterArgs(variableDefinition.getRecordWriterArgs()).recordWriterFactory(RecordWriterFactory.json).build(); }
-        private Writer createWriter(VariableDefinition vd) { return vd==null ? null : FcliVariableHelper.getVariableContentsWriter(vd.getVariableName(), vd.getDefaultPropertyName(), vd.isSingular(), vd.encrypt); }
-        private VariableDefinition createVariableDefinition(VariableStoreConfig vsc) { String variableName = vsc.getVariableName(); String recordWriterArgs = vsc.getRecordWriterArgs(); var ann = FcliCommandSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class); String defaultPropertyName = ann==null ? null : ann.value(); boolean encrypt = FcliCommandSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null; return VariableDefinition.builder().variableName(variableName).recordWriterArgs(recordWriterArgs).singular(isSingularOutput()).defaultPropertyName(defaultPropertyName).encrypt(encrypt).build(); }
+        private final VariableDefinition variableDefinition;
+        @Getter private final IRecordWriter wrappedRecordWriter;
+
+        public VariableRecordWriter() {
+            var cfg = outputOptions.getVariableStoreConfig();
+            this.variableDefinition = cfg==null ? null : createVariableDefinition(cfg);
+            this.wrappedRecordWriter = cfg==null ? null : createOutputRecordWriterFactory().createRecordWriter();
+        }
+
+        public boolean isEnabled() { return variableDefinition!=null; }
+
+        private OutputRecordWriterFactory createOutputRecordWriterFactory() {
+            return createRecordWriterConfigBuilder()
+                    .writerSupplier(() -> createWriter(variableDefinition))
+                    .recordWriterArgs(variableDefinition.getRecordWriterArgs())
+                    .recordWriterFactory(RecordWriterFactory.json)
+                    .build();
+        }
+
+        private Writer createWriter(VariableDefinition vd) {
+            return vd==null ? null : FcliVariableHelper.getVariableContentsWriter(
+                    vd.getVariableName(),
+                    vd.getDefaultPropertyName(),
+                    vd.isSingular(),
+                    vd.encrypt);
+        }
+
+        private VariableDefinition createVariableDefinition(VariableStoreConfig vsc) {
+            String variableName = vsc.getVariableName();
+            String recordWriterArgs = vsc.getRecordWriterArgs();
+            var ann = FcliCommandSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
+            String defaultPropertyName = ann==null ? null : ann.value();
+            boolean encrypt = FcliCommandSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
+            return VariableDefinition.builder()
+                    .variableName(variableName)
+                    .recordWriterArgs(recordWriterArgs)
+                    .singular(isSingularOutput())
+                    .defaultPropertyName(defaultPropertyName)
+                    .encrypt(encrypt)
+                    .build();
+        }
     }
 
-    @Data @Builder private static final class VariableDefinition { private final String variableName; private final String recordWriterArgs; private final String defaultPropertyName; private final boolean singular; private final boolean encrypt; }
+    @Data
+    @Builder
+    private static final class VariableDefinition {
+        private final String variableName;
+        private final String recordWriterArgs;
+        private final String defaultPropertyName;
+        private final boolean singular;
+        private final boolean encrypt;
+    }
 }
 
 
