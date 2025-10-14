@@ -29,7 +29,9 @@ import com.fortify.cli.common.json.record.IRecordProducer;
  *   <li>{@link IRecordProducerSupplier} - to stream individual records</li>
  * </ul>
  */
-public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements ISingularSupplier, IOutputHelperSupplier {
+public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements ISingularSupplier, IOutputHelperSupplier, IRecordCollectionSupport {
+    private java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> recordConsumer;
+    private boolean suppressStdoutForRecordCollection;
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(
         IBaseRequestSupplier.class, 
         IJsonNodeSupplier.class,
@@ -59,4 +61,15 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand impl
     }
     
     public abstract IOutputHelper getOutputHelper();
+    
+    // IRecordCollectionSupport
+    @Override
+    public final void setRecordConsumer(java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> consumer, boolean suppressStdout) {
+        this.recordConsumer = consumer;
+        this.suppressStdoutForRecordCollection = suppressStdout;
+    }
+    @Override
+    public final java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> getRecordConsumer() { return recordConsumer; }
+    @Override
+    public final boolean isStdoutSuppressedForRecordCollection() { return suppressStdoutForRecordCollection; }
 }

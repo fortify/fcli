@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
+import com.fortify.cli.common.output.cli.cmd.IRecordCollectionSupport;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
@@ -100,9 +100,7 @@ public final class FcliCommandExecutorFactory {
 
         public final Result execute() {
             if ( parseErrorResult!=null ) { return parseErrorResult; }
-            if ( recordConsumer!=null && canCollectRecords() ) {
-                StandardOutputWriter.collectRecords(recordConsumer, stdoutOutputType!=OutputType.show);
-            }
+            if ( recordConsumer!=null && canCollectRecords() ) { setPerCommandRecordConsumer(); }
             return call(()->_execute());
         }
 
@@ -174,6 +172,13 @@ public final class FcliCommandExecutorFactory {
 
         public final boolean canCollectRecords() {
             return FcliCommandSpecHelper.canCollectRecords(replicatedLeafCommandSpec);
+        }
+
+        private void setPerCommandRecordConsumer() {
+            var userObj = replicatedLeafCommandSpec.userObject();
+            if ( userObj instanceof IRecordCollectionSupport ) {
+                ((IRecordCollectionSupport)userObj).setRecordConsumer(recordConsumer, stdoutOutputType!=OutputType.show);
+            }
         }
         
         private <T> void consume(T value, Consumer<T> consumer, Consumer<T> defaultConsumer) {

@@ -3,11 +3,11 @@ package com.fortify.cli.common.output.writer.output.standard;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.IRecordCollectionSupport;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
@@ -37,8 +37,8 @@ public class StandardOutputWriter implements IOutputWriter {
     private final CommandSpec commandSpec;
     private final IOutputOptions outputOptions;
     private final IMessageResolver messageResolver;
-    protected static IRecordWriter recordCollector; // accessible to subclass wrappers if needed
-    protected static boolean suppressOutput;
+    private final IRecordWriter recordCollector; // instance-level collector, may be null
+    private final boolean suppressOutput;
 
     public StandardOutputWriter(CommandSpec commandSpec, IOutputOptions outputOptions, StandardOutputConfig defaultOutputConfig) {
         this.commandSpec = commandSpec.commandLine()==null ? commandSpec : commandSpec.commandLine().getCommandSpec();
@@ -46,17 +46,19 @@ public class StandardOutputWriter implements IOutputWriter {
         this.outputConfig = getOutputConfigOrDefault(commandSpec, defaultOutputConfig);
         this.recordWriterFactory = getRecordWriterFactoryOrDefault(outputConfig, outputOptions);
         this.messageResolver = new CommandSpecMessageResolver(this.commandSpec);
+        Object cmd = this.commandSpec.userObject();
+        if ( cmd instanceof IRecordCollectionSupport ) {
+            var rcs = (IRecordCollectionSupport)cmd;
+            this.recordCollector = rcs.getRecordConsumer()==null ? null : new IRecordWriter(){ @Override public void append(ObjectNode r){ rcs.getRecordConsumer().accept(r);} @Override public void close(){} };
+            this.suppressOutput = rcs.isStdoutSuppressedForRecordCollection();
+        } else {
+            this.recordCollector = null;
+            this.suppressOutput = false;
+        }
     }
 
-    public static final void collectRecords(Consumer<ObjectNode> consumer, boolean suppressOutput) {
-    final IRecordWriter oldRecordCollector = StandardOutputWriter.recordCollector;
-    final boolean oldSuppressOutput = StandardOutputWriter.suppressOutput;
-        StandardOutputWriter.suppressOutput = suppressOutput;
-        StandardOutputWriter.recordCollector = new IRecordWriter() {  
-            @Override public void append(ObjectNode record) { consumer.accept(record); }
-            @Override public void close() { StandardOutputWriter.recordCollector = oldRecordCollector; StandardOutputWriter.suppressOutput = oldSuppressOutput; }
-        };
-    }
+    // Instance determines whether to collect records based on command user object
+    // Instance-level record collector configured in constructor if command supports it
 
     @Override
     public void write(IRecordProducer recordProducer) {
@@ -84,12 +86,12 @@ public class StandardOutputWriter implements IOutputWriter {
     }
 
     private final class OutputAndVariableRecordWriter implements IRecordWriter {
-        private final IRecordWriter outputRecordWriter = createOutputRecordWriter();
-        private final IRecordWriter rc = StandardOutputWriter.recordCollector;
+    private final IRecordWriter outputRecordWriter = createOutputRecordWriter();
+    private final IRecordWriter rc = recordCollector;
         private final VariableRecordWriter variableRecordWriter = new VariableRecordWriter();
         @Override public void append(ObjectNode record) { if(outputRecordWriter!=null)outputRecordWriter.append(record); if(rc!=null)rc.append(record); if(variableRecordWriter.isEnabled())variableRecordWriter.append(record);}        
         @Override public void close() { if(outputRecordWriter!=null)outputRecordWriter.close(); if(rc!=null)rc.close(); if(variableRecordWriter.isEnabled())variableRecordWriter.close(); }
-        private IRecordWriter createOutputRecordWriter() { return StandardOutputWriter.suppressOutput ? null : createUnsuppressed(); }
+    private IRecordWriter createOutputRecordWriter() { return suppressOutput ? null : createUnsuppressed(); }
         private IRecordWriter createUnsuppressed() {
             Object cmd = commandSpec.userObject();
             var recordWriterArgs = outputOptions==null || outputOptions.getOutputFormatConfig()==null ? null : outputOptions.getOutputFormatConfig().getRecordWriterArgs();
