@@ -12,43 +12,21 @@
  */
 package com.fortify.cli.common.output.cli.mixin;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.json.producer.IObjectNodeProducer;
-import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
-import com.fortify.cli.common.output.processing.QueryStageConfigurator;
-import com.fortify.cli.common.output.processing.RecordProducerBuilder;
-import com.fortify.cli.common.output.processing.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.product.NoOpProductHelper;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IInputTransformer;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.output.writer.IBasicOutputConfigSupplier;
 import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
-import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
-import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
-import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
-import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
-import com.fortify.cli.common.rest.paging.PagingHelper;
-import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
-import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.JavaHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractOutputHelperMixin implements IOutputHelper {
@@ -60,190 +38,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
                 .orElse(NoOpProductHelper.instance());
     }
 
-    /**
-     * Write output based on the given {@link HttpRequest}. This method updates the
-     * given base {@link HttpRequest} by calling the
-     * {@link #updateRequest(HttpRequest)} method, and retrieves a next page
-     * producer by calling the {@link #getNextPageUrlProducer(HttpRequest)} method.
-     * The (potentially) updated request and next page producer are then passed to
-     * the {@link IOutputWriter} created by the {@link #createOutputWriter()}
-     * method, which in turn will execute the request, handling paging if necessary,
-     * and write the response data.
-     */
-    @Override
-    public final void write(HttpRequest<?> baseRequest) {
-        HttpRequest<?> request = updateRequest(baseRequest);
-        var nextPageRequestProducer = getNextPageRequestProducer();
-        var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
-    var pipelineCfg = getPipelineConfig();
-    IObjectNodeProducer producer = RecordProducerBuilder.forRequest(getOutputConfig(), pipelineCfg, request, nextPageRequestProducer,
-                nextPageUrlProducer);
-        createOutputWriter().write(producer);
-    }
-
-    /**
-     * Write the given {@link JsonNode} using the output writer created by the
-     * {@link #createOutputWriter()} method. Obviously, this method will not provide
-     * any of the {@link HttpRequest}-based functionality as provided by the
-     * {@link #write(HttpRequest)} method, as there is no {@link HttpRequest} to be
-     * updated or to apply paging on.
-     */
-    @Override
-    public final void write(JsonNode jsonNode) {
-    var pipelineCfg = getPipelineConfig();
-    IObjectNodeProducer producer = RecordProducerBuilder.forJsonNode(getOutputConfig(), pipelineCfg, jsonNode);
-        createOutputWriter().write(producer);
-    }
-
-    /**
-     * This method simply gets a {@link JsonNode} instance from the given
-     * {@link JsonNodeHolder}, then calls the {@link #write(JsonNode)} method to
-     * write this {@link JsonNode} instance to the output.
-     */
-    @Override
-    public final void write(JsonNodeHolder jsonNodeHolder) {
-        write(jsonNodeHolder.asJsonNode());
-    }
-
-    /** Write records produced by the given producer using the configured output writer. */
-    @Override
-    public final void write(IObjectNodeProducer recordProducer) {
-        createOutputWriter().write(recordProducer);
-    }
-
-    /**
-     * This method updates the given base {@link HttpRequest} by calling the
-     * {@link IHttpRequestUpdater#updateRequest(HttpRequest)} method on the
-     * configured {@link IProductHelper}, any mixins on the command currently being
-     * invoked, and the command itself, in this order, if they implement the
-     * {@link IHttpRequestUpdater} interface.
-     *
-     * @param baseRequest
-     * @return
-     */
-    protected final HttpRequest<?> updateRequest(HttpRequest<?> request) {
-        request = applyWithDefault(getProductHelper(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) {
-            request = applyWithDefault(mixin.userObject(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
-        }
-        request = applyWithDefault(commandHelper.getCommand(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
-        return request;
-    }
-
-    protected final INextPageRequestProducer getNextPageRequestProducer() {
-        return PagingHelper.asNextPageRequestProducer(getUnirestInstance(), getNextPageUrlProducer());
-    }
-
-    /**
-     * This method returns a next page url producer retrieved from either the
-     * command being invoked, or the configured {@link IProductHelper}, in this
-     * order, if they implement the {@link INextPageUrlProducerSupplier} interface.
-     *
-     * @param request
-     * @return
-     */
-    protected final INextPageUrlProducer getNextPageUrlProducer() {
-        return Stream.of(commandHelper.getCommand(), getProductHelper()).map(AbstractOutputHelperMixin::getNextPageUrlProducerFromObject)
-                .filter(Objects::nonNull).findFirst().orElse(null);
-    }
-
-    /**
-     * This method returns a UnirestInstance retrieved from the command being
-     * invoked, if it implements the {@link IUnirestInstanceSupplier} interface.
-     *
-     * @param request
-     * @return
-     */
-    protected final UnirestInstance getUnirestInstance() {
-        return Stream.of(commandHelper.getCommand()).map(AbstractOutputHelperMixin::getUnirestInstanceFromObject).filter(Objects::nonNull)
-                .findFirst().orElse(null);
-    }
-
-    /**
-     * Add record transformers to the given {@link TransformationPipelineRunnerConfig} in
-     * the following order:
-     * <ol>
-     *   <li>Every mixin on the command (in Picocli commandSpec order)</li>
-     *   <li>The configured {@link IProductHelper}</li>
-     *   <li>The command itself</li>
-     *   <li>The synthetic transformer adding the action command result field (if any)</li>
-     * </ol>
-     * The resulting order guarantees that:
-     * <ul>
-     *   <li>Mixin-provided transformers run before product & command transformers</li>
-     *   <li>Product helper transformers can still be overridden or complemented by command transformers</li>
-     *   <li>The action result field is added last so earlier transformers can still influence its value dependencies</li>
-     * </ul>
-     * Note: Record transformers are no longer configured on {@code StandardOutputConfig};
-     * that type now contains only output formatting concerns. Transformation concerns
-     * are exclusively handled through {@link TransformationPipelineRunnerConfig}.
-     *
-     * @param cfg  mutable pipeline configuration being populated
-     * @param cmd  active command instance
-     */
-    protected final void addRecordTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addRecordTransformersFromObject(cfg, mixin.userObject()); }
-        addRecordTransformersFromObject(cfg, getProductHelper());
-        addRecordTransformersFromObject(cfg, cmd);
-        addCommandActionResultRecordTransformer(cfg, cmd);
-    }
-
-    /**
-     * Add input transformers to the given {@link TransformationPipelineRunnerConfig} in
-     * the following order:
-     * <ol>
-     *   <li>Every mixin on the command (can include an {@link IProductHelper})</li>
-     *   <li>The configured {@link IProductHelper}</li>
-     *   <li>The command itself</li>
-     * </ol>
-     * Similar to record transformers, input transformers have moved from
-     * {@link StandardOutputConfig} to {@link TransformationPipelineRunnerConfig} to
-     * clearly separate transformation from output formatting concerns.
-     *
-     * @param cfg  mutable pipeline configuration being populated
-     * @param cmd  active command instance
-     */
-    protected final void addInputTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addInputTransformersFromObject(cfg, mixin.userObject()); }
-        addInputTransformersFromObject(cfg, getProductHelper());
-        addInputTransformersFromObject(cfg, cmd);
-    }
-
-    /**
-     * Utility method used by {@link #updateRequest(HttpRequest)}, returning a
-     * function that takes an {@link IHttpRequestUpdater} instance and returning the
-     * result of {@link IHttpRequestUpdater#updateRequest(HttpRequest)}.
-     *
-     * @param request
-     * @return
-     */
-    private static final Function<IHttpRequestUpdater, HttpRequest<?>> httpRequestUpdater(final HttpRequest<?> request) {
-        return requestUpdater -> requestUpdater.updateRequest(request);
-    }
-
-    /**
-     * Utility method used by {@link #getNextPageUrlProducer()}, returning a next
-     * page producer retrieved from the given object if that object implements
-     * {@link INextPageUrlProducerSupplier}, or null otherwise.
-     *
-     * @param obj
-     * @return
-     */
-    private static final INextPageUrlProducer getNextPageUrlProducerFromObject(Object obj) {
-        return apply(obj, INextPageUrlProducerSupplier.class, supplier -> supplier.getNextPageUrlProducer());
-    }
-
-    /**
-     * Utility method used by {@link #getUnirestInstance()}, returning a
-     * UnirestInstance retrieved from the given object if that object implements
-     * {@link IUnirestInstanceSupplier}, or null otherwise.
-     *
-     * @param obj
-     * @return
-     */
-    private static final UnirestInstance getUnirestInstanceFromObject(Object obj) {
-        return apply(obj, IUnirestInstanceSupplier.class, supplier -> supplier.getUnirestInstance());
-    }
+    // No write methods; transformation & request handling moved to TransformationPipelineRunnerConfigFactoryMixin.
 
     /**
      * This default implementation of {@link IOutputHelper#getBasicOutputConfig()}
@@ -293,9 +88,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @return {@link IOutputWriter} instance retrieved from an
      *         {@link IOutputWriterFactory} instance
      */
-    private final IOutputWriter createOutputWriter() {
-        return getOutputWriterFactory().createOutputWriter(getOutputConfig());
-    }
+    // Writer creation no longer used within this mixin; subclasses interact through StandardOutputConfig only.
 
     /**
      * Return the effective {@link StandardOutputConfig} used purely for output formatting.
@@ -308,17 +101,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      *
      * @return formatting configuration (never null)
      */
-    private final StandardOutputConfig getOutputConfig() { return getBasicOutputConfig(commandHelper.getCommand()); }
-
-    private final TransformationPipelineRunnerConfig getPipelineConfig() {
-        Object cmd = commandHelper.getCommand();
-    var pipelineCfg = TransformationPipelineRunnerConfig.builder().build();
-    addInputTransformersForCommand(pipelineCfg, cmd);
-    addRecordTransformersForCommand(pipelineCfg, cmd);
-        QueryStageConfigurator.configure(pipelineCfg, commandHelper.getCommandSpec(), cmd, getOutputWriterFactory());
-        addCommandActionResultRecordTransformer(pipelineCfg, cmd);
-        return pipelineCfg;
-    }
+    // No local usage; formatting config resolved externally where needed.
 
     /**
      * If the command being invoked implements {@link IBasicOutputConfigSupplier},
@@ -333,10 +116,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param cmd
      * @return
      */
-    private final StandardOutputConfig getBasicOutputConfig(Object cmd) {
-        return applyWithDefaultSupplier(cmd, IBasicOutputConfigSupplier.class, IBasicOutputConfigSupplier::getBasicOutputConfig,
-                this::getBasicOutputConfig);
-    }
+    // getBasicOutputConfig(Object) no longer required; direct calls to getBasicOutputConfig() expected externally.
 
     /**
      * Utility method for applying the given function on the given object and
@@ -353,12 +133,9 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param defaultValueSupplier
      * @return
      */
-    private static final <T, R> R applyWithDefaultSupplier(Object obj, Class<T> type, Function<T, R> function,
-            Supplier<R> defaultValueSupplier) {
+    private static final <T, R> R applyWithDefaultSupplier(Object obj, Class<T> type, Function<T, R> function, Supplier<R> defaultValueSupplier) {
         var result = JavaHelper.as(obj, type).map(function);
-        if (defaultValueSupplier != null) {
-            result = result.or(() -> Optional.of(defaultValueSupplier.get()));
-        }
+        if (defaultValueSupplier != null) { result = result.or(() -> Optional.of(defaultValueSupplier.get())); }
         return result.orElse(null);
     }
 
@@ -376,59 +153,6 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param defaultValue
      * @return
      */
-    private static final <T, R> R applyWithDefault(Object obj, Class<T> type, Function<T, R> function, R defaultValue) {
-        return applyWithDefaultSupplier(obj, type, function, () -> defaultValue);
-    }
-
-    /**
-     * Utility method for applying the given function on the given object and
-     * returning the result, if the given object is an instance of the given type.
-     * If the given object is not of the given type, or if the provided function
-     * returns null, this method returns null.
-     *
-     * @param <T>
-     * @param <R>
-     * @param obj
-     * @param type
-     * @param function
-     * @return
-     */
-    private static final <T, R> R apply(Object obj, Class<T> type, Function<T, R> function) {
-        return applyWithDefaultSupplier(obj, type, function, null);
-    }
-
-    /**
-     * Add record transformer(s) from the given object if it implements {@link IRecordTransformer}.
-     * The transformer is wrapped and registered on the provided pipeline config.
-     *
-     * @param cfg target pipeline configuration
-     * @param obj potential transformer provider
-     */
-    @SuppressWarnings("deprecation")
-    private static final void addRecordTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
-        apply(obj, IRecordTransformer.class, s -> cfg.recordTransformer(s::transformRecord));
-    }
-
-    /**
-     * Add input transformer(s) from the given object if it implements {@link IInputTransformer}.
-     * The transformer is wrapped and registered on the provided pipeline config.
-     *
-     * @param cfg target pipeline configuration
-     * @param obj potential transformer provider
-     */
-    @SuppressWarnings("deprecation")
-    private static final void addInputTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
-        apply(obj, IInputTransformer.class, s -> cfg.inputTransformer(s::transformInput));
-    }
-
-    private static final void addCommandActionResultRecordTransformer(TransformationPipelineRunnerConfig cfg, Object cmd) {
-        apply(cmd, IActionCommandResultSupplier.class,
-                s -> cfg.recordTransformer(createCommandActionResultRecordTransformer(s)));
-    }
-
-    private static final UnaryOperator<JsonNode> createCommandActionResultRecordTransformer(IActionCommandResultSupplier supplier) {
-        return new AddFieldsTransformer(IActionCommandResultSupplier.actionFieldName, supplier.getActionCommandResult())
-                .overwiteExisting(false)::transform;
-    }
+    // Utility left for existing basic config resolution only
 
 }

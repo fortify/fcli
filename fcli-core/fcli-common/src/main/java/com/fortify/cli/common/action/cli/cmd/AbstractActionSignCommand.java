@@ -32,6 +32,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.FcliBuildProperties;
 
@@ -44,6 +45,7 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(AbstractActionSignCommand.class);
     @Getter @Mixin OutputHelperMixins.TableNoQuery outputHelper;
+    @Mixin private TransformationPipelineRunnerConfigFactoryMixin transformationPipelineRunnerConfigFactoryMixin;
     @Option(names = "--in", required=true, descriptionKey="fcli.action.sign.in") 
     private Path actionFileToSign;
     @Option(names = "--out", required=true, descriptionKey="fcli.action.sign.out")
@@ -145,5 +147,10 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
     @Override
     public final boolean isSingular() {
         return false;
+    }
+
+    @Override
+    protected TransformationPipelineRunnerConfigFactoryMixin getTransformationPipelineRunnerConfigFactoryMixin() {
+        return transformationPipelineRunnerConfigFactoryMixin;
     }
 }

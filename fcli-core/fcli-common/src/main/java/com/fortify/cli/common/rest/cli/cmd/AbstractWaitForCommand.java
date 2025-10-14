@@ -14,6 +14,8 @@ package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
+import com.fortify.cli.common.output.processing.RecordProducerBuilder;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
@@ -29,6 +31,7 @@ import picocli.CommandLine.Mixin;
 
 public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IUnirestInstanceSupplier, ISingularSupplier {
     @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
+    @Mixin private TransformationPipelineRunnerConfigFactoryMixin transformationPipelineRunnerConfigFactoryMixin;
     @Mixin private WaitHelperControlPropertiesMixin controlProperties;
     @Mixin private WaitHelperWaitTypeMixin waitTypeSupplier;
     @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
@@ -53,7 +56,13 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                     .controlProperties(controlProperties)
                     .waitType(waitTypeSupplier.getWaitType())
                     .progressMonitor(progressMonitorMixin.create(false))
-                    .onFinish(WaitHelper::recordsWithActionAsArrayNode, outputHelper::write)
+                    .onFinish(WaitHelper::recordsWithActionAsArrayNode, arrayNode -> {
+                        var cfg = outputHelper.getBasicOutputConfig();
+                        var writerFactory = outputHelper.getOutputWriterFactory();
+                        var pipelineCfg = transformationPipelineRunnerConfigFactoryMixin.getPipelineConfig(writerFactory);
+                        var producer = RecordProducerBuilder.forJsonNode(cfg, pipelineCfg, arrayNode);
+                        transformationPipelineRunnerConfigFactoryMixin.writeProducer(cfg, producer, writerFactory);
+                    })
             ).build().wait(unirest);
     }
     
