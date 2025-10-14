@@ -50,9 +50,7 @@ public final class ToolDefinitionsHelper {
 	public static final Path DEFINITIONS_STATE_ZIP = DEFINITIONS_STATE_DIR.resolve(ZIP_FILE_NAME);
 	private static final String DEFINITIONS_INTERNAL_ZIP = "com/fortify/cli/tool/config/" + ZIP_FILE_NAME;
 	private static final Path DESCRIPTOR_PATH = ToolDefinitionsHelper.DEFINITIONS_STATE_DIR.resolve("state.json");
-	private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
-	private static String toolDefinitionCustomFilePath;
-    private static boolean shouldUpdate = false;
+    private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
 
     public static final List<ToolDefinitionsOutputDescriptor> getOutputDescriptors() {
 		List<ToolDefinitionsOutputDescriptor> result = new ArrayList<>();
@@ -60,18 +58,23 @@ public final class ToolDefinitionsHelper {
 		addYamlOutputDescriptors(result);
 		return result;
 	}
+    public static final List<ToolDefinitionsOutputDescriptor> getOutputDescriptors(String source, boolean shouldUpdate) {
+        List<ToolDefinitionsOutputDescriptor> result = new ArrayList<>();
+        addZipOutputDescriptor(result, shouldUpdate);
+        addYamlOutputDescriptors(result,source, shouldUpdate);
+        return result;
+    }
 
 	@SneakyThrows
 	public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source, boolean forceUpdate, String maxAge) {
-		toolDefinitionCustomFilePath = source;
-        shouldUpdate = shouldUpdateToolDefinitions(forceUpdate, maxAge);
+        boolean shouldUpdate = shouldUpdateToolDefinitions(forceUpdate, maxAge);
         if (shouldUpdate) {
 		createDefinitionsStateDir(ToolDefinitionsHelper.DEFINITIONS_STATE_DIR);
 		var zip = ToolDefinitionsHelper.DEFINITIONS_STATE_ZIP;
 		var descriptor = update(source, zip);
 		FcliDataHelper.saveFile(DESCRIPTOR_PATH, descriptor, true);
         }
-		return getOutputDescriptors();
+		return getOutputDescriptors(source, shouldUpdate);
 	}
 
 	@SneakyThrows
@@ -104,7 +107,7 @@ public final class ToolDefinitionsHelper {
 			if (!source.toLowerCase().endsWith(".zip") && !isValidZip(source)) {
 				throw new FcliSimpleException("Invalid Tools definitions file");
 			}
-			mergeDefinitionsZip(dest);
+			mergeDefinitionsZip(dest, source);
 		}
 		return new ToolDefinitionsStateDescriptor(source, new Date(getModifiedTime(dest).toMillis()));
 	}
@@ -161,13 +164,13 @@ public final class ToolDefinitionsHelper {
 	 * @param dest
 	 */
 	@SneakyThrows
-    private static void mergeDefinitionsZip(Path dest) {
+    private static void mergeDefinitionsZip(Path dest, String source) {
         createDefinitionsStateDir(DEFINITIONS_STATE_DIR);
         try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(Files.newOutputStream(dest))) {
             for (String yamlFileName : getRequiredYamlFileNames()) {
                 File file = null;
-                if (toolDefinitionCustomFilePath != null && Files.exists(Path.of(toolDefinitionCustomFilePath))) {
-                    try (InputStream is = Files.newInputStream(Path.of(toolDefinitionCustomFilePath))) {
+                if (source != null && Files.exists(Path.of(source))) {
+                    try (InputStream is = Files.newInputStream(Path.of(source))) {
                         file = extractYamlFromZip(is, yamlFileName);
                         createZipEntry(zos, file);
                     }
@@ -218,9 +221,18 @@ public final class ToolDefinitionsHelper {
 	private static final InputStream getToolDefinitionsInputStream() throws IOException {
 		return Files.exists(DEFINITIONS_STATE_ZIP) ? Files.newInputStream(DEFINITIONS_STATE_ZIP)
 				: FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
-	}
+    }
 
-	private static final void addZipOutputDescriptor(List<ToolDefinitionsOutputDescriptor> result) {
+    private static final void addZipOutputDescriptor(List<ToolDefinitionsOutputDescriptor> result) {
+        var stateDescriptor = FcliDataHelper.readFile(DESCRIPTOR_PATH, ToolDefinitionsStateDescriptor.class, false);
+        if ( stateDescriptor!=null ) {
+            result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, stateDescriptor, "UPDATED"));
+        } else {
+            result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, "INTERNAL", FcliBuildProperties.INSTANCE.getFcliBuildDate(), "RESET"));
+        }
+    }
+
+    private static final void addZipOutputDescriptor(List<ToolDefinitionsOutputDescriptor> result, boolean shouldUpdate) {
 	    var stateDescriptor = FcliDataHelper.readFile(DESCRIPTOR_PATH, ToolDefinitionsStateDescriptor.class, false);
 	    String actionResult = shouldUpdate ? "UPDATED" : "SKIPPED_BY_AGE";
         if ( stateDescriptor!=null ) {
@@ -228,27 +240,42 @@ public final class ToolDefinitionsHelper {
         } else {
             result.add(new ToolDefinitionsOutputDescriptor(ZIP_FILE_NAME, "INTERNAL", FcliBuildProperties.INSTANCE.getFcliBuildDate(), actionResult));
         }
-	}
+    }
 
     private static Set<String> getRequiredYamlFileNames() {
         return ToolRegistry.getRegisteredToolNames().stream().map(s -> s + ".yaml").collect(Collectors.toSet());
     }
 
 	private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result) {
-		Set<String> requiredYamlNames = getRequiredYamlFileNames();
-		if (!shouldUpdate) {
-		    addYamlDescriptor(result, requiredYamlNames, "SKIPPED_BY_AGE");
-		}
-		else if (toolDefinitionCustomFilePath != null && toolDefinitionCustomFilePath.contains("https://")) {
+        try ( InputStream is = getToolDefinitionsInputStream(); ZipInputStream zis = new ZipInputStream(is) ) {
+            ZipEntry entry;
+            while ( (entry = zis.getNextEntry())!=null ) {
+                var name = Path.of(entry.getName()).getFileName().toString(); // Should already be just a file name, but just in case
+                var source = ZIP_FILE_NAME;
+                var lastModified = new Date(entry.getLastModifiedTime().toMillis());
+                result.add(new ToolDefinitionsOutputDescriptor(name, source, lastModified, "RESET"));
+            }
+        } catch (IOException e) {
+            throw new FcliSimpleException("Error loading tool definitions", e);
+        }
+    }
+
+    private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result, String source,
+            boolean shouldUpdate) {
+        Set<String> requiredYamlNames = getRequiredYamlFileNames();
+        if (!shouldUpdate) {
+            addYamlDescriptor(result, requiredYamlNames, "SKIPPED_BY_AGE");
+        }
+        else if (source != null && source.contains("https://")) {
             addYamlDescriptor(result, requiredYamlNames, "UPDATED");
-		}
+        }
         else {
-			Set<String> foundYamlNames = new HashSet<>();
-			String zipPathOnly = toolDefinitionCustomFilePath != null
-				? Path.of(toolDefinitionCustomFilePath).getFileName().toString()
-				: null;
-            if (toolDefinitionCustomFilePath != null) {
-                updateActionResultForUserFile(result, requiredYamlNames, foundYamlNames, zipPathOnly);
+            Set<String> foundYamlNames = new HashSet<>();
+            String zipPathOnly = source != null
+                ? Path.of(source).getFileName().toString()
+                : null;
+            if (source != null) {
+                updateActionResultForUserFile(result, requiredYamlNames, foundYamlNames, zipPathOnly, source);
             }
 
             updateActionResultForMissingFiles(result, requiredYamlNames, foundYamlNames);
@@ -256,9 +283,8 @@ public final class ToolDefinitionsHelper {
     }
 
     private static void updateActionResultForUserFile(List<ToolDefinitionsOutputDescriptor> result,
-            Set<String> requiredYamlNames, Set<String> foundYamlNames, String zipPathOnly) {
-
-        Path zipPath = Path.of(toolDefinitionCustomFilePath);
+            Set<String> requiredYamlNames, Set<String> foundYamlNames, String zipPathOnly, String source) {
+        Path zipPath = Path.of(source);
 
         if (!Files.exists(zipPath)) {
             throw new FcliSimpleException("User ZIP file not found: " + zipPath);
