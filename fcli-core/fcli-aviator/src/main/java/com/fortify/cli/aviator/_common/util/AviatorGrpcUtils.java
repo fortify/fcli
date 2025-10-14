@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator._common.util;
 
 import java.util.AbstractMap;
@@ -34,11 +46,11 @@ public class AviatorGrpcUtils {
             Set<Descriptors.FieldDescriptor> allFields =
                     new HashSet<>(message.getDescriptorForType().getFields());
 
-             String jsonString = JsonFormat.printer()
-                     .includingDefaultValueFields(allFields)
-                     .preservingProtoFieldNames()
-                     .print(message);
-             LOG.debug("Converted gRPC message to JSON: {}", jsonString);
+            String jsonString = JsonFormat.printer()
+                    .includingDefaultValueFields(allFields)
+                    .preservingProtoFieldNames()
+                    .print(message);
+            LOG.debug("Converted gRPC message to JSON: {}", jsonString);
             return objectMapper.readTree(jsonString);
         } catch (Exception e) {
             LOG.error("Error converting gRPC message to JSON: {}", e.getMessage(), e);

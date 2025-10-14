@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.runner;
@@ -36,17 +36,17 @@ public final class ActionRunnerHelper {
         var format = ctx.getConfig().getAction().getFormatters().get(formatterName);
         return new JsonNodeSpelEvaluatorWalker(ctx, input).walk(format);
     }
-     
+    
     public static final String getFormatterName(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
         var formatterExpression = templateExpressionWithFormatter==null ? null : templateExpressionWithFormatter.getFmt();
         return formatterExpression==null ? null : vars.eval(formatterExpression, String.class);
     }
-     
+    
     public static final Object getValueAsObject(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
         var valueExpression = templateExpressionWithFormatter==null ? null : templateExpressionWithFormatter.getValue();
         return valueExpression==null ? null : vars.eval(valueExpression, Object.class);
     }
-     
+    
     public static final JsonNode getValueAsJsonNode(ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
         var rawValue = getValueAsObject(vars, templateExpressionWithFormatter);
         if ( rawValue==null ) { return null; }

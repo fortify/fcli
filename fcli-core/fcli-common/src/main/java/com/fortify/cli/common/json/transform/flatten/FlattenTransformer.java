@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.json.transform.flatten;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -69,42 +69,45 @@ public class FlattenTransformer extends AbstractJsonNodeTransformer {
                 });
             } else if (node.isArray()) {
                 ArrayNode array = (ArrayNode) node;
-                JsonNodeType nodeType = array==null || array.isEmpty() ? null : array.get(0).getNodeType();
-                if ( nodeType!=null ) {
+                JsonNodeType nodeType = array == null || array.isEmpty() ? null : array.get(0).getNodeType();
+                if (nodeType != null) {
                     switch (nodeType) {
-                    case ARRAY: case OBJECT: case POJO: flattenNestedArray(array, prefix); break;
-                    case STRING: case NUMBER: result.put(fieldNameFormatter.apply(prefix), toConcatenatedString(array)); break;
-                    default: // TODO Ignore all others?
+                        case ARRAY :
+                        case OBJECT :
+                        case POJO :
+                            flattenNestedArray(array, prefix);
+                            break;
+                        case STRING :
+                        case NUMBER :
+                            result.put(fieldNameFormatter.apply(prefix), toConcatenatedString(array));
+                            break;
+                        default : // TODO Ignore all others?
                     }
                 }
             } else {
                 result.set(fieldNameFormatter.apply(prefix), node);
             }
         }
-        
+
         private void flattenNestedArray(ArrayNode array, String prefix) {
-            if ( flattenNestedArrays ) {
+            if (flattenNestedArrays) {
                 AtomicInteger counter = new AtomicInteger();
                 array.elements().forEachRemaining(item -> {
                     flatten(item, getPrefix(prefix, counter.getAndIncrement()));
                 });
             }
         }
-        
+
         private String toConcatenatedString(ArrayNode array) {
             return JsonHelper.stream(array).map(JsonNode::textValue).collect(Collectors.joining(", "));
         }
 
         private String getPrefix(String prefix, String key) {
-            return StringUtils.isBlank(prefix) 
-                    ? key
-                    : (prefix + separator + key);
+            return StringUtils.isBlank(prefix) ? key : (prefix + separator + key);
         }
-        
+
         private String getPrefix(String prefix, int count) {
-            return StringUtils.isBlank(prefix) 
-                    ? String.valueOf(count)
-                    : (prefix + separator + count);
+            return StringUtils.isBlank(prefix) ? String.valueOf(count) : (prefix + separator + count);
         }
 
     }

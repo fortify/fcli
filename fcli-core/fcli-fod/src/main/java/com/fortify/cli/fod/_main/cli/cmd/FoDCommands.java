@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
@@ -32,7 +32,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "fod",
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
-         subcommands = {
+        subcommands = {
                 // This list of product subcommands should be in alphabetical
                 // order, except for:
                 // - session command (should be the first command, as it is a

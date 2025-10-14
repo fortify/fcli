@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import java.io.File;
@@ -53,33 +53,33 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
     
     @Override @SneakyThrows
     protected File getFile() {
-    	File sbomFile = null;
-    	if ( StringUtils.isNotBlank(fileName) ) {
-    		sbomFile = new File(fileName);
-    	} else {
-    		sbomFile = File.createTempFile("debricked", ".json");
-    		sbomFile.deleteOnExit();
-    	}
-    	return sbomFile;
+        File sbomFile = null;
+        if ( StringUtils.isNotBlank(fileName) ) {
+            sbomFile = new File(fileName);
+        } else {
+            sbomFile = File.createTempFile("debricked", ".json");
+            sbomFile.deleteOnExit();
+        }
+        return sbomFile;
     }
     
     @Override
     protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	DebrickedHelper debrickedHelper = new DebrickedHelper(debrickedLoginOptions, repository, branch);
-		progressWriter.writeProgress("Status: Generating & downloading SBOM");
-    	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
-    	    debrickedHelper.downloadSbom(debrickedUnirest, file);
-    	}
-    	progressWriter.writeProgress("Status: Uploading SBOM to SSC");
+        DebrickedHelper debrickedHelper = new DebrickedHelper(debrickedLoginOptions, repository, branch);
+        progressWriter.writeProgress("Status: Generating & downloading SBOM");
+        try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
+            debrickedHelper.downloadSbom(debrickedUnirest, file);
+        }
+        progressWriter.writeProgress("Status: Uploading SBOM to SSC");
     }
     
     @Override
     protected void postUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	if ( StringUtils.isBlank(fileName) ) {
-    		file.delete();
-    	}
-    	progressWriter.writeProgress("Status: SBOM uploaded to SSC");
-    	progressWriter.clearProgress();
+        if ( StringUtils.isBlank(fileName) ) {
+            file.delete();
+        }
+        progressWriter.writeProgress("Status: SBOM uploaded to SSC");
+        progressWriter.clearProgress();
     }
 
 }

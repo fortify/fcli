@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.audit;
 
 import static com.fortify.cli.aviator.util.Constants.DEFAULT_PING_INTERVAL_SECONDS;
@@ -130,7 +142,7 @@ public class IssueAuditor {
     }
 
     public AuditOutcome performAudit(Map<String, AuditResponse> auditResponses, String token,
-                                     String projectName, String projectBuildId, String url) {
+                                    String projectName, String projectBuildId, String url) {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 

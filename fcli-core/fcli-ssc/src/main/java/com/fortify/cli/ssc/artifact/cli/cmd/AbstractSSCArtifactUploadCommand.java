@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import java.io.File;
@@ -38,18 +38,18 @@ public abstract class AbstractSSCArtifactUploadCommand extends AbstractSSCArtifa
     public final HttpRequest<?> getBaseRequest() {
         try ( var progressWriter = progressWriterFactory.create() ) {
             var unirest = getUnirestInstance();
-        	String engineType = getEngineType();
+            String engineType = getEngineType();
             SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
             HttpRequestWithBody request = unirest.post(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()));
             if ( StringUtils.isNotBlank(engineType) ) {
-            	// TODO Check parser plugin is enabled in SSC
-            	request = request.queryString("engineType", engineType);
+                // TODO Check parser plugin is enabled in SSC
+                request = request.queryString("engineType", engineType);
             }
             File file = getFile();
             preUpload(unirest, progressWriter, file);
             JsonNode uploadResponse = request.multiPartContent()
-            		.field("file", file)
-            		.asObject(JsonNode.class).getBody();
+                    .field("file", file)
+                    .asObject(JsonNode.class).getBody();
             postUpload(unirest, progressWriter, file);
             String artifactId = JsonHelper.evaluateSpelExpression(uploadResponse, "data.id", String.class);
             // TODO Do we actually show any scan data from the embedded scans?
@@ -57,7 +57,7 @@ public abstract class AbstractSSCArtifactUploadCommand extends AbstractSSCArtifa
         }
     }
 
-	@Override
+    @Override
     public boolean isSingular() {
         return true;
     }

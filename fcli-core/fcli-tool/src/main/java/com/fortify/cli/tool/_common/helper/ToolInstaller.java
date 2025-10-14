@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.tool._common.helper;
 
 import java.io.File;
@@ -265,10 +265,10 @@ public final class ToolInstaller {
         var targetPath = getTargetPath();
         if ( oldDescriptor!=null && !oldDescriptor.getInstallPath().toAbsolutePath().equals(targetPath.toAbsolutePath()) ) {
             String msg = "WARN: This tool version was previously installed in another directory." +
-                       "\n      Fcli will only track the latest installation directory; you may" +
-                       "\n      want to manually remove the old installation directory." +
-                       "\n        Old: "+oldDescriptor.getInstallDir() +
-                       "\n        New: "+targetPath;
+                    "\n      Fcli will only track the latest installation directory; you may" +
+                    "\n      want to manually remove the old installation directory." +
+                    "\n        Old: "+oldDescriptor.getInstallDir() +
+                    "\n        New: "+targetPath;
             progressWriter.writeWarning(msg);
         }
     }

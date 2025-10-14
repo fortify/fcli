@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.spel.fn;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
@@ -157,7 +157,7 @@ public class SpelFunctionsStandard {
             Retrieves the contents of an fcli variable that was stored through the --store option \
             on a previous fcli invocation, throwing an error if the variable does not exist.
             """,
-                  returns="The JSON contents for the given fcli variable name")
+                returns="The JSON contents for the given fcli variable name")
     public static final JsonNode var(
             @SpelFunctionParam(name="name", desc="the name of the variable to retrieve") String name)
     {
@@ -180,7 +180,7 @@ public class SpelFunctionsStandard {
     }
 
     @SpelFunction(cat=fcli, desc = "Encrypts the given string using the fcli encryption mechanism, compatible with the 'fcli util crypto' commands.",
-                  returns="The encrypted form of the input string")
+                returns="The encrypted form of the input string")
     public static final String encrypt(
             @SpelFunctionParam(name="input", desc="the string to encrypt") String s)
     {
@@ -188,7 +188,7 @@ public class SpelFunctionsStandard {
     }
 
     @SpelFunction(cat=fcli, desc = "Decrypts the given encrypted string using the fcli decryption mechanism, compatible with the 'fcli util crypto' commands.",
-                  returns="The decrypted form of the input string")
+                returns="The decrypted form of the input string")
     public static final String decrypt(
             @SpelFunctionParam(name="input", desc="the encrypted string to decrypt") String s)
     {

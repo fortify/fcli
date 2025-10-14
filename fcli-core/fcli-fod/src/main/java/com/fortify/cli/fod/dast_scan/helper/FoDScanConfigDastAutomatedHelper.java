@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,8 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod.dast_scan.helper;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,8 +35,8 @@ public class FoDScanConfigDastAutomatedHelper {
     }
 
     public static <T> FoDScanConfigDastAutomatedDescriptor setupScan(UnirestInstance unirest,
-                                                                     FoDReleaseDescriptor releaseDescriptor,
-                                                                     T setupDastAutomatedScanRequest, String ep) {
+                                                                    FoDReleaseDescriptor releaseDescriptor,
+                                                                    T setupDastAutomatedScanRequest, String ep) {
         var releaseId = releaseDescriptor.getReleaseId();
         unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + ep)
                 .routeParam("relId", releaseId)
@@ -95,8 +94,8 @@ public class FoDScanConfigDastAutomatedHelper {
 
     @SneakyThrows
     public static <T> FoDScanConfigDastAutomatedDescriptor setupGrpcScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                         FoDScanDastAutomatedSetupBaseRequest base, FileUploadResult fileUploadResult,
-                                         FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
+                                        FoDScanDastAutomatedSetupBaseRequest base, FileUploadResult fileUploadResult,
+                                        FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
         int fileIdToUse = (fileUploadResult != null ? fileUploadResult.getFileId() : 0);
         FoDScanDastAutomatedSetupGrpcRequest setupRequest = FoDScanDastAutomatedSetupGrpcRequest.builder()
                 .fileId(fileIdToUse)

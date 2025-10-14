@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.model;
@@ -38,16 +38,16 @@ import lombok.NoArgsConstructor;
         """)
 @SampleYamlSnippets({"""
         steps:
-          - var.set: # Variable values demonstrate how 'value-fmt' may be specified
+        - var.set: # Variable values demonstrate how 'value-fmt' may be specified
             var1: 'xyz'       # Plain string, without formatter
             var2: true        # Plain boolean, without formatter
             var3: ${expr}     # Plain expression, without formatter
             var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
             var5:             # Same as var4, but expanded YAML syntax
-              fmt: myFmt      
+            fmt: myFmt      
             var6:             # Use the outcome of ${expr} as input for myFmt
-              fmt:   myFmt    
-              value: ${expr}
+            fmt:   myFmt    
+            value: ${expr}
         """})
 public class TemplateExpressionWithFormatter extends AbstractActionElementIf {
     @JsonPropertyDescription("""

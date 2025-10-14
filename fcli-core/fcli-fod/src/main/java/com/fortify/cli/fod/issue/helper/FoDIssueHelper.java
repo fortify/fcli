@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod.issue.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,11 +56,11 @@ public class FoDIssueHelper {
     }
 
     public static final ArrayNode getReleaseIssues(UnirestInstance unirest,
-                                                   String releaseId,
-                                                   FoDIssueIncludeMixin includeMixin,
-                                                   FoDIssueEmbedMixin embedMixin,
-                                                   String filtersParamValue,
-                                                   boolean failOnError) {
+                                                String releaseId,
+                                                FoDIssueIncludeMixin includeMixin,
+                                                FoDIssueEmbedMixin embedMixin,
+                                                String filtersParamValue,
+                                                boolean failOnError) {
         LOG.debug("Retrieving issues for release id: " + releaseId);
         FoDReleaseDescriptor releaseDescriptor = FoDReleaseHelper.getReleaseDescriptorFromId(unirest,
                 Integer.parseInt(releaseId), true );

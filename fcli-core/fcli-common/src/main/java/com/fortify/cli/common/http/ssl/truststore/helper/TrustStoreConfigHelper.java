@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.http.ssl.truststore.helper;
 
 import java.nio.file.Path;
@@ -22,8 +22,8 @@ public final class TrustStoreConfigHelper {
     public static final TrustStoreConfigDescriptor getTrustStoreConfig() {
         Path trustStoreConfigPath = getTrustStoreConfigPath();
         return !FcliDataHelper.exists(trustStoreConfigPath) 
-        		? new TrustStoreConfigDescriptor() 
-        		: FcliDataHelper.readSecuredFile(trustStoreConfigPath, TrustStoreConfigDescriptor.class, true);
+                ? new TrustStoreConfigDescriptor() 
+                : FcliDataHelper.readSecuredFile(trustStoreConfigPath, TrustStoreConfigDescriptor.class, true);
     }
     
     public static final TrustStoreConfigDescriptor setTrustStoreConfig(TrustStoreConfigDescriptor descriptor) {

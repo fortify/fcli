@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.sc_sast.scan.cli.cmd;
 
 import java.io.File;
@@ -68,11 +68,11 @@ public final class SCSastScanStartCommand extends AbstractSCSastJsonNodeOutputCo
     @Mixin private CommonOptionMixins.RequiredFile scanPayloadFileMixin;
     @Option(names = {SENSOR_VERSION_OPT_LONG, SENSOR_VERSION_OPT_SHORT}) private String sensorVersion;
     @Option(names = {"--notify"}) private String email; // TODO Add email address validation
-	@Option(names = {"--sargs", "--scan-args"}) private String scanArguments = "";
-	@Option(names = {"--no-replace"}) private Boolean noReplace;
-	@Option(names = {"--scan-timeout"}) private Integer scanTimeout;
-	@Option(names = {"--diagnose"}) private Boolean diagnose;
-	
+    @Option(names = {"--sargs", "--scan-args"}) private String scanArguments = "";
+    @Option(names = {"--no-replace"}) private Boolean noReplace;
+    @Option(names = {"--scan-timeout"}) private Integer scanTimeout;
+    @Option(names = {"--diagnose"}) private Boolean diagnose;
+    
     
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
@@ -109,7 +109,7 @@ public final class SCSastScanStartCommand extends AbstractSCSastJsonNodeOutputCo
         return SCSastScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, StatusEndpointVersion.v1).asJsonNode();
     }
 
-	/**
+    /**
      * @return
      */
     private SCSastScanPayloadDescriptor getScanPayloadDescriptor() {
@@ -149,10 +149,10 @@ public final class SCSastScanStartCommand extends AbstractSCSastJsonNodeOutputCo
                 throw new FcliSimpleException("Option --publish-token may only be specified if --publish-to has been specified");
             }
         } else {
-        	if ( !StringUtils.isBlank(publishToAppVersionMixin.publishToken) ) {
-        		// Convert token to application token, in case it was provided as a REST token
-        		uploadToken = SSCTokenConverter.toApplicationToken(publishToAppVersionMixin.publishToken);
-        	} else {
+            if ( !StringUtils.isBlank(publishToAppVersionMixin.publishToken) ) {
+                // Convert token to application token, in case it was provided as a REST token
+                uploadToken = SSCTokenConverter.toApplicationToken(publishToAppVersionMixin.publishToken);
+            } else {
                 char[] tokenFromSession = getUnirestInstanceSupplier().getSessionDescriptor().getActiveSSCToken();
                 uploadToken = tokenFromSession==null ? null : SSCTokenConverter.toApplicationToken(String.valueOf(tokenFromSession));
             }
@@ -174,8 +174,8 @@ public final class SCSastScanStartCommand extends AbstractSCSastJsonNodeOutputCo
                 addFile( zout, fileName, payloadDescriptor.getPayloadFile());
                 
                 for (var extraFile : extraFiles.entrySet() ) {
-                	addFile(zout, extraFile.getValue(), extraFile.getKey());
-				}
+                    addFile(zout, extraFile.getValue(), extraFile.getKey());
+                }
             }
             return zipFile;
         } catch (IOException e) {
@@ -183,7 +183,7 @@ public final class SCSastScanStartCommand extends AbstractSCSastJsonNodeOutputCo
         }
     }
 
-	private void addFile(ZipOutputStream zout, String fileName, File file) throws IOException {
+    private void addFile(ZipOutputStream zout, String fileName, File file) throws IOException {
         try ( FileInputStream in = new FileInputStream(file)) {
             zout.putNextEntry(new ZipEntry(fileName));
             byte[] buffer = new byte[1024];

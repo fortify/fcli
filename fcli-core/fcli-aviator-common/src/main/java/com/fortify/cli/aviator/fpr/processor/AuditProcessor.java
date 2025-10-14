@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.File;
@@ -617,9 +629,9 @@ public class AuditProcessor {
     }
 
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                                     TagMappingConfig tagMappingConfig,
-                                                     FPRInfo fprInfo,
-                                                     FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                                    TagMappingConfig tagMappingConfig,
+                                                    FPRInfo fprInfo,
+                                                    FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
         Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
 
@@ -668,9 +680,9 @@ public class AuditProcessor {
     }
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                             Map<String, String> remediationCommentTimestamps,
-                                             FPRInfo fprInfo,
-                                             FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                            Map<String, String> remediationCommentTimestamps,
+                                            FPRInfo fprInfo,
+                                            FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setNamespaceAware(true);

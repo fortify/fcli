@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,8 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod.mast_scan.cli.cmd;
 
 import java.time.format.DateTimeFormatter;
@@ -93,7 +92,7 @@ public class FoDMastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
 
     @Override
     protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                             FoDScanConfigMobileDescriptor currentSetup) {
+                            FoDScanConfigMobileDescriptor currentSetup) {
         var releaseId = releaseDescriptor.getReleaseId();
 
         LOG.info("Finding appropriate entitlement to use.");
@@ -158,5 +157,5 @@ public class FoDMastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
             .put("releaseName", releaseDescriptor.getReleaseName())
             .put("microserviceName", releaseDescriptor.getMicroserviceName());
     }
- 
+
 }

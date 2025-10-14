@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.output.cli.mixin;
 
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
@@ -22,20 +22,23 @@ import com.fortify.cli.common.spel.query.QueryExpression;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 
-public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, IQueryExpressionSupplier { // Query handled via pipeline stage
-    @Mixin private CommandHelperMixin commandHelper;
-    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false, order=30)
+public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, IQueryExpressionSupplier { // Query handled via pipeline
+                                                                                                        // stage
+    @Mixin
+    private CommandHelperMixin commandHelper;
+    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false, order = 30)
     private OutputOptionsArgGroup outputOptionsArgGroup = new OutputOptionsArgGroup();
     @ArgGroup
     private QueryOptionsArgGroup queryOptionsArgGroup = new QueryOptionsArgGroup();
-    
+
     @Override
     public IOutputWriter createOutputWriter(StandardOutputConfig defaultOutputConfig) {
-        return new com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter(commandHelper.getCommandSpec(), outputOptionsArgGroup, defaultOutputConfig);
+        return new com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter(commandHelper.getCommandSpec(),
+                outputOptionsArgGroup, defaultOutputConfig);
     }
 
     @Override
     public QueryExpression getQueryExpression() {
-        return queryOptionsArgGroup==null ? null : queryOptionsArgGroup.getQueryExpression();
+        return queryOptionsArgGroup == null ? null : queryOptionsArgGroup.getQueryExpression();
     }
 }

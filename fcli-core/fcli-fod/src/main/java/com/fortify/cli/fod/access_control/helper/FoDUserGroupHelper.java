@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod.access_control.helper;
 
 import java.util.ArrayList;
@@ -125,7 +125,7 @@ public class FoDUserGroupHelper {
     }
 
     public static final FoDUserGroupDescriptor updateUserGroupMembership(UnirestInstance unirest, String userNameOrId, String userGroupNameOrId,
-                                                                         FoDEnums.UserGroupMembershipAction action) {
+                                                                        FoDEnums.UserGroupMembershipAction action) {
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, userNameOrId, true);
         FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroupDescriptor(unirest, userGroupNameOrId, true);
         ArrayList<Integer> userIds = new ArrayList<>();
@@ -147,7 +147,7 @@ public class FoDUserGroupHelper {
     }
 
     public static final FoDUserGroupDescriptor updateUserGroupApplicationAccess(UnirestInstance unirest, String userGroupOrId, String appNameOrId,
-                                                                      FoDEnums.UserGroupApplicationAccessAction action) {
+                                                                    FoDEnums.UserGroupApplicationAccessAction action) {
         FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroupDescriptor(unirest, userGroupOrId, true);
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserGroupApplicationAccessAction.Add)) {

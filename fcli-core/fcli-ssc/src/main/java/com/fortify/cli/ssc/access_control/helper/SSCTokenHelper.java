@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.access_control.helper;
 
 import java.time.Duration;
@@ -42,22 +42,22 @@ import picocli.CommandLine.Help.Ansi;
 
 public class SSCTokenHelper {
     public static final JsonNode transformTokenRecord(JsonNode tokenRecord) {
-    	if ( tokenRecord instanceof ObjectNode && tokenRecord.has("terminalDate") ) {
-    		Date terminalDate = JsonHelper.treeToValue(tokenRecord.get("terminalDate"), Date.class);
-    		Duration diff = Duration.between(new Date().toInstant(), terminalDate.toInstant());
-    		String timeRemaining;
-    		if ( diff.toDays()>0 ) {
-    			timeRemaining = String.format("%d days", diff.toDays()+1);
-    		} else if ( diff.toHours()>0 ) {
-    			timeRemaining = String.format("%d hours", diff.toHours()+1);
-    		} else if (diff.toMinutes()>0 ) {
-    			timeRemaining = String.format("%d minutes", diff.toMinutes()+1);
-    		} else {
-    			timeRemaining = Ansi.AUTO.string("0");
-    		}
-    		((ObjectNode)tokenRecord).put("timeRemaining", timeRemaining);
-    	}
-    	return tokenRecord;
+        if ( tokenRecord instanceof ObjectNode && tokenRecord.has("terminalDate") ) {
+            Date terminalDate = JsonHelper.treeToValue(tokenRecord.get("terminalDate"), Date.class);
+            Duration diff = Duration.between(new Date().toInstant(), terminalDate.toInstant());
+            String timeRemaining;
+            if ( diff.toDays()>0 ) {
+                timeRemaining = String.format("%d days", diff.toDays()+1);
+            } else if ( diff.toHours()>0 ) {
+                timeRemaining = String.format("%d hours", diff.toHours()+1);
+            } else if (diff.toMinutes()>0 ) {
+                timeRemaining = String.format("%d minutes", diff.toMinutes()+1);
+            } else {
+                timeRemaining = Ansi.AUTO.string("0");
+            }
+            ((ObjectNode)tokenRecord).put("timeRemaining", timeRemaining);
+        }
+        return tokenRecord;
     }
     
     public static final JsonNode listTokens(IUrlConfig urlConfig, IUserCredentialsConfig uc, Map<String,Object> queryParams) {

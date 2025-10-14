@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
@@ -43,11 +55,11 @@ public class FPRProcessor {
      */
     public List<Vulnerability> process(FVDLProcessor fvdlProcessor) {
         logger.info("FPR Processing started");
-      try{
-          this.fprInfo = new FPRInfo(this.fprHandle);
+    try{
+        this.fprInfo = new FPRInfo(this.fprHandle);
 
-          FilterTemplateParser filterTemplateParser = new FilterTemplateParser(this.fprHandle, auditProcessor);
-          Optional<FilterTemplate> filterTemplateOpt = filterTemplateParser.parseFilterTemplate();
+        FilterTemplateParser filterTemplateParser = new FilterTemplateParser(this.fprHandle, auditProcessor);
+        Optional<FilterTemplate> filterTemplateOpt = filterTemplateParser.parseFilterTemplate();
 
 
         if (filterTemplateOpt.isPresent()) {
@@ -78,8 +90,8 @@ public class FPRProcessor {
         } catch (AviatorTechnicalException e) {
             throw e;
         } catch (Exception e) {
-          logger.error("Unexpected error during FPR processing", e);
-          throw new AviatorTechnicalException("Unexpected error during FPR processing.", e);
+        logger.error("Unexpected error during FPR processing", e);
+        throw new AviatorTechnicalException("Unexpected error during FPR processing.", e);
         }
     }
 }

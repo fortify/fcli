@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.app.runner;
 
 import java.util.Arrays;
@@ -32,9 +32,9 @@ import picocli.CommandLine.Model.CommandSpec;
 public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
     // TODO See https://github.com/remkop/picocli/issues/2066
     //@Getter(value = AccessLevel.PRIVATE, lazy = true)
-	//private final CommandLine commandLine = createCommandLine();
-	
-	private CommandLine createCommandLine() {
+    //private final CommandLine commandLine = createCommandLine();
+    
+    private CommandLine createCommandLine() {
         FortifyCLIStaticInitializer.getInstance().initialize();
         CommandLine cl = new CommandLine(FCLIRootCommands.class);
         FcliCommandSpecHelper.setRootCommandLine(cl);
@@ -46,40 +46,40 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
         cl.setHelpFactory((commandSpec, colorScheme)->new FcliHelp(commandSpec, colorScheme));
         return cl;
     }
-	
-	@Override
-	public int run(String... args) {
-	    try {
-	        // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
-	        // to scratch Docker image, for consistency with non-scratch/shell-based images.
-	        if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
-	            args = Arrays.copyOfRange(args, 1, args.length);
-	        }
-    	    String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
-    	    FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
-    	    //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
-    	    CommandLine cl = createCommandLine();
-    	    cl.clearExecutionResults();
-    	    return cl.execute(resolvedArgs);
-	    } finally {
-	        // TODO For now, this is required to ensure new connections are used for 
-	        // every fcli invocation, as otherwise we may be using older proxy settings
-	        // after proxy has been reconfigured.
-	        GenericUnirestFactory.shutdown();
-	    }
-	}
-	
-	@Override
-	public int run(List<String> args) {
-	    return run(args.toArray(new String[] {}));
-	}
-	
-	@Override
-	public void close() {
-	    GenericUnirestFactory.shutdown();
-	}
-	
-	private static final class FcliHelp extends CommandLine.Help {
+    
+    @Override
+    public int run(String... args) {
+        try {
+            // If first arg is 'fcli', remove it. This allows for passing 'fcli' command name
+            // to scratch Docker image, for consistency with non-scratch/shell-based images.
+            if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
+                args = Arrays.copyOfRange(args, 1, args.length);
+            }
+            String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
+            FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
+            //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
+            CommandLine cl = createCommandLine();
+            cl.clearExecutionResults();
+            return cl.execute(resolvedArgs);
+        } finally {
+            // TODO For now, this is required to ensure new connections are used for 
+            // every fcli invocation, as otherwise we may be using older proxy settings
+            // after proxy has been reconfigured.
+            GenericUnirestFactory.shutdown();
+        }
+    }
+    
+    @Override
+    public int run(List<String> args) {
+        return run(args.toArray(new String[] {}));
+    }
+    
+    @Override
+    public void close() {
+        GenericUnirestFactory.shutdown();
+    }
+    
+    private static final class FcliHelp extends CommandLine.Help {
         public FcliHelp(CommandSpec commandSpec, ColorScheme colorScheme) {
             super(commandSpec, colorScheme);
         }
@@ -91,7 +91,7 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
         public FcliHelp(Object command) {
             super(command);
         }
-	    
+        
         protected String makeSynopsisFromParts(int synopsisHeadingLength, Text optionText, Text groupsText, Text endOfOptionsText, Text positionalParamText, Text commandText) {
             boolean positionalsOnly = true;
             for (ArgGroupSpec group : commandSpec().argGroups()) {
@@ -107,5 +107,5 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
             }
             return insertSynopsisCommandName(synopsisHeadingLength, text);
         }
-	}
+    }
 }

@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.model;
@@ -128,14 +128,14 @@ public class Action implements IActionElement {
         """)
     @SampleYamlSnippets("""
         formatters:
-          plainText: |
+        plainText: |
             This is formatted plain text, with variable ${varName}.
-          structured:
+        structured:
             prop1: Some text
             prop2: Hello ${name}!
             prop3:
-              nestedProp1: xyz
-              nestedProp2: ${varName}    
+            nestedProp1: xyz
+            nestedProp2: ${varName}    
         """)
     @JsonProperty(value = "formatters", required = false) private Map<String, JsonNode> formatters = Collections.emptyMap();
     

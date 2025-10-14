@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.model;
@@ -54,13 +54,13 @@ import lombok.SneakyThrows;
 @JsonClassDescription("Define a step to be executed by this action.")
 @SampleYamlSnippets("""
         steps:
-          - var.set:
-              ...
-          - rest.call:
-              ...
-          - if: ${expr}
+        - var.set:
+            ...
+        - rest.call:
+            ...
+        - if: ${expr}
             run.fcli:
-              ...
+            ...
         """)
 public final class ActionStep extends AbstractActionElementIf {
     // Capture fields in this class annotated with @JsonProperty, indexed by JSON property name
@@ -133,13 +133,13 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets(copyFrom=TemplateExpressionWithFormatter.class, value="""
         steps:
-          - var.set:
-              var1: Hello ${name}
-              var2.p1: This is property 1 on var2
-              var2.p2: This is property 2 on var2 
-              var3..: This is element 1 on var3
-          - var.set:
-              var3..: This is element 2 on var3
+        - var.set:
+            var1: Hello ${name}
+            var2.p1: This is property 1 on var2
+            var2.p2: This is property 2 on var2 
+            var3..: This is element 1 on var3
+        - var.set:
+            var3..: This is element 2 on var3
         """)
     @JsonProperty(value = "var.set", required = false) private LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> varSet;
     
@@ -149,9 +149,9 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - var.rm:
-              - var1    # Remove variable named 'var1'
-              - ${var2} # Remove variable name as stored in var2 variable
+        - var.rm:
+            - var1    # Remove variable named 'var1'
+            - ${var2} # Remove variable name as stored in var2 variable
         """)
     @JsonProperty(value = "var.rm", required = false) private List<TemplateExpression> varRemove;
     
@@ -165,7 +165,7 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - log.progress: Processing record ${recordNumber}
+        - log.progress: Processing record ${recordNumber}
         """)
     @JsonProperty(value = "log.progress", required = false) private TemplateExpression logProgress;
     
@@ -176,7 +176,7 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - log.info: Output written to ${fileName}
+        - log.info: Output written to ${fileName}
         """)
     @JsonProperty(value = "log.info", required = false) private TemplateExpression logInfo;
     
@@ -187,15 +187,15 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - log.warn: Skipping this part due to errors: ${errors}
+        - log.warn: Skipping this part due to errors: ${errors}
         """)
     @JsonProperty(value = "log.warn", required = false) private TemplateExpression logWarn;
     
     @JsonPropertyDescription("Write a debug message to log file (if enabled).")
     @SampleYamlSnippets("""
         steps:
-           - log.debug: ${#this}   # Log all action variables
-         """)
+        - log.debug: ${#this}   # Log all action variables
+        """)
     @JsonProperty(value = "log.debug", required = false) private TemplateExpression logDebug;
     
     @JsonPropertyDescription("""
@@ -222,7 +222,7 @@ public final class ActionStep extends AbstractActionElementIf {
         by later steps or other map entries within the same 'rest.call' step. If you wish to make \
         any data produced by the REST call available to later steps, you'll need to use 'var.*' \
         steps in either 'on.success' or 'records.for-each' instructions.
-         
+        
         Note that multiple REST calls defined within a single 'rest.call' step will be executed \
         in the specified order, but the requests are built independent of each other. As such, \
         within a single 'rest.call' step, variables set by one 'rest.call' map entry cannot be \
@@ -285,8 +285,8 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - out.write:
-              ${cli.file}: {fmt: output}    
+        - out.write:
+            ${cli.file}: {fmt: output}    
         """)
     @JsonProperty(value="out.write", required = false) private LinkedHashMap<TemplateExpression, TemplateExpressionWithFormatter> outWrite;
     
@@ -327,12 +327,12 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - with:
-              writers:
+        - with:
+            writers:
                 csvWriter: ...
             do:
-              - writer.append:
-                  csvWriter: ${myCsvRecord}    
+            - writer.append:
+                csvWriter: ${myCsvRecord}    
         """)
     @JsonProperty(value="writer.append", required = false) private LinkedHashMap<String, TemplateExpressionWithFormatter> writerAppend;
     
@@ -341,10 +341,10 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - ...
-          - if: ${condition}
+        - ...
+        - if: ${condition}
             steps:
-              - ... # One or more steps to execute if ${condition} evaluates to true     
+            - ... # One or more steps to execute if ${condition} evaluates to true     
         """)
     @JsonProperty(value = "steps", required = false) private List<ActionStep> steps;
     
@@ -353,7 +353,7 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - throw: ERROR: ${errorMessage}    
+        - throw: ERROR: ${errorMessage}    
         """)
     @JsonProperty(value = "throw", required = false) private TemplateExpression _throw;
     
@@ -362,7 +362,7 @@ public final class ActionStep extends AbstractActionElementIf {
         """)
     @SampleYamlSnippets("""
         steps:
-          - if: ${someCondition}
+        - if: ${someCondition}
             exit: 1    
         """)
     @JsonProperty(value = "exit", required = false) private TemplateExpression _exit;

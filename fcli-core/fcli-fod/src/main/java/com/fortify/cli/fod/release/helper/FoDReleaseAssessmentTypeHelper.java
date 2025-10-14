@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -41,11 +41,11 @@ public final class FoDReleaseAssessmentTypeHelper {
     private FoDReleaseAssessmentTypeHelper() {}
 
     public static final FoDReleaseAssessmentTypeDescriptor[] getAssessmentTypes(UnirestInstance unirestInstance,
-                                                                         String relId,
-                                                                         FoDScanType scanType,
-                                                                         FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
-                                                                         Boolean isRemediation,
-                                                                         boolean failIfNotFound) {
+                                                                        String relId,
+                                                                        FoDScanType scanType,
+                                                                        FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
+                                                                        Boolean isRemediation,
+                                                                        boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
                 .routeParam("relId", relId)
                 .queryString("scanType", scanType.name())

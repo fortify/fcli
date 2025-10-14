@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.model;
@@ -44,20 +44,20 @@ import lombok.NoArgsConstructor;
 @JsonClassDescription("Define a REST call, like request method, URI, ...")
 @SampleYamlSnippets("""
         steps:
-          - rest.call:
-              pvs:                            # Name for this REST call for later reference
+        - rest.call:
+            pvs:                            # Name for this REST call for later reference
                 target: ssc                   # Default configured through config::rest.target.default
                 method: GET                   # Default: GET
                 uri: /api/v1/projectVersions  # URI
                 query:                        # Query string parameters
-                  fields: id,name,project     # May also use expressions
+                fields: id,name,project     # May also use expressions
                 type: paged                   # simple or paged
                 records.for-each:             # Iterate through response records
-                  record.var-name: pv         # Variable name to hold current record
-                  embed:                      # For each record, embed data from other REST call
+                record.var-name: pv         # Variable name to hold current record
+                embed:                      # For each record, embed data from other REST call
                     artifacts:                # Accessible through ${pv.artifacts}
-                      uri: /api/v1/projectVersions/${pv.id}/artifacts
-                  do:
+                    uri: /api/v1/projectVersions/${pv.id}/artifacts
+                do:
                     - ...                     # Steps to execute for each response record
         """)
 public final class ActionStepRestCallEntry extends AbstractActionElementIf implements IMapKeyAware<String> {

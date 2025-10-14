@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.runner.processor;
@@ -94,12 +94,12 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     protected final String getEntryAsString(Object value) {
         if ( value==null ) { return null; }
         try {
-        	return StringHelper.indent(String.format("%s%s:\n%s", value.getClass().getSimpleName(),
-					value instanceof IMapKeyAware<?> ? String.format(" (%s)", ((IMapKeyAware<?>) value).getKey()) : "",
-					yamlObjectMapper.writeValueAsString(value)), "    ");
+            return StringHelper.indent(String.format("%s%s:\n%s", value.getClass().getSimpleName(),
+                    value instanceof IMapKeyAware<?> ? String.format(" (%s)", ((IMapKeyAware<?>) value).getKey()) : "",
+                    yamlObjectMapper.writeValueAsString(value)), "    ");
         } catch ( Exception e ) {
-			return StringHelper.indent(String.format("(Fallback to unformatted: %s: %s)\n%s", e.getClass().getSimpleName(), e.getMessage(),
-					value.toString()), "  ");
+            return StringHelper.indent(String.format("(Fallback to unformatted: %s: %s)\n%s", e.getClass().getSimpleName(), e.getMessage(),
+                    value.toString()), "  ");
         }
     }
     

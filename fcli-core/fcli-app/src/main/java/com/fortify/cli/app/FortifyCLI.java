@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.app;
 
 import java.io.OutputStream;
@@ -27,7 +27,7 @@ import lombok.SneakyThrows;
  * @author Ruud Senden
  */
 public class FortifyCLI {
-	private static final Boolean JANSI_DISABLE = Boolean.getBoolean("jansi.disable");
+    private static final Boolean JANSI_DISABLE = Boolean.getBoolean("jansi.disable");
 
     /**
      * This is the main entry point for executing the Fortify CLI.
@@ -54,29 +54,29 @@ public class FortifyCLI {
     }
     
     private static final void installAnsiConsole() {
-    	tryInvokeAnsiConsoleMethod("systemInstall");
+        tryInvokeAnsiConsoleMethod("systemInstall");
     }
     
     private static final void uninstallAnsiConsole() {
-    	tryInvokeAnsiConsoleMethod("systemUninstall");
+        tryInvokeAnsiConsoleMethod("systemUninstall");
     }
     
     private static final void tryInvokeAnsiConsoleMethod(String methodName) {
-    	if ( !JANSI_DISABLE ) {
-	    	try {
-	    		// AnsiConsole performs eager initialization in a static block, so
-	    		// referencing the class directly would initialize Jansi even if
-	    		// isJansiEnabled() returns false. As such, we use reflection to 
-	    		// only load the AnsiConsole class if Jansi is enabled, and then
-	    		// invoke the specified method. Note that in order for this to work, 
-	    		// we have a reflect-config.json file to allow reflective access to
-	    		// AnsiConsole.
-	    		Class.forName("org.fusesource.jansi.AnsiConsole")
-	    			.getMethod(methodName).invoke(null);
-	    	} catch ( Throwable t ) {
-	    		t.printStackTrace();
-	    	}
-    	}
+        if ( !JANSI_DISABLE ) {
+            try {
+                // AnsiConsole performs eager initialization in a static block, so
+                // referencing the class directly would initialize Jansi even if
+                // isJansiEnabled() returns false. As such, we use reflection to 
+                // only load the AnsiConsole class if Jansi is enabled, and then
+                // invoke the specified method. Note that in order for this to work, 
+                // we have a reflect-config.json file to allow reflective access to
+                // AnsiConsole.
+                Class.forName("org.fusesource.jansi.AnsiConsole")
+                    .getMethod(methodName).invoke(null);
+            } catch ( Throwable t ) {
+                t.printStackTrace();
+            }
+        }
     }
     
     private static final class NonClosingPrintStream extends PrintStream {

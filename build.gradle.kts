@@ -1,5 +1,6 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.Year
 
 plugins {
     id("com.github.jk1.dependency-license-report") apply false
@@ -7,11 +8,14 @@ plugins {
     id("org.asciidoctor.jvm.convert") apply false
     id("io.freefair.lombok") apply false
     id("com.github.ben-manes.versions") apply false
+    id("com.diffplug.spotless") version "6.25.0" apply false
 }
 
 group = "com.fortify.cli"
 
 val buildTime: LocalDateTime = LocalDateTime.now()
+val currentYear: Int = Year.now().value
+val copyrightYears: String = if (currentYear == 2021) "2021" else "2021-$currentYear"
 fun computeVersion(): String {
     val v = findProperty("version") as String?
     return if (v.isNullOrBlank() || v == "unspecified") {
@@ -43,6 +47,57 @@ allprojects {
     repositories {
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
+    }
+    // Apply Spotless only where Java plugin is present; target common json.record & output packages
+    pluginManager.withPlugin("java") {
+        apply(plugin = "com.diffplug.spotless")
+        extensions.configure<com.diffplug.gradle.spotless.SpotlessExtension>("spotless") {
+            java {
+                // Limit to com.fortify Java sources only; exclude generated/compiled dirs
+                target("**/src/**/java/com/fortify/**/*.java")
+                targetExclude("**/build/**", "**/bin/**", "**/generated-sources/**", "**/generated-test-sources/**")
+                // Minimal normalization per request: only ensure standard license header; no other formatting tweaks
+                // Step 1: Replace any tabs with 4 spaces (preserving visual width)
+                custom("tabsToSpaces") { content: String ->
+                    if (!content.contains('\t')) content else content.replace("\t", "    ")
+                }
+                // Step 2: Ensure indentation uses multiples of 4 spaces for code lines (skip Javadoc/ block comment continuations and blank lines)
+                custom("normalizeIndentation") { content: String ->
+                    val lines: List<String> = content.split("\n")
+                    val normalized = lines.map { line: String ->
+                        if (line.isEmpty()) return@map line
+                        val leading = line.takeWhile { ch -> ch == ' ' }
+                        val rest = line.drop(leading.length)
+                        if (rest.startsWith("*") || rest.startsWith("/*") || rest.startsWith("*/")) return@map line
+                        if (leading.isEmpty()) return@map line
+                        val spaceCount = leading.length
+                        val adjustedCount = if (spaceCount % 4 == 0) spaceCount else (spaceCount / 4) * 4
+                        val newLeading = " ".repeat(adjustedCount)
+                        if (newLeading == leading) line else newLeading + rest
+                    }
+                    normalized.joinToString("\n")
+                }
+                custom("stripOldOpenTextHeader") { content: String ->
+                    val pattern = Regex("""^/\*{1,}.*?Open Text.*?\*/\s*""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+                    pattern.replace(content) { mr -> if (mr.value.contains("warranties", ignoreCase = true)) "" else mr.value }
+                }
+                licenseHeader(
+                    """/*
+ * Copyright $copyrightYears Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+"""
+                )
+            }
+        }
     }
     tasks.register("createDistDir") {
         doFirst {

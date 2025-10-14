@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -91,7 +91,7 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDDastAuto
 
     @Override
     protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                             FoDScanConfigDastAutomatedDescriptor currentSetup) {
+                            FoDScanConfigDastAutomatedDescriptor currentSetup) {
         var relId = releaseDescriptor.getReleaseId();
 
         LOG.info("Finding appropriate entitlement to use.");
@@ -234,9 +234,9 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDDastAuto
     }
 
     private ObjectNode buildResultNode(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                       FoDScanDastAutomatedSetupWebsiteRequest setupRequest,
-                                       int fileIdToUse,
-                                       FileUploadResult fileUploadResult) {
+                                    FoDScanDastAutomatedSetupWebsiteRequest setupRequest,
+                                    int fileIdToUse,
+                                    FileUploadResult fileUploadResult) {
         ObjectNode node = FoDScanConfigDastAutomatedHelper.setupScan(unirest, releaseDescriptor, setupRequest,
                 "/website-scan-setup").asObjectNode();
         node.put("scanType", getScanType())

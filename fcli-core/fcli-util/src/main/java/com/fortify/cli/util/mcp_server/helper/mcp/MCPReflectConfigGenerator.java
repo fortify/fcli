@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.util.mcp_server.helper.mcp;
@@ -38,16 +38,16 @@ public class MCPReflectConfigGenerator {
     }
     
     private Stream<String> generateReflectConfig(String parent, Class<?>[] innerClasses) {
-       return Stream.of(innerClasses).flatMap(c->generateReflectConfig(parent, c)); 
+    return Stream.of(innerClasses).flatMap(c->generateReflectConfig(parent, c)); 
     }
 
     private Stream<String> generateReflectConfig(String parent, Class<?> c) {
         var fullName = String.format("%s$%s", parent, c.getSimpleName());
         var currentReflectConfig = String.format("""
                 {
-                  "name" : "%s",
-                  "allPublicConstructors": true,
-                  "allPublicMethods" : true
+                "name" : "%s",
+                "allPublicConstructors": true,
+                "allPublicMethods" : true
                 }
                 """, fullName);
         return Stream.concat(Stream.of(currentReflectConfig), generateReflectConfig(fullName, c.getDeclaredClasses()));

@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod.access_control.helper;
 
 import java.util.ArrayList;
@@ -97,7 +97,7 @@ public class FoDUserHelper {
     }
 
     public static final FoDUserDescriptor updateUser(UnirestInstance unirest, Integer userId,
-                                                     FoDUserUpdateRequest userUpdateRequest) {
+                                                    FoDUserUpdateRequest userUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(userUpdateRequest);
         FoDUserDescriptor userDescriptor = getUserDescriptor(unirest, String.valueOf(userId), true);
         unirest.put(FoDUrls.USER)
@@ -135,7 +135,7 @@ public class FoDUserHelper {
     }
 
     public static final FoDUserDescriptor updateUserApplicationAccess(UnirestInstance unirest, String userNameOrId, String appNameOrId,
-                                                                      FoDEnums.UserApplicationAccessAction action) {
+                                                                    FoDEnums.UserApplicationAccessAction action) {
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, userNameOrId, true);
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserApplicationAccessAction.Add)) {

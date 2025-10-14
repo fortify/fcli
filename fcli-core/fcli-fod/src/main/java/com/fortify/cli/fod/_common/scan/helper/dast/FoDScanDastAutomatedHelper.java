@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,8 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod._common.scan.helper.dast;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,9 +67,9 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
 
     @SneakyThrows
     public static final FoDScanDescriptor handleInProgressScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                                               FoDEnums.InProgressScanActionType inProgressScanActionType,
-                                                               IProgressWriterI18n progressWriter, int maxAttempts,
-                                                               int waitIntervalSeconds) {
+                                                            FoDEnums.InProgressScanActionType inProgressScanActionType,
+                                                            IProgressWriterI18n progressWriter, int maxAttempts,
+                                                            int waitIntervalSeconds) {
         var releaseId = releaseDescriptor.getReleaseId();
         int waitMillis = waitIntervalSeconds * 1000;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {

@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,8 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod._common.scan.helper;
 
 import static java.util.function.Predicate.not;
@@ -93,8 +92,8 @@ public class FoDScanHelper {
     }
 
     public static final FoDScanDescriptor getLatestScanDescriptor(UnirestInstance unirest, String relId,
-                                                                  FoDScanType scanType,
-                                                                  boolean latestById) {
+                                                                FoDScanType scanType,
+                                                                boolean latestById) {
         String queryField = (latestById ? "scanId" : "startedDateTime");
         Optional<JsonNode> latestScan = JsonHelper.stream(
                         (ArrayNode) unirest.get(FoDUrls.RELEASE_SCANS).routeParam("relId", relId)
@@ -134,8 +133,8 @@ public class FoDScanHelper {
     }
 
     public static FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId, FoDScanType scanType,
-                                                                      String assessmentType, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
-                                                                      int entitlementId) {
+                                                                    String assessmentType, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
+                                                                    int entitlementId) {
         FoDScanConfigDastAutomatedDescriptor currentSetup = null;
         try {
             currentSetup = FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);

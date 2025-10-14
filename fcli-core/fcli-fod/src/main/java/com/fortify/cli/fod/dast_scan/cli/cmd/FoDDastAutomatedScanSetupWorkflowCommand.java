@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -72,7 +72,7 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDDastAut
 
     @Override
     protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                             FoDScanConfigDastAutomatedDescriptor currentSetup) {
+                            FoDScanConfigDastAutomatedDescriptor currentSetup) {
         var relId = releaseDescriptor.getReleaseId();
 
         validate();
@@ -167,9 +167,9 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDDastAut
     }
 
     private ObjectNode buildResultNode(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                       FoDScanDastAutomatedSetupWorkflowRequest setupRequest,
-                                       FileUploadResult fileUploadResult,
-                                       ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros) {
+                                    FoDScanDastAutomatedSetupWorkflowRequest setupRequest,
+                                    FileUploadResult fileUploadResult,
+                                    ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros) {
         int fileIdToUse = (workflowMacroFileId != null ? workflowMacroFileId : 0);
         ObjectNode node = FoDScanConfigDastAutomatedHelper.setupScan(unirest, releaseDescriptor, setupRequest,
                 "/workflow-scan-setup").asObjectNode();
