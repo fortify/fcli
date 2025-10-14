@@ -160,23 +160,26 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
 
     /**
-     * This method adds record transformers to the given
-     * {@link StandardOutputConfig} by calling the following methods, in this order:
+     * Add record transformers to the given {@link TransformationPipelineRunnerConfig} in
+     * the following order:
+     * <ol>
+     *   <li>Every mixin on the command (in Picocli commandSpec order)</li>
+     *   <li>The configured {@link IProductHelper}</li>
+     *   <li>The command itself</li>
+     *   <li>The synthetic transformer adding the action command result field (if any)</li>
+     * </ol>
+     * The resulting order guarantees that:
      * <ul>
-     * <li>{@link #addRecordTransformersFromObject(StandardOutputConfig, Object)}
-     * with the configured {@link IProductHelper}</li>
-     * <li>{@link #addRecordTransformersFromObject(StandardOutputConfig, Object)}
-     * with the command being invoked</li>
-     * <li>{@link #addCommandActionResultRecordTransformer(StandardOutputConfig, Object)}
-     * with the command being invoked</li>
-     * <ul>
-     * If a command needs to run any record transformations before the record
-     * transformations provided by {@link IProductHelper}, the command should
-     * implement the {@link IBasicOutputConfigSupplier} interface to add those
-     * record transformations to the basic output configuration.
+     *   <li>Mixin-provided transformers run before product & command transformers</li>
+     *   <li>Product helper transformers can still be overridden or complemented by command transformers</li>
+     *   <li>The action result field is added last so earlier transformers can still influence its value dependencies</li>
+     * </ul>
+     * Note: Record transformers are no longer configured on {@code StandardOutputConfig};
+     * that type now contains only output formatting concerns. Transformation concerns
+     * are exclusively handled through {@link TransformationPipelineRunnerConfig}.
      *
-     * @param standardOutputConfig
-     * @param cmd
+     * @param cfg  mutable pipeline configuration being populated
+     * @param cmd  active command instance
      */
     protected final void addRecordTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
         for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addRecordTransformersFromObject(cfg, mixin.userObject()); }
@@ -186,22 +189,19 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
 
     /**
-     * This method adds input transformers to the given {@link StandardOutputConfig}
-     * by calling the following methods, in this order:
-     * <ul>
-     * <li>{@link #addInputTransformersFromObject(StandardOutputConfig, Object)}
-     * with every mixin contained in the command being invoked, which includes any
-     * {@link IProductHelper} mixin that implements {@link IInputTransformer}</li>
-     * <li>{@link #addInputTransformersFromObject(StandardOutputConfig, Object)}
-     * with the command being invoked</li>
-     * <ul>
-     * If a command needs to run any input transformations before the input
-     * transformations provided by {@link IProductHelper}, the command should
-     * implement the {@link IBasicOutputConfigSupplier} interface to add those input
-     * transformations to the basic output configuration.
+     * Add input transformers to the given {@link TransformationPipelineRunnerConfig} in
+     * the following order:
+     * <ol>
+     *   <li>Every mixin on the command (can include an {@link IProductHelper})</li>
+     *   <li>The configured {@link IProductHelper}</li>
+     *   <li>The command itself</li>
+     * </ol>
+     * Similar to record transformers, input transformers have moved from
+     * {@link StandardOutputConfig} to {@link TransformationPipelineRunnerConfig} to
+     * clearly separate transformation from output formatting concerns.
      *
-     * @param standardOutputConfig
-     * @param cmd
+     * @param cfg  mutable pipeline configuration being populated
+     * @param cmd  active command instance
      */
     protected final void addInputTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
         for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addInputTransformersFromObject(cfg, mixin.userObject()); }
@@ -298,15 +298,15 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
 
     /**
-     * This method returns an {@link StandardOutputConfig} instance that is based on
-     * the basic output configuration returned by the
-     * {@link #getBasicOutputConfig()} method, with input and record transformers
-     * added by the
-     * {@link #addInputTransformersForCommand(StandardOutputConfig, Object)} and
-     * {@link #addRecordTransformersForCommand(StandardOutputConfig, Object)}
-     * methods.
+     * Return the effective {@link StandardOutputConfig} used purely for output formatting.
+     * <p>
+     * Transformation (input & record) concerns have been moved to the separate
+     * {@link TransformationPipelineRunnerConfig} constructed in {@link #getPipelineConfig()}.
+     * This method now only resolves (and if necessary derives) the formatting-related
+     * configuration starting from a command-specific basic configuration.
+     * </p>
      *
-     * @return
+     * @return formatting configuration (never null)
      */
     private final StandardOutputConfig getOutputConfig() { return getBasicOutputConfig(commandHelper.getCommand()); }
 
@@ -398,11 +398,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
 
     /**
-     * This method adds record transformers from the given object if it implements
-     * {@link IRecordTransformer}.
+     * Add record transformer(s) from the given object if it implements {@link IRecordTransformer}.
+     * The transformer is wrapped and registered on the provided pipeline config.
      *
-     * @param standardOutputConfig
-     * @param obj
+     * @param cfg target pipeline configuration
+     * @param obj potential transformer provider
      */
     @SuppressWarnings("deprecation")
     private static final void addRecordTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
@@ -410,11 +410,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
 
     /**
-     * This method adds input transformers from the given object if it implements
-     * {@link IInputTransformer}.
+     * Add input transformer(s) from the given object if it implements {@link IInputTransformer}.
+     * The transformer is wrapped and registered on the provided pipeline config.
      *
-     * @param standardOutputConfig
-     * @param obj
+     * @param cfg target pipeline configuration
+     * @param obj potential transformer provider
      */
     @SuppressWarnings("deprecation")
     private static final void addInputTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
