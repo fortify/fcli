@@ -40,8 +40,7 @@ public final class TransformationPipelineRunner {
     }
 
     private void processRawInput(JsonNode rawInput, IObjectNodeConsumer consumer, PipelineContext baseCtx) {
-        JsonNode transformed = cfg.applyInputTransformations(rawInput);
-        transformed = applyStages(cfg.inputStages(), transformed, baseCtx);
+        JsonNode transformed = applyStages(cfg.inputStages(), rawInput, baseCtx);
         if (stopRequested || transformed == null) { return; }
         if (transformed.isArray()) {
             var it = transformed.elements();
@@ -58,9 +57,7 @@ public final class TransformationPipelineRunner {
 
     private Break processPotentialRecord(JsonNode node, IObjectNodeConsumer consumer, PipelineContext ctx) {
         if (node == null) { return Break.FALSE; }
-        JsonNode record = cfg.applyRecordTransformations(node);
-        if (record == null) { return Break.FALSE; }
-        record = applyStages(cfg.recordStages(), record, ctx);
+        JsonNode record = applyStages(cfg.recordStages(), node, ctx);
         if (stopRequested || record == null) { return Break.FALSE; }
         JsonNodeType type = record.getNodeType();
         ObjectNode objectToWrite = null;

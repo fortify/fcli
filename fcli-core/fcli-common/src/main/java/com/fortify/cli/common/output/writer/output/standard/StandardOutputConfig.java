@@ -29,9 +29,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 // TODO Add null checks in case any input or record transformation returns null?
 public class StandardOutputConfig implements IRecordProducerConfig {
-    @Getter
-    @Setter
-    private RecordWriterFactory defaultFormat;
+    @Getter @Setter private RecordWriterFactory defaultFormat;
     // Legacy transformer lists retained for backward compatibility; wrapped into
     // pipeline stages lazily
     private final List<Function<JsonNode, JsonNode>> inputTransformers = new ArrayList<>();
@@ -64,31 +62,26 @@ public class StandardOutputConfig implements IRecordProducerConfig {
         return this;
     }
 
+    private void ensureLegacyTransformersWrapped() {
+        if (!inputTransformers.isEmpty()) {
+            inputTransformers.forEach(t -> inputStages.add((ctx, n) -> JsonNodePipelineStage.TransformOutcome.continueWith(t.apply(n))));
+            inputTransformers.clear();
+        }
+        if (!recordTransformers.isEmpty()) {
+            recordTransformers.forEach(t -> recordStages.add((ctx, n) -> JsonNodePipelineStage.TransformOutcome.continueWith(t.apply(n))));
+            recordTransformers.clear();
+        }
+    }
+
     @Override
     public final List<JsonNodePipelineStage> inputStages() {
+        ensureLegacyTransformersWrapped();
         return inputStages;
     }
     @Override
     public final List<JsonNodePipelineStage> recordStages() {
+        ensureLegacyTransformersWrapped();
         return recordStages;
-    }
-
-    @Override
-    public final JsonNode applyInputTransformations(JsonNode input) {
-        // First legacy transformers
-        JsonNode transformed = applyTransformations(inputTransformers, input);
-        // Stages run later in producer with context; here we only apply legacy ones
-        return transformed;
-    }
-
-    @Override
-    public final JsonNode applyRecordTransformations(JsonNode record) {
-        JsonNode transformed = applyTransformations(recordTransformers, record);
-        return transformed;
-    }
-
-    private final JsonNode applyTransformations(List<Function<JsonNode, JsonNode>> transformations, JsonNode input) {
-        return transformations.stream().reduce(input, (o, t) -> t.apply(o), (m1, m2) -> m2);
     }
 
     public static final StandardOutputConfig csv() {

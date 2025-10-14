@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.output.processing;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
 
 /**
@@ -21,8 +20,6 @@ import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
  * unified pipeline stages.
  */
 public interface IRecordProducerConfig {
-    JsonNode applyInputTransformations(JsonNode input);
-    JsonNode applyRecordTransformations(JsonNode record);
     Iterable<JsonNodePipelineStage> inputStages();
     Iterable<JsonNodePipelineStage> recordStages();
 }
