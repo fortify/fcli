@@ -25,9 +25,9 @@ import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.JsonNodeRecordProducer;
 import com.fortify.cli.common.json.producer.RequestRecordProducer;
+import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
 import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
-import com.fortify.cli.common.output.processing.QueryStageConfigurator;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.product.NoOpProductHelper;
@@ -43,12 +43,14 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
 
 /**
  * Non-abstract mixin responsible for building the {@link TransformationPipelineRunnerConfig}
@@ -92,7 +94,7 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
         var pipelineCfg = TransformationPipelineRunnerConfig.builder().build();
         addInputTransformersForCommand(pipelineCfg, cmd);
         addRecordTransformersForCommand(pipelineCfg, cmd);
-        QueryStageConfigurator.configure(pipelineCfg, commandHelper.getCommandSpec(), cmd, outputWriterFactory);
+        addQueryStage(pipelineCfg, commandHelper.getCommandSpec(), cmd, outputWriterFactory);
         addCommandActionResultRecordTransformer(pipelineCfg, cmd);
         return pipelineCfg;
     }
@@ -129,6 +131,31 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
         for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addInputTransformersFromObject(cfg, mixin.userObject()); }
         addInputTransformersFromObject(cfg, getProductHelper());
         addInputTransformersFromObject(cfg, cmd);
+    }
+    
+    // ----- Query registration -----
+    private static void addQueryStage(TransformationPipelineRunnerConfig cfg, CommandSpec commandSpec, Object command, Object outputWriterFactory) {
+        for (var stage : cfg.recordStages()) { if (stage instanceof QueryFilterStage) { return; } }
+        // Scan mixins
+        for (var mixin : commandSpec.mixins().values()) {
+            var o = mixin.userObject();
+            if (addQueryStageFromObject(cfg, o)) {
+                return;
+            }
+        }
+        // Command
+        if (addQueryStageFromObject(cfg, command)) {
+            return;
+        }
+        // Writer factory (may hold arg groups)
+        addQueryStageFromObject(cfg, outputWriterFactory);
+    }
+    private static boolean addQueryStageFromObject(TransformationPipelineRunnerConfig cfg, Object o) {
+        if (o instanceof IQueryExpressionSupplier s && s.getQueryExpression() != null) {
+            cfg.recordStage(new QueryFilterStage(s.getQueryExpression()));
+            return true;
+        }
+        return false;
     }
 
     // ----- Internal helpers (duplicated intentionally for independence) -----
