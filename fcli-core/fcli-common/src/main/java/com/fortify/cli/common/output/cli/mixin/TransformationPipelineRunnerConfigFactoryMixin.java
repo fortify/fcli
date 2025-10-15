@@ -24,8 +24,8 @@ import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
-import com.fortify.cli.common.json.producer.JsonNodeRecordProducer;
-import com.fortify.cli.common.json.producer.RequestRecordProducer;
+import com.fortify.cli.common.json.producer.RequestObjectNodeProducer;
+import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer;
 import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
 import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
@@ -63,15 +63,25 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
         HttpRequest<?> request = updateRequest(baseRequest);
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
-        var pipelineCfg = getPipelineConfig();
-        return forRequest(pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
+        // Build producer using builder for potential future builder customizations
+    return RequestObjectNodeProducer.RequestObjectNodeProducerBuilder.builder()
+        .initialRequest(request)
+        .productHelper(getProductHelper())
+        .nextPageRequestProducer(nextPageRequestProducer)
+        .nextPageUrlProducer(nextPageUrlProducer)
+        .applyFromSpec(commandHelper.getCommandSpec())
+        .build();
     }
 
     /**
      * Returns an IObjectNodeProducer for the given JsonNode, using the current output and pipeline config.
      */
     public IObjectNodeProducer getProducerFromJsonNode(JsonNode node) {
-        return forJsonNode(getPipelineConfig(), node);
+    return SimpleObjectNodeProducer.builder()
+        .source(node)
+        .productHelper(getProductHelper())
+        .applyFromSpec(commandHelper.getCommandSpec())
+        .build();
     }
     @Getter @Mixin private CommandHelperMixin commandHelper;
 
@@ -179,7 +189,8 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     }
 
     public static IObjectNodeProducer forJsonNode(TransformationPipelineRunnerConfig pipelineCfg, JsonNode node) {
-        return JsonNodeRecordProducer.of(pipelineCfg, node);
+        // Retain static factory for backward compatibility with existing code paths
+        return SimpleObjectNodeProducer.builder().source(node).build();
     }
 
     public static IObjectNodeProducer forJsonNodeHolder(TransformationPipelineRunnerConfig pipelineCfg, JsonNodeHolder holder) {
@@ -187,7 +198,14 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     }
 
     public static IObjectNodeProducer forRequest(TransformationPipelineRunnerConfig pipelineCfg, HttpRequest<?> request,
-            INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
-    return new RequestRecordProducer(pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
+        INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
+    return RequestObjectNodeProducer.RequestObjectNodeProducerBuilder.builder()
+        .initialRequest(request)
+        .nextPageRequestProducer(nextPageRequestProducer)
+        .nextPageUrlProducer(nextPageUrlProducer)
+        .build();
     }
+
+    // --- New builder applier logic (initial version, focuses on transformers/query only) ---
+    // Reflection-based applyFromSpec removed; builders now expose applyFromSpec directly
 }
