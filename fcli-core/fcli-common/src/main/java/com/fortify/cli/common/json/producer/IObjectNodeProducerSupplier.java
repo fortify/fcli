@@ -10,16 +10,11 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.output.processing;
-
-import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
+package com.fortify.cli.common.json.producer;
 
 /**
- * Defines the configuration for record processing independent from output
- * formatting. Implementations provide legacy transformation application plus
- * unified pipeline stages.
+ * Supplies an {@link ObjectNodeProducer} for streaming records.
  */
-public interface IRecordProducerConfig {
-    Iterable<JsonNodePipelineStage> inputStages();
-    Iterable<JsonNodePipelineStage> recordStages();
+public interface IObjectNodeProducerSupplier {
+    IObjectNodeProducer getObjectNodeProducer();
 }

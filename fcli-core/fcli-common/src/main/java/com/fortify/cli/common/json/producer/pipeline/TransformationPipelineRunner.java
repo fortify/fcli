@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer.IObjectNodeConsumer;
-import com.fortify.cli.common.output.processing.ITransformationPipelineRunnerConfig;
 import com.fortify.cli.common.util.Break;
 
 /**

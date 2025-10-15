@@ -21,11 +21,13 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.JsonNodeRecordProducer;
+import com.fortify.cli.common.json.producer.RequestRecordProducer;
+import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.processing.QueryStageConfigurator;
-import com.fortify.cli.common.output.processing.RecordProducerBuilder;
-import com.fortify.cli.common.output.processing.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.product.NoOpProductHelper;
@@ -68,7 +70,7 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
         var pipelineCfg = getPipelineConfig(outputWriterFactory);
-        IObjectNodeProducer producer = RecordProducerBuilder.forRequest(outputCfg, pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
+        IObjectNodeProducer producer = forRequest(outputCfg, pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
         createOutputWriter(outputWriterFactory, outputCfg).write(producer);
     }
     public final void writeProducer(StandardOutputConfig outputCfg, IObjectNodeProducer producer, IOutputWriterFactory outputWriterFactory) {
@@ -78,10 +80,10 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
         writeProducer(outputCfg, createProducerForJsonNode(outputCfg, node, outputWriterFactory), outputWriterFactory);
     }
     public final IObjectNodeProducer createProducerForJsonNode(StandardOutputConfig outputCfg, JsonNode node, IOutputWriterFactory outputWriterFactory) {
-        return RecordProducerBuilder.forJsonNode(outputCfg, getPipelineConfig(outputWriterFactory), node);
+        return forJsonNode(outputCfg, getPipelineConfig(outputWriterFactory), node);
     }
     public final IObjectNodeProducer createProducerForJsonNodeHolder(StandardOutputConfig outputCfg, com.fortify.cli.common.json.JsonNodeHolder holder, IOutputWriterFactory outputWriterFactory) {
-        return RecordProducerBuilder.forJsonNodeHolder(outputCfg, getPipelineConfig(outputWriterFactory), holder);
+        return forJsonNodeHolder(outputCfg, getPipelineConfig(outputWriterFactory), holder);
     }
 
     // ----- Pipeline Config -----
@@ -169,5 +171,18 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
 
     private static final IOutputWriter createOutputWriter(IOutputWriterFactory factory, StandardOutputConfig outputCfg) {
         return factory.createOutputWriter(outputCfg);
+    }
+
+    public static IObjectNodeProducer forJsonNode(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, JsonNode node) {
+        return JsonNodeRecordProducer.of(pipelineCfg, node);
+    }
+
+    public static IObjectNodeProducer forJsonNodeHolder(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, JsonNodeHolder holder) {
+        return forJsonNode(outputCfg, pipelineCfg, holder.asJsonNode());
+    }
+
+    public static IObjectNodeProducer forRequest(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, HttpRequest<?> request,
+            INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
+    return new RequestRecordProducer(pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
     }
 }

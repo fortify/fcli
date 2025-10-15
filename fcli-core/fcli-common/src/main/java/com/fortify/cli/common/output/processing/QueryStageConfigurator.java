@@ -13,6 +13,7 @@
 package com.fortify.cli.common.output.processing;
 
 import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
+import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 
 import picocli.CommandLine;

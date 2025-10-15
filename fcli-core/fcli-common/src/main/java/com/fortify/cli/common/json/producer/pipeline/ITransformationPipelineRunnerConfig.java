@@ -10,9 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.output.processing;
-
-import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
+package com.fortify.cli.common.json.producer.pipeline;
 
 /**
  * Defines the configuration for transformation pipeline runner independent from output formatting.

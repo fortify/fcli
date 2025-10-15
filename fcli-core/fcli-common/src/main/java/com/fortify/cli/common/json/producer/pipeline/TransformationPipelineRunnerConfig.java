@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.output.processing;
+package com.fortify.cli.common.json.producer.pipeline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,6 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.producer.pipeline.JsonNodePipelineStage;
 
 /**
  * Configuration object dedicated to {@link com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunner}.

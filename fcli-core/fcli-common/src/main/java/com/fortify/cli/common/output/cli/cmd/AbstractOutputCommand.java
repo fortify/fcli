@@ -18,6 +18,7 @@ import java.util.List;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.IObjectNodeProducerSupplier;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
@@ -42,8 +43,8 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
     private java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> recordConsumer;
     private boolean suppressStdoutForRecordCollection;
     @Mixin private TransformationPipelineRunnerConfigFactoryMixin transformationPipelineRunnerConfigFactoryMixin;
-    private static final List<Class<?>> supportedInterfaces = Arrays.asList(IBaseRequestSupplier.class, IJsonNodeSupplier.class,
-        ObjectNodeProducerSupplier.class);
+    private static final List<Class<?>> supportedInterfaces = Arrays.asList(
+            IBaseRequestSupplier.class, IJsonNodeSupplier.class, IObjectNodeProducerSupplier.class);
     @Override
     public final Integer call() {
         initialize();
@@ -55,8 +56,8 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
             pipelineMixin.writeRequest(outputCfg, ((IBaseRequestSupplier) this).getBaseRequest(), writerFactory);
         } else if (isInstance(IJsonNodeSupplier.class)) {
             pipelineMixin.writeJsonNode(outputCfg, ((IJsonNodeSupplier) this).getJsonNode(), writerFactory);
-        } else if (isInstance(ObjectNodeProducerSupplier.class)) {
-            IObjectNodeProducer rp = ((ObjectNodeProducerSupplier) this).getObjectNodeProducer();
+        } else if (isInstance(IObjectNodeProducerSupplier.class)) {
+            IObjectNodeProducer rp = ((IObjectNodeProducerSupplier) this).getObjectNodeProducer();
             // Provided producer assumed already constructed with correct pipeline config elsewhere; if not, wrap?
             pipelineMixin.writeProducer(outputCfg, rp, writerFactory);
         } else {

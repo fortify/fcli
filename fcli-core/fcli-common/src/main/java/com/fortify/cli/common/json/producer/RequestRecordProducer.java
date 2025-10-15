@@ -13,8 +13,8 @@
 package com.fortify.cli.common.json.producer;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.producer.pipeline.ITransformationPipelineRunnerConfig;
 import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunner;
-import com.fortify.cli.common.output.processing.ITransformationPipelineRunnerConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
