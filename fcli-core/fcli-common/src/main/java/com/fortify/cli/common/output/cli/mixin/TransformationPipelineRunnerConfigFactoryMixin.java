@@ -59,6 +59,31 @@ import picocli.CommandLine.Mixin;
  * as needed.
  */
 public class TransformationPipelineRunnerConfigFactoryMixin {
+
+    /**
+     * Returns an IObjectNodeProducer for the given HttpRequest, using the current output and pipeline config.
+     */
+    public IObjectNodeProducer getProducerFromRequest(HttpRequest<?> baseRequest) {
+        Object cmd = commandHelper.getCommand();
+        IOutputHelper outputHelper = (cmd instanceof IOutputHelper) ? (IOutputHelper) cmd : null;
+    StandardOutputConfig outputCfg = outputHelper != null ? outputHelper.getBasicOutputConfig() : new StandardOutputConfig();
+        HttpRequest<?> request = updateRequest(baseRequest);
+        var nextPageRequestProducer = getNextPageRequestProducer();
+        var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
+        var pipelineCfg = getPipelineConfig();
+        return forRequest(outputCfg, pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
+    }
+
+    /**
+     * Returns an IObjectNodeProducer for the given JsonNode, using the current output and pipeline config.
+     */
+    public IObjectNodeProducer getProducerFromJsonNode(JsonNode node) {
+        Object cmd = commandHelper.getCommand();
+        IOutputHelper outputHelper = (cmd instanceof IOutputHelper) ? (IOutputHelper) cmd : null;
+    StandardOutputConfig outputCfg = outputHelper != null ? outputHelper.getBasicOutputConfig() : new StandardOutputConfig();
+        var pipelineCfg = getPipelineConfig();
+        return forJsonNode(outputCfg, pipelineCfg, node);
+    }
     @Getter @Mixin private CommandHelperMixin commandHelper;
 
     public IProductHelper getProductHelper() {
@@ -71,25 +96,22 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
         HttpRequest<?> request = updateRequest(baseRequest);
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
-        var pipelineCfg = getPipelineConfig(outputWriterFactory);
+        var pipelineCfg = getPipelineConfig();
         IObjectNodeProducer producer = forRequest(outputCfg, pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
         createOutputWriter(outputWriterFactory, outputCfg).write(producer);
     }
     public final void writeProducer(StandardOutputConfig outputCfg, IObjectNodeProducer producer, IOutputWriterFactory outputWriterFactory) {
         createOutputWriter(outputWriterFactory, outputCfg).write(producer);
     }
-    public final void writeJsonNode(StandardOutputConfig outputCfg, JsonNode node, IOutputWriterFactory outputWriterFactory) {
-        writeProducer(outputCfg, createProducerForJsonNode(outputCfg, node, outputWriterFactory), outputWriterFactory);
+    public final IObjectNodeProducer createProducerForJsonNode(StandardOutputConfig outputCfg, JsonNode node) {
+        return forJsonNode(outputCfg, getPipelineConfig(), node);
     }
-    public final IObjectNodeProducer createProducerForJsonNode(StandardOutputConfig outputCfg, JsonNode node, IOutputWriterFactory outputWriterFactory) {
-        return forJsonNode(outputCfg, getPipelineConfig(outputWriterFactory), node);
-    }
-    public final IObjectNodeProducer createProducerForJsonNodeHolder(StandardOutputConfig outputCfg, com.fortify.cli.common.json.JsonNodeHolder holder, IOutputWriterFactory outputWriterFactory) {
-        return forJsonNodeHolder(outputCfg, getPipelineConfig(outputWriterFactory), holder);
+    public final IObjectNodeProducer createProducerForJsonNodeHolder(StandardOutputConfig outputCfg, JsonNodeHolder holder) {
+        return forJsonNodeHolder(outputCfg, getPipelineConfig(), holder);
     }
 
     // ----- Pipeline Config -----
-    public final TransformationPipelineRunnerConfig getPipelineConfig(IOutputWriterFactory outputWriterFactory) {
+    public final TransformationPipelineRunnerConfig getPipelineConfig() {
         var pipelineCfg = TransformationPipelineRunnerConfig.builder().build();
         addInputTransformersForCommand(pipelineCfg);
         addRecordTransformersForCommand(pipelineCfg);

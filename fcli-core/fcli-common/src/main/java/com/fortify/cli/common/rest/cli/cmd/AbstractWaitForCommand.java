@@ -58,7 +58,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, arrayNode -> {
                         var cfg = outputHelper.getBasicOutputConfig();
                         var writerFactory = outputHelper.getOutputWriterFactory();
-                        var producer = transformationPipelineRunnerConfigFactoryMixin.createProducerForJsonNode(cfg, arrayNode, writerFactory);
+                        var producer = transformationPipelineRunnerConfigFactoryMixin.createProducerForJsonNode(cfg, arrayNode);
                         transformationPipelineRunnerConfigFactoryMixin.writeProducer(cfg, producer, writerFactory);
                     })
             ).build().wait(unirest);

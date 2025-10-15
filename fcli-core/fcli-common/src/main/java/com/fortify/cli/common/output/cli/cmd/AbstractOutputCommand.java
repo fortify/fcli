@@ -12,13 +12,10 @@
  */
 package com.fortify.cli.common.output.cli.cmd;
 
-import java.util.Arrays;
-import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
-import com.fortify.cli.common.json.producer.IObjectNodeProducerSupplier;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
@@ -42,37 +39,35 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
             IRecordCollectionSupport {
     private java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> recordConsumer;
     private boolean suppressStdoutForRecordCollection;
-    @Mixin private TransformationPipelineRunnerConfigFactoryMixin transformationPipelineRunnerConfigFactoryMixin;
-    private static final List<Class<?>> supportedInterfaces = Arrays.asList(
-            IBaseRequestSupplier.class, IJsonNodeSupplier.class, IObjectNodeProducerSupplier.class);
+    @Mixin private TransformationPipelineRunnerConfigFactoryMixin pipelineMixin;
+
     @Override
-    public final Integer call() {
+    public Integer call() {
         initialize();
         IOutputHelper outputHelper = getOutputHelper();
-        var pipelineMixin = getTransformationPipelineRunnerConfigFactoryMixin();
         StandardOutputConfig outputCfg = outputHelper.getBasicOutputConfig();
         var writerFactory = outputHelper.getOutputWriterFactory();
-        if (isInstance(IBaseRequestSupplier.class)) {
-            pipelineMixin.writeRequest(outputCfg, ((IBaseRequestSupplier) this).getBaseRequest(), writerFactory);
-        } else if (isInstance(IJsonNodeSupplier.class)) {
-            pipelineMixin.writeJsonNode(outputCfg, ((IJsonNodeSupplier) this).getJsonNode(), writerFactory);
-        } else if (isInstance(IObjectNodeProducerSupplier.class)) {
-            IObjectNodeProducer rp = ((IObjectNodeProducerSupplier) this).getObjectNodeProducer();
-            // Provided producer assumed already constructed with correct pipeline config elsewhere; if not, wrap?
-            pipelineMixin.writeProducer(outputCfg, rp, writerFactory);
-        } else {
-            throw new FcliBugException(this.getClass().getName() + " must implement exactly one of " + supportedInterfaces);
-        }
+        IObjectNodeProducer producer = getObjectNodeProducer();
+        pipelineMixin.writeProducer(outputCfg, producer, writerFactory);
         return 0;
     }
 
-    private boolean isInstance(Class<?> clazz) {
-        return clazz.isAssignableFrom(this.getClass())
-                && supportedInterfaces.stream().filter(c -> !c.equals(clazz)).noneMatch(c -> c.isAssignableFrom(this.getClass()));
+    /**
+     * Returns an IObjectNodeProducer for this command. Subclasses should override to provide their own producer.
+     * For backward compatibility, this implementation checks for IBaseRequestSupplier and IJsonNodeSupplier,
+     * and retrieves an appropriate producer from TransformationPipelineRunnerConfigFactoryMixin.
+     */
+    protected IObjectNodeProducer getObjectNodeProducer() {
+        if (this instanceof IBaseRequestSupplier) {
+            return pipelineMixin.getProducerFromRequest(((IBaseRequestSupplier) this).getBaseRequest());
+        } else if (this instanceof IJsonNodeSupplier) {
+            return pipelineMixin.getProducerFromJsonNode(((IJsonNodeSupplier) this).getJsonNode());
+        } else {
+            throw new FcliBugException(this.getClass().getName() + " must provide an IObjectNodeProducer");
+        }
     }
 
     public abstract IOutputHelper getOutputHelper();
-    protected TransformationPipelineRunnerConfigFactoryMixin getTransformationPipelineRunnerConfigFactoryMixin() { return transformationPipelineRunnerConfigFactoryMixin; }
 
     // IRecordCollectionSupport
     @Override
