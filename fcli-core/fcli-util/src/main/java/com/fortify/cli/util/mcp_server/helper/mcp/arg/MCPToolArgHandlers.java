@@ -75,9 +75,7 @@ public final class MCPToolArgHandlers {
     }
 
     private static final boolean hasGenericQueryOpt(CommandSpec spec) {
-        // TODO This doesn't explicitly check whether the supplier provides a --query option,
-        //      but at the moment we only have one such supplier that does.
-        return FcliCommandSpecHelper.getQueryExpressionSupplier(spec).isPresent();
+        return FcliCommandSpecHelper.getQueryOptionMixin(spec).isPresent();
     }
 
     private static <T extends ArgSpec> void addArgSpecHelpers(List<IMCPToolArgHandler> result, List<T> argSpecs, Function<T, IMCPToolArgHandler> factory) {

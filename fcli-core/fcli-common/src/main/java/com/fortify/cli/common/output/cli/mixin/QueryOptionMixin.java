@@ -13,14 +13,13 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 import com.fortify.cli.common.mcp.MCPExclude;
-import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public final class QueryOptionMixin implements IQueryExpressionSupplier {
+public final class QueryOptionMixin {
     @Option(names = {"-q", "--query"}, order = 1, converter = QueryExpressionTypeConverter.class, paramLabel = "<SpEL expression>")
     @MCPExclude // Not suitable for LLM, as LLM doesn't know option syntax/fields
     @Getter

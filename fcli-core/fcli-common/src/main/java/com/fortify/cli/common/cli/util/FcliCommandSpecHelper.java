@@ -29,7 +29,7 @@ import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
-import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.output.cli.mixin.QueryOptionMixin;
 import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
@@ -240,16 +240,16 @@ public class FcliCommandSpecHelper {
     }
         
     public static final Optional<QueryExpression> getQueryExpression(CommandSpec commandSpec) {
-        return getQueryExpressionSupplier(commandSpec)
+        return getQueryOptionMixin(commandSpec)
                 .map(s -> s.getQueryExpression())
                 .filter(Objects::nonNull);
     }
 
-    public static final Optional<IQueryExpressionSupplier> getQueryExpressionSupplier(CommandSpec commandSpec) {
+    public static final Optional<QueryOptionMixin> getQueryOptionMixin(CommandSpec commandSpec) {
         return getAllMixinsStream(commandSpec)
                 .map(m -> m.userObject())
-                .filter(o -> o instanceof IQueryExpressionSupplier)
+                .filter(o -> o instanceof QueryOptionMixin)
                 .findFirst()
-                .map(o -> (IQueryExpressionSupplier)o);
+                .map(o -> (QueryOptionMixin)o);
     }
 }
