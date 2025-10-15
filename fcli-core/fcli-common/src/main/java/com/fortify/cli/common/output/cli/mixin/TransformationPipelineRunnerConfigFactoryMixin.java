@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.JsonNodeRecordProducer;
@@ -50,7 +51,6 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 
 /**
  * Non-abstract mixin responsible for building the {@link TransformationPipelineRunnerConfig}
@@ -90,12 +90,11 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
 
     // ----- Pipeline Config -----
     public final TransformationPipelineRunnerConfig getPipelineConfig(IOutputWriterFactory outputWriterFactory) {
-        Object cmd = commandHelper.getCommand();
         var pipelineCfg = TransformationPipelineRunnerConfig.builder().build();
-        addInputTransformersForCommand(pipelineCfg, cmd);
-        addRecordTransformersForCommand(pipelineCfg, cmd);
-        addQueryStage(pipelineCfg, commandHelper.getCommandSpec(), cmd, outputWriterFactory);
-        addCommandActionResultRecordTransformer(pipelineCfg, cmd);
+        addInputTransformersForCommand(pipelineCfg);
+        addRecordTransformersForCommand(pipelineCfg);
+        addQueryStage(pipelineCfg);
+        addCommandActionResultRecordTransformer(pipelineCfg, commandHelper.getCommand());
         return pipelineCfg;
     }
 
@@ -121,41 +120,33 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     }
 
     // ----- Transformer registration -----
-    protected final void addRecordTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addRecordTransformersFromObject(cfg, mixin.userObject()); }
+    protected final void addRecordTransformersForCommand(TransformationPipelineRunnerConfig cfg) {
+        FcliCommandSpecHelper.getAllMixinsStream(commandHelper.getCommandSpec())
+            .map(m -> m.userObject())
+            .forEach(o->addRecordTransformersFromObject(cfg, o));
         addRecordTransformersFromObject(cfg, getProductHelper());
-        addRecordTransformersFromObject(cfg, cmd);
-        addCommandActionResultRecordTransformer(cfg, cmd);
+        addRecordTransformersFromObject(cfg, commandHelper.getCommand());
     }
-    protected final void addInputTransformersForCommand(TransformationPipelineRunnerConfig cfg, Object cmd) {
-        for (var mixin : commandHelper.getCommandSpec().mixins().values()) { addInputTransformersFromObject(cfg, mixin.userObject()); }
+    protected final void addInputTransformersForCommand(TransformationPipelineRunnerConfig cfg) {
+        FcliCommandSpecHelper.getAllMixinsStream(commandHelper.getCommandSpec())
+            .map(m -> m.userObject())
+            .forEach(o->addInputTransformersFromObject(cfg, o));
         addInputTransformersFromObject(cfg, getProductHelper());
-        addInputTransformersFromObject(cfg, cmd);
+        addInputTransformersFromObject(cfg, commandHelper.getCommand());
     }
     
     // ----- Query registration -----
-    private static void addQueryStage(TransformationPipelineRunnerConfig cfg, CommandSpec commandSpec, Object command, Object outputWriterFactory) {
+    private final void addQueryStage(TransformationPipelineRunnerConfig cfg) {
         for (var stage : cfg.recordStages()) { if (stage instanceof QueryFilterStage) { return; } }
-        // Scan mixins
-        for (var mixin : commandSpec.mixins().values()) {
-            var o = mixin.userObject();
-            if (addQueryStageFromObject(cfg, o)) {
-                return;
-            }
-        }
-        // Command
-        if (addQueryStageFromObject(cfg, command)) {
-            return;
-        }
-        // Writer factory (may hold arg groups)
-        addQueryStageFromObject(cfg, outputWriterFactory);
-    }
-    private static boolean addQueryStageFromObject(TransformationPipelineRunnerConfig cfg, Object o) {
-        if (o instanceof IQueryExpressionSupplier s && s.getQueryExpression() != null) {
-            cfg.recordStage(new QueryFilterStage(s.getQueryExpression()));
-            return true;
-        }
-        return false;
+        // Scan mixins recursively
+        FcliCommandSpecHelper.getAllMixinsStream(commandHelper.getCommandSpec())
+            .map(m -> m.userObject())
+            .filter(o -> o instanceof IQueryExpressionSupplier)
+            .map(o -> (IQueryExpressionSupplier)o)
+            .map(s -> s.getQueryExpression())
+            .filter(Objects::nonNull)
+            .findFirst()
+            .ifPresent(qe -> cfg.recordStage(new QueryFilterStage(qe)));
     }
 
     // ----- Internal helpers (duplicated intentionally for independence) -----
@@ -180,16 +171,14 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     private static final <T, R> R apply(Object obj, Class<T> type, Function<T, R> function) {
         return applyWithDefaultSupplier(obj, type, function, null);
     }
-    @SuppressWarnings("deprecation")
     private static final void addRecordTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
         apply(obj, IRecordTransformer.class, s -> cfg.recordTransformer(s::transformRecord));
     }
-    @SuppressWarnings("deprecation")
     private static final void addInputTransformersFromObject(TransformationPipelineRunnerConfig cfg, Object obj) {
         apply(obj, IInputTransformer.class, s -> cfg.inputTransformer(s::transformInput));
     }
-    private static final void addCommandActionResultRecordTransformer(TransformationPipelineRunnerConfig cfg, Object cmd) {
-        apply(cmd, IActionCommandResultSupplier.class, s -> cfg.recordTransformer(createCommandActionResultRecordTransformer(s)));
+    private static final void addCommandActionResultRecordTransformer(TransformationPipelineRunnerConfig cfg, Object obj) {
+        apply(obj, IActionCommandResultSupplier.class, s -> cfg.recordTransformer(createCommandActionResultRecordTransformer(s)));
     }
     private static final UnaryOperator<JsonNode> createCommandActionResultRecordTransformer(IActionCommandResultSupplier supplier) {
         return new AddFieldsTransformer(IActionCommandResultSupplier.actionFieldName, supplier.getActionCommandResult())

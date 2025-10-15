@@ -40,6 +40,18 @@ public class FcliCommandSpecHelper {
     @Setter // Injected by DefaultFortifyCLIRunner
     private static CommandLine rootCommandLine;
     
+        /**
+         * Recursively returns a Stream of all mixins (including nested ones) for the given CommandSpec.
+         * The returned stream includes only mixin CommandSpec instances, not the root CommandSpec itself.
+         */
+        public static Stream<CommandSpec> getAllMixinsStream(CommandSpec commandSpec) {
+            if (commandSpec == null) return Stream.empty();
+            return commandSpec.mixins().values().stream()
+                .flatMap(mixin -> Stream.concat(
+                    Stream.of(mixin),
+                    getAllMixinsStream(mixin)
+                ));
+        }
     public static final CommandLine getRootCommandLine() {
         if ( rootCommandLine==null ) {
             throw new FcliBugException("Root command line hasn't been configured upon fcli initialization");
