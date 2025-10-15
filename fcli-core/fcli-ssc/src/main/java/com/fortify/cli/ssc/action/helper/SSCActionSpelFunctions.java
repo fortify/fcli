@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ssc.action.helper;
 
-import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
 
 import java.io.InputStream;
 import java.util.function.Consumer;
