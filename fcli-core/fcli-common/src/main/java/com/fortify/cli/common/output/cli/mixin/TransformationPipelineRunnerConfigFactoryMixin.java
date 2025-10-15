@@ -35,16 +35,12 @@ import com.fortify.cli.common.output.product.NoOpProductHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.output.writer.output.IOutputWriter;
-import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.HttpRequest;
@@ -64,25 +60,18 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
      * Returns an IObjectNodeProducer for the given HttpRequest, using the current output and pipeline config.
      */
     public IObjectNodeProducer getProducerFromRequest(HttpRequest<?> baseRequest) {
-        Object cmd = commandHelper.getCommand();
-        IOutputHelper outputHelper = (cmd instanceof IOutputHelper) ? (IOutputHelper) cmd : null;
-    StandardOutputConfig outputCfg = outputHelper != null ? outputHelper.getBasicOutputConfig() : new StandardOutputConfig();
         HttpRequest<?> request = updateRequest(baseRequest);
         var nextPageRequestProducer = getNextPageRequestProducer();
         var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
         var pipelineCfg = getPipelineConfig();
-        return forRequest(outputCfg, pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
+        return forRequest(pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
     }
 
     /**
      * Returns an IObjectNodeProducer for the given JsonNode, using the current output and pipeline config.
      */
     public IObjectNodeProducer getProducerFromJsonNode(JsonNode node) {
-        Object cmd = commandHelper.getCommand();
-        IOutputHelper outputHelper = (cmd instanceof IOutputHelper) ? (IOutputHelper) cmd : null;
-    StandardOutputConfig outputCfg = outputHelper != null ? outputHelper.getBasicOutputConfig() : new StandardOutputConfig();
-        var pipelineCfg = getPipelineConfig();
-        return forJsonNode(outputCfg, pipelineCfg, node);
+        return forJsonNode(getPipelineConfig(), node);
     }
     @Getter @Mixin private CommandHelperMixin commandHelper;
 
@@ -92,22 +81,11 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     }
 
     // ----- Public API -----
-    public final void writeRequest(StandardOutputConfig outputCfg, HttpRequest<?> baseRequest, IOutputWriterFactory outputWriterFactory) {
-        HttpRequest<?> request = updateRequest(baseRequest);
-        var nextPageRequestProducer = getNextPageRequestProducer();
-        var nextPageUrlProducer = nextPageRequestProducer == null ? getNextPageUrlProducer() : null;
-        var pipelineCfg = getPipelineConfig();
-        IObjectNodeProducer producer = forRequest(outputCfg, pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
-        createOutputWriter(outputWriterFactory, outputCfg).write(producer);
+    public final IObjectNodeProducer createProducerForJsonNode(JsonNode node) {
+        return forJsonNode(getPipelineConfig(), node);
     }
-    public final void writeProducer(StandardOutputConfig outputCfg, IObjectNodeProducer producer, IOutputWriterFactory outputWriterFactory) {
-        createOutputWriter(outputWriterFactory, outputCfg).write(producer);
-    }
-    public final IObjectNodeProducer createProducerForJsonNode(StandardOutputConfig outputCfg, JsonNode node) {
-        return forJsonNode(outputCfg, getPipelineConfig(), node);
-    }
-    public final IObjectNodeProducer createProducerForJsonNodeHolder(StandardOutputConfig outputCfg, JsonNodeHolder holder) {
-        return forJsonNodeHolder(outputCfg, getPipelineConfig(), holder);
+    public final IObjectNodeProducer createProducerForJsonNodeHolder(JsonNodeHolder holder) {
+        return forJsonNodeHolder(getPipelineConfig(), holder);
     }
 
     // ----- Pipeline Config -----
@@ -160,14 +138,7 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
     // ----- Query registration -----
     private final void addQueryStage(TransformationPipelineRunnerConfig cfg) {
         for (var stage : cfg.recordStages()) { if (stage instanceof QueryFilterStage) { return; } }
-        // Scan mixins recursively
-        FcliCommandSpecHelper.getAllMixinsStream(commandHelper.getCommandSpec())
-            .map(m -> m.userObject())
-            .filter(o -> o instanceof IQueryExpressionSupplier)
-            .map(o -> (IQueryExpressionSupplier)o)
-            .map(s -> s.getQueryExpression())
-            .filter(Objects::nonNull)
-            .findFirst()
+        FcliCommandSpecHelper.getQueryExpression(commandHelper.getCommandSpec())
             .ifPresent(qe -> cfg.recordStage(new QueryFilterStage(qe)));
     }
 
@@ -207,19 +178,15 @@ public class TransformationPipelineRunnerConfigFactoryMixin {
                 .overwiteExisting(false)::transform;
     }
 
-    private static final IOutputWriter createOutputWriter(IOutputWriterFactory factory, StandardOutputConfig outputCfg) {
-        return factory.createOutputWriter(outputCfg);
-    }
-
-    public static IObjectNodeProducer forJsonNode(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, JsonNode node) {
+    public static IObjectNodeProducer forJsonNode(TransformationPipelineRunnerConfig pipelineCfg, JsonNode node) {
         return JsonNodeRecordProducer.of(pipelineCfg, node);
     }
 
-    public static IObjectNodeProducer forJsonNodeHolder(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, JsonNodeHolder holder) {
-        return forJsonNode(outputCfg, pipelineCfg, holder.asJsonNode());
+    public static IObjectNodeProducer forJsonNodeHolder(TransformationPipelineRunnerConfig pipelineCfg, JsonNodeHolder holder) {
+        return forJsonNode(pipelineCfg, holder.asJsonNode());
     }
 
-    public static IObjectNodeProducer forRequest(StandardOutputConfig outputCfg, TransformationPipelineRunnerConfig pipelineCfg, HttpRequest<?> request,
+    public static IObjectNodeProducer forRequest(TransformationPipelineRunnerConfig pipelineCfg, HttpRequest<?> request,
             INextPageRequestProducer nextPageRequestProducer, INextPageUrlProducer nextPageUrlProducer) {
     return new RequestRecordProducer(pipelineCfg, request, nextPageRequestProducer, nextPageUrlProducer);
     }

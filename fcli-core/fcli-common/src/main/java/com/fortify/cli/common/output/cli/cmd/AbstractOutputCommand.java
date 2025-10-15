@@ -13,13 +13,15 @@
 package com.fortify.cli.common.output.cli.cmd;
 
 
+import java.util.function.Consumer;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
 import picocli.CommandLine.Mixin;
 
@@ -37,18 +39,14 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
             ISingularSupplier,
             IOutputHelperSupplier,
             IRecordCollectionSupport {
-    private java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> recordConsumer;
+    private Consumer<ObjectNode> recordConsumer;
     private boolean suppressStdoutForRecordCollection;
     @Mixin private TransformationPipelineRunnerConfigFactoryMixin pipelineMixin;
 
     @Override
     public Integer call() {
         initialize();
-        IOutputHelper outputHelper = getOutputHelper();
-        StandardOutputConfig outputCfg = outputHelper.getBasicOutputConfig();
-        var writerFactory = outputHelper.getOutputWriterFactory();
-        IObjectNodeProducer producer = getObjectNodeProducer();
-        pipelineMixin.writeProducer(outputCfg, producer, writerFactory);
+        getOutputHelper().write(getObjectNodeProducer());
         return 0;
     }
 

@@ -18,18 +18,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.expression.Expression;
 
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
-import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.output.cli.mixin.AbstractOutputHelperMixin;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
-import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.spel.query.QueryExpression;
 
 import kong.unirest.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 
 @Command
 public abstract class AbstractServerSideQueryMixin implements IHttpRequestUpdater {
@@ -63,19 +60,8 @@ public abstract class AbstractServerSideQueryMixin implements IHttpRequestUpdate
     protected abstract String getServerSideQueryParamOptionValue();
 
     protected final Expression getSpelExpression() {
-        QueryExpression queryExpression = getQueryExpression();
-        return queryExpression==null ? null : queryExpression.getExpression();
-    }
-    private final QueryExpression getQueryExpression() {
-        CommandSpec spec = commandHelper.getCommandSpec();
-        CommandSpec outputHelperMixin = spec.mixins().get("outputHelper");
-        if ( outputHelperMixin==null ) {
-            throw new FcliBugException("Command must provide outputHelper mixin: "+spec.userObject().getClass().getName());
-        }
-        var mixinInstance = (AbstractOutputHelperMixin)outputHelperMixin.userObject();
-        var outputWriterFactory = mixinInstance.getOutputWriterFactory();
-        return outputWriterFactory instanceof IQueryExpressionSupplier 
-                ? ((IQueryExpressionSupplier)outputWriterFactory).getQueryExpression()
-                : null;
+        return FcliCommandSpecHelper.getQueryExpression(commandHelper.getCommandSpec())
+            .map(QueryExpression::getExpression)
+            .orElse(null);
     }
 }

@@ -27,7 +27,7 @@ import picocli.CommandLine.Mixin;
  * appropriate:
  * </p>
  * <ul>
- * <li>{@link Other}, not providing any standard output format or output writer
+ * <li>{@link Base}, not providing any standard output format or output writer
  * factory; subclass should provide {@code CMD_NAME} constant, and
  * outputWriterFactory and basicOutputConfig fields with Getter annotations</li>
  * <li>{@link TableWithQuery}, providing query options and default table output
@@ -67,39 +67,24 @@ import picocli.CommandLine.Mixin;
  * @author rsenden
  */
 public class OutputHelperMixins {
-    public static class Other extends AbstractOutputHelperMixin {
+    public static class TableWithQuery extends AbstractOutputHelperMixin {
+        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
     }
 
-    public static class TableWithQuery extends Other {
-        @Getter
-        @Mixin
-        private OutputWriterWithQueryFactoryMixin outputWriterFactory;
-        @Getter
-        private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
+    public static class TableNoQuery extends AbstractOutputHelperMixin {
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
     }
 
-    public static class TableNoQuery extends Other {
-        @Getter
-        @Mixin
-        private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter
-        private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
+    public static class DetailsNoQuery extends AbstractOutputHelperMixin {
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details();
     }
 
-    public static class DetailsNoQuery extends Other {
-        @Getter
-        @Mixin
-        private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter
-        private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details();
-    }
-
-    public static class DetailsWithQuery extends Other {
-        @Getter
-        @Mixin
-        private OutputWriterWithQueryFactoryMixin outputWriterFactory;
-        @Getter
-        private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details();
+    public static class DetailsWithQuery extends AbstractOutputHelperMixin {
+        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details();
     }
 
     public static class Add extends TableNoQuery {

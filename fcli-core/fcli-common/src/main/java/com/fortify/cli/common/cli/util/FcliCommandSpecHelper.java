@@ -14,6 +14,8 @@ package com.fortify.cli.common.cli.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
@@ -27,6 +29,8 @@ import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.mcp.MCPInclude;
 import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.ReflectionHelper;
 
@@ -40,18 +44,6 @@ public class FcliCommandSpecHelper {
     @Setter // Injected by DefaultFortifyCLIRunner
     private static CommandLine rootCommandLine;
     
-        /**
-         * Recursively returns a Stream of all mixins (including nested ones) for the given CommandSpec.
-         * The returned stream includes only mixin CommandSpec instances, not the root CommandSpec itself.
-         */
-        public static Stream<CommandSpec> getAllMixinsStream(CommandSpec commandSpec) {
-            if (commandSpec == null) return Stream.empty();
-            return commandSpec.mixins().values().stream()
-                .flatMap(mixin -> Stream.concat(
-                    Stream.of(mixin),
-                    getAllMixinsStream(mixin)
-                ));
-        }
     public static final CommandLine getRootCommandLine() {
         if ( rootCommandLine==null ) {
             throw new FcliBugException("Root command line hasn't been configured upon fcli initialization");
@@ -232,5 +224,28 @@ public class FcliCommandSpecHelper {
     public static final boolean isSensitive(ArgSpec as) {
         return (as.interactive() && !as.echo()) 
             || ReflectionHelper.getAnnotationValue(as.userObject(), MaskValue.class, MaskValue::sensitivity, ()->null)==LogSensitivityLevel.high;
+    }
+    
+    /**
+     * Recursively returns a Stream of all mixins (including nested ones) for the given CommandSpec.
+     * The returned stream includes only mixin CommandSpec instances, not the root CommandSpec itself.
+     */
+    public static Stream<CommandSpec> getAllMixinsStream(CommandSpec commandSpec) {
+        if (commandSpec == null) return Stream.empty();
+        return commandSpec.mixins().values().stream()
+            .flatMap(mixin -> Stream.concat(
+                Stream.of(mixin),
+                getAllMixinsStream(mixin)
+            ));
+    }
+        
+    public static final Optional<QueryExpression> getQueryExpression(CommandSpec commandSpec) {
+        return getAllMixinsStream(commandSpec)
+                .map(m -> m.userObject())
+                .filter(o -> o instanceof IQueryExpressionSupplier)
+                .map(o -> (IQueryExpressionSupplier)o)
+                .map(s -> s.getQueryExpression())
+                .filter(Objects::nonNull)
+                .findFirst();
     }
 }

@@ -12,10 +12,8 @@
  */
 package com.fortify.cli.common.output.cli.mixin;
 
-import com.fortify.cli.common.output.product.IProductHelper;
-import com.fortify.cli.common.output.writer.IBasicOutputConfigSupplier;
-import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 
-public interface IOutputHelper extends IBasicOutputConfigSupplier, IOutputWriterFactorySupplier {
-    IProductHelper getProductHelper();
+public interface IOutputHelper {
+    void write(IObjectNodeProducer objectNodeProducer);
 }
