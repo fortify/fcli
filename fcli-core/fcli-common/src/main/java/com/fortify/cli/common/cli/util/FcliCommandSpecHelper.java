@@ -240,12 +240,16 @@ public class FcliCommandSpecHelper {
     }
         
     public static final Optional<QueryExpression> getQueryExpression(CommandSpec commandSpec) {
+        return getQueryExpressionSupplier(commandSpec)
+                .map(s -> s.getQueryExpression())
+                .filter(Objects::nonNull);
+    }
+
+    public static final Optional<IQueryExpressionSupplier> getQueryExpressionSupplier(CommandSpec commandSpec) {
         return getAllMixinsStream(commandSpec)
                 .map(m -> m.userObject())
                 .filter(o -> o instanceof IQueryExpressionSupplier)
-                .map(o -> (IQueryExpressionSupplier)o)
-                .map(s -> s.getQueryExpression())
-                .filter(Objects::nonNull)
-                .findFirst();
+                .findFirst()
+                .map(o -> (IQueryExpressionSupplier)o);
     }
 }

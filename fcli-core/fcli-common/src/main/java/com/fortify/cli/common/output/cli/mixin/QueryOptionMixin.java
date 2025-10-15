@@ -20,7 +20,7 @@ import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public final class QueryOptionsArgGroup implements IQueryExpressionSupplier {
+public final class QueryOptionMixin implements IQueryExpressionSupplier {
     @Option(names = {"-q", "--query"}, order = 1, converter = QueryExpressionTypeConverter.class, paramLabel = "<SpEL expression>")
     @MCPExclude // Not suitable for LLM, as LLM doesn't know option syntax/fields
     @Getter
