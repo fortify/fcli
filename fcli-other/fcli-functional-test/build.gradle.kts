@@ -45,6 +45,7 @@ val ftestShadowJar = tasks.register<com.github.jengelman.gradle.plugins.shadow.t
     from(sourceSets.named("ftest").get().output)
     configurations = listOf(project.configurations.getByName("ftestRuntimeClasspath"))
     manifest { attributes["Main-Class"] = "com.fortify.cli.ftest.TestRunner" }
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
 }
 
 // Distribution task for functional test jar
