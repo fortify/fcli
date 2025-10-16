@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class SimpleObjectNodeProducer extends AbstractObjectNodeProducer {
     private final JsonNode source;
     protected SimpleObjectNodeProducer(SimpleObjectNodeProducerBuilder b) {
-        super(b.inputTransformers, b.recordTransformers, b.queryFilterStage);
+    super(b.inputTransformers, b.recordTransformers, b.queryExpression);
         this.source = b.source;
     }
     @Override public void forEach(IObjectNodeConsumer consumer) { process(source, consumer); }

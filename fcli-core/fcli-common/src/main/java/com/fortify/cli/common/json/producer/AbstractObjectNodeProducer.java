@@ -24,8 +24,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.ICommandHelper;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliBugException;
-import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
-import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunnerConfig;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
@@ -33,9 +31,9 @@ import com.fortify.cli.common.output.product.NoOpProductHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.util.Break;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -44,30 +42,20 @@ import picocli.CommandLine.Model.CommandSpec;
  * <ul>
  *   <li>Input transformations: applied once to the full input node (request response or provided JsonNode)</li>
  *   <li>Record transformations: applied for each record node before passing to consumer</li>
- *   <li>Query filtering: optional {@link QueryFilterStage} applied as last record stage</li>
+ *   <li>Query filtering: optional {@link QueryExpression} applied as last record stage</li>
  * </ul>
  * Subclasses only need to provide the raw input JsonNode(s) by invoking {@link #process(JsonNode, IObjectNodeConsumer)}.
  */
 public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer {
     @Getter private final List<UnaryOperator<JsonNode>> inputTransformers;
     @Getter private final List<UnaryOperator<JsonNode>> recordTransformers;
-    @Getter private final QueryFilterStage queryFilterStage;
-    @Getter(AccessLevel.PROTECTED) private final TransformationPipelineRunnerConfig pipelineConfig; // kept for compatibility if needed later
-
+    @Getter private final QueryExpression queryExpression;
+    
     protected AbstractObjectNodeProducer(List<UnaryOperator<JsonNode>> inputTransformers,
-            List<UnaryOperator<JsonNode>> recordTransformers, QueryFilterStage queryFilterStage) {
+            List<UnaryOperator<JsonNode>> recordTransformers, QueryExpression queryExpression) {
         this.inputTransformers = inputTransformers != null ? inputTransformers : new ArrayList<>();
         this.recordTransformers = recordTransformers != null ? recordTransformers : new ArrayList<>();
-        this.queryFilterStage = queryFilterStage; // may be null
-        this.pipelineConfig = buildPipelineConfig();
-    }
-
-    private TransformationPipelineRunnerConfig buildPipelineConfig() {
-        var cfg = TransformationPipelineRunnerConfig.builder().build();
-        inputTransformers.forEach(cfg::inputTransformer);
-        recordTransformers.forEach(cfg::recordTransformer);
-        if ( queryFilterStage != null ) { cfg.recordStage(queryFilterStage); }
-        return cfg;
+        this.queryExpression = queryExpression; // may be null
     }
 
     /**
@@ -85,10 +73,14 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
                 var n = it.next();
                 if ( n.isObject() ) {
                     if ( Break.TRUE == handleRecordNode((ObjectNode)n, consumer) ) { break; }
+                } else if ( !n.isNull() && !n.isMissingNode() ) {
+                    // We only allow object elements; any other non-null element is unexpected
+                    throw new FcliBugException("Unsupported record node type in array: "+n.getNodeType());
                 }
             }
         } else {
-            // Non container nodes are ignored
+            // Transformed root must be object or array; if it's some other non-null/non-missing node, that's unexpected
+            throw new FcliBugException("Unsupported transformed input node type: "+transformed.getNodeType());
         }
     }
 
@@ -109,17 +101,7 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
                 continue;
             }
         }
-        if ( queryFilterStage!=null ) {
-            var outcome = queryFilterStage.apply(null, current); // context not required currently
-            if ( outcome==null || outcome.node()==null ) { return Break.FALSE; }
-            // skip or stop decisions
-            switch ( outcome.decision() ) {
-                case SKIP: return Break.FALSE;
-                case STOP: return Break.TRUE;
-                case CONTINUE: break;
-            }
-            if ( outcome.node().isObject() ) { current = (ObjectNode)outcome.node(); }
-        }
+        if ( queryExpression!=null && !queryExpression.matches(current) ) { return Break.FALSE; }
         return Objects.requireNonNullElse(consumer.accept(current), Break.FALSE);
     }
 
@@ -128,18 +110,18 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
     public abstract static class AbstractObjectNodeProducerBuilder<C extends AbstractObjectNodeProducer, B extends AbstractObjectNodeProducerBuilder<C,B>> {
         protected List<UnaryOperator<JsonNode>> inputTransformers = new ArrayList<>();
         protected List<UnaryOperator<JsonNode>> recordTransformers = new ArrayList<>();
-        protected QueryFilterStage queryFilterStage;
+        protected QueryExpression queryExpression;
         protected IProductHelper productHelper;
         protected ICommandHelper commandHelper;
         public B inputTransformer(UnaryOperator<JsonNode> transformer) { this.inputTransformers.add(transformer); return (B)this; }
         public B recordTransformer(UnaryOperator<JsonNode> transformer) { this.recordTransformers.add(transformer); return (B)this; }
         public B addInputTransformers(Iterable<? extends IInputTransformer> transformers) { transformers.forEach(t->this.inputTransformers.add(t::transformInput)); return (B)this; }
         public B addRecordTransformers(Iterable<? extends IRecordTransformer> transformers) { transformers.forEach(t->this.recordTransformers.add(r->t.transformRecord(r))); return (B)this; }
-        public B queryFilter(QueryFilterStage stage) { this.queryFilterStage = stage; return (B)this; }
+        public B queryExpression(QueryExpression expression) { this.queryExpression = expression; return (B)this; }
         public B productHelper(IProductHelper productHelper) { this.productHelper = productHelper; return (B)this; }
         public B commandHelper(ICommandHelper commandHelper) { this.commandHelper = commandHelper; return (B)this; }
-    protected abstract B self();
-    public abstract C build();
+        protected abstract B self();
+        public abstract C build();
 
         // --- Spec application API ---
         public B applyFromSpec() { 
@@ -166,9 +148,7 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
         }
         public B applyQueryFromSpec() {
             var spec = getRequiredCommandSpec();
-            if ( this.queryFilterStage==null ) {
-                FcliCommandSpecHelper.getQueryExpression(spec).ifPresent(qe -> this.queryFilterStage = new QueryFilterStage(qe));
-            }
+            if ( this.queryExpression==null ) { FcliCommandSpecHelper.getQueryExpression(spec).ifPresent(qe -> this.queryExpression = qe); }
             return self();
         }
         private IProductHelper getProductHelper() {

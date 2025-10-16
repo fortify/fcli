@@ -38,7 +38,7 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
     private final INextPageUrlProducer nextPageUrlProducer;
 
     protected RequestObjectNodeProducer(RequestObjectNodeProducerBuilder b) {
-        super(b.inputTransformers, b.recordTransformers, b.queryFilterStage);
+    super(b.inputTransformers, b.recordTransformers, b.queryExpression);
         this.initialRequest = b.initialRequest;
         this.requestUpdaters = b.requestUpdaters;
         this.nextPageRequestProducer = b.nextPageRequestProducer;
