@@ -10,28 +10,25 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.fod.app.attr.helper;
+package com.fortify.cli.fod.attribute.helper;
 
-import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonNodeHolder;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data @EqualsAndHashCode(callSuper = true)
-@Reflectable @NoArgsConstructor
-public class FoDAttributeDescriptor extends JsonNodeHolder {
-    private Integer id;
+@Reflectable @NoArgsConstructor @AllArgsConstructor
+@Getter @ToString @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class FoDAttributeCreateRequest {
     private String name;
-    private Integer attributeTypeId;
     private String attributeType;
-    private Integer attributeDataTypeId;
     private String attributeDataType;
-    private Boolean isRequired;
-    private Boolean isRestricted;
-    private ArrayList<FoDPickListDescriptor> picklistValues;
-    private String value;
+    @Builder.Default
+    private Boolean isRequired = false;
+    @Builder.Default
+    private Boolean isRestricted = false;
+    private List<FoDPicklistSortedValue> picklistValues;
 }

@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

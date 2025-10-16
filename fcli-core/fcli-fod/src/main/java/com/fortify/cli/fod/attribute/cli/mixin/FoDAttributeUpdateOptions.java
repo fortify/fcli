@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.fod.app.attr.cli.mixin;
+package com.fortify.cli.fod.attribute.cli.mixin;
 
 import java.util.Map;
 

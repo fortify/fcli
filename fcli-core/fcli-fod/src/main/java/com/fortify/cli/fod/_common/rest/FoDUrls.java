@@ -24,6 +24,7 @@ public class FoDUrls {
     public static final String RELEASE_IMPORT_SCAN_SESSION = RELEASE + "/import-scan-session-id";
     public static final String RELEASE_IMPORT_CYCLONEDX_SBOM = RELEASE + "/open-source-scans/import-cyclonedx-sbom";
     public static final String ATTRIBUTES = ApiBase + "/attributes";
+    public static final String ATTRIBUTE = ApiBase + "/attributes/{attributeId}";
     public static final String USERS = ApiBase + "/users";
     public static final String USER = ApiBase + "/users/{userId}";
     public static final String USER_GROUPS = ApiBase + "/user-management/user-groups";

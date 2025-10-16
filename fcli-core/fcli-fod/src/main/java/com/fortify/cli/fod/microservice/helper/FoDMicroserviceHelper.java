@@ -23,10 +23,10 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 
 import kong.unirest.UnirestInstance;
 

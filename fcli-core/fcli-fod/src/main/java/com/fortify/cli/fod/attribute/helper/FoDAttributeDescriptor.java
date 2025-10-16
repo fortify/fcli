@@ -10,7 +10,9 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.fod.app.attr.helper;
+package com.fortify.cli.fod.attribute.helper;
+
+import java.util.ArrayList;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -21,7 +23,15 @@ import lombok.NoArgsConstructor;
 
 @Data @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor
-public class FoDPickListDescriptor extends JsonNodeHolder {
+public class FoDAttributeDescriptor extends JsonNodeHolder {
     private Integer id;
     private String name;
+    private Integer attributeTypeId;
+    private String attributeType;
+    private Integer attributeDataTypeId;
+    private String attributeDataType;
+    private Boolean isRequired;
+    private Boolean isRestricted;
+    private ArrayList<FoDPickListDescriptor> picklistValues;
+    private String value;
 }

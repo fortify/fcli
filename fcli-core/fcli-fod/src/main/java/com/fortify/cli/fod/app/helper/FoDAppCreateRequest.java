@@ -31,10 +31,10 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.access_control.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions.FoDAppType;
 import com.fortify.cli.fod.app.cli.mixin.FoDCriticalityTypeOptions.FoDCriticalityType;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions.FoDSdlcStatusType;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.release.helper.FoDQualifiedReleaseNameDescriptor;
 
 import kong.unirest.UnirestInstance;

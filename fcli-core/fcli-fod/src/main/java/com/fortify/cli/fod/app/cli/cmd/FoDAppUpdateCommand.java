@@ -27,14 +27,14 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.helper.FoDAppUpdateRequest;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
