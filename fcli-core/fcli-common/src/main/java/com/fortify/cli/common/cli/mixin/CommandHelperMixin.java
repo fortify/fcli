@@ -50,7 +50,7 @@ public final class CommandHelperMixin implements ICommandAware, ICommandHelper {
      * @return
      */
     public final Object getCommand() {
-        return commandSpec.userObject();
+        return commandSpec==null ? null : commandSpec.userObject();
     }
     
     public final CommandLine _getRootCommandLine(CommandSpec spec) {

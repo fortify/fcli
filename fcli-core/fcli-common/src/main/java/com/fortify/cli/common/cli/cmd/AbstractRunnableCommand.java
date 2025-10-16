@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskLevel;
 import com.fortify.cli.common.log.LogMaskSource;
@@ -89,7 +90,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
     protected final void initialize() {
         if ( !initialized ) {
             registerLogMasks(commandSpec);
-            initMixins(commandSpec, commandSpec.mixins());
+            initMixins(commandSpec);
             logVersionAndArgs(commandSpec);
             initialized = true;
         }
@@ -119,16 +120,11 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * This method recursively iterates over all given mixins to inject our {@link CommandSpec} 
      * into any mixins implementing the {@link ICommandAware} interface.
      */
-    private static final void initMixins(CommandSpec commandSpec, Map<String, CommandSpec> mixins) {
-        if ( mixins != null ) {
-            for ( CommandSpec mixin : mixins.values() ) {
-                Object userObject = mixin.userObject();
-                if ( userObject!=null && userObject instanceof ICommandAware) {
-                    ((ICommandAware)userObject).setCommandSpec(commandSpec);
-                }
-                initMixins(commandSpec, mixin.mixins());
-            }
-        }
+    private static final void initMixins(CommandSpec commandSpec) {
+        FcliCommandSpecHelper.getAllMixinsStream(commandSpec)
+            .map(mixin->mixin.userObject())
+            .filter(userObject->userObject!=null && userObject instanceof ICommandAware)
+            .forEach(userObject->((ICommandAware)userObject).setCommandSpec(commandSpec));
     }
 
     /**
