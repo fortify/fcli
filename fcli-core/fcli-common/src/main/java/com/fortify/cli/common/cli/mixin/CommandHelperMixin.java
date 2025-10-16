@@ -24,7 +24,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 
 @Command
-public final class CommandHelperMixin implements ICommandAware {
+public final class CommandHelperMixin implements ICommandAware, ICommandHelper {
     @Getter private CommandSpec commandSpec;
     @Getter private IMessageResolver messageResolver;
     @Getter private CommandLine rootCommandLine;

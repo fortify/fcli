@@ -15,14 +15,19 @@ package com.fortify.cli.common.output.cli.cmd;
 
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.RequestObjectNodeProducer;
+import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
+import kong.unirest.HttpRequest;
+import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 /**
@@ -35,13 +40,11 @@ import picocli.CommandLine.Mixin;
  * </ul>
  */
 public abstract class AbstractOutputCommand extends AbstractRunnableCommand
-        implements
-            ISingularSupplier,
-            IOutputHelperSupplier,
-            IRecordCollectionSupport {
-    private Consumer<ObjectNode> recordConsumer;
-    private boolean suppressStdoutForRecordCollection;
-    @Mixin private TransformationPipelineRunnerConfigFactoryMixin pipelineMixin;
+        implements ISingularSupplier, IOutputHelperSupplier, IRecordCollectionSupport 
+{
+    @Getter private Consumer<ObjectNode> recordConsumer;
+    @Getter private boolean stdoutSuppressedForRecordCollection;
+    @Mixin private CommandHelperMixin commandHelper;
 
     @Override
     public Integer call() {
@@ -52,34 +55,55 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
 
     /**
      * Returns an IObjectNodeProducer for this command. Subclasses should override to provide their own producer.
-     * For backward compatibility, this implementation checks for IBaseRequestSupplier and IJsonNodeSupplier,
-     * and retrieves an appropriate producer from TransformationPipelineRunnerConfigFactoryMixin.
+     * Default implementation builds either a request-based or simple JSON-node producer depending on implemented interfaces.
      */
     protected IObjectNodeProducer getObjectNodeProducer() {
-        if (this instanceof IBaseRequestSupplier) {
-            return pipelineMixin.getProducerFromRequest(((IBaseRequestSupplier) this).getBaseRequest());
-        } else if (this instanceof IJsonNodeSupplier) {
-            return pipelineMixin.getProducerFromJsonNode(((IJsonNodeSupplier) this).getJsonNode());
-        } else {
-            throw new FcliBugException(this.getClass().getName() + " must provide an IObjectNodeProducer");
+        if ( this instanceof IBaseRequestSupplier brs ) {
+            return buildRequestProducer(brs.getBaseRequest());
+        } else if ( this instanceof IJsonNodeSupplier jns) {
+            return buildJsonNodeProducer(jns.getJsonNode());
         }
+        throw new FcliBugException(this.getClass().getName()+" must provide an IObjectNodeProducer");
+    }
+
+    private IObjectNodeProducer buildJsonNodeProducer(JsonNode node) {
+        return simpleObjectNodeProducerBuilder(true).source(node).build();
+    }
+
+    private IObjectNodeProducer buildRequestProducer(HttpRequest<?> initialRequest) {
+        return requestObjectNodeProducerBuilder(true).initialRequest(initialRequest).build();
+    }
+
+    /**
+     * Convenience method to create and configure a {@link SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder}.
+     * This sets the {@code commandHelper}, and if {@code applyFromSpec} is true, {@link SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder#applyFromSpec()} is invoked.
+     * @param applyFromSpec Whether to invoke {@code applyFromSpec()} on the builder
+     * @return Partially configured builder instance
+     */
+    protected final SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder simpleObjectNodeProducerBuilder(boolean applyFromSpec) {
+        var b = SimpleObjectNodeProducer.builder().commandHelper(commandHelper);
+        if ( applyFromSpec ) { b.applyFromSpec(); }
+        return b;
+    }
+
+    /**
+     * Convenience method to create and configure a {@link RequestObjectNodeProducer.RequestObjectNodeProducerBuilder}.
+     * This sets the {@code commandHelper}, and if {@code applyFromSpec} is true, {@link RequestObjectNodeProducer.RequestObjectNodeProducerBuilder#applyFromSpec()} is invoked.
+     * @param applyFromSpec Whether to invoke {@code applyFromSpec()} on the builder
+     * @return Partially configured builder instance
+     */
+    protected final RequestObjectNodeProducer.RequestObjectNodeProducerBuilder requestObjectNodeProducerBuilder(boolean applyFromSpec) {
+        var b = RequestObjectNodeProducer.RequestObjectNodeProducerBuilder.builder().commandHelper(commandHelper);
+        if ( applyFromSpec ) { b.applyFromSpec(); }
+        return b;
     }
 
     public abstract IOutputHelper getOutputHelper();
 
     // IRecordCollectionSupport
     @Override
-    public final void setRecordConsumer(java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> consumer,
-            boolean suppressStdout) {
+    public final void setRecordConsumer(Consumer<ObjectNode> consumer, boolean suppressStdout) {
         this.recordConsumer = consumer;
-        this.suppressStdoutForRecordCollection = suppressStdout;
-    }
-    @Override
-    public final java.util.function.Consumer<com.fasterxml.jackson.databind.node.ObjectNode> getRecordConsumer() {
-        return recordConsumer;
-    }
-    @Override
-    public final boolean isStdoutSuppressedForRecordCollection() {
-        return suppressStdoutForRecordCollection;
+        this.stdoutSuppressedForRecordCollection = suppressStdout;
     }
 }

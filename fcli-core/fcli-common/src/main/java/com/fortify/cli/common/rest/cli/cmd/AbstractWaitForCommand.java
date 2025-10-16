@@ -13,8 +13,9 @@
 package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.TransformationPipelineRunnerConfigFactoryMixin;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
@@ -30,10 +31,10 @@ import picocli.CommandLine.Mixin;
 
 public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IUnirestInstanceSupplier, ISingularSupplier {
     @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
-    @Mixin private TransformationPipelineRunnerConfigFactoryMixin transformationPipelineRunnerConfigFactoryMixin;
     @Mixin private WaitHelperControlPropertiesMixin controlProperties;
     @Mixin private WaitHelperWaitTypeMixin waitTypeSupplier;
     @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
+    @Mixin private CommandHelperMixin commandHelper;
     
     @Override
     public Integer call() {
@@ -56,8 +57,11 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                     .waitType(waitTypeSupplier.getWaitType())
                     .progressMonitor(progressMonitorMixin.create(false))
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, arrayNode -> {
-                        var producer = transformationPipelineRunnerConfigFactoryMixin.createProducerForJsonNode(arrayNode);
-                        outputHelper.write(producer);
+            var producer = SimpleObjectNodeProducer.builder().source(arrayNode)
+                .commandHelper(commandHelper)
+                .applyFromSpec()
+                .build();
+            outputHelper.write((com.fortify.cli.common.json.producer.IObjectNodeProducer)producer);
                     })
             ).build().wait(unirest);
     }

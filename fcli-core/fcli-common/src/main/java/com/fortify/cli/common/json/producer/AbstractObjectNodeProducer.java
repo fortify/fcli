@@ -16,20 +16,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.mixin.ICommandHelper;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.pipeline.QueryFilterStage;
 import com.fortify.cli.common.json.producer.pipeline.TransformationPipelineRunnerConfig;
+import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.product.IProductHelper;
+import com.fortify.cli.common.output.product.IProductHelperSupplier;
+import com.fortify.cli.common.output.product.NoOpProductHelper;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.Break;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import picocli.CommandLine.Model.CommandSpec;
 
 /**
  * Base reusable implementation for {@link IObjectNodeProducer} instances. It concentrates:
@@ -120,41 +128,71 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
     public abstract static class AbstractObjectNodeProducerBuilder<C extends AbstractObjectNodeProducer, B extends AbstractObjectNodeProducerBuilder<C,B>> {
         protected List<UnaryOperator<JsonNode>> inputTransformers = new ArrayList<>();
         protected List<UnaryOperator<JsonNode>> recordTransformers = new ArrayList<>();
-        protected com.fortify.cli.common.json.producer.pipeline.QueryFilterStage queryFilterStage;
+        protected QueryFilterStage queryFilterStage;
         protected IProductHelper productHelper;
+        protected ICommandHelper commandHelper;
         public B inputTransformer(UnaryOperator<JsonNode> transformer) { this.inputTransformers.add(transformer); return (B)this; }
         public B recordTransformer(UnaryOperator<JsonNode> transformer) { this.recordTransformers.add(transformer); return (B)this; }
         public B addInputTransformers(Iterable<? extends IInputTransformer> transformers) { transformers.forEach(t->this.inputTransformers.add(t::transformInput)); return (B)this; }
         public B addRecordTransformers(Iterable<? extends IRecordTransformer> transformers) { transformers.forEach(t->this.recordTransformers.add(r->t.transformRecord(r))); return (B)this; }
-        public B queryFilter(com.fortify.cli.common.json.producer.pipeline.QueryFilterStage stage) { this.queryFilterStage = stage; return (B)this; }
+        public B queryFilter(QueryFilterStage stage) { this.queryFilterStage = stage; return (B)this; }
         public B productHelper(IProductHelper productHelper) { this.productHelper = productHelper; return (B)this; }
+        public B commandHelper(ICommandHelper commandHelper) { this.commandHelper = commandHelper; return (B)this; }
     protected abstract B self();
     public abstract C build();
 
         // --- Spec application API ---
-        public B applyFromSpec(picocli.CommandLine.Model.CommandSpec spec) { 
-            applyInputTransformationsFromSpec(spec);
-            applyRecordTransformationsFromSpec(spec);
-            applyQueryFromSpec(spec);
+        public B applyFromSpec() { 
+            getRequiredCommandHelper(); // ensure configured
+            // Initialize productHelper lazily through getProductHelper(); no direct assignment needed here
+            applyInputTransformationsFromSpec();
+            applyRecordTransformationsFromSpec();
+            applyQueryFromSpec();
+            applyActionCommandResultSupplierFromSpec();
             return self();
         }
-        public B applyInputTransformationsFromSpec(picocli.CommandLine.Model.CommandSpec spec) {
-            FcliCommandSpecHelper.getAllMixinsStream(spec).map(m->m.userObject()).forEach(this::addInputTransformersFromObject);
-            addInputTransformersFromObject(productHelper);
-            addInputTransformersFromObject(spec.userObject());
+        private void applyActionCommandResultSupplierFromSpec() {
+            if ( getRequiredCommandHelper().getCommand() instanceof IActionCommandResultSupplier s ) {
+                recordTransformer(n -> new AddFieldsTransformer(IActionCommandResultSupplier.actionFieldName, s.getActionCommandResult()).transform(n));
+            }
+        }
+        public B applyInputTransformationsFromSpec() {
+            getAllUserObjectsStream().forEach(this::addInputTransformersFromObject);
             return self();
         }
-        public B applyRecordTransformationsFromSpec(picocli.CommandLine.Model.CommandSpec spec) {
-            FcliCommandSpecHelper.getAllMixinsStream(spec).map(m->m.userObject()).forEach(this::addRecordTransformersFromObject);
-            addRecordTransformersFromObject(productHelper);
-            addRecordTransformersFromObject(spec.userObject());
+        public B applyRecordTransformationsFromSpec() {
+            getAllUserObjectsStream().forEach(this::addRecordTransformersFromObject);
             return self();
         }
-        public B applyQueryFromSpec(picocli.CommandLine.Model.CommandSpec spec) {
+        public B applyQueryFromSpec() {
+            var spec = getRequiredCommandSpec();
             if ( this.queryFilterStage==null ) {
                 FcliCommandSpecHelper.getQueryExpression(spec).ifPresent(qe -> this.queryFilterStage = new QueryFilterStage(qe));
             }
             return self();
+        }
+        private IProductHelper getProductHelper() {
+            return productHelper!=null 
+                    ? productHelper
+                    : getRequiredCommandHelper().getCommandAs(IProductHelperSupplier.class)
+                        .map(IProductHelperSupplier::getProductHelper)
+                        .orElse(NoOpProductHelper.instance());
+        }
+        protected Stream<Object> getAllUserObjectsStream() {
+            var spec = getRequiredCommandSpec();
+            return Stream.concat(
+                    Stream.of(getProductHelper(), spec.userObject()),
+                    FcliCommandSpecHelper.getAllMixinsStream(spec).map(m->m.userObject())
+            ).filter(Objects::nonNull);
+        }
+        protected ICommandHelper getRequiredCommandHelper() {
+            if ( commandHelper==null ) {
+                throw new FcliBugException("CommandHelper not configured; call commandHelper(<helper>) before applyFromSpec()");
+            }
+            return commandHelper;
+        }
+        protected CommandSpec getRequiredCommandSpec() {
+            return getRequiredCommandHelper().getCommandSpec();
         }
         private void addInputTransformersFromObject(Object o) {
             if ( o instanceof IInputTransformer it ) { inputTransformer(it::transformInput); }

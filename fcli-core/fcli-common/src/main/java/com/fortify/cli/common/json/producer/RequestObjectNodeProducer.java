@@ -12,6 +12,10 @@
  */
 package com.fortify.cli.common.json.producer;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
@@ -66,7 +70,7 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
 
     public static class RequestObjectNodeProducerBuilder extends AbstractObjectNodeProducerBuilder<RequestObjectNodeProducer, RequestObjectNodeProducerBuilder> {
         private HttpRequest<?> initialRequest;
-        private java.util.List<IHttpRequestUpdater> requestUpdaters = new java.util.ArrayList<>();
+        private List<IHttpRequestUpdater> requestUpdaters = new ArrayList<>();
         private INextPageRequestProducer nextPageRequestProducer;
         private INextPageUrlProducer nextPageUrlProducer;
         public static RequestObjectNodeProducerBuilder builder() { return new RequestObjectNodeProducerBuilder(); }
@@ -74,17 +78,17 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
         public RequestObjectNodeProducerBuilder requestUpdater(IHttpRequestUpdater upd) { if (upd!=null) { requestUpdaters.add(upd); } return self(); }
         public RequestObjectNodeProducerBuilder nextPageRequestProducer(INextPageRequestProducer p) { this.nextPageRequestProducer = p; return self(); }
         public RequestObjectNodeProducerBuilder nextPageUrlProducer(INextPageUrlProducer p) { this.nextPageUrlProducer = p; return self(); }
-        @Override public RequestObjectNodeProducerBuilder applyFromSpec(picocli.CommandLine.Model.CommandSpec spec) {
-            super.applyFromSpec(spec);
-            // Request updaters from command, mixins, product helper
-            com.fortify.cli.common.cli.util.FcliCommandSpecHelper.getAllMixinsStream(spec).map(m->m.userObject()).forEach(this::addRequestUpdaterFromObject);
-            addRequestUpdaterFromObject(productHelper);
-            addRequestUpdaterFromObject(spec.userObject());
-            // Paging producers
-            if ( nextPageUrlProducer==null ) { nextPageUrlProducer = com.fortify.cli.common.cli.util.FcliCommandSpecHelper.getAllMixinsStream(spec)
-                    .map(m->m.userObject()).map(this::nextPageUrlProducerFromObject).filter(java.util.Objects::nonNull).findFirst().orElse(null); }
-            if ( nextPageUrlProducer==null ) { nextPageUrlProducer = nextPageUrlProducerFromObject(productHelper); }
-            if ( nextPageUrlProducer==null ) { nextPageUrlProducer = nextPageUrlProducerFromObject(spec.userObject()); }
+        public RequestObjectNodeProducerBuilder applyFromSpec() {
+            super.applyFromSpec();
+            // Apply request updaters from all user objects (product helper, command spec, mixins)
+            getAllUserObjectsStream().forEach(this::addRequestUpdaterFromObject);
+            // Determine paging producer if not already set; first match wins
+            if ( nextPageUrlProducer==null ) {
+                nextPageUrlProducer = getAllUserObjectsStream()
+                        .map(this::nextPageUrlProducerFromObject)
+                        .filter(Objects::nonNull)
+                        .findFirst().orElse(null);
+            }
             return self();
         }
         private void addRequestUpdaterFromObject(Object o) { if ( o instanceof IHttpRequestUpdater u ) { requestUpdater(u); } }

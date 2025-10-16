@@ -12,9 +12,7 @@
  */
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
-import com.fortify.cli.common.json.producer.RequestObjectNodeProducer.RequestObjectNodeProducerBuilder;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
@@ -33,7 +31,6 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implements IServerSideQueryParamGeneratorSupplier {
-    @Mixin CommandHelperMixin cmdHelper;
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
@@ -48,10 +45,8 @@ public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implement
     @Override
     protected IObjectNodeProducer getObjectNodeProducer() {
         var unirest = getUnirestInstance();
-        return RequestObjectNodeProducerBuilder.builder()
+        return requestObjectNodeProducerBuilder(true)
                 .initialRequest(unirest.get("/api/v1/projectVersions?limit=100"))
-                .productHelper(getProductHelper())
-                .applyFromSpec(cmdHelper.getCommandSpec())
                 .recordTransformer(SSCAppVersionHelper::renameFields)
                 .build();
     }
