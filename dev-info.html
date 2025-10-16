@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Developer Information
-fcli_version: 0.20251016.133313-dev_v3.x
+fcli_version: 0.20251016.150513-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251016.133313-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251016.133313-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251016.150513-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 0.20251016.133313-dev_v3.x</span>
+<span id="revnumber">version 0.20251016.150513-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -704,10 +704,14 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <p><code>IActionCommandResultSupplier</code>: Supply data for a result column to be included in the output, like <code>DELETED</code>, <code>CREATED</code>, &#8230;&#8203;</p>
 </li>
 <li>
-<p><code>IInputTransformer</code>: Allows for transforming the full JSON data before it is being processed for output.</p>
+<p><code>IInputTransformer</code>: Hook to transform the full JSON data before it is processed. Applied once per input in <code>AbstractObjectNodeProducer</code>.</p>
 </li>
 <li>
-<p><code>IRecordTransformer</code>: Allows for transforming individual records before they are being processed for output.</p>
+<p><code>IRecordTransformer</code>: Hook to transform individual records. Applied to each record in <code>AbstractObjectNodeProducer</code>.</p>
+</li>
+<li>
+<p>Query filtering via <code>QueryExpression</code>: Applied after record transformations to decide whether a record is included.
+The previous pipeline abstraction (<code>JsonNodePipelineStage</code> &amp; <code>TransformationPipelineRunner</code>) has been removed; transformation &amp; filtering now happen directly inside <code>AbstractObjectNodeProducer</code> for simpler and more efficient processing.</p>
 </li>
 </ul>
 </div>
@@ -867,8 +871,8 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251016.133313-dev_v3.x<br>
-Last updated 2025-10-16 13:33:13 UTC
+Version 0.20251016.150513-dev_v3.x<br>
+Last updated 2025-10-16 15:05:12 UTC
 </div>
 </div>
 </body>
