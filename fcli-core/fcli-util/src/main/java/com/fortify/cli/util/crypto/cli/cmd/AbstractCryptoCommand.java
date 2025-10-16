@@ -15,18 +15,14 @@ package com.fortify.cli.util.crypto.cli.cmd;
 import java.util.Scanner;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 
 import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
 
 public abstract class AbstractCryptoCommand extends AbstractRunnableCommand {
-    @Mixin private CommandHelperMixin commandHelper;
-    
     @Override @SneakyThrows
     public final Integer call() {
         initialize();
-        String prompt = commandHelper.getMessageResolver().getMessageString("prompt")+" ";
+        String prompt = getCommandHelper().getMessageResolver().getMessageString("prompt")+" ";
         String value;
         if ( System.console()!=null ) {
             value = new String(System.console().readPassword(prompt));

@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
@@ -32,8 +33,10 @@ import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.JavaHelper;
 
 import ch.qos.logback.classic.Level;
+import lombok.AccessLevel;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
@@ -54,6 +57,7 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractRunnableCommand.class);
     // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
+    @Getter(AccessLevel.PROTECTED) @Mixin private CommandHelperMixin commandHelper;
     
     // Boolean indicating whether mixins have already been initialized by
     // the initMixins() method

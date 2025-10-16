@@ -18,7 +18,6 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.RequestObjectNodeProducer;
@@ -30,7 +29,6 @@ import com.fortify.cli.common.output.writer.ISingularSupplier;
 
 import kong.unirest.HttpRequest;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
 
 /**
  * Base class for commands producing output. A concrete command must implement
@@ -46,7 +44,6 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
 {
     @Getter private Consumer<ObjectNode> recordConsumer;
     @Getter private boolean stdoutSuppressedForRecordCollection;
-    @Mixin private CommandHelperMixin commandHelper;
 
     @Override
     public Integer call() {
@@ -83,7 +80,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
      * @return Partially configured builder instance
      */
     protected final SimpleObjectNodeProducerBuilder<?, ?> simpleObjectNodeProducerBuilder(boolean applyAllFromSpec) {
-        var b = SimpleObjectNodeProducer.builder().commandHelper(commandHelper);
+        var b = SimpleObjectNodeProducer.builder().commandHelper(getCommandHelper());
         if ( applyAllFromSpec ) { b.applyAllFromSpec(); }
         return b;
     }
@@ -95,7 +92,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
      * @return Partially configured builder instance
      */
     protected final RequestObjectNodeProducerBuilder<?, ?> requestObjectNodeProducerBuilder(boolean applyAllFromSpec) {
-        var b = RequestObjectNodeProducer.builder().commandHelper(commandHelper);
+        var b = RequestObjectNodeProducer.builder().commandHelper(getCommandHelper());
         if ( applyAllFromSpec ) { b.applyAllFromSpec(); }
         return b;
     }

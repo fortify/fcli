@@ -13,7 +13,6 @@
 package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -34,7 +33,6 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     @Mixin private WaitHelperControlPropertiesMixin controlProperties;
     @Mixin private WaitHelperWaitTypeMixin waitTypeSupplier;
     @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
-    @Mixin private CommandHelperMixin commandHelper;
     
     @Override
     public Integer call() {
@@ -58,7 +56,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                     .progressMonitor(progressMonitorMixin.create(false))
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, arrayNode -> {
             var producer = SimpleObjectNodeProducer.builder().source(arrayNode)
-                .commandHelper(commandHelper)
+                .commandHelper(getCommandHelper())
                 .applyAllFromSpec()
                 .build();
             outputHelper.write((com.fortify.cli.common.json.producer.IObjectNodeProducer)producer);

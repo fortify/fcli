@@ -21,7 +21,6 @@ import com.fortify.cli.common.action.runner.ActionRunnerConfig;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig.ActionRunnerConfigBuilder;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.DisableTest;
@@ -39,7 +38,6 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Option(names="action-parameters", arity="0", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
-    @Mixin private CommandHelperMixin commandHelper;
     @Mixin private ActionValidationMixin actionValidationMixin;
     @Unmatched private String[] actionArgs;
     
@@ -76,7 +74,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
         var errorsString = String.join("\n ", optionsParseResult.getValidationErrors());
         var supportedOptionsString = ActionOptionHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
         var msg = String.format("Option errors:\n %s\nSupported options:\n%s\n", errorsString, supportedOptionsString);
-        return new ParameterException(commandHelper.getCommandSpec().commandLine(), msg);
+        return new ParameterException(getCommandHelper().getCommandSpec().commandLine(), msg);
     }
 
     protected abstract String getType();
