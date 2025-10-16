@@ -12,11 +12,12 @@
  */
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc._common.rest.ssc.query.cli.mixin.SSCQParamMixin;
@@ -25,12 +26,14 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionExcludeMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionIncludeMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
+import kong.unirest.HttpRequest;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implements IServerSideQueryParamGeneratorSupplier {
+public class SSCAppVersionListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
@@ -43,12 +46,13 @@ public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implement
     @Mixin private SSCAppVersionExcludeMixin excludeMixin;
     
     @Override
-    protected IObjectNodeProducer getObjectNodeProducer() {
-        var unirest = getUnirestInstance();
-        return requestObjectNodeProducerBuilder(true)
-                .initialRequest(unirest.get("/api/v1/projectVersions?limit=100"))
-                .recordTransformer(SSCAppVersionHelper::renameFields)
-                .build();
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get("/api/v1/projectVersions?limit=100");
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return SSCAppVersionHelper.renameFields(record);
     }
     
     @Override
