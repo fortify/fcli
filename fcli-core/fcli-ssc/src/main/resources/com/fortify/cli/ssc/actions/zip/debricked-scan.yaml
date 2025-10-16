@@ -10,7 +10,7 @@ config:
   output: immediate
   rest.target.default: ssc
   run.fcli.status.log.default: true    # By default, we log all exit statuses
-  run.fcli.status.check.default: false
+  run.fcli.status.check.default: true
 
 cli.options:
   appVersion:
@@ -48,13 +48,13 @@ cli.options:
     names: --repository, -r
     description: |
       Debricked source repository name or ID.
-    required: true 
+    required: false 
     default: ${#env('REPOSITORY_NAME')}
   debrickedBranch:
     names: --branch, -b
     description: |
       Debricked source branch name or ID.
-    required: true 
+    required: false 
     default: ${#env('BRANCH_NAME')}
   debrickedWait:
     names: --wait
@@ -65,21 +65,35 @@ cli.options:
     type: boolean
 
 steps:
+  - if: ${#isBlank(cli.debrickedRepository)||#isBlank(cli.debrickedBranch)}
+    steps:
+      - var.set:
+          localRepository: ${#localRepo(cli.sourceDir)}
+      - if: ${localRepository == null}
+        throw: Cannot fetch the repository details from the given source directory.
+      - var.set:
+          localRepo: ${localRepository?.repository.name.full}
+          localBranch: ${localRepository?.branch.short}
   - var.set:
       global.debrickedPublish.fcliVarName: debricked_scan_${#action.runID().replace('-','_')} # fcli variable to store the artifact name to be used in next command to wait-for artifact upload command 
       global.debrickedPublish.waitForCmd: 'fcli ssc artifact wait-for ::${global.debrickedPublish.fcliVarName}::'
   - run.fcli:
       UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${cli.toolDefinitions?:""}
+  - run.fcli:
       INSTALL_DEBRICKED: fcli tool dcli install -v ${cli.dcliVersion}
+  - run.fcli:
       RUN_DEBRICKED_CLI: 
-        cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository} -b ${cli.debrickedBranch}
+        cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository?:localRepo} -b ${cli.debrickedBranch?:localBranch}
         stdout: collect
         stderr: collect
+        on.fail:
+          - if: ${#isNotBlank(RUN_DEBRICKED_CLI.stdout)  && !RUN_DEBRICKED_CLI.stdout.contains('vulnerabilities found') && !RUN_DEBRICKED_CLI.stdout.contains('For full details, visit:')}
+            throw: Debricked Scan failed with errors.
   - out.write:
       stdout: ${RUN_DEBRICKED_CLI.stdout}
-      stderr: ${RUN_DEBRICKED_CLI.stderr}      
+      stderr: ${RUN_DEBRICKED_CLI.stderr}
   - run.fcli:
-      IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${cli.appVersion} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository} -b ${cli.debrickedBranch} --store ${global.debrickedPublish.fcliVarName}
+      IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${cli.appVersion} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository?:localRepo} -b ${cli.debrickedBranch?:localBranch} --store ${global.debrickedPublish.fcliVarName}
   - if: ${cli.debrickedWait}
     run.fcli:
       WAIT: ${global.debrickedPublish.waitForCmd}
