@@ -63,6 +63,12 @@ cli.options:
     required: false
     default: ${#env('DO_DEBRICKED_WAIT')}
     type: boolean
+  extraOpts:
+    names: --extra-opts
+    description: |
+      Extra options to be passed to the 'debricked scan' command. Defaults to the options specified in the DEBRICKED_SCAN_EXTRA_OPTS environment variable, or no extra options if not specified. 
+    required: false
+    default: ${#extraOpts('DEBRICKED_SCAN')}
 
 steps:
   - if: ${#isBlank(cli.debrickedRepository)||#isBlank(cli.debrickedBranch)}
@@ -83,7 +89,7 @@ steps:
       INSTALL_DEBRICKED: fcli tool dcli install -v ${cli.dcliVersion}
   - run.fcli:
       RUN_DEBRICKED_CLI: 
-        cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository?:localRepo} -b ${cli.debrickedBranch?:localBranch}
+        cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${cli.debrickedRepository?:localRepo} -b ${cli.debrickedBranch?:localBranch} ${cli.extraOpts} 
         stdout: collect
         stderr: collect
         on.fail:

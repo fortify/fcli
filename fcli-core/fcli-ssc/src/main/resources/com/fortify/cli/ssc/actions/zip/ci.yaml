@@ -47,19 +47,17 @@ steps:
       # Configure session name
       sessionName: ci-${#action.runID()}
       # Configure scan types to run
-      sca.skipReason:   # TODO
-      sca.skip: true
       dast.skipReason:  # TODO
       dast.skip: true
       sast.skipReason: > # Enabled by default, unless explicitly disabled or other scan type requested
         ${
             #skipReasonIf(#env('DO_SAST_SCAN')=='false', 'SAST scan disabled as DO_SAST_SCAN==false')
-            ?:#skipReasonIf(#env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip), 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested')
+            ?:#skipReasonIf(#env('DO_SAST_SCAN')!='true' && !dast.skip, 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested')
         }
       debricked.skipReason: > # Disabled by default, unless explicitly enabled
         ${
             #skipReasonIf(#env('DO_DEBRICKED_SCAN')=='false', 'Debricked scan disabled as DO_DEBRICKED_SCAN==false')
-            ?:#skipReasonIf(#env('DO_DEBRICKED_SCAN')!='true' && (!sca.skip || !dast.skip), 'Debricked scan disabled as DO_DEBRICKED_SCAN!=true and other scan type requested')
+            ?:#skipReasonIf(#env('DO_DEBRICKED_SCAN')!='true' && !dast.skip, 'Debricked scan disabled as DO_DEBRICKED_SCAN!=true and other scan type requested')
             ?:#skipReasonIf(#isBlank('DEBRICKED_ACCESS_TOKEN'), 'Debricked scan disabled as the DEBRICKED_ACCESS_TOKEN is not set')
         }
       aviator.skipReason: >
