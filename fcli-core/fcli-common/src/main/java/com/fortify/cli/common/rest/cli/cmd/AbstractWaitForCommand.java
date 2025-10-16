@@ -59,7 +59,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, arrayNode -> {
             var producer = SimpleObjectNodeProducer.builder().source(arrayNode)
                 .commandHelper(commandHelper)
-                .applyFromSpec()
+                .applyAllFromSpec()
                 .build();
             outputHelper.write((com.fortify.cli.common.json.producer.IObjectNodeProducer)producer);
                     })

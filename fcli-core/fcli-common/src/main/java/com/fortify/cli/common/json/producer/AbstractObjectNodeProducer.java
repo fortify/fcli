@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.json.producer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
@@ -35,6 +34,8 @@ import com.fortify.cli.common.spel.query.QueryExpression;
 import com.fortify.cli.common.util.Break;
 
 import lombok.Getter;
+import lombok.Singular;
+import lombok.experimental.SuperBuilder;
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
@@ -46,17 +47,11 @@ import picocli.CommandLine.Model.CommandSpec;
  * </ul>
  * Subclasses only need to provide the raw input JsonNode(s) by invoking {@link #process(JsonNode, IObjectNodeConsumer)}.
  */
+@SuperBuilder
 public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer {
-    @Getter private final List<UnaryOperator<JsonNode>> inputTransformers;
-    @Getter private final List<UnaryOperator<JsonNode>> recordTransformers;
+    @Getter @Singular private final List<UnaryOperator<JsonNode>> inputTransformers;
+    @Getter @Singular private final List<UnaryOperator<JsonNode>> recordTransformers;
     @Getter private final QueryExpression queryExpression;
-    
-    protected AbstractObjectNodeProducer(List<UnaryOperator<JsonNode>> inputTransformers,
-            List<UnaryOperator<JsonNode>> recordTransformers, QueryExpression queryExpression) {
-        this.inputTransformers = inputTransformers != null ? inputTransformers : new ArrayList<>();
-        this.recordTransformers = recordTransformers != null ? recordTransformers : new ArrayList<>();
-        this.queryExpression = queryExpression; // may be null
-    }
 
     /**
      * Template method used by subclasses to feed input JSON to this base class for processing.
@@ -106,25 +101,14 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
     }
 
     // Convenience builder customizations ------------------------------------------------------
-    @SuppressWarnings("unchecked")
     public abstract static class AbstractObjectNodeProducerBuilder<C extends AbstractObjectNodeProducer, B extends AbstractObjectNodeProducerBuilder<C,B>> {
-        protected List<UnaryOperator<JsonNode>> inputTransformers = new ArrayList<>();
-        protected List<UnaryOperator<JsonNode>> recordTransformers = new ArrayList<>();
-        protected QueryExpression queryExpression;
-        protected IProductHelper productHelper;
-        protected ICommandHelper commandHelper;
-        public B inputTransformer(UnaryOperator<JsonNode> transformer) { this.inputTransformers.add(transformer); return (B)this; }
-        public B recordTransformer(UnaryOperator<JsonNode> transformer) { this.recordTransformers.add(transformer); return (B)this; }
-        public B addInputTransformers(Iterable<? extends IInputTransformer> transformers) { transformers.forEach(t->this.inputTransformers.add(t::transformInput)); return (B)this; }
-        public B addRecordTransformers(Iterable<? extends IRecordTransformer> transformers) { transformers.forEach(t->this.recordTransformers.add(r->t.transformRecord(r))); return (B)this; }
-        public B queryExpression(QueryExpression expression) { this.queryExpression = expression; return (B)this; }
-        public B productHelper(IProductHelper productHelper) { this.productHelper = productHelper; return (B)this; }
-        public B commandHelper(ICommandHelper commandHelper) { this.commandHelper = commandHelper; return (B)this; }
-        protected abstract B self();
-        public abstract C build();
-
+        private IProductHelper productHelper;
+        private ICommandHelper commandHelper;
+        public B productHelper(IProductHelper productHelper) { this.productHelper = productHelper; return self(); }
+        public B commandHelper(ICommandHelper commandHelper) { this.commandHelper = commandHelper; return self(); }
+        
         // --- Spec application API ---
-        public B applyFromSpec() { 
+        public B applyAllFromSpec() { 
             getRequiredCommandHelper(); // ensure configured
             // Initialize productHelper lazily through getProductHelper(); no direct assignment needed here
             applyInputTransformationsFromSpec();

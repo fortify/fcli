@@ -22,7 +22,9 @@ import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.RequestObjectNodeProducer;
+import com.fortify.cli.common.json.producer.RequestObjectNodeProducer.RequestObjectNodeProducerBuilder;
 import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer;
+import com.fortify.cli.common.json.producer.SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
@@ -76,25 +78,25 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand
 
     /**
      * Convenience method to create and configure a {@link SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder}.
-     * This sets the {@code commandHelper}, and if {@code applyFromSpec} is true, {@link SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder#applyFromSpec()} is invoked.
-     * @param applyFromSpec Whether to invoke {@code applyFromSpec()} on the builder
+     * This sets the {@code commandHelper}, and if {@code applyFromSpec} is true, {@link SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder#applyAllFromSpec()} is invoked.
+     * @param applyAllFromSpec Whether to invoke {@code applyFromSpec()} on the builder
      * @return Partially configured builder instance
      */
-    protected final SimpleObjectNodeProducer.SimpleObjectNodeProducerBuilder simpleObjectNodeProducerBuilder(boolean applyFromSpec) {
+    protected final SimpleObjectNodeProducerBuilder<?, ?> simpleObjectNodeProducerBuilder(boolean applyAllFromSpec) {
         var b = SimpleObjectNodeProducer.builder().commandHelper(commandHelper);
-        if ( applyFromSpec ) { b.applyFromSpec(); }
+        if ( applyAllFromSpec ) { b.applyAllFromSpec(); }
         return b;
     }
 
     /**
      * Convenience method to create and configure a {@link RequestObjectNodeProducer.RequestObjectNodeProducerBuilder}.
-     * This sets the {@code commandHelper}, and if {@code applyFromSpec} is true, {@link RequestObjectNodeProducer.RequestObjectNodeProducerBuilder#applyFromSpec()} is invoked.
-     * @param applyFromSpec Whether to invoke {@code applyFromSpec()} on the builder
+     * This sets the {@code commandHelper}, and if {@code applyFromSpec} is true, {@link RequestObjectNodeProducer.RequestObjectNodeProducerBuilder#applyAllFromSpec()} is invoked.
+     * @param applyAllFromSpec Whether to invoke {@code applyFromSpec()} on the builder
      * @return Partially configured builder instance
      */
-    protected final RequestObjectNodeProducer.RequestObjectNodeProducerBuilder requestObjectNodeProducerBuilder(boolean applyFromSpec) {
-        var b = RequestObjectNodeProducer.RequestObjectNodeProducerBuilder.builder().commandHelper(commandHelper);
-        if ( applyFromSpec ) { b.applyFromSpec(); }
+    protected final RequestObjectNodeProducerBuilder<?, ?> requestObjectNodeProducerBuilder(boolean applyAllFromSpec) {
+        var b = RequestObjectNodeProducer.builder().commandHelper(commandHelper);
+        if ( applyAllFromSpec ) { b.applyAllFromSpec(); }
         return b;
     }
 

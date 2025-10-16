@@ -12,9 +12,7 @@
  */
 package com.fortify.cli.common.json.producer;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
@@ -27,23 +25,18 @@ import com.fortify.cli.common.rest.unirest.IfFailureHandler;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Getter;
+import lombok.Singular;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Producer built around executing an HTTP {@link HttpRequest}. Supports request updaters and paging.
  */
+@SuperBuilder
 public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
     @Getter private final HttpRequest<?> initialRequest;
-    private final Iterable<IHttpRequestUpdater> requestUpdaters;
+    @Singular private final List<IHttpRequestUpdater> requestUpdaters;
     private final INextPageRequestProducer nextPageRequestProducer;
     private final INextPageUrlProducer nextPageUrlProducer;
-
-    protected RequestObjectNodeProducer(RequestObjectNodeProducerBuilder b) {
-    super(b.inputTransformers, b.recordTransformers, b.queryExpression);
-        this.initialRequest = b.initialRequest;
-        this.requestUpdaters = b.requestUpdaters;
-        this.nextPageRequestProducer = b.nextPageRequestProducer;
-        this.nextPageUrlProducer = b.nextPageUrlProducer;
-    }
 
     @Override
     public void forEach(IObjectNodeConsumer consumer) {
@@ -68,32 +61,32 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
         process(r.getBody(), consumer);
     }
 
-    public static class RequestObjectNodeProducerBuilder extends AbstractObjectNodeProducerBuilder<RequestObjectNodeProducer, RequestObjectNodeProducerBuilder> {
-        private HttpRequest<?> initialRequest;
-        private List<IHttpRequestUpdater> requestUpdaters = new ArrayList<>();
-        private INextPageRequestProducer nextPageRequestProducer;
-        private INextPageUrlProducer nextPageUrlProducer;
-        public static RequestObjectNodeProducerBuilder builder() { return new RequestObjectNodeProducerBuilder(); }
-        public RequestObjectNodeProducerBuilder initialRequest(HttpRequest<?> r) { this.initialRequest = r; return self(); }
-        public RequestObjectNodeProducerBuilder requestUpdater(IHttpRequestUpdater upd) { if (upd!=null) { requestUpdaters.add(upd); } return self(); }
-        public RequestObjectNodeProducerBuilder nextPageRequestProducer(INextPageRequestProducer p) { this.nextPageRequestProducer = p; return self(); }
-        public RequestObjectNodeProducerBuilder nextPageUrlProducer(INextPageUrlProducer p) { this.nextPageUrlProducer = p; return self(); }
-        public RequestObjectNodeProducerBuilder applyFromSpec() {
-            super.applyFromSpec();
-            // Apply request updaters from all user objects (product helper, command spec, mixins)
-            getAllUserObjectsStream().forEach(this::addRequestUpdaterFromObject);
-            // Determine paging producer if not already set; first match wins
-            if ( nextPageUrlProducer==null ) {
-                nextPageUrlProducer = getAllUserObjectsStream()
-                        .map(this::nextPageUrlProducerFromObject)
-                        .filter(Objects::nonNull)
-                        .findFirst().orElse(null);
-            }
+    public static class RequestObjectNodeProducerBuilderImpl extends RequestObjectNodeProducerBuilder<RequestObjectNodeProducer, RequestObjectNodeProducerBuilderImpl> {
+        public RequestObjectNodeProducerBuilderImpl applyAllFromSpec() {
+            super.applyAllFromSpec();
+            applyRequestUpdatersFromSpec();
+            applyNextPageUrlProducerFromSpec();
             return self();
         }
-        private void addRequestUpdaterFromObject(Object o) { if ( o instanceof IHttpRequestUpdater u ) { requestUpdater(u); } }
-        private INextPageUrlProducer nextPageUrlProducerFromObject(Object o) { return o instanceof INextPageUrlProducerSupplier s ? s.getNextPageUrlProducer() : null; }
-        @Override protected RequestObjectNodeProducerBuilder self() { return this; }
-        @Override public RequestObjectNodeProducer build() { return new RequestObjectNodeProducer(this); }
+
+        private void applyNextPageUrlProducerFromSpec() {
+            getAllUserObjectsStream().forEach(this::addNextPageUrlProducerFromObject);
+        }
+
+        public void applyRequestUpdatersFromSpec() {
+            getAllUserObjectsStream().forEach(this::addRequestUpdaterFromObject);
+        }
+
+        private void addRequestUpdaterFromObject(Object o) {
+            if (o instanceof IHttpRequestUpdater u) {
+                requestUpdater(u);
+            }
+        }
+
+        private void addNextPageUrlProducerFromObject(Object o) {
+            if (o instanceof INextPageUrlProducerSupplier s) {
+                nextPageUrlProducer(s.getNextPageUrlProducer());
+            }
+        }
     }
 }
