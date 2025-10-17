@@ -16,13 +16,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
 import kong.unirest.UnirestInstance;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -44,11 +47,11 @@ public class AviatorSSCPrepareHelper {
         public JsonNode toJsonNode() { return JsonHelper.getObjectMapper().valueToTree(entries); }
     }
 
-    @Data @RequiredArgsConstructor
+    @Data @Reflectable @NoArgsConstructor @AllArgsConstructor
     private static class ResultEntry {
-        private final String status;
-        private final String entity;
-        private final String details;
+        private String status;
+        private String entity;
+        private String details;
     }
 
     @Data
