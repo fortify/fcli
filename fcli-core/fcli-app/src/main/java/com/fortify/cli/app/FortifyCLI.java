@@ -40,12 +40,12 @@ public class FortifyCLI {
     private static final int execute(String[] args) {
         var orgOut = System.out;
         var orgErr = System.err;
-        try ( var runner = new DefaultFortifyCLIRunner() ) {
+        try {
             installAnsiConsole();
             // Avoid any fcli code from closing stdout/stderr streams
             System.setOut(new NonClosingPrintStream(orgOut));
             System.setErr(new NonClosingPrintStream(orgErr));
-            return runner.run(args);
+            return DefaultFortifyCLIRunner.run(args);
         } finally {
             System.setOut(orgOut);
             System.setErr(orgErr);

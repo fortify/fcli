@@ -18,8 +18,8 @@ import com.fortify.cli.common.action.model.ActionStepRestTargetEntry;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 
@@ -41,7 +41,8 @@ public class ActionStepProcessorRestTarget extends AbstractActionStepProcessorMa
     private IActionRequestHelper createBasicRequestHelper(String name, ActionStepRestTargetEntry entry) {
         var baseUrl = vars.eval(entry.getBaseUrl(), String.class);
         var headers = vars.eval(entry.getHeaders(), String.class);
-        IUnirestInstanceSupplier unirestInstanceSupplier = () -> GenericUnirestFactory.getUnirestInstance(name, u->{
+        UnirestContext context = ctx.getConfig().getUnirestContext();
+        IUnirestInstanceSupplier unirestInstanceSupplier = () -> context.getUnirestInstance(name, u->{
             u.config().defaultBaseUrl(baseUrl).getDefaultHeaders().add(headers);
             UnirestUnexpectedHttpResponseConfigurer.configure(u);
             UnirestJsonHeaderConfigurer.configure(u);

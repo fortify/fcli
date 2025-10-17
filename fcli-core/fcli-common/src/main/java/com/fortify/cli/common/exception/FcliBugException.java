@@ -13,6 +13,13 @@
 package com.fortify.cli.common.exception;
 
 /**
+ * Signals a product defect or logically impossible state (broken invariant, unreachable branch
+ * reached, internal misuse of an API). Printed output includes a full stack trace (inherited
+ * from {@link FcliTechnicalException}) to aid rapid diagnosis. Messages should explicitly guide
+ * the user to file a bug report if the issue persists and reference the unexpected condition.
+ * <p>Only use when the user cannot resolve the problem through different input or configuration.
+ * If the condition could be triggered by invalid user input, prefer {@link FcliSimpleException}.
+ * For external transient failures (network, parse errors) prefer {@link FcliTechnicalException}.
  *
  * @author Ruud Senden
  */

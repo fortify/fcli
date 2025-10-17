@@ -19,13 +19,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
 import com.fortify.cli.ssc._common.rest.cli.mixin.SSCAndScanCentralUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCAndScanCentralUnirestHelper;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCAndScanCentralSessionLoginOptions;
-import com.fortify.cli.ssc._common.session.cli.mixin.SSCSessionNameArgGroup;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCAndScanCentralUrlConfig;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
@@ -34,7 +34,6 @@ import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper
 import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -43,12 +42,16 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
     @Mixin @Getter private OutputHelperMixins.Login outputHelper;
     @Getter private SSCAndScanCentralSessionHelper sessionHelper = SSCAndScanCentralSessionHelper.instance();
     @Mixin private SSCAndScanCentralSessionLoginOptions sessionLoginOptions;
-    @Getter @ArgGroup(headingKey = "ssc.session.name.arggroup") 
-    private SSCSessionNameArgGroup sessionNameSupplier;
+    @Mixin private SSCAndScanCentralUnirestInstanceSupplierMixin unirestInstanceSupplierMixin;
+    
+    @Override
+    public ISessionNameSupplier getSessionNameSupplier() {
+        return unirestInstanceSupplierMixin;
+    }
     
     @Override
     protected void logoutBeforeNewLogin(String sessionName, SSCAndScanCentralSessionDescriptor sessionDescriptor) {
-        SSCAndScanCentralUnirestInstanceSupplierMixin.shutdownUnirestInstance(sessionName);
+        unirestInstanceSupplierMixin.close(sessionName);
         sessionDescriptor.logout(sessionLoginOptions.getSscAndScanCentralCredentialConfigOptions().getSscUserCredentialsConfig());
     }
     
@@ -72,7 +75,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
             } catch (MalformedURLException e) {
                 throw new FcliSimpleException("Malformed %s URL - %s", type, e.getMessage());
             }
-    }
+        }
     }
 
     @Override
@@ -81,10 +84,9 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
         // verify SC-SAST & SC-DAST connections.
         SSCAndScanCentralSessionDescriptor sessionData = SSCAndScanCentralSessionHelper.instance().get(sessionName, true);
         String sscUrl = sessionData.getSscUrlConfig().getUrl();
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             testAuthenticatedSCSastConnection(unirest, sessionData);
-        }
-        catch (UnirestException e) {
+        } catch (UnirestException e) {
             logoutBeforeNewLogin(sessionName, sessionData);
             getSessionHelper().destroy(sessionName);
             String scSastUrlConfiguredInSSC = sessionData.getScSastUrlConfig().getUrl();
@@ -99,9 +101,9 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCAndSc
                         "Unable to connect to SC-SAST URL as configured in SSC; please contact your SSC administrator, or use the --disable option to disable SC-SAST functionality for this session.\nSSC URL: %s\nSC-SAST URL: %s",
                         sscUrl, scSastUrlConfiguredInSSC), e);
             }
-
+    
         }
-        try (var unirest = GenericUnirestFactory.createUnirestInstance()) {
+        try (var unirest = UnirestHelper.createUnirestInstance()) {
             testAuthenticatedSCDastConnection(unirest, sessionData);
         } catch (UnirestException e) {
             logoutBeforeNewLogin(sessionName, sessionData);

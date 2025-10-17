@@ -14,7 +14,7 @@ package com.fortify.cli.common.report.generator;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -76,7 +76,7 @@ public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig
      * @return
      */
     private final UnirestInstance createUnirestInstance() {
-        return _configure(GenericUnirestFactory.createUnirestInstance());
+        return UnirestHelper.createUnirestInstance(this::_configure);
     }
     
     /**

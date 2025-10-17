@@ -23,6 +23,7 @@ import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.rest.cli.mixin.UnirestContextMixin;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 
@@ -38,6 +39,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Option(names="action-parameters", arity="0", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    @Mixin private UnirestContextMixin unirestContextMixin;
     @Mixin private ActionValidationMixin actionValidationMixin;
     @Unmatched private String[] actionArgs;
     
@@ -50,7 +52,8 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
             var configBuilder = ActionRunnerConfig.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(action)
-                .progressWriter(progressWriter);
+                .progressWriter(progressWriter)
+                .unirestContext(unirestContextMixin.getUnirestContext());
             configure(configBuilder);
             var config = configBuilder.build();
             progressWriter.writeProgress("Executing action %s", config.getAction().getMetadata().getName());

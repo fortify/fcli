@@ -145,9 +145,9 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
         protected Stream<Object> getAllUserObjectsStream() {
             var spec = getRequiredCommandSpec();
             return Stream.concat(
-                    Stream.of(getProductHelper(), spec.userObject()),
-                    FcliCommandSpecHelper.getAllMixinsStream(spec).map(m->m.userObject())
-            ).filter(Objects::nonNull);
+                        Stream.of(getProductHelper()),
+                        FcliCommandSpecHelper.getAllUserObjectsStream(spec))
+                    .filter(Objects::nonNull);
         }
         protected ICommandHelper getRequiredCommandHelper() {
             if ( commandHelper==null ) {

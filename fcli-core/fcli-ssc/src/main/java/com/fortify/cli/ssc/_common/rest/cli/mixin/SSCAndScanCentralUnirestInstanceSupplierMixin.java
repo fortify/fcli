@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ssc._common.rest.cli.mixin;
 
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.cli.mixin.UnirestContextMixin;
 import com.fortify.cli.common.session.cli.mixin.AbstractSessionDescriptorSupplierMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCAndScanCentralUnirestHelper;
 import com.fortify.cli.ssc._common.session.cli.mixin.SSCSessionNameArgGroup;
@@ -22,10 +22,12 @@ import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 
 public class SSCAndScanCentralUnirestInstanceSupplierMixin extends AbstractSessionDescriptorSupplierMixin<SSCAndScanCentralSessionDescriptor> {
     @Getter @ArgGroup(headingKey = "ssc.session.name.arggroup") 
     private SSCSessionNameArgGroup sessionNameSupplier;
+    @Mixin private UnirestContextMixin unirestContextMixin;
     
     @Override
     protected final SSCAndScanCentralSessionDescriptor getSessionDescriptor(String sessionName) {
@@ -33,23 +35,23 @@ public class SSCAndScanCentralUnirestInstanceSupplierMixin extends AbstractSessi
     }
     
     public final UnirestInstance getSscUnirestInstance() {
-        return GenericUnirestFactory.getUnirestInstance("ssc/"+getSessionName(),
+        return unirestContextMixin.getUnirestInstance("ssc/"+getSessionName(),
                 u->SSCAndScanCentralUnirestHelper.configureSscUnirestInstance(u, getSessionDescriptor()));
     }
 
     public final UnirestInstance getScSastUnirestInstance() {
-        return GenericUnirestFactory.getUnirestInstance("sc-sast/"+getSessionName(),
+        return unirestContextMixin.getUnirestInstance("sc-sast/"+getSessionName(),
                 u->SSCAndScanCentralUnirestHelper.configureScSastControllerUnirestInstance(u, getSessionDescriptor()));
     }
     
     public final UnirestInstance getScDastUnirestInstance() {
-        return GenericUnirestFactory.getUnirestInstance("sc-dast/"+getSessionName(),
+        return unirestContextMixin.getUnirestInstance("sc-dast/"+getSessionName(),
                 u->SSCAndScanCentralUnirestHelper.configureScDastControllerUnirestInstance(u, getSessionDescriptor()));
     }
     
-    public static final void shutdownUnirestInstance(String sessionName) {
-        GenericUnirestFactory.shutdown("ssc/"+sessionName);
-        GenericUnirestFactory.shutdown("sc-sast/"+sessionName);
-        GenericUnirestFactory.shutdown("sc-dast/"+sessionName);
+    public final void close(String sessionName) {
+        unirestContextMixin.close("ssc/"+sessionName);
+        unirestContextMixin.close("sc-sast/"+sessionName);
+        unirestContextMixin.close("sc-dast/"+sessionName);
     }
 }

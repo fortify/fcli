@@ -167,6 +167,7 @@ public final class FcliCommandExecutorFactory {
         private CommandLine createCommandLine() {
             var cl = new CommandLine(replicatedLeafCommandSpec.root());
             cl.setExecutionExceptionHandler(FcliExecutionExceptionHandler.INSTANCE);
+            FcliExecutionStrategyFactory.configureCommandLine(cl);
             return cl;
         }
 

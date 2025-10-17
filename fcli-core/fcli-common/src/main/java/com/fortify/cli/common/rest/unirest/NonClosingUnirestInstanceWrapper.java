@@ -17,9 +17,10 @@ import kong.unirest.GetRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.JsonPatchRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 
 public class NonClosingUnirestInstanceWrapper extends UnirestInstance {
-    private final UnirestInstance wrappee;
+    @Getter private final UnirestInstance wrappee;
     
     public NonClosingUnirestInstanceWrapper(UnirestInstance wrappee) {
     super(wrappee.config());

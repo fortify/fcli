@@ -15,7 +15,7 @@ package com.fortify.cli.fod._common.session.cli.mixin;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.cli.mixin.UnirestContextMixin;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -30,11 +30,14 @@ import kong.unirest.UnirestInstance;
 import kong.unirest.apache.ApacheClient;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 
 public final class FoDUnirestInstanceSupplierMixin extends AbstractSessionDescriptorSupplierMixin<FoDSessionDescriptor> implements IUnirestInstanceSupplier
 {   
     @Getter @ArgGroup(headingKey = "fod.session.name.arggroup") 
     private FoDSessionNameArgGroup sessionNameSupplier;
+    
+    @Mixin private UnirestContextMixin unirestContextMixin;
     
     @Override
     protected final FoDSessionDescriptor getSessionDescriptor(String sessionName) {
@@ -45,12 +48,11 @@ public final class FoDUnirestInstanceSupplierMixin extends AbstractSessionDescri
     public UnirestInstance getUnirestInstance() {
         FoDSessionDescriptor sessionDescriptor = getSessionDescriptor();
         String key = "fod/"+getSessionName();
-        return GenericUnirestFactory.getUnirestInstance(key, 
-                u->configure(u, sessionDescriptor));
+        return unirestContextMixin.getUnirestInstance(key, u->configure(u, sessionDescriptor));
     }
     
-    public static final void shutdownUnirestInstance(String sessionName) {
-        GenericUnirestFactory.shutdown("fod/"+sessionName);
+    public final void close(String sessionName) {
+        unirestContextMixin.close("fod/"+sessionName);
     }
 
     protected final void configure(UnirestInstance unirest, FoDSessionDescriptor sessionDescriptor) {

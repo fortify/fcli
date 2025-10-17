@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -29,14 +29,14 @@ import kong.unirest.UnirestInstance;
 public class FoDOAuthHelper {
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, scopes);
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+    try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
     }
 
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDClientCredentials cc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(cc, scopes);
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+    try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, formData);
         }
     }

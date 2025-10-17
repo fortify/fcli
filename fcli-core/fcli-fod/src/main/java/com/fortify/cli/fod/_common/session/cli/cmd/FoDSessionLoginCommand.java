@@ -16,8 +16,8 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.session.cli.mixin.ISessionNameSupplier;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionLoginOptions;
-import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionNameArgGroup;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
@@ -25,7 +25,6 @@ import com.fortify.cli.fod._common.session.helper.oauth.FoDOAuthHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.FoDTokenCreateResponse;
 
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -34,12 +33,16 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     @Getter @Mixin private OutputHelperMixins.Login outputHelper;
     @Getter private FoDSessionHelper sessionHelper = FoDSessionHelper.instance();
     @Mixin private FoDSessionLoginOptions loginOptions;
-    @Getter @ArgGroup(headingKey = "fod.session.name.arggroup") 
-    private FoDSessionNameArgGroup sessionNameSupplier;
+    @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplierMixin;
+    
+    @Override
+    public ISessionNameSupplier getSessionNameSupplier() {
+        return unirestInstanceSupplierMixin;
+    }
     
     @Override
     protected void logoutBeforeNewLogin(String sessionName, FoDSessionDescriptor sessionDescriptor) {
-        FoDUnirestInstanceSupplierMixin.shutdownUnirestInstance(sessionName);
+        unirestInstanceSupplierMixin.close(sessionName);
         // TODO Can we revoke a previously generated FoD token?
     }
 

@@ -176,7 +176,7 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
         true: Terminate action execution if the fcli command returned a non-zero exit code
         false: Continue action execution if the fcli command returned a non-zero exit code
         
-        Default value is taken from 'config:run.fcli.status.status.check.default'. If not \
+        Default value is taken from 'config:run.fcli.status.check.default'. If not \
         specified, default value is 'false' if 'on.fail' is specified, 'true' otherwise.
         
         For now, this instruction is meant to be used only by built-in fcli actions; custom actions \

@@ -14,6 +14,13 @@ package com.fortify.cli.common.session.helper;
 
 import lombok.Getter;
 
+/**
+ * Specialized simple exception for logout flows indicating a user-facing problem during
+ * session termination (e.g. missing credentials required to revoke a token). The
+ * {@code destroySession} flag controls whether the session should still be removed from
+ * local storage despite the error. Command implementations can inspect this flag to decide
+ * whether to keep session artifacts.
+ */
 public class FcliSessionLogoutException extends FcliSessionException {
     private static final long serialVersionUID = 1L;
     @Getter private boolean destroySession;

@@ -14,16 +14,47 @@ package com.fortify.cli.common.rest.unirest;
 
 import java.io.File;
 import java.nio.file.StandardCopyOption;
+import java.util.function.Consumer;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
+import com.fortify.cli.common.json.JsonHelper;
+
+import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
 
 /**
  * This class provides utility methods related to Unirest
  */
 public class UnirestHelper {
     public static final File download(String fcliModule, String url, File dest) {
-        GenericUnirestFactory.getUnirestInstance(fcliModule, u->ProxyHelper.configureProxy(u, fcliModule, url))
-                .get(url).asFile(dest.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
-        return dest;
+        try (var unirest = createUnirestInstance()) {
+            ProxyHelper.configureProxy(unirest, fcliModule, url);
+            unirest.get(url).asFile(dest.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
+            return dest;
+        }
+    }
+
+    /**
+     * Create a new Unirest instance, configured with the standard FCLI JSON object mapper.
+     * Callers are responsible for closing the returned instance.
+     */
+    public static UnirestInstance createUnirestInstance() {
+        UnirestInstance instance = Unirest.spawnInstance();
+        instance.config().setObjectMapper(new JacksonObjectMapper(JsonHelper.getObjectMapper()));
+        return instance;
+    }
+    
+    /**
+     * Create a new Unirest instance, configured with the standard FCLI JSON object mapper
+     * and any custom configuration applied by the given configurer.
+     * Callers are responsible for closing the returned instance.
+     */
+    public static UnirestInstance createUnirestInstance(Consumer<UnirestInstance> configurer) {
+        UnirestInstance instance = createUnirestInstance();
+        if (configurer != null) {
+            configurer.accept(instance);
+        }
+        return instance;
     }
 }

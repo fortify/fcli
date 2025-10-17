@@ -15,7 +15,7 @@ package com.fortify.cli.common.session.cli.mixin;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
 import com.fortify.cli.common.session.helper.ISessionDescriptorSupplier;
 
-public abstract class AbstractSessionDescriptorSupplierMixin<D extends ISessionDescriptor> implements ISessionDescriptorSupplier<D> {
+public abstract class AbstractSessionDescriptorSupplierMixin<D extends ISessionDescriptor> implements ISessionNameSupplier, ISessionDescriptorSupplier<D> {
     public final D getSessionDescriptor() {
         return getSessionDescriptor(getSessionName());
     }

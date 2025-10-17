@@ -230,13 +230,20 @@ public class FcliCommandSpecHelper {
      * Recursively returns a Stream of all mixins (including nested ones) for the given CommandSpec.
      * The returned stream includes only mixin CommandSpec instances, not the root CommandSpec itself.
      */
-    public static Stream<CommandSpec> getAllMixinsStream(CommandSpec commandSpec) {
+    public static final Stream<CommandSpec> getAllMixinsStream(CommandSpec commandSpec) {
         if (commandSpec == null) return Stream.empty();
         return commandSpec.mixins().values().stream()
             .flatMap(mixin -> Stream.concat(
                 Stream.of(mixin),
                 getAllMixinsStream(mixin)
             ));
+    }
+    
+    public static final Stream<Object> getAllUserObjectsStream(CommandSpec commandSpec) {
+        return Stream.concat(
+                Stream.of(commandSpec.userObject()),
+                getAllMixinsStream(commandSpec).map(m->m.userObject())
+        ).filter(Objects::nonNull);
     }
         
     public static final Optional<QueryExpression> getQueryExpression(CommandSpec commandSpec) {

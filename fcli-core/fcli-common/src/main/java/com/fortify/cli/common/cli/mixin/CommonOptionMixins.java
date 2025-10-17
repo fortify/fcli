@@ -94,7 +94,13 @@ public class CommonOptionMixins {
             return prompt;
         }
         
-        public static final class FcliAbortedByUserException extends FcliSimpleException {
+    /**
+     * Thrown when a destructive or sensitive operation requires explicit user confirmation
+     * (via --confirm or interactive prompt) and the user either omits confirmation or provides
+     * a non-matching response. Treated as a {@link FcliSimpleException} with concise output
+     * indicating intentional abort; no technical diagnostics are needed.
+     */
+    public static final class FcliAbortedByUserException extends FcliSimpleException {
             private static final long serialVersionUID = 1L;
             public FcliAbortedByUserException(String msg) { super(msg); }
         }

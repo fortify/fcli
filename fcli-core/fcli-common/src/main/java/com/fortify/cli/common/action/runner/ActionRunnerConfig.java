@@ -23,6 +23,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spel.ISpelEvaluator;
 
@@ -59,6 +60,8 @@ public class ActionRunnerConfig {
     @Singular private final Collection<BiConsumer<ActionRunnerContext, SimpleEvaluationContext>> actionContextSpelEvaluatorConfigurers;
     /** Default options to pass to fcli commands in run.fcli steps (if the fcli command supports that option) */ 
     @Singular private final Map<String,String> defaultFcliRunOptions;
+    /** Injected UnirestContext for REST targets and related helpers */
+    private final UnirestContext unirestContext;
     
     /** Factory for creating the single {@link ISpelEvaluator} instance. By using a factory, we can
      *  check for illegal access to the {@link ISpelEvaluator} during configuration phase. */

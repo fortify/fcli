@@ -10,11 +10,12 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.app.runner;
+package com.fortify.cli.common.rest.unirest;
 
-import java.util.List;
-
-public interface IFortifyCLIRunner extends AutoCloseable {
-    int run(String... args);
-    int run(List<String> args);
+/**
+ * Marker interface for commands and mixins that need a per-execution {@link UnirestContext}.
+ * Implementations receive the context from the execution strategy before command logic runs.
+ */
+public interface IUnirestContextAware {
+    void setUnirestContext(UnirestContext context);
 }

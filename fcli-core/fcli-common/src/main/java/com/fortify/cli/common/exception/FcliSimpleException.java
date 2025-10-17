@@ -16,6 +16,21 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import picocli.CommandLine.ParameterException;
 
+/**
+ * Indicates an expected/user-facing error condition (validation failure, missing resource,
+ * conflicting options, deliberate abort). Output is formatted as a concise summary; the
+ * underlying cause stack trace is suppressed if the cause is another {@code FcliSimpleException}
+ * or a picocli {@code ParameterException}. For other cause types (technical failures) the full
+ * stack trace for the cause is appended to aid troubleshooting while keeping the top-level
+ * message focused and actionable.
+ * <p>Usage guidelines:
+ * <ul>
+ *   <li>Throw for any condition the user can reasonably correct (bad option value, unknown id).</li>
+ *   <li>Keep messages short; suggest remediation (expected format, required option name).</li>
+ *   <li>Prefer single-line messages; use "\n" for multi-line details (indentation handled automatically).</li>
+ *   <li>Avoid wrapping an existing {@code AbstractFcliException}; let it propagate unchanged.</li>
+ * </ul>
+ */
 public class FcliSimpleException extends AbstractFcliException {
     private static final long serialVersionUID = 1L;
 

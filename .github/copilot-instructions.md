@@ -8,6 +8,59 @@
 - Prefer short methods; split if necessary
 - Utilize Java 17 features like Streams to minimize/optimize code
 - Don't add comments that describe changes, like 'New ...', 'Updated ...'. Comments should only be used to explain code if necessary
+  
+## Exception Handling
+Don't throw standard Java exceptions (like RuntimeException) for CLI-surface errors; prefer the hierarchy in `com.fortify.cli.common.exception` so output and exit codes are consistent.
+
+Primary types:
+    - FcliSimpleException: Expected/user-facing error (invalid input, missing resource, conflicting options). Shows concise summary; underlying cause stack trace suppressed unless it's another non-simple exception.
+    - FcliTechnicalException: Unexpected technical failure (I/O, parsing, remote API protocol issue) that isn't a product bug but may need investigation. Full stack trace is printed.
+    - FcliBugException: Indicates a product defect or impossible state (logic invariant broken, unreachable code reached). Full stack trace printed. Message should guide user to file a bug.
+
+Additional specialized subclasses may extend these (e.g. `FcliAbortedByUserException` for deliberate aborts, session/logout variants). Choose the most specific subclass available; otherwise use one of the primary types above.
+
+Decision matrix (choose first matching row):
+    1. User-provided input invalid, missing, ambiguous, conflicting -> FcliSimpleException.
+    2. External system/resource not found or access denied and this is a normal possibility -> FcliSimpleException (clear guidance, possible remediation).
+    3. Operation aborted intentionally by user confirmation flow -> FcliAbortedByUserException (subclass of FcliSimpleException).
+    4. Unexpected low-level failure (network hiccup, JSON parse error, file read error) -> FcliTechnicalException (wrap original cause).
+    5. Invariant violation, impossible branch, internal misuse of API -> FcliBugException.
+
+Message guidelines:
+    - Be actionable: state what was wrong and how to correct (option name, expected format, required precondition).
+    - Avoid starting with lowercase; sentence case preferred. No trailing periods unless multiple sentences.
+    - Keep within one line when feasible; use "\n" for multi-line details (FcliSimpleException formatting maintains indentation).
+    - For multi-value guidance prefer lists separated by "|" for enums (e.g. true|1|false|0) or "<value1>, <value2>" for sets.
+    - Include contextual identifiers (names, ids) quoted only when necessary to disambiguate. Prefer single quotes.
+
+Wrapping causes:
+    - Always preserve root cause in constructor when useful: `throw new FcliTechnicalException("Error reading file "+file, e);`
+    - For FcliSimpleException, passing a cause will print either a concise summary (if cause is ParameterException or another FcliSimpleException) or the full stack of the cause for other types.
+    - Do NOT build manual stack trace strings; rely on `getStackTraceString()` implementation.
+
+Exit codes:
+    - Set a custom exit code only when needed (`exception.exitCode(<code>)` after construction). Default picocli execution exception exit code otherwise.
+    - Keep mapping stable; introduce new codes deliberately (document in CHANGELOG).
+
+When to rethrow vs convert:
+    - Convert known checked/third-party exceptions at boundary layers (REST helpers, file readers) to FcliTechnicalException.
+    - Let existing AbstractFcliException instances propagate unchanged (avoid wrapping to keep message formatting intact).
+    - Only catch and wrap if you can add meaningful context; otherwise allow bubble-up.
+
+Avoid:
+    - Throwing generic RuntimeException, Exception.
+    - Logging and then throwing for Simple exceptions (output already user-focused); log debug if extra diagnostics desired.
+    - Swallowing cause details—always attach original cause for technical/bug exceptions.
+
+Examples:
+    - Validation: `if (StringUtils.isBlank(name)) throw new FcliSimpleException("--name must be specified");`
+    - Remote parse: `try { parse(json); } catch (JsonProcessingException e) { throw new FcliTechnicalException("Error processing JSON data", e); }`
+    - Impossible branch: `default -> throw new FcliBugException("Unexpected scan status: "+status);`
+
+Subclasses: If adding a new subclass, extend the closest existing base (`FcliSimpleException` for user-level semantics) and keep constructors mirroring base for consistency. Provide a distinct semantic purpose; avoid proliferation for single-use cases.
+
+Testing: For command tests expecting failures, assert on exception class and message prefix (not full text) to allow minor wording refinements.
+
 
 ## Detailed Style Guide (AI & Manual Edits)
 
