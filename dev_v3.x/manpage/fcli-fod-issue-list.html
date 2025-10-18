@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251018.105838-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251018.145815-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,7 +47,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod issue list</strong> [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<p><strong>fcli fod issue list</strong> [<strong>--fast-output</strong>] [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                     [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
                     [<strong>--rel</strong>=<em>id|app[:ms]:rel</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
                     <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
@@ -101,6 +101,10 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Embed extra issue data. Due to FoD rate limits, this may significantly affect performance. Allowed values: allData, summary, details, recommendations, history, requestResponse, headers, parameters, traces. Using the --output option, this extra data can be included in the output. Using the --query option, this extra data can be queried upon. To get an understanding of the structure and contents of the embedded data, use the --output json or --output yaml options.</p>
+</dd>
+<dt class="hdlist1"><strong>--fast-output</strong></dt>
+<dd>
+<p>For streaming output formats (like json, yaml, csv), output each page of data immediately. Ignored for non-streaming output formats (like table) or if --release is specified. Aggregated fields (ids*, foundIn* &amp; vulnIds*) will be empty or blank, and ordering of issues may be different.</p>
 </dd>
 <dt class="hdlist1"><strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em></dt>
 <dd>
@@ -197,7 +201,7 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-10-18 11:01:24 UTC
+Last updated 2025-10-18 15:00:55 UTC
 </div>
 </div>
 </body>
