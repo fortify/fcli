@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Developer Information
-fcli_version: 0.20251020.083313-dev_v3.x
+fcli_version: 0.20251020.161247-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251020.083313-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251020.083313-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251020.161247-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 0.20251020.083313-dev_v3.x</span>
+<span id="revnumber">version 0.20251020.161247-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -35,7 +35,7 @@ fcli_version: 0.20251020.083313-dev_v3.x
 <li><a href="#_branches">Branches</a></li>
 <li><a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a>
 <ul class="sectlevel2">
-<li><a href="#_main_develop_branches"><code>main</code> &amp; <code>develop</code> branches</a></li>
+<li><a href="#_relv3_x_devv3_x_branches"><code>rel/v3.x</code> &amp; <code>dev/v3.x</code> branches</a></li>
 <li><a href="#_feature_other_branches">Feature &amp; other branches</a></li>
 </ul>
 </li>
@@ -56,12 +56,7 @@ fcli_version: 0.20251020.083313-dev_v3.x
 <li><a href="#_user_documentation">User Documentation</a></li>
 </ul>
 </li>
-<li><a href="#_code_style_structure">Code Style &amp; Structure</a>
-<ul class="sectlevel2">
-<li><a href="#_coding_conventions">Coding Conventions</a></li>
-<li><a href="#_package_structure">Package Structure</a></li>
-</ul>
-</li>
+<li><a href="#_code_style_structure">Code Style &amp; Structure</a></li>
 <li><a href="#_implementing_fcli_commands">Implementing fcli Commands</a>
 <ul class="sectlevel2">
 <li><a href="#_command_structure">Command Structure</a></li>
@@ -93,16 +88,16 @@ fcli_version: 0.20251020.083313-dev_v3.x
 <h2 id="_branches"><a class="anchor" href="#_branches"></a>Branches</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>develop</code> branch is our primary branch for active fcli development. In general, new features/fixes/&#8230;&#8203; should be developed in a dedicated branch or fcli fork, and eventually merged into the <code>develop</code> branch by raising a Pull Request.</p>
+<p>The <code>dev/v3.x</code> branch is our primary branch for active fcli development. In general, new features/fixes/&#8230;&#8203; should be developed in a dedicated branch or fcli fork, and eventually merged into the <code>dev/v3.x</code> branch by raising a Pull Request.</p>
 </div>
 <div class="paragraph">
-<p>Once we are ready for releasing a new fcli version, the <code>develop</code> branch will be merged into the <code>main</code> branch, which, based on conventional commit messages (see next section) will result in a release PR to be automatically raised; merging this PR will automatically build the fcli release version and publish the various release artifacts. Once release, the <code>main</code> branch needs to be merged back into the <code>develop</code> branch to apply changelog and version updates.</p>
+<p>Once we are ready for releasing a new fcli version, the <code>dev/v3.x</code> branch will be merged into the <code>rel/v3.x</code> branch, which, based on conventional commit messages (see next section) will result in a release PR to be automatically raised; merging this PR will automatically build the fcli release version and publish the various release artifacts. Once released, the <code>rel/v3.x</code> branch needs to be merged back into the <code>dev/v3.x</code> branch to apply changelog and version updates.</p>
 </div>
 <div class="paragraph">
-<p>In some cases, the process above may require a rewrite of the commit history on the <code>develop</code> branch, as we may have a need to rewrite some commit messages to generate proper release notes. So, after an fcli release, you should always update/replace any branches/forks/local copies to apply the new commit history to avoid issues when merging new changes.</p>
+<p>In some cases, the process above may require a rewrite of the commit history on the <code>dev/v3.x</code> branch, as we may have a need to rewrite some commit messages to generate proper release notes. So, after an fcli release, you should always update/replace any branches/forks/local copies to apply the new commit history to avoid issues when merging new changes.</p>
 </div>
 <div class="paragraph">
-<p>In general, the <code>main</code> branch shouldn&#8217;t be touched (other than as described above), except if we need to apply some (relatively urgent) bug fix at a time when the <code>develop</code> branch is not yet ready for release. In general, this is only applicable if we&#8217;ve already merged some features to the <code>develop</code> branch that still need more work before final release.</p>
+<p>In general, the <code>rel/v3.x</code> branch shouldn&#8217;t be touched (other than as described above), except if we need to apply some (relatively urgent) bug fix at a time when the <code>dev/v3.x</code> branch is not yet ready for release. In general, this is only applicable if we&#8217;ve already merged some features to the <code>dev/v3.x</code> branch that still need more work before final release.</p>
 </div>
 <div class="paragraph">
 <p>Apart from the branches listed above, there&#8217;s also a <code>gh-pages</code> branch that is used to publish documentation to <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>. Most of the files in this branch are either static or automatically generated during fcli builds, so other than changing documentation structure or performing cleanup (like removing documentation for outdated fcli versions), in general this branch shouldn&#8217;t be touched.</p>
@@ -113,9 +108,9 @@ fcli_version: 0.20251020.083313-dev_v3.x
 <h2 id="_conventional_commits_versioning"><a class="anchor" href="#_conventional_commits_versioning"></a>Conventional Commits &amp; Versioning</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_main_develop_branches"><a class="anchor" href="#_main_develop_branches"></a><code>main</code> &amp; <code>develop</code> branches</h3>
+<h3 id="_relv3_x_devv3_x_branches"><a class="anchor" href="#_relv3_x_devv3_x_branches"></a><code>rel/v3.x</code> &amp; <code>dev/v3.x</code> branches</h3>
 <div class="paragraph">
-<p>Versioning is handled automatically by <a href="https://github.com/google-github-actions/release-please-action">release-please-action</a> based on <a href="https://www.conventionalcommits.org/">Conventional Commits</a>. Every commit to the <code>main</code> or <code>develop</code> branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.</p>
+<p>Versioning is handled automatically by <a href="https://github.com/google-github-actions/release-please-action">release-please-action</a> based on <a href="https://www.conventionalcommits.org/">Conventional Commits</a>. Every commit to the <code>dev/v3.x</code> branch should follow the Conventional Commits convention, with those commit messages then being merged into the <code>rel/v3.x</code> branch to generate release notes. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.</p>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -125,18 +120,24 @@ ci: Change to GitHub Actions workflow; won't show up in changelog
 
 docs: Change to documentation; won't show up in changelog
 
-fix: Some fix (#2)
+fix: `fcli ssc issue list`: Fix ... (fixes #2)
 
-feat: New feature (#3)
+fix: SSC `gitlab-sast-report` action: Fix ... (fixes #3)
 
-feat!: Some feature that breaks backward compatibility
+feat: Add `fcli fod issue update` command ... (resolves #4)
 
-feat: Some feature
-  BREAKING-CHANGE: No longer supports xyz</pre>
+feat: `fcli fod issue list`: Add `--app` option to allow for querying issues at application level (resolves #5)
+
+feat!: Remove `fcli fod issue list` command; use `...` instead (resolves #6)
+
+feat!: `fcli ssc issue list`: Remove `--xyz` option (resolves #7)</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>See the output of <code>git log</code> to view some sample commit messages. Note that such commit messages should only describe changes since the last fcli release, not changes within the current development release. For example, suppose you&#8217;ve developed a new feature that hasn&#8217;t been released yet, and then implement some fix for this unreleased feature, you shouldn&#8217;t use a <code>fix:</code> commit message but instead use a <code>chore:</code> or similar message. Otherwise, the changelog would contain entries for both the new feature and fixes to that feature, which doesn&#8217;t make sense.</p>
+<p>See the output of <code>git log</code> to view some sample commit messages. As shown above, commit messages usually list the fcli command and any options that were added/removed/changed in literal blocks (back quotes), and include the associated GitHub issue number to allow the issue to be automatically closed when the commit message is pushed/merged onto the dev/v3.x branch. If an existing command was updated, we first list the command name (may include wild cards, like <code>+`fcli fod issue *</code>+`, followed by a colon, followed by the description. If a command was added/removed, we prefix the command name with Add/Remove. This allows for nice (alphabetical) ordering of release note entries.</p>
+</div>
+<div class="paragraph">
+<p>Note that such commit messages should only describe changes since the last fcli release, not changes within the current development release. For example, suppose you&#8217;ve developed a new feature that hasn&#8217;t been released yet, and then implement some fix for this unreleased feature, you shouldn&#8217;t use a <code>fix:</code> commit message but instead use a <code>chore:</code> or similar message. Otherwise, the changelog would contain entries for both the new feature and fixes to that feature, which doesn&#8217;t make sense.</p>
 </div>
 <div class="paragraph">
 <p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.</p>
@@ -145,10 +146,10 @@ feat: Some feature
 <div class="sect2">
 <h3 id="_feature_other_branches"><a class="anchor" href="#_feature_other_branches"></a>Feature &amp; other branches</h3>
 <div class="paragraph">
-<p>In general, you can use the same commit messages as described above. However, especially when implementing a larger feature that may undergo some changes before being released, it maybe be better to use <code>proposed-feat:</code> instead, to avoid having to fix commit messages if the initial feature description no longer matches the feature that&#8217;s eventually being released.</p>
+<p>Given that feature and other branches are usually squash-merged into the dev/v3.x branch, you can use any kind of commit messages, although to avoid any incorrect or duplicate messages appearing in the change log, it may be better to not use conventional commit messages as described above, but for example use something like <code>proposed-feat:</code> instead.</p>
 </div>
 <div class="paragraph">
-<p>As an example, we&#8217;ve had several occasions where we initially wrote a commit message like <code>feat: Add 'fcli ssc new-entity' commands to &#8230;&#8203;</code>, but before release decided to rename this entity or combine with another entity, causing the previous commit message to be outdated as instead we now should have a commit message <code>feat: Add 'fcli ssc renamed-entity' commands to &#8230;&#8203;</code>.</p>
+<p>Please include the feat/fix messages as described in the previous section in a literal text block in your pull request, to allow for easy copy/paste into the squash commit.</p>
 </div>
 </div>
 </div>
@@ -289,7 +290,10 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <p><code>./gradlew tasks --all</code>: List all available tasks</p>
 </li>
 <li>
-<p>Build: (plugin binary will be stored in <code>build/libs</code>)</p>
+<p><code>./gradlew :fcli-core:fcli-app:dependencyUpdates</code>: List potential dependency updates for main fcli executable</p>
+</li>
+<li>
+<p>Build: (plugin binary will be stored in <code>build/libs</code> and or <code>build/dist</code>)</p>
 <div class="ulist">
 <ul>
 <li>
@@ -323,7 +327,7 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <div class="sect2">
 <h3 id="_user_documentation"><a class="anchor" href="#_user_documentation"></a>User Documentation</h3>
 <div class="paragraph">
-<p>User documentation is generated automatically by the <code>buildRoot/app/fcli-doc</code> project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the <code>src/docs/asciidoc</code> directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.</p>
+<p>User documentation is generated automatically by the <code>fcli-other/fcli-doc</code> project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the <code>src/docs/asciidoc</code> directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.</p>
 </div>
 <div class="paragraph">
 <p>Documentation can be generated using the Gradle <code>distDocs</code> task, ending up in the <code>dist</code> directory of the aforementioned project. The global <code>dist</code> task includes the <code>distDocs</code> task.</p>
@@ -435,157 +439,8 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <div class="sect1">
 <h2 id="_code_style_structure"><a class="anchor" href="#_code_style_structure"></a>Code Style &amp; Structure</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_coding_conventions"><a class="anchor" href="#_coding_conventions"></a>Coding Conventions</h3>
 <div class="paragraph">
-<p>Common Java coding conventions should be used for fcli source code, taking the following into consideration:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Indentation is done using 4 spaces; fcli source code should not contain tabs.</p>
-</li>
-<li>
-<p>Use of System.out and System.err should be avoided, except for code that explicitly handles output.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Command output should be generated through the output framework provided in the common module.</p>
-</li>
-<li>
-<p>The logging framework should be used for outputting warning messages for example.</p>
-</li>
-<li>
-<p>If you use System.out for debugging, potentially commenting out or removing these statements once done with debugging, consider using the logging framework for debug logging. If you need this information for debugging, it may be useful to permanently have this information included in debug logs.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Avoid having commented out source code.</p>
-</li>
-<li>
-<p>Use the 'Organize Imports` feature of the IDE to remove any unused imports.</p>
-</li>
-<li>
-<p>Avoid having unused variables, methods, &#8230;&#8203;</p>
-</li>
-<li>
-<p>Avoid unsafe type conversions. In particular, when using Jackson for deserializing generic types, use <code>TypeReference</code> instead of the generic type class.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_package_structure"><a class="anchor" href="#_package_structure"></a>Package Structure</h3>
-<div class="paragraph">
-<p>Most fcli command modules use the package structure described below. Note that there may be slight variations between product-specific modules that interact with a remote system, and fcli-specific modules like <code>config</code> and <code>tool</code>.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;</code><br></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for the given module</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;._main.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains <code>&lt;module&gt;Commands</code> class listing all entity commands for the given module.</p>
-</li>
-<li>
-<p>May contain command implementations that operate at module-level rather than entity-level, like the <code>ConfigClearCommand</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for the given module entity</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.cli</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for Picocli-based code, like command implementations and mixins</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains the <code>&lt;module&gt;&lt;entity&gt;Commands</code> class, listing all sub-commands for the given entity</p>
-</li>
-<li>
-<p>Contains the individual entity action command classes</p>
-</li>
-<li>
-<p>Where appropriate, sub-packages may be used to group related action commands</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.cli.mixin</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains classes used as Mixin classes, for example defining reusable options and parameters, which may be used by commands in the current entity but also by other entities.</p>
-</li>
-<li>
-<p>May contain classes used as ArgGroups, but these should be used sparingly as noted in <a href="_arggroup_annotations">ArgGroup Annotations</a></p>
-</li>
-<li>
-<p>Usually contains a <code>&lt;module&gt;&lt;entity&gt;ResolverMixin</code> class, containing inner classes that allow for resolving one or more <code>&lt;entity&gt;</code> instances based on command-line options and/or positional parameters. Each inner class name describes the provided functionality, like <code>RequiredOption</code>, <code>OptionalOption</code>, <code>RequiredPositionalParameter</code>, &#8230;&#8203;</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.helper</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains entity-related helper classes, for example for loading entity data, deleting entities, &#8230;&#8203;</p>
-</li>
-<li>
-<p>Contains <code>*Descriptor</code> classes that hold entity-related data</p>
-</li>
-<li>
-<p>Classes in this package should not contain any picocli-related functionality; they should be designed in such a way that they could potentially be used in non-picocli applications</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;._common.*</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for module-specific generic functionality, like connecting to, and authenticating with, the remote system, generic request/response transformations, &#8230;&#8203; Please see existing modules for example structure and contents.</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
+<p>See <a href="https://github.com/fortify/fcli/blob/dev/v3.x/.github/copilot-instructions.md" class="bare">https://github.com/fortify/fcli/blob/dev/v3.x/.github/copilot-instructions.md</a></p>
 </div>
 </div>
 </div>
@@ -688,30 +543,26 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 </li>
 <li>
-<p><code>&lt;SuperClass&gt;</code> is usually <code>Abstract&lt;Module&gt;OutputCommand</code> or one of its abstract subclasses. Most modules provide <code>Abstract&lt;Module&gt;JsonNodeOutputCommand</code> and <code>Abstract&lt;Module&gt;BaseRequestOutputCommand</code> as bases classes for commands that generate <code>JsonNode</code> or <code>HttpRequest</code> instances respectively. Indirectly, virtually all leaf commands should extend from  <code>AbstractOutputCommand</code>.</p>
+<p><code>&lt;SuperClass&gt;</code> is usually <code>Abstract&lt;Module&gt;OutputCommand</code> or one of its abstract subclasses. Most modules provide <code>Abstract&lt;Module&gt;JsonNodeOutputCommand</code> and <code>Abstract&lt;Module&gt;BaseRequestOutputCommand</code> as base classes for commands that generate <code>JsonNode</code> or <code>HttpRequest</code> instances respectively, but note that this is legacy code; most commands should now extend directly from <code>Abstract&lt;Module&gt;OutputCommand</code> and generate an <code>IObjectNodeProducer</code> instance through one of the <code>*Builder</code> methods defined on <code>AbstractOutputCommand</code>, like <code>simpleObjectNodeProducerBuilder</code> or <code>requestObjectNodeProducerBuilder</code>. Indirectly, virtually all leaf commands should extend from  <code>AbstractOutputCommand</code>.</p>
 </li>
 <li>
 <p><code>&lt;CommonInterfaces&gt;</code> is a list of interfaces that define how output is being generated and processed. Following are some commonly used interfaces; see JavaDoc for details on usage:</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>IBaseRequestSupplier</code>: Supply a Unirest <code>HttpRequest</code> instance for retrieving command output data.</p>
+<p><code>IBaseRequestSupplier</code> (legacy; use <code>RequestObjectNodeProducerBuilder</code> instead): Supply a Unirest <code>HttpRequest</code> instance for retrieving command output data.</p>
 </li>
 <li>
-<p><code>IJsonNodeSupplier</code>: Supply a <code>JsonNode</code> instance representing the command output.</p>
+<p><code>IJsonNodeSupplier</code> (legacy; use <code>SimpleObjectNodeProducerBuilder</code> instead): Supply a <code>JsonNode</code> instance representing the command output.</p>
 </li>
 <li>
 <p><code>IActionCommandResultSupplier</code>: Supply data for a result column to be included in the output, like <code>DELETED</code>, <code>CREATED</code>, &#8230;&#8203;</p>
 </li>
 <li>
-<p><code>IInputTransformer</code>: Hook to transform the full JSON data before it is processed. Applied once per input in <code>AbstractObjectNodeProducer</code>.</p>
+<p><code>IInputTransformer</code> (legacy; configure directly on <code>*ObjectNodeProducerBuilder</code>): Hook to transform the full JSON data before it is processed. Applied once per input in <code>AbstractObjectNodeProducer</code>.</p>
 </li>
 <li>
-<p><code>IRecordTransformer</code>: Hook to transform individual records. Applied to each record in <code>AbstractObjectNodeProducer</code>.</p>
-</li>
-<li>
-<p>Query filtering via <code>QueryExpression</code>: Applied after record transformations to decide whether a record is included.
-The previous pipeline abstraction (<code>JsonNodePipelineStage</code> &amp; <code>TransformationPipelineRunner</code>) has been removed; transformation &amp; filtering now happen directly inside <code>AbstractObjectNodeProducer</code> for simpler and more efficient processing.</p>
+<p><code>IRecordTransformer</code> (legacy; configure directly on <code>*ObjectNodeProducerBuilder</code>): Hook to transform individual records. Applied to each record in <code>AbstractObjectNodeProducer</code>.</p>
 </li>
 </ul>
 </div>
@@ -786,6 +637,9 @@ The previous pipeline abstraction (<code>JsonNodePipelineStage</code> &amp; <cod
 </div>
 <div class="paragraph">
 <p>For everything else, including parent entities, options should be used. As an example, the <code>fcli ssc appversion-attribute set</code> command takes the parent entity (application version) as an option named <code>--appversion</code>, whereas the attribute names and values to be set are taken as a positional parameter <code>Map</code> instance.</p>
+</div>
+<div class="paragraph">
+<p>For fcli v4.0, we should consider using options only; it&#8217;s difficult to identify the proper <code>FCLI_DEFAULT_*</code> environment variable to use for positional parameters, and it&#8217;s simpler for both developers (no need to decide between option vs positional parameter) and users (although a bit more typing, users won&#8217;t need to look up whether a given command accepts positional parameter or option, for example for specifying application version).</p>
 </div>
 </div>
 <div class="sect2">
@@ -871,8 +725,8 @@ The previous pipeline abstraction (<code>JsonNodePipelineStage</code> &amp; <cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251020.083313-dev_v3.x<br>
-Last updated 2025-10-20 08:33:13 UTC
+Version 0.20251020.161247-dev_v3.x<br>
+Last updated 2025-10-20 16:12:47 UTC
 </div>
 </div>
 </body>
