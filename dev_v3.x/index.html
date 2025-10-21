@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20251021.110350-dev_v3.x
+fcli_version: 0.20251021.120721-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251021.110350-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251021.110350-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251021.120721-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20251021.110350-dev_v3.x</span>
+<span id="revnumber">version 0.20251021.120721-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -627,7 +627,7 @@ otherwise no log will be written.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>A full list of style elements that can be applied to the output is available in fcli help output or manual pages; the following table lists the most commonly used style elements:</p>
+<p>The table below describes all style elements currently supported by fcli. Fcli usage help and online manual pages also list available style elements for quick review. If you notice any style elements listed in fcli usage help that are not listed below, please <a href="https://github.com/fortify/fcli/issues">file a documentation bug</a>.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -656,6 +656,18 @@ otherwise no log will be written.</p>
 <code>no-border</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>table</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">By default, tables are printed without borders; use <code>border</code> to output a table with borders, or <code>md-border</code> to output a table with Markdown borders. Note that <code>md-border</code> is only meant for outputting simple, short property values. The output will not be a valid Markdown table if any of the output properties contains pipe or newline characters, or if contents are too long to be printed on a single line.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>wrap</code><br>
+<code>no-wrap</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>table</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, table cell contents will be wrapped if they don&#8217;t fit cell width; use the <code>no-wrap</code> style element to abbreviate cell contents instead.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fast-output</code><br>
+<code>no-fast-output</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>table</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fcli v3.10.0 and below used to collect all output data in memory to calculate appropriate table column widths. As of fcli v3.11.0, to allow for faster output, fcli will by default output data in increments of 100 records, sampling the contents of the first 100 records to determine column width. Use <code>no-fast-output</code> to revert to the old behavior, but note that due to other changes (taking terminal width into consideration and <code>(no-)wrap</code> style, table output may still be slightly different than before.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>pretty</code><br>
@@ -1560,8 +1572,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251021.110350-dev_v3.x<br>
-Last updated 2025-10-21 11:07:10 UTC
+Version 0.20251021.120721-dev_v3.x<br>
+Last updated 2025-10-21 12:10:10 UTC
 </div>
 </div>
 </body>
