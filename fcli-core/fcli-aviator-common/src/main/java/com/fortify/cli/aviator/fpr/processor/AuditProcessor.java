@@ -740,14 +740,14 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        String originalFileContent = "";
-                        try {
-                            originalFileContent = String.valueOf(fvdlProcessor.getSourceFileContent(filename));
-                        } catch (RuntimeException ex){
-                            logger.error("Could not get source for autoremediation {}", ex.getMessage());
+                        Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
+
+                        if (originalFileContentOptional.isEmpty()) {
+                            logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
                             continue;
                         }
 
+                        String originalFileContent = originalFileContentOptional.get();
                         Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
                         hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
                         hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));

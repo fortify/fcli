@@ -62,16 +62,15 @@ public class NodeProcessor {
         }
 
         for (UnifiedNodePoolType.Node jaxbNodeFromPool : nodePoolElement.getNode()) {
-            // Store the original JAXB object in the raw pool so TraceProcessor can access it.
             String nodeId = Integer.toString(jaxbNodeFromPool.getId());
             rawNodePool.put(nodeId, jaxbNodeFromPool);
 
-            // Process and store the custom Node object (existing logic)
             Node customNode = processNode(jaxbNodeFromPool);
             if (customNode != null) {
                 nodePool.put(customNode.getId(), customNode);
             }
         }
+        logger.info("NodeProcessor finished. Received sourceFileMap with {} unique file paths.", sourceFileMap.size());
     }
 
     /**

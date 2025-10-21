@@ -90,10 +90,11 @@ public class RemediationProcessor {
                     NodeList changesNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
                     for (int k = 0; k < changesNodes.getLength(); k++) {
                         Element change = (Element) changesNodes.item(k);
-                        String content = String.join(System.lineSeparator(), readFileWithFallback(filePath));
 
-                        //Check originalLine and context lines are read in different way
-                        List<String> originalLines = Files.readAllLines(filePath);
+
+                        String content = Files.readString(filePath, StandardCharsets.UTF_8).replace("\r\n", "\n");
+
+                        List<String> originalLines = Arrays.asList(content.split("\n"));
 
                         int lineFrom = Integer.parseInt(change.getElementsByTagNameNS(NAMESPACE_URI, "LineFrom").item(0).getTextContent());
                         int lineTo = Integer.parseInt(change.getElementsByTagNameNS(NAMESPACE_URI, "LineTo").item(0).getTextContent());
