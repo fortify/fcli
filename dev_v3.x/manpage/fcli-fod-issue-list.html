@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251021.062849-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251021.105251-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,7 +47,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod issue list</strong> [<strong>--fast-output</strong>] [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<p><strong>fcli fod issue list</strong> [<strong>--aggregate</strong>] [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                     [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
                     [<strong>--rel</strong>=<em>id|app[:ms]:rel</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
                     <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
@@ -69,7 +69,7 @@ fcli_version:
 <p>Optionally, additional details may be included in the output using the --embed option, but please note that this may have a significant impact on performance as this will result in additional HTTP requests to FoD for every individual issue, and FoD rate limits may apply to those requests.</p>
 </div>
 <div class="paragraph">
-<p>In general, performance of this command is largely dependent on the number of issues being retrieved from FoD. The default table output collects all data in memory until all issues have been processed, so it may take a long time before you see any output, and there&#8217;s a small risk of running out of memory. Most other output formats (like json, yaml, or csv) output data immediately after each page of issues has been loaded from FoD, resulting in more immediate output.</p>
+<p>By default, issues will be written to the output as soon as they have been loaded from FoD. When listing issues at application level, this means that no aggregation data will be included in the output. Use the --aggregate option to include aggregation data like release id&#8217;s and names in which an issue was found, and the release-specific (vuln)id&#8217;s. Note that --aggregate is equivalent to --style=no-fast-output; all issue data will be collected before being written to output. Depending on the number of releases to be processed and the number of issues per release, it may take a long time before any output is generated.</p>
 </div>
 <div class="admonitionblock warning">
 <table>
@@ -90,6 +90,10 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--aggregate</strong></dt>
+<dd>
+<p>Include aggregation data.</p>
+</dd>
 <dt class="hdlist1"><strong>--app</strong>=<em>&lt;appNameOrId&gt;</em></dt>
 <dd>
 <p>Application id or name. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id.</p>
@@ -101,10 +105,6 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Embed extra issue data. Due to FoD rate limits, this may significantly affect performance. Allowed values: allData, summary, details, recommendations, history, requestResponse, headers, parameters, traces. Using the --output option, this extra data can be included in the output. Using the --query option, this extra data can be queried upon. To get an understanding of the structure and contents of the embedded data, use the --output json or --output yaml options.</p>
-</dd>
-<dt class="hdlist1"><strong>--fast-output</strong></dt>
-<dd>
-<p>Output each page of data immediately when listing application-level issues. Aggregated fields (ids*, foundIn* &amp; vulnIds*) will be empty or blank, and ordering of issues may be different.</p>
 </dd>
 <dt class="hdlist1"><strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em></dt>
 <dd>
@@ -154,7 +154,7 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 </dd>
 <dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
 <dd>
-<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap.</p>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -201,7 +201,7 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-10-21 06:31:39 UTC
+Last updated 2025-10-21 10:55:32 UTC
 </div>
 </div>
 </body>
