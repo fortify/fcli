@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20251022.083133-dev_v3.x
+fcli_version: 0.20251022.092354-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251022.083133-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251022.083133-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251022.092354-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20251022.083133-dev_v3.x</span>
+<span id="revnumber">version 0.20251022.092354-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -187,8 +187,8 @@ fcli_version: 0.20251022.083133-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20251022.083133-dev_v3.x</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.4.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20251022.092354-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.4.1</p></td>
 </tr>
 </tbody>
 </table>
@@ -257,7 +257,7 @@ associations listed below:</p>
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.0.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json</pre>
 </div>
 </div>
 </li>
@@ -265,7 +265,7 @@ associations listed below:</p>
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.0.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json</pre>
 </div>
 </div>
 </li>
@@ -278,8 +278,8 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20251022.083133-dev_v3.x supports
-schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.0.json">2.4.0</a>. Other
+<p>As shown in the sample schema statements above, the current fcli version 0.20251022.092354-dev_v3.x supports
+schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json">2.4.1</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
 same schema minor version range.</p>
@@ -371,12 +371,12 @@ provide more details on the expected contents for each property type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -425,7 +425,7 @@ provide more details on the expected contents for each property type.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>usage</code> - <a href="#type-usage">usage</a></strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the 'fcli * action help' command.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the <code>fcli * action help &lt;action&gt;</code> command.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
@@ -465,8 +465,8 @@ description: |
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">config:
-rest.target.default: fod
-output: immediate</code></pre>
+  rest.target.default: fod
+  output: immediate</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -493,11 +493,11 @@ output: immediate</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">cli.options:
-file: # Can be referenced through ${cli.file} in action steps
+  file: # Can be referenced through ${cli.file} in action steps
     names: -f,--file
     description: Output file name
     required: false
-    defaultValue: somefile.txt</code></pre>
+    default: somefile.txt</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -524,13 +524,13 @@ file: # Can be referenced through ${cli.file} in action steps
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- var.set:
-    ...
-- rest.call:
-    ...
-- if: ${expr}
+  - var.set:
+      ...
+  - rest.call:
+      ...
+  - if: ${expr}
     run.fcli:
-    ...</code></pre>
+      ...</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -557,14 +557,14 @@ file: # Can be referenced through ${cli.file} in action steps
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">formatters:
-plainText: |
+  plainText: |
     This is formatted plain text, with variable ${varName}.
-structured:
+  structured:
     prop1: Some text
     prop2: Hello ${name}!
     prop3:
-    nestedProp1: xyz
-    nestedProp2: ${varName}</code></pre>
+      nestedProp1: xyz
+      nestedProp2: ${varName}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -629,28 +629,28 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- var.set:
-    var1: Hello ${name}
-    var2.p1: This is property 1 on var2
-    var2.p2: This is property 2 on var2
-    var3..: This is element 1 on var3
-- var.set:
-    var3..: This is element 2 on var3</code></pre>
+  - var.set:
+      var1: Hello ${name}
+      var2.p1: This is property 1 on var2
+      var2.p2: This is property 2 on var2
+      var3..: This is element 1 on var3
+  - var.set:
+      var3..: This is element 2 on var3</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- var.set: # Variable values demonstrate how 'value-fmt' may be specified
+  - var.set: # Variable values demonstrate how 'value-fmt' may be specified
     var1: 'xyz'       # Plain string, without formatter
     var2: true        # Plain boolean, without formatter
     var3: ${expr}     # Plain expression, without formatter
     var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
     var5:             # Same as var4, but expanded YAML syntax
-    fmt: myFmt
+      fmt: myFmt
     var6:             # Use the outcome of ${expr} as input for myFmt
-    fmt:   myFmt
-    value: ${expr}</code></pre>
+      fmt:   myFmt
+      value: ${expr}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -677,9 +677,9 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- var.rm:
-    - var1    # Remove variable named 'var1'
-    - ${var2} # Remove variable name as stored in var2 variable</code></pre>
+  - var.rm:
+      - var1    # Remove variable named 'var1'
+      - ${var2} # Remove variable name as stored in var2 variable</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -706,7 +706,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- log.progress: Processing record ${recordNumber}</code></pre>
+  - log.progress: Processing record ${recordNumber}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -733,7 +733,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- log.info: Output written to ${fileName}</code></pre>
+  - log.info: Output written to ${fileName}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -760,7 +760,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- log.warn: Skipping this part due to errors: ${errors}</code></pre>
+  - log.warn: Skipping this part due to errors: ${errors}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -787,7 +787,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- log.debug: ${#this}   # Log all action variables</code></pre>
+   - log.debug: ${#this}   # Log all action variables</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -814,11 +814,11 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- rest.target:
-    example:
+  - rest.target:
+      example:
         baseUrl: https://example.com/my-app
         headers:
-        Authorization: ${exampleAuth}</code></pre>
+          Authorization: ${exampleAuth}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -851,20 +851,20 @@ by later steps or other map entries within the same 'rest.call' step. If you wis
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- rest.call:
-    pvs:                            # Name for this REST call for later reference
+  - rest.call:
+      pvs:                            # Name for this REST call for later reference
         target: ssc                   # Default configured through config::rest.target.default
         method: GET                   # Default: GET
         uri: /api/v1/projectVersions  # URI
         query:                        # Query string parameters
-        fields: id,name,project     # May also use expressions
+          fields: id,name,project     # May also use expressions
         type: paged                   # simple or paged
         records.for-each:             # Iterate through response records
-        record.var-name: pv         # Variable name to hold current record
-        embed:                      # For each record, embed data from other REST call
+          record.var-name: pv         # Variable name to hold current record
+          embed:                      # For each record, embed data from other REST call
             artifacts:                # Accessible through ${pv.artifacts}
-            uri: /api/v1/projectVersions/${pv.id}/artifacts
-        do:
+              uri: /api/v1/projectVersions/${pv.id}/artifacts
+          do:
             - ...                     # Steps to execute for each response record</code></pre>
 </div>
 </div></div></td>
@@ -905,29 +905,29 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- run.fcli:
-    list-av: fcli ssc av ls</code></pre>
+  - run.fcli:
+      list-av: fcli ssc av ls</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- run.fcli:
-    avList:
+  - run.fcli:
+      avList:
         cmd: ssc av ls
         records.collect: true
-- log.debug: ${avList.records}</code></pre>
+  - log.debug: ${avList.records}</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- run.fcli:
-    process-av:
+  - run.fcli:
+      process-av:
         cmd: ssc av ls
         records.for-each:
-        record.var-name: av
-        do:
+          record.var-name: av
+          do:
             - log.debug: ${av}</code></pre>
 </div>
 </div></div></td>
@@ -959,8 +959,8 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- out.write:
-    ${cli.file}: {fmt: output}</code></pre>
+  - out.write:
+      ${cli.file}: {fmt: output}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -987,8 +987,8 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- check:
-    MY_CHECK:
+  - check:
+      MY_CHECK:
         failIf: ${condition}
         ifSkipped: PASS</code></pre>
 </div>
@@ -1017,10 +1017,10 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- records.for-each:
-    from: ${collection}
-    record.var-name: currentRecord
-    do:
+  - records.for-each:
+      from: ${collection}
+      record.var-name: currentRecord
+      do:
         - log.debug: ${currentRecord}
         - ...</code></pre>
 </div>
@@ -1049,28 +1049,28 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-    - with:
-        sessions:
+  - with:
+      sessions:
         - login: fcli fod session login ... --fod-session=myActionSession
-            logout: fcli fod session logout --fod-session=myActionSession
+          logout: fcli fod session logout --fod-session=myActionSession
     do:
-        - run.fcli:
-            myCmd: fcli fod ... --fod-session-myActionSession</code></pre>
+      - run.fcli:
+          myCmd: fcli fod ... --fod-session-myActionSession</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-    - with:
-        writers:
+  - with:
+      writers:
         csvWriter:
-            to: ${cli.file}
+          to: ${cli.file}
         type: csv
     do:
-        - records.for-each:
-            from: ${records}
-            record.var-name: record
-            do:
+      - records.for-each:
+          from: ${records}
+          record.var-name: record
+          do:
             - writer.append:
                 csvWriter: ${record}</code></pre>
 </div>
@@ -1099,12 +1099,12 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- with:
-    writers:
+  - with:
+      writers:
         csvWriter: ...
     do:
-    - writer.append:
-        csvWriter: ${myCsvRecord}</code></pre>
+      - writer.append:
+          csvWriter: ${myCsvRecord}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -1131,10 +1131,10 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- ...
-- if: ${condition}
+  - ...
+  - if: ${condition}
     steps:
-    - ... # One or more steps to execute if ${condition} evaluates to true</code></pre>
+      - ... # One or more steps to execute if ${condition} evaluates to true</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -1161,7 +1161,7 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- throw: ERROR: ${errorMessage}</code></pre>
+  - throw: ERROR: ${errorMessage}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -1188,7 +1188,7 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- if: ${someCondition}
+  - if: ${someCondition}
     exit: 1</code></pre>
 </div>
 </div></div></td>
@@ -1233,8 +1233,8 @@ more details on the expected contents for each property type.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- check:
-    MY_CHECK:
+  - check:
+      MY_CHECK:
         failIf: ${condition}
         ifSkipped: PASS</code></pre>
 </div>
@@ -1306,11 +1306,11 @@ HIDE: Hide the check from output<br></p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">cli.options:
-file: # Can be referenced through ${cli.file} in action steps
+  file: # Can be referenced through ${cli.file} in action steps
     names: -f,--file
     description: Output file name
     required: false
-    defaultValue: somefile.txt</code></pre>
+    default: somefile.txt</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1388,8 +1388,8 @@ options: --option, -o<br></p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">config:
-rest.target.default: fod
-output: immediate</code></pre>
+  rest.target.default: fod
+  output: immediate</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1464,10 +1464,10 @@ output: immediate</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- records.for-each:
-    from: ${collection}
-    record.var-name: currentRecord
-    do:
+  - records.for-each:
+      from: ${collection}
+      record.var-name: currentRecord
+      do:
         - log.debug: ${currentRecord}
         - ...</code></pre>
 </div>
@@ -1531,15 +1531,15 @@ output: immediate</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">config:
-mask.env-vars:
+  mask.env-vars:
     SOME_PASSWORD:
-    sensitivity: high</code></pre>
+      sensitivity: high</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">cli.options:
-pwd:
+  pwd:
     names: -p,--password
     mask: {sensitivity: high}</code></pre>
 </div>
@@ -1596,20 +1596,20 @@ full value will be masked.<br></p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- rest.call:
-    pvs:                            # Name for this REST call for later reference
+  - rest.call:
+      pvs:                            # Name for this REST call for later reference
         target: ssc                   # Default configured through config::rest.target.default
         method: GET                   # Default: GET
         uri: /api/v1/projectVersions  # URI
         query:                        # Query string parameters
-        fields: id,name,project     # May also use expressions
+          fields: id,name,project     # May also use expressions
         type: paged                   # simple or paged
         records.for-each:             # Iterate through response records
-        record.var-name: pv         # Variable name to hold current record
-        embed:                      # For each record, embed data from other REST call
+          record.var-name: pv         # Variable name to hold current record
+          embed:                      # For each record, embed data from other REST call
             artifacts:                # Accessible through ${pv.artifacts}
-            uri: /api/v1/projectVersions/${pv.id}/artifacts
-        do:
+              uri: /api/v1/projectVersions/${pv.id}/artifacts
+          do:
             - ...                     # Steps to execute for each response record</code></pre>
 </div>
 </div>
@@ -1786,11 +1786,11 @@ full value will be masked.<br></p></td>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- rest.target:
-    example:
+  - rest.target:
+      example:
         baseUrl: https://example.com/my-app
         headers:
-        Authorization: ${exampleAuth}</code></pre>
+          Authorization: ${exampleAuth}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1844,29 +1844,29 @@ with default values for all other properties.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- run.fcli:
-    list-av: fcli ssc av ls</code></pre>
+  - run.fcli:
+      list-av: fcli ssc av ls</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- run.fcli:
-    avList:
+  - run.fcli:
+      avList:
         cmd: ssc av ls
         records.collect: true
-- log.debug: ${avList.records}</code></pre>
+  - log.debug: ${avList.records}</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- run.fcli:
-    process-av:
+  - run.fcli:
+      process-av:
         cmd: ssc av ls
         records.for-each:
-        record.var-name: av
-        do:
+          record.var-name: av
+          do:
             - log.debug: ${av}</code></pre>
 </div>
 </div>
@@ -2081,16 +2081,16 @@ description: |
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-- var.set: # Variable values demonstrate how 'value-fmt' may be specified
+  - var.set: # Variable values demonstrate how 'value-fmt' may be specified
     var1: 'xyz'       # Plain string, without formatter
     var2: true        # Plain boolean, without formatter
     var3: ${expr}     # Plain expression, without formatter
     var4: {fmt:myFmt} # Only formatter, allowing formatter to reference all variables
     var5:             # Same as var4, but expanded YAML syntax
-    fmt: myFmt
+      fmt: myFmt
     var6:             # Use the outcome of ${expr} as input for myFmt
-    fmt:   myFmt
-    value: ${expr}</code></pre>
+      fmt:   myFmt
+      value: ${expr}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2143,28 +2143,28 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-    - with:
-        sessions:
+  - with:
+      sessions:
         - login: fcli fod session login ... --fod-session=myActionSession
-            logout: fcli fod session logout --fod-session=myActionSession
+          logout: fcli fod session logout --fod-session=myActionSession
     do:
-        - run.fcli:
-            myCmd: fcli fod ... --fod-session-myActionSession</code></pre>
+      - run.fcli:
+          myCmd: fcli fod ... --fod-session-myActionSession</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-    - with:
-        writers:
+  - with:
+      writers:
         csvWriter:
-            to: ${cli.file}
+          to: ${cli.file}
         type: csv
     do:
-        - records.for-each:
-            from: ${records}
-            record.var-name: record
-            do:
+      - records.for-each:
+          from: ${records}
+          record.var-name: record
+          do:
             - writer.append:
                 csvWriter: ${record}</code></pre>
 </div>
@@ -2224,13 +2224,13 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-    - with:
-        sessions:
+  - with:
+      sessions:
         - login: fcli fod session login ... --fod-session=myActionSession
-            logout: fcli fod session logout --fod-session=myActionSession
+          logout: fcli fod session logout --fod-session=myActionSession
     do:
-        - run.fcli:
-            myCmd: fcli fod ... --fod-session-myActionSession</code></pre>
+      - run.fcli:
+          myCmd: fcli fod ... --fod-session-myActionSession</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2282,16 +2282,16 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
-    - with:
-        writers:
+  - with:
+      writers:
         csvWriter:
-            to: ${cli.file}
+          to: ${cli.file}
         type: csv
     do:
-        - records.for-each:
-            from: ${records}
-            record.var-name: record
-            do:
+      - records.for-each:
+          from: ${records}
+          record.var-name: record
+          do:
             - writer.append:
                 csvWriter: ${record}</code></pre>
 </div>
@@ -4159,8 +4159,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251022.083133-dev_v3.x<br>
-Last updated 2025-10-22 08:34:14 UTC
+Version 0.20251022.092354-dev_v3.x<br>
+Last updated 2025-10-22 09:26:40 UTC
 </div>
 </div>
 </body>

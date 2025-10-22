@@ -626,7 +626,7 @@
         "description" : "Define action usage help.",
         "additionalProperties" : false
       }, {
-        "description" : "Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the 'fcli * action help' command.\n"
+        "description" : "Required object: Action usage help, providing action usage instructions for users of this action. For example, this information may be included in action documentation, or can be viewed by users through the `fcli * action help <action>` command.\n"
       } ]
     }
   },
