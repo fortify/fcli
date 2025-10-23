@@ -27,8 +27,14 @@ public class ConsoleHelper {
     static {
         LOG.debug("ConsoleHelper initializing");
         // Disable JLine logging to avoid polluting application output
-        //java.util.logging.Logger.getLogger("org.jline").setLevel(java.util.logging.Level.OFF);
-        System.setProperty("jansi.providers", "native-image");
+        java.util.logging.Logger.getLogger("org.jline").setLevel(java.util.logging.Level.OFF);
+        // Not sure whether to set this at native image build time, run time, or whether this
+        // even works at all. There is a native-image provider listed here:
+        // https://github.com/jline/jline3/blob/947a2b8026bf29c3242ec57b160657f34f0c0c25/jansi-core/src/main/java/org/jline/jansi/AnsiConsole.java#L138
+        // This is probably coming from this PR on the original JAnsi repository:
+        // https://github.com/fusesource/jansi/pull/270
+        // But I don't see other code from that PRin JLine Jansi, like the NativeImageFeature class
+        // System.setProperty("jansi.providers", "native-image");
     }
     
     public static final boolean hasTerminal() {
