@@ -33,7 +33,7 @@ public class ConsoleHelper {
         // https://github.com/jline/jline3/blob/947a2b8026bf29c3242ec57b160657f34f0c0c25/jansi-core/src/main/java/org/jline/jansi/AnsiConsole.java#L138
         // This is probably coming from this PR on the original JAnsi repository:
         // https://github.com/fusesource/jansi/pull/270
-        // But I don't see other code from that PRin JLine Jansi, like the NativeImageFeature class
+        // But I don't see other code from that PR in JLine Jansi, like the NativeImageFeature class
         // System.setProperty("jansi.providers", "native-image");
     }
     
