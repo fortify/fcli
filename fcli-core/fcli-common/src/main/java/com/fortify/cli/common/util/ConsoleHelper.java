@@ -24,6 +24,11 @@ public class ConsoleHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ConsoleHelper.class);
     @Getter(lazy=true) private static final Integer terminalWidth = determineTerminalWidth();
     
+    static {
+        // Disable JLine logging to avoid polluting application output
+        java.util.logging.Logger.getLogger("org.jline").setLevel(java.util.logging.Level.OFF);
+    }
+    
     public static final boolean hasTerminal() {
         return System.console()!=null && !"true".equals(System.getProperty("fcli.no-terminal"));
     }
