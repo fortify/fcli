@@ -1,5 +1,5 @@
 [{
-  "name" : "org.fusesource.jansi.AnsiConsole",
+  "name" : "org.jline.jansi.AnsiConsole",
   "methods" : [ 
     {"name" : "<init>", "parameterTypes" : [ ]},
     {"name" : "systemInstall", "parameterTypes" : [ ]},

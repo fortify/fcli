@@ -17935,18 +17935,18 @@ public class CommandLine {
                 try {
                     // first check if JANSI was explicitly disabled _without loading any JANSI classes_:
                     // see https://github.com/remkop/picocli/issues/1106
-                    if (Boolean.getBoolean("org.fusesource.jansi.Ansi.disable")) {
+                    if (Boolean.getBoolean("org.jline.jansi.Ansi.disable")) {
                         return false;
                     }
-                    // the Ansi class internally also checks system property "org.fusesource.jansi.Ansi.disable"
+                    // the Ansi class internally also checks system property "org.fusesource.jline.Ansi.disable"
                     // but may also have been set with Ansi.setEnabled or a custom detector
-                    Class<?> ansi = Class.forName("org.fusesource.jansi.Ansi");
+                    Class<?> ansi = Class.forName("org.jline.jansi.Ansi");
                     Boolean enabled = (Boolean) ansi.getDeclaredMethod("isEnabled").invoke(null);
                     if (!enabled) {
                         return false;
                     }
-                    // loading this class will load the native library org.fusesource.jansi.internal.CLibrary
-                    Class<?> ansiConsole = Class.forName("org.fusesource.jansi.AnsiConsole");
+                    // loading this class will load the native library org.jline.jansi.internal.CLibrary
+                    Class<?> ansiConsole = Class.forName("org.jline.jansi.AnsiConsole");
                     Field out = ansiConsole.getField("out");
                     return out.get(null) == System.out;
                 } catch (Exception reflectionFailed) {

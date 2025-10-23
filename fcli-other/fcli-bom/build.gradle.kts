@@ -16,7 +16,7 @@ dependencies {
         api("info.picocli:picocli-codegen:4.7.5")
         api("com.formkiq:graalvm-annotations:1.2.0")
         api("com.formkiq:graalvm-annotations-processor:1.5.1")
-        api("org.fusesource.jansi:jansi:2.4.2")
+        api("org.jline:jansi:3.30.6")
         api("org.slf4j:slf4j-api:2.0.17")
         api("org.slf4j:jcl-over-slf4j:2.0.17")
         api("ch.qos.logback:logback-classic:1.5.20")

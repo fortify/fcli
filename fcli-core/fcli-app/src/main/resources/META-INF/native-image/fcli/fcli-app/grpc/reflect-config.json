@@ -1175,7 +1175,7 @@
     "queryAllDeclaredMethods":true
   },
   {
-    "name":"org.fusesource.jansi.AnsiConsole",
+    "name":"org.jline.jansi.AnsiConsole",
     "methods":[{"name":"systemInstall","parameterTypes":[] }, {"name":"systemUninstall","parameterTypes":[] }]
   },
   {

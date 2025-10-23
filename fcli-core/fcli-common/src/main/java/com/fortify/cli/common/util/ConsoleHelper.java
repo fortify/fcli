@@ -79,7 +79,7 @@ public class ConsoleHelper {
     }
 
     /**
-     * Invoke a static method on org.fusesource.jansi.AnsiConsole reflectively, only if JAnsi isn't disabled.
+     * Invoke a static method on org.jline.jansi.AnsiConsole reflectively, only if JAnsi isn't disabled.
      * @param methodName The static method name to invoke
      * @return Result of the invocation, or null if disabled/unavailable/error
      */
@@ -90,7 +90,7 @@ public class ConsoleHelper {
         }
         try {
             LOG.debug("`Invoking JAnsi method {}`", methodName);
-            var clazz = Class.forName("org.fusesource.jansi.AnsiConsole");
+            var clazz = Class.forName("org.jline.jansi.AnsiConsole");
             var method = clazz.getMethod(methodName);
             return method.invoke(null);
         } catch ( Throwable t ) {

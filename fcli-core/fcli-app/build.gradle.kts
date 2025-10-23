@@ -17,7 +17,7 @@ references@ for (r in refs) {
 // Runtime-only additions
 dependencies {
     runtimeOnly("org.slf4j:jcl-over-slf4j")
-    runtimeOnly("org.fusesource.jansi:jansi")
+    runtimeOnly("org.jline:jansi")
 }
 
 // Picocli reflect config generation
