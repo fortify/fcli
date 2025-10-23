@@ -25,8 +25,10 @@ public class ConsoleHelper {
     @Getter(lazy=true) private static final Integer terminalWidth = determineTerminalWidth();
     
     static {
+        LOG.debug("ConsoleHelper initializing");
         // Disable JLine logging to avoid polluting application output
-        java.util.logging.Logger.getLogger("org.jline").setLevel(java.util.logging.Level.OFF);
+        //java.util.logging.Logger.getLogger("org.jline").setLevel(java.util.logging.Level.OFF);
+        System.setProperty("jansi.providers", "native-image");
     }
     
     public static final boolean hasTerminal() {
