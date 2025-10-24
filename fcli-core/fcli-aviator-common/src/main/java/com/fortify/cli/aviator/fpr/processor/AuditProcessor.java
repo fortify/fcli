@@ -97,8 +97,12 @@ public class AuditProcessor {
             }
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             factory.setFeature("http://xml.org/sax/features/validation", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -127,6 +131,11 @@ public class AuditProcessor {
     private Document createDefaultAuditXml() throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            docFactory.setXIncludeAware(false);
+            docFactory.setExpandEntityReferences(false);
             docFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
             docFactory.setNamespaceAware(true);
 
@@ -686,6 +695,11 @@ public class AuditProcessor {
                                             FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            docFactory.setXIncludeAware(false);
+            docFactory.setExpandEntityReferences(false);
             docFactory.setNamespaceAware(true);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
@@ -912,6 +926,11 @@ public class AuditProcessor {
         String instanceId = remediationElement.getAttribute("instanceId");
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document tempDoc = builder.newDocument();
