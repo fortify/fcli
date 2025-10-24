@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20251024.115609-dev_v3.x
+fcli_version: 0.20251024.133003-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251024.115609-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251024.115609-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251024.133003-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20251024.115609-dev_v3.x</span>
+<span id="revnumber">version 0.20251024.133003-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -187,7 +187,7 @@ fcli_version: 0.20251024.115609-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20251024.115609-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20251024.133003-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.4.1</p></td>
 </tr>
 </tbody>
@@ -207,36 +207,67 @@ tips on custom action development.</p>
 <h3 id="_getting_started"><a class="anchor" href="#_getting_started"></a>Getting started</h3>
 <div class="paragraph">
 <p>To get accustomed with action syntax and features, it is highly recommended to have a look at the YAML
-contents of some of the fcli built-in actions. You can view the contents of built-in actions by running
-the <code>fcli * action get &lt;action&gt;</code> command, or view the contents online at the following locations:</p>
+contents of some of the fcli built-in actions using one of the following approaches:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-common/src/main/resources/com/fortify/cli/common/actions/zip">common actions</a></p>
+<p>If you already have fcli installed:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Run <code>fcli * action get &lt;action&gt;</code> command to view built-in action source</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip"><code>fcli action</code> actions</a></p>
+<p>Online in the fcli source code repository:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-common/src/main/resources/com/fortify/cli/common/actions/zip">shared actions</a> (shared acrosss all fcli modules that provide actions)</p>
 </li>
 <li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip"><code>fcli ssc</code> actions</a></p>
+<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip">'fcli action' module</a></p>
 </li>
 <li>
-<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip"><code>fcli fod</code> actions</a></p>
+<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip">'fcli ssc' module</a></p>
+</li>
+<li>
+<p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip">'fcli fod' module</a></p>
 </li>
 <li>
 <p><a href="https://github.com/fortify/fcli/blob/dev/v3.x/fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml">generate-action-dev-doc.yaml</a> (used to generate this document)</p>
 </li>
 </ul>
 </div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Online action sources reference a development version of the action schema. For custom actions, please make
+sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json</a> instead. Please see the next section for more details.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_schema_based_code_assistance"><a class="anchor" href="#_schema_based_code_assistance"></a>Schema-based code assistance</h3>
 <div class="paragraph">
-<p>Fcli provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation
-and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing
-and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema
-associations listed below:</p>
+<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json">action schema</a>, which allows YAML editors
+and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may
+need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used
+IDE plugins that are known to work with one of the schema associations listed below:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -278,7 +309,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20251024.115609-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20251024.133003-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.4.1.json">2.4.1</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4218,8 +4249,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251024.115609-dev_v3.x<br>
-Last updated 2025-10-24 11:58:59 UTC
+Version 0.20251024.133003-dev_v3.x<br>
+Last updated 2025-10-24 13:32:44 UTC
 </div>
 </div>
 </body>
