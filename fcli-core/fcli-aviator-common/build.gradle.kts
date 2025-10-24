@@ -19,7 +19,7 @@ dependencies {
     implementation("com.sun.activation:jakarta.activation:2.0.1")
     implementation("jakarta.xml.ws:jakarta.xml.ws-api:3.0.1")
     implementation("com.auth0:java-jwt:4.5.0")
-    implementation("io.grpc:grpc-netty-shaded:1.69.0")
+    implementation("io.grpc:grpc-netty-shaded:1.76.0")
     implementation("io.grpc:grpc-protobuf:1.69.0")
     api("io.grpc:grpc-stub:1.69.0")
     runtimeOnly("org.glassfish.jaxb:jaxb-runtime:3.0.2")
