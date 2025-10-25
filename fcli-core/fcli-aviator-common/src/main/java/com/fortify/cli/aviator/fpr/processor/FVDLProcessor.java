@@ -129,7 +129,6 @@ public class FVDLProcessor {
         try (InputStream fis = Files.newInputStream(fvdlFilePath)) {
             JAXBContext jaxbContext = JAXBContext.newInstance(FVDL.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            unmarshaller.setProperty("com.sun.xml.bind.externalEntityAccess", false);
             javax.xml.stream.XMLInputFactory xmlInputFactory = javax.xml.stream.XMLInputFactory.newInstance();
             xmlInputFactory.setProperty(javax.xml.stream.XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
             xmlInputFactory.setProperty(javax.xml.stream.XMLInputFactory.SUPPORT_DTD, false);

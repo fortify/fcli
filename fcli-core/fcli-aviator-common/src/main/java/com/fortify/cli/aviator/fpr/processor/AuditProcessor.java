@@ -13,7 +13,6 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.File;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -97,10 +96,10 @@ public class AuditProcessor {
             }
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
             factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/validation", false);
             factory.setXIncludeAware(false);
             factory.setExpandEntityReferences(false);
             factory.setNamespaceAware(true);
@@ -131,12 +130,12 @@ public class AuditProcessor {
     private Document createDefaultAuditXml() throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
             docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             docFactory.setXIncludeAware(false);
             docFactory.setExpandEntityReferences(false);
-            docFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
             docFactory.setNamespaceAware(true);
 
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -695,6 +694,7 @@ public class AuditProcessor {
                                             FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
             docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
@@ -926,6 +926,7 @@ public class AuditProcessor {
         String instanceId = remediationElement.getAttribute("instanceId");
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
             factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
@@ -1010,23 +1011,5 @@ public class AuditProcessor {
         transformer.transform(source, result);
     }
 
-    /**
-     * A wrapper around an OutputStream that ignores the close() call.
-     * This is essential when passing a ZipOutputStream to a utility like a Transformer
-     * that would otherwise prematurely close the entire archive stream.
-     */
-    private static class NonClosingOutputStream extends FilterOutputStream {
-        public NonClosingOutputStream(OutputStream out) {
-            super(out);
-        }
 
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            out.write(b, off, len);
-        }
-
-        @Override
-        public void close() {
-        }
-    }
 }
