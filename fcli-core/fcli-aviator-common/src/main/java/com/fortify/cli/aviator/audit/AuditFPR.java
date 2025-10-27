@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.audit;
 
 import java.io.File;
@@ -5,28 +17,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.fortify.cli.aviator.audit.model.AuditFprOptions;
-import com.fortify.cli.aviator.audit.model.FilterSelection;
-import com.fortify.cli.aviator.audit.model.ParsedFprData;
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.util.FprHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator._common.config.AviatorConfigManager;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.model.AuditFprOptions;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
+import com.fortify.cli.aviator.audit.model.FilterSelection;
+import com.fortify.cli.aviator.audit.model.ParsedFprData;
 import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.config.TagMappingConfig;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
+import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.fpr.filter.FilterSetSelector;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.ResourceUtil;
 
 public class AuditFPR {

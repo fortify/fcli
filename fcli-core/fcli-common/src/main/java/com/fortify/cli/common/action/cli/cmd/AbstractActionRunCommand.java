@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.action.cli.cmd;
 
 import java.util.List;
@@ -21,9 +21,9 @@ import com.fortify.cli.common.action.runner.ActionRunnerConfig;
 import com.fortify.cli.common.action.runner.ActionRunnerConfig.ActionRunnerConfigBuilder;
 import com.fortify.cli.common.action.runner.processor.ActionCliOptionsProcessor.ActionOptionHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.rest.cli.mixin.UnirestContextMixin;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 
@@ -39,20 +39,20 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Option(names="action-parameters", arity="0", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
-    @Mixin private CommandHelperMixin commandHelper;
+    @Mixin private UnirestContextMixin unirestContextMixin;
     @Mixin private ActionValidationMixin actionValidationMixin;
     @Unmatched private String[] actionArgs;
     
     @Override @SneakyThrows
     public final Integer call() {
-        initialize();
         try (var progressWriter = progressWriterFactory.create()) {
             progressWriter.writeProgress("Loading action %s", actionResolver.getAction());
             var action = actionResolver.loadAction(getType(), actionValidationMixin.getActionValidationHandler());
             var configBuilder = ActionRunnerConfig.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(action)
-                .progressWriter(progressWriter);
+                .progressWriter(progressWriter)
+                .unirestContext(unirestContextMixin.getUnirestContext());
             configure(configBuilder);
             var config = configBuilder.build();
             progressWriter.writeProgress("Executing action %s", config.getAction().getMetadata().getName());
@@ -76,7 +76,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
         var errorsString = String.join("\n ", optionsParseResult.getValidationErrors());
         var supportedOptionsString = ActionOptionHelper.getSupportedOptionsTable(optionsParseResult.getOptions());
         var msg = String.format("Option errors:\n %s\nSupported options:\n%s\n", errorsString, supportedOptionsString);
-        return new ParameterException(commandHelper.getCommandSpec().commandLine(), msg);
+        return new ParameterException(getCommandHelper().getCommandSpec().commandLine(), msg);
     }
 
     protected abstract String getType();

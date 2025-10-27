@@ -71,6 +71,7 @@ class FcliJavaConventionsPlugin: Plugin<Project> {
                 add("implementation", "org.apache.commons:commons-lang3:3.18.0")
                 add("implementation", "org.apache.commons:commons-compress")
                 add("implementation", "org.jsoup:jsoup")
+                add("implementation", "org.eclipse.jgit:org.eclipse.jgit");
             }
         }
 

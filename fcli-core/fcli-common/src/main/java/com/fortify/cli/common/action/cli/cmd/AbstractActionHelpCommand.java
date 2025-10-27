@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.action.cli.cmd;
 
 import java.nio.charset.StandardCharsets;
@@ -46,7 +46,6 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
     
     @Override
     public final Integer call() {
-        initialize();
         var action = actionResolver.loadAction(getType(), ActionValidationHandler.WARN);
         System.out.println(getActionHelp(action));
         return 0;
@@ -71,11 +70,12 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
 
     @SneakyThrows
     private String getClasspathResourceAsString(String path) {
-        var is = this.getClass().getResourceAsStream(path);
-        if ( is==null ) {
-            throw new FcliBugException(String.format("Class path resource %s not found", path));
+        try ( var is = this.getClass().getResourceAsStream(path) ) {
+            if ( is==null ) {
+                throw new FcliBugException(String.format("Class path resource %s not found", path));
+            }
+            return IOUtils.toString(is, StandardCharsets.UTF_8);
         }
-        return IOUtils.toString(is, StandardCharsets.UTF_8);
     }
 
     private final String getMetadata(Action action) {
@@ -96,7 +96,8 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
         }
         switch (signatureStatus) {
         case NO_PUBLIC_KEY: 
-            data.put("Required public key", StringUtils.defaultIfBlank(signatureDescriptor.getPublicKeyFingerprint(), "N/A"));
+            var publicKeyFingerprint = signatureDescriptor==null ? null : signatureDescriptor.getPublicKeyFingerprint();
+            data.put("Required public key", StringUtils.defaultIfBlank(publicKeyFingerprint, "N/A"));
             break;
         case VALID:
             data.put("Certified by", StringUtils.defaultIfBlank(publicKeyDescriptor.getName(), 

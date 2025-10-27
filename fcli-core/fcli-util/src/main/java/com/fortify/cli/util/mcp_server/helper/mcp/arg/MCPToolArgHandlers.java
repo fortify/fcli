@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.util.mcp_server.helper.mcp.arg;
@@ -19,10 +19,11 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.mcp.MCPExclude;
-import com.fortify.cli.common.output.cli.mixin.QueryOptionsArgGroup;
+import com.fortify.cli.common.spel.query.IQueryExpressionSupplier;
 import com.fortify.cli.common.util.ReflectionHelper;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
@@ -50,7 +51,7 @@ public final class MCPToolArgHandlers {
     }
     
     public final String getFcliCmdArgs(Map<String, Object> toolArgs) {
-        return mcpToolArgHandlers.stream().map(h->h.getFcliCmdArgs(toolArgs)).collect(Collectors.joining(" "));
+        return mcpToolArgHandlers.stream().map(h->h.getFcliCmdArgs(toolArgs==null?Map.of():toolArgs)).collect(Collectors.joining(" ")).trim();
     }
 
     private static final List<IMCPToolArgHandler> createToolSpecArgHelpers(CommandSpec spec, boolean paged) {
@@ -75,8 +76,8 @@ public final class MCPToolArgHandlers {
     }
 
     private static final boolean hasGenericQueryOpt(CommandSpec spec) {
-        var queryOpt = spec.optionsMap().get("--query"); 
-        return queryOpt!=null && queryOpt.group()!=null && QueryOptionsArgGroup.class.equals(queryOpt.group().typeInfo().getType());
+        return FcliCommandSpecHelper.getAllUserObjectsStream(spec)
+                .anyMatch(o -> o instanceof IQueryExpressionSupplier);
     }
 
     private static <T extends ArgSpec> void addArgSpecHelpers(List<IMCPToolArgHandler> result, List<T> argSpecs, Function<T, IMCPToolArgHandler> factory) {

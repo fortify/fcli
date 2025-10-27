@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,8 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod.release.cli.cmd;
 
 import java.util.ArrayList;
@@ -27,10 +26,10 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.app.attr.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;

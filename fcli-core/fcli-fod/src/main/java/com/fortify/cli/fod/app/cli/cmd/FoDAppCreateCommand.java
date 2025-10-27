@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod.app.cli.cmd;
 
 import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
@@ -26,13 +26,13 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.app.cli.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.app.cli.mixin.FoDMicroserviceAndReleaseNameResolverMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -119,7 +119,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
             }
         } else if ( StringUtils.isNotBlank(microserviceName) ) {
             throw new CommandLine.ParameterException(spec.commandLine(),
-               "Invalid option value: --release must be a plain release name for non-microservice applications.");
+            "Invalid option value: --release must be a plain release name for non-microservice applications.");
         }
     }
 

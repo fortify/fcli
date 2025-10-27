@@ -1,16 +1,29 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
-
-import com.fortify.cli.aviator.fpr.Vulnerability;
-import com.fortify.cli.aviator.fpr.jaxb.Description;
-import com.fortify.cli.aviator.fpr.model.ReplacementData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.fpr.jaxb.Description;
+import com.fortify.cli.aviator.fpr.model.ReplacementData;
 
 /**
  * Processor for FVDL Descriptions section. Caches descriptions by classID and processes

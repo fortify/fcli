@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.action.cli.cmd;
 
 import java.io.IOException;
@@ -53,7 +53,6 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     
     @Override @SneakyThrows
     public final Integer call() {
-        initialize();
         var contents = generateHeader();
         contents += ActionLoaderHelper
             .streamAsActions(actionSourceResolver.getActionSources(getType()), ActionValidationHandler.IGNORE)
@@ -115,11 +114,12 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
 
     @SneakyThrows
     private String getClasspathResourceAsString(String path) {
-        var is = this.getClass().getResourceAsStream(path);
-        if ( is==null ) {
-            throw new FcliBugException(String.format("Class path resource %s not found", path));
+        try ( var is = this.getClass().getResourceAsStream(path) ) {
+            if ( is==null ) {
+                throw new FcliBugException(String.format("Class path resource %s not found", path));
+            }
+            return String.format("\n----\n%s\n----\n", IOUtils.toString(is, StandardCharsets.UTF_8));
         }
-        return String.format("\n----\n%s\n----\n", IOUtils.toString(is, StandardCharsets.UTF_8));
     }
     
     private final String generateOptionsSection(Action action) {
@@ -164,10 +164,10 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     private Set<String> listDir(Path dir) {
         try (Stream<Path> stream = Files.list(dir)) {
             return stream
-              .filter(file -> !Files.isDirectory(file))
-              .map(Path::getFileName)
-              .map(Path::toString)
-              .collect(Collectors.toSet());
+            .filter(file -> !Files.isDirectory(file))
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .collect(Collectors.toSet());
         } catch ( IOException e ) {
             return new HashSet<>();
         }

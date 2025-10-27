@@ -17,8 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_SRC_LINUX: fcli-other/fcli-docker/linux
-      DOCKER_SRC_GITLAB: fcli-other/fcli-docker/gitlab-installer-svc/linux
-      DOCKER_TAG_GITLAB: gitlab-installer-svc-linux
     steps:
         - name: Check-out source code
           uses: actions/checkout@v4
@@ -49,12 +47,6 @@ jobs:
               docker run --rm -u $(id -u):$(id -g) -v ${PWD}/${i}:/data fcli-${i} fcli tool sc-client install
               test -f ${PWD}/${i}/fortify/tools/bin/scancentral
             done
-        - name: Build GitLab Installer Service image
-          shell: bash
-          run: |
-            cd ${DOCKER_SRC_GITLAB}
-            curl -L https://github.com/fortify/fcli/releases/download/${{ inputs.releaseTag }}/fcli-linux.tgz | tar -zxv
-            docker buildx build -t fcli-${DOCKER_TAG_GITLAB} --attest type=provenance,mode=max --sbom=true .
         
         # For now, we only release scratch and GitLab Installer Service images
         - name: Tag images
@@ -64,7 +56,6 @@ jobs:
             do
               echo Tagging ${v}
               docker tag fcli-scratch fortifydocker/fcli:${v#v}
-              docker tag fcli-${DOCKER_TAG_GITLAB} fortifydocker/fcli:${v#v}-${DOCKER_TAG_GITLAB}
             done
             
         - name: Docker Login

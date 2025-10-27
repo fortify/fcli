@@ -1,18 +1,17 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
 
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.FuzzyContextSearcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.MalformedInputException;
@@ -26,6 +25,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.FuzzyContextSearcher;
 
 public class RemediationProcessor {
     Logger logger = LoggerFactory.getLogger(RemediationProcessor.class);
@@ -76,10 +90,11 @@ public class RemediationProcessor {
                     NodeList changesNodes = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Change");
                     for (int k = 0; k < changesNodes.getLength(); k++) {
                         Element change = (Element) changesNodes.item(k);
-                        String content = String.join(System.lineSeparator(), readFileWithFallback(filePath));
 
-                        //Check originalLine and context lines are read in different way
-                        List<String> originalLines = Files.readAllLines(filePath);
+
+                        String content = Files.readString(filePath, StandardCharsets.UTF_8).replace("\r\n", "\n");
+
+                        List<String> originalLines = Arrays.asList(content.split("\n"));
 
                         int lineFrom = Integer.parseInt(change.getElementsByTagNameNS(NAMESPACE_URI, "LineFrom").item(0).getTextContent());
                         int lineTo = Integer.parseInt(change.getElementsByTagNameNS(NAMESPACE_URI, "LineTo").item(0).getTextContent());
@@ -181,4 +196,3 @@ public class RemediationProcessor {
 
     }
 }
-

@@ -1,21 +1,29 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.issue.cli.cmd;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
+import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc._common.rest.ssc.query.cli.mixin.SSCQParamMixin;
@@ -35,7 +43,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
+public class SSCIssueListCommand extends AbstractSSCOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Mixin private SSCIssueFilterSetResolverMixin.FilterSetOption filterSetResolver;
@@ -49,11 +57,19 @@ public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand imp
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
         .add("issueName", "category", SSCQParamValueGenerators::wrapInQuotes)
         .add("fullFileName", "file", SSCQParamValueGenerators::wrapInQuotes);
-    
+
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+    protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
         String appVersionId = parentResolver.getAppVersionId(unirest);
         SSCIssueFilterSetDescriptor filterSetDescriptor = filterSetResolver.getFilterSetDescriptor(unirest, appVersionId);
+        Map<String, String> folderNameByGuid = getFolderNameByGuid(filterSetDescriptor);
+    return requestObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
+                .baseRequest(getBaseRequest(unirest, appVersionId, filterSetDescriptor))
+                .recordTransformer(n -> addFolderName(n, folderNameByGuid))
+                .build();
+    }
+    
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest, String appVersionId, SSCIssueFilterSetDescriptor filterSetDescriptor) {
         GetRequest request = unirest.get("/api/v1/projectVersions/{id}/issues?limit=100&qm=issues")
                 .routeParam("id", appVersionId);
         if ( filterSetDescriptor!=null ) {
@@ -63,6 +79,38 @@ public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand imp
             request.queryString("filter", new SSCIssueFilterHelper(unirest, appVersionId).getFilter(filter));
         }
         return request;
+    }
+    
+    private Map<String, String> getFolderNameByGuid(SSCIssueFilterSetDescriptor descriptor) {
+        if ( descriptor==null || descriptor.getFolders()==null || descriptor.getFolders().isEmpty() ) { 
+            return Collections.emptyMap(); 
+        }
+        Map<String, String> result = new HashMap<>();
+        descriptor.getFolders().forEach(f -> {
+            var name = f.getName();
+            var guid = f.getGuid();
+            if ( guid!=null && !guid.isBlank() ) {
+                result.put(guid, name); // name may be null; we allow mapping to null explicitly
+            }
+        });
+        return result.isEmpty() ? Collections.emptyMap() : result;
+    }
+    
+    private JsonNode addFolderName(JsonNode n, Map<String, String> folderNameByGuid) {
+        if ( n==null || !n.isObject() ) { return n; }
+        ObjectNode on = (ObjectNode)n;
+        String guid = textValue(on, "folderGuid");
+        String name = guid==null ? null : folderNameByGuid.get(guid);
+        on.put("folderName", name);
+        return on;
+    }
+    
+    private String textValue(JsonNode n, String... names) {
+        for ( String name : names ) {
+            JsonNode v = n.get(name);
+            if ( v!=null && v.isValueNode() ) { String t = v.asText(); if ( t!=null && !t.isBlank() ) { return t; } }
+        }
+        return null;
     }
 
     @Override

@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.11.0](https://github.com/fortify/fcli/compare/v3.10.0...v3.11.0) (2025-10-21)
+
+
+### Features
+
+* `--style` option: Add `(no-)fast-output` support to enable faster table output by sampling first 100 records to determine column width ([b1e5659](https://github.com/fortify/fcli/commit/b1e56591129a13e7a19c38f35d18b25ce59bd8f0))
+* `--style` option: Add `(no-)wrap` support to control text wrapping in table cells ([b1e5659](https://github.com/fortify/fcli/commit/b1e56591129a13e7a19c38f35d18b25ce59bd8f0))
+* `ci` action: Detect data from local Git repository ([a52f0ef](https://github.com/fortify/fcli/commit/a52f0ef8a8f1c47815a1462f47c31c19acd2dba0))
+* `fcli fod issue ls`: Add `--app` option to allow for listing issues at application level (closes [#596](https://github.com/fortify/fcli/issues/596)) ([f9454b1](https://github.com/fortify/fcli/commit/f9454b14817cc9fb1ec7ca4744551bb740ec700b))
+* `fcli ssc issue list`: Add (queryable) `folderName` property in output ([2212093](https://github.com/fortify/fcli/commit/221209366355c6999382b3ad70d05e97dc666afd))
+* `fcli ssc rest call`: Add `/api/v1` prefix if missing, to support same endpoint format as listed in the SSC REST API reference in recent SSC versions ([c6dd23b](https://github.com/fortify/fcli/commit/c6dd23b2580f856273efcaf03bb794a93ac5bcb5))
+* Action schema: Add `#ifBlank` SpEL function ([a52f0ef](https://github.com/fortify/fcli/commit/a52f0ef8a8f1c47815a1462f47c31c19acd2dba0))
+* Action schema: Add `#localRepo` SpEL function for obtaining local repository metadata ([bfeee2e](https://github.com/fortify/fcli/commit/bfeee2e3e8ff998a91bed6d7d1483a55a52e36f8))
+* Add `fcli fod attribute` commands for managing FoD attributes (resolves [#679](https://github.com/fortify/fcli/issues/679)) ([3157d64](https://github.com/fortify/fcli/commit/3157d64b5c9ea5654dde1548dcbe8720fe352561))
+
+
+### Bug Fixes
+
+* `ci` action: Improve Azure DevOps detection logic ([a52f0ef](https://github.com/fortify/fcli/commit/a52f0ef8a8f1c47815a1462f47c31c19acd2dba0))
+* `fcli aviator ssc prepare`: Fix exception in fcli native binaries (fixes [#830](https://github.com/fortify/fcli/issues/830)) ([cbbdc2e](https://github.com/fortify/fcli/commit/cbbdc2ead00069b21ef52b1ccd5385e80159d015))
+* `fcli aviator`: Fix bugs in FPR source processing and remediation generation ([#833](https://github.com/fortify/fcli/issues/833)) ([9512d78](https://github.com/fortify/fcli/commit/9512d7863a90756038667e1332ba64450c31120d))
+* `fcli fod issue ls`: Some fixed issues were not properly annotated with `(F)` (fixes [#820](https://github.com/fortify/fcli/issues/820)) ([f9454b1](https://github.com/fortify/fcli/commit/f9454b14817cc9fb1ec7ca4744551bb740ec700b))
+* `fcli fod session login`: Fix NullPointerException if protocol is missing in FoD URL (fixes [#827](https://github.com/fortify/fcli/issues/827)) ([244bd94](https://github.com/fortify/fcli/commit/244bd943c6f51725fa7c69349ea9d5bdcefbcef2))
+* `fcli ssc session login`: Improve exception if protocol is missing in SSC or SC-SAST Controller URL ([8e89bd8](https://github.com/fortify/fcli/commit/8e89bd87b1112d2ab99368e1792f16a56f419743))
+* Compile native binaries in CPU compatibility mode to allow them to run on more CPU architectures ([0217b8f](https://github.com/fortify/fcli/commit/0217b8f5bd9e3e5b5127e4803afc26b10b89132f))
+* Improve table output ([f18f2f0](https://github.com/fortify/fcli/commit/f18f2f0434695a366692f6285e129d954a52d2fb))
+
 ## [3.10.0](https://github.com/fortify/fcli/compare/v3.9.1...v3.10.0) (2025-10-09)
 
 

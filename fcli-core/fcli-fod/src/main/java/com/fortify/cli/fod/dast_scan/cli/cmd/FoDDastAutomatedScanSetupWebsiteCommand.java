@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -15,12 +15,11 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 import java.util.ArrayList;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.fod.dast_scan.helper.FileUploadResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanAssessmentTypeDescriptor;
@@ -28,6 +27,7 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupWebsiteRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.dast_scan.helper.FileUploadResult;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
@@ -91,7 +91,7 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDDastAuto
 
     @Override
     protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                             FoDScanConfigDastAutomatedDescriptor currentSetup) {
+                            FoDScanConfigDastAutomatedDescriptor currentSetup) {
         var relId = releaseDescriptor.getReleaseId();
 
         LOG.info("Finding appropriate entitlement to use.");
@@ -234,9 +234,9 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDDastAuto
     }
 
     private ObjectNode buildResultNode(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                       FoDScanDastAutomatedSetupWebsiteRequest setupRequest,
-                                       int fileIdToUse,
-                                       FileUploadResult fileUploadResult) {
+                                    FoDScanDastAutomatedSetupWebsiteRequest setupRequest,
+                                    int fileIdToUse,
+                                    FileUploadResult fileUploadResult) {
         ObjectNode node = FoDScanConfigDastAutomatedHelper.setupScan(unirest, releaseDescriptor, setupRequest,
                 "/website-scan-setup").asObjectNode();
         node.put("scanType", getScanType())

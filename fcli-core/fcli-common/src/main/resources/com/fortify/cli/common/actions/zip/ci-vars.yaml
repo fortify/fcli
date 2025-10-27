@@ -60,8 +60,22 @@ steps:
       global.ci.name:              Azure DevOps
       global.ci.id:                ado
       global.ci.qualifiedRepoName: ${#env('Build.Repository.Name')}
-      global.ci.sourceBranch:      # TODO ${#env('Build.SourceBranch') matches 'refs/pull/.*' ? }
+      global.ci.sourceBranch:      ${(#env('Build.SourceBranch')?:'').matches('refs/pull/.*')?((#env('System.PullRequest.SourceBranch')?:#env('System.PullRequest.SourceBranchName')?:'').replaceAll('^refs/heads/','')):((#env('Build.SourceBranchName')?:#env('Build.SourceBranch')?:'').replaceAll('^refs/heads/','')) }
       global.ci.commitSHA:         ${#env('Build.SourceVersion')}
+      global.ci.sourceDir:         ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
+
+  # Generic local repository fallback (run if previous CI-specific steps didn't set these)
+  - var.set:
+      global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,#env('SOURCE_DIR')?:'.')}
+  - var.set:
+      global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
+  - if: ${#isBlank(global.ci.id) && global.ci.localRepo!=null}
+    var.set:
+      global.ci.name:              local Git repository
+      global.ci.id:                local-git
+      global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository.name.full?:global.ci.localRepo?.repository.name.short}
+      global.ci.sourceBranch:      ${global.ci.localRepo?.branch.short}
+      global.ci.commitSHA:         ${global.ci.localRepo?.commit.id.full}
 
   # Additional generic variables based on the output of the CI-specific sections above
   - var.set:
@@ -85,6 +99,3 @@ steps:
       record.var-name: p
       do:
         - log.info: "${'  '+p.key+': '+p.value}"
-  
-        
-        

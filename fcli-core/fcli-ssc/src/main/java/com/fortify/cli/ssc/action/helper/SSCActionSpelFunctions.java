@@ -1,16 +1,18 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.ssc.action.helper;
+
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
 
 import java.io.InputStream;
 import java.util.function.Consumer;
@@ -44,8 +46,6 @@ import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.SSCFi
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetHelper;
 
-import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.*;
-
 import kong.unirest.RawResponse;
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
@@ -58,71 +58,71 @@ public final class SSCActionSpelFunctions {
     private final ActionRunnerContext ctx;
     
     @SpelFunction(cat=fortify, returns="SSC application version object for the given application version name or id") 
-	public final ObjectNode appVersion(
-			@SpelFunctionParam(name="nameOrId", desc="the name or ID of the application version to load") String nameOrId) 
-	{
-		ctx.getProgressWriter().writeProgress("Loading application version %s", nameOrId);
-		var result = SSCAppVersionHelper.getRequiredAppVersion(unirestInstanceSupplier.getSscUnirestInstance(),
-				nameOrId, ":");
-		ctx.getProgressWriter().writeProgress("Loaded application version %s", result.getAppAndVersionName());
-		return result.asObjectNode();
-	}
+    public final ObjectNode appVersion(
+            @SpelFunctionParam(name="nameOrId", desc="the name or ID of the application version to load") String nameOrId) 
+    {
+        ctx.getProgressWriter().writeProgress("Loading application version %s", nameOrId);
+        var result = SSCAppVersionHelper.getRequiredAppVersion(unirestInstanceSupplier.getSscUnirestInstance(),
+                nameOrId, ":");
+        ctx.getProgressWriter().writeProgress("Loaded application version %s", result.getAppAndVersionName());
+        return result.asObjectNode();
+    }
 
-	@SpelFunction(cat=fortify, returns="SSC filter set object for the given application version and filter set title or id") 
-	public final  JsonNode filterSet(
-			@SpelFunctionParam(name="av", desc="an SSC application version object, for example as returned by `#ssc.appVersion(...)`, containing at least the `id` field") ObjectNode appVersion,
-			@SpelFunctionParam(name="titleOrId", desc="the title or ID of the filter set to load; may be blank to load the default filter set") String titleOrId) 
-	{
-		var progressMessage = StringUtils.isBlank(titleOrId) ? "Loading default filter set"
-				: String.format("Loading filter set %s", titleOrId);
-		ctx.getProgressWriter().writeProgress(progressMessage);
-		var filterSetDescriptor = new SSCIssueFilterSetHelper(unirestInstanceSupplier.getSscUnirestInstance(),
-				appVersion.get("id").asText()).getDescriptorByTitleOrId(titleOrId, false);
-		if (filterSetDescriptor == null) {
-			throw new FcliSimpleException("Unknown filter set: " + titleOrId);
-		}
-		return filterSetDescriptor.asJsonNode();
-	}
+    @SpelFunction(cat=fortify, returns="SSC filter set object for the given application version and filter set title or id") 
+    public final  JsonNode filterSet(
+            @SpelFunctionParam(name="av", desc="an SSC application version object, for example as returned by `#ssc.appVersion(...)`, containing at least the `id` field") ObjectNode appVersion,
+            @SpelFunctionParam(name="titleOrId", desc="the title or ID of the filter set to load; may be blank to load the default filter set") String titleOrId) 
+    {
+        var progressMessage = StringUtils.isBlank(titleOrId) ? "Loading default filter set"
+                : String.format("Loading filter set %s", titleOrId);
+        ctx.getProgressWriter().writeProgress(progressMessage);
+        var filterSetDescriptor = new SSCIssueFilterSetHelper(unirestInstanceSupplier.getSscUnirestInstance(),
+                appVersion.get("id").asText()).getDescriptorByTitleOrId(titleOrId, false);
+        if (filterSetDescriptor == null) {
+            throw new FcliSimpleException("Unknown filter set: " + titleOrId);
+        }
+        return filterSetDescriptor.asJsonNode();
+    }
 
-	@SpelFunction(cat=fortify, desc="""
-	        The return value of this function can be passed to a `records.for-each::from` instruction \
-	        to iterate over all rule descriptions that are referenced by issues in the given application \
-	        version. See built-in SSC sarif-sast-report.yaml action for sample usage. 
-	        """,
-	        returns="Processor for iterating over rule descriptions")
-	public IActionStepForEachProcessor ruleDescriptionsProcessor(
-			@SpelFunctionParam(name="avId", desc="the application version ID as a string") String appVersionId) 
-	{
-		var unirest = ctx.getRequestHelper("ssc").getUnirestInstance();
-		return new SSCFPRRuleDescriptionProcessor(unirest, appVersionId)::process;
-	}
+    @SpelFunction(cat=fortify, desc="""
+            The return value of this function can be passed to a `records.for-each::from` instruction \
+            to iterate over all rule descriptions that are referenced by issues in the given application \
+            version. See built-in SSC sarif-sast-report.yaml action for sample usage. 
+            """,
+            returns="Processor for iterating over rule descriptions")
+    public IActionStepForEachProcessor ruleDescriptionsProcessor(
+            @SpelFunctionParam(name="avId", desc="the application version ID as a string") String appVersionId) 
+    {
+        var unirest = ctx.getRequestHelper("ssc").getUnirestInstance();
+        return new SSCFPRRuleDescriptionProcessor(unirest, appVersionId)::process;
+    }
 
-	@SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the SSC issue details page for the given issue")
-	public String issueBrowserUrl(
-			@SpelFunctionParam(name="issue", desc="an SSC issue object, containing at least `projectVersionId`, `id`, `engineType`, and `issueInstanceId` fields") ObjectNode issue,
-			@SpelFunctionParam(name="fs", desc="`null` to use default filter set, or an SSC filter set object, for example as returned by `#ssc.filterSet(...)`, containing at least the `guid` field") ObjectNode filterset) 
-	{
-		var deepLinkExpression = baseUrl()
-				+ "/html/ssc/version/${projectVersionId}/fix/${id}/?engineType=${engineType}&issue=${issueInstanceId}";
-		if (filterset != null) {
-			deepLinkExpression += "&filterSet=" + filterset.get("guid").asText();
-		}
-		return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), issue,
-				String.class);
-	}
+    @SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the SSC issue details page for the given issue")
+    public String issueBrowserUrl(
+            @SpelFunctionParam(name="issue", desc="an SSC issue object, containing at least `projectVersionId`, `id`, `engineType`, and `issueInstanceId` fields") ObjectNode issue,
+            @SpelFunctionParam(name="fs", desc="`null` to use default filter set, or an SSC filter set object, for example as returned by `#ssc.filterSet(...)`, containing at least the `guid` field") ObjectNode filterset) 
+    {
+        var deepLinkExpression = baseUrl()
+                + "/html/ssc/version/${projectVersionId}/fix/${id}/?engineType=${engineType}&issue=${issueInstanceId}";
+        if (filterset != null) {
+            deepLinkExpression += "&filterSet=" + filterset.get("guid").asText();
+        }
+        return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), issue,
+                String.class);
+    }
 
-	@SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the SSC application version page for the given application version")
-	public String appversionBrowserUrl(
-	        @SpelFunctionParam(name="av", desc="an SSC application version object, for example as returned by `#ssc.appVersion(...)`, containing at least the `id` field") ObjectNode appVersion,
+    @SpelFunction(cat=fortify, returns="Browser-accessible URL pointing to the SSC application version page for the given application version")
+    public String appversionBrowserUrl(
+            @SpelFunctionParam(name="av", desc="an SSC application version object, for example as returned by `#ssc.appVersion(...)`, containing at least the `id` field") ObjectNode appVersion,
             @SpelFunctionParam(name="fs", desc="`null` to use default filter set, or an SSC filter set object, for example as returned by `#ssc.filterSet(...)`, containing at least the `guid` field") ObjectNode filterset)
-	{
-		var deepLinkExpression = baseUrl() + "/html/ssc/version/${id}/audit";
-		if (filterset != null) {
-			deepLinkExpression += "?filterSet=" + filterset.get("guid").asText();
-		}
-		return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), appVersion,
-				String.class);
-	}
+    {
+        var deepLinkExpression = baseUrl() + "/html/ssc/version/${id}/audit";
+        if (filterset != null) {
+            deepLinkExpression += "?filterSet=" + filterset.get("guid").asText();
+        }
+        return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), appVersion,
+                String.class);
+    }
 
     private String baseUrl() {
         return unirestInstanceSupplier.getSessionDescriptor().getSscUrlConfig().getUrl()
@@ -157,6 +157,7 @@ public final class SSCActionSpelFunctions {
         
         private final void processAuditFvdl(InputStream is, Function<JsonNode, Boolean> consumer) throws XMLStreamException {
             var factory = XMLInputFactory.newInstance();
+            factory.setXMLResolver(null); // Prevent XML External Entity Injection
             var reader = factory.createXMLStreamReader(is);
             while(reader.hasNext()) {
                 int eventType = reader.next();

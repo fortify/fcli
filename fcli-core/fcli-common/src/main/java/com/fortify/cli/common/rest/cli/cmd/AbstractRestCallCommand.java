@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.rest.cli.cmd;
 
 import java.nio.file.Files;
@@ -128,12 +128,17 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
         return applyOnProductHelper(INextPageUrlProducerSupplier.class, s->s.getNextPageUrlProducer(), null);
     }
 
+    protected String formatUri(String uri) {
+        return uri;
+    }
+
     @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
         if ( StringUtils.isBlank(uri) ) {
             throw new FcliSimpleException("Uri must be specified");
         }
-        HttpRequest<?> request = unirest.request(httpMethod, uri);
+        String processedUri = formatUri(uri);
+        HttpRequest<?> request = unirest.request(httpMethod, processedUri);
         if ( StringUtils.isNotBlank(data) ) {
             if ( "GET".equals(httpMethod) || !(request instanceof HttpRequestWithBody) ) {
                 throw new FcliSimpleException("Request body not supported for "+httpMethod+" requests");

@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -14,6 +14,9 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import java.util.ArrayList;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
@@ -24,16 +27,14 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupWorkflowRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
-
 import com.fortify.cli.fod.dast_scan.helper.FileUploadResult;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -72,7 +73,7 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDDastAut
 
     @Override
     protected JsonNode setup(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                             FoDScanConfigDastAutomatedDescriptor currentSetup) {
+                            FoDScanConfigDastAutomatedDescriptor currentSetup) {
         var relId = releaseDescriptor.getReleaseId();
 
         validate();
@@ -167,9 +168,9 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDDastAut
     }
 
     private ObjectNode buildResultNode(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                       FoDScanDastAutomatedSetupWorkflowRequest setupRequest,
-                                       FileUploadResult fileUploadResult,
-                                       ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros) {
+                                    FoDScanDastAutomatedSetupWorkflowRequest setupRequest,
+                                    FileUploadResult fileUploadResult,
+                                    ArrayList<FoDScanDastAutomatedSetupWorkflowRequest.WorkflowDrivenMacro> workflowDrivenMacros) {
         int fileIdToUse = (workflowMacroFileId != null ? workflowMacroFileId : 0);
         ObjectNode node = FoDScanConfigDastAutomatedHelper.setupScan(unirest, releaseDescriptor, setupRequest,
                 "/workflow-scan-setup").asObjectNode();

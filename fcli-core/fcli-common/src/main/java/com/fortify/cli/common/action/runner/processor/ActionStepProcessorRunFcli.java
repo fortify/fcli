@@ -1,16 +1,17 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.runner.processor;
+import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -86,8 +87,6 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
                     .cmd(cmd)
                     .progressOptionValueIfNotPresent(ctx.getConfig().getProgressWriter().type())
                     .defaultOptionsIfNotPresent(ctx.getConfig().getDefaultFcliRunOptions())
-                    .stdout(System.out)
-                    .stderr(System.err)
                     .stdoutOutputType(stdoutOutputType)
                     .stderrOutputType(stderrOutputType)
                     .onResult(r->onFcliResult(entry, recordConsumer, r))
@@ -175,8 +174,8 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         var name = fcli.getKey();
         var msg = t.getMessage();
         msg = msg==null 
-             ? "Fcli command terminated with an exception"
-             : String.format("Exception: %s", msg.split("\n", 2)[0]); // Get first line only
+            ? "Fcli command terminated with an exception"
+            : String.format("Exception: %s", msg.split("\n", 2)[0]); // Get first line only
         vars.set(String.format(FMT_STATUS_REASON, name), new TextNode(msg));
         vars.set(String.format(FMT_EXCEPTION, name), new POJONode(t));
         vars.set(String.format(FMT_EXIT_CODE, name), new IntNode(1));
@@ -258,18 +257,41 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     }
     @RequiredArgsConstructor
     private class FcliRecordConsumer implements Consumer<ObjectNode> {
+        private final PrintStream stdout = System.out;
+        private final PrintStream stderr = System.err;
         private final ActionStepFcliForEachDescriptor fcliForEach;
         private final boolean collectRecords;
-        
         @Getter(lazy=true) private final ArrayNode records = JsonHelper.getObjectMapper().createArrayNode();
         private boolean continueDoSteps = true;
+        
         @Override
         public void accept(ObjectNode record) {
             if ( collectRecords ) {
                 getRecords().add(record);
             }
             if ( continueDoSteps && fcliForEach!=null ) {
-                continueDoSteps = processForEachStepNode(fcliForEach, record);
+                // If fcliForEach is specified, FcliCommandExecutor will be configured to suppress stdout,
+                // and users may optional suppress stderr. However, output suppression should only apply
+                // to the fcli command itself, and not to any processing done for each record. As this
+                // method is called from within the context of FcliCommandExecutor, we need to temporarily
+                // restore stdout/stderr in order to allow any processing steps to write to stdout/stderr.
+                try (var x = new TempRestoreOutput()) {
+                    continueDoSteps = processForEachStepNode(fcliForEach, record);
+                }
+            }
+        }
+        
+        private final class TempRestoreOutput implements AutoCloseable {
+            private final PrintStream originalOut = System.out;
+            private final PrintStream originalErr = System.err;
+            public TempRestoreOutput() {
+                System.setOut(stdout);
+                System.setErr(stderr);
+            }
+            @Override
+            public void close() {
+                System.setOut(originalOut);
+                System.setErr(originalErr);
             }
         }
     }

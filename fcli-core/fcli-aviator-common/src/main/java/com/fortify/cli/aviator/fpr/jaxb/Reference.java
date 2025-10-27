@@ -8,6 +8,7 @@
 
 package com.fortify.cli.aviator.fpr.jaxb;
 import javax.xml.datatype.XMLGregorianCalendar;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;

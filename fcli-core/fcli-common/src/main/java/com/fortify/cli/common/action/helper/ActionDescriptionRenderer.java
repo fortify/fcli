@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.helper;
@@ -30,6 +30,7 @@ import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ActionDescriptionRenderer {
@@ -86,15 +87,17 @@ public class ActionDescriptionRenderer {
     
     @Reflectable
     public static final class ActionDescriptionRendererSpelFunctions {
+        @SneakyThrows
         public static final String include(String resourcePath) {
-            var is = ActionDescriptionRendererSpelFunctions.class.getResourceAsStream(resourcePath);
-            if ( is==null ) {
-                throw new FcliBugException(String.format("Class path resource %s not found", resourcePath));
-            }
-            try {
-                return IOUtils.toString(is, StandardCharsets.UTF_8);
-            } catch ( Exception e ) {
-                throw new FcliTechnicalException("Unable to load classpath resource "+resourcePath, e);
+            try ( var is = ActionDescriptionRendererSpelFunctions.class.getResourceAsStream(resourcePath) ) {
+                if ( is==null ) {
+                    throw new FcliBugException(String.format("Class path resource %s not found", resourcePath));
+                }
+                try {
+                    return IOUtils.toString(is, StandardCharsets.UTF_8);
+                } catch ( Exception e ) {
+                    throw new FcliTechnicalException("Unable to load classpath resource "+resourcePath, e);
+                }
             }
         }
     }

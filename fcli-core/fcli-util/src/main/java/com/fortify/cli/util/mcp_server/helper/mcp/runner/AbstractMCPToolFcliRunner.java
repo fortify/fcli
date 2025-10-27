@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.util.mcp_server.helper.mcp.runner;
@@ -15,7 +15,6 @@ package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -43,7 +42,8 @@ abstract class AbstractMCPToolFcliRunner implements IMCPToolRunner {
      */
     private final String getFullCmd(CallToolRequest request) {
         var cmd = getCommandSpec().qualifiedName(" ");
-        var args = request==null || request.arguments()==null ? "" : getToolSpecArgHelper().getFcliCmdArgs(request.arguments());
+        var providedArgs = request==null ? null : request.arguments();
+        var args = providedArgs==null ? "" : getToolSpecArgHelper().getFcliCmdArgs(providedArgs);
         return String.format("%s %s", cmd, args).trim();
     }
     
@@ -60,14 +60,6 @@ abstract class AbstractMCPToolFcliRunner implements IMCPToolRunner {
         } catch ( Exception e ) {
             LOG.error("Exception while running fcli command:\n\t"+fullCmd, e);
             return new CallToolResult(e.toString(), true);
-        } finally {
-            // To avoid connections being cached for the full lifetime of the MCP server, we
-            // explicitly shut down all connections after each fcli command execution. This 
-            // ensures that subsequent fcli invocations will recreate connections with up-to-date
-            // session data. For example, if session URL or credentials are changed by the user
-            // through a new session login command, or user logged out of a session, we don't want
-            // cached connections to still use the old URL and authentication tokens.
-            GenericUnirestFactory.shutdown();
         }
     }
     

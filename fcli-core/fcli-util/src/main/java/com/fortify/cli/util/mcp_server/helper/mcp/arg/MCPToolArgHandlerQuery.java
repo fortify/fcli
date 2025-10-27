@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.util.mcp_server.helper.mcp.arg;
@@ -24,8 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
-import com.fortify.cli.common.output.transform.fields.SelectedFieldsTransformer;
+import com.fortify.cli.common.json.transform.PropertyPathFormatter;
+import com.fortify.cli.common.json.transform.fields.SelectedFieldsTransformer;
 import com.networknt.schema.utils.StringUtils;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
@@ -77,8 +77,8 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
             var entityName = spec.name().startsWith("list-") 
                     ? spec.name().replaceFirst("^list-", "")
                     : spec.parent()!=null
-                      ? spec.parent().name()
-                      : null;
+                    ? spec.parent().name()
+                    : null;
             if ( StringUtils.isNotBlank(entityName) ) {
                 var singularEntityName = entityName.replaceAll("s$", "");
                 if ( !schemaPropertyName.toLowerCase().startsWith(singularEntityName.toLowerCase())) {
@@ -114,22 +114,22 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
         var humanReadableName = PropertyPathFormatter.humanReadable(schemaPropertyName);
         return String.format("""
             {
-              "anyOf": [
+            "anyOf": [
                 {
-                  "type": "string",
-                  "format": "regex"
+                "type": "string",
+                "format": "regex"
                 },
                 {
-                  "type": "null"
+                "type": "null"
                 }
-              ],
-              "default": null,
-              "title": "%s",
-              "description": "%s"
+            ],
+            "default": null,
+            "title": "%s",
+            "description": "%s"
             }
             """, 
-              getMessageString(spec, schemaPropertyName, "title", humanReadableName), 
-              getMessageString(spec, schemaPropertyName, "description", getPropertyDescription(humanReadableName))
+            getMessageString(spec, schemaPropertyName, "title", humanReadableName), 
+            getMessageString(spec, schemaPropertyName, "description", getPropertyDescription(humanReadableName))
             );
     }
 
@@ -147,17 +147,17 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
         var defName = PropertyPathFormatter.pascalCase(String.format("%s.query", spec.qualifiedName(".").replaceAll("[-_]", "."))); 
         schema.properties().put(ARG_QUERY, JsonHelper.getObjectMapper().readTree(String.format("""
             {
-              "anyOf": [
+            "anyOf": [
                 {
-                  "$ref": "#/$defs/%s"
+                "$ref": "#/$defs/%s"
                 },
                 {
-                  "type": "null"
+                "type": "null"
                 }
-              ],
-              "default": null,
-              "title": "Query",
-              "description": "Filter results of this MCP tool using the given queries."
+            ],
+            "default": null,
+            "title": "Query",
+            "description": "Filter results of this MCP tool using the given queries."
             }    
             """, defName)));
         schema.defs().put(defName, querySchema);

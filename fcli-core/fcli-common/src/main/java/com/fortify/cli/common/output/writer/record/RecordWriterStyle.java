@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.output.writer.record;
@@ -86,6 +86,20 @@ public final class RecordWriterStyle {
         return getOrDefault(RecordWriterStyleElementGroup.BORDER)==RecordWriterStyleElement.md_border;
     }
     
+    /**
+     * Indicates whether overflowing column content should be wrapped onto multiple lines
+     * instead of being abbreviated with an ellipsis. Defaults to wrap if not explicitly 
+     * configured.
+     */
+    public final boolean isWrap() {
+        return getOrDefault(RecordWriterStyleElementGroup.WRAP)==RecordWriterStyleElement.wrap;
+    }
+
+    /** Indicates whether fast-output (streaming) style is enabled for table output. Defaults to fast-output. */
+    public final boolean isFastOutput() {
+        return getOrDefault(RecordWriterStyleElementGroup.FAST_OUTPUT)==RecordWriterStyleElement.fast_output;
+    }
+    
     private final RecordWriterStyleElement getOrDefault(RecordWriterStyleElementGroup group) {
         return styleElementsByGroup.getOrDefault(group, group.defaultStyle());
     }
@@ -97,7 +111,9 @@ public final class RecordWriterStyle {
         flat(RecordWriterStyleElementGroup.FLAT), no_flat(RecordWriterStyleElementGroup.FLAT),
         array(RecordWriterStyleElementGroup.SINGULAR), single(RecordWriterStyleElementGroup.SINGULAR),
         border(RecordWriterStyleElementGroup.BORDER), no_border(RecordWriterStyleElementGroup.BORDER),
-        md_border(RecordWriterStyleElementGroup.BORDER)
+        md_border(RecordWriterStyleElementGroup.BORDER),
+        wrap(RecordWriterStyleElementGroup.WRAP), no_wrap(RecordWriterStyleElementGroup.WRAP),
+        fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT), no_fast_output(RecordWriterStyleElementGroup.FAST_OUTPUT)
         ;
         
         @Getter private final RecordWriterStyleElementGroup group;
@@ -117,7 +133,9 @@ public final class RecordWriterStyle {
         PRETTY("pretty"), 
         FLAT("no-flat"), 
         SINGULAR("array"),
-        BORDER("no-border");
+        BORDER("no-border"),
+        WRAP("wrap"),
+        FAST_OUTPUT("fast-output");
         
         private final String defaultStyleElementName;
         

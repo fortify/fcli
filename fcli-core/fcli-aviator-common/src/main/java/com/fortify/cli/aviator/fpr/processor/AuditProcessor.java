@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.File;
@@ -35,10 +47,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.util.FprHandle;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -48,8 +56,13 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
+
+import lombok.Setter;
 
 
 public class AuditProcessor {
@@ -617,9 +630,9 @@ public class AuditProcessor {
     }
 
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                                     TagMappingConfig tagMappingConfig,
-                                                     FPRInfo fprInfo,
-                                                     FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                                    TagMappingConfig tagMappingConfig,
+                                                    FPRInfo fprInfo,
+                                                    FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
         Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
 
@@ -668,9 +681,9 @@ public class AuditProcessor {
     }
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                             Map<String, String> remediationCommentTimestamps,
-                                             FPRInfo fprInfo,
-                                             FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                            Map<String, String> remediationCommentTimestamps,
+                                            FPRInfo fprInfo,
+                                            FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setNamespaceAware(true);
@@ -727,14 +740,14 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        String originalFileContent = "";
-                        try {
-                            originalFileContent = String.valueOf(fvdlProcessor.getSourceFileContent(filename));
-                        } catch (RuntimeException ex){
-                            logger.error("Could not get source for autoremediation {}", ex.getMessage());
+                        Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
+
+                        if (originalFileContentOptional.isEmpty()) {
+                            logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
                             continue;
                         }
 
+                        String originalFileContent = originalFileContentOptional.get();
                         Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
                         hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
                         hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));

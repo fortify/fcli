@@ -1,4 +1,35 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.aviator.audit.model.File;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
@@ -14,36 +45,17 @@ import com.fortify.cli.aviator.fpr.utils.FileUtils;
 import com.fortify.cli.aviator.fpr.utils.XmlUtils;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import lombok.Getter;
 
 /**
  * Orchestrates the processing of an FVDL file, extracting and finalizing vulnerabilities.
  */
 public class FVDLProcessor {
     private static final Logger logger = LoggerFactory.getLogger(FVDLProcessor.class);
-    private final Map<String, String> sourceFileMap = new ConcurrentHashMap<>();
     private final NodeProcessor nodeProcessor;
     private final TraceProcessor traceProcessor;
     private final SnippetProcessor snippetProcessor;
@@ -59,8 +71,12 @@ public class FVDLProcessor {
     public FVDLProcessor(FprHandle fprHandle) {
         this.fprHandle = fprHandle;
         this.fileUtils = new FileUtils();
-        this.nodeProcessor = new NodeProcessor(this.fprHandle, fileUtils, sourceFileMap);
-        this.traceProcessor = new TraceProcessor(this.fprHandle, nodeProcessor, new SnippetProcessor(), fileUtils, sourceFileMap);        this.snippetProcessor = new SnippetProcessor();
+
+        Map<String, String> correctSourceMap = fprHandle.getSourceFileMap();
+
+        this.nodeProcessor = new NodeProcessor(this.fprHandle, fileUtils, correctSourceMap);
+        this.traceProcessor = new TraceProcessor(this.fprHandle, nodeProcessor, new SnippetProcessor(), fileUtils, correctSourceMap);
+        this.snippetProcessor = new SnippetProcessor();
         this.descriptionProcessor = new DescriptionProcessor();
         this.metaInfoProcessor = new MetaInfoProcessor();
         this.auxiliaryProcessor = new AuxiliaryProcessor();
@@ -110,7 +126,7 @@ public class FVDLProcessor {
      * @throws IOException   If file access fails
      */
     private FVDL unmarshalFVDL(Path fvdlFilePath) throws JAXBException, IOException {
-        try (InputStream fis = Files.newInputStream(fvdlFilePath)) { // <--- THIS IS THE FIX
+        try (InputStream fis = Files.newInputStream(fvdlFilePath)) {
             JAXBContext jaxbContext = JAXBContext.newInstance(FVDL.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             return (FVDL) unmarshaller.unmarshal(fis);
@@ -118,20 +134,19 @@ public class FVDLProcessor {
     }
 
     public Optional<String> getSourceFileContent(String relativePath) {
-        String fullPathInZip = sourceFileMap.get(relativePath);
-        if (fullPathInZip == null) {
-            logger.debug("Source file key not found in sourceFileMap: {}", relativePath);
+        String internalPath = fprHandle.getSourceFileMap().get(relativePath);
+        if (internalPath == null) {
+            logger.warn("Source file key not found in sourceFileMap: {}", relativePath);
             return Optional.empty();
         }
-        Path actualSourcePath = fprHandle.getPath(fullPathInZip);
+        Path actualSourcePath = fprHandle.getPath("/" + internalPath);
         try {
-            return Optional.of(String.join(System.lineSeparator(), fileUtils.readFileWithFallback(actualSourcePath)));
+            return Optional.of(String.join("\n", fileUtils.readFileWithFallback(actualSourcePath)));
         } catch (RuntimeException e) {
-            logger.warn("WARN: Could not read source file content: {}", relativePath, e);
+            logger.warn("WARN: Could not read source file content for internal path {}: {}", actualSourcePath, e.getMessage());
             return Optional.empty();
         }
     }
-
     /**
      * Processes a single JAXB vulnerability into a rich, fully populated internal Vulnerability object.
      * This method orchestrates the aggregation of data from the rule definitions, instance-specific overrides,
@@ -237,9 +252,11 @@ public class FVDLProcessor {
         if (element == null) return;
 
         String filename = element.getFilename();
-        if (!StringUtil.isEmpty(filename) && sourceFileMap.containsKey(filename) && !uniqueFiles.containsKey(filename)) {
-            String sourceFilePath = sourceFileMap.get(filename);
-            Path actualSourcePath = fprHandle.getPath(sourceFilePath);
+        if (!StringUtil.isEmpty(filename) && fprHandle.getSourceFileMap().containsKey(filename) && !uniqueFiles.containsKey(filename)) {
+            String internalPath = fprHandle.getSourceFileMap().get(filename);
+            if (internalPath == null) { return; } // Should not happen due to containsKey check, but safe.
+
+            Path actualSourcePath = fprHandle.getPath("/" + internalPath);
 
             File file = new File();
             file.setName(filename);
@@ -252,7 +269,8 @@ public class FVDLProcessor {
                     file.setContent(new String(encodedBytes));
                     file.setEndLine(fileUtils.countLines(actualSourcePath));
                 } else {
-                    logger.warn("Source file not found: {}", actualSourcePath);
+                    // This warning is now more accurate.
+                    logger.warn("Source file not found at internal path: {}. This may indicate a corrupt FPR.", actualSourcePath);
                     file.setContent("");
                     file.setEndLine(0);
                 }

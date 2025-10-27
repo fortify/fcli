@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc._common.session.helper;
 
 import java.util.Date;
@@ -114,18 +114,18 @@ public class SSCAndScanCentralSessionDescriptor extends AbstractSessionDescripto
                 .sscUrlConfig(sscUrlConfig)
                 .sscTokenData(sscTokenData)
                 .revokeTokenOnLogout(providedSscToken==null);
-		var sscConfigProperties = getSscConfigProperties(sscUrlConfig, sscTokenData.getToken());
-		Set<SSCComponentDisable> disabledComponents = sscAndScanCentralUrlConfig.getDisabledComponents();
-		if (disabledComponents.contains(SSCComponentDisable.sc_sast)) {
-			sessionDescriptorBuilder.scSastDisabledReason("Disabled by user");
-		} else {
-			addScSastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig,
-					sscAndScanCentralCredentialsConfig.getScSastClientAuthToken(), sscConfigProperties);
-		}
+        var sscConfigProperties = getSscConfigProperties(sscUrlConfig, sscTokenData.getToken());
+        Set<SSCComponentDisable> disabledComponents = sscAndScanCentralUrlConfig.getDisabledComponents();
+        if (disabledComponents.contains(SSCComponentDisable.sc_sast)) {
+            sessionDescriptorBuilder.scSastDisabledReason("Disabled by user");
+        } else {
+            addScSastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig,
+                    sscAndScanCentralCredentialsConfig.getScSastClientAuthToken(), sscConfigProperties);
+        }
         if (disabledComponents.contains(SSCComponentDisable.sc_dast))
-        	sessionDescriptorBuilder.scDastDisabledReason("Disabled by user");
+            sessionDescriptorBuilder.scDastDisabledReason("Disabled by user");
         else
-        	addScDastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig, sscConfigProperties);
+            addScDastSessionConfig(sessionDescriptorBuilder, sscAndScanCentralUrlConfig, sscConfigProperties);
         return sessionDescriptorBuilder.build();
     }
     

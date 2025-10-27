@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,14 +9,12 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
-import com.fortify.cli.fod.dast_scan.helper.FileUploadResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,9 +28,11 @@ import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
+import com.fortify.cli.fod.dast_scan.helper.FileUploadResult;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -101,7 +101,7 @@ public abstract class AbstractFoDDastAutomatedScanSetupCommand extends AbstractF
     }
 
     protected void validateEntitlement(FoDScanConfigDastAutomatedDescriptor currentSetup, Integer entitlementIdToUse,
-                                       String relId, FoDReleaseAssessmentTypeDescriptor atd) {
+                                    String relId, FoDReleaseAssessmentTypeDescriptor atd) {
         // validate entitlement specified or currently in use against assessment type found
         if (entitlementId != null && entitlementId > 0) {
             // check if "entitlement id" explicitly matches what has been found

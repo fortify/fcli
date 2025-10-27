@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
@@ -17,6 +17,7 @@ import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.access_control.cli.cmd.FoDAccessControlCommands;
 import com.fortify.cli.fod.action.cli.cmd.FoDActionCommands;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
+import com.fortify.cli.fod.attribute.cli.cmd.FoDAttributeCommands;
 import com.fortify.cli.fod.dast_scan.cli.cmd.FoDDastScanCommands;
 import com.fortify.cli.fod.issue.cli.cmd.FoDIssueCommands;
 import com.fortify.cli.fod.mast_scan.cli.cmd.FoDMastScanCommands;
@@ -32,7 +33,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "fod",
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
-         subcommands = {
+        subcommands = {
                 // This list of product subcommands should be in alphabetical
                 // order, except for:
                 // - session command (should be the first command, as it is a
@@ -47,6 +48,7 @@ import picocli.CommandLine.Command;
                 FoDActionCommands.class,
                 FoDAccessControlCommands.class,
                 FoDAppCommands.class,
+                FoDAttributeCommands.class,
                 FoDMicroserviceCommands.class,
                 FoDReleaseCommands.class,
                 FoDSastScanCommands.class,

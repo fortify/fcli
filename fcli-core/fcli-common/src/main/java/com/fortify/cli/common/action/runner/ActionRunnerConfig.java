@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.runner;
@@ -23,6 +23,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spel.ISpelEvaluator;
 
@@ -59,6 +60,8 @@ public class ActionRunnerConfig {
     @Singular private final Collection<BiConsumer<ActionRunnerContext, SimpleEvaluationContext>> actionContextSpelEvaluatorConfigurers;
     /** Default options to pass to fcli commands in run.fcli steps (if the fcli command supports that option) */ 
     @Singular private final Map<String,String> defaultFcliRunOptions;
+    /** Injected UnirestContext for REST targets and related helpers */
+    private final UnirestContext unirestContext;
     
     /** Factory for creating the single {@link ISpelEvaluator} instance. By using a factory, we can
      *  check for illegal access to the {@link ISpelEvaluator} during configuration phase. */

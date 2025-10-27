@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.report.cli.cmd;
 
 import java.io.File;
@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -54,7 +53,6 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
         @Option(names = {"-d", "--report-dir"}, required = true) private String reportDirName;
     }
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
-    @Mixin private CommandHelperMixin commandHelper;
     
     @Override
     public JsonNode getJsonNode() {
@@ -74,10 +72,10 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
     private IReportWriter createReportWriter() {
         if ( StringUtils.isNotBlank(outputArgGroup.reportZipName) ) {
             deleteExisting(outputArgGroup.reportZipName, File::delete);
-            return new ReportZipWriter(outputArgGroup.reportZipName, commandHelper.getMessageResolver());
+            return new ReportZipWriter(outputArgGroup.reportZipName, getCommandHelper().getMessageResolver());
         } else if ( StringUtils.isNotBlank(outputArgGroup.reportDirName) ) {
             deleteExisting(outputArgGroup.reportDirName, this::deleteDirectory);
-            return new ReportDirWriter(outputArgGroup.reportDirName, commandHelper.getMessageResolver());
+            return new ReportDirWriter(outputArgGroup.reportDirName, getCommandHelper().getMessageResolver());
         } else {
             throw new FcliSimpleException("Either --report-file or --report-dir must be specified");
         }

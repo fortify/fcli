@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.output.writer.record.impl;
@@ -19,8 +19,8 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.transform.fields.SelectedFieldsTransformer;
-import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
+import com.fortify.cli.common.json.transform.fields.SelectedFieldsTransformer;
+import com.fortify.cli.common.json.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 
@@ -47,15 +47,23 @@ public abstract class AbstractRecordWriter<T> implements IRecordWriter {
         var formattedRecord = getRecordFormatter(record).apply(record);
         append(getOut(formattedRecord), formattedRecord);
     }
-    
+
     @Override @SneakyThrows
     public final void close() {
-        var writer = getWriter();
-        if ( out==null) {
-            closeWithNoData(writer);
-        } else {
-            writer.flush();
-            close(out); // This should also close the writer
+        Writer writer = null;
+        try {
+            writer = getWriter();
+            if ( out==null) {
+                closeWithNoData(writer);
+            } else {
+                writer.flush();
+                close(out); // This should also close the writer
+            }
+        } finally {
+            // Code above is supposed to close the writer, but just in case it doesn't:
+            if ( writer!=null ) {
+                try { writer.close(); } catch (Exception e) {}
+            }
         }
     }
     

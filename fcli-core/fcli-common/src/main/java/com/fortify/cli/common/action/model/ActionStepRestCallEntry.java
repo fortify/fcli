@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.model;
@@ -154,6 +154,20 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
     @Reflectable @NoArgsConstructor
     @Data @EqualsAndHashCode(callSuper = true)
     @JsonTypeName("rest.call-for-each")
+    @SampleYamlSnippets("""
+            steps:
+              - rest.call:
+                  pvs:                            # Name for this REST call for later reference
+                    ...                           # Other REST call properties
+                    records.for-each:             # Iterate through response records
+                      record.var-name: pv         # Variable name to hold current record
+                      embed:                      # For each record, embed data from other REST call
+                        artifacts:                # Accessible through ${pv.artifacts}
+                          uri: /api/v1/projectVersions/${pv.id}/artifacts
+                      do:
+                        - ...                     # Steps to execute for each response record
+                                                  # Can access pv variable, including embedded artifacts property
+            """)
     public static final class ActionStepRequestForEachResponseRecord extends AbstractActionElementForEachRecord implements IActionStepIfSupplier {
         @JsonPropertyDescription("""
             Optional map: Allows for making additional REST calls for each individual record being \
@@ -164,7 +178,6 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
             data will be available through a property named [map key]_raw.
             """)
         @JsonProperty(value = "embed", required = false) private Map<String, ActionStepRestCallEntry> embed;
-        
         protected final void _postLoad(Action action) {}
     }
     
@@ -176,6 +189,18 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
     @Reflectable @NoArgsConstructor
     @Data
     @JsonTypeName("rest.call-log.progress")
+    @SampleYamlSnippets("""
+            steps:
+              - rest.call:
+                  pvs:                            # Name for this REST call for later reference
+                    ...                           # Other REST call properties
+                    type: paged                   # simple or paged
+                    log.progress:                 # Log progress messages during paging
+                      page.pre-load: "Loading page ${pageNumber?:0}"
+                      page.post-load: "Loaded page ${pageNumber?:0} with ${pageSize?:0} records"
+                      page.post-process: "Processed ${totalIssueCount?:0} of ${issues_raw.count} issues"
+                    
+            """)
     public static final class ActionStepRestCallLogProgressDescriptor implements IActionElement {
         @JsonPropertyDescription("""
             Optional SpEL template expression: Log a progress message before loading the next page.

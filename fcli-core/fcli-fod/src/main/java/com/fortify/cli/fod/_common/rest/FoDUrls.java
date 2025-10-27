@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod._common.rest;
 
 public class FoDUrls {
@@ -24,6 +24,7 @@ public class FoDUrls {
     public static final String RELEASE_IMPORT_SCAN_SESSION = RELEASE + "/import-scan-session-id";
     public static final String RELEASE_IMPORT_CYCLONEDX_SBOM = RELEASE + "/open-source-scans/import-cyclonedx-sbom";
     public static final String ATTRIBUTES = ApiBase + "/attributes";
+    public static final String ATTRIBUTE = ApiBase + "/attributes/{attributeId}";
     public static final String USERS = ApiBase + "/users";
     public static final String USER = ApiBase + "/users/{userId}";
     public static final String USER_GROUPS = ApiBase + "/user-management/user-groups";

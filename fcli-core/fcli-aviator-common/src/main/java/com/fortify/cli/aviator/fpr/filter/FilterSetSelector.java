@@ -1,11 +1,17 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 // File: /fcli-aviator-common/src/main/java/com/fortify/cli/aviator/fpr/filter/FilterSetSelector.java
 package com.fortify.cli.aviator.fpr.filter;
-
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator.audit.model.FilterSelection;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +20,13 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator.audit.model.FilterSelection;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
 
 public final class FilterSetSelector {
     private static final Logger LOG = LoggerFactory.getLogger(FilterSetSelector.class);
