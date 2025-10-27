@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -71,18 +72,16 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
     @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagAddOption tagAddMixin;
     @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagRemoveOption tagRemoveMixin;
+    @Mixin protected CommonOptionMixins.CommonOptions commonOptions;
+
     @Option(names={"--description","-d"}, required = false)
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
     private boolean active;
-    @Option(names={"--auto-required-attrs"}, required = false)
-    private boolean autoRequiredAttrs = false;
-    @Option(names={"--skip-if-exists"}, required = false)
-    private boolean skipIfExists = false;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if ( skipIfExists ) {
+        if ( commonOptions.isSkipIfExists() ) {
             var existingDescriptor = SSCAppVersionHelper.getOptionalAppVersionFromAppAndVersionName(unirest, sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor());
             if ( existingDescriptor!=null ) { return existingDescriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); }
         }
@@ -151,7 +150,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         return new SSCAttributeUpdateBuilder(unirest)
                 .add(getAttributesFromSource(unirest, copyFromDescriptor))
                 .add(attrUpdateMixin.getAttributes())
-                .addRequiredAttrs(autoRequiredAttrs)
+                .addRequiredAttrs(commonOptions.isAutoRequiredAttrs())
                 .checkRequiredAttrs(true)
                 .prepareAndCheckRequest();
     }
