@@ -50,12 +50,12 @@ public class CommonOptionMixins {
         @Option(names = {"-f", "--file"}, required=true)
         @Getter private File file;
     }
-
+    
 	public static class CommonOptions {
-		@Option(names = { "--skip-if-exists" })
+		@Option(names = { "--skip-if-exists" }, descriptionKey = "fcli.skip-if-exists")
 		@Getter private boolean skipIfExists;
 
-		@Option(names = { "--auto-required-attrs" })
+		@Option(names = { "--auto-required-attrs" }, descriptionKey = "fcli.auto-required-attrs")
 		@Getter private boolean autoRequiredAttrs;
 	}
 
