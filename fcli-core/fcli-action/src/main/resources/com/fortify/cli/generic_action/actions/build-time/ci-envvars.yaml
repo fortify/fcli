@@ -135,12 +135,13 @@ formatters:
           `fcli fod sast-scan start` command, for example to specify scan notes. Note that these environment
           variables only control the submission of the scan request; see the information below for details
           on waiting for the scan to complete.
-      - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+      - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
         desc: >-
-          By default, the fcli `ci` action will wait for the SAST scan to complete. This behavior can be
-          overridden by setting `DO_SAST_WAIT` to `false`, but note that doing so will skip any post-scan
-          tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-          `fcli fod sast-scan wait-for` command, for example to adjust the polling interval or timeout.
+          By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
+          `false` to just kick off any configured scans without waiting for completion. Note that doing so
+          will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+          extra options to the `fcli fod sast-scan wait-for` command. Note that `DO_SAST_WAIT` is deprecated; 
+          please use `DO_WAIT` instead.
     postScan:
       - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
         desc: >-
@@ -190,11 +191,10 @@ formatters:
         desc: >-
             ScanCentral SAST Client Authentication Token for authenticating with ScanCentral SAST Controller. This 
             environment variable is required when running a ScanCentral SAST scan.
-      # TODO Add DEBRICKED_TOKEN once implemented
       - names: SSC_LOGIN_EXTRA_OPTS
         desc: >-
             Extra SSC login options, for example for disabling SSL checks or changing connection time-outs; 
-            see `fcli ssc session login` documentation.        
+            see `fcli ssc session login` documentation.
     preScan:
       - names: SSC_APPVERSION
         desc: >-
@@ -211,17 +211,28 @@ formatters:
     scan:
       - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
-          The fcli `ci` action currently only supports running a SAST scan, which is enabled by default.
+          The fcli `ci` action by default runs a SAST scan, optionally in combination with other scan types.
+          The `DO_SAST_SCAN` environment variable can be set to `false` to disable the SAST scan.
           The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
           the `fcli sc-sast scan start` command, for example to request a scan completion email notification.
           Note that these environment variables only control the submission of the scan request; see the
           information below for details on waiting for the scan to complete. 
-      - names: DO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+      - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_CLI_VERSION
         desc: >-
-          By default, the fcli `ci` action will wait for the SAST scan to complete. This behavior can be
-          overridden by setting `DO_SAST_WAIT` to `false`, but note that doing so will skip any post-scan
-          tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass extra options to
-          the `fcli sc-sast scan wait-for` command, for example to adjust the polling interval or timeout.
+          The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
+          is enabled automatically if `DEBRICKED_ACCESS_TOKEN` is provided. The `DO_DEBRICKED_SCAN` environment
+          variable can be set to `false` to (temporarily) disable the Debricked scan. By default, latest known
+          Debricked CLI version will be used to run the scan, unless a different version is specified through
+          `nDEBRICKED_CLI_VERSION`. The `DEBRICKED_SCAN_EXTRA_OPTS` environment variable can be used to provide 
+          additional options to the `debricked scan` command.
+      - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+        desc: >-
+          By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
+          `false` to just kick off any configured scans without waiting for completion. Note that doing so
+          will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+          extra options to the `fcli sc-sast scan wait-for` command, and similarly, the `DEBRICKED_WAIT_EXTRA_OPTS`
+          environment variable can be used to pass extra options to the `fcli ssc artifact wait-for` command.
+          Note that `DO_SAST_WAIT` is deprecated; please use `DO_WAIT` instead.
     postScan:
       - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
         desc: >-
@@ -269,6 +280,14 @@ formatters:
           CI system like actionRef:github-sast-report#_github_sast_report or actionRef:gitlab-sast-report#_gitlab_sast_report, or, if specified, the custom fcli action
           specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
           `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+          actions to be used.
+      - names: DO_DEBRICKED_EXPORT\nDEBRICKED_EXPORT_ACTION\nDEBRICKED_EXPORT_EXTRA_OPTS
+        desc: >-
+          If `DO_DEBRICKED_EXPORT` is not set to `false` and a Debricked scan was completed, the Debricked vulnerability
+          data will be exported into a CI-specific format using an fcli-provided action matching the current
+          CI system like actionRef:gitlab-debricked-report#_gitlab_debricked_report, or, if specified, the custom fcli action
+          specified through `DEBRICKED_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+          `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
           actions to be used.
                   
   commonDefinitions:

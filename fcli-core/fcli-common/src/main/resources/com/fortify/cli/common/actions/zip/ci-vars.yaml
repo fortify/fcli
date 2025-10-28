@@ -49,7 +49,7 @@ steps:
     var.set:
       global.ci.name:              GitLab
       global.ci.id:                gitlab
-      global.ci.qualifiedRepoName: ${#env('CI_REPOSITORY_URL').replaceAll('[^:]+://[^/]+/','').replaceAll('\.git$', '')}
+      global.ci.qualifiedRepoName: ${#env('CI_REPOSITORY_URL')?.replaceAll('[^:]+://[^/]+/','')?.replaceAll('\.git$', '')}
       global.ci.sourceBranch:      ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
       global.ci.commitSHA:         ${#env('CI_COMMIT_SHA')}
       global.ci.sourceDir:         ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
@@ -79,10 +79,7 @@ steps:
 
   # Additional generic variables based on the output of the CI-specific sections above
   - var.set:
-      # Set default Fortify repository name (SSC application version or FoD release),
-      # from a similarly named global variable set by one of the sections above, or 
-      # <qualifiedRepoName>:<sourceBranch>
-      global.ci.defaultFortifyRepo:  ${global.ci.av?:#joinOrNull(':', global.ci.qualifiedRepoName, global.ci.sourceBranch)}
+      global.ci.defaultFortifyRepo:  ${#joinOrNull(':', global.ci.qualifiedRepoName, global.ci.sourceBranch)}
       # Set default reporting actions based on ci identifier. Note that FoD/SSC CI actions should check existence of these actions 
       # TODO Only use default values if not explicitly defined in CI-specific sections above.
       global.ci.fod_prCommentAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'pr-comment'))}
