@@ -31,7 +31,7 @@ public class NcdReportAdoSourceConfig extends AbstractNcdReportRepoSelectorConfi
     private int connectTimeoutInMillis = Config.DEFAULT_CONNECT_TIMEOUT;
     private int socketTimeoutInMillis = Config.DEFAULT_SOCKET_TIMEOUT;
     private Boolean insecureModeEnabled;
-    private String apiVersion = "7.0";
+    private String apiVersion = "7.1";
     private NcdReportAdoOrganizationConfig[] organizations;
 
     @Override
