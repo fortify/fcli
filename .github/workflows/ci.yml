@@ -132,7 +132,7 @@ jobs:
       # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/). 
       # We also exclude the native Jansi library resources, as these are now no longer needed.
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifacts/release-assets/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.common.util.JAnsiConfig -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2

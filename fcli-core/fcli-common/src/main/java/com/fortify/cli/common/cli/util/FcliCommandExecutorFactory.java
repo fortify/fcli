@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.cli.util;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,8 +49,6 @@ public final class FcliCommandExecutorFactory {
     private final Consumer<ObjectNode> recordConsumer;
     @Builder.Default private final OutputType stdoutOutputType = OutputType.show;
     @Builder.Default private final OutputType stderrOutputType = OutputType.show;
-    private final PrintStream stdout;
-    private final PrintStream stderr;
     private final Consumer<Result> onResult; // Always executed if fcli command didn't throw exception
     private final Consumer<Result> onSuccess; // Executed after onResult, if 0 exit code
     private final Consumer<Result> onFail; // Executed after onResult, if non-zero exit code
@@ -108,8 +105,8 @@ public final class FcliCommandExecutorFactory {
             Result result = null;
             try {
                 result = OutputHelper.builder()
-                        .stderr(stderr).stderrType(stderrOutputType)
-                        .stdout(stdout).stdoutType(stdoutOutputType)
+                        .stderrType(stderrOutputType)
+                        .stdoutType(stdoutOutputType)
                         .build().call(f);
             } catch ( Throwable t ) {
                 if ( t instanceof ExecutionException ) {

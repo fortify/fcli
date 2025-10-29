@@ -23,6 +23,7 @@ import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.processor.writer.ActionStepRecordWriterFactory.WithWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.util.AbstractWriterWrapper;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -43,9 +44,9 @@ public class ActionStepRecordWriterConfigFactory {
         var to = config.getTo();
         var vars = config.getVars();
         if ( "stdout".equals(to) ) {
-            return new OutputStreamWriter(System.out);
+            return new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out));
         } else if ( "stderr".equals(to) ) {
-            return new OutputStreamWriter(System.err);
+            return new OutputStreamWriter(new NonClosingPrintStream(false, "System.err", System.err));
         } else if ( to.startsWith("var:") ) {
             return new FcliActionVariableWriter(vars, to.replaceAll("^var:", ""));
         } else {

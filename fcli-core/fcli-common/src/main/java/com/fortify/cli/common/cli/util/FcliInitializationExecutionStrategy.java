@@ -12,12 +12,9 @@
  */
 package com.fortify.cli.common.cli.util;
 
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
@@ -26,6 +23,7 @@ import com.fortify.cli.common.rest.unirest.IUnirestContextAware;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.JavaHelper;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -49,7 +47,6 @@ import picocli.CommandLine.ParseResult;
  */
 @Slf4j
 public final class FcliInitializationExecutionStrategy implements IExecutionStrategy {
-    private static final Logger INIT_LOG = LoggerFactory.getLogger(AbstractRunnableCommand.class);
     private final IExecutionStrategy delegate;
 
     public FcliInitializationExecutionStrategy(IExecutionStrategy delegate) {
@@ -61,16 +58,16 @@ public final class FcliInitializationExecutionStrategy implements IExecutionStra
         var leaf = getLeafParseResult(parseResult);
         var leafSpec = leaf.commandSpec();
         // Perform initialization (command spec injection & logging) and Unirest context management
-        try (UnirestContext context = new UnirestContext()) {
-            log.debug("Starting command execution with {}", context.identity());
-            initializeCommand(leafSpec, context);
+        try (var outHandler = new NonClosingOutHandler(); var unirestContext = new UnirestContext()) {
+            log.debug("Starting command execution with {}: {}", unirestContext.identity(), leafSpec.qualifiedName());
+            initializeCommand(leafSpec, unirestContext);
             var result = delegate.execute(parseResult);
-            log.debug("Finished command execution with {}", context.identity());
+            log.debug("Finished command execution with {}: {}", unirestContext.identity(), leafSpec.qualifiedName());
             return result;
         }
     }
 
-    private void initializeCommand(CommandSpec commandSpec, UnirestContext context) {
+    private void initializeCommand(CommandSpec commandSpec, UnirestContext unirestContext) {
         // Register log masks for option values (cheap operation separate from main iteration)
         registerLogMasks(commandSpec);
         // Log version & args before actual command execution
@@ -82,8 +79,8 @@ public final class FcliInitializationExecutionStrategy implements IExecutionStra
                     cAware.setCommandSpec(commandSpec);
                 }
                 if ( o instanceof IUnirestContextAware uAware ) {
-                    log.debug("Injecting {} into: {}", context.identity(), o.getClass().getName());
-                    uAware.setUnirestContext(context);
+                    log.debug("Injecting {} into: {}", unirestContext.identity(), o.getClass().getName());
+                    uAware.setUnirestContext(unirestContext);
                 }
             });
     }
@@ -94,8 +91,8 @@ public final class FcliInitializationExecutionStrategy implements IExecutionStra
     }
 
     private static void logVersionAndArgs(CommandSpec commandSpec) {
-        INIT_LOG.info("fcli version: {} ", FcliBuildProperties.INSTANCE.getFcliBuildInfo());
-        INIT_LOG.info("fcli arguments: {} {} ", commandSpec.qualifiedName(), commandSpec.commandLine().getParseResult().expandedArgs());
+        log.info("fcli version: {} ", FcliBuildProperties.INSTANCE.getFcliBuildInfo());
+        log.info("fcli arguments: {} {} ", commandSpec.qualifiedName(), commandSpec.commandLine().getParseResult().expandedArgs());
     }
 
     private static void registerLogMasks(CommandSpec commandSpec) {
@@ -110,5 +107,27 @@ public final class FcliInitializationExecutionStrategy implements IExecutionStra
 
     private static void registerLogMask(Field field, Object value) {
         LogMaskHelper.INSTANCE.registerValue(field.getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
+    }
+    
+    
+    private static final class NonClosingOutHandler implements AutoCloseable {
+        private final PrintStream orgOut;
+        private final PrintStream orgErr;
+        
+        public NonClosingOutHandler() {
+            // Avoid any fcli code from closing stdout/stderr streams
+            log.debug("Installing NonClosingPrintStream for stdout/stderr");
+            this.orgOut = System.out;
+            this.orgErr = System.err;
+            System.setOut(new NonClosingPrintStream("System.out", orgOut));
+            System.setErr(new NonClosingPrintStream("System.err", orgErr));
+        }
+        
+        @Override
+        public void close() {
+            System.setOut(orgOut);
+            System.setErr(orgErr);
+            log.debug("Restored original stdout/stderr PrintStreams");
+        }
     }
 }

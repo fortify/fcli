@@ -70,8 +70,8 @@ public enum ProgressWriterType {
         protected AbstractProgressWriter() {
             this.originalStdout = System.out;
             this.originalStderr = System.err;
-            this.stdout = new ProgressWriterPrintStreamWrapper(originalStdout, this);
-            this.stderr = new ProgressWriterPrintStreamWrapper(originalStderr, this);
+            this.stdout = new ProgressWriterPrintStreamWrapper("System.out", originalStdout, this);
+            this.stderr = new ProgressWriterPrintStreamWrapper("System.err", originalStderr, this);
             System.setOut(stdout);
             System.setErr(stderr);
         }

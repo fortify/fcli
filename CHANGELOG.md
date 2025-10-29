@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.12.0](https://github.com/fortify/fcli/compare/v3.11.0...v3.12.0) (2025-10-27)
+
+
+### Features
+
+* `fcli util all-commands list`: Include list of full command aliases ([fe00faa](https://github.com/fortify/fcli/commit/fe00faacb32e5097e4c8ce450eb5f7d63aeac88f))
+
+
+### Bug Fixes
+
+* `fcli * action help ci`: Fix table layout ([00f09a2](https://github.com/fortify/fcli/commit/00f09a29e11301304363f4d2338a3253d2a3f3b2))
+* Action development guide: Add missing sample snippets ([ad24754](https://github.com/fortify/fcli/commit/ad247542ac65f8a1a1e92d157858083404a81909))
+* Action development guide: Fix indentation in sample snippets ([543037a](https://github.com/fortify/fcli/commit/543037a958148ba31bdc4e6e4d4b8603cfb48724))
+* Action development guide: Fix typo in cli.option sample snippet ([543037a](https://github.com/fortify/fcli/commit/543037a958148ba31bdc4e6e4d4b8603cfb48724))
+* Action development guide: Various other minor improvements ([543037a](https://github.com/fortify/fcli/commit/543037a958148ba31bdc4e6e4d4b8603cfb48724))
+* Action framework: Fix stdout output being suppressed in `run.fcli::records.for-each` steps, affecting for example `fcli ssc action run servicenow-csv-report -f stdout` ([d88d47f](https://github.com/fortify/fcli/commit/d88d47f9de40ff5e08700579978b0c8a7054bad9))
+* Fix color output on Windows (jar/exe) ([f2712f8](https://github.com/fortify/fcli/commit/f2712f8a444b1941d31b7b2b8f094bedb46b594b))
+* Fix table output on Linux native binary ([d32d98b](https://github.com/fortify/fcli/commit/d32d98b9ec118f289cc68c9978f6f7b97756439d))
+* Fix various code quality issues, like potentially unreleased resources, null pointer references, ... ([24a3ca7](https://github.com/fortify/fcli/commit/24a3ca7f55223071b50e11289b05134fc8c9efba))
+
 ## [3.11.0](https://github.com/fortify/fcli/compare/v3.10.0...v3.11.0) (2025-10-21)
 
 

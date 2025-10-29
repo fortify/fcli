@@ -4,6 +4,7 @@ plugins { id("fcli.module-conventions") }
 val buildTimeActionCiEnvvars = tasks.register<JavaExec>("buildTimeAction_ci_envvars") {
     group = "build resources"
     description = "Generate build-time CI environment variables action output"
+    systemProperty("fcli.terminal.width", "80") // Set text table width to 80 characters
     val outputDirProvider = layout.buildDirectory.dir("generated-action-output-resources")
     val ciEnvVarsLog = layout.buildDirectory.file("ci-envvars.log")
     val inputYaml = project.layout.projectDirectory.file("src/main/resources/com/fortify/cli/generic_action/actions/build-time/ci-envvars.yaml")

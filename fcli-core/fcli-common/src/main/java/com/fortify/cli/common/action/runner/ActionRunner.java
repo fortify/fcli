@@ -32,8 +32,8 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
-import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.RequiredArgsConstructor;
 
@@ -125,7 +125,7 @@ public class ActionRunner {
     private IRecordWriter createCheckStatusWriter() {
         var recordWriterConfig = RecordWriterConfig.builder()
                 .style(RecordWriterStyle.apply(RecordWriterStyleElement.md_border))
-                .writerSupplier(()->new NonClosingWriterWrapper(new OutputStreamWriter(System.out)))
+                .writerSupplier(()->new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
                 .build();
         var recordWriter = RecordWriterFactory.table.createWriter(recordWriterConfig);
         return recordWriter;

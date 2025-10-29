@@ -36,8 +36,6 @@ import lombok.RequiredArgsConstructor;
  */
 @Builder
 public class OutputHelper {
-    private final PrintStream stdout;
-    private final PrintStream stderr;
     private final OutputType stdoutType;
     private final OutputType stderrType;
     @Builder.Default private final Charset charset = StandardCharsets.UTF_8;
@@ -45,8 +43,8 @@ public class OutputHelper {
     public final <T extends OutputStream> Result call(Callable<Integer> callable) throws Exception {
         var orgStdout = System.out;
         var orgStderr = System.err;
-        try ( var stdoutStream = stdoutType.streamSupplier.apply(stdout);
-            var stderrStream = stderrType.streamSupplier.apply(stderr);
+        try ( var stdoutStream = stdoutType.streamSupplier.apply(new NonClosingPrintStream(false, "System.out", orgStdout));
+            var stderrStream = stderrType.streamSupplier.apply(new NonClosingPrintStream(false, "System.err", orgStderr));
             var stdoutPS = new PrintStream(stdoutStream);
             var stderrPS = new PrintStream(stderrStream) ) {
             System.setOut(stdoutPS);

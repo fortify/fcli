@@ -12,12 +12,8 @@
  */
 package com.fortify.cli.app;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
-
-import lombok.SneakyThrows;
+import com.fortify.cli.common.util.ConsoleHelper;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
@@ -27,8 +23,6 @@ import lombok.SneakyThrows;
  * @author Ruud Senden
  */
 public class FortifyCLI {
-    private static final Boolean JANSI_DISABLE = Boolean.getBoolean("jansi.disable");
-
     /**
      * This is the main entry point for executing the Fortify CLI.
      * @param args Command line options passed to Fortify CLI
@@ -38,56 +32,11 @@ public class FortifyCLI {
     }
 
     private static final int execute(String[] args) {
-        var orgOut = System.out;
-        var orgErr = System.err;
         try {
-            installAnsiConsole();
-            // Avoid any fcli code from closing stdout/stderr streams
-            System.setOut(new NonClosingPrintStream(orgOut));
-            System.setErr(new NonClosingPrintStream(orgErr));
+            ConsoleHelper.installAnsiConsole();
             return DefaultFortifyCLIRunner.run(args);
         } finally {
-            System.setOut(orgOut);
-            System.setErr(orgErr);
-            uninstallAnsiConsole();
-        }
-    }
-    
-    private static final void installAnsiConsole() {
-        tryInvokeAnsiConsoleMethod("systemInstall");
-    }
-    
-    private static final void uninstallAnsiConsole() {
-        tryInvokeAnsiConsoleMethod("systemUninstall");
-    }
-    
-    private static final void tryInvokeAnsiConsoleMethod(String methodName) {
-        if ( !JANSI_DISABLE ) {
-            try {
-                // AnsiConsole performs eager initialization in a static block, so
-                // referencing the class directly would initialize Jansi even if
-                // isJansiEnabled() returns false. As such, we use reflection to 
-                // only load the AnsiConsole class if Jansi is enabled, and then
-                // invoke the specified method. Note that in order for this to work, 
-                // we have a reflect-config.json file to allow reflective access to
-                // AnsiConsole.
-                Class.forName("org.fusesource.jansi.AnsiConsole")
-                    .getMethod(methodName).invoke(null);
-            } catch ( Throwable t ) {
-                t.printStackTrace();
-            }
-        }
-    }
-    
-    private static final class NonClosingPrintStream extends PrintStream {
-        public NonClosingPrintStream(OutputStream out) {
-            super(out); 
-        }
-        
-        @Override @SneakyThrows
-        public void close() {
-            out.flush();
-            // Only flush, don't close underlying stream
+            ConsoleHelper.uninstallAnsiConsole();
         }
     }
 }

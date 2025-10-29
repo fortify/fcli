@@ -32,7 +32,7 @@ import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.util.AppendOnCloseWriterWrapper;
-import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -168,7 +168,7 @@ public class StandardOutputWriter implements IOutputWriter {
         private Writer createWriter() {
             var outputFile = outputOptions.getOutputFile();
             return outputFile == null
-                    ? new AppendOnCloseWriterWrapper("\n\n", new NonClosingWriterWrapper(new OutputStreamWriter(System.out)))
+                    ? new AppendOnCloseWriterWrapper("\n\n", new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
                     : new FileWriter(outputFile);
         }
     }
