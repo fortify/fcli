@@ -185,5 +185,56 @@ sources:
   #    includeForks: true
   #    repositoryIncludeExpression: >
   #      !(name matches "test.*") 
+
+  ado:                              
+    # Optional Azure DevOps API URL. If not defined, 'https://dev.azure.com' will be used.
+  - baseUrl: https://dev.azure.com
+    # Optional Azure Devops token expression to authenticate with the given Azure DevOps API URL. 
+    # If not specified, only public repositories will be loaded, and low GitHub rate 
+    # limits may affect report generation. Common approaches for configuring the Azure DevOps 
+    # token:
+    #  #env("AZURE_DEVOPS_TOKEN")       : Read token from the given environment variable
+    #                               during report generation
+    tokenExpression: >                          
+      #env("AZURE_DEVOPS_TOKEN")
+
+    # Optionally override the global includeForks setting for this 
+    # Azure DevOps instance.
+    # includeForks: true 
+
+    # repositoryIncludeExpression: > 
+    #  name matches "fcli|FortifyVulnerabilityExporter"
+  
+    # Configure one or more Azure DevOps organizations to be processed
+    organizations:                      
+      # Required organization name
+    - name: fortify
+
+      # Required project name(s)
+      projects:
+      - name: foo
+      - name: bar
+      
+      # Optionally override the includeForks setting for this organization 
+      # includeForks: false
+      
+      # Optionally override the repositoryIncludeExpression defined above
+      # for this organization.
+      # repositoryIncludeExpression: > 
+      #  name matches "fcli|FortifyVulnerabilityExporter"
+    
+    # Second organization on same Azure DevOps instance to be included in the report.    
+    # We override the default repositoryIncludeExpression to include all
+    # repositories in this organization.
+    - name: fod-dev 
+      repositoryIncludeExpression: >
+        true
+  
+  # Optionally configure additional Azure DevOps instances       
+  #- baseUrl: https://dev.example.com
+  #  tokenExpression: >-                          
+  #    #env("MYCOMPANY_AZURE_DEVOPS_TOKEN")
+  #  organizations:
+  #  - name: org1
                                     
     
