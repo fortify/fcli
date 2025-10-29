@@ -163,8 +163,13 @@ public final class FprHandle implements AutoCloseable {
 
         try (InputStream indexStream = Files.newInputStream(indexPath)) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             factory.setFeature("http://xml.org/sax/features/validation", false);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document indexDoc = builder.parse(indexStream);
 

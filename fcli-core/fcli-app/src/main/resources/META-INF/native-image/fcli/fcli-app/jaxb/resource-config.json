@@ -1,0 +1,12 @@
+{
+  "bundles": [
+    {"name": "jakarta.xml.bind.Messages"}
+  ],
+  "resources": {
+    "includes": [
+      {
+        "pattern": "jakarta/xml/bind/.*\\.properties"
+      }
+    ]
+  }
+}

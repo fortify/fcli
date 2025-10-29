@@ -60,9 +60,24 @@ public class RemediationProcessor {
         Document remediationDoc;
         int totalRemediations;
         int appliedRemediations;
+
+        // Sanitize and normalize the base source directory path once.
+        String trimmedSourceDir = sourceCodeDirectory.trim();
+        if (trimmedSourceDir.length() > 1 && 
+            ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\"")) ||
+             (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
+            trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
+        }
+        final Path sourceBasePath = Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
+
         try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             DocumentBuilder builder = factory.newDocumentBuilder();
             remediationDoc = builder.parse(remediationStream);
 
@@ -77,7 +92,12 @@ public class RemediationProcessor {
                     Element fileChanges = (Element) fileChangesNodes.item(j);
                     String filename = fileChanges.getElementsByTagNameNS(NAMESPACE_URI, "Filename").item(0).getTextContent();
 
-                    Path filePath = sourceCodeDirectory != null ? Paths.get(sourceCodeDirectory, filename) : Paths.get(filename);
+                    Path filePath = sourceBasePath.resolve(filename).normalize();
+
+                    if (!filePath.startsWith(sourceBasePath)) {
+                        logger.error("Skipping file '{}' as it resolves to a path outside the source directory (potential path traversal attack)", filename);
+                        continue;
+                    }
 
                     if (!isFilePresent(filePath)) {
                         logger.error("Source code file not present at: {}", filePath.toString());
