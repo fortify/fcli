@@ -59,7 +59,17 @@ cli.options:
     required: false
     type: boolean
     default: false
-
+  refresh:
+    names: --refresh
+    description: "Refresh application version metrics before audit. For large applications this can lead to timeout errors. Default: true"
+    required: false
+    type: boolean
+    default: true
+  refresh-timeout:
+    names: --refresh-timeout
+    description: "Timeout period for metric refresh, e.g., 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default: 60s"
+    required: false
+    default: "60s"
 
 steps:
   # Configure module
@@ -273,13 +283,13 @@ steps:
                     - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                       run.fcli:
                         run_audit:
-                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}"'
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
                           status.check: false
 
                     - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                       run.fcli:
                         run_audit:
-                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO'
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
                           status.check: false
 
                     - if: ${run_audit.exitCode != 0}
