@@ -41,10 +41,13 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetOptionMixin;
+import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
+import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -60,6 +63,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Mixin private ProgressWriterFactoryMixin progressWriterFactoryMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Mixin private AviatorUserSessionDescriptorSupplier sessionDescriptorSupplier;
+    @Mixin private SSCAppVersionRefreshOptions refreshOptions;
     @Mixin private SSCIssueFilterSetOptionMixin filterSetOptions;
     @Option(names = {"--app"}) private String appName;
     @Option(names = {"--tag-mapping"}) private String tagMapping;
@@ -75,6 +79,15 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             SSCAppVersionDescriptor av = appVersionResolver.getAppVersionDescriptor(unirest);
+
+            if (refreshOptions.isRefresh() && av.isRefreshRequired()) {
+                logger.progress("Status: Metrics for application version %s:%s are out of date, starting refresh...", av.getApplicationName(), av.getVersionName());
+                SSCJobDescriptor refreshJobDesc = SSCAppVersionHelper.refreshMetrics(unirest, av);
+                if (refreshJobDesc != null) {
+                    SSCJobHelper.waitForJob(unirest, refreshJobDesc, refreshOptions.getRefreshTimeout());
+                    logger.progress("Status: Metrics refreshed successfully.");
+                }
+            }
 
             long auditableIssueCount = AviatorSSCAuditHelper.getAuditableIssueCount(unirest, av, logger, noFilterSet, filterSetOptions, folderNames);
             if (auditableIssueCount == 0) {
