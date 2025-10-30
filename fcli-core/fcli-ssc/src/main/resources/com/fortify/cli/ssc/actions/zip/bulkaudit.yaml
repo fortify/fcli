@@ -205,8 +205,6 @@ steps:
           stats.create_successes: 0
           stats.create_failures: 0
           stats.audit_attempts: 0
-          stats.audit_successes: 0
-          stats.audit_failures: 0
           stats.entitlement_exhausted: false
           stats.create_skipped_due_to_entitlement: 0
 
@@ -277,26 +275,12 @@ steps:
                         run_audit:
                           cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}"'
                           status.check: false
-                          records.collect: false
 
                     - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                       run.fcli:
                         run_audit:
                           cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO'
                           status.check: false
-                          records.collect: false
-
-                    # Process results
-                    - if: ${run_audit.exitCode == 0}
-                      steps:
-                        - var.set:
-                            record_count: "${run_audit.records == null ? 0 : run_audit.records.size()}"
-                        - var.set:
-                            record_action: "${(run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].action != null && run_audit.records[0].action != '') ? run_audit.records[0].action : 'SKIPPED'}"
-                        - if: ${!(run_audit.records == null || run_audit.records.size() == 0 || run_audit.records[0].action == null || run_audit.records[0].action == '' || (run_audit.records[0].action != null && run_audit.records[0].action.contains('SKIPPED')))}
-                          var.set:
-                            stats.audit_successes: ${stats.audit_successes + 1}
-
 
                     - if: ${run_audit.exitCode != 0}
                       steps:
