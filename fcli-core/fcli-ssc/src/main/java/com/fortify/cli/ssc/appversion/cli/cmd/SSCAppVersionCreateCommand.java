@@ -208,9 +208,9 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         if ( StringUtils.isBlank(issueTemplateNameOrId) && copyFromDescriptor.isCopyRequested() ) {
             issueTemplateNameOrId = copyFromDescriptor.getAppVersionDescriptor().getIssueTemplateId();
         }
-        var issueTemplateDescriptor = new SSCIssueTemplateHelper(unirest).getIssueTemplateDescriptorOrDefault(issueTemplateNameOrId);
+        var issueTemplateDescriptor = new SSCIssueTemplateHelper(unirest).getIssueTemplateDescriptorOrDefaultorInUse(issueTemplateNameOrId);
         if ( issueTemplateDescriptor==null ) {
-            throw new FcliSimpleException("--issue-template is required, as no default template is configured on SSC");
+            throw new FcliSimpleException("--issue-template is required, as no default template or single In-Use template is configured on SSC");
         }
         return issueTemplateDescriptor.getId();
     }

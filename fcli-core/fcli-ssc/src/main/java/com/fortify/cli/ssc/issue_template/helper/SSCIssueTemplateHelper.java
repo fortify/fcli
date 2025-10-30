@@ -30,6 +30,7 @@ public final class SSCIssueTemplateHelper {
     @Getter private final Map<String, SSCIssueTemplateDescriptor> descriptorsById = new HashMap<>();
     private final Map<String, SSCIssueTemplateDescriptor> descriptorsByName = new HashMap<>();
     @Getter private SSCIssueTemplateDescriptor defaultIssueTemplateDescriptor;
+    @Getter private JsonNode issueTemplatesBody;
     
     /**
      * This constructor calls the SSC projectTemplates endpoint to retrieve issue template data,
@@ -38,7 +39,7 @@ public final class SSCIssueTemplateHelper {
      * @param unirest
      */
     public SSCIssueTemplateHelper(UnirestInstance unirest) {
-        JsonNode issueTemplatesBody = unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1").asObject(JsonNode.class).getBody();
+        issueTemplatesBody = unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1").asObject(JsonNode.class).getBody();
         issueTemplatesBody.get("data").forEach(this::processIssueTemplate);
     }
 
@@ -60,9 +61,24 @@ public final class SSCIssueTemplateHelper {
         return descriptor;
     }
     
-    public SSCIssueTemplateDescriptor getIssueTemplateDescriptorOrDefault(String issueTemplateNameOrId) {
+    public SSCIssueTemplateDescriptor getIssueTemplateDescriptorOrDefaultorInUse(String issueTemplateNameOrId) {
+        SSCIssueTemplateDescriptor defaultOrInUseIssueTemplateDescriptor = new SSCIssueTemplateDescriptor();
+        if(getDefaultIssueTemplateDescriptor()==null) {
+            int inUseTemplateCount = 0;
+            for (JsonNode issueTemplate : getIssueTemplatesBody().get("data")) {
+                SSCIssueTemplateDescriptor descriptor = JsonHelper.treeToValue(issueTemplate,SSCIssueTemplateDescriptor.class);
+                if (descriptor.isInUse()) {
+                    inUseTemplateCount++;
+                    if (inUseTemplateCount > 1) {
+                        defaultOrInUseIssueTemplateDescriptor = null;
+                        break;
+                    }
+                    defaultOrInUseIssueTemplateDescriptor = descriptor;
+                }
+            }
+        }
         return StringUtils.isBlank(issueTemplateNameOrId)
-                ? getDefaultIssueTemplateDescriptor()
+                ? defaultOrInUseIssueTemplateDescriptor
                 : getDescriptorByNameOrId(issueTemplateNameOrId, true);
     }
     
