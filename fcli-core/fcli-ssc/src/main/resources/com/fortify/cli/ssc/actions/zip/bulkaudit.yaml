@@ -12,11 +12,10 @@ usage:
     For application versions that don't already exist in Aviator, the action will
     automatically create them before submitting for audit.
 
-    Note that this action requires a custom tag mapping file. The default tag mapping
-    leaves unsure issues in an unaudited state, which would cause versions with such
-    issues to be selected indefinitely. You can either provide a custom tag mapping file
-    (see SAST Aviator user guide for examples) or use `fcli ssc prepare aviator` to
-    configure SSC with Aviator-specific issue templates.
+    Either --tag-mapping or --add-aviator-tags must be specified. The default tag
+    mapping leaves unsure issues unaudited, causing indefinite reselection. Use
+    a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
+    issue templates.
 
     This action assumes active sessions with SSC, Aviator (user role for auditing),
     and Aviator (admin role for application listing and creation).
@@ -52,14 +51,26 @@ cli.options:
     type: boolean
   tag-mapping:
     names: --tag-mapping, -t
-    description: "Required path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled."
-    required: true
+    description: "Path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
+    required: false
+  add-aviator-tags:
+    names: --add-aviator-tags
+    description: "If specified, runs 'fcli aviator prepare' for the application before audit. Required unless --tag-mapping is specified."
+    required: false
+    type: boolean
+    default: false
 
 
 steps:
   # Configure module
   - var.set:
       module: ssc
+
+  # Validate that at least one of --tag-mapping or --add-aviator-tags is specified
+  - if: ${(cli['tag-mapping'] == null || cli['tag-mapping'] == '') && !cli['add-aviator-tags']}
+    steps:
+      - log.progress: "ERROR: Either --tag-mapping or --add-aviator-tags must be specified."
+      - throw: "Either --tag-mapping or --add-aviator-tags must be specified."
 
   # Get existing Aviator applications
   - log.progress: Retrieving existing Aviator applications...
@@ -85,24 +96,25 @@ steps:
       enriched_versions: null
 
   - rest.call:
-          projects_needing_audit:
-            uri: /api/v1/issueaging
-            query:
-              limit: -1
-              filterby: ${cli.filter}
-            records.for-each:
-              record.var-name: version
-              if: ${version.issuesPendingReview > 0 && !version.snapshotOutOfDate}
-              embed:
-                project_details:
-                  uri: /api/v1/projectVersions/${version.id}
-              do:
-                - var.set:
-                    current_project_name: ${version.project_details.project.name}
-                    project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(version.project_details.project.name)}
-                - var.set:
-                    enriched_versions..: {fmt: enriched_project}
-                  
+      projects_needing_audit:
+        uri: /api/v1/issueaging
+        type: paged
+        query:
+          limit: -1
+          filterby: ${cli.filter}
+        records.for-each:
+          record.var-name: version
+          if: ${version.issuesPendingReview > 0 && !version.snapshotOutOfDate}
+          embed:
+            project_details:
+              uri: /api/v1/projectVersions/${version.id}
+          do:
+            - var.set:
+                current_project_name: ${version.project_details.project.name}
+                project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(version.project_details.project.name)}
+            - var.set:
+                enriched_versions..: {fmt: enriched_project}
+
   - if: ${enriched_versions != null}
     log.progress: Found ${enriched_versions.size()} application versions with pending audit issues
   - if: ${enriched_versions == null}
@@ -115,6 +127,7 @@ steps:
       - rest.call:
           exclusion_list:
             uri: /api/v1/issueaging
+            type: paged
             query:
               limit: -1
               filterby: ${cli['exclude-filter']}
@@ -124,11 +137,11 @@ steps:
               do:
                 - var.set:
                     excluded_ids..: ${excluded_version.id}
-      
+
       - var.set:
           filtered_versions: null
           excluded_count: 0
-      
+
       - records.for-each:
           from: ${enriched_versions}
           record.var-name: candidate
@@ -144,7 +157,7 @@ steps:
             - if: ${!should_exclude}
               var.set:
                 filtered_versions..: ${candidate}
-      
+
       - var.set:
           enriched_versions: ${filtered_versions}
       - if: ${enriched_versions != null}
@@ -193,7 +206,6 @@ steps:
           stats.create_failures: 0
           stats.audit_attempts: 0
           stats.audit_successes: 0
-          stats.audit_skipped: 0
           stats.audit_failures: 0
           stats.entitlement_exhausted: false
           stats.create_skipped_due_to_entitlement: 0
@@ -207,6 +219,8 @@ steps:
               steps:
                 - if: ${!project.exists_in_aviator}
                   log.progress: Would create app ${project.project_name}
+                - if: ${cli['add-aviator-tags']}
+                  log.progress: Would prepare tags for ${project.project_name}:${project.version_name}
                 - log.progress: Would audit ${project.project_name}:${project.version_name}
             - if: ${!cli['dry-run']}
               steps:
@@ -240,23 +254,50 @@ steps:
                   var.set:
                     stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
 
+                # Prepare Aviator tags if requested
+                - if: ${cli['add-aviator-tags']}
+                  steps:
+                    - log.progress: Preparing Aviator tags for ${project.project_name}
+                    - run.fcli:
+                        prepare_tags:
+                          cmd: aviator ssc prepare --av "${project.project_name}:${project.version_name}"
+                          status.check: false
+                    - if: ${prepare_tags.exitCode != 0}
+                      steps:
+                        - log.warn: Aviator tag preparation failed for ${project.project_name}
+
                 # Run audit if app is ready
                 - if: ${app_ready}
                   steps:
                     - var.set:
                         stats.audit_attempts: ${stats.audit_attempts + 1}
-                    - run.fcli:
+
+                    - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
+                      run.fcli:
                         run_audit:
-                          cmd: aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli['tag-mapping']}"
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}"'
                           status.check: false
+                          records.collect: false
+
+                    - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
+                      run.fcli:
+                        run_audit:
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO'
+                          status.check: false
+                          records.collect: false
+
+                    # Process results
                     - if: ${run_audit.exitCode == 0}
                       steps:
-                        - if: "${run_audit.stdOut != null && run_audit.stdOut.contains('SKIPPED (no auditable issues)')}"
-                          var.set:
-                            stats.audit_skipped: ${stats.audit_skipped + 1}
-                        - if: "${run_audit.stdOut == null || !run_audit.stdOut.contains('SKIPPED (no auditable issues)')}"
+                        - var.set:
+                            record_count: "${run_audit.records == null ? 0 : run_audit.records.size()}"
+                        - var.set:
+                            record_action: "${(run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].action != null && run_audit.records[0].action != '') ? run_audit.records[0].action : 'SKIPPED'}"
+                        - if: ${!(run_audit.records == null || run_audit.records.size() == 0 || run_audit.records[0].action == null || run_audit.records[0].action == '' || (run_audit.records[0].action != null && run_audit.records[0].action.contains('SKIPPED')))}
                           var.set:
                             stats.audit_successes: ${stats.audit_successes + 1}
+
+
                     - if: ${run_audit.exitCode != 0}
                       steps:
                         - var.set:
@@ -279,7 +320,7 @@ steps:
 
       - if: ${!cli['dry-run']}
         steps:
-          - log.progress: Complete - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits completed ${stats.audit_successes}/${stats.audit_attempts}
+          - log.progress: Complete - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}
           - if: ${stats.entitlement_exhausted}
             log.progress: Note - Entitlement exhausted, some app creations were skipped
 
