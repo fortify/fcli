@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20251031.121428-dev_v3.x
+fcli_version: 0.20251031.121730-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251031.121428-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251031.121428-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251031.121730-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251031.121428-dev_v3.x</span>
+<span id="revnumber">version 0.20251031.121730-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -379,9 +379,10 @@ SAST_SCAN_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The fcli <code>ci</code> action currently only supports running a SAST scan, which is enabled by default. The <code>SAST_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <a href="manpage/fcli-fod-sast-scan-start.html"><code>fcli fod sast-scan start</code></a> command, for example to specify scan notes. Note that these environment variables only control the submission of the scan request; see the information below for details on waiting for the scan to complete.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_WAIT<br>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_WAIT<br>
+DO_SAST_WAIT<br>
 SAST_WAIT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">By default, the fcli <code>ci</code> action will wait for the SAST scan to complete. This behavior can be overridden by setting <code>DO_SAST_WAIT</code> to <code>false</code>, but note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="manpage/fcli-fod-sast-scan-wait-for.html"><code>fcli fod sast-scan wait-for</code></a> command, for example to adjust the polling interval or timeout.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, the fcli <code>ci</code> action will wait for all started scans to complete; set <code>DO_WAIT</code> to <code>false</code> to just kick off any configured scans without waiting for completion. Note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="manpage/fcli-fod-sast-scan-wait-for.html"><code>fcli fod sast-scan wait-for</code></a> command. Note that <code>DO_SAST_WAIT</code> is deprecated;  please use <code>DO_WAIT</code> instead.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_RELEASE_SUMMARY<br>
@@ -1061,8 +1062,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251031.121428-dev_v3.x<br>
-Last updated 2025-10-31 12:18:13 UTC
+Version 0.20251031.121730-dev_v3.x<br>
+Last updated 2025-10-31 12:20:30 UTC
 </div>
 </div>
 </body>
