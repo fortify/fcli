@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.ssc.issue_template.helper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +32,7 @@ public final class SSCIssueTemplateHelper {
     @Getter private final Map<String, SSCIssueTemplateDescriptor> descriptorsById = new HashMap<>();
     private final Map<String, SSCIssueTemplateDescriptor> descriptorsByName = new HashMap<>();
     @Getter private SSCIssueTemplateDescriptor defaultIssueTemplateDescriptor;
-    @Getter private JsonNode issueTemplatesBody;
+    private final List<SSCIssueTemplateDescriptor> inUseDescriptors = new ArrayList<>();
     
     /**
      * This constructor calls the SSC projectTemplates endpoint to retrieve issue template data,
@@ -39,7 +41,7 @@ public final class SSCIssueTemplateHelper {
      * @param unirest
      */
     public SSCIssueTemplateHelper(UnirestInstance unirest) {
-        issueTemplatesBody = unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1").asObject(JsonNode.class).getBody();
+        JsonNode issueTemplatesBody = unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1").asObject(JsonNode.class).getBody();
         issueTemplatesBody.get("data").forEach(this::processIssueTemplate);
     }
 
@@ -49,6 +51,9 @@ public final class SSCIssueTemplateHelper {
         descriptorsByName.put(descriptor.getName(), descriptor);
         if ( descriptor.isDefaultTemplate() ) {
             this.defaultIssueTemplateDescriptor = descriptor;
+        }
+        if(descriptor.isInUse()) {
+            inUseDescriptors.add(descriptor);
         }
     }
     
@@ -62,24 +67,14 @@ public final class SSCIssueTemplateHelper {
     }
     
     public SSCIssueTemplateDescriptor getIssueTemplateDescriptorOrDefaultorInUse(String issueTemplateNameOrId) {
-        SSCIssueTemplateDescriptor defaultOrInUseIssueTemplateDescriptor = new SSCIssueTemplateDescriptor();
-        if(getDefaultIssueTemplateDescriptor()==null) {
-            int inUseTemplateCount = 0;
-            for (JsonNode issueTemplate : getIssueTemplatesBody().get("data")) {
-                SSCIssueTemplateDescriptor descriptor = JsonHelper.treeToValue(issueTemplate,SSCIssueTemplateDescriptor.class);
-                if (descriptor.isInUse()) {
-                    inUseTemplateCount++;
-                    if (inUseTemplateCount > 1) {
-                        defaultOrInUseIssueTemplateDescriptor = null;
-                        break;
-                    }
-                    defaultOrInUseIssueTemplateDescriptor = descriptor;
-                }
-            }
+        if (StringUtils.isNotBlank(issueTemplateNameOrId)) {
+            return getDescriptorByNameOrId(issueTemplateNameOrId, true);
         }
-        return StringUtils.isBlank(issueTemplateNameOrId)
-                ? defaultOrInUseIssueTemplateDescriptor
-                : getDescriptorByNameOrId(issueTemplateNameOrId, true);
+        SSCIssueTemplateDescriptor defaultDescriptor = getDefaultIssueTemplateDescriptor();
+        if (defaultDescriptor != null) {
+            return defaultDescriptor;
+        }
+        return inUseDescriptors.size() == 1 ? inUseDescriptors.get(0) : null;
     }
     
     /**
