@@ -53,7 +53,7 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
         }
     }
     
-    // TODO This is currently mostly used for writing progress messages, to avoid exceptions is single-line
+    // TODO This is currently mostly used for writing progress messages, to avoid exceptions if single-line
     //      progress writer is configured. Maybe we should make this optional, providing a reusable approach
     //      for only converting to single line if !progressWriter.isMultiLineSupported()?
     protected static final String asSingleLineString(Object o) {
