@@ -56,6 +56,7 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     archiveClassifier.set("")
     archiveVersion.set("")
     from(generatedReflectConfigDir)
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
 }
 
 // Third-party helper

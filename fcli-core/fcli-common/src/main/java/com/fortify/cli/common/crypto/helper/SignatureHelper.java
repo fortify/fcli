@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.common.crypto.helper;
 
 import java.nio.file.Files;
@@ -27,7 +39,7 @@ import lombok.SneakyThrows;
 
 public class SignatureHelper {
     public static final String FORTIFY_PUBLIC_KEY = 
-              "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArij9U9yJVNc53oEMFWYp"
+            "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArij9U9yJVNc53oEMFWYp"
             + "NrXUG1UoRZseDh/p34q1uywD70RGKKWZvXIcUAZZwbZtCu4i0UzsrKRJeUwqanbc"
             + "woJvYanp6lc3DccXUN1w1Y0WOHOaBxiiK3B1TtEIH1cK/X+ZzazPG5nX7TSGh8Tp"
             + "/uxQzUFli2mDVLqaP62/fB9uJ2joX9Gtw8sZfuPGNMRoc8IdhjagbFkhFT7WCZnk"
@@ -37,7 +49,7 @@ public class SignatureHelper {
     private static final Verifier FORTIFY_SIGNATURE_VERIFIER = verifier(FORTIFY_PUBLIC_KEY);
     
     public static final Verifier fortifySignatureVerifier() {
-       return FORTIFY_SIGNATURE_VERIFIER; 
+    return FORTIFY_SIGNATURE_VERIFIER; 
     }
     
     public static final Verifier verifier(byte[] publicKey) {

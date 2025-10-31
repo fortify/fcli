@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,7 +9,7 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod.rest.lookup.helper;
 
 import java.util.Iterator;
@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 
 import kong.unirest.GetRequest;
@@ -37,7 +37,7 @@ public class FoDLookupHelper {
     }
 
     public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
-                                                          String text, boolean failIfNotFound) throws JsonProcessingException {
+                                                        String text, boolean failIfNotFound) throws JsonProcessingException {
         FoDLookupDescriptor currentLookup = null;
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
                 type.name());
@@ -59,7 +59,7 @@ public class FoDLookupHelper {
     }
 
     public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
-                                                          String group, String text, boolean failIfNotFound) throws JsonProcessingException {
+                                                        String group, String text, boolean failIfNotFound) throws JsonProcessingException {
         FoDLookupDescriptor currentLookup = null;
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
                 type.name());

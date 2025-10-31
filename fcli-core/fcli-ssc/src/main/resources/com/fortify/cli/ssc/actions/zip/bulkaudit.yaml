@@ -1,0 +1,328 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.1.0.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Perform SAST Aviator audits of SSC application versions in bulk.
+  description: |
+    This action identifies SSC application versions with pending audit issues and
+    automatically submits them for auditing by Fortify SAST Aviator. The action
+    intelligently filters to only process versions with actual pending audit issues,
+    while ignoring versions for which audit information needs to be refreshed.
+
+    For application versions that don't already exist in Aviator, the action will
+    automatically create them before submitting for audit.
+
+    Either --tag-mapping or --add-aviator-tags must be specified. The default tag
+    mapping leaves unsure issues unaudited, causing indefinite reselection. Use
+    a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
+    issue templates.
+
+    This action assumes active sessions with SSC, Aviator (user role for auditing),
+    and Aviator (admin role for application listing and creation).
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true
+  run.fcli.status.check.default: false
+
+cli.options:
+  max-audits:
+    names: --max-audits, -m
+    description: "Maximum number of project versions to audit. Default: -1 (unlimited)"
+    required: false
+    default: -1
+    type: int
+  filter:
+    names: --filter, -f
+    description: "Optional filter to apply when querying SSC for projects. Example: 'Languages:java'. Default: no filtering"
+    required: false
+    default: ""
+  exclude-filter:
+    names: --exclude-filter, -e
+    description: "Optional inverse filter to exclude projects from audit. Projects matching this filter will be skipped. Example: 'Languages:c#' to exclude .NET projects. Can be combined with --filter. Default: no exclusion"
+    required: false
+    default: ""
+  dry-run:
+    names: --dry-run, -n
+    description: "Show what aviator commands would be executed without actually running them. Default: false"
+    required: false
+    default: false
+    type: boolean
+  tag-mapping:
+    names: --tag-mapping, -t
+    description: "Path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
+    required: false
+  add-aviator-tags:
+    names: --add-aviator-tags
+    description: "If specified, runs 'fcli aviator prepare' for the application before audit. Required unless --tag-mapping is specified."
+    required: false
+    type: boolean
+    default: false
+  refresh:
+    names: --refresh
+    description: "Refresh application version metrics before audit. For large applications this can lead to timeout errors. Default: true"
+    required: false
+    type: boolean
+    default: true
+  refresh-timeout:
+    names: --refresh-timeout
+    description: "Timeout period for metric refresh, e.g., 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default: 60s"
+    required: false
+    default: "60s"
+
+steps:
+  # Configure module
+  - var.set:
+      module: ssc
+
+  # Validate that at least one of --tag-mapping or --add-aviator-tags is specified
+  - if: ${(cli['tag-mapping'] == null || cli['tag-mapping'] == '') && !cli['add-aviator-tags']}
+    steps:
+      - log.progress: "ERROR: Either --tag-mapping or --add-aviator-tags must be specified."
+      - throw: "Either --tag-mapping or --add-aviator-tags must be specified."
+
+  # Get existing Aviator applications
+  - log.progress: Retrieving existing Aviator applications...
+  - run.fcli:
+      aviator_apps:
+        cmd: aviator app ls -o json
+        records.collect: true
+
+  # Build Aviator app name set for fast membership checks
+  - var.set:
+      aviator_app_names: null
+  - records.for-each:
+      from: ${aviator_apps.records}
+      record.var-name: aviator_app
+      do:
+        - var.set:
+            aviator_app_names..: ${aviator_app.name}
+
+  # Query SSC for projects needing audit
+  - log.progress: Querying SSC for projects with pending audit issues...
+
+  - var.set:
+      enriched_versions: null
+
+  - rest.call:
+      projects_needing_audit:
+        uri: /api/v1/issueaging
+        type: paged
+        query:
+          limit: -1
+          filterby: ${cli.filter}
+        records.for-each:
+          record.var-name: version
+          if: ${version.issuesPendingReview > 0 && !version.snapshotOutOfDate}
+          embed:
+            project_details:
+              uri: /api/v1/projectVersions/${version.id}
+          do:
+            - var.set:
+                current_project_name: ${version.project_details.project.name}
+                project_exists_in_aviator: ${aviator_app_names != null && aviator_app_names.contains(version.project_details.project.name)}
+            - var.set:
+                enriched_versions..: {fmt: enriched_project}
+
+  - if: ${enriched_versions != null}
+    log.progress: Found ${enriched_versions.size()} application versions with pending audit issues
+  - if: ${enriched_versions == null}
+    log.progress: Found 0 application versions with pending audit issues
+
+  # Apply exclusion filter if specified
+  - if: ${enriched_versions != null && enriched_versions.size() > 0 && cli['exclude-filter'] != ""}
+    steps:
+      - log.progress: Applying exclusion filter...
+      - rest.call:
+          exclusion_list:
+            uri: /api/v1/issueaging
+            type: paged
+            query:
+              limit: -1
+              filterby: ${cli['exclude-filter']}
+            records.for-each:
+              record.var-name: excluded_version
+              if: ${excluded_version.issuesPendingReview > 0 && !excluded_version.snapshotOutOfDate}
+              do:
+                - var.set:
+                    excluded_ids..: ${excluded_version.id}
+
+      - var.set:
+          filtered_versions: null
+          excluded_count: 0
+
+      - records.for-each:
+          from: ${enriched_versions}
+          record.var-name: candidate
+          do:
+            - var.set:
+                should_exclude: false
+            - if: ${excluded_ids != null && excluded_ids.contains(candidate.id)}
+              var.set:
+                should_exclude: true
+            - if: ${should_exclude}
+              var.set:
+                excluded_count: ${excluded_count + 1}
+            - if: ${!should_exclude}
+              var.set:
+                filtered_versions..: ${candidate}
+
+      - var.set:
+          enriched_versions: ${filtered_versions}
+      - if: ${enriched_versions != null}
+        log.progress: Excluded ${excluded_count} application versions, ${enriched_versions.size()} remaining
+      - if: ${enriched_versions == null}
+        log.progress: Excluded ${excluded_count} application versions, 0 remaining
+
+  # Early exit if no candidates
+  - if: ${enriched_versions == null || enriched_versions.size() == 0}
+    steps:
+      - log.info: No application versions found that require audit
+      - var.set:
+          audit_candidates: null
+
+  # Apply max-audits limit if we have candidates
+  - if: ${enriched_versions != null && enriched_versions.size() > 0}
+    steps:
+      - var.set:
+          audit_candidates: ${enriched_versions}
+      - if: ${cli['max-audits'] != -1 && enriched_versions.size() > cli['max-audits']}
+        steps:
+          - var.set:
+              audit_counter: 0
+              audit_candidates: null
+          - records.for-each:
+              from: ${enriched_versions}
+              record.var-name: candidate
+              breakIf: ${audit_counter >= cli['max-audits']}
+              do:
+                - var.set:
+                    audit_candidates..: ${candidate}
+                    audit_counter: ${audit_counter + 1}
+
+  - if: ${audit_candidates != null}
+    log.progress: Processing ${audit_candidates.size()} application versions
+  - if: ${audit_candidates == null}
+    log.progress: Processing 0 application versions
+
+  # Process audit candidates
+  - if: ${audit_candidates != null && audit_candidates.size() > 0}
+    steps:
+      # Initialize execution tracking
+      - var.set:
+          stats.create_attempts: 0
+          stats.create_successes: 0
+          stats.create_failures: 0
+          stats.audit_attempts: 0
+          stats.entitlement_exhausted: false
+          stats.create_skipped_due_to_entitlement: 0
+
+      # Process each candidate
+      - records.for-each:
+          from: ${audit_candidates}
+          record.var-name: project
+          do:
+            - if: ${cli['dry-run']}
+              steps:
+                - if: ${!project.exists_in_aviator}
+                  log.progress: Would create app ${project.project_name}
+                - if: ${cli['add-aviator-tags']}
+                  log.progress: Would prepare tags for ${project.project_name}:${project.version_name}
+                - log.progress: Would audit ${project.project_name}:${project.version_name}
+            - if: ${!cli['dry-run']}
+              steps:
+                - var.set:
+                    app_ready: ${project.exists_in_aviator}
+
+                # Create app if needed
+                - if: ${!project.exists_in_aviator && !stats.entitlement_exhausted}
+                  steps:
+                    - var.set:
+                        stats.create_attempts: ${stats.create_attempts + 1}
+                    - run.fcli:
+                        create_app:
+                          cmd: aviator app create "${project.project_name}"
+                          status.check: false
+                    - if: ${create_app.exitCode == 0}
+                      var.set:
+                        app_ready: true
+                        stats.create_successes: ${stats.create_successes + 1}
+                    - if: ${create_app.exitCode != 0}
+                      steps:
+                        - var.set:
+                            stats.create_failures: ${stats.create_failures + 1}
+                        - if: ${!stats.entitlement_exhausted}
+                          steps:
+                            - log.warn: App creation failed - suppressing further create attempts
+                            - var.set:
+                                stats.entitlement_exhausted: true
+
+                - if: ${!project.exists_in_aviator && stats.entitlement_exhausted}
+                  var.set:
+                    stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
+
+                # Prepare Aviator tags if requested
+                - if: ${cli['add-aviator-tags']}
+                  steps:
+                    - log.progress: Preparing Aviator tags for ${project.project_name}
+                    - run.fcli:
+                        prepare_tags:
+                          cmd: aviator ssc prepare --av "${project.project_name}:${project.version_name}"
+                          status.check: false
+                    - if: ${prepare_tags.exitCode != 0}
+                      steps:
+                        - log.warn: Aviator tag preparation failed for ${project.project_name}
+
+                # Run audit if app is ready
+                - if: ${app_ready}
+                  steps:
+                    - var.set:
+                        stats.audit_attempts: ${stats.audit_attempts + 1}
+
+                    - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
+                      run.fcli:
+                        run_audit:
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
+                          status.check: false
+
+                    - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
+                      run.fcli:
+                        run_audit:
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
+                          status.check: false
+
+                    - if: ${run_audit.exitCode != 0}
+                      steps:
+                        - var.set:
+                            stats.audit_failures: ${stats.audit_failures + 1}
+                        - log.warn: Audit failed for ${project.project_name}:${project.version_name}
+
+      # Summary
+      - if: ${cli['dry-run']}
+        steps:
+          - var.set:
+              would_create_count: 0
+          - records.for-each:
+              from: ${audit_candidates}
+              record.var-name: dr_proj
+              if: ${!dr_proj.exists_in_aviator}
+              do:
+                - var.set:
+                    would_create_count: ${would_create_count + 1}
+          - log.progress: Dry-run complete - would process ${audit_candidates.size()} versions and create ${would_create_count} apps
+
+      - if: ${!cli['dry-run']}
+        steps:
+          - log.progress: Complete - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}
+          - if: ${stats.entitlement_exhausted}
+            log.progress: Note - Entitlement exhausted, some app creations were skipped
+
+formatters:
+  enriched_project:
+    id: ${version.id}
+    name: ${version.name}
+    issuesPendingReview: ${version.issuesPendingReview}
+    project_name: ${version.project_details.project.name}
+    version_name: ${version.project_details.name}
+    exists_in_aviator: ${project_exists_in_aviator}

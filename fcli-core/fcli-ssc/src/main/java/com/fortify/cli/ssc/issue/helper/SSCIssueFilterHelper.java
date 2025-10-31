@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.issue.helper;
 
 import java.util.LinkedHashMap;
@@ -54,8 +54,8 @@ public final class SSCIssueFilterHelper {
             } else if ( matchingFriendlyFilters.size()>1 ) {
                 throw new FcliSimpleException(technicalOrFriendlyFilter+" is ambiguous.\n" +
                     "please use one of the following filters:\n"+
-						matchingFriendlyFilters.stream().filter(Objects::nonNull).map(s -> StringHelper.indent(s, "  "))
-								.collect(Collectors.joining("\n")));
+                        matchingFriendlyFilters.stream().filter(Objects::nonNull).map(s -> StringHelper.indent(s, "  "))
+                                .collect(Collectors.joining("\n")));
             } else {
                 return matchingFriendlyFilters.get(0);
             }

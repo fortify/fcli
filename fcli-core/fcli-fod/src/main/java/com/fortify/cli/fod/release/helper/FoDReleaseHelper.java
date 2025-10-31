@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,31 +9,39 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod.release.helper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
+import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
+import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
+import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public class FoDReleaseHelper {
+    private static final Log LOG = LogFactory.getLog(FoDReleaseHelper.class);
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     private static String[] defaultFields = {"releaseId", "releaseName", "applicationName", "microserviceName"};
@@ -75,13 +83,41 @@ public class FoDReleaseHelper {
     }
 
     public static final FoDReleaseDescriptor updateRelease(UnirestInstance unirest, String relId,
-                                                   FoDReleaseUpdateRequest appUpdateRequest) {
+                                                FoDReleaseUpdateRequest appUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(appUpdateRequest);
         // TODO Check whether put request doesn't already return release data
         unirest.put(FoDUrls.RELEASE)
                 .routeParam("relId", relId)
                 .body(body).asObject(JsonNode.class).getBody();
         return getReleaseDescriptorFromId(unirest, Integer.parseInt(relId), true);
+    }
+
+    public static final List<String> getAllReleaseIdsForApp(UnirestInstance unirest, String appId, boolean failOnError) {
+        LOG.debug("Retrieving all releases for application id: " + appId);
+        // Get all releases for the application
+        try {
+            List<JsonNode> releases = FoDPagingHelper.pagedRequest(
+                            unirest.get(FoDUrls.RELEASES).queryString("filters", "applicationId:"+appId)
+                    ).stream()
+                    .map(HttpResponse::getBody)
+                    .map(FoDInputTransformer::getItems)
+                    .map(ArrayNode.class::cast)
+                    .flatMap(JsonHelper::stream)
+                    .collect(Collectors.toList());
+
+            // Extract releaseIds
+            return releases.stream()
+                    .map(release -> release.get("releaseId").asText())
+                    .collect(Collectors.toList());
+        } catch (UnexpectedHttpResponseException e) {
+            if (failOnError) {
+                throw e;
+            }
+            LOG.error("Error retrieving releases for application " +
+                    (StringUtils.isNotEmpty(appId) ? appId : "<null>") +
+                    ": " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     private static final GetRequest addFieldsParam(GetRequest req, String... fields) {
@@ -102,4 +138,5 @@ public class FoDReleaseHelper {
             return JsonHelper.treeToValue(result, FoDReleaseDescriptor.class);
         }
     }
+    
 }

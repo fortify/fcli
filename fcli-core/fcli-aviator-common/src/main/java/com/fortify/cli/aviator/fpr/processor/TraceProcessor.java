@@ -1,6 +1,26 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.aviator.audit.model.Fragment;
+import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedNode;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedNodeRef;
 import com.fortify.cli.aviator.fpr.jaxb.UnifiedTrace;
@@ -9,15 +29,9 @@ import com.fortify.cli.aviator.fpr.jaxb.UnifiedTraceRef;
 import com.fortify.cli.aviator.fpr.model.Node;
 import com.fortify.cli.aviator.fpr.model.TraceEntry;
 import com.fortify.cli.aviator.fpr.utils.FileUtils;
-import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.util.FprHandle;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.Getter;
 
 /**
  * Processor for UnifiedTracePool and individual UnifiedTrace elements in FVDL.

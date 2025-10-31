@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -12,9 +12,9 @@
  */
 package com.fortify.cli.fod.dast_scan.helper;
 
-import lombok.Data;
-
 import java.util.ArrayList;
+
+import lombok.Data;
 
 @Data
 public class FileUploadResult {

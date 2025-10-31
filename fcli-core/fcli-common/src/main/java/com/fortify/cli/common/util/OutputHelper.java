@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.util;
@@ -36,8 +36,6 @@ import lombok.RequiredArgsConstructor;
  */
 @Builder
 public class OutputHelper {
-    private final PrintStream stdout;
-    private final PrintStream stderr;
     private final OutputType stdoutType;
     private final OutputType stderrType;
     @Builder.Default private final Charset charset = StandardCharsets.UTF_8;
@@ -45,10 +43,10 @@ public class OutputHelper {
     public final <T extends OutputStream> Result call(Callable<Integer> callable) throws Exception {
         var orgStdout = System.out;
         var orgStderr = System.err;
-        try ( var stdoutStream = stdoutType.streamSupplier.apply(stdout);
-              var stderrStream = stderrType.streamSupplier.apply(stderr);
-              var stdoutPS = new PrintStream(stdoutStream);
-              var stderrPS = new PrintStream(stderrStream) ) {
+        try ( var stdoutStream = stdoutType.streamSupplier.apply(new NonClosingPrintStream(false, "System.out", orgStdout));
+            var stderrStream = stderrType.streamSupplier.apply(new NonClosingPrintStream(false, "System.err", orgStderr));
+            var stdoutPS = new PrintStream(stdoutStream);
+            var stderrPS = new PrintStream(stderrStream) ) {
             System.setOut(stdoutPS);
             System.setErr(stderrPS);
             int exitCode = callable.call();

@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.access_control.helper;
 
 import java.time.Duration;
@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestBasicAuthConfigurer;
@@ -42,68 +42,68 @@ import picocli.CommandLine.Help.Ansi;
 
 public class SSCTokenHelper {
     public static final JsonNode transformTokenRecord(JsonNode tokenRecord) {
-    	if ( tokenRecord instanceof ObjectNode && tokenRecord.has("terminalDate") ) {
-    		Date terminalDate = JsonHelper.treeToValue(tokenRecord.get("terminalDate"), Date.class);
-    		Duration diff = Duration.between(new Date().toInstant(), terminalDate.toInstant());
-    		String timeRemaining;
-    		if ( diff.toDays()>0 ) {
-    			timeRemaining = String.format("%d days", diff.toDays()+1);
-    		} else if ( diff.toHours()>0 ) {
-    			timeRemaining = String.format("%d hours", diff.toHours()+1);
-    		} else if (diff.toMinutes()>0 ) {
-    			timeRemaining = String.format("%d minutes", diff.toMinutes()+1);
-    		} else {
-    			timeRemaining = Ansi.AUTO.string("0");
-    		}
-    		((ObjectNode)tokenRecord).put("timeRemaining", timeRemaining);
-    	}
-    	return tokenRecord;
+        if ( tokenRecord instanceof ObjectNode && tokenRecord.has("terminalDate") ) {
+            Date terminalDate = JsonHelper.treeToValue(tokenRecord.get("terminalDate"), Date.class);
+            Duration diff = Duration.between(new Date().toInstant(), terminalDate.toInstant());
+            String timeRemaining;
+            if ( diff.toDays()>0 ) {
+                timeRemaining = String.format("%d days", diff.toDays()+1);
+            } else if ( diff.toHours()>0 ) {
+                timeRemaining = String.format("%d hours", diff.toHours()+1);
+            } else if (diff.toMinutes()>0 ) {
+                timeRemaining = String.format("%d minutes", diff.toMinutes()+1);
+            } else {
+                timeRemaining = Ansi.AUTO.string("0");
+            }
+            ((ObjectNode)tokenRecord).put("timeRemaining", timeRemaining);
+        }
+        return tokenRecord;
     }
     
     public static final JsonNode listTokens(IUrlConfig urlConfig, IUserCredentialsConfig uc, Map<String,Object> queryParams) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return listTokens(unirest, urlConfig, uc, queryParams);
         }
     }
     
     public static final JsonNode updateToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, String tokenId, SSCTokenUpdateRequest tokenUpdateRequest) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return updateToken(unirest, urlConfig, uc, tokenId, tokenUpdateRequest);
         }
     }
     
     public static final JsonNode deleteTokensById(IUrlConfig urlConfig, IUserCredentialsConfig uc, String... tokenIds) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return deleteTokensById(unirest, urlConfig, uc, tokenIds);
         }
     }
     
     public static final JsonNode deleteTokensByValue(IUrlConfig urlConfig, IUserCredentialsConfig uc, String... tokens) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return deleteTokensByValue(unirest, urlConfig, uc, tokens);
         }
     }
     
     public static final void revokeToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, char[] token) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             revokeToken(unirest, urlConfig, uc, token);
         }
     }
     
     public static final <T> T createToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return createToken(unirest, urlConfig, uc, tokenCreateRequest, returnType);
         }
     }
     
     public static final SSCTokenData getTokenData(IUrlConfig urlConfig, char[] token) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             return getTokenData(unirest, urlConfig, token);
         }
     }
 
     public static final <R> R run(IUrlConfig urlConfig, char[] activeToken, Function<UnirestInstance, R> f) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
             configureUnirest(unirest, urlConfig, activeToken);
             return f.apply(unirest);
         }

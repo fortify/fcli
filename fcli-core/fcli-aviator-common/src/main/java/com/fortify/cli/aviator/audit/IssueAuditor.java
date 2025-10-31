@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.audit;
 
 import static com.fortify.cli.aviator.util.Constants.DEFAULT_PING_INTERVAL_SECONDS;
@@ -18,29 +30,29 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.model.AuditOutcome;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.FilterSelection;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.config.IAviatorLogger;
 import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
 import com.fortify.cli.aviator.fpr.filter.SearchTree;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
-import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.audit.model.AuditOutcome;
-import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.StringUtil;
 
 
 public class IssueAuditor {
@@ -130,7 +142,7 @@ public class IssueAuditor {
     }
 
     public AuditOutcome performAudit(Map<String, AuditResponse> auditResponses, String token,
-                                     String projectName, String projectBuildId, String url) {
+                                    String projectName, String projectBuildId, String url) {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 

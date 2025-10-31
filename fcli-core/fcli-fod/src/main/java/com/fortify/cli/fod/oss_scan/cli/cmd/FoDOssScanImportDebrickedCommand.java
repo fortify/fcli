@@ -1,5 +1,5 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -19,7 +19,7 @@ import com.fortify.cli.common.debricked.DebrickedHelper;
 import com.fortify.cli.common.debricked.DebrickedLoginOptions;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanImportCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
@@ -61,21 +61,21 @@ public class FoDOssScanImportDebrickedCommand extends AbstractFoDScanImportComma
 
     @Override
     protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	DebrickedHelper debrickedHelper = new DebrickedHelper(debrickedLoginOptions, repository, branch);
-		progressWriter.writeProgress("Status: Generating & downloading SBOM");
-    	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
-    	    debrickedHelper.downloadSbom(debrickedUnirest, file);
-    	}
-    	progressWriter.writeProgress("Status: Uploading SBOM to FoD");
+        DebrickedHelper debrickedHelper = new DebrickedHelper(debrickedLoginOptions, repository, branch);
+        progressWriter.writeProgress("Status: Generating & downloading SBOM");
+    try ( var debrickedUnirest = UnirestHelper.createUnirestInstance() ) {
+            debrickedHelper.downloadSbom(debrickedUnirest, file);
+        }
+        progressWriter.writeProgress("Status: Uploading SBOM to FoD");
     }
     
     @Override
     protected void postUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
-    	//if ( StringUtils.isBlank(fileName) ) {
-    	//	file.delete();
-    	//}
-    	progressWriter.writeProgress("Status: SBOM uploaded to FoD");
-    	progressWriter.clearProgress();
+        //if ( StringUtils.isBlank(fileName) ) {
+        //    file.delete();
+        //}
+        progressWriter.writeProgress("Status: SBOM uploaded to FoD");
+        progressWriter.clearProgress();
     }
 
     @RequiredArgsConstructor

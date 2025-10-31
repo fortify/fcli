@@ -160,7 +160,8 @@ class FoDAccessControlUserSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==0
+                size()==1
+                it[0].equals("---")
             }
     }
     

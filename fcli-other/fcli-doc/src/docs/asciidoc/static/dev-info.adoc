@@ -4,21 +4,21 @@ The following sections provide information that may be useful for developers of 
 
 == Branches
 
-The `develop` branch is our primary branch for active fcli development. In general, new features/fixes/... should be developed in a dedicated branch or fcli fork, and eventually merged into the `develop` branch by raising a Pull Request. 
+The `dev/v3.x` branch is our primary branch for active fcli development. In general, new features/fixes/... should be developed in a dedicated branch or fcli fork, and eventually merged into the `dev/v3.x` branch by raising a Pull Request. 
 
-Once we are ready for releasing a new fcli version, the `develop` branch will be merged into the `main` branch, which, based on conventional commit messages (see next section) will result in a release PR to be automatically raised; merging this PR will automatically build the fcli release version and publish the various release artifacts. Once release, the `main` branch needs to be merged back into the `develop` branch to apply changelog and version updates. 
+Once we are ready for releasing a new fcli version, the `dev/v3.x` branch will be merged into the `rel/v3.x` branch, which, based on conventional commit messages (see next section) will result in a release PR to be automatically raised; merging this PR will automatically build the fcli release version and publish the various release artifacts. Once released, the `rel/v3.x` branch needs to be merged back into the `dev/v3.x` branch to apply changelog and version updates. 
 
-In some cases, the process above may require a rewrite of the commit history on the `develop` branch, as we may have a need to rewrite some commit messages to generate proper release notes. So, after an fcli release, you should always update/replace any branches/forks/local copies to apply the new commit history to avoid issues when merging new changes.
+In some cases, the process above may require a rewrite of the commit history on the `dev/v3.x` branch, as we may have a need to rewrite some commit messages to generate proper release notes. So, after an fcli release, you should always update/replace any branches/forks/local copies to apply the new commit history to avoid issues when merging new changes.
 
-In general, the `main` branch shouldn't be touched (other than as described above), except if we need to apply some (relatively urgent) bug fix at a time when the `develop` branch is not yet ready for release. In general, this is only applicable if we've already merged some features to the `develop` branch that still need more work before final release.
+In general, the `rel/v3.x` branch shouldn't be touched (other than as described above), except if we need to apply some (relatively urgent) bug fix at a time when the `dev/v3.x` branch is not yet ready for release. In general, this is only applicable if we've already merged some features to the `dev/v3.x` branch that still need more work before final release.
 
 Apart from the branches listed above, there's also a `gh-pages` branch that is used to publish documentation to https://fortify.github.io/fcli. Most of the files in this branch are either static or automatically generated during fcli builds, so other than changing documentation structure or performing cleanup (like removing documentation for outdated fcli versions), in general this branch shouldn't be touched.
 
 == Conventional Commits & Versioning
 
-=== `main` & `develop` branches
+=== `rel/v3.x` & `dev/v3.x` branches
 
-Versioning is handled automatically by https://github.com/google-github-actions/release-please-action[release-please-action] based on https://www.conventionalcommits.org/[Conventional Commits]. Every commit to the `+main+` or `+develop+` branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.
+Versioning is handled automatically by https://github.com/google-github-actions/release-please-action[release-please-action] based on https://www.conventionalcommits.org/[Conventional Commits]. Every commit to the `+dev/v3.x+` branch should follow the Conventional Commits convention, with those commit messages then being merged into the `rel/v3.x` branch to generate release notes. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.
 
 ....
 chore: Won't show up in changelog
@@ -27,25 +27,30 @@ ci: Change to GitHub Actions workflow; won't show up in changelog
 
 docs: Change to documentation; won't show up in changelog
 
-fix: Some fix (#2)
+fix: `fcli ssc issue list`: Fix ... (fixes #2)
 
-feat: New feature (#3)
+fix: SSC `gitlab-sast-report` action: Fix ... (fixes #3)
 
-feat!: Some feature that breaks backward compatibility
+feat: Add `fcli fod issue update` command ... (resolves #4)
 
-feat: Some feature
-  BREAKING-CHANGE: No longer supports xyz
+feat: `fcli fod issue list`: Add `--app` option to allow for querying issues at application level (resolves #5)
+
+feat!: Remove `fcli fod issue list` command; use `...` instead (resolves #6)
+
+feat!: `fcli ssc issue list`: Remove `--xyz` option (resolves #7)
 ....
 
-See the output of `+git log+` to view some sample commit messages. Note that such commit messages should only describe changes since the last fcli release, not changes within the current development release. For example, suppose you've developed a new feature that hasn't been released yet, and then implement some fix for this unreleased feature, you shouldn't use a `fix:` commit message but instead use a `chore:` or similar message. Otherwise, the changelog would contain entries for both the new feature and fixes to that feature, which doesn't make sense.
+See the output of `+git log+` to view some sample commit messages. As shown above, commit messages usually list the fcli command and any options that were added/removed/changed in literal blocks (back quotes), and include the associated GitHub issue number to allow the issue to be automatically closed when the commit message is pushed/merged onto the dev/v3.x branch. If an existing command was updated, we first list the command name (may include wild cards, like `+`fcli fod issue *`+`, followed by a colon, followed by the description. If a command was added/removed, we prefix the command name with Add/Remove. This allows for nice (alphabetical) ordering of release note entries.
+
+Note that such commit messages should only describe changes since the last fcli release, not changes within the current development release. For example, suppose you've developed a new feature that hasn't been released yet, and then implement some fix for this unreleased feature, you shouldn't use a `fix:` commit message but instead use a `chore:` or similar message. Otherwise, the changelog would contain entries for both the new feature and fixes to that feature, which doesn't make sense.
 
 `+release-please-action+` invoked from the GitHub CI workflow generates pull requests containing updated `+CHANGELOG.md+` and `+version.txt+` files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.
 
 === Feature & other branches
 
-In general, you can use the same commit messages as described above. However, especially when implementing a larger feature that may undergo some changes before being released, it maybe be better to use `proposed-feat:` instead, to avoid having to fix commit messages if the initial feature description no longer matches the feature that's eventually being released.
+Given that feature and other branches are usually squash-merged into the dev/v3.x branch, you can use any kind of commit messages, although to avoid any incorrect or duplicate messages appearing in the change log, it may be better to not use conventional commit messages as described above, but for example use something like `proposed-feat:` instead.
 
-As an example, we've had several occasions where we initially wrote a commit message like `feat: Add 'fcli ssc new-entity' commands to ...`, but before release decided to rename this entity or combine with another entity, causing the previous commit message to be outdated as instead we now should have a commit message `feat: Add 'fcli ssc renamed-entity' commands to ...`.
+Please include the feat/fix messages as described in the previous section in a literal text block in your pull request, to allow for easy copy/paste into the squash commit.
 
 
 == Technologies & Frameworks
@@ -111,10 +116,12 @@ The Gradle build uses various helper scripts from https://github.com/fortify/sha
 All commands listed below use Linux/bash notation; adjust accordingly if you are running on a different platform. All commands are to be executed from the main project directory.
 
 * `+./gradlew tasks --all+`: List all available tasks
-* Build: (plugin binary will be stored in `+build/libs+`)
+* `+./gradlew :fcli-core:fcli-app:dependencyUpdates+`: List potential dependency updates for main fcli executable
+* Build: (plugin binary will be stored in `+build/libs+` and or `+build/dist+`)
 ** `+./gradlew clean build+`: Clean and build the project
 ** `+./gradlew build+`: Build the project without cleaning
 ** `+./gradlew dist distThirdParty+`: Build distribution zip and third-party information bundle
+
 
 == Documentation
 
@@ -126,7 +133,7 @@ Most or all of the `+*.md+` and `LICENSE.txt` files located in the repository ro
 
 === User Documentation
 
-User documentation is generated automatically by the `+buildRoot/app/fcli-doc+` project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the `+src/docs/asciidoc+` directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.
+User documentation is generated automatically by the `+fcli-other/fcli-doc+` project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the `+src/docs/asciidoc+` directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.
 
 Documentation can be generated using the Gradle `distDocs` task, ending up in the `dist` directory of the aforementioned project. The global `dist` task includes the `distDocs` task.
 
@@ -171,47 +178,7 @@ Note that project directory structure may change beteen fcli versions, possibly 
 
 == Code Style & Structure 
 
-=== Coding Conventions
-
-Common Java coding conventions should be used for fcli source code, taking the following into consideration:
-
-* Indentation is done using 4 spaces; fcli source code should not contain tabs.
-* Use of System.out and System.err should be avoided, except for code that explicitly handles output. 
-** Command output should be generated through the output framework provided in the common module.
-** The logging framework should be used for outputting warning messages for example.
-** If you use System.out for debugging, potentially commenting out or removing these statements once done with debugging, consider using the logging framework for debug logging. If you need this information for debugging, it may be useful to permanently have this information included in debug logs.
-* Avoid having commented out source code.
-* Use the 'Organize Imports` feature of the IDE to remove any unused imports.
-* Avoid having unused variables, methods, ...
-* Avoid unsafe type conversions. In particular, when using Jackson for deserializing generic types, use `TypeReference` instead of the generic type class.
-
-=== Package Structure
-
-Most fcli command modules use the package structure described below. Note that there may be slight variations between product-specific modules that interact with a remote system, and fcli-specific modules like `config` and `tool`.
-
-* `com.fortify.cli.<module>` +
-** Root package for the given module
-* `com.fortify.cli.<module>._main.cli.cmd`
-** Contains `<module>Commands` class listing all entity commands for the given module.
-** May contain command implementations that operate at module-level rather than entity-level, like the `ConfigClearCommand`.
-* `com.fortify.cli.<module>.<entity>`
-** Root package for the given module entity
-* `com.fortify.cli.<module>.<entity>.cli`
-** Root package for Picocli-based code, like command implementations and mixins
-* `com.fortify.cli.<module>.<entity>.cli.cmd`
-** Contains the `<module><entity>Commands` class, listing all sub-commands for the given entity
-** Contains the individual entity action command classes
-** Where appropriate, sub-packages may be used to group related action commands
-* `com.fortify.cli.<module>.<entity>.cli.mixin`
-** Contains classes used as Mixin classes, for example defining reusable options and parameters, which may be used by commands in the current entity but also by other entities.
-** May contain classes used as ArgGroups, but these should be used sparingly as noted in link:_arggroup_annotations[ArgGroup Annotations]
-** Usually contains a `<module><entity>ResolverMixin` class, containing inner classes that allow for resolving one or more `<entity>` instances based on command-line options and/or positional parameters. Each inner class name describes the provided functionality, like `RequiredOption`, `OptionalOption`, `RequiredPositionalParameter`, ...
-* `com.fortify.cli.<module>.<entity>.helper`
-** Contains entity-related helper classes, for example for loading entity data, deleting entities, ...
-** Contains `*Descriptor` classes that hold entity-related data
-** Classes in this package should not contain any picocli-related functionality; they should be designed in such a way that they could potentially be used in non-picocli applications
-* `com.fortify.cli.<module>._common.*`
-** Root package for module-specific generic functionality, like connecting to, and authenticating with, the remote system, generic request/response transformations, ... Please see existing modules for example structure and contents.
+See https://github.com/fortify/fcli/blob/dev/v3.x/.github/copilot-instructions.md
 
 == Implementing fcli Commands
 
@@ -266,13 +233,13 @@ public class <Module><Entity><Action>Command extends <SuperClass> implements <Co
 * `<Action>`: Represents the action performed by this command; should be one of the classes in the `[Module]OutputHelperMixins` class, like `Get`, `List`, `Delete`, ... 
 ** Every action should have a corresponding inner class in either the generic `OutputHelperMixins` class, or the module-specific `[Module]OutputHelperMixins` class.
 ** In general, only concrete command implementations should declare references to `*OutputHelperMixins` classes, both in the `@Command` declaration and the `outputHelper` field. Defining an `outputHelper` field in an (abstract) superclass will result in any aliases defined on `*OutputHelperMixins` inner classes not being applied to the concrete command implementations.
-* `<SuperClass>` is usually `Abstract<Module>OutputCommand` or one of its abstract subclasses. Most modules provide `Abstract<Module>JsonNodeOutputCommand` and `Abstract<Module>BaseRequestOutputCommand` as bases classes for commands that generate `JsonNode` or `HttpRequest` instances respectively. Indirectly, virtually all leaf commands should extend from  `AbstractOutputCommand`.
+* `<SuperClass>` is usually `Abstract<Module>OutputCommand` or one of its abstract subclasses. Most modules provide `Abstract<Module>JsonNodeOutputCommand` and `Abstract<Module>BaseRequestOutputCommand` as base classes for commands that generate `JsonNode` or `HttpRequest` instances respectively, but note that this is legacy code; most commands should now extend directly from `Abstract<Module>OutputCommand` and generate an `IObjectNodeProducer` instance through one of the `*Builder` methods defined on `AbstractOutputCommand`, like `simpleObjectNodeProducerBuilder` or `requestObjectNodeProducerBuilder`. Indirectly, virtually all leaf commands should extend from  `AbstractOutputCommand`.
 * `<CommonInterfaces>` is a list of interfaces that define how output is being generated and processed. Following are some commonly used interfaces; see JavaDoc for details on usage:
-** `IBaseRequestSupplier`: Supply a Unirest `HttpRequest` instance for retrieving command output data.
-** `IJsonNodeSupplier`: Supply a `JsonNode` instance representing the command output.
+** `IBaseRequestSupplier` (legacy; use `RequestObjectNodeProducerBuilder` instead): Supply a Unirest `HttpRequest` instance for retrieving command output data.
+** `IJsonNodeSupplier` (legacy; use `SimpleObjectNodeProducerBuilder` instead): Supply a `JsonNode` instance representing the command output.
 ** `IActionCommandResultSupplier`: Supply data for a result column to be included in the output, like `DELETED`, `CREATED`, ...
-** `IInputTransformer`: Allows for transforming the full JSON data before it is being processed for output.
-** `IRecordTransformer`: Allows for transforming individual records before they are being processed for output.
+** `IInputTransformer` (legacy; configure directly on `*ObjectNodeProducerBuilder`): Hook to transform the full JSON data before it is processed. Applied once per input in `AbstractObjectNodeProducer`.
+** `IRecordTransformer` (legacy; configure directly on `*ObjectNodeProducerBuilder`): Hook to transform individual records. Applied to each record in `AbstractObjectNodeProducer`.
 
 Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent `<module>` and `<entity>` have a very different (easier) structure as they don't have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.
 
@@ -305,6 +272,8 @@ It was decided that `ArgGroup` annotations should be used sparingly (link:https:
 It was decided that every fcli command should have at most one positional parameter definition to specify the primary entity id or name that the command operates on. For example, `<entity> delete` commands can have a positional parameter for specifying the entity name or id to be deleted, usually matching the `<entity>` command group that the command is located at. For example, an `app delete` command would take a positional parameter for identifying the `app` to be deleted. Potentially the positional parameter may be an array or collection, for example if the `app delete` command allows for deleting multiple apps in a single operation.
 
 For everything else, including parent entities, options should be used. As an example, the `fcli ssc appversion-attribute set` command takes the parent entity (application version) as an option named `--appversion`, whereas the attribute names and values to be set are taken as a positional parameter `Map` instance.
+
+For fcli v4.0, we should consider using options only; it's difficult to identify the proper `FCLI_DEFAULT_*` environment variable to use for positional parameters, and it's simpler for both developers (no need to decide between option vs positional parameter) and users (although a bit more typing, users won't need to look up whether a given command accepts positional parameter or option, for example for specifying application version).
 
 === Message Keys
 

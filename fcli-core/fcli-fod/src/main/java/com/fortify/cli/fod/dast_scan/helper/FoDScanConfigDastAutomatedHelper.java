@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,22 +9,26 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod.dast_scan.helper;
+
+import java.util.ArrayList;
+
+import org.springframework.beans.BeanUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod._common.scan.helper.dast.*;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupBaseRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupGraphQlRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupGrpcRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupOpenApiRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupPostmanRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
-import org.springframework.beans.BeanUtils;
-
-import java.util.ArrayList;
 
 public class FoDScanConfigDastAutomatedHelper {
     public static FoDScanConfigDastAutomatedDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {
@@ -36,8 +40,8 @@ public class FoDScanConfigDastAutomatedHelper {
     }
 
     public static <T> FoDScanConfigDastAutomatedDescriptor setupScan(UnirestInstance unirest,
-                                                                     FoDReleaseDescriptor releaseDescriptor,
-                                                                     T setupDastAutomatedScanRequest, String ep) {
+                                                                    FoDReleaseDescriptor releaseDescriptor,
+                                                                    T setupDastAutomatedScanRequest, String ep) {
         var releaseId = releaseDescriptor.getReleaseId();
         unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + ep)
                 .routeParam("relId", releaseId)
@@ -95,8 +99,8 @@ public class FoDScanConfigDastAutomatedHelper {
 
     @SneakyThrows
     public static <T> FoDScanConfigDastAutomatedDescriptor setupGrpcScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                         FoDScanDastAutomatedSetupBaseRequest base, FileUploadResult fileUploadResult,
-                                         FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
+                                        FoDScanDastAutomatedSetupBaseRequest base, FileUploadResult fileUploadResult,
+                                        FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
         int fileIdToUse = (fileUploadResult != null ? fileUploadResult.getFileId() : 0);
         FoDScanDastAutomatedSetupGrpcRequest setupRequest = FoDScanDastAutomatedSetupGrpcRequest.builder()
                 .fileId(fileIdToUse)

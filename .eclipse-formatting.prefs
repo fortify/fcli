@@ -1,0 +1,3 @@
+org.eclipse.jdt.core.formatter.lineSplit=140
+org.eclipse.jdt.core.formatter.tabulation.char=space
+org.eclipse.jdt.core.formatter.tabulation.size=4

@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.fod.issue.cli.mixin;
 
 import java.util.LinkedHashMap;
@@ -51,12 +63,16 @@ public class FoDIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransfo
     public JsonNode transformRecord(JsonNode record) {
         var objectNode = (ObjectNode)record;
         objectNode.put("location", JsonHelper.evaluateSpelExpression(record, "primaryLocation+(lineNumber==null?'':(':'+lineNumber))", String.class));
+        // Debug: Print closedStatus and isSuppressed for each record
+        //boolean isSuppressed = JsonHelper.evaluateSpelExpression(objectNode, "isSuppressed", Boolean.class);
+        //boolean isFixed = JsonHelper.evaluateSpelExpression(objectNode, "closedStatus", Boolean.class);
         // If includes doesn't include 'visible', we return null for any visible (non-suppressed
         // & non-fixed) issues. We don't need explicit handling for other cases, as suppressed or
         // fixed issues won't be returned by FoD if not explicitly specified through the --include
         // option.
         return !includes.contains(FoDIssueInclude.visible)
-                && JsonHelper.evaluateSpelExpression(objectNode, "!isSuppressed && !closedStatus", Boolean.class)
+                && JsonHelper.evaluateSpelExpression(objectNode,
+                    "!isSuppressed && !(closedStatus || status=='Fix Validated')", Boolean.class)
                 ? null
                 : addVisibilityProperties(objectNode);
     }
@@ -64,11 +80,17 @@ public class FoDIssueIncludeMixin implements IHttpRequestUpdater, IRecordTransfo
     private ObjectNode addVisibilityProperties(ObjectNode record) {
         Map<String,String> visibility = new LinkedHashMap<>();
         if ( getBoolean(record, "isSuppressed") ) { visibility.put("suppressed", "(S)"); }
-        if ( getBoolean(record, "closedStatus") ) { visibility.put("fixed", "(F)"); } 
+        // Updated as per (Issue#820): using status field as well to determine fixed status instead of just closedStatus field
+        if ( getBoolean(record, "closedStatus") || isFixValidated(record) ) { visibility.put("fixed", "(F)"); }
         if ( visibility.isEmpty() )               { visibility.put("visible", " "); }
         record.put("visibility", String.join(",", visibility.keySet()))
             .put("visibilityMarker", String.join("", visibility.values()));
         return record;
+    }
+
+    private boolean isFixValidated(ObjectNode record) {
+        var field = record.get("status");
+        return field != null && "Fix Validated".equals(field.asText());
     }
 
     private boolean getBoolean(ObjectNode record, String propertyName) {

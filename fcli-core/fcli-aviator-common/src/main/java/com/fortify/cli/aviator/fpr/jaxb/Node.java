@@ -10,6 +10,7 @@ package com.fortify.cli.aviator.fpr.jaxb;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;

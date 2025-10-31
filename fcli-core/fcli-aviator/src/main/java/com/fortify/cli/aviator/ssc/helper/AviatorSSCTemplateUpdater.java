@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.ssc.helper;
 
 import java.util.ArrayList;
@@ -8,8 +20,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
-import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +29,8 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;

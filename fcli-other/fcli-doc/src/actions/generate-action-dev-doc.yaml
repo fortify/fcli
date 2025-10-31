@@ -153,21 +153,29 @@ formatters:
     === Getting started
     
     To get accustomed with action syntax and features, it is highly recommended to have a look at the YAML 
-    contents of some of the fcli built-in actions. You can view the contents of built-in actions by running
-    the `fcli * action get <action>` command, or view the contents online at the following locations:
+    contents of some of the fcli built-in actions using one of the following approaches:
+        
+    * If you already have fcli installed:
+    ** Run `fcli * action get <action>` command to view built-in action source
+    * Online in the fcli source code repository:
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/resources/com/fortify/cli/common/actions/zip[shared actions] (shared acrosss all fcli modules that provide actions)
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip['fcli action' module]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip['fcli ssc' module]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip['fcli fod' module]
+    ** link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml[generate-action-dev-doc.yaml] (used to generate this document)
     
-    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-common/src/main/resources/com/fortify/cli/common/actions/zip[common actions]
-    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip[`fcli action` actions]
-    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip[`fcli ssc` actions]
-    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip[`fcli fod` actions]
-    * link:${fcliBuildProperties.sourceCodeBaseUrl}/fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml[generate-action-dev-doc.yaml] (used to generate this document)
+    [NOTE]
+    ====
+    Online action sources reference a development version of the action schema. For custom actions, please make
+    sure to use ${fcliBuildProperties.fcliActionSchemaUrl} instead. Please see the next section for more details.
+    ====
     
     === Schema-based code assistance
         
-    Fcli provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation
-    and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing
-    and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema
-    associations listed below:
+    Fcli provides an link:${fcliBuildProperties.fcliActionSchemaUrl}[action schema], which allows YAML editors
+    and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may
+    need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used
+    IDE plugins that are known to work with one of the schema associations listed below:
 
     * Visual Studio Code: link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[Red Hat YAML plugin]
     * Eclipse: link:https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml[Wild Web Developer]

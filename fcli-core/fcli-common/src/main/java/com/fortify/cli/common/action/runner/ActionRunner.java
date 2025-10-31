@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.runner;
@@ -32,8 +32,8 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
-import com.fortify.cli.common.output.writer.record.util.NonClosingWriterWrapper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.RequiredArgsConstructor;
 
@@ -125,7 +125,7 @@ public class ActionRunner {
     private IRecordWriter createCheckStatusWriter() {
         var recordWriterConfig = RecordWriterConfig.builder()
                 .style(RecordWriterStyle.apply(RecordWriterStyleElement.md_border))
-                .writerSupplier(()->new NonClosingWriterWrapper(new OutputStreamWriter(System.out)))
+                .writerSupplier(()->new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
                 .build();
         var recordWriter = RecordWriterFactory.table.createWriter(recordWriterConfig);
         return recordWriter;

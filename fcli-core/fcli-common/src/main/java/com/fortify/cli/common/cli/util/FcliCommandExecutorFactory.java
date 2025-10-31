@@ -1,18 +1,17 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.cli.util;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
+import com.fortify.cli.common.output.cli.cmd.IRecordCollectionSupport;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
@@ -50,8 +49,6 @@ public final class FcliCommandExecutorFactory {
     private final Consumer<ObjectNode> recordConsumer;
     @Builder.Default private final OutputType stdoutOutputType = OutputType.show;
     @Builder.Default private final OutputType stderrOutputType = OutputType.show;
-    private final PrintStream stdout;
-    private final PrintStream stderr;
     private final Consumer<Result> onResult; // Always executed if fcli command didn't throw exception
     private final Consumer<Result> onSuccess; // Executed after onResult, if 0 exit code
     private final Consumer<Result> onFail; // Executed after onResult, if non-zero exit code
@@ -100,9 +97,7 @@ public final class FcliCommandExecutorFactory {
 
         public final Result execute() {
             if ( parseErrorResult!=null ) { return parseErrorResult; }
-            if ( recordConsumer!=null && canCollectRecords() ) {
-                StandardOutputWriter.collectRecords(recordConsumer, stdoutOutputType!=OutputType.show);
-            }
+            if ( recordConsumer!=null && canCollectRecords() ) { setPerCommandRecordConsumer(); }
             return call(()->_execute());
         }
 
@@ -110,8 +105,8 @@ public final class FcliCommandExecutorFactory {
             Result result = null;
             try {
                 result = OutputHelper.builder()
-                        .stderr(stderr).stderrType(stderrOutputType)
-                        .stdout(stdout).stdoutType(stdoutOutputType)
+                        .stderrType(stderrOutputType)
+                        .stdoutType(stdoutOutputType)
                         .build().call(f);
             } catch ( Throwable t ) {
                 if ( t instanceof ExecutionException ) {
@@ -169,11 +164,19 @@ public final class FcliCommandExecutorFactory {
         private CommandLine createCommandLine() {
             var cl = new CommandLine(replicatedLeafCommandSpec.root());
             cl.setExecutionExceptionHandler(FcliExecutionExceptionHandler.INSTANCE);
+            FcliExecutionStrategyFactory.configureCommandLine(cl);
             return cl;
         }
 
         public final boolean canCollectRecords() {
             return FcliCommandSpecHelper.canCollectRecords(replicatedLeafCommandSpec);
+        }
+
+        private void setPerCommandRecordConsumer() {
+            var userObj = replicatedLeafCommandSpec.userObject();
+            if ( userObj instanceof IRecordCollectionSupport ) {
+                ((IRecordCollectionSupport)userObj).setRecordConsumer(recordConsumer, stdoutOutputType!=OutputType.show);
+            }
         }
         
         private <T> void consume(T value, Consumer<T> consumer, Consumer<T> defaultConsumer) {

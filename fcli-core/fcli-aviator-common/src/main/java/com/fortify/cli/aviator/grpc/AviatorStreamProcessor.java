@@ -1,23 +1,16 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.grpc;
-
-import com.fortify.aviator.grpc.AuditorResponse;
-import com.fortify.aviator.grpc.AuditRequest;
-import com.fortify.aviator.grpc.AuditorServiceGrpc;
-import com.fortify.aviator.grpc.PingRequest;
-import com.fortify.aviator.grpc.StreamInitRequest;
-import com.fortify.aviator.grpc.UserPromptRequest;
-import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
-import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
-import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.audit.model.UserPrompt;
-import com.fortify.cli.aviator.config.IAviatorLogger;
-import com.fortify.cli.aviator.util.Constants;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ClientCallStreamObserver;
-import io.grpc.stub.ClientResponseObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +33,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.aviator.grpc.AuditRequest;
+import com.fortify.aviator.grpc.AuditorResponse;
+import com.fortify.aviator.grpc.AuditorServiceGrpc;
+import com.fortify.aviator.grpc.PingRequest;
+import com.fortify.aviator.grpc.StreamInitRequest;
+import com.fortify.aviator.grpc.UserPromptRequest;
+import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
+import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.model.AuditResponse;
+import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.util.Constants;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.ClientCallStreamObserver;
+import io.grpc.stub.ClientResponseObserver;
 
 class AviatorStreamProcessor implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(AviatorStreamProcessor.class);
@@ -534,8 +547,8 @@ class AviatorStreamProcessor implements AutoCloseable {
     }
 
     private void processRequestQueue(int totalRequests, AtomicInteger processedRequests,
-                                     Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture,
-                                     CountDownLatch streamLatch) {
+                                    Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture,
+                                    CountDownLatch streamLatch) {
         logger.progress("Starting to process issues...");
 
         LOG.info("Entering processRequestQueue loop, queue size: " + processingQueue.size() + ", permits: " + requestSemaphore.availablePermits() + ", outstanding: " + outstandingRequests.get());

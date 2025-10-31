@@ -15,6 +15,14 @@ public class Fcli {
     private static Path fcliDataDir
     private static IRunner runner
     private static Set<String> stringsToMask = []
+    // Central definition of system properties that must be passed to any fcli invocation
+    private static final Map<String,String> FCLI_SYSTEM_PROPERTIES = Map.of(
+        "fcli.no-terminal", "true", // Allow unlimited table width
+        "fcli.env.FCLI_DEFAULT_STYLE", "no-fast-output" // Disable fast output style for tests
+    )
+    // Pre-built list of -D arguments as plain java.lang.String instances (avoid GString for static type checking)
+    private static final List<String> FCLI_SYSTEM_PROPERTY_ARGS = FCLI_SYSTEM_PROPERTIES
+        .collect { k,v -> ("-D"+k+"="+v) as String } as List<String>
     
     static void initialize(Path fortifyDataDir) {
         System.setProperty("picocli.ansi", "false")
@@ -111,9 +119,18 @@ public class Fcli {
         if ( !fcli || fcli=="build" ) {
             return new ReflectiveRunner()
         } else {
-            def cmd = fcli.endsWith(".jar")
-                ? [java, "-jar", fcli]
-                : [fcli]
+            def cmd = [] as List<String>
+            if ( fcli.endsWith(".jar") ) {
+                // java -Dprop=val ... -jar file.jar
+                cmd.add(java)
+                cmd.addAll(FCLI_SYSTEM_PROPERTY_ARGS)
+                cmd.add("-jar")
+                cmd.add(fcli)
+            } else {
+                // native fcli -Dprop=val ... (system properties must come right after executable)
+                cmd.add(fcli)
+                cmd.addAll(FCLI_SYSTEM_PROPERTY_ARGS)
+            }
             return new ExternalRunner(cmd)
         }
     }
@@ -198,21 +215,26 @@ public class Fcli {
     // as this class (and IFortifyCLIRunner interface) is not available if the
     // ftest.fcli property points to an external fcli executable
     private static class ReflectiveRunner implements IRunner {
-        private Object obj;
+        private Class<?> runnerClass;
+        // Apply system properties once when ReflectiveRunner class is loaded
+        static {
+            FCLI_SYSTEM_PROPERTIES.each { k,v -> System.setProperty(k, v) }
+        }
         
         @Override
         int run(List<String> args) {
-            if ( obj==null ) {
-                obj = Class.forName("com.fortify.cli.app.runner.DefaultFortifyCLIRunner").newInstance()
+            if ( runnerClass==null ) {
+                runnerClass = Class.forName("com.fortify.cli.app.runner.DefaultFortifyCLIRunner")
             }
-            return (int)obj.invokeMethod("run", args)
+            // Static run(String... args) method; need to convert List<String> to Object[] and invoke reflectively
+            def method = runnerClass.getMethod("run", String[].class)
+            String[] a = args as String[]
+            return (int)method.invoke(null, (Object)a)
         }
         
         @Override
         void close() {
-            if ( obj!=null ) {
-                obj.invokeMethod("close", [])
-            }
+            // No-op; DefaultFortifyCLIRunner no longer requires explicit close
         }
     }
     

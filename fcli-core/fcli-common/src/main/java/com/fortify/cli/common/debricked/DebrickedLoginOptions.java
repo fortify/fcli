@@ -1,15 +1,15 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.debricked;
 
 import com.fortify.cli.common.log.LogSensitivityLevel;
@@ -35,8 +35,8 @@ public class DebrickedLoginOptions {
     }
     
     public static class DebrickedUserCredentialOptions implements IUserCredentialsConfig {
-    	@Option(names = {"--debricked-user", "-u"}, required = true)
-    	@MaskValue(sensitivity = LogSensitivityLevel.medium, description = "DEBRICKED USER")
+        @Option(names = {"--debricked-user", "-u"}, required = true)
+        @MaskValue(sensitivity = LogSensitivityLevel.medium, description = "DEBRICKED USER")
         @Getter private String user;
         
         @Option(names = {"--debricked-password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)

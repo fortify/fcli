@@ -1,17 +1,19 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.ssc.issue_template.helper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +32,7 @@ public final class SSCIssueTemplateHelper {
     @Getter private final Map<String, SSCIssueTemplateDescriptor> descriptorsById = new HashMap<>();
     private final Map<String, SSCIssueTemplateDescriptor> descriptorsByName = new HashMap<>();
     @Getter private SSCIssueTemplateDescriptor defaultIssueTemplateDescriptor;
+    private final List<SSCIssueTemplateDescriptor> inUseDescriptors = new ArrayList<>();
     
     /**
      * This constructor calls the SSC projectTemplates endpoint to retrieve issue template data,
@@ -49,6 +52,9 @@ public final class SSCIssueTemplateHelper {
         if ( descriptor.isDefaultTemplate() ) {
             this.defaultIssueTemplateDescriptor = descriptor;
         }
+        if(descriptor.isInUse()) {
+            inUseDescriptors.add(descriptor);
+        }
     }
     
     public SSCIssueTemplateDescriptor getDescriptorByNameOrId(String issueTemplateNameOrId, boolean failIfNotFound) {
@@ -60,10 +66,15 @@ public final class SSCIssueTemplateHelper {
         return descriptor;
     }
     
-    public SSCIssueTemplateDescriptor getIssueTemplateDescriptorOrDefault(String issueTemplateNameOrId) {
-        return StringUtils.isBlank(issueTemplateNameOrId)
-                ? getDefaultIssueTemplateDescriptor()
-                : getDescriptorByNameOrId(issueTemplateNameOrId, true);
+    public SSCIssueTemplateDescriptor getIssueTemplateDescriptorOrDefaultorInUse(String issueTemplateNameOrId) {
+        if (StringUtils.isNotBlank(issueTemplateNameOrId)) {
+            return getDescriptorByNameOrId(issueTemplateNameOrId, true);
+        }
+        SSCIssueTemplateDescriptor defaultDescriptor = getDefaultIssueTemplateDescriptor();
+        if (defaultDescriptor != null) {
+            return defaultDescriptor;
+        }
+        return inUseDescriptors.size() == 1 ? inUseDescriptors.get(0) : null;
     }
     
     /**

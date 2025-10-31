@@ -1,7 +1,18 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.File;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,7 +37,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -35,10 +45,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import com.fortify.cli.aviator.fpr.model.AuditIssue;
-import com.fortify.cli.aviator.fpr.model.FPRInfo;
-import com.fortify.cli.aviator.util.FprHandle;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -48,8 +54,13 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
-import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.config.TagMappingConfig;
+import com.fortify.cli.aviator.fpr.model.AuditIssue;
+import com.fortify.cli.aviator.fpr.model.FPRInfo;
+import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
+
+import lombok.Setter;
 
 
 public class AuditProcessor {
@@ -84,8 +95,12 @@ public class AuditProcessor {
             }
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/validation", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -114,7 +129,12 @@ public class AuditProcessor {
     private Document createDefaultAuditXml() throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            docFactory.setXIncludeAware(false);
+            docFactory.setExpandEntityReferences(false);
             docFactory.setNamespaceAware(true);
 
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -617,9 +637,9 @@ public class AuditProcessor {
     }
 
     public File updateAndSaveAuditAndRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                                     TagMappingConfig tagMappingConfig,
-                                                     FPRInfo fprInfo,
-                                                     FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                                    TagMappingConfig tagMappingConfig,
+                                                    FPRInfo fprInfo,
+                                                    FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         // Step 1: Update the in-memory audit.xml document. This returns timestamps needed for remediations.
         Map<String, String> remediationCommentTimestamps = updateAuditXml(auditResponses, tagMappingConfig);
 
@@ -668,11 +688,17 @@ public class AuditProcessor {
     }
 
     private Document generateRemediationsXml(Map<String, AuditResponse> auditResponses,
-                                             Map<String, String> remediationCommentTimestamps,
-                                             FPRInfo fprInfo,
-                                             FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
+                                            Map<String, String> remediationCommentTimestamps,
+                                            FPRInfo fprInfo,
+                                            FVDLProcessor fvdlProcessor) throws AviatorTechnicalException {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            docFactory.setXIncludeAware(false);
+            docFactory.setExpandEntityReferences(false);
             docFactory.setNamespaceAware(true);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
@@ -727,14 +753,14 @@ public class AuditProcessor {
                         filenameElement.setTextContent(filename);
                         fileChangesElement.appendChild(filenameElement);
 
-                        String originalFileContent = "";
-                        try {
-                            originalFileContent = String.valueOf(fvdlProcessor.getSourceFileContent(filename));
-                        } catch (RuntimeException ex){
-                            logger.error("Could not get source for autoremediation {}", ex.getMessage());
+                        Optional<String> originalFileContentOptional = fvdlProcessor.getSourceFileContent(filename);
+
+                        if (originalFileContentOptional.isEmpty()) {
+                            logger.warn("WARN: Could not retrieve source code for file '{}'. Skipping remediation generation for this file for instanceId '{}'.", filename, instanceId);
                             continue;
                         }
 
+                        String originalFileContent = originalFileContentOptional.get();
                         Element hashElement = finalDoc.createElementNS(REMEDIATIONS_NAMESPACE_URI, "Hash");
                         hashElement.setAttribute("type", HASHING_ALGORITHM_SHA_256);
                         hashElement.setTextContent(calculateHashBase64(originalFileContent, HASHING_ALGORITHM_SHA_256));
@@ -899,6 +925,12 @@ public class AuditProcessor {
         String instanceId = remediationElement.getAttribute("instanceId");
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document tempDoc = builder.newDocument();
@@ -963,13 +995,9 @@ public class AuditProcessor {
 
     private void transformDomToStream(Document doc, OutputStream os) throws TransformerException {
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        try {
-            transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
-        } catch (TransformerConfigurationException e) {
-            logger.warn("WARN: Security feature not fully supported by TransformerFactory.", e);
-        }
+        transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         Transformer transformer = transformerFactory.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -978,23 +1006,5 @@ public class AuditProcessor {
         transformer.transform(source, result);
     }
 
-    /**
-     * A wrapper around an OutputStream that ignores the close() call.
-     * This is essential when passing a ZipOutputStream to a utility like a Transformer
-     * that would otherwise prematurely close the entire archive stream.
-     */
-    private static class NonClosingOutputStream extends FilterOutputStream {
-        public NonClosingOutputStream(OutputStream out) {
-            super(out);
-        }
 
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            out.write(b, off, len);
-        }
-
-        @Override
-        public void close() {
-        }
-    }
 }

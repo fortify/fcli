@@ -1,4 +1,23 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.ssc.cli.cmd;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
@@ -15,19 +34,13 @@ import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.artifact.cli.mixin.SSCArtifactResolverMixin;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Command(name = "apply-remediations")
 public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutputCommand  implements IRecordTransformer, IActionCommandResultSupplier {

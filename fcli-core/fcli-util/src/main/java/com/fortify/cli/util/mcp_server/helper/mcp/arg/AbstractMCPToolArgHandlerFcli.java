@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.util.mcp_server.helper.mcp.arg;
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.mcp.MCPDefaultValue;
+import com.fortify.cli.common.util.ReflectionHelper;
 
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import picocli.CommandLine.Model.ArgSpec;
@@ -71,9 +73,12 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
     }
     
     private final ObjectNode createProperty(ArgSpec argSpec) {
-        return JsonHelper.getObjectMapper().createObjectNode()
-                .put("description", getDescription())
-                .set("type", getPropertyType(argSpec.typeInfo()));
+        var node = JsonHelper.getObjectMapper().createObjectNode();
+        node.put("description", getDescription());
+        node.set("type", getPropertyType(argSpec.typeInfo()));
+        var defVal = ReflectionHelper.getAnnotationValue(argSpec.userObject(), MCPDefaultValue.class, MCPDefaultValue::value, ()->null);
+        if ( defVal!=null && !defVal.isBlank() ) { node.put("default", defVal); }
+        return node;
     }
 
     private static final JsonNode getPropertyType(ITypeInfo typeInfo) {

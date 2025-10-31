@@ -1,13 +1,13 @@
-/**
- * Copyright 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  */
 package com.fortify.cli.common.action.model;
@@ -55,7 +55,12 @@ import lombok.NoArgsConstructor;
                 cmd: ssc av ls
                 records.collect: true
           - log.debug: ${avList.records}
-        ""","""
+        """,
+        ActionStepRunFcliEntry.SAMPLE_SNIPPET_FOR_EACH})
+public final class ActionStepRunFcliEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
+    @JsonIgnore private String key;
+    
+    public static final String SAMPLE_SNIPPET_FOR_EACH = """
         steps:
           - run.fcli:
               process-av:
@@ -64,9 +69,7 @@ import lombok.NoArgsConstructor;
                   record.var-name: av
                   do:
                     - log.debug: ${av}
-        """})
-public final class ActionStepRunFcliEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
-    @JsonIgnore private String key;
+            """;
     
     /** Allow for deserializing from a string that specified the fcli command to run, rather than object */
     public ActionStepRunFcliEntry(String cmdString) {
@@ -176,7 +179,7 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
         true: Terminate action execution if the fcli command returned a non-zero exit code
         false: Continue action execution if the fcli command returned a non-zero exit code
         
-        Default value is taken from 'config:run.fcli.status.status.check.default'. If not \
+        Default value is taken from 'config:run.fcli.status.check.default'. If not \
         specified, default value is 'false' if 'on.fail' is specified, 'true' otherwise.
         
         For now, this instruction is meant to be used only by built-in fcli actions; custom actions \
@@ -227,6 +230,7 @@ public final class ActionStepRunFcliEntry extends AbstractActionElementIf implem
     @Reflectable @NoArgsConstructor
     @Data @EqualsAndHashCode(callSuper = true)
     @JsonTypeName("run.fcli-for-each")
+    @SampleYamlSnippets({ActionStepRunFcliEntry.SAMPLE_SNIPPET_FOR_EACH})
     public static final class ActionStepFcliForEachDescriptor extends AbstractActionElementForEachRecord {
         protected final void _postLoad(Action action) {}
     }

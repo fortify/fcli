@@ -1,20 +1,22 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.fod._common.rest.helper;
 
-import java.net.URI;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
@@ -38,23 +40,39 @@ public class FoDProductHelper implements IProductHelper, IInputTransformer, INex
         return FoDInputTransformer.getItems(input);
     }
     
-    @SneakyThrows
     public String getApiUrl(String url) {
-        var uri = new URI(url);
-        if ( !uri.getHost().startsWith("api.") ) {
-            uri = new URI(uri.getScheme(), uri.getUserInfo(), "api."+uri.getHost(), uri.getPort(), 
-                    uri.getPath(), uri.getQuery(), uri.getFragment());
+        URL result = parseUrl(url);
+        String host = result.getHost();
+        if (!host.startsWith("api.")) {
+            result = buildUrlWithHost(result, "api." + host);
         }
-        return uri.toString().replaceAll("/+$", "");
+        return stripTrailingSlashes(result.toString());
+    }
+
+    public String getBrowserUrl(String url) {
+        URL result = parseUrl(url);
+        String host = result.getHost();
+        if (host.startsWith("api.")) {
+            result = buildUrlWithHost(result, host.substring(4));
+        }
+        return stripTrailingSlashes(result.toString());
+    }
+
+    private URL parseUrl(String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            throw new FcliSimpleException("Malformed URL - %s", e.getMessage());
+        }
     }
     
     @SneakyThrows
-    public String getBrowserUrl(String url) {
-        var uri = new URI(url);
-        if ( uri.getHost().startsWith("api.") ) {
-            uri = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost().substring(4), uri.getPort(), 
-                    uri.getPath(), uri.getQuery(), uri.getFragment());
-        }
-        return uri.toString().replaceAll("/+$", "");
+    private URL buildUrlWithHost(URL original, String host) {
+        return new URL(original.getProtocol(), host, original.getPort(), original.getFile());
     }
+
+    private String stripTrailingSlashes(String value) {
+        return value.replaceFirst("/+$", "");
+    }
+    
 }

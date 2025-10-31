@@ -233,7 +233,7 @@ Some examples:
 * Output a table with border and no headers: `-o table --style no-header,border`
 * Output non-pretty flattened JSON: `-o json --style no-pretty,flat`
 
-A full list of style elements that can be applied to the output is available in fcli help output or manual pages; the following table lists the most commonly used style elements:
+The table below describes all style elements currently supported by fcli. Fcli usage help and online manual pages also list available style elements for quick review. If you notice any style elements listed in fcli usage help that are not listed below, please link:https://github.com/fortify/fcli/issues[file a documentation bug].
 
 [cols="1,2,3"]
 |===
@@ -250,6 +250,16 @@ A full list of style elements that can be applied to the output is available in 
 `+no-border+`
 |`+table+`
 |By default, tables are printed without borders; use `border` to output a table with borders, or `md-border` to output a table with Markdown borders. Note that `md-border` is only meant for outputting simple, short property values. The output will not be a valid Markdown table if any of the output properties contains pipe or newline characters, or if contents are too long to be printed on a single line.
+
+|`+wrap+` +
+`+no-wrap+`
+|`+table+`
+|By default, table cell contents will be wrapped if they don't fit cell width; use the `no-wrap` style element to abbreviate cell contents instead.
+
+|`+fast-output+` +
+`+no-fast-output+`
+|`+table+`
+|Fcli v3.10.0 and below used to collect all output data in memory to calculate appropriate table column widths. As of fcli v3.11.0, to allow for faster output, fcli will by default output data in increments of 100 records, sampling the contents of the first 100 records to determine column width. Use `no-fast-output` to revert to the old behavior, but note that due to other changes (taking terminal width into consideration and `(no-)wrap` style, table output may still be slightly different than before.
 
 |`+pretty+` +
 `+no-pretty+`

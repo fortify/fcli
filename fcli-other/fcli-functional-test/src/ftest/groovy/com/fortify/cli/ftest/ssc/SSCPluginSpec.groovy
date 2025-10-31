@@ -46,7 +46,6 @@ class SSCPluginSpec extends FcliBaseSpec {
     }
     
     def "install"() {
-        
             def args = "ssc plugin install -f $samplePlugin"
             when:
                 def result = Fcli.run(args)

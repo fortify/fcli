@@ -1,3 +1,15 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
 package com.fortify.cli.aviator.util;
 
 import java.io.File;
@@ -13,9 +25,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
-import com.fortify.cli.common.exception.FcliTechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.exception.FcliTechnicalException;
 
 public final class FileUtil {
 
@@ -33,7 +46,7 @@ public final class FileUtil {
             return false;
         }
         try (FileInputStream fis = new FileInputStream(file);
-             ZipInputStream zis = new ZipInputStream(fis)) {
+            ZipInputStream zis = new ZipInputStream(fis)) {
             return zis.getNextEntry() != null;
         } catch (IOException e) {
             return false;

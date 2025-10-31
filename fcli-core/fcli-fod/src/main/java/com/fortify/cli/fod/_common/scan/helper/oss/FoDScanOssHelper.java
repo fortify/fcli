@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/*
+ * Copyright 2021-2025 Open Text.
  *
  * The only warranties for products and services of Open Text
  * and its affiliates and licensors ("Open Text") are as may
@@ -9,16 +9,13 @@
  * liable for technical or editorial errors or omissions contained
  * herein. The information contained herein is subject to change
  * without notice.
- *******************************************************************************/
-
+ */
 package com.fortify.cli.fod._common.scan.helper.oss;
 
 import java.io.File;
-import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -114,7 +111,7 @@ public class FoDScanOssHelper extends FoDScanHelper {
         issueSummary = issuesBuilder.length() > 0
             ? issuesBuilder.substring(0, issuesBuilder.length() - 2)
             : "";
-         
+        
         //((ObjectNode)record).remove("licenses");
         return ((ObjectNode)record)
             .put("licenseSummary", licenseSummary)
