@@ -33,7 +33,7 @@ public abstract class AbstractFoDScanSetupCommand<T> extends AbstractFoDJsonNode
     private static final Log LOG = LogFactory.getLog(AbstractFoDScanSetupCommand.class);
     @Mixin protected FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin protected FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
-	@Mixin protected CommonOptionMixins.CommonOptions commonOptions;
+    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
 
     @Option(names = {"--assessment-type"}, required = true)
     protected String assessmentType; // Plain text name as custom assessment types can be created
@@ -68,7 +68,7 @@ public abstract class AbstractFoDScanSetupCommand<T> extends AbstractFoDJsonNode
         var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         var releaseId = releaseDescriptor.getReleaseId();
         T setupDescriptor = getSetupDescriptor(unirest, releaseId);
-        var skippedNode = handleSkipIfExists(commonOptions.isSkipIfExists(), setupDescriptor, releaseDescriptor);
+        var skippedNode = handleSkipIfExists(skipIfExistsOption.isSkipIfExists(), setupDescriptor, releaseDescriptor);
         if (skippedNode != null) {
             return skippedNode;
         } else {

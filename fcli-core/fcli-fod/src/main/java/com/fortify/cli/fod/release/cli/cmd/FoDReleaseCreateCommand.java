@@ -64,7 +64,8 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameResolverMixin.PositionalParameter releaseNameResolver;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
-	@Mixin protected CommonOptionMixins.CommonOptions commonOptions;
+    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Option(names = {"--description", "-d"})
     private String description;
@@ -77,7 +78,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if (commonOptions.isSkipIfExists()) {
+        if (skipIfExistsOption.isSkipIfExists()) {
             var descriptor = releaseNameResolver.getReleaseDescriptor(unirest, false);
             if (descriptor != null) {
                 return addActionCommandResult(descriptor.asObjectNode(), false, false, false);
@@ -119,7 +120,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
                 .sdlcStatus(sdlcStatus.getSdlcStatusType())
                 .owner(unirest, appCreateOptions.getAppOwner())
                 .appType(appCreateOptions.getAppType())
-                .autoAttributes(unirest, relAttrs.getAttributes(), commonOptions.isAutoRequiredAttrs())
+                .autoAttributes(unirest, relAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs())
                 .userGroups(unirest, appCreateOptions.getAppUserGroups())
                 .build().validate();
         FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
@@ -135,7 +136,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
             if ( StringUtils.isBlank(microserviceName) ) {
                 throw new FcliSimpleException("Microservice name must be specified for microservices application");
             }
-            microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName(), relAttrs, commonOptions.isAutoRequiredAttrs());
+            microserviceDescriptor = FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, releaseNameResolver.getQualifiedReleaseNameDescriptor().getMicroserviceName(), relAttrs, autoRequiredAttrsOption.isAutoRequiredAttrs());
             msCreated = true;
         }
         return createRelease(unirest, appDescriptor, microserviceDescriptor, msCreated);
@@ -150,7 +151,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
                 .releaseDescription(description)
                 .sdlcStatusType(sdlcStatus.getSdlcStatusType().name())
                 .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Release, 
-                    relAttrs.getAttributes(), commonOptions.isAutoRequiredAttrs()));
+                    relAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs()));
         requestBuilder = addMicroservice(microserviceDescriptor, requestBuilder);
         requestBuilder = addCopyFrom(unirest, appDescriptor, requestBuilder);
 

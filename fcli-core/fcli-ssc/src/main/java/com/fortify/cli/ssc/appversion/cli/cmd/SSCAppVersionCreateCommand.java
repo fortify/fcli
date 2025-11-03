@@ -71,7 +71,8 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
     @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagAddOption tagAddMixin;
     @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagRemoveOption tagRemoveMixin;
-    @Mixin protected CommonOptionMixins.CommonOptions commonOptions;
+    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Option(names={"--description","-d"}, required = false)
     private String description;
@@ -80,7 +81,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if ( commonOptions.isSkipIfExists() ) {
+        if ( skipIfExistsOption.isSkipIfExists() ) {
             var existingDescriptor = SSCAppVersionHelper.getOptionalAppVersionFromAppAndVersionName(unirest, sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor());
             if ( existingDescriptor!=null ) { return existingDescriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); }
         }
@@ -149,7 +150,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         return new SSCAttributeUpdateBuilder(unirest)
                 .add(getAttributesFromSource(unirest, copyFromDescriptor))
                 .add(attrUpdateMixin.getAttributes())
-                .addRequiredAttrs(commonOptions.isAutoRequiredAttrs())
+                .addRequiredAttrs(autoRequiredAttrsOption.isAutoRequiredAttrs())
                 .checkRequiredAttrs(true)
                 .prepareAndCheckRequest();
     }

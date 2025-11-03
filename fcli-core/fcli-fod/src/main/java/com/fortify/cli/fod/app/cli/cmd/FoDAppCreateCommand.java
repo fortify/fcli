@@ -49,7 +49,8 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     //private static final Logger LOG = LoggerFactory.getLogger(FoDAppCreateCommand.class);
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
-    @Mixin protected CommonOptionMixins.CommonOptions commonOptions;
+    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
     protected String applicationName;
@@ -80,7 +81,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     public JsonNode getJsonNode(UnirestInstance unirest) {
         boolean msCreated = false;
         boolean relCreated = false;
-        if (commonOptions.isSkipIfExists()) {
+        if (skipIfExistsOption.isSkipIfExists()) {
             var descriptor = FoDAppHelper.getAppDescriptor(unirest, applicationName, false);
             if (descriptor != null) {
                 return addActionCommandResult(descriptor.asObjectNode(), false, false, false);
@@ -100,7 +101,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .sdlcStatus(sdlcStatus.getSdlcStatusType())
                 .owner(unirest, owner)
                 .appType(appType.getAppType())
-                .autoAttributes(unirest, appAttrs.getAttributes(), commonOptions.isAutoRequiredAttrs())
+                .autoAttributes(unirest, appAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs())
                 .userGroups(unirest, userGroups)
                 .build().validate();
         msCreated = (microserviceName != null && StringUtils.isNotBlank(microserviceName));

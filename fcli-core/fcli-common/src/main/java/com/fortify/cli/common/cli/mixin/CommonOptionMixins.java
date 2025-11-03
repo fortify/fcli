@@ -51,13 +51,15 @@ public class CommonOptionMixins {
         @Getter private File file;
     }
 
-	public static class CommonOptions {
-		@Option(names = { "--skip-if-exists" })
-		@Getter private boolean skipIfExists;
+    public static class SkipIfExistsOption {
+        @Option(names = { "--skip-if-exists" })
+        @Getter private boolean skipIfExists;
+    }
 
-		@Option(names = { "--auto-required-attrs" })
-		@Getter private boolean autoRequiredAttrs;
-	}
+    public static class AutoRequiredAttrsOption {
+        @Option(names = { "--auto-required-attrs" })
+        @Getter private boolean autoRequiredAttrs;
+    }
 
     public static class RequireConfirmation {
         @Mixin private CommandHelperMixin commandHelper;

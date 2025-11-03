@@ -32,7 +32,6 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
@@ -40,13 +39,14 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter qualifiedMicroserviceNameResolver;
-    @Mixin protected CommonOptionMixins.CommonOptions commonOptions;
+    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption msAttrs;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if (commonOptions.isSkipIfExists()) {
+        if (skipIfExistsOption.isSkipIfExists()) {
             FoDMicroserviceDescriptor descriptor = qualifiedMicroserviceNameResolver.getMicroserviceDescriptor(unirest, false);
             if (descriptor != null) { return descriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING"); }
         }
@@ -55,7 +55,7 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
         FoDMicroserviceUpdateRequest msCreateRequest = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
                 .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,
-                                msAttrs.getAttributes(), commonOptions.isAutoRequiredAttrs()))
+                                msAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs()))
                 .build();
         return FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, msCreateRequest).asJsonNode();
     }
