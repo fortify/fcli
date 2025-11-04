@@ -49,7 +49,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     //Downloading of the FPR will be based on artifact and not app version
     @Mixin private SSCArtifactResolverMixin.RequiredOption artifactResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
-    @Option(names = {"--source-dir"}) private String sourceCodeDirectory;
+    @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
 
     @Override
     @SneakyThrows
