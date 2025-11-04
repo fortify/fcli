@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251103.205258-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251104.145130-dev_v3.x" %}
 
 
 <div id="header">
@@ -45,9 +45,14 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli util mcp-server start</strong> <strong>-m</strong>=<em>&lt;module&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                           [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+<p><strong>fcli util mcp-server start</strong> [<strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em>]
+                           <strong>-m</strong>=<em>&lt;module&gt;</em>
+                           [<strong>--progress-interval</strong>=<em>&lt;progressIntervalPeriod&gt;</em>]
+                           [<strong>--progress-threads</strong>=<em>&lt;progressThreads&gt;</em>]
+                           [<strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em>] [[<strong>-h</strong>]
+                           [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
+                           [<strong>--debug</strong>]]</p>
 </div>
 </div>
 </div>
@@ -112,9 +117,25 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em></dt>
+<dd>
+<p>Maximum time to wait synchronously for a job result before returning an in_progress placeholder. Specify duration like 25s, 2m, 1h.</p>
+</dd>
 <dt class="hdlist1"><strong>-m</strong>, <strong>--module</strong>=<em>&lt;module&gt;</em></dt>
 <dd>
 <p>Fcli module to expose through this MCP server instance.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress-interval</strong>=<em>&lt;progressIntervalPeriod&gt;</em></dt>
+<dd>
+<p>Interval between internal progress counter updates for long-running jobs. Specify duration (e.g. 500ms, 1s, 2s).</p>
+</dd>
+<dt class="hdlist1"><strong>--progress-threads</strong>=<em>&lt;progressThreads&gt;</em></dt>
+<dd>
+<p>Number of threads used for updating and tracking job progress for long-running jobs.</p>
+</dd>
+<dt class="hdlist1"><strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em></dt>
+<dd>
+<p>Number of worker threads used to execute MCP tool jobs concurrently. Increase for higher parallelism if LLM invokes multiple tools simultaneously.</p>
 </dd>
 </dl>
 </div>
@@ -157,7 +178,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-03 20:55:44 UTC
+Last updated 2025-11-04 14:54:23 UTC
 </div>
 </div>
 </body>
