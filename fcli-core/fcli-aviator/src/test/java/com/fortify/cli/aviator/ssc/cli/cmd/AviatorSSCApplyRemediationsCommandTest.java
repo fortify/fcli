@@ -14,10 +14,13 @@ package com.fortify.cli.aviator.ssc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.lang.reflect.Field;
 
 import org.junit.jupiter.api.Test;
+
+import com.fortify.cli.common.exception.FcliSimpleException;
 
 class AviatorSSCApplyRemediationsCommandTest {
     @Test
@@ -49,5 +52,17 @@ class AviatorSSCApplyRemediationsCommandTest {
 
         assertEquals(customPath, fieldValue,
             "sourceCodeDirectory should be overridable when --source-dir option is provided");
+    }
+
+    @Test
+    void testBlankSourceCodeDirectoryThrowsException() throws Exception {
+        AviatorSSCApplyRemediationsCommand command = new AviatorSSCApplyRemediationsCommand();
+
+        Field field = AviatorSSCApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
+        field.setAccessible(true);
+        field.set(command, "");
+
+        assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null),
+            "Blank sourceCodeDirectory should throw FcliSimpleException");
     }
 }

@@ -56,4 +56,19 @@ class RemediationProcessorTest {
         }
     }
 
+    @Test
+    void testProcessRemediationXML_BlankSourceDir() throws IOException {
+        String remediationXml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Remediations xmlns="xmlns://www.fortify.com/schema/remediations">
+            </Remediations>
+            """;
+        Path fprPath = createTestFpr(remediationXml);
+
+        try (FprHandle fprHandle = new FprHandle(fprPath)) {
+            assertThrows(FcliBugException.class, () -> new RemediationProcessor(fprHandle, ""));
+            assertThrows(FcliBugException.class, () -> new RemediationProcessor(fprHandle, "   "));
+        }
+    }
+
 }

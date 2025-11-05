@@ -24,6 +24,7 @@ import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.ssc.helper.AviatorSSCApplyRemediationsHelper;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -54,10 +55,17 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     @Override
     @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        validateSourceCodeDirectory();
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             SSCArtifactDescriptor ad = artifactResolver.getArtifactDescriptor(unirest);
             return processFprRemediations(unirest, ad, logger);
+        }
+    }
+    
+    private void validateSourceCodeDirectory() {
+        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
+            throw new FcliSimpleException("--source-dir must specify a valid directory path");
         }
     }
 
