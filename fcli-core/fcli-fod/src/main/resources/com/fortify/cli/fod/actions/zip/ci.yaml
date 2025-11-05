@@ -84,13 +84,13 @@ steps:
   #   Automatically set to an appropriate skip reason by fcli, if <earlierStep> was skipped or failed.
   - run.fcli:
       SETUP:
-        cmd: ${#actionCmd('SETUP', 'fod', 'setup-release')} --rel "${global.ci.rel}" --scan-types sast
+        cmd: ${#actionCmd('SETUP', 'fod', 'setup-release')} "--rel=${global.ci.rel}" "--scan-types=sast"
         status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
           
       PACKAGE_ACTION: 
-        cmd: ${#actionCmd('PACKAGE_ACTION', 'fod', 'package')} --source-dir "${global.ci.sourceDir}"
+        cmd: ${#actionCmd('PACKAGE_ACTION', 'fod', 'package')} "--source-dir=${global.ci.sourceDir}"
         skip.if-reason:
           - ${sast.skipReason} # Skip if SAST scan is skipped
           
@@ -109,21 +109,21 @@ steps:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
              
       CHECK_POLICY:
-        cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} --rel "${global.ci.rel}" --progress=none
+        cmd: ${#actionCmd('CHECK_POLICY', 'fod', 'check-policy')} "--rel=${global.ci.rel}" "--progress=none"
         stdout: collect
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('CHECK_POLICY', true)} # Skip unless DO_CHECK_POLICY==true or CHECK_POLICY_ACTION/EXTRA_OPTS defined
           - ${postScan.skipReason}                               # Skip if no scans were run
           
       RELEASE_SUMMARY:
-        cmd: ${#actionCmd('RELEASE_SUMMARY', 'fod', 'release-summary')} --rel "${global.ci.rel}" --progress=none
+        cmd: ${#actionCmd('RELEASE_SUMMARY', 'fod', 'release-summary')} "--rel=${global.ci.rel}" "--progress=none"
         stdout: collect
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('RELEASE_SUMMARY', false)} # Skip if DO_RELEASE_SUMMARY==false
           - ${postScan.skipReason}                                   # Skip if no scans were run
           
       PR_COMMENT:
-        cmd: ${#actionCmd('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)} --rel "${global.ci.rel}"
+        cmd: ${#actionCmd('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)} "--rel=${global.ci.rel}"
         skip.if-reason: 
           - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
           - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)}
@@ -132,7 +132,7 @@ steps:
           # TODO Skip if prCommentAction is null or doesn't exist
           
       SAST_EXPORT:
-        cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} --rel "${global.ci.rel}" --source-dir "${global.ci.sourceDir}"
+        cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}"
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
           - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)}

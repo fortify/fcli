@@ -113,7 +113,7 @@ steps:
         #   Automatically set to an appropriate skip reason by fcli, if <earlierStep> was skipped or failed.
         - run.fcli:
             SETUP:
-              cmd: ${#actionCmd('SETUP', 'ssc', 'setup-appversion')} --av "${global.ci.av}" --store av
+              cmd: ${#actionCmd('SETUP', 'ssc', 'setup-appversion')} "--av=${global.ci.av}" "--store=av"
               status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
               skip.if-reason:
                 - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
@@ -121,7 +121,7 @@ steps:
             PACKAGE_ACTION:
               # Maybe use similar approach as DEBRICKED_SCAN_ACTION, explicitly passing all options?
               # If we decide to do so, we should do the same in FoD ci action 
-              cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} --source-dir "${global.ci.sourceDir}"
+              cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} "--source-dir=${global.ci.sourceDir}"
               skip.if-reason:
                 - ${sast.skipReason} # Skip if SAST scan is skipped
                   
@@ -203,21 +203,21 @@ steps:
                 - ${AVIATOR_AUDIT.dependencySkipReason}                # Skip if AVIATOR_AUDIT was skipped or failed
                         
             CHECK_POLICY:
-              cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} --av "${global.ci.av}" --progress=none
+              cmd: ${#actionCmd('CHECK_POLICY', 'ssc', 'check-policy')} "--av=${global.ci.av}" "--progress=none"
               stdout: collect
               skip.if-reason:
                 - ${postScan.skipReason}                               # Skip if no scans were run
                 - ${#actionCmdSkipFromEnvReason('CHECK_POLICY', true)} # Skip unless DO_CHECK_POLICY==true or CHECK_POLICY_ACTION/EXTRA_OPTS defined
                 
             APPVERSION_SUMMARY:
-              cmd: ${#actionCmd('APPVERSION_SUMMARY', 'ssc', 'appversion-summary')} --av "${global.ci.av}" --progress=none
+              cmd: ${#actionCmd('APPVERSION_SUMMARY', 'ssc', 'appversion-summary')} "--av=${global.ci.av}" "--progress=none"
               stdout: collect
               skip.if-reason:
                 - ${postScan.skipReason}                                      # Skip if no scans were run
                 - ${#actionCmdSkipFromEnvReason('APPVERSION_SUMMARY', false)} # Skip if DO_APPVERSION_SUMMARY==false
                 
             PR_COMMENT:
-              cmd: ${#actionCmd('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)} --av "${global.ci.av}"
+              cmd: ${#actionCmd('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)} "--av=${global.ci.av}"
               skip.if-reason: 
                 - ${postScan.skipReason}                             # Skip if no scans were run
                 - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
@@ -225,14 +225,14 @@ steps:
                 # TODO Check whether current run is for a PR
                 
             SAST_EXPORT:
-              cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} --av "${global.ci.av}" --source-dir "${global.ci.sourceDir}"
+              cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} "--av=${global.ci.av}" "--source-dir=${global.ci.sourceDir}"
               skip.if-reason:
                 - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
                 - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
                 - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)}
 
             DEBRICKED_EXPORT:
-              cmd: ${#actionCmd('DEBRICKED_EXPORT', 'ssc', global.ci.ssc_scaExportAction)} --av "${global.ci.av}"
+              cmd: ${#actionCmd('DEBRICKED_EXPORT', 'ssc', global.ci.ssc_scaExportAction)} "--av=${global.ci.av}"
               skip.if-reason:
                 - ${DEBRICKED_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
                 - ${#actionCmdSkipFromEnvReason('DEBRICKED_EXPORT', false)} # Skip if DO_DEBRICKED_EXPORT==false
