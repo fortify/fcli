@@ -38,9 +38,7 @@ import org.xml.sax.SAXException;
 
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
-import com.fortify.cli.aviator.util.FuzzyContextSearcher;
-import com.fortify.cli.common.exception.FcliBugException;
-
+import com.fortify.cli.aviator.util.FuzzyContextSearche
 public class RemediationProcessor {
     Logger logger = LoggerFactory.getLogger(RemediationProcessor.class);
     private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
