@@ -51,9 +51,6 @@ public class RemediationProcessor {
     public record RemediationMetric(int totalRemediations, int appliedRemediations, int skippedRemediations){}
 
     public RemediationProcessor(FprHandle fprHandle, String sourceCodeDirectory) {
-        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
-            throw new FcliBugException("sourceCodeDirectory may not be null or blank");
-        }
         this.fprHandle = fprHandle;
         this.sourceCodeDirectory = sourceCodeDirectory;
     }
