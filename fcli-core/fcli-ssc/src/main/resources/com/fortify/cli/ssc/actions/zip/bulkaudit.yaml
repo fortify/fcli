@@ -216,6 +216,7 @@ steps:
           stats.create_successes: 0
           stats.create_failures: 0
           stats.audit_attempts: 0
+          stats.audit_failures: 0
           stats.entitlement_exhausted: false
           stats.create_skipped_due_to_entitlement: 0
 
