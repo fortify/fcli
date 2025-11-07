@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Developer Information
-fcli_version: 0.20251107.120717-dev_v3.x
+fcli_version: 0.20251107.123429-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251107.120717-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251107.120717-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251107.123429-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 0.20251107.120717-dev_v3.x</span>
+<span id="revnumber">version 0.20251107.123429-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -255,11 +255,29 @@ During the release process, no new commits may be merged into the <code>dev/v3.x
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>git log rel/v3.x..dev/v3.x --oneline</pre>
+<pre>git log rel/v3.x..dev/v3.x</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Ensure all relevant features and fixes have proper conventional commit messages. If any commits are missing appropriate <code>feat:</code> or <code>fix:</code> messages, add them now using empty commits:</p>
+<p>This will display all commits with their full commit messages, which is important since a single commit may contain multiple conventional commit message entries (e.g., multiple <code>feat:</code> and <code>fix:</code> lines in one commit).</p>
+</div>
+<div class="paragraph">
+<p>Review the output and ensure all relevant features and fixes have proper conventional commit messages. Note that only commits with <code>feat:</code>, <code>fix:</code>, <code>feat!:</code>, or <code>fix!:</code> prefixes will appear in the changelog; commits with <code>chore:</code>, <code>ci:</code>, <code>docs:</code>, or other prefixes will not.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+To filter and view only the lines that will appear in the changelog, you can pipe the output through grep: <code>git log rel/v3.x..dev/v3.x | grep -E '^\s*(feat|fix)(\\(.*\\))?(!)?:'</code>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If any commits are missing appropriate <code>feat:</code> or <code>fix:</code> messages, add them now using empty commits:</p>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -343,7 +361,7 @@ git commit --allow-empty -m "fix: Description of fix"</pre>
 <div class="title">Important</div>
 </td>
 <td class="content">
-Use a <strong>regular merge</strong> (not squash or rebase) to merge the PR into <code>rel/v3.x</code>. This preserves the commit history needed for proper changelog generation.
+Use the <strong><code>Create a merge commit</code></strong> option (not <code>Squash and merge</code> or <code>Rebase and merge</code>) to merge the PR into <code>rel/v3.x</code>. This preserves the commit history needed for proper changelog generation.
 </td>
 </tr>
 </table>
@@ -402,7 +420,7 @@ If you find issues with the release notes, it&#8217;s generally better to fix th
 <div class="title">Important</div>
 </td>
 <td class="content">
-Again, use a <strong>regular merge</strong> (not squash or rebase) to merge the release-please PR.
+Again, use the <strong><code>Create a merge commit</code></strong> option (not <code>Squash and merge</code> or <code>Rebase and merge</code>) to merge the release-please PR.
 </td>
 </tr>
 </table>
@@ -413,16 +431,16 @@ Again, use a <strong>regular merge</strong> (not squash or rebase) to merge the 
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Immediately create a new GitHub release (without assets)</p>
+<p>Trigger the <code>Build and release</code> workflow</p>
 </li>
 <li>
-<p>Trigger the <code>Build and release</code> workflow</p>
+<p>Immediately create a new GitHub release (without assets)</p>
 </li>
 <li>
 <p>Build all release artifacts (native binaries, jars, documentation)</p>
 </li>
 <li>
-<p>Publish artifacts to the GitHub release (this takes 15-30 minutes)</p>
+<p>Publish artifacts to the GitHub release (this usually takes 15-30 minutes)</p>
 </li>
 </ol>
 </div>
@@ -1147,8 +1165,8 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251107.120717-dev_v3.x<br>
-Last updated 2025-11-07 12:07:16 UTC
+Version 0.20251107.123429-dev_v3.x<br>
+Last updated 2025-11-07 12:34:29 UTC
 </div>
 </div>
 </body>
