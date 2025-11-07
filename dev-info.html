@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Developer Information
-fcli_version: 3.13.1
+fcli_version: 0.20251107.120717-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 3.13.1
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.13.1" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251107.120717-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
 <div class="details">
-<span id="revnumber">version 3.13.1</span>
+<span id="revnumber">version 0.20251107.120717-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -37,6 +37,15 @@ fcli_version: 3.13.1
 <ul class="sectlevel2">
 <li><a href="#_relv3_x_devv3_x_branches"><code>rel/v3.x</code> &amp; <code>dev/v3.x</code> branches</a></li>
 <li><a href="#_feature_other_branches">Feature &amp; other branches</a></li>
+</ul>
+</li>
+<li><a href="#_release_process">Release Process</a>
+<ul class="sectlevel2">
+<li><a href="#_prerequisites">Prerequisites</a></li>
+<li><a href="#_release_process_overview">Release Process Overview</a></li>
+<li><a href="#_detailed_release_steps">Detailed Release Steps</a></li>
+<li><a href="#_post_release_activities">Post-Release Activities</a></li>
+<li><a href="#_troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
 <li><a href="#_technologies_frameworks">Technologies &amp; Frameworks</a></li>
@@ -150,6 +159,419 @@ feat!: `fcli ssc issue list`: Remove `--xyz` option (resolves #7)</pre>
 </div>
 <div class="paragraph">
 <p>Please include the feat/fix messages as described in the previous section in a literal text block in your pull request, to allow for easy copy/paste into the squash commit.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_release_process"><a class="anchor" href="#_release_process"></a>Release Process</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section provides detailed instructions on how to build and publish a new fcli release. The process leverages automated workflows and follows strict merge discipline to ensure consistent versioning and changelog generation.</p>
+</div>
+<div class="sect2">
+<h3 id="_prerequisites"><a class="anchor" href="#_prerequisites"></a>Prerequisites</h3>
+<div class="paragraph">
+<p>Before initiating a release, ensure the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>All features and fixes intended for the release have been merged into the <code>dev/v3.x</code> branch</p>
+</li>
+<li>
+<p>All relevant changes are properly documented with conventional commit messages (see <a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a>)</p>
+</li>
+<li>
+<p>If any fixes or features lack proper commit messages, add empty commits with appropriate <code>feat:</code> or <code>fix:</code> prefixes to ensure they appear in the changelog</p>
+</li>
+<li>
+<p>All CI workflows for the <code>dev/v3.x</code> branch have completed successfully</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+During the release process, no new commits may be merged into the <code>dev/v3.x</code> branch until the release is complete and changes have been synchronized back.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_release_process_overview"><a class="anchor" href="#_release_process_overview"></a>Release Process Overview</h3>
+<div class="paragraph">
+<p>The release process follows this high-level workflow:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>                    Verify changelog
+                    messages on
+                    dev/v3.x
+                         |
+                         v
+                    Create PR from
+                    dev/v3.x to rel/v3.x
+                         |
+                         v
+                    Wait for all
+                    workflows to pass
+                         |
+                         v
+                    Merge PR
+                    (regular merge!)
+                         |
+                         v
+                    Wait for
+                    release-please PR
+                    generation
+                         |
+                         v
+                    Review and merge
+                    release-please PR
+                    (regular merge!)
+                         |
+                         v
+                    Wait for release
+                    artifacts (15-30 min)
+                         |
+                         v
+                    Sync rel/v3.x back
+                    to dev/v3.x</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_detailed_release_steps"><a class="anchor" href="#_detailed_release_steps"></a>Detailed Release Steps</h3>
+<div class="sect3">
+<h4 id="_step_1_verify_changelog_messages"><a class="anchor" href="#_step_1_verify_changelog_messages"></a>Step 1: Verify Changelog Messages</h4>
+<div class="paragraph">
+<p>Before starting the release process, review the commit history on the <code>dev/v3.x</code> branch:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>git log rel/v3.x..dev/v3.x --oneline</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Ensure all relevant features and fixes have proper conventional commit messages. If any commits are missing appropriate <code>feat:</code> or <code>fix:</code> messages, add them now using empty commits:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>git commit --allow-empty -m "feat: Description of feature"
+git commit --allow-empty -m "fix: Description of fix"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Push these commits to the <code>dev/v3.x</code> branch and wait for CI workflows to complete successfully.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_2_create_pull_request_from_devv3_x_to_relv3_x"><a class="anchor" href="#_step_2_create_pull_request_from_devv3_x_to_relv3_x"></a>Step 2: Create Pull Request from dev/v3.x to rel/v3.x</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigate to the <code>rel/v3.x</code> branch on GitHub: <a href="https://github.com/fortify/fcli/tree/rel/v3.x" class="bare">https://github.com/fortify/fcli/tree/rel/v3.x</a></p>
+</li>
+<li>
+<p>If the <code>dev/v3.x</code> branch has changes, GitHub will display a message like "This branch is X commits behind dev/v3.x"</p>
+</li>
+<li>
+<p>Click the link to compare branches and create a pull request</p>
+</li>
+<li>
+<p>Fill in the PR title as <code>Prepare for next release</code></p>
+</li>
+<li>
+<p>Submit the pull request</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_3_wait_for_workflow_completion"><a class="anchor" href="#_step_3_wait_for_workflow_completion"></a>Step 3: Wait for Workflow Completion</h4>
+<div class="paragraph">
+<p>Before merging the PR, verify that all workflows have completed successfully for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>dev/v3.x</code> branch</p>
+</li>
+<li>
+<p>The newly created pull request</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The <code>Build and release</code> workflow includes multiple jobs:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Build</p>
+</li>
+<li>
+<p>Native image builds (Linux, macOS, Windows)</p>
+</li>
+<li>
+<p>Functional tests</p>
+</li>
+<li>
+<p>Docker image publishing (if applicable)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This may take 15-30 minutes depending on GitHub runner availability.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_4_merge_the_pull_request"><a class="anchor" href="#_step_4_merge_the_pull_request"></a>Step 4: Merge the Pull Request</h4>
+<div class="paragraph">
+<p>Once all workflows pass successfully:</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+Use a <strong>regular merge</strong> (not squash or rebase) to merge the PR into <code>rel/v3.x</code>. This preserves the commit history needed for proper changelog generation.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>After merging, the <code>Build and release</code> workflow will run again on the <code>rel/v3.x</code> branch. Once completed, the <code>release-please</code> action will automatically create a new pull request containing:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Updated <code>CHANGELOG.md</code> with release notes</p>
+</li>
+<li>
+<p>Updated <code>version.txt</code> with the new version number</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_5_review_release_notes"><a class="anchor" href="#_step_5_review_release_notes"></a>Step 5: Review Release Notes</h4>
+<div class="paragraph">
+<p>Once the release-please PR is generated:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Review the PR contents, particularly the <code>CHANGELOG.md</code> changes</p>
+</li>
+<li>
+<p>Verify that all features and fixes are properly documented</p>
+</li>
+<li>
+<p>Check for any typos or formatting issues</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If you find issues with the release notes, it&#8217;s generally better to fix them <strong>after</strong> the release by manually updating <code>CHANGELOG.md</code> and the GitHub release description. Making changes before merging the release-please PR may complicate the release process.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_6_merge_the_release_please_pr"><a class="anchor" href="#_step_6_merge_the_release_please_pr"></a>Step 6: Merge the Release-Please PR</h4>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+Again, use a <strong>regular merge</strong> (not squash or rebase) to merge the release-please PR.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Merging this PR will:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Immediately create a new GitHub release (without assets)</p>
+</li>
+<li>
+<p>Trigger the <code>Build and release</code> workflow</p>
+</li>
+<li>
+<p>Build all release artifacts (native binaries, jars, documentation)</p>
+</li>
+<li>
+<p>Publish artifacts to the GitHub release (this takes 15-30 minutes)</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You can monitor the workflow progress at: <a href="https://github.com/fortify/fcli/actions" class="bare">https://github.com/fortify/fcli/actions</a></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_7_verify_release_artifacts"><a class="anchor" href="#_step_7_verify_release_artifacts"></a>Step 7: Verify Release Artifacts</h4>
+<div class="paragraph">
+<p>Once the workflow completes:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigate to the releases page: <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a></p>
+</li>
+<li>
+<p>Verify that the new release is present</p>
+</li>
+<li>
+<p>Check that all expected assets are attached:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Native binaries for Linux, macOS, Windows</p>
+</li>
+<li>
+<p>JAR files</p>
+</li>
+<li>
+<p>Documentation archives</p>
+</li>
+<li>
+<p>Source code archives</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_step_8_synchronize_devv3_x_with_relv3_x"><a class="anchor" href="#_step_8_synchronize_devv3_x_with_relv3_x"></a>Step 8: Synchronize dev/v3.x with rel/v3.x</h4>
+<div class="paragraph">
+<p>After the release is complete, the <code>dev/v3.x</code> branch must be updated with the changelog and version changes from <code>rel/v3.x</code>:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>git checkout rel/v3.x
+git pull
+git checkout dev/v3.x
+git merge --ff-only rel/v3.x
+git push</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>--ff-only</code> flag ensures a fast-forward merge, which should always be possible since <code>rel/v3.x</code> is now ahead of <code>dev/v3.x</code> with only the changelog and version updates.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, you can use a single command to fetch and merge:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>git checkout dev/v3.x
+git pull origin rel/v3.x:rel/v3.x
+git merge --ff-only rel/v3.x
+git push</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_post_release_activities"><a class="anchor" href="#_post_release_activities"></a>Post-Release Activities</h3>
+<div class="paragraph">
+<p>After the release is complete:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Update any external documentation or announcements referencing the new version</p>
+</li>
+<li>
+<p>Monitor GitHub issues for any reports of problems with the release</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_troubleshooting"><a class="anchor" href="#_troubleshooting"></a>Troubleshooting</h3>
+<div class="sect3">
+<h4 id="_workflows_fail_during_release"><a class="anchor" href="#_workflows_fail_during_release"></a>Workflows Fail During Release</h4>
+<div class="paragraph">
+<p>If any workflow fails during the release process:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Do not merge the PR until the issue is resolved</p>
+</li>
+<li>
+<p>Fix the underlying issue in the <code>dev/v3.x</code> branch</p>
+</li>
+<li>
+<p>Wait for workflows to pass</p>
+</li>
+<li>
+<p>Update the PR (it will automatically include the new commits)</p>
+</li>
+<li>
+<p>Proceed with merging once all workflows pass</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_incorrect_changelog_entries"><a class="anchor" href="#_incorrect_changelog_entries"></a>Incorrect Changelog Entries</h4>
+<div class="paragraph">
+<p>If the release-please PR contains incorrect changelog entries:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>You can either fix them after release (recommended) or</p>
+</li>
+<li>
+<p>Cancel the release process, fix commit messages on <code>dev/v3.x</code>, and start over</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_release_artifacts_missing"><a class="anchor" href="#_release_artifacts_missing"></a>Release Artifacts Missing</h4>
+<div class="paragraph">
+<p>If the GitHub release is created but artifacts are missing:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check the workflow logs for errors</p>
+</li>
+<li>
+<p>The workflow may still be running; wait for completion (15-30 minutes)</p>
+</li>
+<li>
+<p>If the workflow failed, investigate the logs and potentially re-run the workflow</p>
+</li>
+</ol>
+</div>
 </div>
 </div>
 </div>
@@ -725,8 +1147,8 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 3.13.1<br>
-Last updated 2025-11-07 11:03:12 UTC
+Version 0.20251107.120717-dev_v3.x<br>
+Last updated 2025-11-07 12:07:16 UTC
 </div>
 </div>
 </body>
