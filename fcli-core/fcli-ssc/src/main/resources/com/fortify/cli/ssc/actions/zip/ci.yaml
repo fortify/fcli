@@ -91,8 +91,8 @@ steps:
   - with:
       sessions:
         - if: ${#isBlank(aviator.skipReason)}
-          login: ${#fcliCmd('AVIATOR_LOGIN', 'fcli aviator session login')} --aviator-session ${sessionName} --token=env:AVIATOR_TOKEN ${#optsFromEnv(aviator.loginOpts)}
-          logout: ${#fcliCmd('AVIATOR_LOGOUT', 'fcli aviator session logout')} --aviator-session ${sessionName}
+          login: ${#fcliCmd('AVIATOR_LOGIN', 'fcli aviator session login')} "--aviator-session=${sessionName}" "--token=env:AVIATOR_TOKEN" ${#optsFromEnv(aviator.loginOpts)}
+          logout: ${#fcliCmd('AVIATOR_LOGOUT', 'fcli aviator session logout')} "--aviator-session=${sessionName}"
       do:
         # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
         # continue to run on failures due to config:run.fcli.status.check.default being set to false.
