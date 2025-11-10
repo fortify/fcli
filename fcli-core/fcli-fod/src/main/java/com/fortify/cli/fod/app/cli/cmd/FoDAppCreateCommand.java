@@ -49,33 +49,33 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     //private static final Logger LOG = LoggerFactory.getLogger(FoDAppCreateCommand.class);
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
-    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
-    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
+    @Mixin private CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
-    protected String applicationName;
+    private String applicationName;
 
     @Option(names = {"--description", "-d"})
-    protected String description;
+    private String description;
     @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
-    protected ArrayList<String> notifications;
+    private ArrayList<String> notifications;
     @Mixin private FoDMicroserviceAndReleaseNameResolverMixin.RequiredOption releaseNameResolverMixin;
     @Option(names = {"--release-description"})
-    protected String releaseDescription;
+    private String releaseDescription;
     @Option(names = {"--owner"}, required = false)
-    protected String owner;
+    private String owner;
     @Option(names = {"--groups"}, required = false, split=",")
-    protected ArrayList<String> userGroups;
+    private ArrayList<String> userGroups;
 
     @Mixin
-    protected FoDAppTypeOptions.RequiredAppTypeOption appType;
+    private FoDAppTypeOptions.RequiredAppTypeOption appType;
     @Mixin
-    protected FoDCriticalityTypeOptions.RequiredOption criticalityType;
+    private FoDCriticalityTypeOptions.RequiredOption criticalityType;
     @Mixin
-    protected FoDAttributeUpdateOptions.OptionalAttrCreateOption appAttrs;
+    private FoDAttributeUpdateOptions.OptionalAttrCreateOption appAttrs;
     @Mixin
-    protected FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
+    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

@@ -71,8 +71,8 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
     @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagAddOption tagAddMixin;
     @Mixin private SSCCustomTagAddRemoveMixin.OptionalTagRemoveOption tagRemoveMixin;
-    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
-    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
+    @Mixin private CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Option(names={"--description","-d"}, required = false)
     private String description;

@@ -64,8 +64,8 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameResolverMixin.PositionalParameter releaseNameResolver;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
-    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
-    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
+    @Mixin private CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Option(names = {"--description", "-d"})
     private String description;

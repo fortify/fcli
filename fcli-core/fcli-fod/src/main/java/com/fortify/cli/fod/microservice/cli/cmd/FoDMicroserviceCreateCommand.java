@@ -39,8 +39,8 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter qualifiedMicroserviceNameResolver;
-    @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
-    @Mixin protected CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
+    @Mixin private CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption msAttrs;
 
