@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251107.123429-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251110.152842-dev_v3.x" %}
 
 
 <div id="header">
@@ -64,14 +64,19 @@ fcli_version:
 <p>This command allows for signing custom actions, allowing those actions to be run without confirmation if the corresponding public key has been imported through the <code>fcli config public-key import</code> command or passed in the <code>--pubkey</code> option on various action commands. The action to be signed must be a local file.</p>
 </div>
 <div class="paragraph">
-<p>This command can use an existing private key for signing, or generate a new key pair if the private key file as specified through the <code>--with</code> option doesn&#8217;t yet exist and <code>--pubout</code> is specified to output the corresponding public key.</p>
+<p>This command requires an existing private key for signing; fcli will not generate private keys. Private keys must be generated using OpenSSL or similar tools. Only RSA keys in PEM format are supported. For encrypted private keys, only a limited set of encryption schemes are supported. It is recommended to use AES-256 encryption, which is supported by both native fcli executables and the .jar version of fcli (the latter requires Java 19 or above for AES-encrypted private keys).</p>
 </div>
 <div class="paragraph">
-<p>Private keys may also be generated using OpenSSL or similar tools, but note that only RSA keys in PEM format are supported, and only a small set of encryption schemes are supported for encrypted private keys. It is recommended to use AES encryption, which is supported by both native fcli executables and the .jar version of fcli. The latter requires Java 19 or above though to handle AES-encrypted private keys. Following is a sample OpenSSL command for generating an encrypted private key that&#8217;s supported by fcli for signing:
-  openssl genpkey -algorithm rsa -out private-key.pem -aes256</p>
+<p>To generate a private key using OpenSSL:
+  Unencrypted: openssl genpkey -algorithm RSA -out private-key.pem -pkeyopt rsa_keygen_bits:2048
+  Encrypted:   openssl genpkey -algorithm RSA -out private-key.pem -pkeyopt rsa_keygen_bits:2048 -aes-256-cbc</p>
 </div>
 <div class="paragraph">
-<p>For convenience, when using a pre-existing private key, the <code>--pubout</code> option allows for outputting the corresponding public key for use by the <code>fcli config public-key import</code> command. Note that public keys will not be automatically added to the fcli trusted public key store; even if this command generates a key pair on the fly, you&#8217;ll still need to import the generated public key using the <code>fcli config public-key import</code> command.</p>
+<p>To extract the corresponding public key for distribution:
+  openssl rsa -in private-key.pem -pubout -out public-key.pem</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, use the <code>--pubout</code> option to output the public key when signing. Note that public keys are not automatically added to the fcli trusted public key store; you must import the public key using the <code>fcli config public-key import</code> command.</p>
 </div>
 </div>
 </div>
@@ -94,11 +99,11 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;privateKeyPassword&gt;</em>]</dt>
 <dd>
-<p>Private key password.</p>
+<p>Private key password (if the private key is encrypted).</p>
 </dd>
 <dt class="hdlist1"><strong>--pubout</strong>=<em>&lt;publicKeyPath&gt;</em></dt>
 <dd>
-<p>Public key output file. This option is required when generating a new key pair (if given private key doesn&#8217;t exist), and may optionally be used for outputting the public key if an already existing private key is being used.</p>
+<p>Optional public key output file. Use this to extract the public key from the private key for distribution.</p>
 </dd>
 <dt class="hdlist1"><strong>--signer</strong>=<em>&lt;signer&gt;</em></dt>
 <dd>
@@ -106,7 +111,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--with</strong>=<em>&lt;privateKeyPath&gt;</em></dt>
 <dd>
-<p>PEM file containing private key used for signing.</p>
+<p>PEM file containing the private key used for signing. The private key must already exist; fcli will not generate keys.</p>
 </dd>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
@@ -178,7 +183,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-07 12:37:10 UTC
+Last updated 2025-11-10 15:31:38 UTC
 </div>
 </div>
 </body>
