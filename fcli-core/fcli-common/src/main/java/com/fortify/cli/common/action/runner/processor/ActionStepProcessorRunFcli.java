@@ -68,7 +68,11 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         if ( isSkipped(entry) ) { return; }
         logStatus(entry, "START");
         var cmd = vars.eval(entry.getCmd(), String.class);
-        ctx.getProgressWriter().writeProgress("Executing fcli %s", cmd.replaceAll("^fcli ", ""));
+        ctx.getProgressWriter().writeProgress("Executing fcli %s",
+                // Replace all whitespace (including newlines) with single space
+                //   to avoid errors on single-line progress writer
+                // Remove duplicate 'fcli' if included in cmd,
+                asSingleLineString(cmd.replaceAll("^fcli ", "")));
         var recordConsumer = createFcliRecordConsumer(entry);
         var cmdExecutor = createCmdExecutor(entry, cmd, recordConsumer);
         if ( cmdExecutor!=null ) {

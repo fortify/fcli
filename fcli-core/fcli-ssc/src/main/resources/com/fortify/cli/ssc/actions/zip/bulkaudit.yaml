@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.1.0.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 
 author: Fortify
 usage:
@@ -25,6 +25,7 @@ config:
   rest.target.default: ssc
   run.fcli.status.log.default: true
   run.fcli.status.check.default: false
+  mcp: exclude # Not suitable for MCP tool invocation
 
 cli.options:
   max-audits:
@@ -215,6 +216,7 @@ steps:
           stats.create_successes: 0
           stats.create_failures: 0
           stats.audit_attempts: 0
+          stats.audit_failures: 0
           stats.entitlement_exhausted: false
           stats.create_skipped_due_to_entitlement: 0
 

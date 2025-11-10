@@ -77,7 +77,9 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
         node.put("description", getDescription());
         node.set("type", getPropertyType(argSpec.typeInfo()));
         var defVal = ReflectionHelper.getAnnotationValue(argSpec.userObject(), MCPDefaultValue.class, MCPDefaultValue::value, ()->null);
-        if ( defVal!=null && !defVal.isBlank() ) { node.put("default", defVal); }
+        if ( defVal!=null && !defVal.isBlank() ) {
+            node.put("default", defVal);
+        }
         return node;
     }
 
@@ -99,10 +101,18 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
                         JsonHelper.getObjectMapper().createObjectNode().set("type", getPropertyType(typeInfo.getAuxiliaryTypeInfos().get(0))));
         }
         */
-        if ( typeInfo.isArray() || typeInfo.isCollection() ) { return new TextNode("string"); }
-        if (typeInfo.isBoolean()) { return new TextNode("boolean"); }
-        if (type==Integer.class || type==int.class ) { return new TextNode("integer"); }
-        if (type==Number.class || type==float.class || type==double.class) { return new TextNode("number"); }
+        if ( typeInfo.isArray() || typeInfo.isCollection() ) {
+            return new TextNode("string");
+        }
+        if (typeInfo.isBoolean()) {
+            return new TextNode("boolean");
+        }
+        if (type==Integer.class || type==int.class ) {
+            return new TextNode("integer");
+        }
+        if (type==Number.class || type==float.class || type==double.class) {
+            return new TextNode("number");
+        }
         //if (typeInfo.isEnum()) { return JsonHelper.getObjectMapper().createObjectNode().set("enum", JsonHelper.toArrayNode(typeInfo.getEnumConstantNames().toArray(String[]::new))); }
         return new TextNode("string");
     }

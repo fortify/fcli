@@ -13,11 +13,14 @@
 package com.fortify.cli.tool._common.cli.cmd;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +32,7 @@ import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -80,11 +84,37 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         var pb = new ProcessBuilder()
                 .command(fullCmd)
                 .directory(new File(workDir))
-                .inheritIO();
+                // .inheritIO(); 
+                // Can't use inheritIO as this as it may inherit original stdout/stderr, rather than
+                // those created by OutputHelper.OutputType (for example through FcliCommandExecutor).
+                // Instead, we use pipes and manually copy the output to current System.out/System.err.
+                // This fixes for example https://github.com/fortify/fcli/issues/859.
+                .redirectInput(ProcessBuilder.Redirect.INHERIT)
+                .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                .redirectError(ProcessBuilder.Redirect.PIPE);
         updateProcessBuilder(pb);
         var process = pb.start();
-        process.waitFor();
+        inheritIO(process.getInputStream(), System.out);
+        inheritIO(process.getErrorStream(), System.err);
+        try {
+            process.waitFor();
+        } catch ( InterruptedException ie ) {
+            // Best-effort kill if job cancellation interrupted this thread
+            try { process.destroy(); } catch ( Exception ignore ) {}
+            try { process.destroyForcibly(); } catch ( Exception ignore ) {}
+            Thread.currentThread().interrupt();
+            throw ie; // Propagate so upstream job manager can mark cancelled
+        }
         return process.exitValue();
+    }
+    
+    private static void inheritIO(final InputStream src, final PrintStream dest) {
+        new Thread(new Runnable() {
+            @SneakyThrows
+            public void run() {
+                IOUtils.copy(src, dest);
+            }
+        }).start();
     }
 
     private final ToolInstallationDescriptor getToolInstallationDescriptor() {

@@ -119,7 +119,10 @@ public class SpelFunctionsStandard {
         } else if (source instanceof ArrayNode) {
             stream = JsonHelper.stream((ArrayNode) source);
         }
-        return stream == null ? "" : stream.map(SpelFunctionsStandard::toString).collect(Collectors.joining(delimiter));
+        return stream == null 
+                ? "" 
+                : stream.filter(Objects::nonNull).map(SpelFunctionsStandard::toString)
+                        .collect(Collectors.joining(delimiter));
     }
     
     @SpelFunction(cat=txt, returns="String consisting of the joined elements separated by the given delimiter _if all elements are non-null_; otherwise `null`")

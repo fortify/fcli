@@ -14,7 +14,6 @@ package com.fortify.cli.aviator.fpr.processor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,7 +39,6 @@ import org.xml.sax.SAXException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.FuzzyContextSearcher;
-
 public class RemediationProcessor {
     Logger logger = LoggerFactory.getLogger(RemediationProcessor.class);
     private static final String NAMESPACE_URI = "xmlns://www.fortify.com/schema/remediations";
@@ -121,13 +119,11 @@ public class RemediationProcessor {
 
 
                         if (!calculateHashBase64(content, "SHA-256").equals(fileHash)) {
-                            int diff = lineTo-lineFrom;
                             Element contextElem = (Element) change.getElementsByTagNameNS(NAMESPACE_URI, "Context").item(0);
                             String contextText = contextElem.getTextContent();
 
                             //spliting a string into a list of lines, using both Unix (\n) and Windows (\r\n) line endings.
                             List<String> contextLine = Arrays.asList(contextText.split("\\r?\\n"));
-                            int before = Integer.parseInt(contextElem.getAttribute("before"));
                             int contextLineFrom = FuzzyContextSearcher.fuzzySearchContext(originalLines, contextLine, 0) ;
                             if(contextLineFrom==-1) {
                                 logger.info("File content has changed. Context Lines not found. Remediation not possible for {}", instanceId);
@@ -201,18 +197,5 @@ public class RemediationProcessor {
         }
     }
 
-    private List<String> readFileWithFallback(Path filePath) throws IOException {
-        try {
-            byte[] fileBytes = Files.readAllBytes(filePath);
-            String content = new String(fileBytes);
-            return Arrays.asList(content.split("\\r?\\n"));
-        } catch (MalformedInputException e) {
-            //logger.error("Malformed input reading file: {}", path, e);
-            throw new RuntimeException(new IOException("Unable to read file due to encoding: ", e));
-        } catch (IOException e) {
-            //logger.error("Failed to read file: {}", path, e);
-            throw new RuntimeException(new IOException("Unable to read file: ", e));
-        }
 
-    }
 }

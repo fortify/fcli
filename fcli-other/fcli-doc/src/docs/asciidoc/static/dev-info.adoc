@@ -53,6 +53,215 @@ Given that feature and other branches are usually squash-merged into the dev/v3.
 Please include the feat/fix messages as described in the previous section in a literal text block in your pull request, to allow for easy copy/paste into the squash commit.
 
 
+== Release Process
+
+This section provides detailed instructions on how to build and publish a new fcli release. The process leverages automated workflows and follows strict merge discipline to ensure consistent versioning and changelog generation.
+
+=== Prerequisites
+
+Before initiating a release, ensure the following:
+
+* All features and fixes intended for the release have been merged into the `dev/v3.x` branch
+* All relevant changes are properly documented with conventional commit messages (see link:#_conventional_commits_versioning[Conventional Commits & Versioning])
+* If any fixes or features lack proper commit messages, add empty commits with appropriate `feat:` or `fix:` prefixes to ensure they appear in the changelog
+* All CI workflows for the `dev/v3.x` branch have completed successfully
+
+WARNING: During the release process, no new commits may be merged into the `dev/v3.x` branch until the release is complete and changes have been synchronized back.
+
+=== Release Process Overview
+
+The release process follows this high-level workflow:
+
+[ditaa]
+....
+                    Verify changelog
+                    messages on
+                    dev/v3.x
+                         |
+                         v
+                    Create PR from
+                    dev/v3.x to rel/v3.x
+                         |
+                         v
+                    Wait for all
+                    workflows to pass
+                         |
+                         v
+                    Merge PR
+                    (regular merge!)
+                         |
+                         v
+                    Wait for
+                    release-please PR
+                    generation
+                         |
+                         v
+                    Review and merge
+                    release-please PR
+                    (regular merge!)
+                         |
+                         v
+                    Wait for release
+                    artifacts (15-30 min)
+                         |
+                         v
+                    Sync rel/v3.x back
+                    to dev/v3.x
+....
+
+=== Detailed Release Steps
+
+==== Step 1: Verify Changelog Messages
+
+Before starting the release process, review the commit history on the `dev/v3.x` branch:
+
+....
+git log rel/v3.x..dev/v3.x
+....
+
+This will display all commits with their full commit messages, which is important since a single commit may contain multiple conventional commit message entries (e.g., multiple `feat:` and `fix:` lines in one commit).
+
+Review the output and ensure all relevant features and fixes have proper conventional commit messages. Note that only commits with `feat:`, `fix:`, `feat!:`, or `fix!:` prefixes will appear in the changelog; commits with `chore:`, `ci:`, `docs:`, or other prefixes will not.
+
+TIP: To filter and view only the lines that will appear in the changelog, you can pipe the output through grep: `git log rel/v3.x..dev/v3.x | grep -E '^\s*(feat|fix)(\\(.*\\))?(!)?:'`
+
+If any commits are missing appropriate `feat:` or `fix:` messages, add them now using empty commits:
+
+....
+git commit --allow-empty -m "feat: Description of feature"
+git commit --allow-empty -m "fix: Description of fix"
+....
+
+Push these commits to the `dev/v3.x` branch and wait for CI workflows to complete successfully.
+
+==== Step 2: Create Pull Request from dev/v3.x to rel/v3.x
+
+. Navigate to the `rel/v3.x` branch on GitHub: https://github.com/fortify/fcli/tree/rel/v3.x
+. If the `dev/v3.x` branch has changes, GitHub will display a message like "This branch is X commits behind dev/v3.x"
+. Click the link to compare branches and create a pull request
+. Fill in the PR title as `Prepare for next release`
+. Submit the pull request
+
+==== Step 3: Wait for Workflow Completion
+
+Before merging the PR, verify that all workflows have completed successfully for:
+
+* The `dev/v3.x` branch
+* The newly created pull request
+
+The `Build and release` workflow includes multiple jobs:
+
+* Build
+* Native image builds (Linux, macOS, Windows)
+* Functional tests
+* Docker image publishing (if applicable)
+
+This may take 15-30 minutes depending on GitHub runner availability.
+
+==== Step 4: Merge the Pull Request
+
+Once all workflows pass successfully:
+
+IMPORTANT: Use the **`Create a merge commit`** option (not `Squash and merge` or `Rebase and merge`) to merge the PR into `rel/v3.x`. This preserves the commit history needed for proper changelog generation.
+
+After merging, the `Build and release` workflow will run again on the `rel/v3.x` branch. Once completed, the `release-please` action will automatically create a new pull request containing:
+
+* Updated `CHANGELOG.md` with release notes
+* Updated `version.txt` with the new version number
+
+==== Step 5: Review Release Notes
+
+Once the release-please PR is generated:
+
+. Review the PR contents, particularly the `CHANGELOG.md` changes
+. Verify that all features and fixes are properly documented
+. Check for any typos or formatting issues
+
+NOTE: If you find issues with the release notes, it's generally better to fix them **after** the release by manually updating `CHANGELOG.md` and the GitHub release description. Making changes before merging the release-please PR may complicate the release process.
+
+==== Step 6: Merge the Release-Please PR
+
+IMPORTANT: Again, use the **`Create a merge commit`** option (not `Squash and merge` or `Rebase and merge`) to merge the release-please PR.
+
+Merging this PR will:
+
+. Trigger the `Build and release` workflow
+. Immediately create a new GitHub release (without assets)
+. Build all release artifacts (native binaries, jars, documentation)
+. Publish artifacts to the GitHub release (this usually takes 15-30 minutes)
+
+You can monitor the workflow progress at: https://github.com/fortify/fcli/actions
+
+==== Step 7: Verify Release Artifacts
+
+Once the workflow completes:
+
+. Navigate to the releases page: https://github.com/fortify/fcli/releases
+. Verify that the new release is present
+. Check that all expected assets are attached:
+** Native binaries for Linux, macOS, Windows
+** JAR files
+** Documentation archives
+** Source code archives
+
+==== Step 8: Synchronize dev/v3.x with rel/v3.x
+
+After the release is complete, the `dev/v3.x` branch must be updated with the changelog and version changes from `rel/v3.x`:
+
+....
+git checkout rel/v3.x
+git pull
+git checkout dev/v3.x
+git merge --ff-only rel/v3.x
+git push
+....
+
+The `--ff-only` flag ensures a fast-forward merge, which should always be possible since `rel/v3.x` is now ahead of `dev/v3.x` with only the changelog and version updates.
+
+Alternatively, you can use a single command to fetch and merge:
+
+....
+git checkout dev/v3.x
+git pull origin rel/v3.x:rel/v3.x
+git merge --ff-only rel/v3.x
+git push
+....
+
+=== Post-Release Activities
+
+After the release is complete:
+
+* Update any external documentation or announcements referencing the new version
+* Monitor GitHub issues for any reports of problems with the release
+
+=== Troubleshooting
+
+==== Workflows Fail During Release
+
+If any workflow fails during the release process:
+
+. Do not merge the PR until the issue is resolved
+. Fix the underlying issue in the `dev/v3.x` branch
+. Wait for workflows to pass
+. Update the PR (it will automatically include the new commits)
+. Proceed with merging once all workflows pass
+
+==== Incorrect Changelog Entries
+
+If the release-please PR contains incorrect changelog entries:
+
+. You can either fix them after release (recommended) or
+. Cancel the release process, fix commit messages on `dev/v3.x`, and start over
+
+==== Release Artifacts Missing
+
+If the GitHub release is created but artifacts are missing:
+
+. Check the workflow logs for errors
+. The workflow may still be running; wait for completion (15-30 minutes)
+. If the workflow failed, investigate the logs and potentially re-run the workflow
+
+
 == Technologies & Frameworks
 
 Following is a list of the main frameworks and technologies used by fcli: 

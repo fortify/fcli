@@ -48,14 +48,23 @@ steps:
       sca.skip: true
       dast.skipReason:  # TODO
       dast.skip: true
-      sast.skipReason: > # Enabled by default, unless explicitly disabled or other scan type requested
-        ${#env('DO_SAST_SCAN')=='false' ? 'SAST scan disabled as DO_SAST_SCAN==false'
-          : #env('DO_SAST_SCAN')!='true' && (!sca.skip || !dast.skip) ? 'SAST scan disabled as DO_SAST_SCAN!=true and other scan type requested'
-          : null
+      sast.skipReason: > # Enabled by default, unless explicitly disabled
+        ${
+            #fcliCmdSkipFromEnvReason('SAST_SCAN', false)
         }
-      # Post-scan tasks will be skipped with the following reason, unless this variable is
-      # reset to null by one of the SAST/DAST/SCA/ scan/wait tasks in their on.success blocks
-      postScan.skipReason: No scans have been run because they failed or were skipped
+      wait.skipReason: > # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
+        ${
+            #fcliCmdSkipFromEnvReason('WAIT', false)
+            ?:#fcliCmdSkipFromEnvReason('SAST_WAIT', false) 
+        }
+      # Post-scan tasks will be skipped if wait is skipped or if no scans were completed
+      # successfully. Post-scan skip reason will be reset to null once the wait task for
+      # any scan completed successfully. 
+      postScan.skipReason: >
+        ${
+            wait.skipReason?:'No scans have been run because they failed or were skipped'
+        }
+        
   # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
   # continue to run on failures due to config:run.fcli.status.check.default being set to false.
   #
@@ -94,8 +103,8 @@ steps:
       SAST_WAIT:
         cmd: "${#fcliCmd('SAST_WAIT', 'fod sast-scan wait-for')} ::fod_sast_scan:: --store fod_sast_wait"
         skip.if-reason:
-          - ${#fcliCmdSkipFromEnvReason('SAST_WAIT', false)} # Skip if DO_SAST_WAIT==false
-          - ${SAST_SCAN.dependencySkipReason}                # Skip if SAST_SCAN was skipped or failed
+          - ${wait.skipReason}                                 # Skip if wait.skipReason!=null
+          - ${SAST_SCAN.dependencySkipReason}                  # Skip if SAST_SCAN was skipped or failed
         on.success:
           - var.set: { postScan.skipReason: } # Reset postScan.skipReason to allow post-scan tasks to run
              
@@ -154,6 +163,7 @@ formatters:
   ciEntry:
     Step: ${ciEntry.key}
     Status: ${ciEntry.value.status}
+    Reason: ${ciEntry.value.statusReason?:''}
         
   summary: |
   

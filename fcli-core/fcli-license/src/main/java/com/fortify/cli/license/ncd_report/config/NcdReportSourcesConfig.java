@@ -34,9 +34,10 @@ public class NcdReportSourcesConfig {
     private Optional<Boolean> includeForks = Optional.empty();
     private Optional<NcdReportGitHubSourceConfig[]> github = Optional.empty();
     private Optional<NcdReportGitLabSourceConfig[]> gitlab = Optional.empty();
+    private Optional<NcdReportAdoSourceConfig[]> ado = Optional.empty();
     
     public final List<INcdReportSourceConfig> getSourceConfigs() {
-        return Stream.of(github, gitlab)
+        return Stream.of(ado, github, gitlab)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(INcdReportSourceConfig[].class::cast)

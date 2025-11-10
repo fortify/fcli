@@ -44,37 +44,57 @@ public final class MCPToolArgHandlerActionOption implements IMCPToolArgHandler {
                 .put("description", description)
                 .put("type", type);
         schema.properties().put(name, property);
-        if ( required ) { schema.required().add(name); }
+        if ( required ) {
+            schema.required().add(name);
+        }
     }
 
     @Override
     public String getFcliCmdArgs(Map<String, Object> toolArgs) {
         var value = toolArgs==null?null:toolArgs.get(name);
-        if ( value==null ) { return ""; }
+        if ( value==null ) {
+            return "";
+        }
         var values = streamValueElements(value).toList();
-        if ( values.isEmpty() ) { return ""; }
+        if ( values.isEmpty() ) {
+            return "";
+        }
         return String.format("\"%s=%s\"", name, String.join(",", values));
     }
     
     private static Stream<String> streamValueElements(Object value) {
         Stream<?> os;
-        if ( value==null ) { os = Stream.empty(); }
-        else if ( value.getClass().isArray() ) { os = Stream.of((Object[])value); }
-        else if ( Collection.class.isAssignableFrom(value.getClass()) ) { os = ((Collection<?>)value).stream(); }
-        else { os = Stream.of(value); }
+        if ( value==null ) {
+            os = Stream.empty();
+        } else if ( value.getClass().isArray() ) {
+            os = Stream.of((Object[])value);
+        } else if ( Collection.class.isAssignableFrom(value.getClass()) ) {
+            os = ((Collection<?>)value).stream();
+        } else {
+            os = Stream.of(value);
+        }
         return os.filter(Objects::nonNull).map(Object::toString);
     }
     
     private static String mapType(String actionType) {
-        if ( actionType==null ) { return "string"; }
+        if ( actionType==null ) {
+            return "string";
+        }
         switch (actionType) {
-            case "boolean": return "boolean";
-            case "int": return "integer";
-            case "long": return "integer";
-            case "double": return "number";
-            case "float": return "number";
-            case "array": return "string"; // Represent arrays as comma-separated string
-            default: return "string";
+            case "boolean":
+                return "boolean";
+            case "int":
+                return "integer";
+            case "long":
+                return "integer";
+            case "double":
+                return "number";
+            case "float":
+                return "number";
+            case "array":
+                return "string"; // Represent arrays as comma-separated string
+            default:
+                return "string";
         }
     }
 }

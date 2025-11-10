@@ -24,6 +24,7 @@ import com.fortify.cli.aviator.applyRemediation.ApplyAutoRemediationOnSource;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
 import com.fortify.cli.aviator.fod.helper.AviatorFoDApplyRemediationsHelper;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -50,14 +51,21 @@ public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorFoDApplyRemediationsCommand.class);
-    @Option(names = {"--source-dir"}, description = "Absolute path for source code") private String sourceCodeDirectory;
+    @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
 
     @Override @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        validateSourceCodeDirectory();
         try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             AviatorLoggerImpl logger = new AviatorLoggerImpl(progressWriter);
             FoDReleaseDescriptor rd = releaseResolver.getReleaseDescriptor(unirest);
             return processFprRemediations(unirest, rd, logger);
+        }
+    }
+    
+    private void validateSourceCodeDirectory() {
+        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
+            throw new FcliSimpleException("--source-dir must specify a valid directory path");
         }
     }
 

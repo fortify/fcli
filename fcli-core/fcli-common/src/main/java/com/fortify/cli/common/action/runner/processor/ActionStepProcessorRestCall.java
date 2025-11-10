@@ -204,7 +204,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
         
         private void addPagingProgress(TemplateExpression expr, Consumer<Runnable> consumer, ActionRunnerVars vars) {
             if ( expr!=null ) {
-                consumer.accept(()->ctx.getProgressWriter().writeProgress(vars.eval(expr, String.class)));
+                consumer.accept(()->ctx.getProgressWriter().writeProgress(asSingleLineString(vars.eval(expr, String.class))));
             }
         }
         

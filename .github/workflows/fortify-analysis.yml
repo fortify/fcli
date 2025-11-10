@@ -64,7 +64,7 @@ jobs:
           java-version: '17'
 
       - name: Run FoD SAST scan
-        uses: fortify/github-action@v1
+        uses: fortify/github-action@v2
         with:
           sast-scan: true
           debricked-sca-scan: true
@@ -74,11 +74,8 @@ jobs:
           FOD_USER: ${{secrets.OSS_FOD_USER}}
           FOD_PASSWORD: ${{secrets.OSS_FOD_PAT}}
           FOD_LOGIN_EXTRA_OPTS: --socket-timeout=600s
-          FOD_SAST_SCAN_EXTRA_OPTS: --notes "These are notes from the GitHub Action"
           DO_SETUP: true
-          # DO_POLICY_CHECK: true
           DO_JOB_SUMMARY: true
-          # DO_PR_COMMENT: true
           DO_EXPORT: true
           SETUP_EXTRA_OPTS: --sdlc-status Development --scan-types sast
           PACKAGE_EXTRA_OPTS: -oss

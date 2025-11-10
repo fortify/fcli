@@ -13,8 +13,8 @@
 package com.fortify.cli.ssc.issue_template.helper;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;

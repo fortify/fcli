@@ -1,5 +1,40 @@
 # Changelog
 
+## [3.13.1](https://github.com/fortify/fcli/compare/v3.13.0...v3.13.1) (2025-11-07)
+
+
+### Bug Fixes
+
+* `fcli aviator * apply-remediations`: Fix `NullPointerException` if `--source-dir` not specified (fixes [#860](https://github.com/fortify/fcli/issues/860)) ([c5923d0](https://github.com/fortify/fcli/commit/c5923d0ad7e2c9755bcf686ddf1213be2e83ddea))
+* `fcli sc-dast scan`: Add support for new ScanCentral DAST scan status types ([f50777a](https://github.com/fortify/fcli/commit/f50777a755de75a6dd31cceca11e9623d0377881))
+* `fcli sc-dast scan`: Fix `ArrayIndexOutOfBoundsException` if ScanCentral DAST returns a scan status type that is not (yet) known to fcli, now returning `UnknownScanStatusType` instead ([f50777a](https://github.com/fortify/fcli/commit/f50777a755de75a6dd31cceca11e9623d0377881))
+* `fcli util mcp-server start`: Improve `fcli tool * run` commands to adhere to fcli stdout/stderr processing, to avoid tool output from interfering with MCP JSON-RPC messages (fixes [#859](https://github.com/fortify/fcli/issues/859)) ([2fa7817](https://github.com/fortify/fcli/commit/2fa7817cd4602f9e5a89cf6c72a30e5fa358e6b7))
+* `fcli util mcp-server start`: Improve support for long-running operations ([ff757af](https://github.com/fortify/fcli/commit/ff757afd597cef608d962320d8dbf1ec333b4e1e))
+* `fcli util mcp-server start`: Return paged records as soon as they become available ([4f59fde](https://github.com/fortify/fcli/commit/4f59fde9337ff3de50570e7d361e8c79f3f190c4))
+* SSC `bulkaudit` action: Exclude from MCP tools as it doesn't make sense to run a batch process through LLM ([de5472c](https://github.com/fortify/fcli/commit/de5472ca35823996bf8ba400069bfb447ac6dff9))
+* SSC `bulkaudit` action: Initialize `stats.audit_failures` counter to 0 to prevent error ([0a0a00a](https://github.com/fortify/fcli/commit/0a0a00ac3d1eda1597dbccd707ed478d7c09db1a))
+* SSC `debricked-scan` action: Exclude from MCP tools as this actions requires sensitive data to be entered ([16442a8](https://github.com/fortify/fcli/commit/16442a8d86c61326dc39b12070d3d4efbaf12958))
+
+## [3.13.0](https://github.com/fortify/fcli/compare/v3.12.0...v3.13.0) (2025-10-31)
+
+
+### Features
+
+* `fcli license ncd-report`: Add support for Azure DevOps (see [#299](https://github.com/fortify/fcli/issues/299)) ([bb0b9b9](https://github.com/fortify/fcli/commit/bb0b9b934522129a72e4f29f6f255788f11c90bd))
+* `fcli ssc appversion create`: If there's only a single issue template marked as 'in use', this template will now be considered as the default template if no default template is explicitly configured in SSC ([1a865d7](https://github.com/fortify/fcli/commit/1a865d77183e598b4105ceaec54a4b44fc1fa1e1))
+* Add `bulkaudit` SSC action for automated SAST Aviator batch auditing of SSC application versions ([2b9391d](https://github.com/fortify/fcli/commit/2b9391d6d69fc744c01716eeb924be5fe0cd0da7))
+* FoD `ci` action: Add support for new scan-agnostic `DO_WAIT` environment variable & deprecate `DO_SAST_WAIT` ([b87ac3b](https://github.com/fortify/fcli/commit/b87ac3b4a5b365e6ed42f83c878d709026170dc5))
+* SSC `ci` action: Add support for new scan-agnostic `DO_WAIT` environment variable & deprecate `DO_SAST_WAIT` ([b87ac3b](https://github.com/fortify/fcli/commit/b87ac3b4a5b365e6ed42f83c878d709026170dc5))
+* SSC `ci` action: Incorporate `debricked-scan` action to allow for running both SAST & Debricked SCA scan ([b87ac3b](https://github.com/fortify/fcli/commit/b87ac3b4a5b365e6ed42f83c878d709026170dc5))
+* SSC `debricked-scan` action: New action for running a Debricked scan and importing results to SSC ([b87ac3b](https://github.com/fortify/fcli/commit/b87ac3b4a5b365e6ed42f83c878d709026170dc5))
+
+
+### Bug Fixes
+
+* `fcli aviator * apply-remediations`: Fix `InvalidPathException` for quoted paths ([848b97e](https://github.com/fortify/fcli/commit/848b97e4817f1748c9ce1a83a4d435bec022521e))
+* `fcli aviator ssc audit`: Automatically refresh SSC metrics if necessary before auditing ([2b9391d](https://github.com/fortify/fcli/commit/2b9391d6d69fc744c01716eeb924be5fe0cd0da7))
+* `fcli fod session login`: Ignore `--tenant` when authenticating with client credentials ([7014b3c](https://github.com/fortify/fcli/commit/7014b3cae5e59450bccb26fd179b456028146c5f))
+
 ## [3.12.0](https://github.com/fortify/fcli/compare/v3.11.0...v3.12.0) (2025-10-27)
 
 

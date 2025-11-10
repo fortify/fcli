@@ -41,7 +41,7 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     protected final Logger LOG = LoggerFactory.getLogger(this.getClass());
     private static final ObjectMapper yamlObjectMapper = createYamlObjectMapper();
     
-    protected final String asString(Object o) {
+    protected static final String asString(Object o) {
         if ( o==null ) {
             return "<null>";
         } else if ( o instanceof TextNode ) {
@@ -51,7 +51,14 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
         } else {
             return o.toString();
         }
-    }  
+    }
+    
+    // TODO This is currently mostly used for writing progress messages, to avoid exceptions if single-line
+    //      progress writer is configured. Maybe we should make this optional, providing a reusable approach
+    //      for only converting to single line if !progressWriter.isMultiLineSupported()?
+    protected static final String asSingleLineString(Object o) {
+        return asString(o).replaceAll("\\s+", " ");
+    }
     
     protected final void processSteps(List<ActionStep> steps) {
         new ActionStepProcessorSteps(getCtx(), getVars(), steps).process();

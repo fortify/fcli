@@ -51,6 +51,9 @@ out/
 .vscode/
 bin/
 
+### Directory where users can store local-only files ###
+_gitignored/
+
 ### Sample scans & logs ###
 samples/**/scans/**
 samples/**/logs/**

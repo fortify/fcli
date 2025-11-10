@@ -1,0 +1,114 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Run Debricked Scan
+  description: |
+    This action can be used to run a debricked scan of the project.
+
+config:
+  output: immediate
+  rest.target.default: ssc
+  run.fcli.status.log.default: true    # By default, we log all exit statuses
+  run.fcli.status.check.default: true
+  mcp: exclude # Currently requires sensitive Debricked access token to be specified, so exclude from MCP tools
+
+# NOTE: When updating any options, ci action may also need to be updated
+cli.options:
+  sourceDir:
+    names: --source-dir, -s
+    description: >-
+      Source directory on which to run Debricked Software Composition Analysis (SCA) scan.
+      Defaults to current working directory if not specified.
+    required: false
+    default: .
+  repository:
+    names: --repository, -r
+    description: >-
+      Debricked source repository name or ID. Will be auto-detected if source directory points
+      to a local git repository.
+    required: false 
+  branch:
+    names: --branch, -b
+    description: >-
+      Debricked source branch name or ID. Will be auto-detected if source directory points
+      to a local git repository.
+    required: false
+  appVersion:
+    names: --app-version, --av
+    description: >-
+      SSC application version to which the debricked report must be imported to. Defaults to
+      <repository>:<branch> if not specified. Application version must already exist in SSC.
+    required: false 
+  debrickedAccessToken:
+    names: --debricked-token, -t
+    description: >-
+      Access token required for Debricked authentication.
+    required: true 
+    mask: {sensitivity: high}
+  dcliVersion:
+    names: --cli-version, -v
+    description: >-
+      Specify the Debricked CLI tool version to be installed that shall be used for scanning.
+      Defaults to 'latest' if not specified.
+    required: false
+    default: latest
+  toolDefinitions:
+    names: --tool-definitions
+    description: >-
+      Custom tool definitions to use for identifying available Debricked CLI tool versions and download URLs.
+    required: false 
+  skipWait:
+    names: --skip-wait
+    description: >-
+      By default, the action will wait for the Debricked scan import to complete. Use this option to skip
+      waiting for the import to complete.
+    required: false
+    type: boolean
+  extraScanOpts:
+    names: --extra-scan-opts
+    description: >-
+      Extra options to be passed to the 'debricked scan' command. 
+    required: false
+
+steps:
+  - if: ${#isBlank(cli.repository)||#isBlank(cli.branch)}
+    steps:
+      - var.set:
+          localRepository: ${#localRepo(cli.sourceDir)}
+  - var.set:
+      repo: ${#ifBlank(cli.repository, localRepository?.repository?.name?.full)}
+      branch: ${#ifBlank(cli.branch, localRepository?.branch?.short)}
+  - if: ${#isBlank(repo)||#isBlank(branch)}
+    throw: Could not determine repository and/or branch for given source directory; please specify explicitly.
+  - var.set:
+      av: ${#ifBlank(cli.appVersion,#join(':', {repo, branch}))}
+      # Used for passing extra options from `ci` action without bothering about escaping
+      extraScanOpts: ${#join(" ", {cli.extraScanOpts, global.debrickedScan?.extraOpts})}
+  - var.set:
+      global.debrickedPublish.fcliVarName: debricked_scan_${#action.runID().replace('-','_')} # fcli variable to store the artifact name to be used in next command to wait-for artifact upload command 
+      global.debrickedPublish.waitForCmd: 'fcli ssc artifact wait-for ::${global.debrickedPublish.fcliVarName}::'
+  - run.fcli:
+      UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${cli.toolDefinitions?:""}
+  - run.fcli:
+      INSTALL_DEBRICKED: fcli tool dcli install -v ${cli.dcliVersion}
+  - run.fcli:
+      RUN_DEBRICKED_CLI: 
+        cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${repo} -b ${branch} ${extraScanOpts} 
+        stdout: collect
+        stderr: collect
+        on.fail:
+          - if: ${#isNotBlank(RUN_DEBRICKED_CLI.stdout)  && !RUN_DEBRICKED_CLI.stdout.contains('vulnerabilities found') && !RUN_DEBRICKED_CLI.stdout.contains('For full details, visit:')}
+            throw: Debricked Scan failed with errors.
+          - var.set:
+              global.debrickedScan.policyFailure: true
+  - out.write:
+      stdout: ${RUN_DEBRICKED_CLI.stdout}
+      stderr: ${RUN_DEBRICKED_CLI.stderr}
+  - run.fcli:
+      IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${av} -t ${cli.debrickedAccessToken} -r ${repo} -b ${branch} --store ${global.debrickedPublish.fcliVarName}
+  - if: ${!cli.skipWait}
+    run.fcli:
+      WAIT: ${global.debrickedPublish.waitForCmd}
+
+      

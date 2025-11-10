@@ -48,10 +48,10 @@ public class MCPToolFcliRunnerHelper {
             .build().create().execute();
     }
     
-    static final MCPToolResultRecords collectRecords(String fullCmd, CommandSpec spec) {
+    static final MCPToolResult collectRecords(String fullCmd, CommandSpec spec) {
         var records = new ArrayList<JsonNode>();
         var result = collectRecords(fullCmd, records::add, spec);
-        return MCPToolResultRecords.from(result, records);
+        return MCPToolResult.fromRecords(result, records);
     }
     
     private static final FcliCommandExecutorFactory.FcliCommandExecutorFactoryBuilder createBuilder(String fullCmd, CommandSpec spec) {
@@ -63,13 +63,19 @@ public class MCPToolFcliRunnerHelper {
     }
 
     private static final Map<String,String> collectMcpDefaultOptions(CommandSpec spec) {
-        if ( spec==null ) { return Map.of(); }
+        if ( spec==null ) {
+            return Map.of();
+        }
         var result = new LinkedHashMap<String,String>();
         spec.options().forEach(o->{
             var defVal = ReflectionHelper.getAnnotationValue(o.userObject(), MCPDefaultValue.class, MCPDefaultValue::value, ()->null);
-            if ( StringUtils.isBlank(defVal) ) { return; }
+            if ( StringUtils.isBlank(defVal) ) {
+                return;
+            }
             var name = o.longestName();
-            if ( name!=null ) { result.put(name, defVal); }
+            if ( name!=null ) {
+                result.put(name, defVal);
+            }
         });
         return result;
     }

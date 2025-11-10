@@ -28,6 +28,6 @@ public class ActionStepProcessorLogProgress extends AbstractActionStepProcessor 
     private final TemplateExpression expr;
 
     public final void process() {
-        ctx.getProgressWriter().writeProgress(asString(vars.eval(expr, Object.class)));
+        ctx.getProgressWriter().writeProgress(asSingleLineString(vars.eval(expr, Object.class)));
     }
 }

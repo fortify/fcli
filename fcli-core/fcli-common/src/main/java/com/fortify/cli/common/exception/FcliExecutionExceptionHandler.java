@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.exception;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +35,7 @@ public class FcliExecutionExceptionHandler implements IExecutionExceptionHandler
         if ( LOG.isDebugEnabled() ) {
             LOG.debug("fcli terminating with exception", ex);
         }
-        var formattedException = formatException(ex);
+        var formattedException = FcliExceptionHelper.formatException(ex);
         if ( formattedException!=null ) {
             var err = commandLine.getErr();
             err.println(commandLine.getColorScheme().errorText(formattedException));
@@ -53,17 +52,5 @@ public class FcliExecutionExceptionHandler implements IExecutionExceptionHandler
             }
         }
         return commandLine.getCommandSpec().exitCodeOnExecutionException();
-    }
-    
-    private static String formatException(Exception e) {
-        return (e instanceof AbstractFcliException) ? formatFcliException((AbstractFcliException)e) : formatNonFcliException(e);
-    }
-
-    private static final String formatFcliException(AbstractFcliException e) {
-        return e.getStackTraceString();
-    }
-
-    private static final String formatNonFcliException(Exception e) {
-        return ExceptionUtils.getStackTrace(e);
     }
 }

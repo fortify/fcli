@@ -23,13 +23,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public enum SCDastScanStatus {
     Queued, Pending, Paused, Running, Complete, Interrupted, Unknown,
     ImportingScanResults, ImportScanResultsFailed, FailedToStart, PausingScan,
-    ResumingScan, CompletingScan, ResumeScanQueued, ForcedComplete, FailedToResume, LicenseUnavailable;
+    ResumingScan, CompletingScan, ResumeScanQueued, ForcedComplete, FailedToResume, LicenseUnavailable,
+    PendingApproval, Rejected, ImportScanFileQueued, PendingScanFileImport, ImportingScanFile,
+    FailedToImportScanFile, ProcessingScanArtifacts, FailedToPause,
+    UnknownScanStatusType // Fcli-specific status code to handle unknown enum indexes. This must be the last entry!
+    ; 
 
     public int getScanStatusType() {
         return ordinal()+1;
     }
     
     public static SCDastScanStatus valueOf(Integer index){
+        // Check if index is not null and within bounds; if not, return UnknownScanStatusType
+        if ( index==null || index<1 || index>SCDastScanStatus.values().length ) {
+            return UnknownScanStatusType;
+        }
         return SCDastScanStatus.values()[index-1];
     }
     

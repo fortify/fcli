@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
@@ -35,7 +33,10 @@ import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.util.FcliBuildProperties;
+import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.IMCPToolArgHandler;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerActionOption;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
@@ -54,19 +55,37 @@ import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Start.CMD_NAME) 
+@Command(name = OutputHelperMixins.Start.CMD_NAME)
 @MCPExclude // Doesn't make sense to allow mcp-server start command to be called from MCP server
+@Slf4j
 public class MCPServerStartCommand extends AbstractRunnableCommand {
-    private static final Logger LOG = LoggerFactory.getLogger(MCPServerStartCommand.class);
     @Option(names={"--module", "-m"}, required = true) private McpModule module;
-    
+    @Option(names={"--work-threads"}, defaultValue="10") private int workThreads;
+    @Option(names={"--progress-threads"}, defaultValue="4") private int progressThreads;
+    @Option(names={"--job-safe-return"}, defaultValue="25s") private String jobSafeReturnPeriod;
+    @Option(names={"--progress-interval"}, defaultValue="5s") private String progressIntervalPeriod;
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
+    private MCPJobManager jobManager;
+
+    @Override
     public Integer call() throws Exception {
-        
-        McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(new ObjectMapper())))
+        long safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(jobSafeReturnPeriod);
+        long progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(progressIntervalPeriod);
+        if ( safeReturnMillis<=0 ) {
+            safeReturnMillis = 25000;
+        }
+        if ( progressIntervalMillis<=0 ) {
+            progressIntervalMillis = 500;
+        }
+        // Instantiate job manager prior to building tool specs so we can include job tool spec
+        this.jobManager = new MCPJobManager(module.toString(), workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
+        var toolSpecs = createToolSpecs();
+        var server = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(new ObjectMapper())))
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("""
@@ -74,27 +93,25 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
                         session, inform the user that the 'default' session will be used.
                         """)
                 .capabilities(getServerCapabilities())
-                .tools(createToolSpecs())
+                .tools(toolSpecs)
                 .build();
-
-        LOG.info("Fcli MCP server running on stdio");
+    log.debug("Initialized MCP server instance: {}", server);
+    log.info("Fcli MCP server running on stdio");
         System.err.println("Fcli MCP server running on stdio. Hit Ctrl-C to exit.");
-        
-        // Join all non-daemon threads to ensure proper shutdown of MCP server
         Thread.getAllStackTraces().keySet().stream()
             .filter(t->!t.isDaemon() && t!=Thread.currentThread())
             .forEach(t-> {
                 try {
                     t.join();
                 } catch (InterruptedException e) {
-                    LOG.warn("Interrupted while joining thread "+t.getName(), e);
+                    log.warn("Interrupted while joining thread {}", t.getName(), e);
+                    Thread.currentThread().interrupt();
                 }
             });
-        
         return 0;
     }
 
-    private static final ServerCapabilities getServerCapabilities() {
+    private static ServerCapabilities getServerCapabilities() {
         return ServerCapabilities.builder()
                 .resources(false, false)
                 .prompts(false)
@@ -104,44 +121,43 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
 
     private List<SyncToolSpecification> createToolSpecs() {
         var result = new ArrayList<SyncToolSpecification>();
-        // Picocli command-based tools
         result.addAll(module.getSubcommandsStream()
                 .filter(spec->!FcliCommandSpecHelper.isMcpIgnored(spec))
-                .map(cs->createCommandToolSpec(cs))
-                .peek(s->LOG.debug("Registering cmd tool: {}", s.tool().name()))
+                .map(this::createCommandToolSpec)
+                .peek(s->log.debug("Registering cmd tool: {}", s.tool().name()))
                 .toList());
-        // Fcli action tools
         if ( module.hasActionCmd() ) {
             result.addAll(createActionToolSpecs());
         }
+        // Job management tool
+        result.add(jobManager.getJobToolSpecification());
         return result;
     }
-    
+
     private List<SyncToolSpecification> createActionToolSpecs() {
         var actionSources = ActionSource.defaultActionSources(module.toString());
         var validationHandler = ActionValidationHandler.WARN;
         return ActionLoaderHelper.streamAsActions(actionSources, validationHandler)
                 .filter(this::includeActionAsMcpTool)
                 .map(a->new ActionToolSpecHelper(module.toString(), a).createToolSpec())
-                .peek(s->LOG.debug("Registering action tool: {}", s.tool().name()))
+                .peek(s->log.debug("Registering action tool: {}", s.tool().name()))
                 .toList();
     }
-    
+
     private boolean includeActionAsMcpTool(Action action) {
         try {
             return action.getConfig()==null || action.getConfig().getMcp()!=ActionMcpIncludeExclude.exclude;
-        } catch (Exception e) { // Be defensive; never fail server start due to malformed action
-            LOG.warn("Error checking MCP include/exclude for action {}: {}", 
-                    action!=null && action.getMetadata()!=null ? action.getMetadata().getName() : "<unknown>", e.toString());
+        } catch (Exception e) {
+            log.warn("Error checking MCP include/exclude for action {}: {}", action!=null && action.getMetadata()!=null ? action.getMetadata().getName() : "<unknown>", e.toString());
             return false;
         }
     }
-    
-    private static final SyncToolSpecification createCommandToolSpec(CommandSpec spec) {
+
+    private SyncToolSpecification createCommandToolSpec(CommandSpec spec) {
         return new CommandToolSpecHelper(spec).createToolSpec();
     }
 
-    private static final class CommandToolSpecHelper {
+    private final class CommandToolSpecHelper {
         private final CommandSpec commandSpec;
         private final MCPToolArgHandlers toolSpecArgHelper;
         
@@ -151,79 +167,67 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         }
         
         @SneakyThrows
-        public final SyncToolSpecification createToolSpec() {
-            return McpServerFeatures.SyncToolSpecification.builder()
-                    .tool(createTool())
-                    .callHandler(createRunner()::run)
-                    .build();
+        public SyncToolSpecification createToolSpec() {
+            return McpServerFeatures.SyncToolSpecification.builder().tool(createTool()).callHandler(createRunner()::run).build();
         }
         
-        private final Tool createTool() {
-            return Tool.builder()
-                    .name(commandSpec.qualifiedName("_").replace('-', '_'))
-                    .description(buildToolDescription())
-                    .inputSchema(toolSpecArgHelper.getSchema())
-                    .build();
+        private Tool createTool() {
+            return Tool.builder().name(commandSpec.qualifiedName("_")
+                .replace('-', '_')).description(buildToolDescription())
+                .inputSchema(toolSpecArgHelper.getSchema()).build();
         }
-        
-        private final String buildToolDescription() {
+        private String buildToolDescription() {
             var cmdHeader = commandSpec.commandLine().getHelp().header();
-            // Regular fcli usage help might show options/description contents that doesn't 
-            // apply to LLM context (for example because some options are not rendered or 
-            // use a different syntax, like --query). As such, we only include an MCP-specific
-            // description (if defined).
             var mcpToolDescription = FcliCommandSpecHelper.getMessageString(commandSpec, "mcp.description");
-            return StringUtils.isBlank(mcpToolDescription) ? cmdHeader : String.format("%s\n%s", cmdHeader, mcpToolDescription);
+            var base = StringUtils.isBlank(mcpToolDescription) ? cmdHeader : String.format("%s\n%s", cmdHeader, mcpToolDescription);
+            if ( toolSpecArgHelper.isPaged() ) {
+                // Append paging guidance for LLM/client
+                base = base + "\nPaging Guidance: This tool may return partial results if background record collection is still in progress. "
+                        + "When pagination.totalRecords is null, call the job tool 'fcli_"+module.toString().replace('-', '_')+"_mcp_job' with operation=wait and the pagination.jobToken value to finalize loading and obtain totalRecords & totalPages.";
+            }
+            return base;
         }
-        
-        private final IMCPToolRunner createRunner() {
+        private IMCPToolRunner createRunner() {
             if ( FcliCommandSpecHelper.canCollectRecords(commandSpec) ) {
                 if ( toolSpecArgHelper.isPaged() ) {
-                    return new MCPToolFcliRunnerRecordsPaged(toolSpecArgHelper, commandSpec);
-                } else {
-                    return new MCPToolFcliRunnerRecords(toolSpecArgHelper, commandSpec);
+                    return new MCPToolFcliRunnerRecordsPaged(toolSpecArgHelper, commandSpec, jobManager);
                 }
-            } else {
-                return new MCPToolFcliRunnerPlainText(toolSpecArgHelper, commandSpec);
+                return new MCPToolFcliRunnerRecords(toolSpecArgHelper, commandSpec, jobManager);
             }
+            return new MCPToolFcliRunnerPlainText(toolSpecArgHelper, commandSpec, jobManager);
         }
     }
-    
-    // Helper for action-based MCP tools
-    private static final class ActionToolSpecHelper {
-        private final String module;
+
+    private final class ActionToolSpecHelper {
+        private final String moduleName;
         private final Action action;
         private final List<IMCPToolArgHandler> argHandlers;
         
         private ActionToolSpecHelper(String module, Action action) {
-            this.module = module;
+            this.moduleName = module;
             this.action = action;
             this.argHandlers = createArgHandlers();
         }
         
-        public final SyncToolSpecification createToolSpec() {
-            return McpServerFeatures.SyncToolSpecification.builder()
-                    .tool(createTool())
-                    .callHandler(new MCPToolFcliRunnerAction(module, action, argHandlers)::run)
-                    .build();
+        public SyncToolSpecification createToolSpec() {
+            return McpServerFeatures.SyncToolSpecification.builder().tool(createTool()).callHandler(new MCPToolFcliRunnerAction(moduleName, action, argHandlers, jobManager)::run).build();
         }
         
-        private final Tool createTool() {
-            return Tool.builder()
-                    .name(getToolName())
-                    .description(getDescription())
-                    .inputSchema(createSchema())
-                    .build();
+        private Tool createTool() {
+            return Tool.builder().name(getToolName()).description(getDescription()).inputSchema(createSchema()).build();
         }
-        
         private List<IMCPToolArgHandler> createArgHandlers() {
             var result = new ArrayList<IMCPToolArgHandler>();
             if ( action.getCliOptions()!=null ) {
                 for ( Map.Entry<String, ActionCliOption> e : action.getCliOptions().entrySet() ) {
                     var opt = e.getValue();
-                    if ( opt.getMcp()==ActionMcpIncludeExclude.exclude ) { continue; }
+                    if ( opt.getMcp()==ActionMcpIncludeExclude.exclude ) {
+                        continue;
+                    }
                     var name = getLongestName(opt);
-                    if ( StringUtils.isBlank(name) ) { continue; }
+                    if ( StringUtils.isBlank(name) ) {
+                        continue;
+                    }
                     result.add(new MCPToolArgHandlerActionOption(name, opt.getDescription(), opt.isRequired(), opt.getType()));
                 }
             }
@@ -237,7 +241,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         }
         
         private String getToolName() {
-            return "fcli_"+module.replace('-', '_')+"_action_"+action.getMetadata().getName().replace('-', '_');
+            return "fcli_"+moduleName.replace('-', '_')+"_action_"+action.getMetadata().getName().replace('-', '_');
         }
         
         private String getDescription() {
@@ -247,16 +251,19 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         
         private String getLongestName(ActionCliOption opt) {
             var names = opt.getNamesAsArray();
-            if ( names==null || names.length==0 ) { return null; }
-            String longest = null;
+            if ( names==null || names.length==0 ) {
+                return null;
+            }
+            String longest=null;
             for ( var n : names ) {
-                if ( longest==null || n.length()>longest.length() ) { longest = n; }
+                if ( longest==null || n.length()>longest.length() ) {
+                    longest=n;
+                }
             }
             return longest;
         }
     }
-    
-    /** Fcli modules for which MCP server commands are exposed */
+
     public static enum McpModule {
         fod, ssc, sc_sast, sc_dast, aviator;
         
@@ -268,11 +275,11 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         public boolean hasActionCmd() {
             return getModuleSpec().subcommands().containsKey("action");
         }
-
-        public final Stream<CommandSpec> getSubcommandsStream() {
+        
+        public Stream<CommandSpec> getSubcommandsStream() {
             return FcliCommandSpecHelper.commandTreeStream(getModuleSpec());
         }
-
+        
         private CommandSpec getModuleSpec() {
             var moduleName = this.toString();
             var moduleSpec = FcliCommandSpecHelper.getCommandSpec(moduleName);

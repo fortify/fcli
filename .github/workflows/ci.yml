@@ -75,6 +75,11 @@ jobs:
           else 
             echo "Tag ${tag} does not exist, no development release will be published"
           fi 
+          
+      - name: PR - Define release info
+        if: github.event_name == 'pull_request' && !env.DO_PROD_RELEASE && !env.DO_RELEASE
+        run: |
+          echo DO_BUILD=true >> $GITHUB_ENV # Do a build with default settings for PRs
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
@@ -274,6 +279,9 @@ jobs:
     name: Trigger functional tests
     needs: [build, native_linux, native_mac, native_win, combine-artifacts]
     runs-on: ubuntu-latest
+    # TODO Also run on pull requests, but command below fails with (for example):
+    #  could not create workflow dispatch event: HTTP 422: No ref found for: refs/pull/849/merge (https://api.github.com/repos/fortify/fcli/actions/workflows/62959663/dispatches)
+    if: github.event_name != 'pull_request'
     steps:
       # Previously we had a workflow_run trigger on functional-tests.yaml, but:
       #  - This approach allows for starting functional tests a bit earlier (no need to wait for Docker builds)
