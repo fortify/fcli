@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
                 ToolSCClientInstallCommand.class,
                 ToolSCClientListCommand.class,
                 ToolSCClientListPlatformsCommand.class,
+                ToolSCClientRegisterCommand.class,
                 ToolSCClientRunCommand.class,
                 ToolSCClientUninstallCommand.class
         }

@@ -200,6 +200,10 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "uninstall";
     }
 
+    public static class Register extends TableNoQuery {
+        public static final String CMD_NAME = "register";
+    }
+
     public static class Import extends TableNoQuery {
         public static final String CMD_NAME = "import";
     }

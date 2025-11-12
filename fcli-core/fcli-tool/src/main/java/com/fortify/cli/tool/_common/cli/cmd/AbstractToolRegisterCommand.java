@@ -1,0 +1,169 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.tool._common.cli.cmd;
+
+import java.io.File;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
+import com.fortify.cli.tool._common.helper.ToolVersionDetector;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+
+/**
+ * Abstract base class for tool register commands. Provides two modes:
+ * 1. Auto-detect: Search for tool in environment variables, PATH, and fcli installation status
+ * 2. Explicit path: Register tool from user-specified location
+ * 
+ * Subclasses must implement:
+ * - getToolName(): Return the tool identifier
+ * - getDefaultBinaryName(): Return platform-specific binary name
+ * - getToolEnvVarName(): Return env var name for direct binary path (or null)
+ * - getToolHomeEnvVarName(): Return env var name for install directory (or null)
+ * 
+ * @author Ruud Senden
+ */
+@Command(name = OutputHelperMixins.Register.CMD_NAME)
+public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand 
+        implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    
+    @Getter @picocli.CommandLine.Mixin 
+    private OutputHelperMixins.Register outputHelper;
+    
+    @ArgGroup(exclusive = true, multiplicity = "1")
+    private RegisterModeArgGroup registerMode;
+    
+    private static final class RegisterModeArgGroup {
+        @Option(names = {"--auto-detect"}, required = true, descriptionKey = "fcli.tool.register.auto-detect")
+        private boolean autoDetect;
+        
+        @Option(names = {"-p", "--path"}, required = true, descriptionKey = "fcli.tool.register.path")
+        private File explicitPath;
+    }
+    
+    @Override
+    public final String getActionCommandResult() {
+        return "REGISTERED";
+    }
+    
+    @Override
+    public final boolean isSingular() {
+        return true;
+    }
+    
+    protected abstract String getToolName();
+    protected abstract String getDefaultBinaryName();
+    protected abstract String getToolEnvVarName();
+    protected abstract String getToolHomeEnvVarName();
+    
+    @Override
+    @SneakyThrows
+    public ObjectNode getJsonNode() {
+        File toolBinary = registerMode.autoDetect 
+            ? ToolRegistrationHelper.autoDetectToolBinary(getToolName(), getDefaultBinaryName(), getToolEnvVarName(), getToolHomeEnvVarName())
+            : ToolRegistrationHelper.resolveBinaryFromExplicitPath(registerMode.explicitPath, getDefaultBinaryName());
+        
+        // Validate binary is executable (or is a JAR file)
+        if (!toolBinary.canExecute() && !toolBinary.getName().endsWith(".jar")) {
+            throw new FcliSimpleException(
+                getToolName() + " binary found but not executable: " + toolBinary.getAbsolutePath())
+                .exitCode(ExitCode.TOOL_INVALID_OR_NOT_EXECUTABLE.getCode());
+        }
+        
+        // Resolve install directory
+        File installDir = ToolRegistrationHelper.resolveInstallDir(toolBinary);
+        
+        // Check for fcli-installed tool first
+        String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(toolBinary);
+        String detectedVersion = versionFromDescriptor != null 
+            ? versionFromDescriptor 
+            : detectVersion(toolBinary, installDir);
+        
+        // Find matching version descriptor
+        ToolDefinitionVersionDescriptor versionDescriptor = resolveVersionDescriptor(detectedVersion);
+        
+        // Create and save installation descriptor
+        ToolInstallationDescriptor installation = new ToolInstallationDescriptor(
+            installDir.toPath(), 
+            toolBinary.getParentFile().toPath(),
+            null
+        );
+        installation.save(getToolName(), versionDescriptor);
+        
+        return createOutputNode(installation, detectedVersion);
+    }
+    
+    /**
+     * Detect tool version. Subclasses must implement this to provide tool-specific version detection.
+     * Common strategies include:
+     * - Execute tool binary with version arguments (use {@link ToolVersionDetector#tryExecute})
+     * - Scan installation directory for version-specific files (use {@link ToolVersionDetector#extractVersionFromFilePattern})
+     * 
+     * If version cannot be detected, return "unknown".
+     * 
+     * @param toolBinary The tool binary file
+     * @param installDir The resolved installation directory
+     * @return Detected version string, or "unknown" if detection fails
+     */
+    protected abstract String detectVersion(File toolBinary, File installDir);
+    
+    private ToolDefinitionVersionDescriptor resolveVersionDescriptor(String detectedVersion) {
+        var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
+        
+        // Try to find matching version in tool definitions
+        try {
+            return toolDefinition.getVersion(detectedVersion);
+        } catch (IllegalArgumentException e) {
+            // Version not found in definitions, create synthetic descriptor
+            ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
+            syntheticDescriptor.setVersion(detectedVersion);
+            syntheticDescriptor.setStable(false);  // External installations default to not stable
+            return syntheticDescriptor;
+        }
+    }
+    
+    private ObjectNode createOutputNode(ToolInstallationDescriptor installation, String version) {
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+        result.put("name", getToolName());
+        result.put("version", version);
+        result.put("installDir", installation.getInstallDir());
+        result.put("binDir", installation.getBinDir());
+        result.put("action", "REGISTERED");
+        return result;
+    }
+    
+    @RequiredArgsConstructor
+    @Getter
+    public static enum ExitCode {
+        SUCCESS(0),
+        TOOL_NOT_FOUND(1),
+        INVALID_PATH(2),
+        TOOL_INVALID_OR_NOT_EXECUTABLE(3);
+        
+        private final int code;
+    }
+}

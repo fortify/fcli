@@ -22,6 +22,7 @@ import picocli.CommandLine.Command;
                 ToolFcliInstallCommand.class,
                 ToolFcliListCommand.class,
                 ToolFcliListPlatformsCommand.class,
+                ToolFcliRegisterCommand.class,
                 ToolFcliRunCommand.class,
                 ToolFcliUninstallCommand.class
         }
