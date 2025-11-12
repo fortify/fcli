@@ -17,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
@@ -42,6 +44,7 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
     @Mixin private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
@@ -66,7 +69,9 @@ public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
                 .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion())
                 .build();
 
-        return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile());
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+        }
     }
 
     private void validateScanSetup(UnirestInstance unirest, String relId) {

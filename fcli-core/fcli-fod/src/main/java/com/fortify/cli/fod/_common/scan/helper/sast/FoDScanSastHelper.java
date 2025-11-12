@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
@@ -42,7 +43,7 @@ public class FoDScanSastHelper extends FoDScanHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static final FoDScanDescriptor startScanWithDefaults(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
-                                                                FoDScanSastStartRequest req, File scanFile) {
+                                                                FoDScanSastStartRequest req, File scanFile, IProgressWriter progressWriter) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START_WITH_DEFAULTS).routeParam("relId", relId)
                 .queryString("isRemediationScan", req.getIsRemediationScan())
@@ -53,11 +54,11 @@ public class FoDScanSastHelper extends FoDScanHelper {
             String truncatedNotes = StringUtils.abbreviate(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
         }
-        return startScan(unirest, releaseDescriptor, request, scanFile);
+        return startScan(unirest, releaseDescriptor, request, scanFile, progressWriter);
     }
 
     public static final FoDScanDescriptor startScanAdvanced(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanSastStartRequest req,
-                                                            File scanFile) {
+                                                            File scanFile, IProgressWriter progressWriter) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START_ADVANCED).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
@@ -77,11 +78,11 @@ public class FoDScanSastHelper extends FoDScanHelper {
             String truncatedNotes = StringUtils.abbreviate(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
         }
-        return startScan(unirest, releaseDescriptor, request, scanFile);
+        return startScan(unirest, releaseDescriptor, request, scanFile, progressWriter);
     }
 
-    private static FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, HttpRequest<?> request, File scanFile) {
-        JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
+    private static FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, HttpRequest<?> request, File scanFile, IProgressWriter progressWriter) {
+        JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile, progressWriter);
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new FcliSimpleException("Unable to retrieve scan id from response when starting Static scan.");

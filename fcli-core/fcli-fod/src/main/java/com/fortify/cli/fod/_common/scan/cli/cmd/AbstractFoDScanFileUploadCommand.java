@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
@@ -31,17 +32,20 @@ public abstract class AbstractFoDScanFileUploadCommand extends AbstractFoDJsonNo
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
     @Mixin private CommonOptionMixins.RequiredFile uploadFileMixin;
+    @Mixin  private ProgressWriterFactoryMixin progressWriterFactory;
 
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         var releaseId = releaseDescriptor.getReleaseId();
         HttpRequest<?> baseRequest = getBaseRequest(unirest, releaseId);
-        JsonNode response = FoDFileTransferHelper.upload(unirest, baseRequest, uploadFileMixin.getFile());
-        return releaseDescriptor.asObjectNode()
+        try (var progressWriter = progressWriterFactory.create()) {
+            JsonNode response = FoDFileTransferHelper.upload(unirest, baseRequest, uploadFileMixin.getFile(), progressWriter);
+            return releaseDescriptor.asObjectNode()
                 .put("fileType", getFileType())
                 .put("filename", uploadFileMixin.getFile().getName())
                 .put("fileId", response.get("fileId").intValue());
+        }
     }
 
     protected abstract String getFileType();
