@@ -32,6 +32,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -375,7 +376,7 @@ public final class FileUtils {
      */
     @SneakyThrows
     public static final <R> R processMatchingStream(Path baseDir, String globPattern, int maxDepth,
-            java.util.function.Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
+            Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
         var pattern = compileAntGlobPattern(globPattern);
         return processMatchingStream(baseDir, pattern, maxDepth, pathFilter, streamProcessor);
     }
@@ -397,7 +398,7 @@ public final class FileUtils {
      */
     @SneakyThrows
     public static final <R> R processMatchingStream(Path baseDir, Pattern pattern, int maxDepth,
-            java.util.function.Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
+            Predicate<Path> pathFilter, Function<Stream<Path>, R> streamProcessor) {
         if (baseDir == null || !Files.isDirectory(baseDir)) {
             throw new FcliSimpleException("Base directory must be a valid directory");
         }

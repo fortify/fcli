@@ -14,16 +14,20 @@ package com.fortify.cli.common.json.producer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.ICommandHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+
+import picocli.CommandLine;
 
 /**
  * Tests for {@link ObjectNodeProducerApplyFrom} behavior.
@@ -81,37 +85,37 @@ public class AbstractObjectNodeProducerApplyFromTest {
 
     private ICommandHelper dummyCommandHelper() {
         return new ICommandHelper() {
-            @Override public picocli.CommandLine.Model.CommandSpec getCommandSpec() { return picocli.CommandLine.Model.CommandSpec.create(); }
+            @Override public CommandLine.Model.CommandSpec getCommandSpec() { return CommandLine.Model.CommandSpec.create(); }
             @Override public Object getCommand() { return new Object(); }
-            @Override public <T> java.util.Optional<T> getCommandAs(Class<T> type) { return java.util.Optional.empty(); }
+            @Override public <T> Optional<T> getCommandAs(Class<T> type) { return Optional.empty(); }
         };
     }
 
     private ICommandHelper dummyCommandHelperWithObjects(Object... objects) {
         return new ICommandHelper() {
-            @Override public picocli.CommandLine.Model.CommandSpec getCommandSpec() { 
-                var spec = picocli.CommandLine.Model.CommandSpec.create();
-                for ( var o : objects ) { spec.addMixin("m"+o.hashCode(), picocli.CommandLine.Model.CommandSpec.forAnnotatedObject(o)); }
+            @Override public CommandLine.Model.CommandSpec getCommandSpec() { 
+                var spec = CommandLine.Model.CommandSpec.create();
+                for ( var o : objects ) { spec.addMixin("m"+o.hashCode(), CommandLine.Model.CommandSpec.forAnnotatedObject(o)); }
                 return spec;
             }
             @Override public Object getCommand() { return new Object(); }
             @SuppressWarnings("unchecked")
-            @Override public <T> java.util.Optional<T> getCommandAs(Class<T> type) { 
-                for ( var o : objects ) { if ( type.isInstance(o) ) { return java.util.Optional.of((T)o); } }
-                return java.util.Optional.empty();
+            @Override public <T> Optional<T> getCommandAs(Class<T> type) { 
+                for ( var o : objects ) { if ( type.isInstance(o) ) { return Optional.of((T)o); } }
+                return Optional.empty();
             }
         };
     }
 
-    @picocli.CommandLine.Command(name="dummy")
+    @CommandLine.Command(name="dummy")
     private static class DummyProductHelper implements IProductHelper, IInputTransformer, IRecordTransformer {
-        @Override public com.fasterxml.jackson.databind.JsonNode transformInput(com.fasterxml.jackson.databind.JsonNode input) { ((ObjectNode)input).put("inputAdded", true); return input; }
-        @Override public com.fasterxml.jackson.databind.JsonNode transformRecord(com.fasterxml.jackson.databind.JsonNode record) { ((ObjectNode)record).put("recordAdded", true); return record; }
+        @Override public JsonNode transformInput(JsonNode input) { ((ObjectNode)input).put("inputAdded", true); return input; }
+        @Override public JsonNode transformRecord(JsonNode record) { ((ObjectNode)record).put("recordAdded", true); return record; }
     }
-    @picocli.CommandLine.Command(name="dummyI")
-    private static class DummyInputTransformer implements IInputTransformer { @Override public com.fasterxml.jackson.databind.JsonNode transformInput(com.fasterxml.jackson.databind.JsonNode input) { ((ObjectNode)input).put("userInputAdded", true); return input; } }
-    @picocli.CommandLine.Command(name="dummyR")
-    private static class DummyRecordTransformer implements IRecordTransformer { @Override public com.fasterxml.jackson.databind.JsonNode transformRecord(com.fasterxml.jackson.databind.JsonNode record) { ((ObjectNode)record).put("userRecordAdded", true); return record; } }
+    @CommandLine.Command(name="dummyI")
+    private static class DummyInputTransformer implements IInputTransformer { @Override public JsonNode transformInput(JsonNode input) { ((ObjectNode)input).put("userInputAdded", true); return input; } }
+    @CommandLine.Command(name="dummyR")
+    private static class DummyRecordTransformer implements IRecordTransformer { @Override public JsonNode transformRecord(JsonNode record) { ((ObjectNode)record).put("userRecordAdded", true); return record; } }
     private static class DummyUserInputTransformer extends DummyInputTransformer {}
     private static class DummyUserRecordTransformer extends DummyRecordTransformer {}
 

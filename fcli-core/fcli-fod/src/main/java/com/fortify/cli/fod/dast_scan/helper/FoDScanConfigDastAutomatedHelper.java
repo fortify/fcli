@@ -32,7 +32,7 @@ import lombok.SneakyThrows;
 
 public class FoDScanConfigDastAutomatedHelper {
     public static FoDScanConfigDastAutomatedDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {
-        var body = unirest.get(com.fortify.cli.fod._common.rest.FoDUrls.DAST_AUTOMATED_SCANS + "/scan-setup")
+        var body = unirest.get(FoDUrls.DAST_AUTOMATED_SCANS + "/scan-setup")
                 .routeParam("relId", releaseId)
                 .asObject(ObjectNode.class)
                 .getBody();

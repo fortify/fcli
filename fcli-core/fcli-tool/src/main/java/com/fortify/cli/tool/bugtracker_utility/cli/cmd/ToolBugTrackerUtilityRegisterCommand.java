@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.tool.bugtracker_utility.cli.cmd;
 
+import java.io.File;
+
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
@@ -39,7 +41,7 @@ public class ToolBugTrackerUtilityRegisterCommand extends AbstractToolRegisterCo
     }
     
     @Override
-    protected String detectVersion(java.io.File toolBinary, java.io.File installDir) {
+    protected String detectVersion(File toolBinary, File installDir) {
         // BugTracker Utility: No version flag, no version in filename, no version in manifest
         // Only option is to rely on fcli install descriptor or return unknown for external installations
         return "unknown";

@@ -19,6 +19,9 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -26,6 +29,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.util.FileUtils;
 
 /**
  * Utility class providing helper methods for version detection.
@@ -169,13 +174,13 @@ public class ToolVersionDetector {
             return null;
         }
         
-        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile)) {
-            java.util.jar.Manifest manifest = jar.getManifest();
+        try (JarFile jar = new JarFile(jarFile)) {
+            Manifest manifest = jar.getManifest();
             if (manifest == null) {
                 return null;
             }
             
-            java.util.jar.Attributes mainAttributes = manifest.getMainAttributes();
+            Attributes mainAttributes = manifest.getMainAttributes();
             
             // Try common version attributes in order of preference
             String[] versionAttributes = {
@@ -241,7 +246,7 @@ public class ToolVersionDetector {
         }
         
         try {
-            Path jarPath = com.fortify.cli.common.util.FileUtils.processMatchingFileStream(
+            Path jarPath = FileUtils.processMatchingFileStream(
                 installDir.toPath(), 
                 jarPattern, 
                 maxDepth,

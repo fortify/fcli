@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.tool.fod_uploader.cli.cmd;
 
+import java.io.File;
+
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
@@ -40,7 +42,7 @@ public class ToolFoDUploaderRegisterCommand extends AbstractToolRegisterCommand 
     }
     
     @Override
-    protected String detectVersion(java.io.File toolBinary, java.io.File installDir) {
+    protected String detectVersion(File toolBinary, File installDir) {
         // FoD Uploader: Check JAR manifest for Implementation-Version
         // FodUpload.jar has no version in filename but has Implementation-Version in manifest
         String versionFromManifest = ToolVersionDetector

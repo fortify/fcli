@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.tool.vuln_exporter.cli.cmd;
 
+import java.io.File;
+
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
@@ -40,7 +42,7 @@ public class ToolVulnExporterRegisterCommand extends AbstractToolRegisterCommand
     }
     
     @Override
-    protected String detectVersion(java.io.File toolBinary, java.io.File installDir) {
+    protected String detectVersion(File toolBinary, File installDir) {
         // Vulnerability Exporter: Check JAR manifest for Implementation-Version
         // FortifyVulnerabilityExporter.jar has no version in filename but has Implementation-Version in manifest
         String versionFromManifest = ToolVersionDetector

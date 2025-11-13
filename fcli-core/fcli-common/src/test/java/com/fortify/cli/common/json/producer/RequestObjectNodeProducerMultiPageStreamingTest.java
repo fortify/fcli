@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,7 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
+import picocli.CommandLine;
 
 /**
  * Verifies simulated multi-page streaming using testPageBodies. Ensures records are delivered in order
@@ -44,16 +46,16 @@ public class RequestObjectNodeProducerMultiPageStreamingTest {
         page2.add(object("id","2b"));
         var supplier = new DummyUnirestSupplier(ui);
         ICommandHelper ch = new ICommandHelper() {
-            @Override public picocli.CommandLine.Model.CommandSpec getCommandSpec() {
-                var spec = picocli.CommandLine.Model.CommandSpec.create();
-                spec.addMixin("sup", picocli.CommandLine.Model.CommandSpec.forAnnotatedObject(supplier));
+            @Override public CommandLine.Model.CommandSpec getCommandSpec() {
+                var spec = CommandLine.Model.CommandSpec.create();
+                spec.addMixin("sup", CommandLine.Model.CommandSpec.forAnnotatedObject(supplier));
                 return spec;
             }
             @Override public Object getCommand() { return supplier; }
             @SuppressWarnings("unchecked")
-            @Override public <T> java.util.Optional<T> getCommandAs(Class<T> type) {
-                if ( type.isInstance(supplier) ) { return java.util.Optional.of((T)supplier); }
-                return java.util.Optional.empty();
+            @Override public <T> Optional<T> getCommandAs(Class<T> type) {
+                if ( type.isInstance(supplier) ) { return Optional.of((T)supplier); }
+                return Optional.empty();
             }
         };
         List<String> received = new ArrayList<>();
@@ -74,7 +76,7 @@ public class RequestObjectNodeProducerMultiPageStreamingTest {
         n.put(k, v); return n;
     }
 
-    @picocli.CommandLine.Command(name="dummy")
+    @CommandLine.Command(name="dummy")
     private static class DummyUnirestSupplier implements IUnirestInstanceSupplier {
         private final UnirestInstance ui;
         DummyUnirestSupplier(UnirestInstance ui) { this.ui = ui; }

@@ -14,6 +14,7 @@ package com.fortify.cli.common.json.producer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
+import picocli.CommandLine;
 
 /**
  * Verifies that RequestObjectNodeProducer auto-detects an IUnirestInstanceSupplier from the command
@@ -41,16 +43,16 @@ public class RequestObjectNodeProducerAutoUnirestTest {
         // Dummy supplier exposing unirest & a nextPageUrlProducer (returns null => single page)
         var dummySupplier = new DummySupplier(ui);
         ICommandHelper ch = new ICommandHelper() {
-            @Override public picocli.CommandLine.Model.CommandSpec getCommandSpec() {
-                var spec = picocli.CommandLine.Model.CommandSpec.create();
-                spec.addMixin("sup", picocli.CommandLine.Model.CommandSpec.forAnnotatedObject(dummySupplier));
+            @Override public CommandLine.Model.CommandSpec getCommandSpec() {
+                var spec = CommandLine.Model.CommandSpec.create();
+                spec.addMixin("sup", CommandLine.Model.CommandSpec.forAnnotatedObject(dummySupplier));
                 return spec;
             }
             @Override public Object getCommand() { return dummySupplier; }
             @SuppressWarnings("unchecked")
-            @Override public <T> java.util.Optional<T> getCommandAs(Class<T> type) {
-                if ( type.isInstance(dummySupplier) ) { return java.util.Optional.of((T)dummySupplier); }
-                return java.util.Optional.empty();
+            @Override public <T> Optional<T> getCommandAs(Class<T> type) {
+                if ( type.isInstance(dummySupplier) ) { return Optional.of((T)dummySupplier); }
+                return Optional.empty();
             }
         };
         var producer = RequestObjectNodeProducer.builder()
@@ -68,7 +70,7 @@ public class RequestObjectNodeProducerAutoUnirestTest {
     }
 
     // Dummy combined supplier
-    @picocli.CommandLine.Command(name="dummy")
+    @CommandLine.Command(name="dummy")
     private static class DummySupplier implements IUnirestInstanceSupplier, INextPageUrlProducerSupplier {
         private final UnirestInstance ui;
         DummySupplier(UnirestInstance ui) { this.ui = ui; }

@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
+import java.io.File;
+
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
@@ -40,7 +42,7 @@ public class ToolDebrickedCliRegisterCommand extends AbstractToolRegisterCommand
     }
     
     @Override
-    protected String detectVersion(java.io.File toolBinary, java.io.File installDir) {
+    protected String detectVersion(File toolBinary, File installDir) {
         // Try executing debricked --version
         String output = ToolVersionDetector.tryExecute(toolBinary, "--version");
         if (output != null) {

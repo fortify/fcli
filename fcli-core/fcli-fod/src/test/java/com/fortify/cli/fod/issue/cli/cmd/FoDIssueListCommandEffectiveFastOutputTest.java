@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 
 /**
  * Tests for FoDIssueListCommand.isEffectiveFastOutput logic after migration to style-based fast-output.
@@ -39,8 +41,8 @@ public class FoDIssueListCommandEffectiveFastOutputTest {
         streamingStub = new StreamingStubOutputHelper();
         setField(cmd, "outputHelper", streamingStub); // inject stub
         // Provide empty mixins so reflection can set their private fields
-        setField(cmd, "appResolver", new com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin.OptionalOption());
-        setField(cmd, "releaseResolver", new com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalOption());
+        setField(cmd, "appResolver", new FoDAppResolverMixin.OptionalOption());
+        setField(cmd, "releaseResolver", new FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalOption());
     }
 
     @Test
