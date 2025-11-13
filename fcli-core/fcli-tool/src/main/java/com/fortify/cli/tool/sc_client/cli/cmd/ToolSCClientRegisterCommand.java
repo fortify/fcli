@@ -36,13 +36,8 @@ public class ToolSCClientRegisterCommand extends AbstractToolRegisterCommand {
     }
     
     @Override
-    protected String getToolEnvVarName() {
-        return "SCANCENTRAL";
-    }
-    
-    @Override
-    protected String getToolHomeEnvVarName() {
-        return "SCANCENTRAL_HOME";
+    protected String[] getToolEnvVarPrefixes() {
+        return new String[]{"SCANCENTRAL", "SC_CLIENT"};
     }
     
     @Override
@@ -56,11 +51,18 @@ public class ToolSCClientRegisterCommand extends AbstractToolRegisterCommand {
             }
         }
         
-        // Fallback: extract version from Core/lib/scancentral-cli-{version}.jar (filename or manifest)
-        String versionFromJar = ToolVersionDetector
-            .extractVersionFromJarPattern(installDir, "Core/lib/scancentral-cli-{version}.jar", 3);
-        if (versionFromJar != null) {
-            return versionFromJar;
+        // Fallback: Try extracting version from Core/lib/scancentral-cli-{version}.jar filename
+        String versionFromFilename = ToolVersionDetector
+            .extractVersionFromJarFilename(installDir, "Core/lib/scancentral-cli-{version}.jar", 3);
+        if (versionFromFilename != null) {
+            return versionFromFilename;
+        }
+        
+        // Final fallback: Read manifest from JAR
+        String versionFromManifest = ToolVersionDetector
+            .extractVersionFromJarManifestPattern(installDir, "Core/lib/scancentral-cli-{version}.jar", 3);
+        if (versionFromManifest != null) {
+            return versionFromManifest;
         }
         
         return "unknown";

@@ -15,6 +15,7 @@ package com.fortify.cli.ftest.tool
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.Comparator
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -87,6 +88,23 @@ class ToolRegisterSpec extends FcliBaseSpec {
     
     def setupSpec() {
         fcliStateDir = Path.of(System.getProperty("fcli.env.FORTIFY_DATA_DIR")).resolve("state/tools")
+    }
+    
+    def cleanupSpec() {
+        // Clean up tool state for all registered tools to avoid interference with existing installations
+        toolConfigs.keySet().each { tool ->
+            def toolStateDir = fcliStateDir.resolve(tool)
+            if (Files.exists(toolStateDir)) {
+                try {
+                    deleteDirectory(toolStateDir)
+                    println "Cleaned up tool state for ${tool}"
+                } catch (IOException e) {
+                    println "Warning: Failed to clean up tool state for ${tool}: ${e.message}"
+                }
+            }
+        }
+        // Note: Installation directories in installBaseDir and externalBaseDir are automatically
+        // cleaned up by @TempDir annotation
     }
     
     @Unroll
@@ -314,6 +332,14 @@ class ToolRegisterSpec extends FcliBaseSpec {
                     Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
                 }
             }
+        }
+    }
+    
+    private void deleteDirectory(Path directory) {
+        if (Files.exists(directory)) {
+            Files.walk(directory)
+                .sorted(Comparator.reverseOrder())
+                .forEach { path -> Files.deleteIfExists(path) }
         }
     }
 }

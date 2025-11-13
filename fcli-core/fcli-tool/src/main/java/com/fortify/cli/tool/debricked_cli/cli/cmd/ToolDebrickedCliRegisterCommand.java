@@ -35,13 +35,8 @@ public class ToolDebrickedCliRegisterCommand extends AbstractToolRegisterCommand
     }
     
     @Override
-    protected String getToolEnvVarName() {
-        return "DEBRICKED_CLI";
-    }
-    
-    @Override
-    protected String getToolHomeEnvVarName() {
-        return "DEBRICKED_CLI_HOME";
+    protected String[] getToolEnvVarPrefixes() {
+        return new String[]{"DEBRICKED_CLI", "DEBRICKED"};
     }
     
     @Override

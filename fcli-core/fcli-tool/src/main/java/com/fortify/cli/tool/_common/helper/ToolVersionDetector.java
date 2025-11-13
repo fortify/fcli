@@ -200,69 +200,68 @@ public class ToolVersionDetector {
     }
     
     /**
-     * Find and extract version from a JAR file matching a specific pattern.
-     * First tries to extract version from JAR manifest, then falls back to filename pattern.
+     * Extract version from JAR filename matching a pattern.
      * Pattern should use {version} as placeholder for version string.
-     * Example: "lib/tool-{version}.jar" will match "lib/tool-1.2.3.jar"
+     * Example: "Core/lib/scancentral-cli-{version}.jar" will match "Core/lib/scancentral-cli-25.4.0.0047.jar"
+     * and extract "25.4.0.0047" as the version.
      * 
      * @param installDir Installation directory to search
      * @param jarPattern Pattern with {version} placeholder (e.g., "lib/tool-{version}.jar")
      * @param maxDepth Maximum directory depth to search
-     * @return Extracted version or null if no matching file found
+     * @return Extracted version from filename or null if no matching file found
      */
-    public static String extractVersionFromJarPattern(File installDir, String jarPattern, int maxDepth) {
+    public static String extractVersionFromJarFilename(File installDir, String jarPattern, int maxDepth) {
+        if (installDir == null || !installDir.isDirectory()) return null;
+        if (StringUtils.isBlank(jarPattern) || !jarPattern.contains("{version}")) {
+            LOG.warn("JAR pattern must contain {{version}} placeholder");
+            return null;
+        }
+        
+        return extractVersionFromFilePattern(installDir, jarPattern, maxDepth);
+    }
+    
+    /**
+     * Find JAR file matching Ant-style glob pattern and extract version from manifest.
+     * Pattern supports:
+     * - {@code *} matches any characters within a single path segment
+     * - {@code **} matches zero or more directory levels
+     * Reads Implementation-Version, Bundle-Version, Specification-Version, or Version attribute.
+     * Example: "FodUpload.jar", "lib/*.jar", "**\/scancentral-*.jar"
+     * 
+     * @param installDir Installation directory to search
+     * @param jarPattern Ant-style glob pattern for JAR file (e.g., "FodUpload.jar" or "**\/*.jar")
+     * @param maxDepth Maximum directory depth to search
+     * @return Extracted version from manifest or null if not found
+     */
+    public static String extractVersionFromJarManifestPattern(File installDir, String jarPattern, int maxDepth) {
         if (installDir == null || !installDir.isDirectory()) return null;
         if (StringUtils.isBlank(jarPattern)) {
             LOG.warn("JAR pattern cannot be blank");
             return null;
         }
         
-        // If pattern contains {version}, try extracting from filename first
-        if (jarPattern.contains("{version}")) {
-            String versionFromFilename = extractVersionFromFilePattern(installDir, jarPattern, maxDepth);
-            if (versionFromFilename != null) {
-                return versionFromFilename;
-            }
-        }
-        
-        // Pattern without {version} - find exact file and read manifest
-        String searchPattern = jarPattern.replace("{version}", "*");
-        Pattern pattern = createGlobPattern(searchPattern);
-        
-        try (Stream<Path> paths = Files.walk(installDir.toPath(), maxDepth)) {
-            Path jarPath = paths
-                .filter(Files::isRegularFile)
-                .filter(p -> p.toString().endsWith(".jar"))
-                .map(p -> installDir.toPath().relativize(p))
-                .filter(p -> pattern.matcher(p.toString().replace('\\', '/')).matches())
-                .map(installDir.toPath()::resolve)
-                .findFirst()
-                .orElse(null);
-                
+        try {
+            Path jarPath = com.fortify.cli.common.util.FileUtils.processMatchingFileStream(
+                installDir.toPath(), 
+                jarPattern, 
+                maxDepth,
+                stream -> stream
+                    .filter(p -> p.toString().endsWith(".jar"))
+                    .findFirst()
+                    .orElse(null)
+            );
+            
             if (jarPath != null) {
                 String versionFromManifest = extractVersionFromJarManifest(jarPath.toFile());
                 if (versionFromManifest != null) {
                     return versionFromManifest;
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.debug("Failed to scan directory for JAR pattern: " + jarPattern, e);
         }
         
         return null;
-    }
-    
-    /**
-     * Convert a glob-style pattern to regex Pattern.
-     * Supports * for any characters within path segment.
-     * 
-     * @param globPattern Glob pattern (e.g., "lib/tool-*.jar")
-     * @return Compiled Pattern
-     */
-    private static Pattern createGlobPattern(String globPattern) {
-        String regex = Pattern.quote(globPattern)
-            .replace("\\*", "\\E[^/]*\\Q");
-        return Pattern.compile(regex);
     }
     
     /**

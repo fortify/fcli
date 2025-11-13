@@ -28,48 +28,55 @@ import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand.ExitCode
 public class ToolRegistrationHelper {
     
     /**
-     * Auto-detect tool binary by searching in priority order:
-     * 1. fcli installation status
-     * 2. <TOOL> environment variable (direct binary path)
-     * 3. <TOOL_HOME> environment variable (install directory)
+     * Auto-detect tool binary location using multiple strategies in priority order:
+     * 1. fcli installation descriptors
+     * 2. {PREFIX}_CMD environment variables (direct binary/jar path)
+     * 3. {PREFIX}_HOME environment variables (install directory)
      * 4. PATH entries
      * 
      * @param toolName Tool identifier
      * @param binaryName Platform-specific binary name
-     * @param toolEnvVar Environment variable for direct binary path (may be null)
-     * @param toolHomeEnvVar Environment variable for install directory (may be null)
+     * @param envPrefixes Environment variable prefixes to check (e.g., ["FCLI"], ["SCANCENTRAL", "SC_CLIENT"])
      * @return Detected tool binary file
      * @throws FcliSimpleException if tool not found
      */
-    public static File autoDetectToolBinary(String toolName, String binaryName, String toolEnvVar, String toolHomeEnvVar) {
+    public static File autoDetectToolBinary(String toolName, String binaryName, String[] envPrefixes) {
         // Priority 1: Check fcli installation status
         ToolInstallationDescriptor existing = ToolInstallationDescriptor.loadLastModified(toolName);
         if (existing != null && existing.getBinDir() != null) {
             File binary = new File(existing.getBinPath().resolve(binaryName).toString());
-            if (binary.exists() && binary.canExecute()) {
+            if (binary.exists() && (binary.canExecute() || binary.getName().endsWith(".jar"))) {
                 return binary;
             }
         }
         
-        // Priority 2: Check <TOOL> env var (direct binary path)
-        if (toolEnvVar != null) {
-            String toolPath = EnvHelper.env(toolEnvVar);
+        // Priority 2: Check {PREFIX}_CMD env vars (direct binary/jar path)
+        for (String prefix : envPrefixes) {
+            String cmdEnvVar = prefix + "_CMD";
+            String toolPath = EnvHelper.env(cmdEnvVar);
             if (StringUtils.isNotBlank(toolPath)) {
                 File binary = new File(toolPath);
-                if (binary.exists() && binary.canExecute()) {
+                if (binary.exists() && (binary.canExecute() || binary.getName().endsWith(".jar"))) {
                     return binary;
                 }
             }
         }
         
-        // Priority 3: Check <TOOL_HOME> env var (install directory)
-        if (toolHomeEnvVar != null) {
-            String toolHomePath = EnvHelper.env(toolHomeEnvVar);
+        // Priority 3: Check {PREFIX}_HOME env vars (install directory)
+        for (String prefix : envPrefixes) {
+            String homeEnvVar = prefix + "_HOME";
+            String toolHomePath = EnvHelper.env(homeEnvVar);
             if (StringUtils.isNotBlank(toolHomePath)) {
                 File toolHome = new File(toolHomePath);
-                File binary = new File(toolHome, "bin" + File.separator + binaryName);
-                if (binary.exists() && binary.canExecute()) {
-                    return binary;
+                // Try bin subdirectory first
+                File binaryInBin = new File(toolHome, "bin" + File.separator + binaryName);
+                if (binaryInBin.exists() && (binaryInBin.canExecute() || binaryInBin.getName().endsWith(".jar"))) {
+                    return binaryInBin;
+                }
+                // Try root directory for JAR files
+                File binaryInRoot = new File(toolHome, binaryName);
+                if (binaryInRoot.exists() && binaryInRoot.getName().endsWith(".jar")) {
+                    return binaryInRoot;
                 }
             }
         }

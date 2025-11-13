@@ -77,14 +77,21 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     
     protected abstract String getToolName();
     protected abstract String getDefaultBinaryName();
-    protected abstract String getToolEnvVarName();
-    protected abstract String getToolHomeEnvVarName();
+    
+    /**
+     * Get environment variable prefixes for auto-detecting tool location.
+     * Each prefix will be used to check for {PREFIX}_CMD (pointing to executable/jar)
+     * and {PREFIX}_HOME (pointing to installation directory).
+     * 
+     * @return Array of environment variable prefixes (e.g., ["FCLI"], ["SCANCENTRAL", "SC_CLIENT"])
+     */
+    protected abstract String[] getToolEnvVarPrefixes();
     
     @Override
     @SneakyThrows
     public ObjectNode getJsonNode() {
         File toolBinary = registerMode.autoDetect 
-            ? ToolRegistrationHelper.autoDetectToolBinary(getToolName(), getDefaultBinaryName(), getToolEnvVarName(), getToolHomeEnvVarName())
+            ? ToolRegistrationHelper.autoDetectToolBinary(getToolName(), getDefaultBinaryName(), getToolEnvVarPrefixes())
             : ToolRegistrationHelper.resolveBinaryFromExplicitPath(registerMode.explicitPath, getDefaultBinaryName());
         
         // Validate binary is executable (or is a JAR file)

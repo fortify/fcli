@@ -37,13 +37,8 @@ public class ToolFcliRegisterCommand extends AbstractToolRegisterCommand {
     }
     
     @Override
-    protected String getToolEnvVarName() {
-        return "FCLI";
-    }
-    
-    @Override
-    protected String getToolHomeEnvVarName() {
-        return "FCLI_HOME";
+    protected String[] getToolEnvVarPrefixes() {
+        return new String[]{"FCLI"};
     }
     
     @Override

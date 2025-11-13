@@ -34,13 +34,8 @@ public class ToolBugTrackerUtilityRegisterCommand extends AbstractToolRegisterCo
     }
     
     @Override
-    protected String getToolEnvVarName() {
-        return "FBTU";
-    }
-    
-    @Override
-    protected String getToolHomeEnvVarName() {
-        return "FBTU_HOME";
+    protected String[] getToolEnvVarPrefixes() {
+        return new String[]{"BUGTRACKER_UTILITY", "FBTU"};
     }
     
     @Override

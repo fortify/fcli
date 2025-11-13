@@ -35,23 +35,18 @@ public class ToolVulnExporterRegisterCommand extends AbstractToolRegisterCommand
     }
     
     @Override
-    protected String getToolEnvVarName() {
-        return "VULN_EXPORTER";
-    }
-    
-    @Override
-    protected String getToolHomeEnvVarName() {
-        return "VULN_EXPORTER_HOME";
+    protected String[] getToolEnvVarPrefixes() {
+        return new String[]{"VULN_EXPORTER", "FVE"};
     }
     
     @Override
     protected String detectVersion(java.io.File toolBinary, java.io.File installDir) {
         // Vulnerability Exporter: Check JAR manifest for Implementation-Version
         // FortifyVulnerabilityExporter.jar has no version in filename but has Implementation-Version in manifest
-        String versionFromJar = ToolVersionDetector
-            .extractVersionFromJarPattern(installDir, "FortifyVulnerabilityExporter.jar", 1);
-        if (versionFromJar != null) {
-            return versionFromJar;
+        String versionFromManifest = ToolVersionDetector
+            .extractVersionFromJarManifestPattern(installDir, "FortifyVulnerabilityExporter.jar", 1);
+        if (versionFromManifest != null) {
+            return versionFromManifest;
         }
         
         return "unknown";
