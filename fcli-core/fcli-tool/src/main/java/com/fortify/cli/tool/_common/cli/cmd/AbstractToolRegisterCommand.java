@@ -110,7 +110,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
             ? versionFromDescriptor 
             : detectVersion(toolBinary, installDir);
         
-        // Find matching version descriptor
+        // Find matching version descriptor (this also normalizes the version)
         ToolDefinitionVersionDescriptor versionDescriptor = resolveVersionDescriptor(detectedVersion);
         
         // Create and save installation descriptor
@@ -121,7 +121,8 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
         );
         installation.save(getToolName(), versionDescriptor);
         
-        return createOutputNode(installation, detectedVersion);
+        // Use normalized version from descriptor for output
+        return createOutputNode(installation, versionDescriptor.getVersion());
     }
     
     /**
@@ -141,13 +142,16 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     private ToolDefinitionVersionDescriptor resolveVersionDescriptor(String detectedVersion) {
         var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
         
-        // Try to find matching version in tool definitions
+        // Normalize version format to match tool definitions (e.g., 24.2.0.0050 -> 24.2.0)
+        String normalizedVersion = toolDefinition.normalizeVersionFormat(detectedVersion);
+        
+        // Try to find matching version in tool definitions using normalized version
         try {
-            return toolDefinition.getVersion(detectedVersion);
+            return toolDefinition.getVersion(normalizedVersion);
         } catch (IllegalArgumentException e) {
-            // Version not found in definitions, create synthetic descriptor
+            // Version not found in definitions, create synthetic descriptor with normalized version
             ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
-            syntheticDescriptor.setVersion(detectedVersion);
+            syntheticDescriptor.setVersion(normalizedVersion);
             syntheticDescriptor.setStable(false);  // External installations default to not stable
             return syntheticDescriptor;
         }

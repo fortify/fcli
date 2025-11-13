@@ -65,4 +65,97 @@ public class ToolDefinitionRootDescriptor {
         return result;
     }
     
+    /**
+     * Normalize a version string to match the format commonly used in tool definitions.
+     * Determines the most common number of version segments (dots) from actual version
+     * strings in tool definitions (excluding aliases), then truncates or pads the input
+     * version to match that format.
+     * 
+     * Examples:
+     * - If definitions use 3-segment versions (e.g., 24.2.0), normalize 24.2.0.0050 to 24.2.0
+     * - If definitions use 2-segment versions (e.g., 1.2), normalize 1.2.3 to 1.2
+     * 
+     * @param detectedVersion The version string to normalize
+     * @return Normalized version string matching tool definition format
+     */
+    public final String normalizeVersionFormat(String detectedVersion) {
+        if (StringUtils.isBlank(detectedVersion) || "unknown".equals(detectedVersion)) {
+            return detectedVersion;
+        }
+        
+        int targetSegments = determineVersionFormatSegmentCount();
+        if (targetSegments <= 0) {
+            // No consistent format found, return as-is
+            return detectedVersion;
+        }
+        
+        // Split version into segments (ignoring any suffix like -SNAPSHOT)
+        String versionBase = detectedVersion;
+        String suffix = "";
+        int suffixIdx = detectedVersion.indexOf('-');
+        if (suffixIdx > 0) {
+            versionBase = detectedVersion.substring(0, suffixIdx);
+            suffix = detectedVersion.substring(suffixIdx);
+        }
+        
+        String[] segments = versionBase.split("\\.");
+        
+        if (segments.length == targetSegments) {
+            return detectedVersion; // Already correct format
+        }
+        
+        if (segments.length > targetSegments) {
+            // Truncate to target segment count
+            return String.join(".", Arrays.copyOf(segments, targetSegments)) + suffix;
+        } else {
+            // Pad with zeros to reach target segment count
+            String[] paddedSegments = Arrays.copyOf(segments, targetSegments);
+            for (int i = segments.length; i < targetSegments; i++) {
+                paddedSegments[i] = "0";
+            }
+            return String.join(".", paddedSegments) + suffix;
+        }
+    }
+    
+    /**
+     * Determine the most common number of version segments (dots + 1) used in tool definitions.
+     * Only considers actual version strings, not aliases.
+     * 
+     * @return Number of segments in the most common version format, or -1 if no pattern found
+     */
+    private int determineVersionFormatSegmentCount() {
+        if (versions == null || versions.length == 0) {
+            return -1;
+        }
+        
+        // Count occurrences of each segment count
+        var segmentCounts = new java.util.HashMap<Integer, Integer>();
+        
+        for (ToolDefinitionVersionDescriptor descriptor : versions) {
+            String version = descriptor.getVersion();
+            if (StringUtils.isNotBlank(version)) {
+                // Extract base version (before any suffix like -SNAPSHOT)
+                String versionBase = version;
+                int suffixIdx = version.indexOf('-');
+                if (suffixIdx > 0) {
+                    versionBase = version.substring(0, suffixIdx);
+                }
+                
+                // Count dots + 1 to get segment count
+                int segments = versionBase.split("\\.").length;
+                segmentCounts.merge(segments, 1, Integer::sum);
+            }
+        }
+        
+        if (segmentCounts.isEmpty()) {
+            return -1;
+        }
+        
+        // Return the most common segment count
+        return segmentCounts.entrySet().stream()
+            .max(java.util.Map.Entry.comparingByValue())
+            .map(java.util.Map.Entry::getKey)
+            .orElse(-1);
+    }
+    
 }

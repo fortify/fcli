@@ -84,20 +84,22 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
                     if (version.equals(toolName)) {
                         return false;
                     }
-                    // Only include versions not already in tool definitions
+                    // Normalize version for comparison
+                    String normalizedVersion = toolDefinition.normalizeVersionFormat(version);
+                    // Only include versions not already in tool definitions (check normalized version)
                     try {
-                        toolDefinition.getVersion(version);
+                        toolDefinition.getVersion(normalizedVersion);
                         return false; // Version exists in definitions
                     } catch (IllegalArgumentException e) {
                         return true; // Version not in definitions, include it
                     }
                 })
                 .map(version -> {
-                    // Create synthetic version descriptor for unknown version
-                    var installationDescriptor = ToolInstallationDescriptor.load(toolName, 
-                            createSyntheticVersionDescriptor(toolDefinition, version));
+                    // Create synthetic version descriptor for unknown version (will be normalized)
+                    var versionDescriptor = createSyntheticVersionDescriptor(toolDefinition, version);
+                    var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
                     return new ToolInstallationOutputDescriptor(toolName, 
-                            createSyntheticVersionDescriptor(toolDefinition, version), 
+                            versionDescriptor, 
                             installationDescriptor, "");
                 });
     }
@@ -105,9 +107,12 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     private ToolDefinitionVersionDescriptor createSyntheticVersionDescriptor(
             com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor toolDefinition, 
             String version) {
+        // Normalize version format to match tool definitions
+        String normalizedVersion = toolDefinition.normalizeVersionFormat(version);
+        
         // Create a minimal synthetic descriptor for unknown versions
         ToolDefinitionVersionDescriptor descriptor = new ToolDefinitionVersionDescriptor();
-        descriptor.setVersion(version);
+        descriptor.setVersion(normalizedVersion);
         descriptor.setStable(false);
         descriptor.setAliases(new String[0]);
         return descriptor;
