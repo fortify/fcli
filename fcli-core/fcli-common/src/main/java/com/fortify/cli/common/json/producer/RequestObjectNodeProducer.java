@@ -20,6 +20,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
+import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.IfFailureHandler;
 
 import kong.unirest.HttpRequest;
@@ -41,7 +42,7 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
     private final INextPageRequestProducer nextPageRequestProducer;
     private final INextPageUrlProducer nextPageUrlProducer;
     // Test-only support: if configured, simulate multi-page responses without performing HTTP requests
-    @Singular private final java.util.List<JsonNode> testPageBodies;
+    @Singular private final List<JsonNode> testPageBodies;
 
     @Override
     public void forEach(IObjectNodeConsumer consumer) {
@@ -80,7 +81,7 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
             super.applyAllFrom(applyFrom);
             // Auto-apply Unirest instance if command supplies it
             var ch = getRequiredCommandHelper();
-            ch.getCommandAs(com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier.class)
+            ch.getCommandAs(IUnirestInstanceSupplier.class)
                 .ifPresent(s -> super.unirestInstance(s.getUnirestInstance()));
             applyRequestUpdatersFrom(applyFrom);
             applyNextPageUrlProducerFrom(applyFrom);

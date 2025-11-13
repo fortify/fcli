@@ -14,9 +14,11 @@ package com.fortify.cli.ssc._common.rest.ssc.bulk;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -149,8 +151,8 @@ public class SSCBulkRequestBuilder {
 
     private record Batch(int start, int end) {}
 
-    private java.util.List<Batch> batches(int totalRequests, int batchSize) {
-        return java.util.stream.IntStream.range(0, totalRequests)
+    private List<Batch> batches(int totalRequests, int batchSize) {
+        return IntStream.range(0, totalRequests)
                 .filter(i -> i % batchSize == 0)
                 .mapToObj(i -> new Batch(i, Math.min(i + batchSize, totalRequests)))
                 .toList();

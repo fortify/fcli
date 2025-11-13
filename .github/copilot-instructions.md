@@ -106,6 +106,7 @@ default -> throw new FcliBugException("Unexpected status: "+status);
 
 ### Imports & Formatting
 - Always use explicit imports; avoid wildcard imports.
+- Always use imports, no fully qualified class names (unless this results in collision because same class name exists in mutliple packages)
 - Order: static imports (grouped), then normal imports alphabetically; keep separation between 3rd-party and internal logical groups only if automated tooling maintains it.
 - No unused imports; remove immediately.
 

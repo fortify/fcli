@@ -26,7 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -61,8 +64,8 @@ class AviatorStreamProcessor implements AutoCloseable {
     private final AviatorGrpcClient client;
     private final IAviatorLogger logger;
     private final AuditorServiceGrpc.AuditorServiceStub asyncStub;
-    private final java.util.concurrent.ExecutorService processingExecutor;
-    private final java.util.concurrent.ScheduledExecutorService pingScheduler;
+    private final ExecutorService processingExecutor;
+    private final ScheduledExecutorService pingScheduler;
     private final long pingIntervalSeconds;
     private final long defaultTimeoutSeconds;
 
@@ -78,10 +81,10 @@ class AviatorStreamProcessor implements AutoCloseable {
     private final AtomicInteger outstandingRequests = new AtomicInteger(0);
     private RequestHandler<UserPromptRequest> requestHandler;
 
-    private java.util.concurrent.ScheduledFuture<?> pingTask;
+    private ScheduledFuture<?> pingTask;
     private final AtomicBoolean isPinging = new AtomicBoolean(false);
 
-    private final java.util.concurrent.ConcurrentLinkedDeque<RequestWrapper> processingQueue = new ConcurrentLinkedDeque<>();
+    private final ConcurrentLinkedDeque<RequestWrapper> processingQueue = new ConcurrentLinkedDeque<>();
     private volatile StreamState currentStreamState;
     private final AtomicInteger stagnantRetryCount = new AtomicInteger(0);
     private final AtomicInteger lastProcessed = new AtomicInteger(0);
@@ -89,7 +92,7 @@ class AviatorStreamProcessor implements AutoCloseable {
     private volatile Future<?> processingTask;
     private final Object retryLock = new Object();
 
-    public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub, java.util.concurrent.ExecutorService processingExecutor, java.util.concurrent.ScheduledExecutorService pingScheduler, long pingIntervalSeconds, long defaultTimeoutSeconds) {
+    public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub, ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds, long defaultTimeoutSeconds) {
         this.client = client;
         this.logger = logger;
         this.asyncStub = asyncStub;

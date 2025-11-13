@@ -19,6 +19,7 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -656,7 +657,7 @@ public class ActionSpelFunctions {
                         pathPart = idx>=0 ? cleaned.substring(idx+1) : cleaned;
                     } else {
                         try {
-                            var uri = java.net.URI.create(cleaned);
+                            var uri = URI.create(cleaned);
                             pathPart = uri.getPath();
                             if (pathPart==null) { pathPart = cleaned; }
                         } catch (Exception ex) { pathPart = cleaned; }
