@@ -33,8 +33,8 @@ import spock.lang.Unroll
  */
 @Prefix("tool.register") @Stepwise
 class ToolRegisterSpec extends FcliBaseSpec {
-    @Shared @TempDir("fortify/tools") String installBaseDir
-    @Shared @TempDir("external/tools") String externalBaseDir
+    @Shared @TempDir("tool-register-test/install") String installBaseDir
+    @Shared @TempDir("tool-register-test/external") String externalBaseDir
     @Shared Path fcliStateDir
     
     // Tool definitions with version info
@@ -91,7 +91,20 @@ class ToolRegisterSpec extends FcliBaseSpec {
     }
     
     def cleanupSpec() {
-        // Clean up tool state for all registered tools to avoid interference with existing installations
+        // Uninstall all tools that were installed during tests
+        toolConfigs.keySet().each { tool ->
+            if (installedTools.contains(tool)) {
+                def config = toolConfigs[tool]
+                try {
+                    Fcli.run("tool ${tool} uninstall -y -v=${config.version} --progress none", {})
+                    println "Uninstalled ${tool} ${config.version}"
+                } catch (Exception e) {
+                    println "Warning: Failed to uninstall ${tool}: ${e.message}"
+                }
+            }
+        }
+        
+        // Clean up tool state for all registered tools to avoid interference with other tests
         toolConfigs.keySet().each { tool ->
             def toolStateDir = fcliStateDir.resolve(tool)
             if (Files.exists(toolStateDir)) {
