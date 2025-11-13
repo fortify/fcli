@@ -89,7 +89,7 @@ steps:
       global.debrickedPublish.fcliVarName: debricked_scan_${#action.runID().replace('-','_')} # fcli variable to store the artifact name to be used in next command to wait-for artifact upload command 
       global.debrickedPublish.waitForCmd: 'fcli ssc artifact wait-for ::${global.debrickedPublish.fcliVarName}::'
   - run.fcli:
-      UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${cli.toolDefinitions?:""}
+      UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${#joinOrNull('=','--source',cli.toolDefinitions)?:""}
   - run.fcli:
       INSTALL_DEBRICKED: fcli tool dcli install -v ${cli.dcliVersion}
   - run.fcli:
