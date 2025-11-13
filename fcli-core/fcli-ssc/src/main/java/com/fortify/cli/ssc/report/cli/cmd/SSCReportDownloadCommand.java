@@ -18,6 +18,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
@@ -36,7 +38,8 @@ public class SSCReportDownloadCommand extends AbstractSSCJsonNodeOutputCommand i
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
     @Mixin private SSCReportResolverMixin.PositionalParameterSingle reportResolver;
     @Mixin private CommonOptionMixins.OptionalFile fileMixin;
-    
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCReportDescriptor descriptor = reportResolver.getReportDescriptor(unirest);
@@ -44,14 +47,17 @@ public class SSCReportDownloadCommand extends AbstractSSCJsonNodeOutputCommand i
         if ( destination==null ) {
             destination = new File(String.format("./%s.%s", descriptor.getName(), descriptor.getFormat().toLowerCase()));
         }
-        SSCFileTransferHelper.download(
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_REPORT(descriptor.getIdString()),
                 destination,
                 SSCFileTransferTokenType.REPORT_FILE,
-                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
-        );
-        return descriptor.asJsonNode();
+                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
+                progressWriter
+            );
+            return descriptor.asJsonNode();
+        }
     }
 
     @Override

@@ -23,6 +23,8 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
@@ -50,7 +52,8 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
 
     @Option(names = {"-c", "--config"}, defaultValue = "./ReportTemplateConfig.yml")
     private File answerFile;
-    
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+
     @Override @SneakyThrows
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         var createRequest = getCreateRequest();
@@ -80,14 +83,17 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
     }
     
     private final String uploadTemplateFile(UnirestInstance unirest) {
-        ObjectNode uploadResponse = SSCFileTransferHelper.htmlUpload(
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            ObjectNode uploadResponse = SSCFileTransferHelper.htmlUpload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
                 templatePath,
                 ISSCAddUploadTokenFunction.ROUTEPARAM_UPLOADTOKEN,
-                ObjectNode.class
-        );
-        return uploadResponse.get("entityId").asText();
+                ObjectNode.class,
+                progressWriter
+            );
+            return uploadResponse.get("entityId").asText();
+        }
     }
     
     @Reflectable @NoArgsConstructor

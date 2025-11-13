@@ -17,6 +17,8 @@ import java.io.File;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
@@ -29,6 +31,7 @@ import picocli.CommandLine.Mixin;
 public abstract class AbstractSSCIssueTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin protected CommonOptionMixins.OptionalFile fileMixin;
     @Mixin protected SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
+    @Mixin protected ProgressWriterFactoryMixin progressWriterFactory;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -38,13 +41,16 @@ public abstract class AbstractSSCIssueTemplateDownloadCommand extends AbstractSS
         if (destination==null ) {
             destination = new File(String.format("./%s", descriptor.getOriginalFileName()));
         }
-        SSCFileTransferHelper.download(
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            SSCFileTransferHelper.download(
                 unirest,
                 String.format("/download/projectTemplateDownload.html?guid=%s", issueTemplateId),
                 destination,
-                ISSCAddDownloadTokenFunction.QUERYSTRING_MAT
-        );
-        return descriptor.asJsonNode();
+                ISSCAddDownloadTokenFunction.QUERYSTRING_MAT,
+                progressWriter
+            );
+            return descriptor.asJsonNode();
+        }
     }
     
     @Override
