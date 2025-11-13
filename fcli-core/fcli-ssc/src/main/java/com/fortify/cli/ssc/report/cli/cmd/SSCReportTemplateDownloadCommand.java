@@ -49,7 +49,7 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCJsonNodeOutputC
         }
         try (IProgressWriter progressWriter = progressWriterFactory.create()) {
             SSCFileTransferHelper.download(
-				unirest,
+                unirest,
                 SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(descriptor.getIdString()),
                 destination,
                 ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
