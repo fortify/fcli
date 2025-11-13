@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.tool.sc_client.cli.cmd;
 
+import java.io.File;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
@@ -41,28 +42,21 @@ public class ToolSCClientRegisterCommand extends AbstractToolRegisterCommand {
     }
     
     @Override
-    protected String detectVersion(java.io.File toolBinary, java.io.File installDir) {
-        // Try executing scancentral -version
-        String output = ToolVersionDetector.tryExecute(toolBinary, "-version");
-        if (output != null) {
-            String version = ToolVersionDetector.extractVersionFromOutput(output);
-            if (version != null) {
-                return version;
-            }
-        }
-        
-        // Fallback: Try extracting version from Core/lib/scancentral-cli-{version}.jar filename
+    protected String detectVersion(File toolBinary, File installDir) {
+        // Try JAR filename detection first (faster than executing binary)
         String versionFromFilename = ToolVersionDetector
             .extractVersionFromJarFilename(installDir, "Core/lib/scancentral-cli-{version}.jar", 3);
         if (versionFromFilename != null) {
             return versionFromFilename;
         }
         
-        // Final fallback: Read manifest from JAR
-        String versionFromManifest = ToolVersionDetector
-            .extractVersionFromJarManifestPattern(installDir, "Core/lib/scancentral-cli-{version}.jar", 3);
-        if (versionFromManifest != null) {
-            return versionFromManifest;
+        // Fallback: Execute scancentral -version
+        String output = ToolVersionDetector.tryExecute(toolBinary, "-version");
+        if (output != null) {
+            String version = ToolVersionDetector.extractVersionFromOutput(output);
+            if (version != null) {
+                return version;
+            }
         }
         
         return "unknown";
