@@ -54,6 +54,8 @@ public final class ToolInstaller {
     @Getter private final Consumer<ToolInstaller> preInstallAction;
     @Getter private final BiConsumer<ToolInstaller, ToolInstallationResult> postInstallAction;
     @Getter private final IProgressWriterI18n progressWriter;
+    @Getter @Builder.Default private final Function<ToolInstaller,String> versionDetector = ToolInstaller::defaultVersionDetector;
+    @Getter @Builder.Default private final BiConsumer<ToolInstaller,ToolDefinitionArtifactDescriptor> installer = ToolInstaller::defaultInstaller;
     private final LazyObject<ToolDefinitionRootDescriptor> _definitionRootDescriptor = new LazyObject<>();
     private final LazyObject<ToolDefinitionVersionDescriptor> _versionDescriptor = new LazyObject<>();
     private final LazyObject<ToolInstallationDescriptor> _previousInstallationDescriptor = new LazyObject<>();
@@ -85,7 +87,10 @@ public final class ToolInstaller {
     }
     
     public final ToolDefinitionVersionDescriptor getVersionDescriptor() {
-        return _versionDescriptor.get(()->getDefinitionRootDescriptor().getVersionOrDefault(requestedVersion));
+        return _versionDescriptor.get(()->{
+            String version = versionDetector.apply(this);
+            return getDefinitionRootDescriptor().getVersionOrDefault(version);
+        });
     }
     
     public final ToolInstallationDescriptor getPreviousInstallationDescriptor() {
@@ -126,6 +131,15 @@ public final class ToolInstaller {
         var artifactDescriptor = getArtifactDescriptor(platform)
                 .orElseThrow(()->new IllegalStateException(String.format("No matching artifact found for platform %s", platform)));
         return install(artifactDescriptor);
+    }
+    
+    private static String defaultVersionDetector(ToolInstaller installer) {
+        return installer.requestedVersion;
+    }
+    
+    @SneakyThrows
+    private static void defaultInstaller(ToolInstaller installer, ToolDefinitionArtifactDescriptor artifactDescriptor) {
+        installer.downloadAndExtract(artifactDescriptor);
     }
     
     /**
@@ -197,7 +211,7 @@ public final class ToolInstaller {
             warnIfDifferentTargetPath();
             if ( !hasMatchingTargetPath(getVersionDescriptor()) ) {
                 checkEmptyTargetPath();
-                downloadAndExtract(artifactDescriptor);
+                installer.accept(this, artifactDescriptor);
             }
             var result = new ToolInstallationResult(toolName, versionDescriptor, artifactDescriptor, createAndSaveInstallationDescriptor());
             if ( postInstallAction!=null ) {

@@ -27,11 +27,14 @@ import spock.lang.Stepwise
 class ToolFcliSpec extends FcliBaseSpec {
     @Shared @TempDir("fortify/tools") String baseDir;
     @Shared String version = "2.1.0"
-    @Shared Path globalBinScript = Path.of(baseDir).resolve("bin/fcli.bat");
-    @Shared Path binScript = Path.of(baseDir).resolve("fcli/${version}/bin/fcli.exe");
+    @Shared String platform = System.getProperty("os.name").toLowerCase().contains("windows") ? "windows/x64" : "linux/x64"
+    @Shared String binaryExt = System.getProperty("os.name").toLowerCase().contains("windows") ? ".exe" : ""
+    @Shared String scriptExt = System.getProperty("os.name").toLowerCase().contains("windows") ? ".bat" : ""
+    @Shared Path globalBinScript = Path.of(baseDir).resolve("bin/fcli${scriptExt}");
+    @Shared Path binScript = Path.of(baseDir).resolve("fcli/${version}/bin/fcli${binaryExt}");
     
     def "install"() {
-        def args = "tool fcli install -y -v=${version} -b ${baseDir} --platform windows/x64 --progress none"
+        def args = "tool fcli install -y -v=${version} -b ${baseDir} --platform ${platform} --progress none"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -69,6 +72,117 @@ class ToolFcliSpec extends FcliBaseSpec {
                 Files.exists(globalBinScript);
                 !Files.exists(binScript);
             }
+    }
+    
+    def "installWithCopyFrom"() {
+        def copyFromVersion = "2.2.0"
+        def sourceInstallDir = Path.of(baseDir).resolve("fcli/${copyFromVersion}")
+        def sourceBinScript = sourceInstallDir.resolve("bin/fcli${binaryExt}")
+        def globalBinScript = Path.of(baseDir).resolve("bin/fcli${scriptExt}")
+        
+        // First install the source version to copy from
+        def installArgs = "tool fcli install -y -v=${copyFromVersion} -b ${baseDir} --platform ${platform} --progress none"
+        Fcli.run(installArgs, {it.expectZeroExitCode()})
+        
+        // Verify source installation exists
+        assert Files.exists(sourceBinScript)
+        
+        // Now reinstall using --copy-from (should detect version and reinstall)
+        def copyArgs = "tool fcli install -y --copy-from ${sourceBinScript} -b ${baseDir} --progress none"
+        
+        when:
+            def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains("fcli")
+                it[1].contains(copyFromVersion)
+                it[1].contains("INSTALLED")
+                Files.exists(sourceBinScript)
+                Files.exists(globalBinScript)
+            }
+        
+        cleanup:
+            // Uninstall the version
+            Fcli.run("tool fcli uninstall -y -v=${copyFromVersion} --progress none")
+    }
+    
+    def "installWithCopyFromBinDir"() {
+        def sourceVersion = "2.3.0"
+        def sourceBinDir = Path.of(baseDir).resolve("fcli/${sourceVersion}/bin")
+        def sourceBinScript = sourceBinDir.resolve("fcli${binaryExt}")
+        
+        // First install the source version
+        def installArgs = "tool fcli install -y -v=${sourceVersion} -b ${baseDir} --platform ${platform} --progress none"
+        Fcli.run(installArgs, {it.expectZeroExitCode()})
+        
+        // Now use --copy-from with the bin directory
+        def copyArgs = "tool fcli install -y --copy-from ${sourceBinDir} -b ${baseDir} --progress none"
+        
+        when:
+            def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains("fcli")
+                it[1].contains(sourceVersion)
+                it[1].contains("INSTALLED")
+                Files.exists(sourceBinScript)
+            }
+        
+        cleanup:
+            // Uninstall the version
+            Fcli.run("tool fcli uninstall -y -v=${sourceVersion} --progress none")
+    }
+    
+    def "installWithCopyFromInstallDir"() {
+        def sourceVersion = "2.4.0"
+        def sourceInstallDir = Path.of(baseDir).resolve("fcli/${sourceVersion}")
+        def sourceBinScript = sourceInstallDir.resolve("bin/fcli${binaryExt}")
+        
+        // First install the source version
+        def installArgs = "tool fcli install -y -v=${sourceVersion} -b ${baseDir} --platform ${platform} --progress none"
+        Fcli.run(installArgs, {it.expectZeroExitCode()})
+        
+        // Now use --copy-from with the install directory
+        def copyArgs = "tool fcli install -y --copy-from ${sourceInstallDir} -b ${baseDir} --progress none"
+        
+        when:
+            def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains("fcli")
+                it[1].contains(sourceVersion)
+                it[1].contains("INSTALLED")
+                Files.exists(sourceBinScript)
+            }
+        
+        cleanup:
+            // Uninstall the version
+            Fcli.run("tool fcli uninstall -y -v=${sourceVersion} --progress none")
+    }
+    
+    def "installWithCopyFromNonExecutable"() {
+        def nonExecutablePath = Path.of(baseDir).resolve("non-executable.txt")
+        Files.createDirectories(nonExecutablePath.getParent())
+        Files.writeString(nonExecutablePath, "not an executable")
+        
+        def copyArgs = "tool fcli install -y --copy-from ${nonExecutablePath} -b ${baseDir} --progress none"
+        
+        when:
+            def result = Fcli.run(copyArgs, {})
+        then:
+            result.exitCode != 0
+            result.stderr.join("\n").contains("not executable") || 
+            result.stderr.join("\n").contains("Failed to detect version") ||
+            result.stderr.join("\n").contains("Tool binary not found")
+        
+        cleanup:
+            Files.deleteIfExists(nonExecutablePath)
     }
     
 }

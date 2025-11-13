@@ -58,7 +58,7 @@ import picocli.CommandLine.Option;
 @CommandGroup("install") @DefaultVariablePropertyName("version")
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final ObjectMapper OBJECTMAPPER = JsonHelper.getObjectMapper();
-    @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
+    @Option(names={"-v", "--version"}, required = false, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
     private String version;
     @ArgGroup(exclusive = true)
     private InstallOrBaseDirArgGroup installOrBaseDirArgGroup = new InstallOrBaseDirArgGroup();
@@ -100,10 +100,20 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected abstract void postInstall(ToolInstaller toolInstaller, ToolInstallationResult installationResult);
     protected abstract String getDefaultArtifactType();
     
+    /**
+     * Subclasses can override this to customize the ToolInstaller builder before installation.
+     * This allows registration of hooks for custom version detection or installation logic.
+     * 
+     * @param builder The ToolInstaller builder to configure
+     */
+    protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
+        // Default: no additional configuration
+    }
+    
     private final ArrayNode install() {
         try ( var progressWriter = progressWriterFactory.create() ) {
             var preparer = new ToolInstallationPreparer();
-            var installer = ToolInstaller.builder()
+            var builder = ToolInstaller.builder()
                     .defaultPlatform(getDefaultArtifactType())
                     .onDigestMismatch(onDigestMismatch)
                     .preInstallAction(preparer)
@@ -112,8 +122,9 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
                     .targetPathProvider(this::getTargetPath)
                     .globalBinPathProvider(this::getGlobalBinPath)
                     .toolName(getToolName())
-                    .requestedVersion(version)
-                    .build();
+                    .requestedVersion(version);
+            configureToolInstallerBuilder(builder);
+            var installer = builder.build();
             var installResult = StringUtils.isBlank(platform) ? installer.install() : installer.install(platform);
             var result = OBJECTMAPPER.createArrayNode();
             result.add(OBJECTMAPPER.valueToTree(installResult.asOutputDescriptor()));
