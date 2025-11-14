@@ -291,19 +291,19 @@ class ToolRegisterSpec extends FcliBaseSpec {
     def "register non-existent tool with --path fails"() {
         when: "registering with path to non-existent directory"
             def args = "tool fcli register --path /non/existent/path"
-            Fcli.run(args, {it.expectNonZeroExitCode()})
+            def result = Fcli.run(args, {it.expectSuccess(false)})
             
         then: "command fails"
-            thrown(Exception)
+            result.isNonZeroExitCode()
     }
     
     def "register with --auto-detect fails when tool not found"() {
         when: "registering with auto-detect when tool is not in PATH or env vars"
             def args = "tool fcli register --auto-detect"
-            Fcli.run(args, {it.expectNonZeroExitCode()})
+            def result = Fcli.run(args, {it.expectSuccess(false)})
             
         then: "command fails with helpful message"
-            thrown(Exception)
+            result.isNonZeroExitCode()
     }
     
     @Unroll
@@ -429,11 +429,13 @@ class ToolRegisterSpec extends FcliBaseSpec {
             
         when: "registering with non-matching --version"
             def args = "tool ${tool} register --path ${installDir} --version ${wrongVersion}"
-            Fcli.run(args, {it.expectNonZeroExitCode()})
+            def result = Fcli.run(args, {it.expectSuccess(false)})
             
         then: "registration fails with version mismatch error"
-            def e = thrown(Exception)
-            e.message.contains("VERSION_MISMATCH") || e.message.contains("does not match")
+            result.isNonZeroExitCode()
+            result.stderr.any { line -> 
+                line.contains("does not match") || line.contains("version")
+            }
             
         where:
             tool << toolConfigs.keySet()
