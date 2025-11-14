@@ -38,7 +38,7 @@ public class ToolSCClientRegisterCommand extends AbstractToolRegisterCommand {
     
     @Override
     protected String[] getToolEnvVarPrefixes() {
-        return new String[]{"SCANCENTRAL", "SC_CLIENT"};
+        return ToolSCClientCommands.TOOL_ENV_VAR_PREFIXES;
     }
     
     @Override

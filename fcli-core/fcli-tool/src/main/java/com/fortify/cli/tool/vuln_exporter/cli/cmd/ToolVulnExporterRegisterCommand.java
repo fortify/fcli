@@ -38,7 +38,7 @@ public class ToolVulnExporterRegisterCommand extends AbstractToolRegisterCommand
     
     @Override
     protected String[] getToolEnvVarPrefixes() {
-        return new String[]{"VULN_EXPORTER", "FVE"};
+        return ToolVulnExporterCommands.TOOL_ENV_VAR_PREFIXES;
     }
     
     @Override

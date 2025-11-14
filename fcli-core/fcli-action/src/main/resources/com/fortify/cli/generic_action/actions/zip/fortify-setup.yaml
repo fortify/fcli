@@ -7,6 +7,9 @@ usage:
     Detects, registers, and installs Fortify tools (fcli, sc-client, fod-uploader,
     debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines.
     
+    Once tools are installed/registered, use the 'fcli tool <tool-name> env' command
+    to generate environment variables for shell scripts or CI/CD systems.
+    
     Supports:
     - Auto-detection of pre-installed tools
     - Dynamic installation with signature verification  
@@ -29,10 +32,6 @@ usage:
       # Docker multi-stage build
       fcli action run fortify-setup --fcli-copy-from /base/usr/bin/fcli \
         --base-dir /opt/fortify --sc-client-version 24.4.0
-      
-      # Generate GitHub Actions environment output
-      fcli action run fortify-setup --sc-client-version 24.4.0 \
-        --output-format github --output-file $GITHUB_ENV
 
 config:
   output: immediate
@@ -126,17 +125,6 @@ cli.options:
     names: --tool-definitions
     required: false
     description: "Custom tool definitions URL (ignored in air-gapped mode)"
-    
-  # Output options
-  output-format:
-    names: --output-format
-    required: false
-    default: shell
-    description: "Output format: shell (default), github, azure, gitlab"
-  output-file:
-    names: --output-file
-    required: false
-    description: "Write output to file instead of stdout"
 
 steps:
   # ===== PHASE 1: INITIALIZATION =====
@@ -256,136 +244,8 @@ steps:
   - var.set:
       global.fortify_setup.processed: ${tools.?[status != null && status != 'skipped' && status != 'failed'].![#this.getRealNode()]}
       global.fortify_setup.failed: ${tools.?[status == 'failed'].![#this.getRealNode()]}
-
-  # Build PATH additions and environment variables
-  - var.set:
-      path_additions: ${{}}   # Empty array for PATH additions
-      env_vars: ${{:}}  # Empty map for environment variables
-      
-  - log.info: "Building environment from ${global.fortify_setup.processed.size()} processed tool(s)..."
-      
-  - records.for-each:
-      from: ${global.fortify_setup.processed}
-      record.var-name: tool
-      do:
-        # Add bin directory to PATH
-        - if: ${tool.binDir != null}
-          var.set:
-            path_additions..: ${tool.binDir}
-            
-        # Add TOOL_HOME environment variable
-        - if: ${tool.installDir != null}
-          var.set:
-            tool_home_var_name: ${tool.name.toUpperCase().replace('-', '_') + '_HOME'}
-        - if: ${tool.installDir != null}
-          var.set:
-            env_vars.${tool_home_var_name}: ${tool.installDir}
   
-  # Generate output based on format
-  - if: ${cli['output-format'] == 'shell'}
-    var.set:
-      output_lines:
-  - if: ${cli['output-format'] == 'shell'}
-    var.set:
-      output_lines..: '# Fortify tools environment setup'
-  - if: ${cli['output-format'] == 'shell'}
-    records.for-each:
-      from: ${path_additions}
-      record.var-name: dir
-      do:
-        - var.set:
-            output_lines..: ${'export PATH="' + dir + ':$PATH"'}
-  - if: ${cli['output-format'] == 'shell'}
-    records.for-each:
-      from: ${#properties(env_vars)}
-      record.var-name: prop
-      do:
-        - var.set:
-            output_lines..: ${'export ' + prop.key + '="' + prop.value + '"'}
-  - if: ${cli['output-format'] == 'shell'}
-    log.debug: "Output lines array: ${output_lines}"
-  - if: ${cli['output-format'] == 'shell'}
-    var.set:
-      output_content: ${#join('\n', output_lines)}
-  - if: ${cli['output-format'] == 'shell'}
-    log.debug: "Shell output (${output_lines.size()} lines): ${output_content}"
-      
-  - if: ${cli['output-format'] == 'github'}
-    var.set:
-      output_lines:
-  - if: ${cli['output-format'] == 'github'}
-    records.for-each:
-      from: ${path_additions}
-      record.var-name: dir
-      do:
-        - var.set:
-            output_lines..: ${dir}
-  - if: ${cli['output-format'] == 'github'}
-    records.for-each:
-      from: ${#properties(env_vars)}
-      record.var-name: prop
-      do:
-        - var.set:
-            output_lines..: ${prop.key + '=' + prop.value}
-  - if: ${cli['output-format'] == 'github'}
-    var.set:
-      output_content: ${#join('\n', output_lines)}
-          
-  - if: ${cli['output-format'] == 'azure'}
-    var.set:
-      output_lines:
-  - if: ${cli['output-format'] == 'azure'}
-    records.for-each:
-      from: ${path_additions}
-      record.var-name: dir
-      do:
-        - var.set:
-            output_lines..: ${'##vso[task.prependpath]' + dir}
-  - if: ${cli['output-format'] == 'azure'}
-    records.for-each:
-      from: ${#properties(env_vars)}
-      record.var-name: prop
-      do:
-        - var.set:
-            output_lines..: ${'##vso[task.setvariable variable=' + prop.key + ']' + prop.value}
-  - if: ${cli['output-format'] == 'azure'}
-    var.set:
-      output_content: ${#join('\n', output_lines)}
-          
-  - if: ${cli['output-format'] == 'gitlab'}
-    var.set:
-      output_lines:
-  - if: ${cli['output-format'] == 'gitlab'}
-    records.for-each:
-      from: ${path_additions}
-      record.var-name: dir
-      do:
-        - var.set:
-            output_lines..: ${'export PATH="' + dir + ':$PATH"'}
-  - if: ${cli['output-format'] == 'gitlab'}
-    records.for-each:
-      from: ${#properties(env_vars)}
-      record.var-name: prop
-      do:
-        - var.set:
-            output_lines..: ${'export ' + prop.key + '="' + prop.value + '"'}
-  - if: ${cli['output-format'] == 'gitlab'}
-    var.set:
-      output_content: ${#join('\n',output_lines)}
-  
-  # Write output to file or stdout
-  - if: ${cli['output-file'] != null && cli['output-file'] != 'stdout' && cli['output-file'] != 'stderr'}
-    log.info: "NOTE: Writing to file requires manual redirection. Output:"
-  - if: ${cli['output-file'] != null && cli['output-file'] != 'stdout' && cli['output-file'] != 'stderr'}
-    log.info: "${output_content}"
-      
-  - if: ${cli['output-file'] == null || cli['output-file'] == 'stdout'}
-    log.info: ${output_content}
-    
-  - if: ${cli['output-file'] == 'stderr'}
-    log.info: ${output_content}  # Actions don't distinguish stdout/stderr in log.info
-  
-  # ===== PHASE 6: SUMMARY =====
+  # ===== PHASE 5: SUMMARY =====
   
   - log.info: ""
   - log.info: "Fortify tools setup complete. ${global.fortify_setup.processed.size()} tool(s) processed."

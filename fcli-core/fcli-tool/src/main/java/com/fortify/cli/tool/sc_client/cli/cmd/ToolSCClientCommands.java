@@ -25,10 +25,12 @@ import picocli.CommandLine.Command;
                 ToolSCClientListPlatformsCommand.class,
                 ToolSCClientRegisterCommand.class,
                 ToolSCClientRunCommand.class,
+                ToolSCClientEnvCommand.class,
                 ToolSCClientUninstallCommand.class
         }
 
 )
 public class ToolSCClientCommands extends AbstractContainerCommand {
     static final String TOOL_NAME = "sc-client";
+    static final String[] TOOL_ENV_VAR_PREFIXES = {"SCANCENTRAL", "SC_CLIENT"};
 }

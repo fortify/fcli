@@ -12,28 +12,17 @@
  */
 package com.fortify.cli.tool.fcli.cli.cmd;
 
-import java.io.File;
-
-import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
+import com.fortify.cli.tool._common.cli.cmd.AbstractToolEnvCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "register")
-public class ToolFcliRegisterCommand extends AbstractToolRegisterCommand {
+@Command(name = "env")
+public class ToolFcliEnvCommand extends AbstractToolEnvCommand {
     
     @Override
     protected String getToolName() {
         return ToolFcliCommands.TOOL_NAME;
-    }
-    
-    @Override
-    protected String getDefaultBinaryName() {
-        if (ToolPlatformHelper.isWindows()) {
-            return "fcli.exe";
-        }
-        return "fcli";
     }
     
     @Override
@@ -42,16 +31,10 @@ public class ToolFcliRegisterCommand extends AbstractToolRegisterCommand {
     }
     
     @Override
-    protected String detectVersion(File toolBinary, File installDir) {
-        // fcli is a native binary, use --version flag
-        String output = ToolVersionDetector.tryExecute(toolBinary, "--version");
-        if (output != null) {
-            String version = ToolVersionDetector.extractVersionFromOutput(output);
-            if (version != null) {
-                return version;
-            }
+    protected String getDefaultBinaryName() {
+        if (ToolPlatformHelper.isWindows()) {
+            return "fcli.exe";
         }
-        
-        return "unknown";
+        return "fcli";
     }
 }

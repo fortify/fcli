@@ -38,7 +38,7 @@ public class ToolFoDUploaderRegisterCommand extends AbstractToolRegisterCommand 
     
     @Override
     protected String[] getToolEnvVarPrefixes() {
-        return new String[]{"FOD_UPLOADER", "FODUPLOAD"};
+        return ToolFoDUploaderCommands.TOOL_ENV_VAR_PREFIXES;
     }
     
     @Override

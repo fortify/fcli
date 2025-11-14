@@ -12,27 +12,17 @@
  */
 package com.fortify.cli.tool.bugtracker_utility.cli.cmd;
 
-import java.io.File;
-
-import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
+import com.fortify.cli.tool._common.cli.cmd.AbstractToolEnvCommand;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "register")
-public class ToolBugTrackerUtilityRegisterCommand extends AbstractToolRegisterCommand {
+@Command(name = "env")
+public class ToolBugTrackerUtilityEnvCommand extends AbstractToolEnvCommand {
     
     @Override
     protected String getToolName() {
         return ToolBugTrackerUtilityCommands.TOOL_NAME;
-    }
-    
-    @Override
-    protected String getDefaultBinaryName() {
-        if (ToolPlatformHelper.isWindows()) {
-            return "FortifyBugTrackerUtility.bat";
-        }
-        return "FortifyBugTrackerUtility";
     }
     
     @Override
@@ -41,9 +31,10 @@ public class ToolBugTrackerUtilityRegisterCommand extends AbstractToolRegisterCo
     }
     
     @Override
-    protected String detectVersion(File toolBinary, File installDir) {
-        // BugTracker Utility: No version flag, no version in filename, no version in manifest
-        // Only option is to rely on fcli install descriptor or return unknown for external installations
-        return "unknown";
+    protected String getDefaultBinaryName() {
+        if (ToolPlatformHelper.isWindows()) {
+            return "FortifyBugTrackerUtility.bat";
+        }
+        return "FortifyBugTrackerUtility";
     }
 }

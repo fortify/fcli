@@ -25,10 +25,12 @@ import picocli.CommandLine.Command;
                 ToolFoDUploaderListPlatformsCommand.class,
                 ToolFoDUploaderRegisterCommand.class,
                 ToolFoDUploaderRunCommand.class,
+                ToolFoDUploaderEnvCommand.class,
                 ToolFoDUploaderUninstallCommand.class
         }
 
 )
 public class ToolFoDUploaderCommands extends AbstractContainerCommand {
     static final String TOOL_NAME = "fod-uploader";
+    static final String[] TOOL_ENV_VAR_PREFIXES = {"FOD_UPLOADER", "FODUPLOAD"};
 }

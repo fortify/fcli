@@ -25,10 +25,12 @@ import picocli.CommandLine.Command;
                 ToolBugTrackerUtilityListPlatformsCommand.class,
                 ToolBugTrackerUtilityRegisterCommand.class,
                 ToolBugTrackerUtilityRunCommand.class,
+                ToolBugTrackerUtilityEnvCommand.class,
                 ToolBugTrackerUtilityUninstallCommand.class
         }
 
 )
 public class ToolBugTrackerUtilityCommands extends AbstractContainerCommand {
     static final String TOOL_NAME = "bugtracker-utility";
+    static final String[] TOOL_ENV_VAR_PREFIXES = {"BUGTRACKER_UTILITY", "FBTU"};
 }
