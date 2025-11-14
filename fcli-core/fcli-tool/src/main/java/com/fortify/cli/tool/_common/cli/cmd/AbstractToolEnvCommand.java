@@ -119,7 +119,7 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
         } else if (cmdVarMode == EnvVarMode.exclude) {
             return false;
         } else { // auto
-            // Auto: include if custom name provided, otherwise include by default
+            // Auto: include by default
             return true;
         }
     }
@@ -130,7 +130,7 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
         } else if (homeVarMode == EnvVarMode.exclude) {
             return false;
         } else { // auto
-            // Auto: include if custom name provided, otherwise include by default
+            // Auto: include by default
             return true;
         }
     }
