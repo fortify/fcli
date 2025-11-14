@@ -57,7 +57,7 @@ steps:
       global.ci.sourceBranch:        ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
       global.ci.commitSHA:           ${#env('CI_COMMIT_SHA')}
       global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
-      global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('CI_PROJECT_DIR'),'.fortify/tools')}
+      global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('CI_PROJECT_DIR'),'fortify',#env('CI_JOB_NAME')?:'job','tools')}
       global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, '{tool}/{version}')}
       
   # Azure DevOps
@@ -70,7 +70,7 @@ steps:
       global.ci.commitSHA:           ${#env('Build.SourceVersion')}
       global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
       global.ci.toolCacheBaseDir:    ${#env('AGENT_TOOLSDIRECTORY')}
-      global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, 'fortify/{tool}/{version}/x64')}
+      global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, 'fortify/{tool}/{version}',#env('Agent.OSArchitecture')?.toLowerCase()?:'x64')}
 
   # Jenkins
   - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
