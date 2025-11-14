@@ -26,6 +26,10 @@ steps:
       global.ci.sourceDir:           # Directory containing source files to be scanned
       global.ci.toolCacheBaseDir:    # Platform's root tool cache directory
       global.ci.toolCacheDirPattern: # Pattern for tool installation paths (with {tool} and {version} placeholders)
+      global.ci.java8Home:           # Path to Java 8 installation (if available)
+      global.ci.java11Home:          # Path to Java 11 installation (if available)
+      global.ci.java17Home:          # Path to Java 17 installation (if available)
+      global.ci.java21Home:          # Path to Java 21 installation (if available)
       # The following are set by default at the end, but may be overridden by individual CI configurations
       global.fod.prCommentAction:   # FoD PR comment action
       global.ssc.prCommentAction:   # SSC PR comment action
@@ -47,6 +51,10 @@ steps:
       global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('GITHUB_WORKSPACE')?:'.'}
       global.ci.toolCacheBaseDir:    ${#env('RUNNER_TOOL_CACHE')}
       global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, '{tool}/{version}',#env("RUNNER_ARCH")?:'x64')}
+      global.ci.java8Home:           ${#env('JAVA_HOME_8_X64')}
+      global.ci.java11Home:          ${#env('JAVA_HOME_11_X64')}
+      global.ci.java17Home:          ${#env('JAVA_HOME_17_X64')}
+      global.ci.java21Home:          ${#env('JAVA_HOME_21_X64')}
       
   # GitLab
   - if: ${#env('GITLAB_CI')=='true'}
@@ -71,6 +79,10 @@ steps:
       global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
       global.ci.toolCacheBaseDir:    ${#env('AGENT_TOOLSDIRECTORY')}
       global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, 'fortify/{tool}/{version}',#env('Agent.OSArchitecture')?.toLowerCase()?:'x64')}
+      global.ci.java8Home:           ${#env('JAVA_HOME_8_X64')}
+      global.ci.java11Home:          ${#env('JAVA_HOME_11_X64')}
+      global.ci.java17Home:          ${#env('JAVA_HOME_17_X64')}
+      global.ci.java21Home:          ${#env('JAVA_HOME_21_X64')}
 
   # Jenkins
   - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}

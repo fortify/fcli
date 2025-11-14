@@ -40,6 +40,7 @@ public class ToolInstallationOutputDescriptor {
     private final String aliasesString;
     private final String stable;
     private Map<String, ToolDefinitionArtifactDescriptor> binaries;
+    private Map<String, String> extraProperties;
     private final String installDir;
     private final String binDir;
     private final String globalBinDir;
@@ -53,6 +54,7 @@ public class ToolInstallationOutputDescriptor {
         this.aliasesString = String.join(", ", aliases);
         this.stable = versionDescriptor.isStable()?"Yes":"No";
         this.binaries = versionDescriptor.getBinaries();
+        this.extraProperties = versionDescriptor.getExtraProperties();
         this.installDir = installationDescriptor==null ? null : installationDescriptor.getInstallDir();
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
         this.globalBinDir = installationDescriptor==null ? null : installationDescriptor.getGlobalBinDir();

@@ -50,6 +50,7 @@ public class ToolInstallationDescriptor {
     private String installDir;
     private String binDir;
     private String globalBinDir;
+    private String jreHome;
     
     public ToolInstallationDescriptor(Path installPath, Path binPath, Path globalBinPath) {
         this.installDir = installPath==null ? null : installPath.toAbsolutePath().normalize().toString();

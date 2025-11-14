@@ -71,6 +71,11 @@ cli.options:
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
+  with-jre:
+    names: --with-jre
+    required: false
+    default: auto
+    description: "JRE handling for sc-client: yes (install with JRE), no (use system Java), auto (detect compatible JRE). Default: auto"
     
   # Tool paths (explicit overrides)
   fcli-path:
@@ -146,12 +151,12 @@ steps:
   - var.set:
       tools: |-
         ${{
-          {name: 'fcli', version: cli['fcli-version'], path: cli['fcli-path'], copyFrom: cli['fcli-copy-from'], status: null},
-          {name: 'sc-client', version: cli['sc-client-version'], path: cli['sc-client-path'], copyFrom: null, status: null},
-          {name: 'fod-uploader', version: cli['fod-uploader-version'], path: cli['fod-uploader-path'], copyFrom: null, status: null},
-          {name: 'debricked-cli', version: cli['debricked-cli-version'], path: cli['debricked-cli-path'], copyFrom: null, status: null},
-          {name: 'bugtracker-utility', version: cli['bugtracker-utility-version'], path: cli['bugtracker-utility-path'], copyFrom: null, status: null},
-          {name: 'vuln-exporter', version: cli['vuln-exporter-version'], path: cli['vuln-exporter-path'], copyFrom: null, status: null}
+          {name: 'fcli', version: cli['fcli-version'], path: cli['fcli-path'], copyFrom: cli['fcli-copy-from'], supportsJre: false, status: null},
+          {name: 'sc-client', version: cli['sc-client-version'], path: cli['sc-client-path'], copyFrom: null, supportsJre: true, status: null},
+          {name: 'fod-uploader', version: cli['fod-uploader-version'], path: cli['fod-uploader-path'], copyFrom: null, supportsJre: false, status: null},
+          {name: 'debricked-cli', version: cli['debricked-cli-version'], path: cli['debricked-cli-path'], copyFrom: null, supportsJre: false, status: null},
+          {name: 'bugtracker-utility', version: cli['bugtracker-utility-version'], path: cli['bugtracker-utility-path'], copyFrom: null, supportsJre: false, status: null},
+          {name: 'vuln-exporter', version: cli['vuln-exporter-version'], path: cli['vuln-exporter-path'], copyFrom: null, supportsJre: false, status: null}
         }}
   - log.debug: "Tools to process:"
   - log.debug: ${tools}
@@ -210,6 +215,29 @@ steps:
                 - if: ${cli['air-gapped']}
                   throw: "Tool ${tool.name} must be pre-installed (--air-gapped mode) but was not found"
         
+        # Determine JRE for tools that support it (before build install command)
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] != 'no'}
+          var.set:
+            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto'}
+          run.fcli:
+            GET_JRE_REQUIREMENT:
+              cmd: tool ${tool.name} get ${tool.installVersion}
+              records.for-each:
+                record.var-name: version_info
+                do:
+                  - var.set:
+                      tool.requiredJre: ${version_info.extraProperties?.jre}
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.requiredJre != null}
+          var.set:
+            tool.detectedJreHome: ${#env('SCANCENTRAL_JAVA_HOME')}
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
+          var.set:
+            tool.detectedJreHome: ${global.ci['java'+tool.requiredJre+'Home']}
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
+          var.set:
+            tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
+        
         # Build install command
         - if: ${tool.status==null && tool.name == 'fcli' && tool.copyFrom != null}
           var.set:
@@ -226,6 +254,17 @@ steps:
             tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
             tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
             tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
+        
+        # Add JRE options for tools that support it
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'yes'}
+          var.set:
+            tool.installCmd: ${tool.installCmd} --with-jre
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.detectedJreHome != null}
+          var.set:
+            tool.installCmd: ${tool.installCmd} --jre "${tool.detectedJreHome}"
+        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.detectedJreHome == null}
+          var.set:
+            tool.installCmd: ${tool.installCmd} --with-jre
         
         # Execute installation
         - if: ${tool.status==null}

@@ -17,6 +17,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fortify.cli.common.util.DebugHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
@@ -59,11 +61,47 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
     
     @Override
     protected List<String> getJavaBaseCommand(ToolInstallationDescriptor descriptor) {
-        var cmd = new ArrayList<String>(super.getJavaBaseCommand(descriptor));
+        // Get java command, preferring stored JRE location
+        String javaCommand = getJavaCommandForDescriptor(descriptor);
+        var cmd = new ArrayList<String>();
+        cmd.add(javaCommand);
         if ( logDir!=null ) {
-            cmd.add(1, "-Dlog4j.dir="+logDir.toAbsolutePath().normalize().toString());
+            cmd.add("-Dlog4j.dir="+logDir.toAbsolutePath().normalize().toString());
         }
+        cmd.add("-jar");
+        cmd.add(getJar(descriptor));
         return cmd;
+    }
+    
+    private String getJavaCommandForDescriptor(ToolInstallationDescriptor descriptor) {
+        var baseJavaCmd = com.fortify.cli.tool._common.helper.ToolPlatformHelper.isWindows() ? "java.exe" : "java";
+        
+        // First check if JRE was specified during installation
+        String storedJreHome = descriptor.getJreHome();
+        if (StringUtils.isNotBlank(storedJreHome)) {
+            var javaCmdFromStored = Path.of(storedJreHome, "bin", baseJavaCmd);
+            if (Files.exists(javaCmdFromStored)) {
+                return javaCmdFromStored.toString();
+            }
+        }
+        
+        // Check for embedded JRE
+        var embeddedJavaCmdPath = descriptor.getInstallPath().resolve("jre/bin").resolve(baseJavaCmd);
+        if (Files.exists(embeddedJavaCmdPath)) {
+            return embeddedJavaCmdPath.toString();
+        }
+        
+        // Check environment variables
+        for (var javaHomeEnvVarName : getJavaHomeEnvVarNames()) {
+            var javaHome = com.fortify.cli.common.util.EnvHelper.env(javaHomeEnvVarName);
+            var javaCmdPathFromEnv = javaHome == null ? null : Path.of(javaHome, "bin", baseJavaCmd);
+            if (javaCmdPathFromEnv != null && Files.exists(javaCmdPathFromEnv)) {
+                return javaCmdPathFromEnv.toString();
+            }
+        }
+        
+        // Fallback to java from PATH
+        return "java";
     }
     
     @Override

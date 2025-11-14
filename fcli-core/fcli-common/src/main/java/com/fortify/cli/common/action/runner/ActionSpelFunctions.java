@@ -66,6 +66,7 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.IssueSourceFileResolver;
+import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.common.util.StringHelper;
 
 import lombok.NoArgsConstructor;
@@ -598,6 +599,20 @@ public class ActionSpelFunctions {
                 return root;
             } catch (Exception e) { return null; }
         }
+    
+    @SpelFunction(cat=util, desc="""
+                Searches for a Java installation with the specified major version by checking JAVA_HOME \
+                environment variable and java executable in PATH. Returns the Java home directory path or \
+                null if not found. Follows symlinks to determine actual Java home directory.
+                
+                This function executes java -version to verify the version, so it may be slow. It's recommended \
+                to cache the result if calling multiple times with the same version parameter.
+                """, 
+                returns="Path to Java home directory or null if not found")
+    public static final String findJavaHome(
+            @SpelFunctionParam(name="majorVersion", desc="Required Java major version (e.g., '8', '11', '17', '21')") String majorVersion) {
+        return JreHelper.findJavaHome(majorVersion);
+    }
     
     private static final class ActionSpelFunctionsJsoupHelper {
         private static final void replaceCode(Element e) {
