@@ -41,14 +41,14 @@ class ToolRegisterSpec extends FcliBaseSpec {
     @Shared Map<String, Map> toolConfigs = [
         'fcli': [
             version: '2.1.0',
-            binaryName: 'fcli',
+            binaryName: getBinaryName('fcli'),
             binSubdir: 'bin',
             envVar: 'FCLI',
             homeVar: 'FCLI_HOME'
         ],
         'sc-client': [
             version: '23.1.0',
-            binaryName: 'scancentral.bat',
+            binaryName: isWindows() ? 'scancentral.bat' : 'scancentral',
             binSubdir: 'bin',
             envVar: 'SC_CLIENT',
             homeVar: 'SC_CLIENT_HOME'
@@ -62,7 +62,7 @@ class ToolRegisterSpec extends FcliBaseSpec {
         ],
         'debricked-cli': [
             version: '1.9.0',
-            binaryName: 'debricked',
+            binaryName: getBinaryName('debricked'),
             binSubdir: 'bin',
             envVar: 'DEBRICKED_CLI',
             homeVar: 'DEBRICKED_CLI_HOME'
@@ -82,6 +82,16 @@ class ToolRegisterSpec extends FcliBaseSpec {
             homeVar: 'VULN_EXPORTER_HOME'
         ]
     ]
+    
+    // Helper method to get platform-specific binary name
+    static String getBinaryName(String baseName) {
+        return isWindows() ? "${baseName}.exe" : baseName
+    }
+    
+    // Helper method to detect Windows platform
+    static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("windows")
+    }
     
     // Track which tools have been installed to avoid repeated downloads
     @Shared Set<String> installedTools = []
@@ -318,6 +328,129 @@ class ToolRegisterSpec extends FcliBaseSpec {
             
         where:
             tool << toolConfigs.keySet()
+    }
+    
+    // Version filtering tests
+    
+    @Unroll
+    def "register #tool with --version matching major version"() {
+        given: "tool installation directory"
+            def config = toolConfigs[tool]
+            def installDir = Path.of(installBaseDir).resolve("${tool}/${config.version}")
+            def majorVersion = config.version.split('\\.')[0] // Extract major version (e.g., "2" from "2.1.0")
+            
+        when: "registering with --version matching major version"
+            def args = "tool ${tool} register --path ${installDir} --version ${majorVersion}"
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+            
+        then: "registration succeeds"
+            result.stdout.size() > 0
+            def outputLine = result.stdout[1]
+            outputLine.contains(tool)
+            outputLine.contains(config.version)
+            outputLine.contains("REGISTERED")
+            
+        where:
+            tool << toolConfigs.keySet()
+    }
+    
+    @Unroll
+    def "register #tool with --version matching major.minor version"() {
+        given: "tool installation directory"
+            def config = toolConfigs[tool]
+            def installDir = Path.of(installBaseDir).resolve("${tool}/${config.version}")
+            def versionParts = config.version.split('\\.')
+            def majorMinor = "${versionParts[0]}.${versionParts[1]}" // e.g., "2.1" from "2.1.0"
+            
+        when: "registering with --version matching major.minor"
+            def args = "tool ${tool} register --path ${installDir} --version ${majorMinor}"
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+            
+        then: "registration succeeds"
+            result.stdout.size() > 0
+            def outputLine = result.stdout[1]
+            outputLine.contains(tool)
+            outputLine.contains(config.version)
+            outputLine.contains("REGISTERED")
+            
+        where:
+            tool << toolConfigs.keySet()
+    }
+    
+    @Unroll
+    def "register #tool with --version matching exact version"() {
+        given: "tool installation directory"
+            def config = toolConfigs[tool]
+            def installDir = Path.of(installBaseDir).resolve("${tool}/${config.version}")
+            
+        when: "registering with --version matching exact version"
+            def args = "tool ${tool} register --path ${installDir} --version ${config.version}"
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+            
+        then: "registration succeeds"
+            result.stdout.size() > 0
+            def outputLine = result.stdout[1]
+            outputLine.contains(tool)
+            outputLine.contains(config.version)
+            outputLine.contains("REGISTERED")
+            
+        where:
+            tool << toolConfigs.keySet()
+    }
+    
+    @Unroll
+    def "register #tool with --version with v prefix"() {
+        given: "tool installation directory"
+            def config = toolConfigs[tool]
+            def installDir = Path.of(installBaseDir).resolve("${tool}/${config.version}")
+            def majorVersion = config.version.split('\\.')[0]
+            
+        when: "registering with --version using v prefix"
+            def args = "tool ${tool} register --path ${installDir} --version v${majorVersion}"
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+            
+        then: "registration succeeds (v prefix is normalized)"
+            result.stdout.size() > 0
+            def outputLine = result.stdout[1]
+            outputLine.contains(tool)
+            outputLine.contains(config.version)
+            outputLine.contains("REGISTERED")
+            
+        where:
+            tool << toolConfigs.keySet()
+    }
+    
+    @Unroll
+    def "register #tool with --version mismatch fails"() {
+        given: "tool installation directory"
+            def config = toolConfigs[tool]
+            def installDir = Path.of(installBaseDir).resolve("${tool}/${config.version}")
+            def wrongVersion = "999" // Version that definitely won't match
+            
+        when: "registering with non-matching --version"
+            def args = "tool ${tool} register --path ${installDir} --version ${wrongVersion}"
+            Fcli.run(args, {it.expectNonZeroExitCode()})
+            
+        then: "registration fails with version mismatch error"
+            def e = thrown(Exception)
+            e.message.contains("VERSION_MISMATCH") || e.message.contains("does not match")
+            
+        where:
+            tool << toolConfigs.keySet()
+    }
+    
+    def "register with --version=any accepts any version"() {
+        given: "fcli installation"
+            def config = toolConfigs['fcli']
+            def installDir = Path.of(installBaseDir).resolve("fcli/${config.version}")
+            
+        when: "registering with --version=any"
+            def args = "tool fcli register --path ${installDir} --version any"
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+            
+        then: "registration succeeds regardless of detected version"
+            result.stdout.size() > 0
+            result.stdout[1].contains("REGISTERED")
     }
     
     // Helper methods

@@ -32,7 +32,12 @@ public class ToolRegistrationHelper {
      * 1. fcli installation descriptors
      * 2. {PREFIX}_CMD environment variables (direct binary/jar path)
      * 3. {PREFIX}_HOME environment variables (install directory)
-     * 4. PATH entries
+     * 4. PATH entries (returns first match)
+     * 
+     * Note: When using --version filtering with --auto-detect, version validation happens
+     * after binary detection. If multiple versions exist in PATH, the first executable found
+     * will be used and then validated against the requested version. To register a specific
+     * version when multiple are installed, use explicit paths or environment variables.
      * 
      * @param toolName Tool identifier
      * @param binaryName Platform-specific binary name

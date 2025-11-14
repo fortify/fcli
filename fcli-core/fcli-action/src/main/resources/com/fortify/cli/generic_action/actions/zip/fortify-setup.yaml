@@ -185,10 +185,17 @@ steps:
                     tool.status: failed
                             
         # Auto-detect mode: try to find pre-installed tool
+        # Build register command with optional version filter
+        - if: ${tool.version != 'skip' && tool.path == null}
+          var.set:
+            tool.registerCmd: tool ${tool.name} register --auto-detect
+        - if: ${tool.version != 'skip' && tool.path == null && tool.version != 'auto' && tool.version != 'latest' && tool.version != 'preinstalled'}
+          var.set:
+            tool.registerCmd: ${tool.registerCmd} --version ${tool.version}
         - if: ${tool.version != 'skip' && tool.path == null}
           run.fcli:
             AUTO_DETECT:
-              cmd: tool ${tool.name} register --auto-detect
+              cmd: ${tool.registerCmd}
               records.for-each:
                 record.var-name: register_result
                 do:
