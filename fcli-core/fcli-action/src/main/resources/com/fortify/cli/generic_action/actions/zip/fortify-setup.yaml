@@ -191,12 +191,18 @@ steps:
                             
         # Auto-detect mode: try to find pre-installed tool
         # Build register command with optional version filter
+        # NOTE: For semantic versions (v3, v24, etc), use --require-latest to ensure
+        #       any pre-installed version is the latest available in tool definitions
         - if: ${tool.version != 'skip' && tool.path == null}
           var.set:
             tool.registerCmd: tool ${tool.name} register --auto-detect
+            tool.versionIsSemantic: ${tool.version != 'auto' && tool.version != 'latest' && tool.version != 'preinstalled' && tool.version.matches('^v?\\d+(\\.\\d+)?$')}
         - if: ${tool.version != 'skip' && tool.path == null && tool.version != 'auto' && tool.version != 'latest' && tool.version != 'preinstalled'}
           var.set:
             tool.registerCmd: ${tool.registerCmd} --version ${tool.version}
+        - if: ${tool.version != 'skip' && tool.path == null && tool.versionIsSemantic}
+          var.set:
+            tool.registerCmd: ${tool.registerCmd} --require-latest
         - if: ${tool.version != 'skip' && tool.path == null}
           run.fcli:
             AUTO_DETECT:

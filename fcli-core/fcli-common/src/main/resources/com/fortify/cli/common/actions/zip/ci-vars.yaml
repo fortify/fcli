@@ -102,9 +102,9 @@ steps:
     var.set:
       global.ci.name:              local Git repository
       global.ci.id:                local-git
-      global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository.name.full?:global.ci.localRepo?.repository.name.short}
-      global.ci.sourceBranch:      ${global.ci.localRepo?.branch.short}
-      global.ci.commitSHA:         ${global.ci.localRepo?.commit.id.full}
+      global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository?.name?.full?:global.ci.localRepo?.repository?.name?.short}
+      global.ci.sourceBranch:      ${global.ci.localRepo?.branch?.short}
+      global.ci.commitSHA:         ${global.ci.localRepo?.commit?.id?.full}
 
   # Tool cache fallback (if not set by platform-specific section)
   - if: ${#isBlank(global.ci.toolCacheBaseDir)}

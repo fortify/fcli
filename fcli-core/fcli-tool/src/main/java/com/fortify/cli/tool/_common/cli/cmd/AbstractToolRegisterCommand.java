@@ -61,6 +61,9 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     @Option(names = {"-v", "--version"}, required = false, descriptionKey = "fcli.tool.register.version")
     private String requestedVersion = "any";
     
+    @Option(names = {"--require-latest"}, required = false, descriptionKey = "fcli.tool.register.require-latest")
+    private boolean requireLatest = false;
+    
     private static final class RegisterModeArgGroup {
         @Option(names = {"--auto-detect"}, required = true, descriptionKey = "fcli.tool.register.auto-detect")
         private boolean autoDetect;
@@ -126,6 +129,17 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
                 .exitCode(ExitCode.VERSION_MISMATCH.getCode());
         }
         
+        // If --require-latest is specified, verify this is the latest version matching the requested pattern
+        if (requireLatest && !"any".equals(requestedVersion) && !"preinstalled".equals(requestedVersion)) {
+            String latestMatchingVersion = findLatestMatchingVersion(requestedVersion);
+            if (latestMatchingVersion != null && !versionDescriptor.getVersion().equals(latestMatchingVersion)) {
+                throw new FcliSimpleException(
+                    String.format("Detected %s version %s matches requested version %s but is not the latest available (%s)", 
+                        getToolName(), versionDescriptor.getVersion(), requestedVersion, latestMatchingVersion))
+                    .exitCode(ExitCode.VERSION_NOT_LATEST.getCode());
+            }
+        }
+        
         // Create and save installation descriptor
         ToolInstallationDescriptor installation = new ToolInstallationDescriptor(
             installDir.toPath(), 
@@ -167,6 +181,30 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
             syntheticDescriptor.setVersion(normalizedVersion);
             syntheticDescriptor.setStable(false);  // External installations default to not stable
             return syntheticDescriptor;
+        }
+    }
+    
+    private String findLatestMatchingVersion(String requestedPattern) {
+        try {
+            var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
+            
+            // Normalize pattern by removing 'v' prefix
+            String normalizedPattern = requestedPattern.startsWith("v") ? requestedPattern.substring(1) : requestedPattern;
+            
+            // Get all versions and find the latest that matches the pattern
+            return java.util.Arrays.stream(toolDefinition.getVersions())
+                .map(ToolDefinitionVersionDescriptor::getVersion)
+                .filter(v -> versionMatches(v, normalizedPattern))
+                .max((v1, v2) -> {
+                    try {
+                        return new SemVer(v1).compareTo(new SemVer(v2));
+                    } catch (Exception e) {
+                        return v1.compareTo(v2);
+                    }
+                })
+                .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
     
@@ -247,7 +285,8 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
         TOOL_NOT_FOUND(1),
         INVALID_PATH(2),
         TOOL_INVALID_OR_NOT_EXECUTABLE(3),
-        VERSION_MISMATCH(4);
+        VERSION_MISMATCH(4),
+        VERSION_NOT_LATEST(5);
         
         private final int code;
     }
