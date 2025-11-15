@@ -60,6 +60,9 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     @Option(names = {"--format"}, required = false, descriptionKey = "fcli.tool.env.format")
     private EnvFormat format = EnvFormat.shell;
     
+    @Option(names = {"--no-comments"}, required = false, descriptionKey = "fcli.tool.env.no-comments")
+    private boolean noComments = false;
+    
     @Override
     public final Integer call() {
         var descriptor = getToolInstallationDescriptor();
@@ -199,9 +202,11 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     private void outputShellFormat(ToolInstallationDescriptor descriptor, Map<String, String> envVars, 
                                     boolean includePathUpdate) {
         List<String> lines = new ArrayList<>();
-        lines.add("# " + getToolName() + " environment setup");
-        lines.add("# Usage: source <(fcli tool " + getToolName() + " env)");
-        lines.add("");
+        if (!noComments) {
+            lines.add("# " + getToolName() + " environment setup");
+            lines.add("# Usage: source <(fcli tool " + getToolName() + " env)");
+            lines.add("");
+        }
         
         if (includePathUpdate && descriptor.getBinDir() != null) {
             lines.add("export PATH=\"" + descriptor.getBinPath() + ":$PATH\"");
@@ -217,9 +222,11 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     private void outputPowerShellFormat(ToolInstallationDescriptor descriptor, Map<String, String> envVars, 
                                          boolean includePathUpdate) {
         List<String> lines = new ArrayList<>();
-        lines.add("# " + getToolName() + " environment setup");
-        lines.add("# Usage: fcli tool " + getToolName() + " env --format powershell | Invoke-Expression");
-        lines.add("");
+        if (!noComments) {
+            lines.add("# " + getToolName() + " environment setup");
+            lines.add("# Usage: fcli tool " + getToolName() + " env --format powershell | Invoke-Expression");
+            lines.add("");
+        }
         
         if (includePathUpdate && descriptor.getBinDir() != null) {
             lines.add("$env:PATH = \"" + descriptor.getBinPath() + ";$env:PATH\"");
@@ -235,9 +242,11 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     private void outputCmdFormat(ToolInstallationDescriptor descriptor, Map<String, String> envVars, 
                                   boolean includePathUpdate) {
         List<String> lines = new ArrayList<>();
-        lines.add("@REM " + getToolName() + " environment setup");
-        lines.add("@REM Usage: fcli tool " + getToolName() + " env --format cmd > env.bat && env.bat");
-        lines.add("");
+        if (!noComments) {
+            lines.add("@REM " + getToolName() + " environment setup");
+            lines.add("@REM Usage: fcli tool " + getToolName() + " env --format cmd > env.bat && env.bat");
+            lines.add("");
+        }
         
         if (includePathUpdate && descriptor.getBinDir() != null) {
             lines.add("set PATH=" + descriptor.getBinPath() + ";%PATH%");
@@ -253,10 +262,12 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     private void outputGitHubFormat(ToolInstallationDescriptor descriptor, Map<String, String> envVars, 
                                      boolean includePathUpdate) {
         List<String> lines = new ArrayList<>();
-        lines.add("#!/bin/bash");
-        lines.add("# " + getToolName() + " environment setup for GitHub Actions");
-        lines.add("# Usage: source <(fcli tool " + getToolName() + " env --format github)");
-        lines.add("");
+        if (!noComments) {
+            lines.add("#!/bin/bash");
+            lines.add("# " + getToolName() + " environment setup for GitHub Actions");
+            lines.add("# Usage: source <(fcli tool " + getToolName() + " env --format github)");
+            lines.add("");
+        }
         
         if (includePathUpdate && descriptor.getBinDir() != null) {
             lines.add("echo \"" + descriptor.getBinPath() + "\" >> $GITHUB_PATH");
@@ -272,9 +283,11 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     private void outputAzureFormat(ToolInstallationDescriptor descriptor, Map<String, String> envVars, 
                                     boolean includePathUpdate) {
         List<String> lines = new ArrayList<>();
-        lines.add("# " + getToolName() + " environment setup for Azure Pipelines");
-        lines.add("# Usage: Copy output and paste into Azure Pipeline script task");
-        lines.add("");
+        if (!noComments) {
+            lines.add("# " + getToolName() + " environment setup for Azure Pipelines");
+            lines.add("# Usage: Copy output and paste into Azure Pipeline script task");
+            lines.add("");
+        }
         
         if (includePathUpdate && descriptor.getBinDir() != null) {
             lines.add("##vso[task.prependpath]" + descriptor.getBinPath());
@@ -290,9 +303,11 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     private void outputGitLabFormat(ToolInstallationDescriptor descriptor, Map<String, String> envVars, 
                                      boolean includePathUpdate) {
         List<String> lines = new ArrayList<>();
-        lines.add("# " + getToolName() + " environment setup for GitLab CI");
-        lines.add("# Usage: source <(fcli tool " + getToolName() + " env --format gitlab)");
-        lines.add("");
+        if (!noComments) {
+            lines.add("# " + getToolName() + " environment setup for GitLab CI");
+            lines.add("# Usage: source <(fcli tool " + getToolName() + " env --format gitlab)");
+            lines.add("");
+        }
         
         if (includePathUpdate && descriptor.getBinDir() != null) {
             lines.add("export PATH=\"" + descriptor.getBinPath() + ":$PATH\"");

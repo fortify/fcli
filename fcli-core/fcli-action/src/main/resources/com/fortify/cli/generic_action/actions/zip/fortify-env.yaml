@@ -1,0 +1,219 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) Output environment variables for Fortify tools
+  description: |
+    Generates environment variable definitions for installed Fortify tools in various
+    formats suitable for sourcing in shells or setting through CI/CD systems.
+    
+    Outputs environment variables for the last installed version of each tool by default,
+    or for a specific version if requested. If a tool is not installed, it will be skipped
+    unless a specific version is explicitly requested (which will cause an error).
+    
+    Supports multiple output formats:
+    - shell: Bash/Zsh compatible export statements
+    - powershell: PowerShell $env: syntax
+    - cmd: Windows Command Prompt SET statements
+    - github: GitHub Actions GITHUB_ENV format
+    - azure: Azure Pipelines ##vso[task.setvariable] format
+    - gitlab: GitLab CI export statements
+    
+    Examples:
+      # Generate env for all installed tools (shell format)
+      fcli action run fortify-env
+      
+      # Generate env for specific tools with versions
+      fcli action run fortify-env --sc-client-version 24.4.0 --fcli-version latest
+      
+      # Generate env for GitHub Actions
+      fcli action run fortify-env --format github
+      
+      # Generate env for specific tool only
+      fcli action run fortify-env --sc-client-version auto --skip-others
+      
+      # Use in shell (bash/zsh)
+      source <(fcli action run fortify-env)
+
+config:
+  output: immediate
+  mcp: exclude
+  run.fcli.status.log.default: false
+  run.fcli.status.check.default: true
+
+cli.options:
+  # Tool versions
+  fcli-version:
+    names: --fcli-version
+    required: false
+    default: auto
+    description: "Version to output env for: <specific-version>, latest, auto (last installed), skip. Default: auto"
+  sc-client-version:
+    names: --sc-client-version
+    required: false
+    default: auto
+    description: "Version to output env for: <specific-version>, latest, auto (last installed), skip. Default: auto"
+  fod-uploader-version:
+    names: --fod-uploader-version
+    required: false
+    default: auto
+    description: "Version to output env for: <specific-version>, latest, auto (last installed), skip. Default: auto"
+  debricked-cli-version:
+    names: --debricked-cli-version
+    required: false
+    default: auto
+    description: "Version to output env for: <specific-version>, latest, auto (last installed), skip. Default: auto"
+  bugtracker-utility-version:
+    names: --bugtracker-utility-version
+    required: false
+    default: auto
+    description: "Version to output env for: <specific-version>, latest, auto (last installed), skip. Default: auto"
+  vuln-exporter-version:
+    names: --vuln-exporter-version
+    required: false
+    default: auto
+    description: "Version to output env for: <specific-version>, latest, auto (last installed), skip. Default: auto"
+    
+  # Format options
+  format:
+    names: --format
+    required: false
+    default: shell
+    description: "Output format: shell, powershell, cmd, github, azure, gitlab. Default: shell"
+  path:
+    names: --path
+    required: false
+    default: auto
+    description: "Include PATH updates: include, exclude, auto (detect if needed). Default: auto"
+  cmd-var:
+    names: --cmd-var
+    required: false
+    default: auto
+    description: "Include *_CMD variables: include, exclude, auto. Default: auto"
+  home-var:
+    names: --home-var
+    required: false
+    default: auto
+    description: "Include *_HOME variables: include, exclude, auto. Default: auto"
+    
+  # Behavior options
+  skip-others:
+    names: --skip-others
+    type: boolean
+    required: false
+    default: false
+    description: "Only output env for explicitly versioned tools (skip tools with version=auto)"
+
+steps:
+  # ===== PHASE 1: DEFINE TOOL METADATA =====
+      
+  - var.set:
+      tools: |-
+        ${{
+          {name: 'fcli', version: cli['fcli-version'], output: null, status: null},
+          {name: 'sc-client', version: cli['sc-client-version'], output: null, status: null},
+          {name: 'fod-uploader', version: cli['fod-uploader-version'], output: null, status: null},
+          {name: 'debricked-cli', version: cli['debricked-cli-version'], output: null, status: null},
+          {name: 'bugtracker-utility', version: cli['bugtracker-utility-version'], output: null, status: null},
+          {name: 'vuln-exporter', version: cli['vuln-exporter-version'], output: null, status: null}
+        }}
+  - log.debug: "Tools to process:"
+  - log.debug: ${tools}
+
+  # ===== PHASE 2: PROCESS EACH TOOL =====
+  
+  - records.for-each:
+      from: ${tools}
+      record.var-name: tool
+      do:
+        # Skip if version=skip
+        - if: ${tool.version == 'skip'}
+          var.set:
+            tool.status: skipped
+            
+        # Skip if version=auto and --skip-others is enabled
+        - if: ${tool.version == 'auto' && cli['skip-others']}
+          var.set:
+            tool.status: skipped
+            
+        # Build env command
+        - if: ${tool.status == null}
+          var.set:
+            tool.envCmd: tool ${tool.name} env --no-comments --format ${cli.format} --path ${cli.path} --cmd-var ${cli['cmd-var']} --home-var ${cli['home-var']}
+        - if: ${tool.status == null && tool.version != 'auto'}
+          var.set:
+            tool.envCmd: ${tool.envCmd} --version ${tool.version}
+        
+        # Execute env command and collect stdout/stderr
+        - if: ${tool.status == null}
+          run.fcli:
+            GET_ENV:
+              cmd: ${tool.envCmd}
+              stdout: collect
+              stderr: collect
+              on.fail:
+                - if: ${tool.version == 'auto'}
+                  var.set:
+                    tool.status: not-installed
+                    tool.stderr: ${GET_ENV.stderr}
+                - if: ${tool.version != 'auto'}
+                  throw: "Failed to get environment for ${tool.name} version ${tool.version}. Is it installed?"
+              on.success:
+                - var.set:
+                    tool.output: ${GET_ENV.stdout}
+                    tool.status: success
+  
+  # ===== PHASE 3: GENERATE COMBINED OUTPUT =====
+  
+  # Collect successful tools
+  - var.set:
+      global.fortify_env.successful: ${tools.?[status == 'success'].![#this.getRealNode()]}
+      global.fortify_env.skipped: ${tools.?[status == 'skipped'].![#this.getRealNode()]}
+      global.fortify_env.notInstalled: ${tools.?[status == 'not-installed'].![#this.getRealNode()]}
+  
+  # Define comment prefix based on format
+  - var.set:
+      commentPrefix: |-
+        ${cli.format == 'shell' || cli.format == 'github' || cli.format == 'gitlab' || cli.format == 'azure' ? '# ' : 
+          cli.format == 'powershell' ? '# ' : 
+          cli.format == 'cmd' ? '@REM ' : '# '}
+  
+  # Output header comment
+  - if: ${global.fortify_env.successful.size() > 0}
+    out.write:
+      stdout: |-
+        ${commentPrefix}Fortify tools environment setup
+        ${commentPrefix}Generated by: fcli action run fortify-env
+        ${commentPrefix}
+        ${commentPrefix}Usage (shell): source <(fcli action run fortify-env)
+        ${commentPrefix}Usage (npm):   source <(npx @fortify/setup env)
+        ${commentPrefix}
+  
+  # Output environment variables for each tool with tool-specific comments
+  - records.for-each:
+      from: ${global.fortify_env.successful}
+      record.var-name: tool
+      do:
+        - out.write: 
+            stdout: |-
+              ${commentPrefix}${tool.name}
+              ${tool.output}
+  
+  # ===== PHASE 4: SUMMARY =====
+  
+  # Output summary as comments
+  - if: ${global.fortify_env.successful.size() == 0 && global.fortify_env.notInstalled.size() == 0}
+    out.write:
+      stdout: |-
+        ${commentPrefix}No Fortify tools configured for environment output
+    
+  - if: ${global.fortify_env.successful.size() > 0}
+    out.write:
+      stdout: |-
+        ${commentPrefix}
+        ${commentPrefix}Summary: ${global.fortify_env.successful.size()} tool(s) configured
+        
+  - if: ${global.fortify_env.notInstalled.size() > 0}
+    out.write:
+      stdout: |-
+        ${commentPrefix}Skipped ${global.fortify_env.notInstalled.size()} tool(s) (not installed): ${#join(', ', global.fortify_env.notInstalled.![name])}
