@@ -18,16 +18,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
-import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -41,10 +37,8 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     
     @Override
     protected String getDefaultBinaryName() {
-        return ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli";
+        return ToolFcliHelper.getDefaultBinaryName();
     }
-    
-    // No need to override configureToolInstallerBuilder - parent class handles it
     
     @Override
     protected String getDefaultArtifactType() {
@@ -84,67 +78,16 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     
     @Override
     protected String detectVersionFromCopySource(ToolInstaller installer) {
-        File sourceBinary = resolveCopySourceBinary();
-        
-        String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(sourceBinary);
-        if (versionFromDescriptor != null) {
-            return versionFromDescriptor;
-        }
-        
-        String output = ToolVersionDetector.tryExecute(sourceBinary, "--version");
-        if (output != null) {
-            String version = ToolVersionDetector.extractVersionFromOutput(output);
-            if (version != null) {
-                return version;
-            }
-        }
-        
-        throw new FcliSimpleException(
-            "Failed to detect version from fcli binary: " + sourceBinary.getAbsolutePath());
-    }
-    
-    @Override
-    @SneakyThrows
-    protected void installFromCopy(ToolInstaller installer, Object artifactDescriptor) {
-        File sourceBinary = resolveCopySourceBinary();
-        File sourceInstallDir = ToolRegistrationHelper.resolveInstallDir(sourceBinary);
-        
-        Path targetInstallPath = installer.getTargetPath();
-        Path targetBinPath = installer.getBinPath();
-        Files.createDirectories(targetBinPath);
-        
-        if (Files.exists(sourceInstallDir.toPath().resolve("fcli.jar"))) {
-            Files.copy(sourceInstallDir.toPath().resolve("fcli.jar"), 
-                targetInstallPath.resolve("fcli.jar"), 
-                StandardCopyOption.REPLACE_EXISTING);
-        }
-        
-        String binaryName = ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli";
-        File targetBinary = targetBinPath.resolve(binaryName).toFile();
-        Files.copy(sourceBinary.toPath(), targetBinary.toPath(), 
-            StandardCopyOption.REPLACE_EXISTING);
-        targetBinary.setExecutable(true);
-        
-        File completionScript = new File(sourceBinary.getParentFile(), "fcli_completion");
-        if (completionScript.exists()) {
-            Files.copy(completionScript.toPath(), 
-                targetBinPath.resolve("fcli_completion"), 
-                StandardCopyOption.REPLACE_EXISTING);
+        // First try default implementation (fcli install descriptor)
+        try {
+            return super.detectVersionFromCopySource(installer);
+        } catch (Exception e) {
+            // Fall back to direct version detection from binary
+            File sourceBinary = ToolFcliHelper.resolveBinaryFromExplicitPath(getCopyFromPath());
+            return ToolFcliHelper.detectVersion(sourceBinary);
         }
     }
     
-    @Override
-    protected File resolveCopySourceBinary() {
-        File sourceBinary = ToolRegistrationHelper.resolveBinaryFromExplicitPath(
-            getCopyFromPath(), 
-            getDefaultBinaryName()
-        );
-        
-        if (!sourceBinary.canExecute()) {
-            throw new FcliSimpleException(
-                "Source fcli binary not executable: " + sourceBinary.getAbsolutePath());
-        }
-        
-        return sourceBinary;
-    }
+    // installFromCopy uses default implementation (copies entire directory tree)
+    // resolveCopySourceDirectory uses default implementation (finds directory with install-descriptor)
 }

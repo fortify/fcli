@@ -15,6 +15,7 @@ package com.fortify.cli.tool._common.cli.cmd;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -356,36 +357,130 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     /**
      * Detect version from copy source.
-     * Subclasses that support --copy-from must override this method to implement
-     * tool-specific version detection logic.
+     * Default implementation looks for fcli install descriptor in the source directory.
+     * Subclasses can override for more advanced version detection (e.g., executing --version).
      * 
      * @param installer The tool installer
-     * @return Detected version string, or null if not supported
+     * @return Detected version string
+     * @throws FcliSimpleException if version cannot be detected
      */
     protected String detectVersionFromCopySource(ToolInstaller installer) {
-        return null;
+        File sourceDir = resolveCopySourceDirectory();
+        String version = detectVersionFromInstallDescriptor(sourceDir);
+        if (version != null) {
+            return version;
+        }
+        throw new FcliSimpleException(
+            "Cannot detect version from --copy-from path. Only tools previously installed through fcli are supported " +
+            "for --copy-from unless the tool command provides a custom implementation.");
     }
     
     /**
      * Install from copy source.
-     * Subclasses that support --copy-from must override this method to implement
-     * tool-specific copy logic.
+     * Default implementation copies the entire installation directory tree from an fcli-installed tool.
+     * Subclasses can override for more advanced copy logic (e.g., selective file copying).
      * 
      * @param installer The tool installer
      * @param artifactDescriptor The artifact descriptor (may be null for copy-from mode)
      */
+    @SneakyThrows
     protected void installFromCopy(ToolInstaller installer, Object artifactDescriptor) {
-        // Default: not supported
+        File sourceDir = resolveCopySourceDirectory();
+        Path sourcePath = sourceDir.toPath();
+        Path targetPath = installer.getTargetPath();
+        
+        installer.getProgressWriter().writeProgress(
+            "Copying %s from %s to %s", getToolName(), sourcePath, targetPath);
+        
+        Files.createDirectories(targetPath);
+        copyDirectoryContents(sourcePath, targetPath);
     }
     
     /**
-     * Resolve the copy source binary.
-     * Subclasses that support --copy-from must override this method.
+     * Resolve the copy source directory.
+     * Default implementation resolves the install directory from --copy-from path by looking for
+     * the directory containing an 'install-descriptor' subdirectory.
+     * Subclasses can override for custom resolution logic.
      * 
-     * @return The resolved source binary file, or null if not supported
+     * @return The resolved source directory
+     * @throws FcliSimpleException if directory cannot be resolved
      */
-    protected File resolveCopySourceBinary() {
+    protected File resolveCopySourceDirectory() {
+        File copyFromFile = getCopyFromPath();
+        
+        // If it's a file (e.g., binary), get parent directories until we find install-descriptor
+        File searchDir = copyFromFile.isFile() ? copyFromFile.getParentFile() : copyFromFile;
+        
+        // Search upward for install-descriptor directory
+        File current = searchDir;
+        while (current != null) {
+            File installDescriptorDir = new File(current, "install-descriptor");
+            if (installDescriptorDir.exists() && installDescriptorDir.isDirectory()) {
+                return current;
+            }
+            current = current.getParentFile();
+        }
+        
+        throw new FcliSimpleException(
+            "Cannot find fcli install descriptor in --copy-from path or its parent directories. " +
+            "Only tools previously installed through fcli are supported for --copy-from unless " +
+            "the tool command provides a custom implementation.");
+    }
+    
+    /**
+     * Detect version from install descriptor in source directory.
+     * 
+     * @param sourceDir Source installation directory
+     * @return Version string from descriptor, or null if not found
+     */
+    private String detectVersionFromInstallDescriptor(File sourceDir) {
+        File installDescriptorDir = new File(sourceDir, "install-descriptor");
+        if (!installDescriptorDir.exists() || !installDescriptorDir.isDirectory()) {
+            return null;
+        }
+        
+        // Look for {tool-name}/{version} structure
+        File toolDir = new File(installDescriptorDir, getToolName());
+        if (!toolDir.exists() || !toolDir.isDirectory()) {
+            return null;
+        }
+        
+        File[] versionFiles = toolDir.listFiles(File::isFile);
+        if (versionFiles != null && versionFiles.length > 0) {
+            // Return the first version file name (there should only be one)
+            return versionFiles[0].getName();
+        }
+        
         return null;
+    }
+    
+    /**
+     * Copy directory contents recursively.
+     * 
+     * @param source Source directory
+     * @param target Target directory
+     */
+    @SneakyThrows
+    private void copyDirectoryContents(Path source, Path target) {
+        Files.walk(source)
+            .forEach(sourcePath -> {
+                try {
+                    Path targetPath = target.resolve(source.relativize(sourcePath));
+                    if (Files.isDirectory(sourcePath)) {
+                        if (!Files.exists(targetPath)) {
+                            Files.createDirectories(targetPath);
+                        }
+                    } else {
+                        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                        // Preserve executable permissions
+                        if (Files.isExecutable(sourcePath)) {
+                            targetPath.toFile().setExecutable(true);
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to copy " + sourcePath + " to " + target, e);
+                }
+            });
     }
     
     private final ArrayNode install() {
