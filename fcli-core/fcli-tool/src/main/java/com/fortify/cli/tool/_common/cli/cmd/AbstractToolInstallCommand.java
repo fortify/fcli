@@ -71,6 +71,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private Set<String> versionsToUninstall = new HashSet<>();
     @Option(names={"--no-global-bin"}, required = false, negatable = true, descriptionKey="fcli.tool.install.global-bin")
     private boolean installGlobalBin = true;
+    @Option(names={"--copy-from"}, required = false, descriptionKey="fcli.tool.install.copy-from")
+    private File copyFromPath;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
@@ -99,6 +101,30 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected abstract String getToolName();
     protected abstract void postInstall(ToolInstaller toolInstaller, ToolInstallationResult installationResult);
     protected abstract String getDefaultArtifactType();
+    
+    /**
+     * Get the default binary name for this tool (platform-specific).
+     * This is used when --copy-from is specified to locate the binary to copy.
+     * 
+     * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar")
+     */
+    protected String getDefaultBinaryName() {
+        return null; // Default: no binary name (not all tools have a single primary binary)
+    }
+    
+    /**
+     * Check if copy-from mode is enabled
+     */
+    protected final boolean isCopyFromMode() {
+        return copyFromPath != null;
+    }
+    
+    /**
+     * Get the copy-from path if specified
+     */
+    protected final File getCopyFromPath() {
+        return copyFromPath;
+    }
     
     /**
      * Subclasses can override this to customize the ToolInstaller builder before installation.

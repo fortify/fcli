@@ -33,19 +33,20 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Install.CMD_NAME)
 public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolFcliCommands.TOOL_NAME;
     
-    @Option(names = {"--copy-from"}, required = false, descriptionKey = "fcli.tool.fcli.install.copy-from")
-    private File copyFromPath;
+    @Override
+    protected String getDefaultBinaryName() {
+        return ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli";
+    }
     
     @Override
     protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
-        if (copyFromPath != null) {
+        if (isCopyFromMode()) {
             builder.versionDetector(this::detectVersionFromCopySource);
             builder.installer(this::installFromCopy);
         }
@@ -138,8 +139,8 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     
     private File resolveCopySourceBinary() {
         File sourceBinary = ToolRegistrationHelper.resolveBinaryFromExplicitPath(
-            copyFromPath, 
-            ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli"
+            getCopyFromPath(), 
+            getDefaultBinaryName()
         );
         
         if (!sourceBinary.canExecute()) {
