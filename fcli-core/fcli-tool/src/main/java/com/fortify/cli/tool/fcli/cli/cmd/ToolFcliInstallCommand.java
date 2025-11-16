@@ -44,13 +44,7 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
         return ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli";
     }
     
-    @Override
-    protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
-        if (isCopyFromMode()) {
-            builder.versionDetector(this::detectVersionFromCopySource);
-            builder.installer(this::installFromCopy);
-        }
-    }
+    // No need to override configureToolInstallerBuilder - parent class handles it
     
     @Override
     protected String getDefaultArtifactType() {

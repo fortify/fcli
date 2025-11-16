@@ -40,16 +40,16 @@ import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.common.util.SemVer;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
-import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
-import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -75,8 +75,21 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private boolean installGlobalBin = true;
     @Option(names={"--copy-from"}, required = false, descriptionKey="fcli.tool.install.copy-from")
     private File copyFromPath;
+    @Option(names={"--on-copy-version-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-copy-version-mismatch", defaultValue = "skip")
+    private OnCopyVersionMismatch onCopyVersionMismatch;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    
+    public static enum OnCopyVersionMismatch {
+        skip, copy, fail
+    }
+    
+    public static class SkipCopyFromException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+        public SkipCopyFromException() {
+            super("Skip copy-from due to version mismatch");
+        }
+    }
     
     private static final class InstallOrBaseDirArgGroup {
         @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
@@ -107,11 +120,12 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     /**
      * Get the default binary name for this tool (platform-specific).
      * This is used when --copy-from is specified to locate the binary to copy.
+     * Subclasses that support --copy-from must override this method.
      * 
-     * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar")
+     * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar"), or null if copy-from not supported
      */
     protected String getDefaultBinaryName() {
-        return null; // Default: no binary name (not all tools have a single primary binary)
+        return null;
     }
     
     /**
@@ -129,117 +143,249 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     /**
+     * Get the on-copy-version-mismatch setting
+     */
+    protected final OnCopyVersionMismatch getOnCopyVersionMismatch() {
+        return onCopyVersionMismatch;
+    }
+    
+    /**
+     * Check if copy-from version matches the requested version pattern.
+     * Supports semantic versioning and handles aliases via tool definitions.
+     * 
+     * @param copyFromVersion The version detected from copy source
+     * @param requestedVersion The requested version pattern
+     * @param installer The tool installer instance
+     * @return true if versions match, false otherwise
+     */
+    protected final boolean checkCopyFromVersionMatch(String copyFromVersion, String requestedVersion, ToolInstaller installer) {
+        // Always match for latest/auto
+        if ("latest".equals(requestedVersion) || "auto".equals(requestedVersion)) {
+            return true;
+        }
+        
+        // Exact match
+        if (copyFromVersion.equals(requestedVersion)) {
+            return true;
+        }
+        
+        try {
+            var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
+            
+            // Normalize copy-from version to match tool definition format
+            String normalizedCopyFromVersion = toolDefinition.normalizeVersionFormat(copyFromVersion);
+            
+            // Resolve requested version to actual version descriptor
+            var requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
+            String resolvedRequestedVersion = requestedVersionDescriptor.getVersion();
+            
+            // Check if normalized versions match
+            if (normalizedCopyFromVersion.equals(resolvedRequestedVersion)) {
+                return true;
+            }
+            
+            // Check if copy-from version matches any alias
+            if (requestedVersionDescriptor.getAliases() != null) {
+                for (String alias : requestedVersionDescriptor.getAliases()) {
+                    if (normalizedCopyFromVersion.equals(alias) || copyFromVersion.equals(alias)) {
+                        return true;
+                    }
+                }
+            }
+            
+            // Fall back to semantic version pattern matching
+            return versionMatches(normalizedCopyFromVersion, requestedVersion);
+        } catch (Exception e) {
+            // If tool definitions unavailable, fall back to semantic version matching
+            installer.getProgressWriter().writeWarning(
+                "WARN: Unable to verify version compatibility using tool definitions, using pattern matching: " + e.getMessage());
+            return versionMatches(copyFromVersion, requestedVersion);
+        }
+    }
+    
+    /**
+     * Check if a version matches the requested version pattern using semantic versioning.
+     * Reuses logic from AbstractToolRegisterCommand.versionMatches.
+     * Supports semantic versioning: "2" matches "2.x.y", "2.1" matches "2.1.x", etc.
+     * 
+     * @param actualVersion The actual detected version
+     * @param requestedPattern The requested version pattern
+     * @return true if the version matches the pattern
+     */
+    private boolean versionMatches(String actualVersion, String requestedPattern) {
+        // Special handling for "unknown" versions
+        if ("unknown".equals(actualVersion)) {
+            return "unknown".equals(requestedPattern);
+        }
+        
+        // Normalize by removing 'v' prefix
+        String normalizedActual = actualVersion.startsWith("v") ? actualVersion.substring(1) : actualVersion;
+        String normalizedRequested = requestedPattern.startsWith("v") ? requestedPattern.substring(1) : requestedPattern;
+        
+        try {
+            SemVer actual = new SemVer(normalizedActual);
+            
+            // If not a proper semver, fall back to prefix matching
+            if (!actual.isProperSemver()) {
+                return normalizedActual.startsWith(normalizedRequested);
+            }
+            
+            // Split requested pattern by dots
+            String[] requestedParts = normalizedRequested.split("\\.");
+            
+            // Check major version
+            if (requestedParts.length >= 1 && !requestedParts[0].isEmpty()) {
+                if (!actual.getMajor().map(m -> m.equals(requestedParts[0])).orElse(false)) {
+                    return false;
+                }
+            }
+            
+            // Check minor version if specified
+            if (requestedParts.length >= 2 && !requestedParts[1].isEmpty()) {
+                if (!actual.getMinor().map(m -> m.equals(requestedParts[1])).orElse(false)) {
+                    return false;
+                }
+            }
+            
+            // Check patch version if specified
+            if (requestedParts.length >= 3 && !requestedParts[2].isEmpty()) {
+                if (!actual.getPatch().map(p -> p.equals(requestedParts[2])).orElse(false)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (Exception e) {
+            // If parsing fails, fall back to simple string prefix match
+            return normalizedActual.startsWith(normalizedRequested);
+        }
+    }
+    
+    /**
      * Subclasses can override this to customize the ToolInstaller builder before installation.
      * This allows registration of hooks for custom version detection or installation logic.
      * 
      * @param builder The ToolInstaller builder to configure
      */
     protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
-        // Set up default copy-from logic if enabled and not overridden by subclass
-        if (isCopyFromMode() && getDefaultBinaryName() != null) {
+        // Set up copy-from logic if enabled
+        if (isCopyFromMode()) {
+            if (getDefaultBinaryName() == null) {
+                throw new FcliSimpleException(
+                    "--copy-from is not supported for " + getToolName());
+            }
             builder.versionDetector(this::detectVersionFromCopySource);
-            builder.installer(this::installFromCopy);
+            builder.installer(this::installFromCopyWithVersionCheck);
         }
     }
     
     /**
-     * Default implementation for detecting version from copy source.
-     * Subclasses can override for tool-specific version detection logic.
+     * Install from copy source with version checking.
+     * This method checks if the copy-from version matches the requested version
+     * and handles version mismatches according to the --on-copy-version-mismatch setting.
+     * 
+     * @param installer The tool installer
+     * @param artifactDescriptor The artifact descriptor (may be null for copy-from mode)
+     */
+    @SneakyThrows
+    private void installFromCopyWithVersionCheck(ToolInstaller installer, Object artifactDescriptor) {
+        String copyFromVersion = installer.getToolVersion();
+        String requestedVersion = installer.getRequestedVersion();
+        
+        boolean versionsMatch = checkCopyFromVersionMatch(copyFromVersion, requestedVersion, installer);
+        
+        if (!versionsMatch) {
+            handleVersionMismatch(copyFromVersion, requestedVersion, installer, artifactDescriptor);
+        }
+        
+        installFromCopy(installer, artifactDescriptor);
+    }
+    
+    /**
+     * Handle version mismatch according to the --on-copy-version-mismatch setting.
+     * 
+     * @param copyFromVersion The version detected from copy source
+     * @param requestedVersion The requested version
+     * @param installer The tool installer
+     * @param artifactDescriptor The artifact descriptor for fallback to download
+     */
+    private void handleVersionMismatch(String copyFromVersion, String requestedVersion, 
+                                      ToolInstaller installer, Object artifactDescriptor) {
+        var mismatchAction = getOnCopyVersionMismatch();
+        
+        switch (mismatchAction) {
+            case fail:
+                throw new FcliSimpleException(
+                    String.format("Version mismatch: --copy-from version is %s but requested version is %s. " +
+                        "Use --on-copy-version-mismatch=copy to copy anyway, or --on-copy-version-mismatch=skip to download instead.",
+                        copyFromVersion, requestedVersion));
+            case skip:
+                installer.getProgressWriter().writeWarning(
+                    String.format("WARN: Version mismatch: --copy-from version is %s but requested version is %s. " +
+                        "Skipping --copy-from and downloading instead (--on-copy-version-mismatch=skip).",
+                        copyFromVersion, requestedVersion));
+                installer.getProgressWriter().writeProgress(
+                    "Downloading %s %s", installer.getToolName(), installer.getToolVersion());
+                defaultInstaller(installer, artifactDescriptor);
+                throw new SkipCopyFromException(); // Prevent installFromCopy from executing
+            case copy:
+                installer.getProgressWriter().writeWarning(
+                    String.format("WARN: Version mismatch: --copy-from version is %s but requested version is %s. " +
+                        "Proceeding with copy anyway (--on-copy-version-mismatch=copy).",
+                        copyFromVersion, requestedVersion));
+                break;
+        }
+    }
+    
+    /**
+     * Fall back to default installer (download and extract).
+     * This is called when copy-from is skipped due to version mismatch.
+     */
+    @SneakyThrows
+    private void defaultInstaller(ToolInstaller installer, Object artifactDescriptor) {
+        if (artifactDescriptor instanceof com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor) {
+            // Use reflection to access private downloadAndExtract method
+            var method = ToolInstaller.class.getDeclaredMethod(
+                "downloadAndExtract", com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor.class);
+            method.setAccessible(true);
+            method.invoke(installer, artifactDescriptor);
+        } else {
+            throw new FcliSimpleException("Cannot fall back to download: artifact descriptor is not a ToolDefinitionArtifactDescriptor");
+        }
+    }
+    
+    /**
+     * Detect version from copy source.
+     * Subclasses that support --copy-from must override this method to implement
+     * tool-specific version detection logic.
+     * 
+     * @param installer The tool installer
+     * @return Detected version string, or null if not supported
      */
     protected String detectVersionFromCopySource(ToolInstaller installer) {
-        if (getDefaultBinaryName() == null) {
-            throw new FcliSimpleException(
-                "--copy-from is not supported for " + getToolName() + 
-                " (getDefaultBinaryName() not implemented)");
-        }
-        
-        File sourceBinary = resolveCopySourceBinary();
-        
-        // Try descriptor first (for fcli-installed tools)
-        String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(sourceBinary);
-        if (versionFromDescriptor != null) {
-            return versionFromDescriptor;
-        }
-        
-        // Try executing the tool to get version
-        String output = ToolVersionDetector.tryExecute(sourceBinary, "--version");
-        if (output != null) {
-            String version = ToolVersionDetector.extractVersionFromOutput(output);
-            if (version != null) {
-                return version;
-            }
-        }
-        
-        throw new FcliSimpleException(
-            "Failed to detect version from " + getToolName() + " binary: " + sourceBinary.getAbsolutePath());
+        return null;
     }
     
     /**
-     * Default implementation for installing from copy source.
-     * Copies the entire installation directory to the target location.
-     * Subclasses can override for tool-specific copy logic.
+     * Install from copy source.
+     * Subclasses that support --copy-from must override this method to implement
+     * tool-specific copy logic.
+     * 
+     * @param installer The tool installer
+     * @param artifactDescriptor The artifact descriptor (may be null for copy-from mode)
      */
-    @SneakyThrows
     protected void installFromCopy(ToolInstaller installer, Object artifactDescriptor) {
-        if (getDefaultBinaryName() == null) {
-            throw new FcliSimpleException(
-                "--copy-from is not supported for " + getToolName() + 
-                " (getDefaultBinaryName() not implemented)");
-        }
-        
-        File sourceBinary = resolveCopySourceBinary();
-        File sourceInstallDir = ToolRegistrationHelper.resolveInstallDir(sourceBinary);
-        
-        Path targetInstallPath = installer.getTargetPath();
-        Path targetBinPath = installer.getBinPath();
-        Files.createDirectories(targetBinPath);
-        
-        // Copy entire installation directory contents
-        installer.getProgressWriter().writeProgress(
-            "Copying %s from %s to %s", getToolName(), sourceInstallDir, targetInstallPath);
-        copyDirectoryContents(sourceInstallDir.toPath(), targetInstallPath);
-    }
-    
-    @SneakyThrows
-    private void copyDirectoryContents(Path source, Path target) {
-        Files.walk(source)
-            .forEach(sourcePath -> {
-                try {
-                    Path targetPath = target.resolve(source.relativize(sourcePath));
-                    if (Files.isDirectory(sourcePath)) {
-                        if (!Files.exists(targetPath)) {
-                            Files.createDirectories(targetPath);
-                        }
-                    } else {
-                        Files.copy(sourcePath, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to copy " + sourcePath + " to " + target, e);
-                }
-            });
+        // Default: not supported
     }
     
     /**
-     * Resolve the copy source binary. Can be overridden by subclasses for custom resolution.
+     * Resolve the copy source binary.
+     * Subclasses that support --copy-from must override this method.
+     * 
+     * @return The resolved source binary file, or null if not supported
      */
     protected File resolveCopySourceBinary() {
-        if (getDefaultBinaryName() == null) {
-            throw new FcliSimpleException(
-                "--copy-from is not supported for " + getToolName() + 
-                " (getDefaultBinaryName() not implemented)");
-        }
-        
-        File sourceBinary = ToolRegistrationHelper.resolveBinaryFromExplicitPath(
-            getCopyFromPath(), 
-            getDefaultBinaryName()
-        );
-        
-        if (!sourceBinary.canExecute() && !sourceBinary.getName().endsWith(".jar")) {
-            throw new FcliSimpleException(
-                "Source " + getToolName() + " binary not executable: " + sourceBinary.getAbsolutePath());
-        }
-        
-        return sourceBinary;
+        return null;
     }
     
     private final ArrayNode install() {

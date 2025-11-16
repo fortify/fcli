@@ -118,6 +118,20 @@ cli.options:
     names: --fcli-copy-from
     required: false
     description: "Bootstrap fcli from existing installation (Docker multi-stage builds)"
+  self:
+    names: --self
+    required: false
+    description: "Path to bootstrapped fcli executable. Typically set by automation tools (e.g., fortify-setup-js), not by end users."
+  self-type:
+    names: --self-type
+    required: false
+    default: stable
+    description: "Type of bootstrapped fcli: stable (pre-installed/cached) or unstable (downloaded from URL). Default: stable. Typically set by automation tools, not by end users."
+  on-copy-version-mismatch:
+    names: --on-copy-version-mismatch
+    required: false
+    default: skip
+    description: "Behavior when --copy-from version doesn't match requested version: skip (ignore copy-from and download), copy (copy regardless of version with warning), fail (throw error). Default: skip"
     
   # Behavior options
   air-gapped:
@@ -147,11 +161,23 @@ steps:
         cmd: tool definitions update ${#joinOrNull('=','--source',cli['tool-definitions'])?:""}
       
   # ===== PHASE 3: DEFINE TOOL METADATA =====
+  
+  # Determine fcli handling based on --self option
+  # If --self is provided:
+  #   - stable (default): register the provided fcli and continue normal version detection
+  #   - unstable: use as --copy-from with version matching logic
+  # If --self is not provided, use --fcli-copy-from or normal processing
+  - var.set:
+      fcli.self: ${cli['self']}
+      fcli.selfType: ${cli['self-type']}
+      fcli.useAsCopyFrom: ${cli['self'] != null && cli['self-type'] == 'unstable'}
+      fcli.copyFromPath: ${cli['self'] != null && cli['self-type'] == 'unstable' ? cli['self']:cli['fcli-copy-from']}
+      fcli.explicitPath: ${cli['self'] != null && cli['self-type'] == 'stable' ? cli['self']:cli['fcli-path']}
       
   - var.set:
       tools: |-
         ${{
-          {name: 'fcli', version: cli['fcli-version'], path: cli['fcli-path'], copyFrom: cli['fcli-copy-from'], supportsJre: false, status: null},
+          {name: 'fcli', version: cli['fcli-version'], path: fcli.explicitPath, copyFrom: fcli.copyFromPath, supportsJre: false, status: null},
           {name: 'sc-client', version: cli['sc-client-version'], path: cli['sc-client-path'], copyFrom: null, supportsJre: true, status: null},
           {name: 'fod-uploader', version: cli['fod-uploader-version'], path: cli['fod-uploader-path'], copyFrom: null, supportsJre: false, status: null},
           {name: 'debricked-cli', version: cli['debricked-cli-version'], path: cli['debricked-cli-path'], copyFrom: null, supportsJre: false, status: null},
@@ -275,7 +301,8 @@ steps:
         # If tool has explicit copyFrom path (e.g., fcli bootstrap)
         - if: ${tool.status==null && !tool.needsCopy && tool.copyFrom != null}
           var.set:
-            tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyFrom}"
+            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+            tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyFrom}" --version ${tool.installVersion} --on-copy-version-mismatch ${cli['on-copy-version-mismatch']}
         # Otherwise, install normally from download
         - if: ${tool.status==null && !tool.needsCopy && tool.copyFrom == null}
           var.set:
@@ -310,7 +337,7 @@ steps:
                 record.var-name: install_result
                 do:
                   - var.set:
-                      tool.status: ${tool.needsCopy ? 'copied' : 'installed'}
+                      tool.status: ${tool.needsCopy ? 'copied':'installed'}
                       tool.installDir: ${install_result.installDir}
                       tool.binDir: ${install_result.binDir}
                       tool.actualVersion: ${install_result.version}
