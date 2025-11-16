@@ -46,7 +46,9 @@ import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
+import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
+import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Getter;
@@ -71,6 +73,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private Set<String> versionsToUninstall = new HashSet<>();
     @Option(names={"--no-global-bin"}, required = false, negatable = true, descriptionKey="fcli.tool.install.global-bin")
     private boolean installGlobalBin = true;
+    @Option(names={"--copy-from"}, required = false, descriptionKey="fcli.tool.install.copy-from")
+    private File copyFromPath;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
@@ -101,13 +105,141 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected abstract String getDefaultArtifactType();
     
     /**
+     * Get the default binary name for this tool (platform-specific).
+     * This is used when --copy-from is specified to locate the binary to copy.
+     * 
+     * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar")
+     */
+    protected String getDefaultBinaryName() {
+        return null; // Default: no binary name (not all tools have a single primary binary)
+    }
+    
+    /**
+     * Check if copy-from mode is enabled
+     */
+    protected final boolean isCopyFromMode() {
+        return copyFromPath != null;
+    }
+    
+    /**
+     * Get the copy-from path if specified
+     */
+    protected final File getCopyFromPath() {
+        return copyFromPath;
+    }
+    
+    /**
      * Subclasses can override this to customize the ToolInstaller builder before installation.
      * This allows registration of hooks for custom version detection or installation logic.
      * 
      * @param builder The ToolInstaller builder to configure
      */
     protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
-        // Default: no additional configuration
+        // Set up default copy-from logic if enabled and not overridden by subclass
+        if (isCopyFromMode() && getDefaultBinaryName() != null) {
+            builder.versionDetector(this::detectVersionFromCopySource);
+            builder.installer(this::installFromCopy);
+        }
+    }
+    
+    /**
+     * Default implementation for detecting version from copy source.
+     * Subclasses can override for tool-specific version detection logic.
+     */
+    protected String detectVersionFromCopySource(ToolInstaller installer) {
+        if (getDefaultBinaryName() == null) {
+            throw new FcliSimpleException(
+                "--copy-from is not supported for " + getToolName() + 
+                " (getDefaultBinaryName() not implemented)");
+        }
+        
+        File sourceBinary = resolveCopySourceBinary();
+        
+        // Try descriptor first (for fcli-installed tools)
+        String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(sourceBinary);
+        if (versionFromDescriptor != null) {
+            return versionFromDescriptor;
+        }
+        
+        // Try executing the tool to get version
+        String output = ToolVersionDetector.tryExecute(sourceBinary, "--version");
+        if (output != null) {
+            String version = ToolVersionDetector.extractVersionFromOutput(output);
+            if (version != null) {
+                return version;
+            }
+        }
+        
+        throw new FcliSimpleException(
+            "Failed to detect version from " + getToolName() + " binary: " + sourceBinary.getAbsolutePath());
+    }
+    
+    /**
+     * Default implementation for installing from copy source.
+     * Copies the entire installation directory to the target location.
+     * Subclasses can override for tool-specific copy logic.
+     */
+    @SneakyThrows
+    protected void installFromCopy(ToolInstaller installer, Object artifactDescriptor) {
+        if (getDefaultBinaryName() == null) {
+            throw new FcliSimpleException(
+                "--copy-from is not supported for " + getToolName() + 
+                " (getDefaultBinaryName() not implemented)");
+        }
+        
+        File sourceBinary = resolveCopySourceBinary();
+        File sourceInstallDir = ToolRegistrationHelper.resolveInstallDir(sourceBinary);
+        
+        Path targetInstallPath = installer.getTargetPath();
+        Path targetBinPath = installer.getBinPath();
+        Files.createDirectories(targetBinPath);
+        
+        // Copy entire installation directory contents
+        installer.getProgressWriter().writeProgress(
+            "Copying %s from %s to %s", getToolName(), sourceInstallDir, targetInstallPath);
+        copyDirectoryContents(sourceInstallDir.toPath(), targetInstallPath);
+    }
+    
+    @SneakyThrows
+    private void copyDirectoryContents(Path source, Path target) {
+        Files.walk(source)
+            .forEach(sourcePath -> {
+                try {
+                    Path targetPath = target.resolve(source.relativize(sourcePath));
+                    if (Files.isDirectory(sourcePath)) {
+                        if (!Files.exists(targetPath)) {
+                            Files.createDirectories(targetPath);
+                        }
+                    } else {
+                        Files.copy(sourcePath, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to copy " + sourcePath + " to " + target, e);
+                }
+            });
+    }
+    
+    /**
+     * Resolve the copy source binary. Can be overridden by subclasses for custom resolution.
+     */
+    protected File resolveCopySourceBinary() {
+        if (getDefaultBinaryName() == null) {
+            throw new FcliSimpleException(
+                "--copy-from is not supported for " + getToolName() + 
+                " (getDefaultBinaryName() not implemented)");
+        }
+        
+        File sourceBinary = ToolRegistrationHelper.resolveBinaryFromExplicitPath(
+            getCopyFromPath(), 
+            getDefaultBinaryName()
+        );
+        
+        if (!sourceBinary.canExecute() && !sourceBinary.getName().endsWith(".jar")) {
+            throw new FcliSimpleException(
+                "Source " + getToolName() + " binary not executable: " + sourceBinary.getAbsolutePath());
+        }
+        
+        return sourceBinary;
     }
     
     private final ArrayNode install() {

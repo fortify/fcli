@@ -211,15 +211,38 @@ steps:
                 record.var-name: register_result
                 do:
                   - var.set:
-                      tool.status: registered-preinstalled
-                      tool.installDir: ${register_result.installDir}
-                      tool.binDir: ${register_result.binDir}
+                      tool.registeredInstallDir: ${register_result.installDir}
+                      tool.registeredBinDir: ${register_result.binDir}
                       tool.actualVersion: ${register_result.version}
               on.fail:
                 - if: ${tool.version=='preinstalled'}
                   throw: "Tool ${tool.name} must be pre-installed but was not found"
                 - if: ${cli['air-gapped']}
                   throw: "Tool ${tool.name} must be pre-installed (--air-gapped mode) but was not found"
+        
+        # Check if registered tool location matches target directory
+        # If using --use-tool-cache or --base-dir, we may need to copy the tool to the target location
+        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null}
+          var.set:
+            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null && cli['use-tool-cache'] && global.ci.toolCacheDirPattern != null}
+          var.set:
+            tool.expectedCacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
+        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null && cli['base-dir'] != null}
+          var.set:
+            tool.expectedBaseDir: "${cli['base-dir']}/${tool.name}/${tool.actualVersion}"
+        
+        # If tool is registered but not in the expected location, we'll use --copy-from
+        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null}
+          var.set:
+            tool.needsCopy: ${(tool.expectedCacheDir != null && !tool.registeredInstallDir.equals(tool.expectedCacheDir)) || (tool.expectedBaseDir != null && !tool.registeredInstallDir.equals(tool.expectedBaseDir))}
+            
+        # Mark as registered if no copy is needed
+        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null && !tool.needsCopy}
+          var.set:
+            tool.status: registered-preinstalled
+            tool.installDir: ${tool.registeredInstallDir}
+            tool.binDir: ${tool.registeredBinDir}
         
         # Determine JRE for tools that support it (before build install command)
         - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] != 'no'}
@@ -245,10 +268,16 @@ steps:
             tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
         
         # Build install command
-        - if: ${tool.status==null && tool.name == 'fcli' && tool.copyFrom != null}
+        # If tool is registered but needs to be copied to a different location, use --copy-from
+        - if: ${tool.status==null && tool.needsCopy}
           var.set:
-            tool.installCmd: tool fcli install --copy-from "${tool.copyFrom}"
-        - if: ${tool.status==null && (tool.name != 'fcli' || tool.copyFrom == null)}
+            tool.installCmd: tool ${tool.name} install --copy-from "${tool.registeredBinDir}"
+        # If tool has explicit copyFrom path (e.g., fcli bootstrap)
+        - if: ${tool.status==null && !tool.needsCopy && tool.copyFrom != null}
+          var.set:
+            tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyFrom}"
+        # Otherwise, install normally from download
+        - if: ${tool.status==null && !tool.needsCopy && tool.copyFrom == null}
           var.set:
             tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
             tool.installCmd: tool ${tool.name} install --version ${tool.installVersion}
@@ -281,7 +310,7 @@ steps:
                 record.var-name: install_result
                 do:
                   - var.set:
-                      tool.status: installed
+                      tool.status: ${tool.needsCopy ? 'copied' : 'installed'}
                       tool.installDir: ${install_result.installDir}
                       tool.binDir: ${install_result.binDir}
                       tool.actualVersion: ${install_result.version}
