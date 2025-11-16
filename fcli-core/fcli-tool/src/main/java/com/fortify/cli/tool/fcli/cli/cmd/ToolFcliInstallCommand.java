@@ -88,7 +88,8 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
         }
     }
     
-    private String detectVersionFromCopySource(ToolInstaller installer) {
+    @Override
+    protected String detectVersionFromCopySource(ToolInstaller installer) {
         File sourceBinary = resolveCopySourceBinary();
         
         String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(sourceBinary);
@@ -108,8 +109,9 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
             "Failed to detect version from fcli binary: " + sourceBinary.getAbsolutePath());
     }
     
+    @Override
     @SneakyThrows
-    private void installFromCopy(ToolInstaller installer, Object artifactDescriptor) {
+    protected void installFromCopy(ToolInstaller installer, Object artifactDescriptor) {
         File sourceBinary = resolveCopySourceBinary();
         File sourceInstallDir = ToolRegistrationHelper.resolveInstallDir(sourceBinary);
         
@@ -137,7 +139,8 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
         }
     }
     
-    private File resolveCopySourceBinary() {
+    @Override
+    protected File resolveCopySourceBinary() {
         File sourceBinary = ToolRegistrationHelper.resolveBinaryFromExplicitPath(
             getCopyFromPath(), 
             getDefaultBinaryName()
