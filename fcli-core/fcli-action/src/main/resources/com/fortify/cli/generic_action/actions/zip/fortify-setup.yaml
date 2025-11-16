@@ -121,12 +121,12 @@ cli.options:
   self:
     names: --self
     required: false
-    description: "Path to bootstrapped fcli executable. Typically set by automation tools (e.g., fortify-setup-js), not by end users."
+    description: "Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools."
   self-type:
     names: --self-type
     required: false
     default: stable
-    description: "Type of bootstrapped fcli: stable (pre-installed/cached) or unstable (downloaded from URL). Default: stable. Typically set by automation tools, not by end users."
+    description: "Type of bootstrapped fcli: stable (pre-installed/cached) or unstable (downloaded). Not intended for end users."
   on-copy-version-mismatch:
     names: --on-copy-version-mismatch
     required: false
@@ -162,11 +162,66 @@ steps:
       
   # ===== PHASE 3: DEFINE TOOL METADATA =====
   
+  # ============================================================================
+  # INTEGRATOR DOCUMENTATION: --self and --self-type Parameters
+  # ============================================================================
+  # These parameters enable platform integration tools (GitHub Actions, GitLab
+  # Components, Azure DevOps tasks, shell scripts) to pass their bootstrapped
+  # fcli to this action, avoiding redundant downloads.
+  #
+  # WHY THESE PARAMETERS EXIST:
+  # - Fcli cannot install itself (circular dependency)
+  # - Platform integrations must bootstrap fcli first using their own logic:
+  #   * GitHub: @fortify/setup TypeScript module downloads fcli
+  #   * GitLab: Shell script in component downloads fcli
+  #   * Azure: TypeScript task downloads fcli
+  #   * Shell: fortify-setup.sh downloads fcli
+  # - Once fcli is available, pass it to this action via --self
+  #
+  # PARAMETER: --self <path>
+  # - Path to fcli executable that platform tool has already resolved/downloaded and that is used to run this action
+  # - Allows this action to re-use bootstrapped fcli if user requested same or compatible fcli version to be installed
+  #
+  # PARAMETER: --self-type <stable|unstable>
+  # - Classifies the trustworthiness/source of the fcli provided via --self
+  #
+  # --self-type=stable (default):
+  #   Sources: Pre-installed, CI/CD tool cache, explicit user path, PATH
+  #   Use: When fcli given in --self is unlikely to be overwritten by other fcli versions in the future
+  #   Behavior: Action registers fcli immediately, proceeds with normal workflow
+  #   Use cases:
+  #   - Fcli found in PATH or FCLI_HOME environment variable
+  #   - Fcli from CI/CD platform tool cache (GitHub tool-cache, Azure cache)
+  #   - Fcli pre-installed in Docker image or on self-hosted runner
+  #   - User explicitly provided path via --fcli-path
+  #
+  # --self-type=unstable:
+  #   Sources: Fresh download from GitHub releases URL
+  #   Use: When fcli given in --self may be replaced by different version on subsequent bootstrapping operations
+  #   Behavior: Treat as --fcli-copy-from with version matching validation
+  #   Version handling: Subject to --on-copy-version-mismatch (warn/error/ignore)
+  #   Use cases:
+  #   - Platform tool downloaded fcli from https://github.com/fortify/fcli/releases
+  #   - Version might not exactly match requested pattern (e.g., v3.5.0 vs v3)
+  #   - Need validation that downloaded version is compatible
+  #
+  # RATIONALE FOR 'UNSTABLE' TYPE:
+  #
+  # Most fcli bootstrapping mechanisms use a semantic version like "v3", to make sure
+  # that they always use the latest compatible fcli version. Subsequent bootstrapping
+  # operations may download a newer version (e.g., v3.6.1), which may replace the
+  # previously downloaded version (e.g., v3.5.0) in the bootstrapping cache. The first
+  # bootstrapping operation would register the fcli binary stored in bootstrapping cache
+  # as v3.5.0, but the next operation would download v3.6.1 and replace the binary, whereas
+  # fcli thinks this binary is still v3.5.0. Furthermore, users may request the cache to
+  # be cleared, in which case the registered fcli binary no longer exists, potentially 
+  # causing failures when trying to run this previously registered fcli version.
+  #
+  # As such, for unstable selfs, we never register these directly, but rather copy them
+  # to the target location using --copy-from if they match user-requested version.
+  # ============================================================================
+  
   # Determine fcli handling based on --self option
-  # If --self is provided:
-  #   - stable (default): register the provided fcli and continue normal version detection
-  #   - unstable: use as --copy-from with version matching logic
-  # If --self is not provided, use --fcli-copy-from or normal processing
   - var.set:
       fcli.self: ${cli['self']}
       fcli.selfType: ${cli['self-type']}
@@ -217,18 +272,19 @@ steps:
                             
         # Auto-detect mode: try to find pre-installed tool
         # Build register command with optional version filter
-        # NOTE: For semantic versions (v3, v24, etc), use --require-latest to ensure
-        #       any pre-installed version is the latest available in tool definitions
+        # NOTE: --require-latest ensures any pre-installed version is the latest available
+        #       in tool definitions that matches the version pattern.
+        #       Examples:
+        #         - Pattern "v3" with v3.5.0 installed: Rejects if v3.6.1 is latest v3.x
+        #         - Pattern "latest" with any version: Requires absolute latest
+        #         - Pattern "v3.6.1" with v3.6.1 installed: Accepts (exact match is latest)
+        #       Only "auto" and "preinstalled" skip this validation (accept any version).
         - if: ${tool.version != 'skip' && tool.path == null}
           var.set:
             tool.registerCmd: tool ${tool.name} register --auto-detect
-            tool.versionIsSemantic: ${tool.version != 'auto' && tool.version != 'latest' && tool.version != 'preinstalled' && tool.version.matches('^v?\\d+(\\.\\d+)?$')}
-        - if: ${tool.version != 'skip' && tool.path == null && tool.version != 'auto' && tool.version != 'latest' && tool.version != 'preinstalled'}
+        - if: ${tool.version != 'skip' && tool.path == null && tool.version != 'auto' && tool.version != 'preinstalled'}
           var.set:
-            tool.registerCmd: ${tool.registerCmd} --version ${tool.version}
-        - if: ${tool.version != 'skip' && tool.path == null && tool.versionIsSemantic}
-          var.set:
-            tool.registerCmd: ${tool.registerCmd} --require-latest
+            tool.registerCmd: ${tool.registerCmd} --version ${tool.version} --require-latest
         - if: ${tool.version != 'skip' && tool.path == null}
           run.fcli:
             AUTO_DETECT:
