@@ -18,8 +18,8 @@ import java.util.Calendar;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,7 +47,7 @@ public class FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final Log LOG = LogFactory.getLog(FoDScanHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDScanHelper.class);
 
 
     // max retention period (in years) of FPRs

@@ -15,8 +15,8 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +39,7 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractFoDDastAutomatedScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScanConfigDastAutomatedDescriptor> {
-    private static final Log LOG = LogFactory.getLog(AbstractFoDDastAutomatedScanSetupCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFoDDastAutomatedScanSetupCommand.class);
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mixin

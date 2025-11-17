@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +41,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public class FoDReleaseHelper {
-    private static final Log LOG = LogFactory.getLog(FoDReleaseHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDReleaseHelper.class);
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     private static String[] defaultFields = {"releaseId", "releaseName", "applicationName", "microserviceName"};

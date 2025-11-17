@@ -15,8 +15,8 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 import java.util.ArrayList;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -41,7 +41,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.SetupWebsite.CMD_NAME) @CommandGroup("*-scan-setup")
 public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDDastAutomatedScanSetupCommand {
-    private static final Log LOG = LogFactory.getLog(FoDDastAutomatedScanSetupWebsiteCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDDastAutomatedScanSetupWebsiteCommand.class);
     @Getter @Mixin private FoDOutputHelperMixins.SetupWebsite outputHelper;
     private final static FoDEnums.DastAutomatedFileTypes dastFileType = FoDEnums.DastAutomatedFileTypes.LoginMacro;
 

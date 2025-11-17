@@ -18,8 +18,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -49,7 +49,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.StartLegacy.CMD_NAME, hidden = true)
 public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
-    private static final Log LOG = LogFactory.getLog(FoDDastLegacyScanStartCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDDastLegacyScanStartCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;

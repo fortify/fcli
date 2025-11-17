@@ -12,8 +12,8 @@
  */
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,7 +30,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractFoDScanSetupCommand<T> extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    private static final Log LOG = LogFactory.getLog(AbstractFoDScanSetupCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFoDScanSetupCommand.class);
     @Mixin protected FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin protected FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Mixin protected CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
