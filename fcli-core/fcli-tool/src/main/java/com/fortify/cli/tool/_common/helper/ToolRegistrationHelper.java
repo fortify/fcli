@@ -13,11 +13,13 @@
 package com.fortify.cli.tool._common.helper;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand.ExitCode;
 
 /**
@@ -28,16 +30,60 @@ import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand.ExitCode
 public class ToolRegistrationHelper {
     
     /**
+     * Find all potential tool binary candidates from all detection sources.
+     * Used when version filtering is needed - returns all candidates for version matching.
+     * 
+     * @param toolName Tool identifier
+     * @param binaryName Platform-specific binary name
+     * @param envPrefixes Environment variable prefixes to check
+     * @return List of all candidate binaries (may be empty)
+     */
+    public static java.util.List<File> findAllToolBinaryCandidates(String toolName, String binaryName, String[] envPrefixes) {
+        java.util.List<File> candidates = new java.util.ArrayList<>();
+        
+        // Collect from fcli installed versions
+        candidates.addAll(findAllBinariesFromInstalledVersions(toolName, binaryName));
+        
+        // Collect from environment variables
+        for (String prefix : envPrefixes) {
+            String cmdEnvVar = prefix + "_CMD";
+            String toolPath = EnvHelper.env(cmdEnvVar);
+            if (StringUtils.isNotBlank(toolPath)) {
+                File binary = new File(toolPath);
+                if (binary.exists() && (binary.canExecute() || binary.getName().endsWith(".jar"))) {
+                    candidates.add(binary);
+                }
+            }
+            
+            String homeEnvVar = prefix + "_HOME";
+            String toolHomePath = EnvHelper.env(homeEnvVar);
+            if (StringUtils.isNotBlank(toolHomePath)) {
+                File toolHome = new File(toolHomePath);
+                File binaryInBin = new File(toolHome, "bin" + File.separator + binaryName);
+                if (binaryInBin.exists() && (binaryInBin.canExecute() || binaryInBin.getName().endsWith(".jar"))) {
+                    candidates.add(binaryInBin);
+                }
+                File binaryInRoot = new File(toolHome, binaryName);
+                if (binaryInRoot.exists() && binaryInRoot.getName().endsWith(".jar")) {
+                    candidates.add(binaryInRoot);
+                }
+            }
+        }
+        
+        // Collect from PATH
+        candidates.addAll(findAllBinariesInPath(binaryName));
+        
+        return candidates;
+    }
+    
+    /**
      * Auto-detect tool binary location using multiple strategies in priority order:
-     * 1. fcli installation descriptors
+     * 1. fcli installation descriptors (all installed versions, not just last modified)
      * 2. {PREFIX}_CMD environment variables (direct binary/jar path)
      * 3. {PREFIX}_HOME environment variables (install directory)
-     * 4. PATH entries (returns first match)
+     * 4. PATH entries (searches all entries, not just first match)
      * 
-     * Note: When using --version filtering with --auto-detect, version validation happens
-     * after binary detection. If multiple versions exist in PATH, the first executable found
-     * will be used and then validated against the requested version. To register a specific
-     * version when multiple are installed, use explicit paths or environment variables.
+     * Returns first valid binary found. For version filtering, use findAllToolBinaryCandidates().
      * 
      * @param toolName Tool identifier
      * @param binaryName Platform-specific binary name
@@ -46,13 +92,10 @@ public class ToolRegistrationHelper {
      * @throws FcliSimpleException if tool not found
      */
     public static File autoDetectToolBinary(String toolName, String binaryName, String[] envPrefixes) {
-        // Priority 1: Check fcli installation status
-        ToolInstallationDescriptor existing = ToolInstallationDescriptor.loadLastModified(toolName);
-        if (existing != null && existing.getBinDir() != null) {
-            File binary = new File(existing.getBinPath().resolve(binaryName).toString());
-            if (binary.exists() && (binary.canExecute() || binary.getName().endsWith(".jar"))) {
-                return binary;
-            }
+        // Priority 1: Check fcli installation status (all installed versions)
+        File binaryFromInstalled = findBinaryFromInstalledVersions(toolName, binaryName);
+        if (binaryFromInstalled != null) {
+            return binaryFromInstalled;
         }
         
         // Priority 2: Check {PREFIX}_CMD env vars (direct binary/jar path)
@@ -151,17 +194,57 @@ public class ToolRegistrationHelper {
         return binDir;
     }
     
-    private static File findBinaryInPath(String binaryName) {
+    private static java.util.List<File> findAllBinariesFromInstalledVersions(String toolName, String binaryName) {
+        java.util.List<File> binaries = new java.util.ArrayList<>();
+        Path installDescriptorsDir = ToolInstallationHelper.getToolsStatePath().resolve(toolName);
+        if (!installDescriptorsDir.toFile().exists()) {
+            return binaries;
+        }
+        
+        File[] descriptorFiles = installDescriptorsDir.toFile().listFiles(File::isFile);
+        if (descriptorFiles == null || descriptorFiles.length == 0) {
+            return binaries;
+        }
+        
+        // Check all installed versions, newest first
+        java.util.Arrays.sort(descriptorFiles, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+        
+        for (File descriptorFile : descriptorFiles) {
+            ToolInstallationDescriptor descriptor = FcliDataHelper.readFile(
+                descriptorFile.toPath(), ToolInstallationDescriptor.class, false);
+            
+            if (descriptor != null && descriptor.getBinDir() != null) {
+                File binary = new File(descriptor.getBinPath().resolve(binaryName).toString());
+                if (binary.exists() && (binary.canExecute() || binary.getName().endsWith(".jar"))) {
+                    binaries.add(binary);
+                }
+            }
+        }
+        return binaries;
+    }
+    
+    private static File findBinaryFromInstalledVersions(String toolName, String binaryName) {
+        java.util.List<File> binaries = findAllBinariesFromInstalledVersions(toolName, binaryName);
+        return binaries.isEmpty() ? null : binaries.get(0);
+    }
+    
+    private static java.util.List<File> findAllBinariesInPath(String binaryName) {
+        java.util.List<File> binaries = new java.util.ArrayList<>();
         String pathEnv = EnvHelper.env("PATH");
-        if (pathEnv == null) return null;
+        if (pathEnv == null) return binaries;
         
         String[] pathDirs = pathEnv.split(File.pathSeparator);
         for (String pathDir : pathDirs) {
             File binary = new File(pathDir, binaryName);
             if (binary.exists() && binary.canExecute()) {
-                return binary;
+                binaries.add(binary);
             }
         }
-        return null;
+        return binaries;
+    }
+    
+    private static File findBinaryInPath(String binaryName) {
+        java.util.List<File> binaries = findAllBinariesInPath(binaryName);
+        return binaries.isEmpty() ? null : binaries.get(0);
     }
 }

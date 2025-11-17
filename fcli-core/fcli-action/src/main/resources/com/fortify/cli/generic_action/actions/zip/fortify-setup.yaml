@@ -252,154 +252,161 @@ steps:
         - if: ${tool.version == 'skip'}
           var.set:
             tool.status: skipped
+        
+        - if: ${tool.version != 'skip'}
+          steps:
+            # Explicit path mode: register from provided path
+            - if: ${tool.path != null}
+              run.fcli:
+                REGISTER_TOOL:
+                  cmd: tool ${tool.name} register --path "${tool.path}"
+                  records.for-each:
+                    record.var-name: register_result
+                    do:
+                    - var.set:
+                        tool.status: registered-explicit
+                        tool.installDir: ${register_result.installDir}
+                        tool.binDir: ${register_result.binDir}
+                        tool.actualVersion: ${register_result.version}
+                  on.fail:
+                    - var.set:
+                        tool.status: failed
+                                
+            # Auto-detect mode: try to find pre-installed tool
+            # Build register command with optional version filter
+            # NOTE: --require-latest ensures any pre-installed version is the latest available
+            #       in tool definitions that matches the version pattern.
+            #       Examples:
+            #         - Pattern "v3" with v3.5.0 installed: Rejects if v3.6.1 is latest v3.x
+            #         - Pattern "latest" with any version: Requires absolute latest
+            #         - Pattern "v3.6.1" with v3.6.1 installed: Accepts (exact match is latest)
+            #       Only "auto" and "preinstalled" skip this validation (accept any version).
+            - if: ${tool.path == null}
+              var.set:
+                tool.registerCmd: tool ${tool.name} register --auto-detect
+            - if: ${tool.path == null && tool.version != 'auto' && tool.version != 'preinstalled'}
+              var.set:
+                tool.registerCmd: ${tool.registerCmd} --version ${tool.version} --require-latest
+            - if: ${tool.path == null}
+              run.fcli:
+                AUTO_DETECT:
+                  cmd: ${tool.registerCmd}
+                  stderr: collect
+                  records.for-each:
+                    record.var-name: register_result
+                    do:
+                      - var.set:
+                          tool.registeredInstallDir: ${register_result.installDir}
+                          tool.registeredBinDir: ${register_result.binDir}
+                          tool.actualVersion: ${register_result.version}
+                  on.fail:
+                    - if: ${tool.version=='preinstalled'}
+                      throw: "Tool ${tool.name} must be pre-installed but was not found"
+                    - if: ${cli['air-gapped']}
+                      throw: "Tool ${tool.name} must be pre-installed (--air-gapped mode) but was not found"
+                    - log.progress: "No matching ${tool.name} version found during auto-detect, continuing installation"
             
-        # Explicit path mode: register from provided path
-        - if: ${tool.version != 'skip' && tool.path != null}
-          run.fcli:
-            REGISTER_TOOL:
-              cmd: tool ${tool.name} register --path "${tool.path}"
-              records.for-each:
-                record.var-name: register_result
-                do:
-                - var.set:
-                    tool.status: registered-explicit
-                    tool.installDir: ${register_result.installDir}
-                    tool.binDir: ${register_result.binDir}
-                    tool.actualVersion: ${register_result.version}
-              on.fail:
-                - var.set:
-                    tool.status: failed
-                            
-        # Auto-detect mode: try to find pre-installed tool
-        # Build register command with optional version filter
-        # NOTE: --require-latest ensures any pre-installed version is the latest available
-        #       in tool definitions that matches the version pattern.
-        #       Examples:
-        #         - Pattern "v3" with v3.5.0 installed: Rejects if v3.6.1 is latest v3.x
-        #         - Pattern "latest" with any version: Requires absolute latest
-        #         - Pattern "v3.6.1" with v3.6.1 installed: Accepts (exact match is latest)
-        #       Only "auto" and "preinstalled" skip this validation (accept any version).
-        - if: ${tool.version != 'skip' && tool.path == null}
-          var.set:
-            tool.registerCmd: tool ${tool.name} register --auto-detect
-        - if: ${tool.version != 'skip' && tool.path == null && tool.version != 'auto' && tool.version != 'preinstalled'}
-          var.set:
-            tool.registerCmd: ${tool.registerCmd} --version ${tool.version} --require-latest
-        - if: ${tool.version != 'skip' && tool.path == null}
-          run.fcli:
-            AUTO_DETECT:
-              cmd: ${tool.registerCmd}
-              records.for-each:
-                record.var-name: register_result
-                do:
-                  - var.set:
-                      tool.registeredInstallDir: ${register_result.installDir}
-                      tool.registeredBinDir: ${register_result.binDir}
-                      tool.actualVersion: ${register_result.version}
-              on.fail:
-                - if: ${tool.version=='preinstalled'}
-                  throw: "Tool ${tool.name} must be pre-installed but was not found"
-                - if: ${cli['air-gapped']}
-                  throw: "Tool ${tool.name} must be pre-installed (--air-gapped mode) but was not found"
-        
-        # Check if registered tool location matches target directory
-        # If using --use-tool-cache or --base-dir, we may need to copy the tool to the target location
-        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null}
-          var.set:
-            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null && cli['use-tool-cache'] && global.ci.toolCacheDirPattern != null}
-          var.set:
-            tool.expectedCacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
-        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null && cli['base-dir'] != null}
-          var.set:
-            tool.expectedBaseDir: "${cli['base-dir']}/${tool.name}/${tool.actualVersion}"
-        
-        # If tool is registered but not in the expected location, we'll use --copy-from
-        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null}
-          var.set:
-            tool.needsCopy: ${(tool.expectedCacheDir != null && !tool.registeredInstallDir.equals(tool.expectedCacheDir)) || (tool.expectedBaseDir != null && !tool.registeredInstallDir.equals(tool.expectedBaseDir))}
+            # Check if registered tool location matches target directory
+            # If using --use-tool-cache or --base-dir, we may need to copy the tool to the target location
+            - if: ${tool.path == null && tool.registeredInstallDir != null}
+              var.set:
+                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+            - if: ${tool.path == null && tool.registeredInstallDir != null && cli['use-tool-cache'] == true && global.ci.toolCacheDirPattern != null}
+              var.set:
+                tool.expectedCacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
+            - if: ${tool.path == null && tool.registeredInstallDir != null && cli['base-dir'] != null}
+              var.set:
+                tool.expectedBaseDir: "${cli['base-dir']}/${tool.name}/${tool.actualVersion}"
             
-        # Mark as registered if no copy is needed
-        - if: ${tool.version != 'skip' && tool.path == null && tool.registeredInstallDir != null && !tool.needsCopy}
-          var.set:
-            tool.status: registered-preinstalled
-            tool.installDir: ${tool.registeredInstallDir}
-            tool.binDir: ${tool.registeredBinDir}
-        
-        # Determine JRE for tools that support it (before build install command)
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] != 'no'}
-          var.set:
-            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto'}
-          run.fcli:
-            GET_JRE_REQUIREMENT:
-              cmd: tool ${tool.name} get ${tool.installVersion}
-              records.for-each:
-                record.var-name: version_info
-                do:
-                  - var.set:
-                      tool.requiredJre: ${version_info.extraProperties?.jre}
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.requiredJre != null}
-          var.set:
-            tool.detectedJreHome: ${#env('SCANCENTRAL_JAVA_HOME')}
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
-          var.set:
-            tool.detectedJreHome: ${global.ci['java'+tool.requiredJre+'Home']}
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
-          var.set:
-            tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
-        
-        # Build install command
-        # If tool is registered but needs to be copied to a different location, use --copy-from
-        - if: ${tool.status==null && tool.needsCopy}
-          var.set:
-            tool.installCmd: tool ${tool.name} install --copy-from "${tool.registeredBinDir}"
-        # If tool has explicit copyFrom path (e.g., fcli bootstrap)
-        - if: ${tool.status==null && !tool.needsCopy && tool.copyFrom != null}
-          var.set:
-            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-            tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyFrom}" --version ${tool.installVersion} --on-copy-version-mismatch ${cli['on-copy-version-mismatch']}
-        # Otherwise, install normally from download
-        - if: ${tool.status==null && !tool.needsCopy && tool.copyFrom == null}
-          var.set:
-            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-            tool.installCmd: tool ${tool.name} install --version ${tool.installVersion}
-        - if: ${tool.status==null && cli['base-dir'] != null}
-          var.set:
-            tool.installCmd: ${tool.installCmd} --base-dir "${cli['base-dir']}"
-        - if: ${tool.status==null && cli['use-tool-cache'] && global.ci.toolCacheDirPattern != null}
-          var.set:
-            tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-            tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
-            tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
-        
-        # Add JRE options for tools that support it
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'yes'}
-          var.set:
-            tool.installCmd: ${tool.installCmd} --with-jre
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.detectedJreHome != null}
-          var.set:
-            tool.installCmd: ${tool.installCmd} --jre "${tool.detectedJreHome}"
-        - if: ${tool.status==null && tool.supportsJre && cli['with-jre'] == 'auto' && tool.detectedJreHome == null}
-          var.set:
-            tool.installCmd: ${tool.installCmd} --with-jre
-        
-        # Execute installation
-        - if: ${tool.status==null}
-          run.fcli:
-            INSTALL:
-              cmd: ${tool.installCmd}
-              records.for-each:
-                record.var-name: install_result
-                do:
-                  - var.set:
-                      tool.status: ${tool.needsCopy ? 'copied':'installed'}
-                      tool.installDir: ${install_result.installDir}
-                      tool.binDir: ${install_result.binDir}
-                      tool.actualVersion: ${install_result.version}
-              on.fail:
-                - var.set:
-                    tool.status: failed
+            # If tool is registered but not in the expected location, we'll use --copy-from
+            - if: ${tool.path == null && tool.registeredInstallDir != null}
+              var.set:
+                tool.needsCopy: ${(tool.expectedCacheDir != null && !tool.registeredInstallDir.equals(tool.expectedCacheDir)) || (tool.expectedBaseDir != null && !tool.registeredInstallDir.equals(tool.expectedBaseDir))}
+            - if: ${tool.path == null && tool.registeredInstallDir == null}
+              var.set:
+                tool.needsCopy: false
+                
+            # Mark as registered if no copy is needed
+            - if: ${tool.path == null && tool.registeredInstallDir != null && tool.needsCopy == false}
+              var.set:
+                tool.status: registered-preinstalled
+                tool.installDir: ${tool.registeredInstallDir}
+                tool.binDir: ${tool.registeredBinDir}
+            
+            # Determine JRE for tools that support it (before build install command)
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] != 'no'}
+              var.set:
+                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto'}
+              run.fcli:
+                GET_JRE_REQUIREMENT:
+                  cmd: tool ${tool.name} get ${tool.installVersion}
+                  records.for-each:
+                    record.var-name: version_info
+                    do:
+                      - var.set:
+                          tool.requiredJre: ${version_info.extraProperties?.jre}
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.requiredJre != null}
+              var.set:
+                tool.detectedJreHome: ${#env('SCANCENTRAL_JAVA_HOME')}
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
+              var.set:
+                tool.detectedJreHome: ${global.ci['java'+tool.requiredJre+'Home']}
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
+              var.set:
+                tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
+            
+            # Build install command
+            # If tool is registered but needs to be copied to a different location, use --copy-from
+            - if: ${tool.status==null && tool.needsCopy == true}
+              var.set:
+                tool.installCmd: tool ${tool.name} install --copy-from "${tool.registeredBinDir}"
+            # If tool has explicit copyFrom path (e.g., fcli bootstrap)
+            - if: ${tool.status==null && tool.needsCopy != true && tool.copyFrom != null}
+              var.set:
+                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyFrom}" --version ${tool.installVersion} --on-copy-version-mismatch ${cli['on-copy-version-mismatch']}
+            # Otherwise, install normally from download
+            - if: ${tool.status==null && tool.needsCopy != true && tool.copyFrom == null}
+              var.set:
+                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                tool.installCmd: tool ${tool.name} install --version ${tool.installVersion}
+            - if: ${tool.status==null && cli['base-dir'] != null}
+              var.set:
+                tool.installCmd: ${tool.installCmd} --base-dir "${cli['base-dir']}"
+            - if: ${tool.status==null && cli['use-tool-cache'] == true && global.ci.toolCacheDirPattern != null}
+              var.set:
+                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
+                tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
+            
+            # Add JRE options for tools that support it
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'yes'}
+              var.set:
+                tool.installCmd: ${tool.installCmd} --with-jre
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.detectedJreHome != null}
+              var.set:
+                tool.installCmd: ${tool.installCmd} --jre "${tool.detectedJreHome}"
+            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.detectedJreHome == null}
+              var.set:
+                tool.installCmd: ${tool.installCmd} --with-jre
+            
+            # Execute installation
+            - if: ${tool.status==null}
+              run.fcli:
+                INSTALL:
+                  cmd: ${tool.installCmd}
+                  records.for-each:
+                    record.var-name: install_result
+                    do:
+                      - var.set:
+                          tool.status: ${tool.needsCopy ? 'copied':'installed'}
+                          tool.installDir: ${install_result.installDir}
+                          tool.binDir: ${install_result.binDir}
+                          tool.actualVersion: ${install_result.version}
+                  on.fail:
+                    - var.set:
+                        tool.status: failed
   
   # ===== PHASE 5: GENERATE ENVIRONMENT OUTPUT =====
   

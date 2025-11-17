@@ -97,36 +97,59 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     @Override
     @SneakyThrows
     public ObjectNode getJsonNode() {
-        File toolBinary = registerMode.autoDetect 
-            ? ToolRegistrationHelper.autoDetectToolBinary(getToolName(), getDefaultBinaryName(), getToolEnvVarPrefixes())
-            : ToolRegistrationHelper.resolveBinaryFromExplicitPath(registerMode.explicitPath, getDefaultBinaryName());
+        File toolBinary;
+        ToolDefinitionVersionDescriptor versionDescriptor;
         
-        // Validate binary is executable (or is a JAR file)
-        if (!toolBinary.canExecute() && !toolBinary.getName().endsWith(".jar")) {
-            throw new FcliSimpleException(
-                getToolName() + " binary found but not executable: " + toolBinary.getAbsolutePath())
-                .exitCode(ExitCode.TOOL_INVALID_OR_NOT_EXECUTABLE.getCode());
-        }
-        
-        // Resolve install directory
-        File installDir = ToolRegistrationHelper.resolveInstallDir(toolBinary);
-        
-        // Check for fcli-installed tool first
-        String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(toolBinary);
-        String detectedVersion = versionFromDescriptor != null 
-            ? versionFromDescriptor 
-            : detectVersion(toolBinary, installDir);
-        
-        // Find matching version descriptor (this also normalizes the version)
-        ToolDefinitionVersionDescriptor versionDescriptor = resolveVersionDescriptor(detectedVersion);
-        
-        // Validate version matches requested version (if not 'any')
-        // Note: "unknown" versions are handled gracefully - they will only match if requestedVersion is "any" or "unknown"
-        if (!"any".equals(requestedVersion) && !versionMatches(versionDescriptor.getVersion(), requestedVersion)) {
-            throw new FcliSimpleException(
-                String.format("Detected %s version %s does not match requested version %s", 
-                    getToolName(), versionDescriptor.getVersion(), requestedVersion))
-                .exitCode(ExitCode.VERSION_MISMATCH.getCode());
+        if (registerMode.autoDetect && !"any".equals(requestedVersion)) {
+            // When version filter is specified, search all candidates for matching version
+            var candidates = ToolRegistrationHelper.findAllToolBinaryCandidates(getToolName(), getDefaultBinaryName(), getToolEnvVarPrefixes());
+            toolBinary = findMatchingCandidate(candidates);
+            if (toolBinary == null) {
+                throw new FcliSimpleException(
+                    String.format("%s version matching %s not found. Please specify --path or ensure matching version is in PATH", 
+                        getToolName(), requestedVersion))
+                    .exitCode(ExitCode.TOOL_NOT_FOUND.getCode());
+            }
+            // Detect version from the matched binary
+            File installDir = ToolRegistrationHelper.resolveInstallDir(toolBinary);
+            String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(toolBinary);
+            String detectedVersion = versionFromDescriptor != null 
+                ? versionFromDescriptor 
+                : detectVersion(toolBinary, installDir);
+            versionDescriptor = resolveVersionDescriptor(detectedVersion);
+        } else {
+            // No version filter or explicit path - use first found
+            toolBinary = registerMode.autoDetect 
+                ? ToolRegistrationHelper.autoDetectToolBinary(getToolName(), getDefaultBinaryName(), getToolEnvVarPrefixes())
+                : ToolRegistrationHelper.resolveBinaryFromExplicitPath(registerMode.explicitPath, getDefaultBinaryName());
+            
+            // Validate binary is executable (or is a JAR file)
+            if (!toolBinary.canExecute() && !toolBinary.getName().endsWith(".jar")) {
+                throw new FcliSimpleException(
+                    getToolName() + " binary found but not executable: " + toolBinary.getAbsolutePath())
+                    .exitCode(ExitCode.TOOL_INVALID_OR_NOT_EXECUTABLE.getCode());
+            }
+            
+            // Resolve install directory
+            File installDir = ToolRegistrationHelper.resolveInstallDir(toolBinary);
+            
+            // Check for fcli-installed tool first
+            String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(toolBinary);
+            String detectedVersion = versionFromDescriptor != null 
+                ? versionFromDescriptor 
+                : detectVersion(toolBinary, installDir);
+            
+            // Find matching version descriptor (this also normalizes the version)
+            versionDescriptor = resolveVersionDescriptor(detectedVersion);
+            
+            // Validate version matches requested version (if not 'any')
+            // Note: "unknown" versions are handled gracefully - they will only match if requestedVersion is "any" or "unknown"
+            if (!"any".equals(requestedVersion) && !versionMatches(versionDescriptor.getVersion(), requestedVersion)) {
+                throw new FcliSimpleException(
+                    String.format("Detected %s version %s does not match requested version %s", 
+                        getToolName(), versionDescriptor.getVersion(), requestedVersion))
+                    .exitCode(ExitCode.VERSION_MISMATCH.getCode());
+            }
         }
         
         // If --require-latest is specified, verify this is the latest version matching the requested pattern
@@ -141,6 +164,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
         }
         
         // Create and save installation descriptor
+        File installDir = ToolRegistrationHelper.resolveInstallDir(toolBinary);
         ToolInstallationDescriptor installation = new ToolInstallationDescriptor(
             installDir.toPath(), 
             toolBinary.getParentFile().toPath(),
@@ -165,6 +189,38 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
      * @return Detected version string, or "unknown" if detection fails
      */
     protected abstract String detectVersion(File toolBinary, File installDir);
+    
+    /**
+     * Find the first candidate binary that matches the requested version.
+     * 
+     * @param candidates List of candidate binary files
+     * @return Matching binary file or null if no match
+     */
+    private File findMatchingCandidate(java.util.List<File> candidates) {
+        for (File candidate : candidates) {
+            if (!candidate.canExecute() && !candidate.getName().endsWith(".jar")) {
+                continue;
+            }
+            
+            try {
+                File installDir = ToolRegistrationHelper.resolveInstallDir(candidate);
+                String versionFromDescriptor = ToolVersionDetector.detectVersionFromDescriptor(candidate);
+                String detectedVersion = versionFromDescriptor != null 
+                    ? versionFromDescriptor 
+                    : detectVersion(candidate, installDir);
+                
+                ToolDefinitionVersionDescriptor versionDesc = resolveVersionDescriptor(detectedVersion);
+                
+                if (versionMatches(versionDesc.getVersion(), requestedVersion)) {
+                    return candidate;
+                }
+            } catch (Exception e) {
+                // Skip candidates that fail version detection
+                continue;
+            }
+        }
+        return null;
+    }
     
     private ToolDefinitionVersionDescriptor resolveVersionDescriptor(String detectedVersion) {
         var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
