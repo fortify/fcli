@@ -19,19 +19,20 @@ usage:
     
     Examples:
       # Minimal: install sc-client only
-      fcli action run fortify-setup --sc-client-version 24.4.0
+      fcli action run fortify-setup --sc-client 24.4.0
       
       # Pre-installed tools (air-gapped)
       fcli action run fortify-setup --air-gapped \
-        --sc-client-version auto --fod-uploader-version auto
+        --sc-client auto --fod-uploader auto
       
       # Platform tool cache
       fcli action run fortify-setup --use-tool-cache \
-        --sc-client-version latest --debricked-cli-version v2
+        --sc-client latest --debricked-cli v2
       
-      # Docker multi-stage build
-      fcli action run fortify-setup --fcli-copy-from /base/usr/bin/fcli \
-        --base-dir /opt/fortify --sc-client-version 24.4.0
+      # Docker multi-stage build, installing from preinstalled fcli
+      fcli action run fortify-setup --self /base/usr/bin/fcli \
+        --fcli auto \
+        --base-dir /opt/fortify --sc-client 24.4.0
 
 config:
   output: immediate
@@ -42,32 +43,32 @@ config:
 cli.options:
   # Tool versions
   fcli-version:
-    names: --fcli-version
+    names: --fcli
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
   sc-client-version:
-    names: --sc-client-version
+    names: --sc-client
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
   fod-uploader-version:
-    names: --fod-uploader-version
+    names: --fod-uploader
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
   debricked-cli-version:
-    names: --debricked-cli-version
+    names: --debricked-cli
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
   bugtracker-utility-version:
-    names: --bugtracker-utility-version
+    names: --bugtracker-utility
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
   vuln-exporter-version:
-    names: --vuln-exporter-version
+    names: --vuln-exporter
     required: false
     default: skip
     description: "Version to use: <specific-version>, latest, auto, preinstalled, skip. Default: skip"
@@ -78,6 +79,8 @@ cli.options:
     description: "JRE handling for sc-client: yes (install with JRE), no (use system Java), auto (detect compatible JRE). Default: auto"
     
   # Tool paths (explicit overrides)
+  # Note that tool register auto-detection will handle environment-based configuration such as 
+  # SCANCENTRAL_HOME, so we don't need to handle environment-based paths here.
   fcli-path:
     names: --fcli-path
     required: false
@@ -114,24 +117,12 @@ cli.options:
     required: false
     default: false
     description: "Use platform-specific tool cache (detected via ci-vars)"
-  fcli-copy-from:
-    names: --fcli-copy-from
-    required: false
-    description: "Bootstrap fcli from existing installation (Docker multi-stage builds)"
+    
+  # Path to fcli executable used to execute this action
   self:
     names: --self
     required: false
     description: "Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools."
-  self-type:
-    names: --self-type
-    required: false
-    default: stable
-    description: "Type of bootstrapped fcli: stable (pre-installed/cached) or unstable (downloaded). Not intended for end users."
-  on-copy-version-mismatch:
-    names: --on-copy-version-mismatch
-    required: false
-    default: skip
-    description: "Behavior when --copy-from version doesn't match requested version: skip (ignore copy-from and download), copy (copy regardless of version with warning), fail (throw error). Default: skip"
     
   # Behavior options
   air-gapped:
@@ -163,81 +154,37 @@ steps:
   # ===== PHASE 3: DEFINE TOOL METADATA =====
   
   # ============================================================================
-  # INTEGRATOR DOCUMENTATION: --self and --self-type Parameters
+  # INTEGRATOR DOCUMENTATION: --self parameter
   # ============================================================================
-  # These parameters enable platform integration tools (GitHub Actions, GitLab
+  # This parameter enables platform integration tools (GitHub Actions, GitLab
   # Components, Azure DevOps tasks, shell scripts) to pass their bootstrapped
   # fcli to this action, avoiding redundant downloads.
   #
-  # WHY THESE PARAMETERS EXIST:
-  # - Fcli cannot install itself (circular dependency)
+  # WHY THIS PARAMETER EXISTS:
+  # - Fcli cannot install itself (chicken-and-egg problem)
   # - Platform integrations must bootstrap fcli first using their own logic:
   #   * GitHub: @fortify/setup TypeScript module downloads fcli
   #   * GitLab: Shell script in component downloads fcli
   #   * Azure: TypeScript task downloads fcli
   #   * Shell: fortify-setup.sh downloads fcli
   # - Once fcli is available, pass it to this action via --self
+  # - If user requests same or compatible fcli version, this action can then 
+  #   re-use the given fcli executable instead of downloading again.
   #
   # PARAMETER: --self <path>
   # - Path to fcli executable that platform tool has already resolved/downloaded and that is used to run this action
   # - Allows this action to re-use bootstrapped fcli if user requested same or compatible fcli version to be installed
-  #
-  # PARAMETER: --self-type <stable|unstable>
-  # - Classifies the trustworthiness/source of the fcli provided via --self
-  #
-  # --self-type=stable (default):
-  #   Sources: Pre-installed, CI/CD tool cache, explicit user path, PATH
-  #   Use: When fcli given in --self is unlikely to be overwritten by other fcli versions in the future
-  #   Behavior: Action registers fcli immediately, proceeds with normal workflow
-  #   Use cases:
-  #   - Fcli found in PATH or FCLI_HOME environment variable
-  #   - Fcli from CI/CD platform tool cache (GitHub tool-cache, Azure cache)
-  #   - Fcli pre-installed in Docker image or on self-hosted runner
-  #   - User explicitly provided path via --fcli-path
-  #
-  # --self-type=unstable:
-  #   Sources: Fresh download from GitHub releases URL
-  #   Use: When fcli given in --self may be replaced by different version on subsequent bootstrapping operations
-  #   Behavior: Treat as --fcli-copy-from with version matching validation
-  #   Version handling: Subject to --on-copy-version-mismatch (warn/error/ignore)
-  #   Use cases:
-  #   - Platform tool downloaded fcli from https://github.com/fortify/fcli/releases
-  #   - Version might not exactly match requested pattern (e.g., v3.5.0 vs v3)
-  #   - Need validation that downloaded version is compatible
-  #
-  # RATIONALE FOR 'UNSTABLE' TYPE:
-  #
-  # Most fcli bootstrapping mechanisms use a semantic version like "v3", to make sure
-  # that they always use the latest compatible fcli version. Subsequent bootstrapping
-  # operations may download a newer version (e.g., v3.6.1), which may replace the
-  # previously downloaded version (e.g., v3.5.0) in the bootstrapping cache. The first
-  # bootstrapping operation would register the fcli binary stored in bootstrapping cache
-  # as v3.5.0, but the next operation would download v3.6.1 and replace the binary, whereas
-  # fcli thinks this binary is still v3.5.0. Furthermore, users may request the cache to
-  # be cleared, in which case the registered fcli binary no longer exists, potentially 
-  # causing failures when trying to run this previously registered fcli version.
-  #
-  # As such, for unstable selfs, we never register these directly, but rather copy them
-  # to the target location using --copy-from if they match user-requested version.
   # ============================================================================
   
-  # Determine fcli handling based on --self option
-  - var.set:
-      fcli.self: ${cli['self']}
-      fcli.selfType: ${cli['self-type']}
-      fcli.useAsCopyFrom: ${cli['self'] != null && cli['self-type'] == 'unstable'}
-      fcli.copyFromPath: ${cli['self'] != null && cli['self-type'] == 'unstable' ? cli['self']:cli['fcli-copy-from']}
-      fcli.explicitPath: ${cli['self'] != null && cli['self-type'] == 'stable' ? cli['self']:cli['fcli-path']}
-      
   - var.set:
       tools: |-
         ${{
-          {name: 'fcli', version: cli['fcli-version'], path: fcli.explicitPath, copyFrom: fcli.copyFromPath, supportsJre: false, status: null},
-          {name: 'sc-client', version: cli['sc-client-version'], path: cli['sc-client-path'], copyFrom: null, supportsJre: true, status: null},
-          {name: 'fod-uploader', version: cli['fod-uploader-version'], path: cli['fod-uploader-path'], copyFrom: null, supportsJre: false, status: null},
-          {name: 'debricked-cli', version: cli['debricked-cli-version'], path: cli['debricked-cli-path'], copyFrom: null, supportsJre: false, status: null},
-          {name: 'bugtracker-utility', version: cli['bugtracker-utility-version'], path: cli['bugtracker-utility-path'], copyFrom: null, supportsJre: false, status: null},
-          {name: 'vuln-exporter', version: cli['vuln-exporter-version'], path: cli['vuln-exporter-path'], copyFrom: null, supportsJre: false, status: null}
+          {name: 'fcli', version: cli['fcli-version'], path: cli['fcli-path'], copyIfMatching: cli['self'], supportsJre: false, status: null},
+          {name: 'sc-client', version: cli['sc-client-version'], path: cli['sc-client-path'], copyIfMatching: null, supportsJre: true, status: null},
+          {name: 'fod-uploader', version: cli['fod-uploader-version'], path: cli['fod-uploader-path'], copyIfMatching: null, supportsJre: false, status: null},
+          {name: 'debricked-cli', version: cli['debricked-cli-version'], path: cli['debricked-cli-path'], copyIfMatching: null, supportsJre: false, status: null},
+          {name: 'bugtracker-utility', version: cli['bugtracker-utility-version'], path: cli['bugtracker-utility-path'], copyIfMatching: null, supportsJre: false, status: null},
+          {name: 'vuln-exporter', version: cli['vuln-exporter-version'], path: cli['vuln-exporter-path'], copyIfMatching: null, supportsJre: false, status: null}
         }}
   - log.debug: "Tools to process:"
   - log.debug: ${tools}
@@ -273,140 +220,149 @@ steps:
                         tool.status: failed
                                 
             # Auto-detect mode: try to find pre-installed tool
-            # Build register command with optional version filter
-            # NOTE: --require-latest ensures any pre-installed version is the latest available
-            #       in tool definitions that matches the version pattern.
-            #       Examples:
-            #         - Pattern "v3" with v3.5.0 installed: Rejects if v3.6.1 is latest v3.x
-            #         - Pattern "latest" with any version: Requires absolute latest
-            #         - Pattern "v3.6.1" with v3.6.1 installed: Accepts (exact match is latest)
-            #       Only "auto" and "preinstalled" skip this validation (accept any version).
             - if: ${tool.path == null}
-              var.set:
-                tool.registerCmd: tool ${tool.name} register --auto-detect
-            - if: ${tool.path == null && tool.version != 'auto' && tool.version != 'preinstalled'}
-              var.set:
-                tool.registerCmd: ${tool.registerCmd} --version ${tool.version} --require-latest
-            - if: ${tool.path == null}
-              run.fcli:
-                AUTO_DETECT:
-                  cmd: ${tool.registerCmd}
-                  stderr: collect
-                  records.for-each:
-                    record.var-name: register_result
-                    do:
-                      - var.set:
-                          tool.registeredInstallDir: ${register_result.installDir}
-                          tool.registeredBinDir: ${register_result.binDir}
-                          tool.actualVersion: ${register_result.version}
-                  on.fail:
-                    - if: ${tool.version=='preinstalled'}
-                      throw: "Tool ${tool.name} must be pre-installed but was not found"
-                    - if: ${cli['air-gapped']}
-                      throw: "Tool ${tool.name} must be pre-installed (--air-gapped mode) but was not found"
-                    - log.progress: "No matching ${tool.name} version found during auto-detect, continuing installation"
-            
-            # Check if registered tool location matches target directory
-            # If using --use-tool-cache or --base-dir, we may need to copy the tool to the target location
-            - if: ${tool.path == null && tool.registeredInstallDir != null}
-              var.set:
-                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-            - if: ${tool.path == null && tool.registeredInstallDir != null && cli['use-tool-cache'] == true && global.ci.toolCacheDirPattern != null}
-              var.set:
-                tool.expectedCacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
-            - if: ${tool.path == null && tool.registeredInstallDir != null && cli['base-dir'] != null}
-              var.set:
-                tool.expectedBaseDir: "${cli['base-dir']}/${tool.name}/${tool.actualVersion}"
-            
-            # If tool is registered but not in the expected location, we'll use --copy-from
-            - if: ${tool.path == null && tool.registeredInstallDir != null}
-              var.set:
-                tool.needsCopy: ${(tool.expectedCacheDir != null && !tool.registeredInstallDir.equals(tool.expectedCacheDir)) || (tool.expectedBaseDir != null && !tool.registeredInstallDir.equals(tool.expectedBaseDir))}
-            - if: ${tool.path == null && tool.registeredInstallDir == null}
-              var.set:
-                tool.needsCopy: false
+              steps:
+                # Build register command with optional version filter
+                # NOTE: By default, register requires detected version to be the latest available
+                #       in tool definitions that matches the version pattern.
+                #       Examples:
+                #         - Pattern "v3" with v3.5.0 installed: Rejects if v3.6.1 is latest v3.x
+                #         - Pattern "latest" with any version: Requires absolute latest
+                #         - Pattern "v3.6.1" with v3.6.1 installed: Accepts (exact match is latest)
+                #       Only "auto" and "preinstalled" skip this validation (accept any version).
+                #       Use --any-matching to accept any version matching the pattern.
+                - var.set:
+                    tool.registerCmd: tool ${tool.name} register --auto-detect
+                - if: ${tool.version != 'auto' && tool.version != 'preinstalled'}
+                  var.set:
+                    tool.registerCmd: ${tool.registerCmd} --version ${tool.version}
+                - run.fcli:
+                    AUTO_DETECT:
+                      cmd: ${tool.registerCmd}
+                      stderr: collect
+                      records.for-each:
+                        record.var-name: register_result
+                        do:
+                          - var.set:
+                              tool.registeredInstallDir: ${register_result.installDir}
+                              tool.registeredBinDir: ${register_result.binDir}
+                              tool.actualVersion: ${register_result.version}
+                      on.fail:
+                        - if: ${tool.version=='preinstalled'}
+                          throw: "Tool ${tool.name} must be pre-installed but was not found"
+                        - if: ${cli['air-gapped']}
+                          throw: "Tool ${tool.name} must be pre-installed (--air-gapped mode) but was not found"
+                        - log.progress: "No matching ${tool.name} version found during auto-detect, continuing installation"
                 
-            # Mark as registered if no copy is needed
-            - if: ${tool.path == null && tool.registeredInstallDir != null && tool.needsCopy == false}
-              var.set:
-                tool.status: registered-preinstalled
-                tool.installDir: ${tool.registeredInstallDir}
-                tool.binDir: ${tool.registeredBinDir}
-            
-            # Determine JRE for tools that support it (before build install command)
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] != 'no'}
-              var.set:
-                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto'}
-              run.fcli:
-                GET_JRE_REQUIREMENT:
-                  cmd: tool ${tool.name} get ${tool.installVersion}
-                  records.for-each:
-                    record.var-name: version_info
-                    do:
-                      - var.set:
-                          tool.requiredJre: ${version_info.extraProperties?.jre}
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.requiredJre != null}
-              var.set:
-                tool.detectedJreHome: ${#env('SCANCENTRAL_JAVA_HOME')}
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
-              var.set:
-                tool.detectedJreHome: ${global.ci['java'+tool.requiredJre+'Home']}
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.requiredJre != null && tool.detectedJreHome == null}
-              var.set:
-                tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
-            
-            # Build install command
-            # If tool is registered but needs to be copied to a different location, use --copy-from
-            - if: ${tool.status==null && tool.needsCopy == true}
-              var.set:
-                tool.installCmd: tool ${tool.name} install --copy-from "${tool.registeredBinDir}"
-            # If tool has explicit copyFrom path (e.g., fcli bootstrap)
-            - if: ${tool.status==null && tool.needsCopy != true && tool.copyFrom != null}
-              var.set:
-                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-                tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyFrom}" --version ${tool.installVersion} --on-copy-version-mismatch ${cli['on-copy-version-mismatch']}
-            # Otherwise, install normally from download
-            - if: ${tool.status==null && tool.needsCopy != true && tool.copyFrom == null}
-              var.set:
-                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-                tool.installCmd: tool ${tool.name} install --version ${tool.installVersion}
-            - if: ${tool.status==null && cli['base-dir'] != null}
-              var.set:
-                tool.installCmd: ${tool.installCmd} --base-dir "${cli['base-dir']}"
-            - if: ${tool.status==null && cli['use-tool-cache'] == true && global.ci.toolCacheDirPattern != null}
-              var.set:
-                tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
-                tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
-                tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
-            
-            # Add JRE options for tools that support it
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'yes'}
-              var.set:
-                tool.installCmd: ${tool.installCmd} --with-jre
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.detectedJreHome != null}
-              var.set:
-                tool.installCmd: ${tool.installCmd} --jre "${tool.detectedJreHome}"
-            - if: ${tool.status==null && tool.supportsJre == true && cli['with-jre'] == 'auto' && tool.detectedJreHome == null}
-              var.set:
-                tool.installCmd: ${tool.installCmd} --with-jre
-            
-            # Execute installation
-            - if: ${tool.status==null}
-              run.fcli:
-                INSTALL:
-                  cmd: ${tool.installCmd}
-                  records.for-each:
-                    record.var-name: install_result
-                    do:
-                      - var.set:
-                          tool.status: ${tool.needsCopy ? 'copied':'installed'}
-                          tool.installDir: ${install_result.installDir}
-                          tool.binDir: ${install_result.binDir}
-                          tool.actualVersion: ${install_result.version}
-                  on.fail:
+                # Check if registered tool location matches target directory
+                # If using --use-tool-cache or --base-dir, we may need to copy the tool to the target location
+                - if: ${tool.registeredInstallDir != null}
+                  steps:
                     - var.set:
-                        tool.status: failed
+                        tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                    - if: ${cli['use-tool-cache'] == true && global.ci.toolCacheDirPattern != null}
+                      var.set:
+                        tool.expectedCacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
+                    - if: ${cli['base-dir'] != null}
+                      var.set:
+                        tool.expectedBaseDir: "${cli['base-dir']}/${tool.name}/${tool.actualVersion}"
+                    
+                    # If tool is registered but not in the expected location, we'll use --copy-from
+                    - var.set:
+                        tool.needsCopy: ${(tool.expectedCacheDir != null && !tool.registeredInstallDir.equals(tool.expectedCacheDir)) || (tool.expectedBaseDir != null && !tool.registeredInstallDir.equals(tool.expectedBaseDir))}
+                        
+                    # Mark as registered if no copy is needed
+                    - if: ${tool.needsCopy == false}
+                      var.set:
+                        tool.status: registered-preinstalled
+                        tool.installDir: ${tool.registeredInstallDir}
+                        tool.binDir: ${tool.registeredBinDir}
+                
+                - if: ${tool.registeredInstallDir == null}
+                  var.set:
+                    tool.needsCopy: false
+            
+            # Tool needs installation
+            - if: ${tool.status == null}
+              steps:
+                # Determine JRE for tools that support it (before build install command)
+                - if: ${tool.supportsJre == true && cli['with-jre'] != 'no'}
+                  steps:
+                    - var.set:
+                        tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                    - if: ${cli['with-jre'] == 'auto'}
+                      steps:
+                        - run.fcli:
+                            GET_JRE_REQUIREMENT:
+                              cmd: tool ${tool.name} get ${tool.installVersion}
+                              records.for-each:
+                                record.var-name: version_info
+                                do:
+                                  - var.set:
+                                      tool.requiredJre: ${version_info.extraProperties?.jre}
+                        - if: ${tool.requiredJre != null}
+                          steps:
+                            - var.set:
+                                tool.detectedJreHome: ${#env('SCANCENTRAL_JAVA_HOME')}
+                            - if: ${tool.detectedJreHome == null}
+                              var.set:
+                                tool.detectedJreHome: ${global.ci['java'+tool.requiredJre+'Home']}
+                            - if: ${tool.detectedJreHome == null}
+                              var.set:
+                                tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
+                
+                # Build install command
+                # If tool is registered but needs to be copied to a different location, use --copy-from
+                - if: ${tool.needsCopy == true}
+                  var.set:
+                    tool.installCmd: tool ${tool.name} install --copy-from "${tool.registeredBinDir}"
+                # If tool has explicit copyIfMatching path (e.g., fcli bootstrap)
+                - if: ${tool.needsCopy != true && tool.copyIfMatching != null}
+                  var.set:
+                    tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                    tool.installCmd: tool ${tool.name} install --copy-from "${tool.copyIfMatching}" --on-copy-version-mismatch skip --version ${tool.installVersion}
+                # Otherwise, install normally from download
+                - if: ${tool.needsCopy != true && tool.copyIfMatching == null}
+                  var.set:
+                    tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                    tool.installCmd: tool ${tool.name} install --version ${tool.installVersion}
+                - if: ${cli['base-dir'] != null}
+                  var.set:
+                    tool.installCmd: ${tool.installCmd} --base-dir "${cli['base-dir']}"
+                - if: ${cli['use-tool-cache'] == true && global.ci.toolCacheDirPattern != null}
+                  var.set:
+                    tool.installVersion: "${tool.version == 'auto' ? 'latest' : tool.version}"
+                    tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.installVersion)}
+                    tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
+                
+                # Add JRE options for tools that support it
+                - if: ${tool.supportsJre == true}
+                  steps:
+                    - if: ${cli['with-jre'] == 'yes'}
+                      var.set:
+                        tool.installCmd: ${tool.installCmd} --with-jre
+                    - if: ${cli['with-jre'] == 'auto' && tool.detectedJreHome != null}
+                      var.set:
+                        tool.installCmd: ${tool.installCmd} --jre "${tool.detectedJreHome}"
+                    - if: ${cli['with-jre'] == 'auto' && tool.detectedJreHome == null}
+                      var.set:
+                        tool.installCmd: ${tool.installCmd} --with-jre
+                
+                # Execute installation
+                - run.fcli:
+                    INSTALL:
+                      cmd: ${tool.installCmd}
+                      records.for-each:
+                        record.var-name: install_result
+                        do:
+                          - var.set:
+                              tool.status: ${tool.needsCopy ? 'copied':'installed'}
+                              tool.installDir: ${install_result.installDir}
+                              tool.binDir: ${install_result.binDir}
+                              tool.actualVersion: ${install_result.version}
+                      on.fail:
+                        - var.set:
+                            tool.status: failed
   
   # ===== PHASE 5: GENERATE ENVIRONMENT OUTPUT =====
   

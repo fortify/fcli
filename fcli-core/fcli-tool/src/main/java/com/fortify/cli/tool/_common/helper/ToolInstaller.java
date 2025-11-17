@@ -42,7 +42,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Builder
 public final class ToolInstaller {
     @Getter private final String toolName;
@@ -61,6 +63,7 @@ public final class ToolInstaller {
     private final LazyObject<ToolInstallationDescriptor> _previousInstallationDescriptor = new LazyObject<>();
     private final LazyObject<Path> _targetPath = new LazyObject<>();
     private final LazyObject<Path> _globalBinPath = new LazyObject<>();
+    private boolean skippedCopyFrom;
     
     @Data
     public static final class ToolInstallationResult {
@@ -88,9 +91,25 @@ public final class ToolInstaller {
     
     public final ToolDefinitionVersionDescriptor getVersionDescriptor() {
         return _versionDescriptor.get(()->{
-            String version = versionDetector.apply(this);
-            return getDefinitionRootDescriptor().getVersionOrDefault(version);
+            String detectedVersion = versionDetector.apply(this);
+            var rootDescriptor = getDefinitionRootDescriptor();
+            
+            // Try to find version in definitions
+            try {
+                return rootDescriptor.getVersionOrDefault(detectedVersion);
+            } catch (IllegalArgumentException e) {
+                // Version not found in definitions - treat as non-matching and use requested version
+                log.info("Detected version {} from --copy-from not found in tool definitions. " +
+                    "Downloading requested version {} instead.",
+                    detectedVersion, requestedVersion);
+                skippedCopyFrom = true;
+                return rootDescriptor.getVersionOrDefault(requestedVersion);
+            }
         });
+    }
+    
+    public final boolean isSkippedCopyFrom() {
+        return skippedCopyFrom;
     }
     
     public final ToolInstallationDescriptor getPreviousInstallationDescriptor() {

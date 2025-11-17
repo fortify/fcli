@@ -61,8 +61,8 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     @Option(names = {"-v", "--version"}, required = false, descriptionKey = "fcli.tool.register.version")
     private String requestedVersion = "any";
     
-    @Option(names = {"--require-latest"}, required = false, descriptionKey = "fcli.tool.register.require-latest")
-    private boolean requireLatest = false;
+    @Option(names = {"--any-matching"}, required = false, descriptionKey = "fcli.tool.register.any-matching")
+    private boolean anyMatching = false;
     
     private static final class RegisterModeArgGroup {
         @Option(names = {"--auto-detect"}, required = true, descriptionKey = "fcli.tool.register.auto-detect")
@@ -152,12 +152,13 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
             }
         }
         
-        // If --require-latest is specified, verify this is the latest version matching the requested pattern
-        if (requireLatest && !"any".equals(requestedVersion) && !"preinstalled".equals(requestedVersion)) {
+        // By default, verify that detected version is the latest matching the requested pattern
+        // unless --any-matching is specified
+        if (!anyMatching && !"any".equals(requestedVersion) && !"preinstalled".equals(requestedVersion)) {
             String latestMatchingVersion = findLatestMatchingVersion(requestedVersion);
             if (latestMatchingVersion != null && !versionDescriptor.getVersion().equals(latestMatchingVersion)) {
                 throw new FcliSimpleException(
-                    String.format("Detected %s version %s matches requested version %s but is not the latest available (%s)", 
+                    String.format("Detected %s version %s matches requested version %s but is not the latest available (%s). Use --any-matching to accept any matching version", 
                         getToolName(), versionDescriptor.getVersion(), requestedVersion, latestMatchingVersion))
                     .exitCode(ExitCode.VERSION_NOT_LATEST.getCode());
             }

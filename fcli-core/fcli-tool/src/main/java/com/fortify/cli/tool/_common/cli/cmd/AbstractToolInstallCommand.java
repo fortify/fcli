@@ -285,11 +285,20 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
      * This method checks if the copy-from version matches the requested version
      * and handles version mismatches according to the --on-copy-version-mismatch setting.
      * 
+     * If copy-from was skipped (version not in definitions), falls back to download.
+     * 
      * @param installer The tool installer
      * @param artifactDescriptor The artifact descriptor (may be null for copy-from mode)
      */
     @SneakyThrows
     private void installFromCopyWithVersionCheck(ToolInstaller installer, Object artifactDescriptor) {
+        // Check if copy-from was skipped due to version not in definitions
+        if (installer.isSkippedCopyFrom()) {
+            // Fall back to default installer (download from tool definitions)
+            defaultInstaller(installer, artifactDescriptor);
+            return;
+        }
+        
         String copyFromVersion = installer.getToolVersion();
         String requestedVersion = installer.getRequestedVersion();
         
@@ -366,13 +375,13 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
      */
     protected String detectVersionFromCopySource(ToolInstaller installer) {
         File sourceDir = resolveCopySourceDirectory();
-        String version = detectVersionFromInstallDescriptor(sourceDir);
-        if (version != null) {
-            return version;
+        String detectedVersion = detectVersionFromInstallDescriptor(sourceDir);
+        if (detectedVersion == null) {
+            throw new FcliSimpleException(
+                "Cannot detect version from --copy-from path. Only tools previously installed through fcli are supported " +
+                "for --copy-from unless the tool command provides a custom implementation.");
         }
-        throw new FcliSimpleException(
-            "Cannot detect version from --copy-from path. Only tools previously installed through fcli are supported " +
-            "for --copy-from unless the tool command provides a custom implementation.");
+        return detectedVersion;
     }
     
     /**
