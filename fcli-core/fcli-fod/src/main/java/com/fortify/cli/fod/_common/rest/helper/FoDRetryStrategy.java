@@ -12,11 +12,11 @@
  */
 package com.fortify.cli.fod._common.rest.helper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.protocol.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements an Apache HttpClient 4.x {@link ServiceUnavailableRetryStrategy}
