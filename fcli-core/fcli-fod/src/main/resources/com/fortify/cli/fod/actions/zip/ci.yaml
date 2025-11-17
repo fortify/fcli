@@ -52,7 +52,7 @@ steps:
         ${
             #fcliCmdSkipFromEnvReason('SAST_SCAN', false)
         }
-      wait.skipReason: > # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
+      wait.skipReason: >- # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
         ${
             #fcliCmdSkipFromEnvReason('WAIT', false)
             ?:#fcliCmdSkipFromEnvReason('SAST_WAIT', false) 
@@ -60,10 +60,7 @@ steps:
       # Post-scan tasks will be skipped if wait is skipped or if no scans were completed
       # successfully. Post-scan skip reason will be reset to null once the wait task for
       # any scan completed successfully. 
-      postScan.skipReason: >
-        ${
-            wait.skipReason?:'No scans have been run because they failed or were skipped'
-        }
+      postScan.skipReason: ${#ifBlank(wait.skipReason,'No scans have been run because they failed or were skipped')}
         
   # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
   # continue to run on failures due to config:run.fcli.status.check.default being set to false.

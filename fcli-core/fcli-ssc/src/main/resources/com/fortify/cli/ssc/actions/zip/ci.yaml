@@ -74,7 +74,7 @@ steps:
         }
       aviator.loginOpts: --url=AVIATOR_URL
       aviator.app: ${#env('AVIATOR_APP')?:'::av::application.name'}
-      wait.skipReason: > # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
+      wait.skipReason: >- # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
         ${
             #fcliCmdSkipFromEnvReason('WAIT', false)
             ?:#fcliCmdSkipFromEnvReason('SAST_WAIT', false) 
@@ -82,10 +82,7 @@ steps:
       # Post-scan tasks will be skipped if wait is skipped or if no scans were completed
       # successfully. Post-scan skip reason will be reset to null once the wait task for
       # any scan completed successfully. 
-      postScan.skipReason: >
-        ${
-            wait.skipReason?:'No scans have been run because they failed or were skipped'
-        }
+      postScan.skipReason: ${#ifBlank(wait.skipReason,'No scans have been run because they failed or were skipped')}
 
   # Set up Aviator session if necessary
   - with:
