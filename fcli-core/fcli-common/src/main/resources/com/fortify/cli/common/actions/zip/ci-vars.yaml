@@ -15,119 +15,125 @@ config:
   mcp: exclude
   
 steps:
-  # Set default ci values. Where possible, steps below should override these
-  # variables with CI-specific values
-  - var.set:
-      global.ci.name:                # Name of current CI system
-      global.ci.id:                  # Id of current CI system, used to look up <id>-* actions 
-      global.ci.qualifiedRepoName:   # Fully qualified repository name
-      global.ci.sourceBranch:        # The current branch being processed/scanned 
-      global.ci.commitSHA:           # Commit SHA for current commit
-      global.ci.sourceDir:           # Directory containing source files to be scanned
-      global.ci.toolCacheBaseDir:    # Platform's root tool cache directory
-      global.ci.toolCacheDirPattern: # Pattern for tool installation paths (with {tool} and {version} placeholders)
-      global.ci.java8Home:           # Path to Java 8 installation (if available)
-      global.ci.java11Home:          # Path to Java 11 installation (if available)
-      global.ci.java17Home:          # Path to Java 17 installation (if available)
-      global.ci.java21Home:          # Path to Java 21 installation (if available)
-      # The following are set by default at the end, but may be overridden by individual CI configurations
-      global.fod.prCommentAction:   # FoD PR comment action
-      global.ssc.prCommentAction:   # SSC PR comment action
-      global.fod.sastExportAction:  # FoD SAST export action
-      global.ssc.sastExportAction:  # SSC SAST export action
-      global.fod.dastExportAction:  # FoD DAST export action
-      global.ssc.dastExportAction:  # SSC DAST export action
-      global.fod.scaExportAction:   # FoD SCA (composition analysis) export action
-      global.ssc.scaExportAction:   # SSC SCA (composition analysis) export action
-  
-  # GitHub
-  - if: ${#isNotBlank(#env('GITHUB_REPOSITORY'))}
-    var.set:
-      global.ci.name:                GitHub
-      global.ci.id:                  github
-      global.ci.qualifiedRepoName:   ${#env('GITHUB_REPOSITORY')}
-      global.ci.sourceBranch:        ${#env('GITHUB_HEAD_REF')?:#env('GITHUB_REF_NAME')}
-      global.ci.commitSHA:           ${#env('GITHUB_SHA')}
-      global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('GITHUB_WORKSPACE')?:'.'}
-      global.ci.toolCacheBaseDir:    ${#env('RUNNER_TOOL_CACHE')}
-      global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, '{tool}/{version}',#env("RUNNER_ARCH")?:'x64')}
-      global.ci.java8Home:           ${#env('JAVA_HOME_8_X64')}
-      global.ci.java11Home:          ${#env('JAVA_HOME_11_X64')}
-      global.ci.java17Home:          ${#env('JAVA_HOME_17_X64')}
-      global.ci.java21Home:          ${#env('JAVA_HOME_21_X64')}
+  # Only run if not run before; global.ci.isInitialized is set at the end of this action
+  - if: ${global.isCiInitialized==null}
+    steps:
+      # Set default ci values. Where possible, steps below should override these
+      # variables with CI-specific values
+      - var.set:
+          global.ci.name:                # Name of current CI system
+          global.ci.id:                  # Id of current CI system, used to look up <id>-* actions 
+          global.ci.qualifiedRepoName:   # Fully qualified repository name
+          global.ci.sourceBranch:        # The current branch being processed/scanned 
+          global.ci.commitSHA:           # Commit SHA for current commit
+          global.ci.sourceDir:           # Directory containing source files to be scanned
+          global.ci.toolCacheBaseDir:    # Platform's root tool cache directory
+          global.ci.toolCacheDirPattern: # Pattern for tool installation paths (with {tool} and {version} placeholders)
+          global.ci.java8Home:           # Path to Java 8 installation (if available)
+          global.ci.java11Home:          # Path to Java 11 installation (if available)
+          global.ci.java17Home:          # Path to Java 17 installation (if available)
+          global.ci.java21Home:          # Path to Java 21 installation (if available)
+          # The following are set by default at the end, but may be overridden by individual CI configurations
+          global.fod.prCommentAction:   # FoD PR comment action
+          global.ssc.prCommentAction:   # SSC PR comment action
+          global.fod.sastExportAction:  # FoD SAST export action
+          global.ssc.sastExportAction:  # SSC SAST export action
+          global.fod.dastExportAction:  # FoD DAST export action
+          global.ssc.dastExportAction:  # SSC DAST export action
+          global.fod.scaExportAction:   # FoD SCA (composition analysis) export action
+          global.ssc.scaExportAction:   # SSC SCA (composition analysis) export action
       
-  # GitLab
-  - if: ${#env('GITLAB_CI')=='true'}
-    var.set:
-      global.ci.name:                GitLab
-      global.ci.id:                  gitlab
-      global.ci.qualifiedRepoName:   ${#env('CI_REPOSITORY_URL')?.replaceAll('[^:]+://[^/]+/','')?.replaceAll('\.git$', '')}
-      global.ci.sourceBranch:        ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
-      global.ci.commitSHA:           ${#env('CI_COMMIT_SHA')}
-      global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
-      global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('CI_PROJECT_DIR'),'fortify',#env('CI_JOB_NAME')?:'job','tools')}
-      global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, '{tool}/{version}')}
-      
-  # Azure DevOps
-  - if: ${#isNotBlank(#env('Build.Repository.Name'))}
-    var.set:
-      global.ci.name:                Azure DevOps
-      global.ci.id:                  ado
-      global.ci.qualifiedRepoName:   ${#env('Build.Repository.Name')}
-      global.ci.sourceBranch:        ${(#env('Build.SourceBranch')?:'').matches('refs/pull/.*')?((#env('System.PullRequest.SourceBranch')?:#env('System.PullRequest.SourceBranchName')?:'').replaceAll('^refs/heads/','')):((#env('Build.SourceBranchName')?:#env('Build.SourceBranch')?:'').replaceAll('^refs/heads/','')) }
-      global.ci.commitSHA:           ${#env('Build.SourceVersion')}
-      global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
-      global.ci.toolCacheBaseDir:    ${#env('AGENT_TOOLSDIRECTORY')}
-      global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, 'fortify/{tool}/{version}',#env('Agent.OSArchitecture')?.toLowerCase()?:'x64')}
-      global.ci.java8Home:           ${#env('JAVA_HOME_8_X64')}
-      global.ci.java11Home:          ${#env('JAVA_HOME_11_X64')}
-      global.ci.java17Home:          ${#env('JAVA_HOME_17_X64')}
-      global.ci.java21Home:          ${#env('JAVA_HOME_21_X64')}
-
-  # Jenkins
-  - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
-    var.set:
-      global.ci.name:                Jenkins
-      global.ci.id:                  jenkins
-      global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('WORKSPACE')?:'.'}
-      global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('WORKSPACE')?:#env('HOME'),'.fortify/tools')}
-      global.ci.toolCacheDirPattern: ${#joinOrNull('/',global.ci.toolCacheBaseDir,'{tool}/{version}')}
-
-  # Generic local repository fallback (run if previous CI-specific steps didn't set these)
-  - var.set:
-      global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,#env('SOURCE_DIR')?:'.')}
-  - var.set:
-      global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
-  - if: ${#isBlank(global.ci.id) && global.ci.localRepo!=null}
-    var.set:
-      global.ci.name:              local Git repository
-      global.ci.id:                local-git
-      global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository?.name?.full?:global.ci.localRepo?.repository?.name?.short}
-      global.ci.sourceBranch:      ${global.ci.localRepo?.branch?.short}
-      global.ci.commitSHA:         ${global.ci.localRepo?.commit?.id?.full}
-
-  # Tool cache fallback (if not set by platform-specific section)
-  - if: ${#isBlank(global.ci.toolCacheBaseDir)}
-    var.set:
-      global.ci.toolCacheBaseDir: ${#joinOrNull('/',#env('HOME'),'fortify/tools')}
-      global.ci.toolCacheDirPattern: ${#joinOrNull('/',global.ci.toolCacheBaseDir,'{tool}/{version}')}
-
-  # Additional generic variables based on the output of the CI-specific sections above
-  - var.set:
-      global.ci.defaultFortifyRepo:  ${#joinOrNull(':', global.ci.qualifiedRepoName, global.ci.sourceBranch)}
-      # Set default reporting actions based on ci identifier. Note that FoD/SSC CI actions should check existence of these actions 
-      # TODO Only use default values if not explicitly defined in CI-specific sections above.
-      global.ci.fod_prCommentAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'pr-comment'))}
-      global.ci.ssc_prCommentAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'pr-comment'))}
-      global.ci.fod_sastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'sast-report'))}
-      global.ci.ssc_sastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'sast-report'))}
-      global.ci.fod_dastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'dast-report'))}
-      global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
-      global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
-      global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
-  - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
-  - records.for-each:
-      from: ${#properties(global.ci)}
-      record.var-name: p
-      do:
-        - log.info: "${'  '+p.key+': '+p.value}"
+      # GitHub
+      - if: ${#isNotBlank(#env('GITHUB_REPOSITORY'))}
+        var.set:
+          global.ci.name:                GitHub
+          global.ci.id:                  github
+          global.ci.qualifiedRepoName:   ${#env('GITHUB_REPOSITORY')}
+          global.ci.sourceBranch:        ${#env('GITHUB_HEAD_REF')?:#env('GITHUB_REF_NAME')}
+          global.ci.commitSHA:           ${#env('GITHUB_SHA')}
+          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('GITHUB_WORKSPACE')?:'.'}
+          global.ci.toolCacheBaseDir:    ${#env('RUNNER_TOOL_CACHE')}
+          global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, '{tool}/{version}',#env("RUNNER_ARCH")?:'x64')}
+          global.ci.java8Home:           ${#env('JAVA_HOME_8_X64')}
+          global.ci.java11Home:          ${#env('JAVA_HOME_11_X64')}
+          global.ci.java17Home:          ${#env('JAVA_HOME_17_X64')}
+          global.ci.java21Home:          ${#env('JAVA_HOME_21_X64')}
+          
+      # GitLab
+      - if: ${#env('GITLAB_CI')=='true'}
+        var.set:
+          global.ci.name:                GitLab
+          global.ci.id:                  gitlab
+          global.ci.qualifiedRepoName:   ${#env('CI_REPOSITORY_URL')?.replaceAll('[^:]+://[^/]+/','')?.replaceAll('\.git$', '')}
+          global.ci.sourceBranch:        ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
+          global.ci.commitSHA:           ${#env('CI_COMMIT_SHA')}
+          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
+          global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('CI_PROJECT_DIR'),'fortify',#env('CI_JOB_NAME')?:'job','tools')}
+          global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, '{tool}/{version}')}
+          
+      # Azure DevOps
+      - if: ${#isNotBlank(#env('Build.Repository.Name'))}
+        var.set:
+          global.ci.name:                Azure DevOps
+          global.ci.id:                  ado
+          global.ci.qualifiedRepoName:   ${#env('Build.Repository.Name')}
+          global.ci.sourceBranch:        ${(#env('Build.SourceBranch')?:'').matches('refs/pull/.*')?((#env('System.PullRequest.SourceBranch')?:#env('System.PullRequest.SourceBranchName')?:'').replaceAll('^refs/heads/','')):((#env('Build.SourceBranchName')?:#env('Build.SourceBranch')?:'').replaceAll('^refs/heads/','')) }
+          global.ci.commitSHA:           ${#env('Build.SourceVersion')}
+          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
+          global.ci.toolCacheBaseDir:    ${#env('AGENT_TOOLSDIRECTORY')}
+          global.ci.toolCacheDirPattern: ${#joinOrNull('/', global.ci.toolCacheBaseDir, 'fortify/{tool}/{version}',#env('Agent.OSArchitecture')?.toLowerCase()?:'x64')}
+          global.ci.java8Home:           ${#env('JAVA_HOME_8_X64')}
+          global.ci.java11Home:          ${#env('JAVA_HOME_11_X64')}
+          global.ci.java17Home:          ${#env('JAVA_HOME_17_X64')}
+          global.ci.java21Home:          ${#env('JAVA_HOME_21_X64')}
+    
+      # Jenkins
+      - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
+        var.set:
+          global.ci.name:                Jenkins
+          global.ci.id:                  jenkins
+          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('WORKSPACE')?:'.'}
+          global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('WORKSPACE')?:#env('HOME'),'.fortify/tools')}
+          global.ci.toolCacheDirPattern: ${#joinOrNull('/',global.ci.toolCacheBaseDir,'{tool}/{version}')}
+    
+      # Generic local repository fallback (run if previous CI-specific steps didn't set these)
+      - var.set:
+          global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,#env('SOURCE_DIR')?:'.')}
+      - var.set:
+          global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
+      - if: ${#isBlank(global.ci.id) && global.ci.localRepo!=null}
+        var.set:
+          global.ci.name:              local Git repository
+          global.ci.id:                local-git
+          global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository?.name?.full?:global.ci.localRepo?.repository?.name?.short}
+          global.ci.sourceBranch:      ${global.ci.localRepo?.branch?.short}
+          global.ci.commitSHA:         ${global.ci.localRepo?.commit?.id?.full}
+    
+      # Tool cache fallback (if not set by platform-specific section)
+      - if: ${#isBlank(global.ci.toolCacheBaseDir)}
+        var.set:
+          global.ci.toolCacheBaseDir: ${#joinOrNull('/',#env('HOME'),'fortify/tools')}
+          global.ci.toolCacheDirPattern: ${#joinOrNull('/',global.ci.toolCacheBaseDir,'{tool}/{version}')}
+    
+      # Additional generic variables based on the output of the CI-specific sections above
+      - var.set:
+          global.ci.defaultFortifyRepo:  ${#joinOrNull(':', global.ci.qualifiedRepoName, global.ci.sourceBranch)}
+          # Set default reporting actions based on ci identifier. Note that FoD/SSC CI actions should check existence of these actions 
+          # TODO Only use default values if not explicitly defined in CI-specific sections above.
+          global.ci.fod_prCommentAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'pr-comment'))}
+          global.ci.ssc_prCommentAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'pr-comment'))}
+          global.ci.fod_sastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'sast-report'))}
+          global.ci.ssc_sastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'sast-report'))}
+          global.ci.fod_dastExportAction:  ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'dast-report'))}
+          global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
+          global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+          global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+      - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
+      - records.for-each:
+          from: ${#properties(global.ci)}
+          record.var-name: p
+          do:
+            - log.info: "${'  '+p.key+': '+p.value}"
+      # Mark as initialized to prevent re-running this action
+      - var.set:
+          global.isCiInitialized: true

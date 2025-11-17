@@ -149,7 +149,7 @@ steps:
   - if: ${!cli['air-gapped']}
     run.fcli:
       UPDATE_TOOL_DEFINITIONS:
-        cmd: tool definitions update ${#joinOrNull('=','--source',cli['tool-definitions'])?:""}
+        cmd: tool definitions update ${#isBlank(cli['tool-definitions'])?'':('"--source='+cli['tool-definitions']+'"')}
       
   # ===== PHASE 3: DEFINE TOOL METADATA =====
   

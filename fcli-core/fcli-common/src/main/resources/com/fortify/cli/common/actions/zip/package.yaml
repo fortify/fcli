@@ -59,8 +59,8 @@ steps:
   - var.set:
       global.package.output: ${#resolveAgainstCurrentWorkDir(#isNotBlank(cli.usePackage)?cli.usePackage:cli.output)}
   - if: ${#isBlank(cli.usePackage)}
-    run.fcli:
-      UPDATE_TOOL_DEFINITIONS: fcli tool definitions update ${cli.toolDefinitions?:""}
-      INSTALL_SC_CLIENT: fcli tool sc-client install -v ${cli.scClientVersion} --with-jre
-      RUN_SC_CLIENT: fcli tool sc-client run -v ${cli.scClientVersion} --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}
+    steps:
+      - run.fcli:
+          SETUP_TOOLS: fcli action run fortify-setup "--sc-client=${cli.scClientVersion}" "--tool-definitions=${cli.toolDefinitions}"
+          RUN_SC_CLIENT: fcli tool sc-client run -v ${cli.scClientVersion} --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}
       
