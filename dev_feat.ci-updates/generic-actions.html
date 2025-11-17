@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20251117.103531-dev_feat.ci-updates
+fcli_version: 0.20251117.142030-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251117.103531-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.103531-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.142030-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251117.103531-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251117.142030-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -529,27 +529,28 @@ to generate environment variables for shell scripts or CI/CD systems.</p>
 <div class="paragraph">
 <p>Examples:
   # Minimal: install sc-client only
-  <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client-version 24.4.0</p>
+  <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0</p>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre># Pre-installed tools (air-gapped)
 link:manpage/fcli-action-run.html[fcli action run] fortify-setup --air-gapped \
-  --sc-client-version auto --fod-uploader-version auto</pre>
+  --sc-client auto --fod-uploader auto</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre># Platform tool cache
 link:manpage/fcli-action-run.html[fcli action run] fortify-setup --use-tool-cache \
-  --sc-client-version latest --debricked-cli-version v2</pre>
+  --sc-client latest --debricked-cli v2</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre># Docker multi-stage build
-link:manpage/fcli-action-run.html[fcli action run] fortify-setup --fcli-copy-from /base/usr/bin/fcli \
-  --base-dir /opt/fortify --sc-client-version 24.4.0</pre>
+<pre># Docker multi-stage build, installing from preinstalled fcli
+link:manpage/fcli-action-run.html[fcli action run] fortify-setup --self /base/usr/bin/fcli \
+  --fcli auto \
+  --base-dir /opt/fortify --sc-client 24.4.0</pre>
 </div>
 </div>
 </div>
@@ -557,27 +558,27 @@ link:manpage/fcli-action-run.html[fcli action run] fortify-setup --fcli-copy-fro
 <h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
 <div class="dlist">
 <dl>
-<dt class="hdlist1">--fcli-version</dt>
+<dt class="hdlist1">--fcli</dt>
 <dd>
 <p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
 </dd>
-<dt class="hdlist1">--sc-client-version</dt>
+<dt class="hdlist1">--sc-client</dt>
 <dd>
 <p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
 </dd>
-<dt class="hdlist1">--fod-uploader-version</dt>
+<dt class="hdlist1">--fod-uploader</dt>
 <dd>
 <p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
 </dd>
-<dt class="hdlist1">--debricked-cli-version</dt>
+<dt class="hdlist1">--debricked-cli</dt>
 <dd>
 <p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
 </dd>
-<dt class="hdlist1">--bugtracker-utility-version</dt>
+<dt class="hdlist1">--bugtracker-utility</dt>
 <dd>
 <p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
 </dd>
-<dt class="hdlist1">--vuln-exporter-version</dt>
+<dt class="hdlist1">--vuln-exporter</dt>
 <dd>
 <p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
 </dd>
@@ -617,21 +618,9 @@ link:manpage/fcli-action-run.html[fcli action run] fortify-setup --fcli-copy-fro
 <dd>
 <p>Use platform-specific tool cache (detected via ci-vars)</p>
 </dd>
-<dt class="hdlist1">--fcli-copy-from</dt>
-<dd>
-<p>Bootstrap fcli from existing installation (Docker multi-stage builds)</p>
-</dd>
 <dt class="hdlist1">--self</dt>
 <dd>
 <p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
-</dd>
-<dt class="hdlist1">--self-type</dt>
-<dd>
-<p>Type of bootstrapped fcli: stable (pre-installed/cached) or unstable (downloaded). Not intended for end users.</p>
-</dd>
-<dt class="hdlist1">--on-copy-version-mismatch</dt>
-<dd>
-<p>Behavior when --copy-from version doesn&#8217;t match requested version: skip (ignore copy-from and download), copy (copy regardless of version with warning), fail (throw error). Default: skip</p>
 </dd>
 <dt class="hdlist1">--air-gapped</dt>
 <dd>
@@ -706,8 +695,8 @@ specified.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251117.103531-dev_feat.ci-updates<br>
-Last updated 2025-11-17 10:38:24 UTC
+Version 0.20251117.142030-dev_feat.ci-updates<br>
+Last updated 2025-11-17 14:23:28 UTC
 </div>
 </div>
 </body>

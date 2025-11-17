@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.103531-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.142030-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -46,8 +46,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool bugtracker-utility register</strong> [<strong>--require-latest</strong>]
-                                      [<strong>-v</strong>=<em>&lt;requestedVersion&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli tool bugtracker-utility register</strong> [<strong>-v</strong>=<em>&lt;requestedVersion&gt;</em>] [[<strong>-h</strong>]
                                       [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
@@ -101,10 +100,6 @@ fcli_version:
 <dt class="hdlist1"><strong>-p</strong>, <strong>--path</strong>=<em>&lt;explicitPath&gt;</em></dt>
 <dd>
 <p>Explicit path to the tool binary, bin directory, or installation directory.</p>
-</dd>
-<dt class="hdlist1"><strong>--require-latest</strong></dt>
-<dd>
-<p>When specified with a version pattern, require that the detected version is the latest available version matching that pattern. If a matching but non-latest version is found, registration fails. This ensures that pre-installed tools are up-to-date with tool definitions. Only applies when --version is specified (not with 'any' or 'preinstalled').</p>
 </dd>
 <dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;requestedVersion&gt;</em></dt>
 <dd>
@@ -176,7 +171,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-17 10:38:05 UTC
+Last updated 2025-11-17 14:23:10 UTC
 </div>
 </div>
 </body>
