@@ -13,6 +13,7 @@
 package com.fortify.cli.tool._common.cli.cmd;
 
 import java.io.File;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -191,7 +192,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
      * @param candidates List of candidate binary files
      * @return Matching binary file or null if no match
      */
-    private File findMatchingCandidate(java.util.List<File> candidates) {
+    private File findMatchingCandidate(List<File> candidates) {
         var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
         ToolDefinitionVersionDescriptor requestedVersionDescriptor;
         try {

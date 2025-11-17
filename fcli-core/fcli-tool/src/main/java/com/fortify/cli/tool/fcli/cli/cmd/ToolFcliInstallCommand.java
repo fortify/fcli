@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.function.BiFunction;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
@@ -77,17 +78,11 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     }
     
     @Override
-    protected String detectVersionFromCopySource(ToolInstaller installer) {
-        // First try default implementation (fcli install descriptor)
-        try {
-            return super.detectVersionFromCopySource(installer);
-        } catch (Exception e) {
-            // Fall back to direct version detection from binary
-            File sourceBinary = ToolFcliHelper.resolveBinaryFromExplicitPath(getCopyFromPath());
+    protected BiFunction<ToolInstaller, File, String> getToolVersionDetectorCallback() {
+        // Fcli-specific version detection: try install descriptor first, then execute fcli --version
+        return (installer, sourceDir) -> {
+            File sourceBinary = ToolFcliHelper.resolveBinaryFromExplicitPath(sourceDir);
             return ToolFcliHelper.detectVersion(sourceBinary);
-        }
+        };
     }
-    
-    // installFromCopy uses default implementation (copies entire directory tree)
-    // resolveCopySourceDirectory uses default implementation (finds directory with install-descriptor)
 }
