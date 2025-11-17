@@ -1,0 +1,155 @@
+---
+title: fcli-tool-vuln-exporter-env(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-vuln-exporter-env(1)</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.103531-dev_feat.ci-updates" %}
+
+
+<div id="header">
+<h1>fcli-tool-vuln-exporter-env(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-vuln-exporter-env - Output Fortify Vulnerability Exporter environment variables</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool vuln-exporter env</strong> [<strong>--no-comments</strong>] [<strong>--cmd-var</strong>=<em>&lt;cmdVarMode&gt;</em>]
+                            [<strong>--cmd-var-name</strong>=<em>&lt;cmdVarName&gt;</em>] [<strong>--format</strong>=<em>&lt;format&gt;</em>]
+                            [<strong>--home-var</strong>=<em>&lt;homeVarMode&gt;</em>]
+                            [<strong>--home-var-name</strong>=<em>&lt;homeVarName&gt;</em>] [<strong>--path</strong>=<em>&lt;pathMode&gt;</em>]
+                            [<strong>-v</strong>=<em>&lt;version&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                            [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command outputs environment variable definitions for a previously installed or registered Fortify Vulnerability Exporter installation. Use --format to select output format (default: shell).</p>
+</div>
+<div class="paragraph">
+<p>Examples:
+  Shell: source &lt;(fcli tool vuln-exporter env)
+  PowerShell: fcli tool vuln-exporter env --format powershell | Invoke-Expression
+  GitHub Actions: source &lt;(fcli tool vuln-exporter env --format github)
+  Manual copy/paste: fcli tool vuln-exporter env --format azure</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--cmd-var</strong>=<em>&lt;cmdVarMode&gt;</em></dt>
+<dd>
+<p>Control whether *_CMD environment variable should be set (pointing to tool binary). Allowed values: include, exclude, auto. Default: auto.</p>
+</dd>
+<dt class="hdlist1"><strong>--cmd-var-name</strong>=<em>&lt;cmdVarName&gt;</em></dt>
+<dd>
+<p>Override the *_CMD environment variable name. By default, uses the primary tool prefix with _CMD suffix (e.g., SCANCENTRAL_CMD, FCLI_CMD).</p>
+</dd>
+<dt class="hdlist1"><strong>--format</strong>=<em>&lt;format&gt;</em></dt>
+<dd>
+<p>Output format for environment variable definitions. Allowed values: shell, powershell, cmd, github, azure, gitlab. Default value: shell.</p>
+</dd>
+<dt class="hdlist1"><strong>--home-var</strong>=<em>&lt;homeVarMode&gt;</em></dt>
+<dd>
+<p>Control whether *_HOME environment variable should be set (pointing to installation directory). Allowed values: include, exclude, auto. Default: auto.</p>
+</dd>
+<dt class="hdlist1"><strong>--home-var-name</strong>=<em>&lt;homeVarName&gt;</em></dt>
+<dd>
+<p>Override the *_HOME environment variable name. By default, uses the primary tool prefix with _HOME suffix (e.g., SCANCENTRAL_HOME, FCLI_HOME).</p>
+</dd>
+<dt class="hdlist1"><strong>--no-comments</strong></dt>
+<dd>
+<p>Suppress comments in output. When enabled, only environment variable definitions are output without usage comments or headers. Useful when combining output from multiple tools or when comments are generated at a higher level.</p>
+</dd>
+<dt class="hdlist1"><strong>--path</strong>=<em>&lt;pathMode&gt;</em></dt>
+<dd>
+<p>Control whether PATH environment variable should be updated. Allowed values: include, exclude, auto. Default: auto. Auto mode includes PATH update only if the tool&#8217;s bin directory is not already in the current PATH.</p>
+</dd>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;version&gt;</em></dt>
+<dd>
+<p>Tool version for which to generate environment variables. The specified tool version must have been previously installed using the 'install' command or registered via the 'register' command. Default: the tool version that was last installed or registered.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-11-17 10:38:05 UTC
+</div>
+</div>
+</body>
+</html>
