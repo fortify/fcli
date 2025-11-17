@@ -238,7 +238,6 @@ public final class ToolInstaller {
                 postInstallAction.accept(this, result);
             }
             FileUtils.setAllFilePermissions(result.getInstallationDescriptor().getBinPath(), FileUtils.execPermissions, false);
-            writeInstallationInfo(result);
             return result;
         } catch ( IOException e ) {
             throw new FcliSimpleException("Error installing "+toolName, e);
@@ -304,13 +303,6 @@ public final class ToolInstaller {
                     "\n        New: "+targetPath;
             progressWriter.writeWarning(msg);
         }
-    }
-    
-    private final void writeInstallationInfo(ToolInstallationResult installationResult) {
-        var globalBinDir = installationResult.getInstallationDescriptor().getGlobalBinDir(); 
-        var binDir = installationResult.getInstallationDescriptor().getBinDir();
-        progressWriter.writeWarning("INFO: Add the following directory to PATH for easy tool invocation:\n  %s\n", 
-                globalBinDir==null ? binDir : globalBinDir);
     }
     
     private final void checkEmptyTargetPath() throws IOException {

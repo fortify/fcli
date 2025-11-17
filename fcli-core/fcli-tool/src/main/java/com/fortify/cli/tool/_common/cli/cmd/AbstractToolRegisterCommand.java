@@ -21,7 +21,6 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.util.SemVer;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
@@ -60,9 +59,6 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     
     @Option(names = {"-v", "--version"}, required = false, descriptionKey = "fcli.tool.register.version")
     private String requestedVersion = "any";
-    
-    @Option(names = {"--any-matching"}, required = false, descriptionKey = "fcli.tool.register.any-matching")
-    private boolean anyMatching = false;
     
     private static final class RegisterModeArgGroup {
         @Option(names = {"--auto-detect"}, required = true, descriptionKey = "fcli.tool.register.auto-detect")
@@ -143,24 +139,22 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
             versionDescriptor = resolveVersionDescriptor(detectedVersion);
             
             // Validate version matches requested version (if not 'any')
-            // Note: "unknown" versions are handled gracefully - they will only match if requestedVersion is "any" or "unknown"
-            if (!"any".equals(requestedVersion) && !versionMatches(versionDescriptor.getVersion(), requestedVersion)) {
-                throw new FcliSimpleException(
-                    String.format("Detected %s version %s does not match requested version %s", 
-                        getToolName(), versionDescriptor.getVersion(), requestedVersion))
-                    .exitCode(ExitCode.VERSION_MISMATCH.getCode());
-            }
-        }
-        
-        // By default, verify that detected version is the latest matching the requested pattern
-        // unless --any-matching is specified
-        if (!anyMatching && !"any".equals(requestedVersion) && !"preinstalled".equals(requestedVersion)) {
-            String latestMatchingVersion = findLatestMatchingVersion(requestedVersion);
-            if (latestMatchingVersion != null && !versionDescriptor.getVersion().equals(latestMatchingVersion)) {
-                throw new FcliSimpleException(
-                    String.format("Detected %s version %s matches requested version %s but is not the latest available (%s). Use --any-matching to accept any matching version", 
-                        getToolName(), versionDescriptor.getVersion(), requestedVersion, latestMatchingVersion))
-                    .exitCode(ExitCode.VERSION_NOT_LATEST.getCode());
+            if (!"any".equals(requestedVersion)) {
+                var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
+                try {
+                    var requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
+                    if (!versionDescriptor.getVersion().equals(requestedVersionDescriptor.getVersion())) {
+                        throw new FcliSimpleException(
+                            String.format("Detected %s version %s does not match requested version %s (resolves to %s)", 
+                                getToolName(), versionDescriptor.getVersion(), requestedVersion, requestedVersionDescriptor.getVersion()))
+                            .exitCode(ExitCode.VERSION_MISMATCH.getCode());
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw new FcliSimpleException(
+                        String.format("Requested version %s not found in tool definitions. Detected version is %s", 
+                            requestedVersion, versionDescriptor.getVersion()))
+                        .exitCode(ExitCode.VERSION_MISMATCH.getCode());
+                }
             }
         }
         
@@ -198,6 +192,16 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
      * @return Matching binary file or null if no match
      */
     private File findMatchingCandidate(java.util.List<File> candidates) {
+        var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
+        ToolDefinitionVersionDescriptor requestedVersionDescriptor;
+        try {
+            requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
+        } catch (IllegalArgumentException e) {
+            throw new FcliSimpleException(
+                String.format("Requested version %s not found in tool definitions", requestedVersion))
+                .exitCode(ExitCode.VERSION_MISMATCH.getCode());
+        }
+        
         for (File candidate : candidates) {
             if (!candidate.canExecute() && !candidate.getName().endsWith(".jar")) {
                 continue;
@@ -212,7 +216,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
                 
                 ToolDefinitionVersionDescriptor versionDesc = resolveVersionDescriptor(detectedVersion);
                 
-                if (versionMatches(versionDesc.getVersion(), requestedVersion)) {
+                if (versionDesc.getVersion().equals(requestedVersionDescriptor.getVersion())) {
                     return candidate;
                 }
             } catch (Exception e) {
@@ -241,30 +245,6 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
         }
     }
     
-    private String findLatestMatchingVersion(String requestedPattern) {
-        try {
-            var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName());
-            
-            // Normalize pattern by removing 'v' prefix
-            String normalizedPattern = requestedPattern.startsWith("v") ? requestedPattern.substring(1) : requestedPattern;
-            
-            // Get all versions and find the latest that matches the pattern
-            return java.util.Arrays.stream(toolDefinition.getVersions())
-                .map(ToolDefinitionVersionDescriptor::getVersion)
-                .filter(v -> versionMatches(v, normalizedPattern))
-                .max((v1, v2) -> {
-                    try {
-                        return new SemVer(v1).compareTo(new SemVer(v2));
-                    } catch (Exception e) {
-                        return v1.compareTo(v2);
-                    }
-                })
-                .orElse(null);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
     private ObjectNode createOutputNode(ToolInstallationDescriptor installation, String version) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("name", getToolName());
@@ -275,66 +255,6 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
         return result;
     }
     
-    /**
-     * Check if a version matches the requested version pattern.
-     * Supports semantic versioning: "2" matches "2.x.y", "2.1" matches "2.1.x", etc.
-     * Both "v2" and "2" formats are supported.
-     * 
-     * Special case: "unknown" versions only match if the requested pattern is exactly "unknown".
-     * 
-     * @param actualVersion The actual detected version (e.g., "24.4.0", "unknown")
-     * @param requestedPattern The requested version pattern (e.g., "24", "v24", "24.4")
-     * @return true if the version matches the pattern
-     */
-    private boolean versionMatches(String actualVersion, String requestedPattern) {
-        // Special handling for "unknown" versions - only match exact "unknown" request
-        if ("unknown".equals(actualVersion)) {
-            return "unknown".equals(requestedPattern);
-        }
-        
-        // Normalize by removing 'v' prefix
-        String normalizedActual = actualVersion.startsWith("v") ? actualVersion.substring(1) : actualVersion;
-        String normalizedRequested = requestedPattern.startsWith("v") ? requestedPattern.substring(1) : requestedPattern;
-        
-        try {
-            SemVer actual = new SemVer(normalizedActual);
-            
-            // If not a proper semver, fall back to prefix matching
-            if (!actual.isProperSemver()) {
-                return normalizedActual.startsWith(normalizedRequested);
-            }
-            
-            // Split requested pattern by dots
-            String[] requestedParts = normalizedRequested.split("\\.");
-            
-            // Check major version
-            if (requestedParts.length >= 1 && !requestedParts[0].isEmpty()) {
-                if (!actual.getMajor().map(m -> m.equals(requestedParts[0])).orElse(false)) {
-                    return false;
-                }
-            }
-            
-            // Check minor version if specified
-            if (requestedParts.length >= 2 && !requestedParts[1].isEmpty()) {
-                if (!actual.getMinor().map(m -> m.equals(requestedParts[1])).orElse(false)) {
-                    return false;
-                }
-            }
-            
-            // Check patch version if specified
-            if (requestedParts.length >= 3 && !requestedParts[2].isEmpty()) {
-                if (!actual.getPatch().map(p -> p.equals(requestedParts[2])).orElse(false)) {
-                    return false;
-                }
-            }
-            
-            return true;
-        } catch (Exception e) {
-            // If parsing fails, fall back to simple string prefix match
-            return normalizedActual.startsWith(normalizedRequested);
-        }
-    }
-    
     @RequiredArgsConstructor
     @Getter
     public static enum ExitCode {
@@ -342,8 +262,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
         TOOL_NOT_FOUND(1),
         INVALID_PATH(2),
         TOOL_INVALID_OR_NOT_EXECUTABLE(3),
-        VERSION_MISMATCH(4),
-        VERSION_NOT_LATEST(5);
+        VERSION_MISMATCH(4);
         
         private final int code;
     }
