@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
        
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization -march=compatibility
