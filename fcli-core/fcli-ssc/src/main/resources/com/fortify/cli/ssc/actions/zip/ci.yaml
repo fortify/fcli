@@ -44,6 +44,11 @@ steps:
         on.success:
           - var.set:
               global.ci.av: ${#env('SSC_APPVERSION')?:global.ci.defaultFortifyRepo}
+              global.fortifySetup.toolCacheDirPattern: ${global.ci.toolCacheDirPattern}
+              global.fortifySetup.java8Home: ${global.ci.java8Home}
+              global.fortifySetup.java11Home: ${global.ci.java11Home}
+              global.fortifySetup.java17Home: ${global.ci.java17Home}
+              global.fortifySetup.java21Home: ${global.ci.java21Home}
           - if: ${global.ci.av==null}
             throw: SSC application version must be specified through SSC_APPVERSION environment variable
             
@@ -137,7 +142,7 @@ steps:
                 "--branch=${global.ci.sourceBranch}"
                 "--av=${global.ci.av}"
                 "--debricked-token=${#env('DEBRICKED_ACCESS_TOKEN')}"
-                "--cli-version=${#env('DEBRICKED_CLI_VERSION')?:'latest'}"
+                "--cli-version=${#env('DEBRICKED_CLI_VERSION')?:'auto'}"
                 "--tool-definitions=${#env('TOOL_DEFINITIONS')?:''}"
                 "--skip-wait=true"
               skip.if-reason:

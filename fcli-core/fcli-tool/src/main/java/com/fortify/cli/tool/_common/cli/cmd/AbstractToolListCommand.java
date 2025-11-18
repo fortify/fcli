@@ -27,6 +27,7 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
@@ -105,7 +106,7 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     }
     
     private ToolDefinitionVersionDescriptor createSyntheticVersionDescriptor(
-            com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor toolDefinition, 
+            ToolDefinitionRootDescriptor toolDefinition, 
             String version) {
         // Normalize version format to match tool definitions
         String normalizedVersion = toolDefinition.normalizeVersionFormat(version);

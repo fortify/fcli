@@ -25,10 +25,10 @@ cli.options:
   scClientVersion:
     names: --sc-client-version, -v
     description: |
-      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'latest' if not
+      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
       specified.
     required: true
-    default: ${#env('SC_CLIENT_VERSION')?:'latest'}
+    default: ${#env('SC_CLIENT_VERSION')?:'auto'}
   sourceDir:
     names: --source-dir, -d
     description: |
@@ -62,5 +62,5 @@ steps:
     steps:
       - run.fcli:
           SETUP_TOOLS: fcli action run fortify-setup "--sc-client=${cli.scClientVersion}" "--tool-definitions=${cli.toolDefinitions}"
-          RUN_SC_CLIENT: fcli tool sc-client run -v ${cli.scClientVersion} --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}
+          RUN_SC_CLIENT: fcli tool sc-client run --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}
       

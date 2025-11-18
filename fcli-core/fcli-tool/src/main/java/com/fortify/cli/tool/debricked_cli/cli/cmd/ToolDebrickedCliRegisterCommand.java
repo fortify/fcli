@@ -37,11 +37,6 @@ public class ToolDebrickedCliRegisterCommand extends AbstractToolRegisterCommand
     }
     
     @Override
-    protected String[] getToolEnvVarPrefixes() {
-        return ToolDebrickedCliCommands.TOOL_ENV_VAR_PREFIXES;
-    }
-    
-    @Override
     protected String detectVersion(File toolBinary, File installDir) {
         // Try executing debricked --version
         String output = ToolVersionDetector.tryExecute(toolBinary, "--version");

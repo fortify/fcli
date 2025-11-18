@@ -37,11 +37,6 @@ public class ToolVulnExporterRegisterCommand extends AbstractToolRegisterCommand
     }
     
     @Override
-    protected String[] getToolEnvVarPrefixes() {
-        return ToolVulnExporterCommands.TOOL_ENV_VAR_PREFIXES;
-    }
-    
-    @Override
     protected String detectVersion(File toolBinary, File installDir) {
         // Vulnerability Exporter: Check JAR manifest for Implementation-Version
         // FortifyVulnerabilityExporter.jar has no version in filename but has Implementation-Version in manifest

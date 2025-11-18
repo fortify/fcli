@@ -36,11 +36,6 @@ public class ToolBugTrackerUtilityRegisterCommand extends AbstractToolRegisterCo
     }
     
     @Override
-    protected String[] getToolEnvVarPrefixes() {
-        return ToolBugTrackerUtilityCommands.TOOL_ENV_VAR_PREFIXES;
-    }
-    
-    @Override
     protected String detectVersion(File toolBinary, File installDir) {
         // BugTracker Utility: No version flag, no version in filename, no version in manifest
         // Only option is to rely on fcli install descriptor or return unknown for external installations

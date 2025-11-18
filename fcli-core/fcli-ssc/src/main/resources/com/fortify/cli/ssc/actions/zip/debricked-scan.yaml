@@ -48,11 +48,11 @@ cli.options:
     mask: {sensitivity: high}
   dcliVersion:
     names: --cli-version, -v
-    description: >-
+    description: >
       Specify the Debricked CLI tool version to be installed that shall be used for scanning.
-      Defaults to 'latest' if not specified.
+      Defaults to 'auto' if not specified.
     required: false
-    default: latest
+    default: auto
   toolDefinitions:
     names: --tool-definitions
     description: >-

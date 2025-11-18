@@ -245,6 +245,8 @@ public final class ToolInstaller {
                 checkEmptyTargetPath();
                 installer.accept(this, artifactDescriptor);
             }
+            // Always save descriptor (even when installation was skipped) to update timestamp,
+            // making this the default version for 'tool run' commands
             var result = new ToolInstallationResult(toolName, versionDescriptor, artifactDescriptor, createAndSaveInstallationDescriptor());
             if ( postInstallAction!=null ) {
                 progressWriter.writeProgress("Running post-install actions");

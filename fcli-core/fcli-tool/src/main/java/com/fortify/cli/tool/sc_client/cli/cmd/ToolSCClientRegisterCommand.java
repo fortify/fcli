@@ -37,11 +37,6 @@ public class ToolSCClientRegisterCommand extends AbstractToolRegisterCommand {
     }
     
     @Override
-    protected String[] getToolEnvVarPrefixes() {
-        return ToolSCClientCommands.TOOL_ENV_VAR_PREFIXES;
-    }
-    
-    @Override
     protected String detectVersion(File toolBinary, File installDir) {
         // Try JAR filename detection first (faster than executing binary)
         String versionFromFilename = ToolVersionDetector

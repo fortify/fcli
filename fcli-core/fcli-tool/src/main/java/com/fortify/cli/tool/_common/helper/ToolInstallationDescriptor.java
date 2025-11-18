@@ -105,6 +105,13 @@ public class ToolInstallationDescriptor {
         delete(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()));
     }
     
+    /**
+     * Save this installation descriptor. CRITICAL: This method writes/updates the descriptor file,
+     * which updates its file system timestamp. The loadLastModified() method uses these timestamps
+     * to determine which tool version should be used by default (e.g., 'fcli tool <name> run' without
+     * --version flag). Always call this method when registering or installing a tool to ensure it
+     * becomes the default version for subsequent commands.
+     */
     public final void save(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
         Path installDescriptorPath = getInstallDescriptorPath(toolName, versionDescriptor.getVersion());
         FcliDataHelper.saveFile(installDescriptorPath, this, true);

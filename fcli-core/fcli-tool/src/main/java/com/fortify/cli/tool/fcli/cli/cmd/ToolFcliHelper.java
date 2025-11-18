@@ -16,7 +16,6 @@ import java.io.File;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
-import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 
 /**
@@ -86,10 +85,15 @@ public class ToolFcliHelper {
      * @throws FcliSimpleException if binary cannot be resolved or is not executable
      */
     public static File resolveBinaryFromExplicitPath(File explicitPath) {
-        File sourceBinary = ToolRegistrationHelper.resolveBinaryFromExplicitPath(
+        File sourceBinary = resolveBinaryFromExplicitPath(
             explicitPath, 
             getDefaultBinaryName()
         );
+        
+        if ( sourceBinary == null ) {
+            throw new FcliSimpleException(
+                "Source fcli binary not found at specified path: " + explicitPath.getAbsolutePath());
+        }
         
         if (!sourceBinary.canExecute()) {
             throw new FcliSimpleException(
@@ -97,5 +101,39 @@ public class ToolFcliHelper {
         }
         
         return sourceBinary;
+    }
+    
+    /**
+     * Resolve binary from explicit path. Handles three cases:
+     * 1. Direct binary file path
+     * 2. Bin directory containing binary
+     * 3. Install directory with bin/ subdirectory
+     * 
+     * @param path User-specified path
+     * @param binaryName Platform-specific binary name
+     * @return Resolved tool binary file
+     * @throws FcliSimpleException if binary not found at specified path
+     */
+    private static final File resolveBinaryFromExplicitPath(File path, String binaryName) {
+        if (path.isFile()) {
+            // Accept both executable binaries and JAR files
+            if (path.canExecute() || path.getName().endsWith(".jar")) {
+                return path;
+            }
+        }
+        
+        // Try as bin directory
+        File binInPath = new File(path, binaryName);
+        if (binInPath.exists() && (binInPath.canExecute() || binInPath.getName().endsWith(".jar"))) {
+            return binInPath;
+        }
+        
+        // Try as install directory
+        File binSubdir = new File(path, "bin");
+        File binInSubdir = new File(binSubdir, binaryName);
+        if (binInSubdir.exists() && (binInSubdir.canExecute() || binInSubdir.getName().endsWith(".jar"))) {
+            return binInSubdir;
+        }
+        return null;
     }
 }

@@ -37,11 +37,6 @@ public class ToolFoDUploaderRegisterCommand extends AbstractToolRegisterCommand 
     }
     
     @Override
-    protected String[] getToolEnvVarPrefixes() {
-        return ToolFoDUploaderCommands.TOOL_ENV_VAR_PREFIXES;
-    }
-    
-    @Override
     protected String detectVersion(File toolBinary, File installDir) {
         // FoD Uploader: Check JAR manifest for Implementation-Version
         // FodUpload.jar has no version in filename but has Implementation-Version in manifest

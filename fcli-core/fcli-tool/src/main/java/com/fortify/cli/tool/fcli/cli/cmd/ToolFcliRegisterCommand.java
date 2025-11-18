@@ -32,11 +32,6 @@ public class ToolFcliRegisterCommand extends AbstractToolRegisterCommand {
     }
     
     @Override
-    protected String[] getToolEnvVarPrefixes() {
-        return ToolFcliCommands.TOOL_ENV_VAR_PREFIXES;
-    }
-    
-    @Override
     protected String detectVersion(File toolBinary, File installDir) {
         return ToolFcliHelper.detectVersionOrUnknown(toolBinary, installDir);
     }
