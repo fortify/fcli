@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20251117.214001-dev_feat.ci-updates
+fcli_version: 0.20251118.140040-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251117.214001-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.214001-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.140040-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251117.214001-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251118.140040-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -178,14 +178,18 @@ PACKAGE_ACTION_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE<br>
 PACKAGE_EXTRA_OPTS<br>
 SC_CLIENT_VERSION<br>
+SC_CLIENT_HOME<br>
+SETUP_AIRGAPPED<br>
 SOURCE_DIR<br>
 TOOL_DEFINITIONS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.<br>
 By default:<br>
- - Latest available ScanCentral Client version will be used for packaging; use <code>SC_CLIENT_VERSION</code> to specify a different version.<br>
+ - If <code>SETUP_AIRGAPPED</code> is set to <code>true</code>, air-gapped mode will be enabled. In this mode, all required tools (ScanCentral Client, Debricked CLI, etc.) must be pre-installed and tool definitions will not be updated from remote sources. Tools can be pre-installed via <code>*_HOME</code> environment variables or must be available in PATH.<br>
+ - If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
+ - If <code>SC_CLIENT_VERSION</code> and <code>SC_CLIENT_HOME</code> are not set, the most recently installed ScanCentral Client version will be used, or the latest available version will be installed if none is installed yet. Use <code>SC_CLIENT_VERSION</code> to specify a different version (e.g., <code>latest</code>, <code>24.4.0</code>, or <code>auto</code> for most recent installed).<br>
  - Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.<br>
  - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.<br>
- - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br></p></td>
+ - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location (unless <code>SETUP_AIRGAPPED</code> is <code>true</code>); use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN<br>
@@ -281,14 +285,18 @@ PACKAGE_ACTION_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE<br>
 PACKAGE_EXTRA_OPTS<br>
 SC_CLIENT_VERSION<br>
+SC_CLIENT_HOME<br>
+SETUP_AIRGAPPED<br>
 SOURCE_DIR<br>
 TOOL_DEFINITIONS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.<br>
 By default:<br>
- - Latest available ScanCentral Client version will be used for packaging; use <code>SC_CLIENT_VERSION</code> to specify a different version.<br>
+ - If <code>SETUP_AIRGAPPED</code> is set to <code>true</code>, air-gapped mode will be enabled. In this mode, all required tools (ScanCentral Client, Debricked CLI, etc.) must be pre-installed and tool definitions will not be updated from remote sources. Tools can be pre-installed via <code>*_HOME</code> environment variables or must be available in PATH.<br>
+ - If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
+ - If <code>SC_CLIENT_VERSION</code> and <code>SC_CLIENT_HOME</code> are not set, the most recently installed ScanCentral Client version will be used, or the latest available version will be installed if none is installed yet. Use <code>SC_CLIENT_VERSION</code> to specify a different version (e.g., <code>latest</code>, <code>24.4.0</code>, or <code>auto</code> for most recent installed).<br>
  - Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.<br>
  - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.<br>
- - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br></p></td>
+ - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location (unless <code>SETUP_AIRGAPPED</code> is <code>true</code>); use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN<br>
@@ -299,8 +307,13 @@ SAST_SCAN_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_DEBRICKED_SCAN<br>
 DEBRICKED_SCAN_EXTRA_OPTS<br>
 DEBRICKED_ACCESS_TOKEN<br>
-DEBRICKED_CLI_VERSION</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The fcli <code>ci</code> action supports running a Debricked Software Composition Analysis (SCA) scan, which is enabled automatically if <code>DEBRICKED_ACCESS_TOKEN</code> is provided. The <code>DO_DEBRICKED_SCAN</code> environment variable can be set to <code>false</code> to (temporarily) disable the Debricked scan. By default, latest known Debricked CLI version will be used to run the scan, unless a different version is specified through <code>nDEBRICKED_CLI_VERSION</code>. The <code>DEBRICKED_SCAN_EXTRA_OPTS</code> environment variable can be used to provide  additional options to the <code>debricked scan</code> command.</p></td>
+DEBRICKED_CLI_VERSION<br>
+DEBRICKED_HOME</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The fcli <code>ci</code> action supports running a Debricked Software Composition Analysis (SCA) scan, which is enabled automatically if <code>DEBRICKED_ACCESS_TOKEN</code> is provided. The <code>DO_DEBRICKED_SCAN</code> environment variable can be set to <code>false</code> to (temporarily) disable the Debricked scan. The <code>DEBRICKED_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <code>debricked scan</code> command.<br>
+By default:<br>
+ - If <code>SETUP_AIRGAPPED</code> is set to <code>true</code>, the Debricked CLI must be pre-installed (via <code>DEBRICKED_HOME</code> or available in PATH) and tool definitions will not be updated.<br>
+ - If <code>DEBRICKED_HOME</code> is specified, the pre-installed Debricked CLI at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
+ - If <code>DEBRICKED_CLI_VERSION</code> and <code>DEBRICKED_HOME</code> are not set, the most recently installed Debricked CLI version will be used, or the latest available version will be installed if none is installed yet. Use <code>DEBRICKED_CLI_VERSION</code> to specify a different version (e.g., <code>latest</code>, <code>2.1.0</code>, or <code>auto</code> for most recent installed).<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_WAIT<br>
@@ -515,10 +528,6 @@ source &lt;(link:manpage/fcli-action-run.html[fcli action run] fortify-env)</pre
 debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines.</p>
 </div>
 <div class="paragraph">
-<p>Once tools are installed/registered, use the 'fcli tool &lt;tool-name&gt; env' command
-to generate environment variables for shell scripts or CI/CD systems.</p>
-</div>
-<div class="paragraph">
 <p>Supports:
 - Auto-detection of pre-installed tools
 - Dynamic installation with signature verification
@@ -528,8 +537,9 @@ to generate environment variables for shell scripts or CI/CD systems.</p>
 </div>
 <div class="paragraph">
 <p>Examples:
-  # Minimal: install sc-client only
-  <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0</p>
+  # Install sc-client, then use it to package source code
+  <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0
+  fcli tool sc-client run&#8201;&#8212;&#8201;package -o package.zip</p>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -540,18 +550,28 @@ link:manpage/fcli-action-run.html[fcli action run] fortify-setup --air-gapped \
 </div>
 <div class="literalblock">
 <div class="content">
-<pre># Platform tool cache
-link:manpage/fcli-action-run.html[fcli action run] fortify-setup --use-tool-cache \
-  --sc-client latest --debricked-cli v2</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
 <pre># Docker multi-stage build, installing from preinstalled fcli
 link:manpage/fcli-action-run.html[fcli action run] fortify-setup --self /base/usr/bin/fcli \
   --fcli auto \
   --base-dir /opt/fortify --sc-client 24.4.0</pre>
 </div>
+</div>
+<div class="paragraph">
+<p>Tools that are registered or installed through this action automatically become the
+default version for subsequent 'fcli tool &lt;tool-name&gt; run' commands. In the following
+example, the <a href="manpage/fcli-tool-sc-client-run.html"><code>fcli tool sc-client run</code></a> command will use sc-client v24.4.0 as specified
+on the <code><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup</code> command:
+- <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0
+- fcli tool sc-client run&#8201;&#8212;&#8201;package -o package.zip</p>
+</div>
+<div class="paragraph">
+<p>If you need direct access to any tools installations, the fortify-env action may be used
+to output environment variables pointing to the installed tool locations. In the following
+example, the output of <code><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-env</code> will include environment variables
+pointing to sc-client v24.4.0 and latest fod-uploader, alongside any other tools that were
+previously installed or registered:
+- <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0 --fod-uploader latest
+- <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-env</p>
 </div>
 </div>
 <div class="sect2">
@@ -560,27 +580,27 @@ link:manpage/fcli-action-run.html[fcli action run] fortify-setup --self /base/us
 <dl>
 <dt class="hdlist1">--fcli</dt>
 <dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
+<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
 </dd>
 <dt class="hdlist1">--sc-client</dt>
 <dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
+<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
 </dd>
 <dt class="hdlist1">--fod-uploader</dt>
 <dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
+<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
 </dd>
 <dt class="hdlist1">--debricked-cli</dt>
 <dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
+<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
 </dd>
 <dt class="hdlist1">--bugtracker-utility</dt>
 <dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
+<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
 </dd>
 <dt class="hdlist1">--vuln-exporter</dt>
 <dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. Default: skip</p>
+<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
 </dd>
 <dt class="hdlist1">--with-jre</dt>
 <dd>
@@ -613,10 +633,6 @@ link:manpage/fcli-action-run.html[fcli action run] fortify-setup --self /base/us
 <dt class="hdlist1">--base-dir</dt>
 <dd>
 <p>Base directory for tool installations: &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;/</p>
-</dd>
-<dt class="hdlist1">--use-tool-cache</dt>
-<dd>
-<p>Use platform-specific tool cache (detected via ci-vars)</p>
 </dd>
 <dt class="hdlist1">--self</dt>
 <dd>
@@ -668,7 +684,7 @@ only ScanCentral logs, not fcli logs.</p>
 </dd>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
-<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'latest' if not
+<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
 specified.</p>
 </dd>
 <dt class="hdlist1">--source-dir, -d</dt>
@@ -695,8 +711,8 @@ specified.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251117.214001-dev_feat.ci-updates<br>
-Last updated 2025-11-17 21:43:02 UTC
+Version 0.20251118.140040-dev_feat.ci-updates<br>
+Last updated 2025-11-18 14:03:39 UTC
 </div>
 </div>
 </body>

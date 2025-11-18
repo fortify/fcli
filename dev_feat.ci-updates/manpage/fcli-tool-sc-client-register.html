@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251117.214001-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.140040-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -46,13 +46,12 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool sc-client register</strong> [<strong>-v</strong>=<em>&lt;requestedVersion&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli tool sc-client register</strong> <strong>-p</strong>=<em>&lt;pathOption&gt;</em> [<strong>-v</strong>=<em>&lt;requestedVersion&gt;</em>] [[<strong>-h</strong>]
                              [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                              [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
                              [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                              [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                             [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] (<strong>--auto-detect</strong> |
-                             <strong>-p</strong>=<em>&lt;explicitPath&gt;</em>)</p>
+                             [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -60,31 +59,21 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command registers an existing ScanCentral SAST Client installation (whether installed through fcli or externally), allowing fcli to reference this tool installation in CI/CD integrations and other contexts.</p>
+<p>This command registers an existing tool installation (whether installed through fcli or externally), allowing fcli to reference this tool installation in CI/CD integrations and other contexts.</p>
 </div>
 <div class="paragraph">
-<p>Registration approaches:</p>
+<p>PATH SEARCH BEHAVIOR:
+When a single path is provided (no path separator), fcli uses that exact installation without searching other locations. This ensures that when using environment variables like *_HOME, the specific installation is registered. An error is thrown if the tool is not found at that path or if the version doesn&#8217;t match the requested version.</p>
 </div>
 <div class="paragraph">
-<p>--path: Explicitly specify the path to the tool binary, bin directory, or installation directory.</p>
+<p>When multiple paths are provided (separated by ':' on Unix or ';' on Windows), fcli first checks if a matching version is already registered. If found, that existing installation is re-registered (updating its timestamp to make it the default). Only if no matching registered installation exists will fcli search the provided paths in order.</p>
 </div>
 <div class="paragraph">
-<p>--auto-detect: Automatically locate the tool using the following detection mechanism:
-  1. Check fcli status for previously registered installation
-  2. Check tool-specific environment variables:
-     - SCANCENTRAL_CMD or SCANCENTRAL_HOME
-     - SC_CLIENT_CMD or SC_CLIENT_HOME
-  3. Search PATH for the tool binary</p>
-</div>
-<div class="paragraph">
-<p>Environment variable formats:
-  *_CMD: Direct path to the tool binary
-  *_HOME: Path to installation directory; binary located in bin/ or root</p>
-</div>
-<div class="paragraph">
-<p>Version detection: The tool version is automatically detected using the following methods:
-  1. Extract version from Core/lib/scancentral-cli-{version}.jar filename pattern
-  3. Execute 'scancentral -version' and parse the output</p>
+<p>Examples:
+  --path /opt/fortify/tools/scancentral/bin
+  --path $SCANCENTRAL_HOME
+  --path $PATH
+  --path $SCANCENTRAL_HOME:$PATH</p>
 </div>
 </div>
 </div>
@@ -93,13 +82,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--auto-detect</strong></dt>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--path</strong>=<em>&lt;pathOption&gt;</em></dt>
 <dd>
-<p>Auto-detect tool binary from fcli status, environment variables, or PATH.</p>
-</dd>
-<dt class="hdlist1"><strong>-p</strong>, <strong>--path</strong>=<em>&lt;explicitPath&gt;</em></dt>
-<dd>
-<p>Explicit path to the tool binary, bin directory, or installation directory.</p>
+<p>One or more paths to search for the tool binary, separated by the platform path separator (e.g., ':' on Unix, ';' on Windows, like PATH environment variable). Each path entry can point to tool executable, tool bin directory, or tool installation directory. See command description for details on single vs. multiple path behavior.</p>
 </dd>
 <dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;requestedVersion&gt;</em></dt>
 <dd>
@@ -171,7 +156,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-17 21:42:43 UTC
+Last updated 2025-11-18 14:03:20 UTC
 </div>
 </div>
 </body>
