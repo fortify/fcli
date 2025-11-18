@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.142932-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.143513-dev_v3.x" %}
 
 
 <div id="header">
@@ -48,7 +48,8 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli fod sast-scan start</strong> [<strong>--validate-entitlement</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                         <strong>-f</strong>=<em>&lt;file&gt;</em> [<strong>--notes</strong>=<em>&lt;notes&gt;</em>] <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
+                         <strong>-f</strong>=<em>&lt;file&gt;</em> [<strong>--notes</strong>=<em>&lt;notes&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                         <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
                          [<strong>--remediation</strong>=<em>&lt;remediationScanPreferenceType&gt;</em>] [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
@@ -82,6 +83,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--notes</strong>=<em>&lt;notes&gt;</em></dt>
 <dd>
 <p>Scan notes.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
@@ -174,7 +179,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-18 14:32:17 UTC
+Last updated 2025-11-18 14:38:08 UTC
 </div>
 </div>
 </body>

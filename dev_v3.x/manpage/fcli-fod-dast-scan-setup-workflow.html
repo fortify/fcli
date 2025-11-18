@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.142932-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.143513-dev_v3.x" %}
 
 
 <div id="header">
@@ -56,9 +56,10 @@ fcli_version:
                                   <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
                                   [<strong>--network-auth-type</strong>=<em>&lt;networkAuthenticationTyp</em>
          _                         e&gt;_] [<strong>-p</strong>=<em>&lt;password&gt;</em>] [<strong>--policy</strong>=<em>&lt;scanPolicy&gt;</em>]
-                                  <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>]
-                                  [<strong>-u</strong>=<em>&lt;username&gt;</em>] [<strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em>]
-                                  [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                                  [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
+                                  [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>] [<strong>-u</strong>=<em>&lt;username&gt;</em>]
+                                  [<strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em>] [[<strong>-h</strong>]
+                                  [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
                                   [<strong>--debug</strong>]] [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -127,6 +128,10 @@ In order to use a Workflow Macro you can upload it directly using the '--file' o
 <dt class="hdlist1"><strong>--policy</strong>=<em>&lt;scanPolicy&gt;</em></dt>
 <dd>
 <p>The Scan Policy to use. Use 'fod rest lookup DastAutomatedScanPolicies' to display valid values.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
@@ -227,7 +232,7 @@ In order to use a Workflow Macro you can upload it directly using the '--file' o
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-18 14:32:17 UTC
+Last updated 2025-11-18 14:38:08 UTC
 </div>
 </div>
 </body>

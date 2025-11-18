@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.142932-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251118.143513-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,10 +47,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc report create-template</strong> [<strong>-c</strong>=<em>&lt;answerFile&gt;</em>] <strong>-t</strong>=<em>&lt;templatePath&gt;</em> [[<strong>-h</strong>]
-                                [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
-                                [<strong>--debug</strong>]] [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
+<p><strong>fcli ssc report create-template</strong> [<strong>-c</strong>=<em>&lt;answerFile&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                                <strong>-t</strong>=<em>&lt;templatePath&gt;</em> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                                [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
                                 [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
                                 <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
                                 [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
@@ -71,6 +72,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;answerFile&gt;</em></dt>
 <dd>
 <p>File containing report template configuration, like report parameters. You can use the 'generate-config' command to create a new configuration file template.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--template</strong>=<em>&lt;templatePath&gt;</em></dt>
 <dd>
@@ -155,7 +160,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-18 14:32:18 UTC
+Last updated 2025-11-18 14:38:09 UTC
 </div>
 </div>
 </body>
