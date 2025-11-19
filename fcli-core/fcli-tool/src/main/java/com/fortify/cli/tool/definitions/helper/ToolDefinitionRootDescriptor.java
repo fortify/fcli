@@ -13,6 +13,8 @@
 package com.fortify.cli.tool.definitions.helper;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -129,7 +131,7 @@ public class ToolDefinitionRootDescriptor {
         }
         
         // Count occurrences of each segment count
-        var segmentCounts = new java.util.HashMap<Integer, Integer>();
+        var segmentCounts = new HashMap<Integer, Integer>();
         
         for (ToolDefinitionVersionDescriptor descriptor : versions) {
             String version = descriptor.getVersion();
@@ -153,8 +155,8 @@ public class ToolDefinitionRootDescriptor {
         
         // Return the most common segment count
         return segmentCounts.entrySet().stream()
-            .max(java.util.Map.Entry.comparingByValue())
-            .map(java.util.Map.Entry::getKey)
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
             .orElse(-1);
     }
     

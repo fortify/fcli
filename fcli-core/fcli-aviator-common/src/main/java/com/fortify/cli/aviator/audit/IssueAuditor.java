@@ -46,6 +46,7 @@ import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
 import com.fortify.cli.aviator.fpr.filter.SearchTree;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
+import com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
@@ -301,7 +302,7 @@ public class IssueAuditor {
         Map<String, List<Vulnerability>> folderContents = new HashMap<>();
         for (Vulnerability vuln : allVulnerabilities) {
             for (Filter folderFilter : folderFilters) {
-                if (com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator.evaluate(parsedQueries.get(folderFilter), vuln)) {
+                if (VulnerabilityEvaluator.evaluate(parsedQueries.get(folderFilter), vuln)) {
                     folderContents.computeIfAbsent(folderFilter.getActionParam(), k -> new ArrayList<>()).add(vuln);
                     break;
                 }
@@ -310,7 +311,7 @@ public class IssueAuditor {
 
         folderContents.values().forEach(vulnList ->
                 vulnList.removeIf(vuln -> hideFilters.stream().anyMatch(
-                        hideFilter -> com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator.evaluate(parsedQueries.get(hideFilter), vuln)
+                        hideFilter -> VulnerabilityEvaluator.evaluate(parsedQueries.get(hideFilter), vuln)
                 ))
         );
 

@@ -15,6 +15,7 @@ package com.fortify.cli.fod.release.helper;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.function.Predicate;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,7 +63,7 @@ public final class FoDReleaseAssessmentTypeHelper {
         UnirestInstance unirest, String relId, 
         FoDScanType scanType, EntitlementFrequencyType entFreqType, String assessmentType) {
         // support both assessment type id and name
-        java.util.function.Predicate<FoDReleaseAssessmentTypeDescriptor> predicate;
+        Predicate<FoDReleaseAssessmentTypeDescriptor> predicate;
         try {
             int assessmentTypeId = Integer.parseInt(assessmentType);
             predicate = n -> n.getAssessmentTypeId().equals(assessmentTypeId);

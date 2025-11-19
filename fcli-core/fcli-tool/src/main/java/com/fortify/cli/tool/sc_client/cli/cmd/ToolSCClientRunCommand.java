@@ -20,6 +20,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.util.DebugHelper;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
@@ -74,7 +75,7 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
     }
     
     private String getJavaCommandForDescriptor(ToolInstallationDescriptor descriptor) {
-        var baseJavaCmd = com.fortify.cli.tool._common.helper.ToolPlatformHelper.isWindows() ? "java.exe" : "java";
+        var baseJavaCmd = ToolPlatformHelper.isWindows() ? "java.exe" : "java";
         
         // First check if JRE was specified during installation
         String storedJreHome = descriptor.getJreHome();
@@ -93,7 +94,7 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
         
         // Check environment variables
         for (var javaHomeEnvVarName : getJavaHomeEnvVarNames()) {
-            var javaHome = com.fortify.cli.common.util.EnvHelper.env(javaHomeEnvVarName);
+            var javaHome = EnvHelper.env(javaHomeEnvVarName);
             var javaCmdPathFromEnv = javaHome == null ? null : Path.of(javaHome, "bin", baseJavaCmd);
             if (javaCmdPathFromEnv != null && Files.exists(javaCmdPathFromEnv)) {
                 return javaCmdPathFromEnv.toString();

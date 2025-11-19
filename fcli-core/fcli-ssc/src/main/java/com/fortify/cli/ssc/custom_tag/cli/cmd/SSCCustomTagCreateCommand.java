@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.custom_tag.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -82,7 +83,7 @@ public class SSCCustomTagCreateCommand extends AbstractSSCJsonNodeOutputCommand 
         return body;
     }
 
-    private com.fasterxml.jackson.databind.node.ArrayNode buildValueList() {
+    private ArrayNode buildValueList() {
         if (values == null || values.isBlank()) {
             throw new FcliSimpleException("At least one value must be specified for LIST type using --values");
         }

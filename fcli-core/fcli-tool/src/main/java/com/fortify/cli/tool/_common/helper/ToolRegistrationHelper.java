@@ -14,6 +14,9 @@ package com.fortify.cli.tool._common.helper;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -40,8 +43,8 @@ public class ToolRegistrationHelper {
      * @param paths Array of paths to search (each can be file, bin dir, or install dir)
      * @return List of all candidate binaries (may be empty)
      */
-    public static java.util.List<File> findAllToolBinariesInPaths(String toolName, String binaryName, String[] paths) {
-        java.util.List<File> candidates = new java.util.ArrayList<>();
+    public static List<File> findAllToolBinariesInPaths(String toolName, String binaryName, String[] paths) {
+        List<File> candidates = new ArrayList<>();
         
         // Collect from fcli installed versions
         candidates.addAll(findAllBinariesFromInstalledVersions(toolName, binaryName));
@@ -130,8 +133,8 @@ public class ToolRegistrationHelper {
         return binDir;
     }
     
-    private static java.util.List<File> findAllBinariesFromInstalledVersions(String toolName, String binaryName) {
-        java.util.List<File> binaries = new java.util.ArrayList<>();
+    private static List<File> findAllBinariesFromInstalledVersions(String toolName, String binaryName) {
+        List<File> binaries = new ArrayList<>();
         Path installDescriptorsDir = ToolInstallationHelper.getToolsStatePath().resolve(toolName);
         if (!installDescriptorsDir.toFile().exists()) {
             return binaries;
@@ -143,7 +146,7 @@ public class ToolRegistrationHelper {
         }
         
         // Check all installed versions, newest first
-        java.util.Arrays.sort(descriptorFiles, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
+        Arrays.sort(descriptorFiles, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
         
         for (File descriptorFile : descriptorFiles) {
             ToolInstallationDescriptor descriptor = FcliDataHelper.readFile(
@@ -160,7 +163,7 @@ public class ToolRegistrationHelper {
     }
     
     private static File findBinaryFromInstalledVersions(String toolName, String binaryName) {
-        java.util.List<File> binaries = findAllBinariesFromInstalledVersions(toolName, binaryName);
+        List<File> binaries = findAllBinariesFromInstalledVersions(toolName, binaryName);
         return binaries.isEmpty() ? null : binaries.get(0);
     }
     
@@ -396,7 +399,7 @@ public class ToolRegistrationHelper {
             return installation;
         }
         
-        private File findMatchingCandidate(java.util.List<File> candidates, String requestedVersion) {
+        private File findMatchingCandidate(List<File> candidates, String requestedVersion) {
             var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
             ToolDefinitionVersionDescriptor requestedVersionDescriptor;
             try {

@@ -66,7 +66,7 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     }
     
     private Stream<ToolInstallationOutputDescriptor> getUnknownVersionsFromState(String toolName, 
-            com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor toolDefinition) {
+            ToolDefinitionRootDescriptor toolDefinition) {
         Path stateDir = ToolInstallationHelper.getToolsStatePath().resolve(toolName);
         
         if (!Files.exists(stateDir) || !Files.isDirectory(stateDir)) {
