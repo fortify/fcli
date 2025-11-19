@@ -27,8 +27,8 @@ import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
-import com.fortify.cli.tool.fcli.helper.ToolFcliHelper;
 import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
+import com.fortify.cli.tool.fcli.helper.ToolFcliHelper;
 
 import lombok.Getter;
 import lombok.SneakyThrows;

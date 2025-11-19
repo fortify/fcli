@@ -64,7 +64,6 @@ public final class ToolInstaller {
     @Getter private final File copyFromPath;
     @Getter private final OnCopyVersionMismatch onCopyVersionMismatch;
     @Getter private final BiFunction<ToolInstaller, File, String> toolVersionDetectorCallback;
-    @Getter private final Function<File, File> installDirResolver;
     
     @Getter @Builder.Default private final Function<ToolInstaller,String> versionDetector = ToolInstaller::defaultVersionDetector;
     @Getter @Builder.Default private final BiConsumer<ToolInstaller,ToolDefinitionArtifactDescriptor> installer = ToolInstaller::defaultInstaller;
@@ -372,31 +371,38 @@ public final class ToolInstaller {
             ToolInstallerBuilder builder, 
             File copyFromPath, 
             OnCopyVersionMismatch onCopyVersionMismatch,
-            Function<File, File> installDirResolver) {
+            BiFunction<ToolInstaller, File, String> toolVersionDetectorCallback) {
         return builder
             .copyFromPath(copyFromPath)
             .onCopyVersionMismatch(onCopyVersionMismatch)
-            .toolVersionDetectorCallback((installer, installDir) -> installer.detectVersionFromCopySource(installDir))
-            .installDirResolver(installDirResolver)
+            .toolVersionDetectorCallback(toolVersionDetectorCallback)
             .versionDetector(ToolInstaller::copyFromVersionDetector)
             .installer((installer, artifact) -> installer.copyFromInstaller());
     }
     
     /**
-     * Resolves the install directory from the copy-from path.
-     * Uses the installDirResolver callback if provided, otherwise uses default logic.
+     * Resolves the copy source directory by locating a directory with an install-descriptor subdirectory.
      */
-    private File resolveInstallDirectory(File copyFromPath) {
+    private File resolveCopySourceDirectory(File copyFromPath) {
         if (copyFromPath == null) {
             return null;
         }
-        
-        if (installDirResolver != null) {
-            return installDirResolver.apply(copyFromPath);
+        var resolvedFile = copyFromPath.getAbsoluteFile();
+        var installDescriptorDir = new File(resolvedFile, "install-descriptor");
+        if (installDescriptorDir.exists() && installDescriptorDir.isDirectory()) {
+            return resolvedFile;
         }
-        
-        // Default: use ToolRegistrationHelper logic
-        return ToolRegistrationHelper.resolveInstallDir(copyFromPath);
+        // Search subdirectories for install-descriptor
+        var subdirs = resolvedFile.listFiles(File::isDirectory);
+        if (subdirs != null) {
+            for (var subdir : subdirs) {
+                installDescriptorDir = new File(subdir, "install-descriptor");
+                if (installDescriptorDir.exists() && installDescriptorDir.isDirectory()) {
+                    return subdir;
+                }
+            }
+        }
+        return null;
     }
     
     /**
@@ -425,59 +431,23 @@ public final class ToolInstaller {
     
     /**
      * Detects version from copy source using descriptor first, then callback.
-     * Returns null on any errors to allow graceful fallback to download.
-     */
-    private String detectVersionFromCopySource(File installDir) {
-        try {
-            String detectedVersion = detectVersionFromInstallDescriptor(installDir);
-            if (detectedVersion == null && toolVersionDetectorCallback != null) {
-                detectedVersion = toolVersionDetectorCallback.apply(this, installDir);
-            }
-            return detectedVersion;
-        } catch (Exception e) {
-            log.debug("Error detecting version from copy source: " + installDir, e);
-            return null;
-        }
-    }
-    
-    /**
-     * Detects version from copy source.
-     * Falls back to requested version if detection fails (unless onCopyVersionMismatch=fail).
      */
     private String copyFromVersionDetector() {
-        try {
-            var resolvedCopyPath = resolveInstallDirectory(copyFromPath);
-            if (resolvedCopyPath == null) {
-                log.debug("Could not resolve install directory from: {}", copyFromPath);
-                if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                    throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
-                }
-                skippedCopyFrom = true;
-                return requestedVersion;
-            }
-            
-            String detectedVersion = detectVersionFromCopySource(resolvedCopyPath);
-            
-            if (detectedVersion == null) {
-                log.debug("Unable to detect version from copy source: {}", copyFromPath);
-                if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                    throw new FcliSimpleException("Unable to detect version from copy source: " + copyFromPath);
-                }
-                skippedCopyFrom = true;
-                return requestedVersion;
-            }
-            
-            return detectedVersion;
-        } catch (FcliSimpleException e) {
-            throw e;
-        } catch (Exception e) {
-            log.debug("Error in copyFromVersionDetector", e);
-            if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                throw new FcliTechnicalException("Error detecting version from copy source: " + copyFromPath, e);
-            }
-            skippedCopyFrom = true;
-            return requestedVersion;
+        var resolvedCopyPath = resolveCopySourceDirectory(copyFromPath);
+        if (resolvedCopyPath == null) {
+            throw new FcliSimpleException("Copy source directory not found or does not contain install descriptor: " + copyFromPath);
         }
+        
+        String detectedVersion = detectVersionFromInstallDescriptor(resolvedCopyPath);
+        if (detectedVersion == null && toolVersionDetectorCallback != null) {
+            detectedVersion = toolVersionDetectorCallback.apply(this, resolvedCopyPath);
+        }
+        
+        if (detectedVersion == null) {
+            throw new FcliSimpleException("Unable to detect version from copy source: " + copyFromPath);
+        }
+        
+        return detectedVersion;
     }
     
     /**
@@ -502,19 +472,17 @@ public final class ToolInstaller {
     
     /**
      * Handles version mismatch according to onCopyVersionMismatch setting.
-     * Returns true if should proceed with copy, false if should skip.
      */
-    private boolean handleCopyFromVersionMismatch(String requestedVersion, String detectedVersion) {
+    private void handleCopyFromVersionMismatch(String requestedVersion, String detectedVersion) {
         switch (onCopyVersionMismatch) {
             case skip:
                 progressWriter.writeProgress(
                     "Version mismatch (requested: " + requestedVersion + ", detected: " + detectedVersion + "). Skipping copy, will download instead.");
-                skippedCopyFrom = true;
-                return false;
+                throw new SkipCopyFromException();
             case copy:
                 progressWriter.writeWarning(
                     "Version mismatch: requested=" + requestedVersion + ", detected=" + detectedVersion + ". Copying anyway.");
-                return true;
+                break;
             case fail:
                 throw new FcliSimpleException(
                     "Version mismatch: requested " + requestedVersion + " but copy source contains " + detectedVersion);
@@ -547,44 +515,29 @@ public final class ToolInstaller {
     
     /**
      * Installer implementation for copy-from functionality.
-     * Falls back to regular download if copy is not possible or skipped.
      */
-    @SneakyThrows
     private void copyFromInstaller() {
-        // Check if copy was already skipped during version detection
-        if (skippedCopyFrom) {
-            progressWriter.writeProgress("Skipping copy, downloading instead");
-            downloadAndExtract(getVersionDescriptor().getBinaries().get(
-                ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform));
-            return;
-        }
-        
-        var resolvedCopyPath = resolveInstallDirectory(copyFromPath);
+        var resolvedCopyPath = resolveCopySourceDirectory(copyFromPath);
         if (resolvedCopyPath == null) {
-            if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
-            }
-            progressWriter.writeProgress("Copy source directory not found, downloading instead");
-            downloadAndExtract(getVersionDescriptor().getBinaries().get(
-                ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform));
-            return;
+            throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
         }
         
-        String detectedVersion = detectVersionFromCopySource(resolvedCopyPath);
+        String detectedVersion = copyFromVersionDetector();
         String requestedVersion = getRequestedVersion();
         
-        if (detectedVersion != null && !checkCopyFromVersionMatch(requestedVersion, detectedVersion)) {
-            if (!handleCopyFromVersionMismatch(requestedVersion, detectedVersion)) {
-                // Skip was requested, fall back to download
-                downloadAndExtract(getVersionDescriptor().getBinaries().get(
-                    ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform));
-                return;
-            }
+        if (!checkCopyFromVersionMatch(requestedVersion, detectedVersion)) {
+            handleCopyFromVersionMismatch(requestedVersion, detectedVersion);
         }
         
         progressWriter.writeProgress("Copying from: " + resolvedCopyPath);
         copyDirectoryContents(resolvedCopyPath.toPath(), getTargetPath());
         progressWriter.writeProgress("Copy complete");
+    }
+    
+    /**
+     * Exception thrown when copy-from is skipped due to version mismatch.
+     */
+    private static class SkipCopyFromException extends RuntimeException {
     }
     
 }
