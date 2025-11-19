@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,6 +48,7 @@ import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
+import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
@@ -143,8 +145,18 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             }
             ToolInstaller.configureCopyFrom(builder, copyFromPath, 
                 ToolInstaller.OnCopyVersionMismatch.valueOf(onCopyVersionMismatch.name()), 
+                getInstallDirResolver(),
                 getToolVersionDetectorCallback());
         }
+    }
+    
+    /**
+     * Get the install directory resolver for copy-from.
+     * Default implementation uses ToolRegistrationHelper.resolveInstallDir.
+     * Subclasses can override to provide custom resolution logic.
+     */
+    protected Function<File, File> getInstallDirResolver() {
+        return ToolRegistrationHelper::resolveInstallDir;
     }
     
     /**
