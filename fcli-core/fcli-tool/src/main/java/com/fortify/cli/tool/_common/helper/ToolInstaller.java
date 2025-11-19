@@ -271,6 +271,22 @@ public final class ToolInstaller {
         copyOrExtract(artifactDescriptor, downloadedFile);
     }
     
+    private void downloadAndExtractSafely() throws IOException {
+        var binaries = getVersionDescriptor().getBinaries();
+        if (binaries == null) {
+            throw new FcliSimpleException(
+                "Cannot download " + toolName + ": version " + getVersionDescriptor().getVersion() + 
+                " not found in tool definitions. Please update tool definitions or use a different version.");
+        }
+        var platform = ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform;
+        var artifactDescriptor = binaries.get(platform);
+        if (artifactDescriptor == null) {
+            throw new FcliSimpleException(
+                "Cannot download " + toolName + ": no artifact available for platform " + platform);
+        }
+        downloadAndExtract(artifactDescriptor);
+    }
+    
     private static final File download(ToolDefinitionArtifactDescriptor artifactDescriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
@@ -555,8 +571,7 @@ public final class ToolInstaller {
         // Check if copy was already skipped during version detection
         if (skippedCopyFrom) {
             progressWriter.writeProgress("Skipping copy, downloading instead");
-            downloadAndExtract(getVersionDescriptor().getBinaries().get(
-                ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform));
+            downloadAndExtractSafely();
             return;
         }
         
@@ -566,8 +581,7 @@ public final class ToolInstaller {
                 throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
             }
             progressWriter.writeProgress("Copy source directory not found, downloading instead");
-            downloadAndExtract(getVersionDescriptor().getBinaries().get(
-                ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform));
+            downloadAndExtractSafely();
             return;
         }
         
@@ -577,8 +591,7 @@ public final class ToolInstaller {
         if (detectedVersion != null && !checkCopyFromVersionMatch(requestedVersion, detectedVersion)) {
             if (!handleCopyFromVersionMismatch(requestedVersion, detectedVersion)) {
                 // Skip was requested, fall back to download
-                downloadAndExtract(getVersionDescriptor().getBinaries().get(
-                    ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform));
+                downloadAndExtractSafely();
                 return;
             }
         }

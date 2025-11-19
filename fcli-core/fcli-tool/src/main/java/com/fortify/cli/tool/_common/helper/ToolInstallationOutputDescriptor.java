@@ -63,6 +63,9 @@ public class ToolInstallationOutputDescriptor {
     }
     
     private static final String[] reverse(String[] array) {
+        if (array == null) {
+            return new String[0];
+        }
         List<String> list = Arrays.asList(array);
         Collections.reverse(list);
         return list.toArray(String[]::new);

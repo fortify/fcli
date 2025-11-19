@@ -447,7 +447,8 @@ public class ToolRegistrationHelper {
                 // Version not found in definitions, create synthetic descriptor with normalized version
                 ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
                 syntheticDescriptor.setVersion(normalizedVersion);
-                syntheticDescriptor.setStable(true);  // We assume stable for registered versions
+                syntheticDescriptor.setStable(true);
+                syntheticDescriptor.setAliases(new String[0]);
                 return syntheticDescriptor;
             }
         }

@@ -151,7 +151,7 @@ steps:
       UPDATE_TOOL_DEFINITIONS:
         cmd: tool definitions update ${#isBlank(cli['tool-definitions'])?'':('"--source='+cli['tool-definitions']+'"')}
       
-  # ===== PHASE 3: DEFINE TOOL METADATA =====
+  # ===== PHASE 2: DEFINE TOOL METADATA =====
   
   # ============================================================================
   # INTEGRATOR DOCUMENTATION: --self parameter
@@ -206,6 +206,12 @@ steps:
       from: ${tools}
       record.var-name: tool
       do:
+        # Normalize version by stripping 'v' prefix if present
+        # Tool definitions use plain versions (e.g., '3.13.1'), but users may pass 'v3' or 'v3.13.1'
+        - if: ${tool.version != null && tool.version.startsWith('v')}
+          var.set:
+            tool.version: ${tool.version.substring(1)}
+        
         # Determine registration path source (priority: explicit path > env var > PATH)
         - var.set:
             tool.envVarName: "${tool.envPrefix}_HOME"
@@ -279,12 +285,15 @@ steps:
             - if: ${tool.status == null}
               steps:
                 # Resolve semantic version to actual version for proper tool cache directory naming
-                # Skip for 'auto' which isn't a valid version spec in tool list
-                - if: ${global.ci.toolCacheDirPattern != null && tool.effectiveVersion != 'auto'}
+                # For 'auto', resolve to 'latest' version number
+                # Skip for 'preinstalled' which isn't a valid version spec in tool list
+                - if: ${global.ci.toolCacheDirPattern != null && tool.effectiveVersion != 'preinstalled'}
                   steps:
+                    - var.set:
+                        tool.versionToResolve: ${tool.effectiveVersion == 'auto' ? 'latest' : tool.effectiveVersion}
                     - run.fcli:
                         RESOLVE_VERSION:
-                          cmd: tool ${tool.name} list -q "version=='${tool.effectiveVersion}' || aliases.contains('${tool.effectiveVersion}')"
+                          cmd: tool ${tool.name} list -q "version=='${tool.versionToResolve}' || aliases.contains('${tool.versionToResolve}')"
                           records.for-each:
                             record.var-name: version_match
                             do:
@@ -292,7 +301,7 @@ steps:
                                   tool.resolvedVersion: ${version_match.version}
                           on.fail:
                             # If version resolution fails, we'll skip tool cache and use default install location
-                            - log.debug: "Could not resolve version ${tool.effectiveVersion} for ${tool.name}, skipping tool cache"
+                            - log.debug: "Could not resolve version ${tool.versionToResolve} for ${tool.name}, skipping tool cache"
                 
                 # Determine JRE for tools that support it (before build install command)
                 - if: ${tool.supportsJre == true && cli['with-jre'] != 'no'}
