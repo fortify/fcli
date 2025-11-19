@@ -290,7 +290,7 @@ steps:
                 - if: ${global.ci.toolCacheDirPattern != null && tool.effectiveVersion != 'preinstalled'}
                   steps:
                     - var.set:
-                        tool.versionToResolve: ${tool.effectiveVersion == 'auto' ? 'latest' : tool.effectiveVersion}
+                        tool.versionToResolve: ${tool.effectiveVersion == 'auto'?'latest':tool.effectiveVersion}
                     - run.fcli:
                         RESOLVE_VERSION:
                           cmd: tool ${tool.name} list -q "version=='${tool.versionToResolve}' || aliases.contains('${tool.versionToResolve}')"
