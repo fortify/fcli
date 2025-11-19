@@ -146,7 +146,7 @@ public final class ToolInstaller {
     }
     
     public final boolean hasMatchingTargetPath(ToolDefinitionVersionDescriptor versionDescriptor) {
-        var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+        var installationDescriptor = ToolInstallationDescriptor.optionalCopyFromToolInstallPath(getTargetPath(), toolName, versionDescriptor);
         var currentToolInstallPath = installationDescriptor==null ? null: installationDescriptor.getInstallPath().normalize();
         var targetToolInstallPath = getTargetPath().normalize();
         return targetToolInstallPath.equals(currentToolInstallPath) && Files.exists(targetToolInstallPath);

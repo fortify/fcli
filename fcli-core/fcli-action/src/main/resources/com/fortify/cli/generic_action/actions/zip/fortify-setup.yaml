@@ -138,6 +138,12 @@ cli.options:
     description: "Custom tool definitions URL (ignored in air-gapped mode)"
 
 steps:
+  # ===== PHASE 0: CI DETECTION =====
+  - if: ${global.isCiInitialized==null}
+    run.fcli:
+      ci-vars: 
+        cmd: fcli action run ci-vars
+  
   # ===== PHASE 1: TOOL DEFINITIONS (OPTIONAL) =====
   
   - if: ${!cli['air-gapped']}
@@ -274,7 +280,7 @@ steps:
               steps:
                 # Resolve semantic version to actual version for proper tool cache directory naming
                 # Skip for 'auto' which isn't a valid version spec in tool list
-                - if: ${global.fortifySetup.toolCacheDirPattern != null && tool.effectiveVersion != 'auto'}
+                - if: ${global.ci.toolCacheDirPattern != null && tool.effectiveVersion != 'auto'}
                   steps:
                     - run.fcli:
                         RESOLVE_VERSION:
@@ -307,7 +313,7 @@ steps:
                                 tool.detectedJreHome: ${#env('SCANCENTRAL_JAVA_HOME')}
                             - if: ${tool.detectedJreHome == null}
                               var.set:
-                                tool.detectedJreHome: ${global.fortifySetup['java'+tool.requiredJre+'Home']}
+                                tool.detectedJreHome: ${global.ci['java'+tool.requiredJre+'Home']}
                             - if: ${tool.detectedJreHome == null}
                               var.set:
                                 tool.detectedJreHome: ${#findJavaHome(tool.requiredJre)}
@@ -324,9 +330,9 @@ steps:
                   var.set:
                     tool.installCmd: ${tool.installCmd} --base-dir "${cli['base-dir']}"
                 # For tool cache: use resolvedVersion if available, otherwise fall back to default install location
-                - if: ${global.fortifySetup.toolCacheDirPattern != null && tool.resolvedVersion != null}
+                - if: ${global.ci.toolCacheDirPattern != null && tool.resolvedVersion != null}
                   var.set:
-                    tool.cacheDir: ${global.fortifySetup.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.resolvedVersion)}
+                    tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.resolvedVersion)}
                     tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
                 
                 # Add JRE options for tools that support it

@@ -39,11 +39,6 @@ steps:
         on.success:
           - var.set:
               global.ci.rel: ${#env('FOD_RELEASE')?:global.ci.defaultFortifyRepo}
-              global.fortifySetup.toolCacheDirPattern: ${global.ci.toolCacheDirPattern}
-              global.fortifySetup.java8Home: ${global.ci.java8Home}
-              global.fortifySetup.java11Home: ${global.ci.java11Home}
-              global.fortifySetup.java17Home: ${global.ci.java17Home}
-              global.fortifySetup.java21Home: ${global.ci.java21Home}
           - if: ${global.ci.rel==null}
             throw: FoD release must be specified through FOD_RELEASE environment variable
             
