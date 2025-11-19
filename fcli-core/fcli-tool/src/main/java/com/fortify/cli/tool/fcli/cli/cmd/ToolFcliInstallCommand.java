@@ -18,13 +18,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
+import com.fortify.cli.tool.fcli.helper.ToolFcliHelper;
+import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -80,9 +84,23 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     @Override
     protected BiFunction<ToolInstaller, File, String> getToolVersionDetectorCallback() {
         // Fcli-specific version detection: try install descriptor first, then execute fcli --version
-        return (installer, sourceDir) -> {
-            File sourceBinary = ToolFcliHelper.resolveBinaryFromExplicitPath(sourceDir);
+        return (installer, installDir) -> {
+            File sourceBinary = ToolFcliHelper.resolveBinaryFromExplicitPath(installDir);
             return ToolFcliHelper.detectVersion(sourceBinary);
+        };
+    }
+    
+    @Override
+    protected Function<File, File> getInstallDirResolver() {
+        // For fcli, resolve install dir from any path (executable, bin dir, or install dir)
+        return path -> {
+            try {
+                File sourceBinary = ToolFcliHelper.resolveBinaryFromExplicitPath(path);
+                return ToolRegistrationHelper.resolveInstallDir(sourceBinary);
+            } catch (FcliSimpleException e) {
+                // If binary resolution fails, fall back to default behavior
+                return ToolRegistrationHelper.resolveInstallDir(path);
+            }
         };
     }
 }

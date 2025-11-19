@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.tool.fcli.cli.cmd;
+package com.fortify.cli.tool.fcli.helper;
 
 import java.io.File;
 

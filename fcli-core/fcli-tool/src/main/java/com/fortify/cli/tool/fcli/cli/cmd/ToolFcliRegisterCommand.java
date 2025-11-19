@@ -15,6 +15,7 @@ package com.fortify.cli.tool.fcli.cli.cmd;
 import java.io.File;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
+import com.fortify.cli.tool.fcli.helper.ToolFcliHelper;
 
 import picocli.CommandLine.Command;
 
