@@ -211,7 +211,6 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         var installPath = getInstallPath();
         Path result = null;
         if ( installPath!=null ) {
-            toolInstaller.getProgressWriter().writeWarning("WARN: --install-dir option is deprecated");
             result = installPath;
         } else {
             var basePath = getBasePath();
