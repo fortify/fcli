@@ -30,7 +30,7 @@ public class ToolDebrickedCliInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolDebrickedCliCommands.TOOL_NAME;
 
     @Override
-    protected String getDefaultArtifactType() {
+    protected String getFallbackPlatform() {
         return "";
     }
     

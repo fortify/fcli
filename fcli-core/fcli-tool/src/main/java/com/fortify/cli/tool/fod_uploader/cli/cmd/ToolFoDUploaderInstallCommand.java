@@ -28,7 +28,7 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolFoDUploaderCommands.TOOL_NAME;
     
     @Override
-    protected String getDefaultArtifactType() {
+    protected String getFallbackPlatform() {
         return "java";
     }
     

@@ -46,7 +46,7 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     }
     
     @Override
-    protected String getDefaultArtifactType() {
+    protected String getFallbackPlatform() {
         return "java";
     }
     

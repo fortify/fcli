@@ -33,7 +33,7 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
     @Getter private String toolName = ToolBugTrackerUtilityCommands.TOOL_NAME;
     
     @Override
-    protected String getDefaultArtifactType() {
+    protected String getFallbackPlatform() {
         return "java";
     }
     

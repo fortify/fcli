@@ -54,7 +54,7 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Option(names= {"--jre"}) private Path jrePath;
     
     @Override
-    protected String getDefaultArtifactType() {
+    protected String getFallbackPlatform() {
         return "java";
     }
     

@@ -28,7 +28,7 @@ public class ToolVulnExporterInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolVulnExporterCommands.TOOL_NAME;
     
     @Override
-    protected String getDefaultArtifactType() {
+    protected String getFallbackPlatform() {
         return "java";
     }
     

@@ -105,7 +105,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     protected abstract String getToolName();
     protected abstract void postInstall(ToolInstaller toolInstaller, ToolInstallationResult installationResult);
-    protected abstract String getDefaultArtifactType();
+    protected abstract String getFallbackPlatform();
     
     /**
      * Get the default binary name for this tool (platform-specific).
@@ -172,7 +172,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         try ( var progressWriter = progressWriterFactory.create() ) {
             var preparer = new ToolInstallationPreparer();
             var builder = ToolInstaller.builder()
-                    .defaultPlatform(getDefaultArtifactType())
+                    .fallbackPlatform(getFallbackPlatform())
                     .onDigestMismatch(onDigestMismatch)
                     .preInstallAction(preparer)
                     .postInstallAction(this::postInstall)

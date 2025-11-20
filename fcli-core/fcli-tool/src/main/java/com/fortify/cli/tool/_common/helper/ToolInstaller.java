@@ -52,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class ToolInstaller {
     @Getter private final String toolName;
     @Getter private final String requestedVersion;
-    @Getter private final String defaultPlatform;
+    @Getter private final String fallbackPlatform;
     @Getter private final Function<ToolInstaller,Path> targetPathProvider;
     @Getter private final Function<ToolInstaller,Path> globalBinPathProvider;
     @Getter private final DigestMismatchAction onDigestMismatch;
@@ -155,7 +155,7 @@ public final class ToolInstaller {
     
     public final ToolInstallationResult install() {
         var artifactDescriptor = getArtifactDescriptor(ToolPlatformHelper.getPlatform())
-                .orElseGet(()->getArtifactDescriptor(defaultPlatform)
+                .orElseGet(()->getArtifactDescriptor(fallbackPlatform)
                         .orElseThrow(()->new IllegalStateException("Appropriate artifact for system platform cannot be determined automatically, please specify platform explicitly")));
         return install(artifactDescriptor);
     }
@@ -271,22 +271,6 @@ public final class ToolInstaller {
         copyOrExtract(artifactDescriptor, downloadedFile);
     }
     
-    private void downloadAndExtractSafely() throws IOException {
-        var binaries = getVersionDescriptor().getBinaries();
-        if (binaries == null) {
-            throw new FcliSimpleException(
-                "Cannot download " + toolName + ": version " + getVersionDescriptor().getVersion() + 
-                " not found in tool definitions. Please update tool definitions or use a different version.");
-        }
-        var platform = ToolPlatformHelper.getPlatform() != null ? ToolPlatformHelper.getPlatform() : defaultPlatform;
-        var artifactDescriptor = binaries.get(platform);
-        if (artifactDescriptor == null) {
-            throw new FcliSimpleException(
-                "Cannot download " + toolName + ": no artifact available for platform " + platform);
-        }
-        downloadAndExtract(artifactDescriptor);
-    }
-    
     private static final File download(ToolDefinitionArtifactDescriptor artifactDescriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
@@ -396,7 +380,7 @@ public final class ToolInstaller {
             .toolVersionDetectorCallback(toolVersionDetectorCallback)
             .installDirResolver(installDirResolver)
             .versionDetector(ToolInstaller::copyFromVersionDetector)
-            .installer((installer, artifact) -> installer.copyFromInstaller());
+            .installer(ToolInstaller::copyFromInstaller);
     }
     
     /**
@@ -567,11 +551,11 @@ public final class ToolInstaller {
      * Falls back to regular download if copy is not possible or skipped.
      */
     @SneakyThrows
-    private void copyFromInstaller() {
+    private void copyFromInstaller(ToolDefinitionArtifactDescriptor artifactDescriptor) {
         // Check if copy was already skipped during version detection
         if (skippedCopyFrom) {
             progressWriter.writeProgress("Skipping copy, downloading instead");
-            downloadAndExtractSafely();
+            downloadAndExtract(artifactDescriptor);
             return;
         }
         
@@ -581,7 +565,7 @@ public final class ToolInstaller {
                 throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
             }
             progressWriter.writeProgress("Copy source directory not found, downloading instead");
-            downloadAndExtractSafely();
+            downloadAndExtract(artifactDescriptor);
             return;
         }
         
@@ -591,7 +575,7 @@ public final class ToolInstaller {
         if (detectedVersion != null && !checkCopyFromVersionMatch(requestedVersion, detectedVersion)) {
             if (!handleCopyFromVersionMismatch(requestedVersion, detectedVersion)) {
                 // Skip was requested, fall back to download
-                downloadAndExtractSafely();
+                downloadAndExtract(artifactDescriptor);
                 return;
             }
         }
