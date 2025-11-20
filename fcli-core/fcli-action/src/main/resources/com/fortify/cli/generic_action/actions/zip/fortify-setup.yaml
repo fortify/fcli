@@ -2,7 +2,7 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Set up Fortify tools for CI/CD workflows
+  header: Set up Fortify tools for CI/CD workflows
   description: |
     Detects, registers, and installs Fortify tools (fcli, sc-client, fod-uploader,
     debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines.

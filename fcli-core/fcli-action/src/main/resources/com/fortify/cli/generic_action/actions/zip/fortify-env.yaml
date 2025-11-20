@@ -2,7 +2,7 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Output environment variables for Fortify tools
+  header: Output environment variables for Fortify tools
   description: |
     Generates environment variable definitions for installed Fortify tools in various
     formats suitable for sourcing in shells or setting through CI/CD systems.

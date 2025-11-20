@@ -2,20 +2,22 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Collect CI-specific data
+  header: Collect environment-specific data
   description: |
-    This action collects data used by the SSC & FoD 'ci' actions, based on CI-specific 
-    data like CI-specific environment variables. Data is collected in a CI-agnostic
-    global variable named 'ci'. Note that available properties on the global 'ci' 
-    variable may change across fcli releases, potentially breaking any custom actions
-    that depend on these properties.
+    This action collects data about the current environment in which fcli is being run,
+    like the current CI/CD platform (GitHub, GitLab, Azure DevOps, ...), Git data from
+    current source code directory, ... Collected data is stored in global.ci.* action 
+    variables for use by other actions, and printed to the output for user reference.
+    This includes both environment-specific data, and any data derived from that data,
+    like default FoD release name and SSC application version name.
 
 config:
   output: immediate
   mcp: exclude
   
 steps:
-  # Only run if not run before; global.ci.isInitialized is set at the end of this action
+  # Only run if not run before; global.isCiInitialized is set at the end of this action.
+  # Callers may also check this variable to avoid re-running this action.
   - if: ${global.isCiInitialized==null}
     steps:
       # Set default ci values. Where possible, steps below should override these
@@ -96,11 +98,13 @@ steps:
           global.ci.toolCacheBaseDir:    ${#joinOrNull('/',#env('WORKSPACE')?:#env('HOME'),'.fortify/tools')}
           global.ci.toolCacheDirPattern: ${#joinOrNull('/',global.ci.toolCacheBaseDir,'{tool}/{version}')}
     
-      # Generic local repository fallback (run if previous CI-specific steps didn't set these)
+      # Generic local repository detection
       - var.set:
           global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,#env('SOURCE_DIR')?:'.')}
       - var.set:
           global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
+      
+      # Generic local repository fallback (run if previous CI-specific steps didn't set these)
       - if: ${#isBlank(global.ci.id) && global.ci.localRepo!=null}
         var.set:
           global.ci.name:              local Git repository
@@ -133,7 +137,9 @@ steps:
           from: ${#properties(global.ci)}
           record.var-name: p
           do:
-            - log.info: "${'  '+p.key+': '+p.value}"
+            - if: ${#isDebugEnabled() || p.value!=null}
+              log.info: "${'  '+p.key+': '+p.value}"
+
       # Mark as initialized to prevent re-running this action
       - var.set:
           global.isCiInitialized: true

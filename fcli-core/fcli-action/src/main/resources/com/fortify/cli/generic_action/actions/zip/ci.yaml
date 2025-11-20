@@ -2,7 +2,7 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Run CI pipeline
+  header: Run CI pipeline
   description: |
     This action can be used to run a full, standardized CI pipeline that performs the
     following activities:

@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
 author: Fortify
 usage:
-  header: (PREVIEW) Run FoD CI pipeline
+  header: Run FoD CI pipeline
   description: |
     This action can be used to run a full, standardized CI pipeline that performs the
     following activities:
