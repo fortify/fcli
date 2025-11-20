@@ -37,9 +37,9 @@ steps:
       
   # Run ci-vars action to obtain CI data
   - run.fcli:
-      ci-vars: 
-        group: ci-vars
-        cmd: ${#actionCmd('CI_VARS', module, 'ci-vars')}
+      detect-env: 
+        group: detect-env
+        cmd: fcli action run detect-env
         status.check: true   # Fail immediately if this step fails, as it doesn't make sense to continue
         on.success:
           - var.set:

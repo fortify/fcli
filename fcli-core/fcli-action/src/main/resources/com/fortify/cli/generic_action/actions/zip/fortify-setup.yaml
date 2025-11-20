@@ -141,8 +141,8 @@ steps:
   # ===== PHASE 0: CI DETECTION =====
   - if: ${global.isCiInitialized==null}
     run.fcli:
-      ci-vars: 
-        cmd: fcli action run ci-vars
+      detect-env: 
+        cmd: fcli action run detect-env
   
   # ===== PHASE 1: TOOL DEFINITIONS (OPTIONAL) =====
   
@@ -287,7 +287,7 @@ steps:
                 # Resolve semantic version to actual version for proper tool cache directory naming
                 # For 'auto', resolve to 'latest' version number
                 # Skip for 'preinstalled' which isn't a valid version spec in tool list
-                - if: ${global.ci.toolCacheDirPattern != null && tool.effectiveVersion != 'preinstalled'}
+                - if: ${global.ci.toolInstallDirPattern != null && tool.effectiveVersion != 'preinstalled'}
                   steps:
                     - var.set:
                         tool.versionToResolve: ${tool.effectiveVersion == 'auto'?'latest':tool.effectiveVersion}
@@ -339,9 +339,9 @@ steps:
                   var.set:
                     tool.installCmd: ${tool.installCmd} --base-dir "${cli['base-dir']}"
                 # For tool cache: use resolvedVersion if available, otherwise fall back to default install location
-                - if: ${global.ci.toolCacheDirPattern != null && tool.resolvedVersion != null}
+                - if: ${global.ci.toolInstallDirPattern != null && tool.resolvedVersion != null}
                   var.set:
-                    tool.cacheDir: ${global.ci.toolCacheDirPattern.replace('{tool}', tool.name).replace('{version}', tool.resolvedVersion)}
+                    tool.cacheDir: ${global.ci.toolInstallDirPattern.replace('{tool}', tool.name).replace('{version}', tool.resolvedVersion)}
                     tool.installCmd: ${tool.installCmd} --install-dir "${tool.cacheDir}"
                 
                 # Add JRE options for tools that support it
