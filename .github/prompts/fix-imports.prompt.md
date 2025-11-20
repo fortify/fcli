@@ -3,13 +3,15 @@
 ## Objective
 Find all fully qualified class names (FQCNs) used in Java code (not in import statements or package declarations) and replace them with simple class names after adding appropriate import statements.
 
+**Note:** Only update files within the `com.fortify.cli` packages. Do not modify third-party or external code.
+
 ## Search Strategy
 
 1. **Initial Search**: Use regex search to find potential FQCNs:
    ```regex
-   ^[^/\n]*[^import\s].*\b(com|org|java|javax)\.[a-z][a-z0-9_.]*\.[A-Z][a-zA-Z0-9]*
+   ^[^/\n]*[^import\s].*\b(com|org|java|javax|lombok)(\.[a-z][a-z0-9_])*\.[A-Z][a-zA-Z0-9]*
    ```
-   - Search in: `**/*.java`
+   - Search in: `**/com/fortify/cli/**/*.java`
    - This pattern finds lines that contain FQCNs but are not import or package statements
 
 2. **Filter Results**: The search will include:
@@ -31,6 +33,14 @@ Find all fully qualified class names (FQCNs) used in Java code (not in import st
 - `picocli.CommandLine.Command` → `CommandLine.Command` (after importing `picocli.CommandLine`)
 - `com.fasterxml.jackson.core.type.TypeReference` → `TypeReference`
 - `com.fasterxml.jackson.databind.JsonNode` → `JsonNode`
+
+### Lombok Annotations
+- `lombok.Builder` → `Builder`
+- `lombok.Data` → `Data`
+- `lombok.Getter` → `Getter`
+- `lombok.Setter` → `Setter`
+- `lombok.NoArgsConstructor` → `NoArgsConstructor`
+- `lombok.AllArgsConstructor` → `AllArgsConstructor`
 
 ### Project Classes
 - `com.fortify.cli.common.util.FileUtils` → `FileUtils` (if not in same package)
