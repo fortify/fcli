@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20251120.112450-dev_feat.ci-updates
+fcli_version: 0.20251120.130327-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251120.112450-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.112450-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.130327-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251120.112450-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251120.130327-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -73,100 +73,94 @@ fcli_version: 0.20251120.112450-dev_feat.ci-updates
 <li><a href="#_description_6">Description</a></li>
 </ul>
 </li>
-<li><a href="#_ci_vars">ci-vars</a>
+<li><a href="#_debricked_scan">debricked-scan</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_7">Synopsis</a></li>
 <li><a href="#_description_7">Description</a></li>
-</ul>
-</li>
-<li><a href="#_debricked_scan">debricked-scan</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_8">Synopsis</a></li>
-<li><a href="#_description_8">Description</a></li>
 <li><a href="#_options_6">Options</a></li>
 </ul>
 </li>
 <li><a href="#_github_pr_comment">github-pr-comment</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_9">Synopsis</a></li>
-<li><a href="#_description_9">Description</a></li>
+<li><a href="#_synopsis_8">Synopsis</a></li>
+<li><a href="#_description_8">Description</a></li>
 <li><a href="#_options_7">Options</a></li>
 </ul>
 </li>
 <li><a href="#_github_sast_report">github-sast-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_10">Synopsis</a></li>
-<li><a href="#_description_10">Description</a></li>
+<li><a href="#_synopsis_9">Synopsis</a></li>
+<li><a href="#_description_9">Description</a></li>
 <li><a href="#_options_8">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_codequality_report">gitlab-codequality-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_11">Synopsis</a></li>
-<li><a href="#_description_11">Description</a></li>
+<li><a href="#_synopsis_10">Synopsis</a></li>
+<li><a href="#_description_10">Description</a></li>
 <li><a href="#_options_9">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_dast_report">gitlab-dast-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_12">Synopsis</a></li>
-<li><a href="#_description_12">Description</a></li>
+<li><a href="#_synopsis_11">Synopsis</a></li>
+<li><a href="#_description_11">Description</a></li>
 <li><a href="#_options_10">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_debricked_report">gitlab-debricked-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_13">Synopsis</a></li>
-<li><a href="#_description_13">Description</a></li>
+<li><a href="#_synopsis_12">Synopsis</a></li>
+<li><a href="#_description_12">Description</a></li>
 <li><a href="#_options_11">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_sast_report">gitlab-sast-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_14">Synopsis</a></li>
-<li><a href="#_description_14">Description</a></li>
+<li><a href="#_synopsis_13">Synopsis</a></li>
+<li><a href="#_description_13">Description</a></li>
 <li><a href="#_options_12">Options</a></li>
 </ul>
 </li>
 <li><a href="#_gitlab_sonatype_report">gitlab-sonatype-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_15">Synopsis</a></li>
-<li><a href="#_description_15">Description</a></li>
+<li><a href="#_synopsis_14">Synopsis</a></li>
+<li><a href="#_description_14">Description</a></li>
 <li><a href="#_options_13">Options</a></li>
 </ul>
 </li>
 <li><a href="#_package">package</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_16">Synopsis</a></li>
-<li><a href="#_description_16">Description</a></li>
+<li><a href="#_synopsis_15">Synopsis</a></li>
+<li><a href="#_description_15">Description</a></li>
 <li><a href="#_options_14">Options</a></li>
 </ul>
 </li>
 <li><a href="#_sarif_sast_report">sarif-sast-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_17">Synopsis</a></li>
-<li><a href="#_description_17">Description</a></li>
+<li><a href="#_synopsis_16">Synopsis</a></li>
+<li><a href="#_description_16">Description</a></li>
 <li><a href="#_options_15">Options</a></li>
 </ul>
 </li>
 <li><a href="#_servicenow_csv_report">servicenow-csv-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_18">Synopsis</a></li>
-<li><a href="#_description_18">Description</a></li>
+<li><a href="#_synopsis_17">Synopsis</a></li>
+<li><a href="#_description_17">Description</a></li>
 <li><a href="#_options_16">Options</a></li>
 </ul>
 </li>
 <li><a href="#_setup_appversion">setup-appversion</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_19">Synopsis</a></li>
-<li><a href="#_description_19">Description</a></li>
+<li><a href="#_synopsis_18">Synopsis</a></li>
+<li><a href="#_description_18">Description</a></li>
 <li><a href="#_options_17">Options</a></li>
 </ul>
 </li>
 <li><a href="#_sonarqube_sast_report">sonarqube-sast-report</a>
 <ul class="sectlevel2">
-<li><a href="#_synopsis_20">Synopsis</a></li>
-<li><a href="#_description_20">Description</a></li>
+<li><a href="#_synopsis_19">Synopsis</a></li>
+<li><a href="#_description_19">Description</a></li>
 <li><a href="#_options_18">Options</a></li>
 </ul>
 </li>
@@ -450,7 +444,7 @@ fcli actions, returning a non-zero exit code if any of the checks fail.</p>
 <h2 id="_ci"><a class="anchor" href="#_ci"></a>ci</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Run SSC CI pipeline</p>
+<p>Run SSC CI pipeline</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_6"><a class="anchor" href="#_synopsis_6"></a>Synopsis</h3>
@@ -606,43 +600,19 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_ci_vars"><a class="anchor" href="#_ci_vars"></a>ci-vars</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>(PREVIEW) Collect CI-specific data</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_7"><a class="anchor" href="#_synopsis_7"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> ci-vars [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_7"><a class="anchor" href="#_description_7"></a>Description</h3>
-<div class="paragraph">
-<p>This action collects data used by the SSC &amp; FoD 'ci' actions, based on CI-specific
-data like CI-specific environment variables. Data is collected in a CI-agnostic
-global variable named 'ci'. Note that available properties on the global 'ci'
-variable may change across fcli releases, potentially breaking any custom actions
-that depend on these properties.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_debricked_scan"><a class="anchor" href="#_debricked_scan"></a>debricked-scan</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>(PREVIEW) Run Debricked Scan</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
+<h3 id="_synopsis_7"><a class="anchor" href="#_synopsis_7"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> debricked-scan [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
+<h3 id="_description_7"><a class="anchor" href="#_description_7"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to run a debricked scan of the project.</p>
 </div>
@@ -699,13 +669,13 @@ that depend on these properties.</p>
 <p>(PREVIEW) Add GitHub Pull Request review comments.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
+<h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-pr-comment [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
+<h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
 <div class="paragraph">
 <p>This action adds review comments to a GitHub Pull Request. Currently
 this is marked as PREVIEW as we build out this functionality; later
@@ -788,13 +758,13 @@ previous scan for this PR.</p>
 <p>Generate a GitHub Code Scanning report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
+<h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> github-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
+<h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitHub, see
 <a href="https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github" class="bare">https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github</a></p>
@@ -836,13 +806,13 @@ previous scan for this PR.</p>
 <p>Generate a GitLab Code Quality report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
+<h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-codequality-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
+<h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality</a></p>
@@ -884,13 +854,13 @@ previous scan for this PR.</p>
 <p>Generate a GitLab DAST report listing SSC DAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
+<h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-dast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
+<h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast</a></p>
@@ -928,13 +898,13 @@ previous scan for this PR.</p>
 <p>Generate a GitLab Dependency Scanning report listing SSC Debricked vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
+<h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-debricked-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
+<h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
@@ -972,13 +942,13 @@ previous scan for this PR.</p>
 <p>Generate a GitLab SAST report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
+<h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
+<h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast</a></p>
@@ -1020,13 +990,13 @@ previous scan for this PR.</p>
 <p>Generate a GitLab Dependency Scanning report listing SSC Sonatype vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
+<h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> gitlab-sonatype-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
+<h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into GitLab, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
@@ -1061,16 +1031,16 @@ previous scan for this PR.</p>
 <h2 id="_package"><a class="anchor" href="#_package"></a>package</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Package source code</p>
+<p>Package source code</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
+<h3 id="_synopsis_15"><a class="anchor" href="#_synopsis_15"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> package [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
+<h3 id="_description_15"><a class="anchor" href="#_description_15"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to package source code using ScanCentral Client. It will
 take care of installing the specified ScanCentral Client version, followed by
@@ -1121,13 +1091,13 @@ specified.</p>
 <p>Generate SARIF report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_17"><a class="anchor" href="#_synopsis_17"></a>Synopsis</h3>
+<h3 id="_synopsis_16"><a class="anchor" href="#_synopsis_16"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sarif-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_17"><a class="anchor" href="#_description_17"></a>Description</h3>
+<h3 id="_description_16"><a class="anchor" href="#_description_16"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a SARIF report listing Fortify SAST vulnerabilities, which
 may be useful for integration with various 3rd-party tools that can ingest SARIF
@@ -1171,13 +1141,13 @@ reports. For more information about SARIF, please see
 <p>(PREVIEW) Generate ServiceNow CSV report</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_18"><a class="anchor" href="#_synopsis_18"></a>Synopsis</h3>
+<h3 id="_synopsis_17"><a class="anchor" href="#_synopsis_17"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> servicenow-csv-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_18"><a class="anchor" href="#_description_18"></a>Description</h3>
+<h3 id="_description_17"><a class="anchor" href="#_description_17"></a>Description</h3>
 <div class="paragraph">
 <p>This action generates a CSV report that can be imported into the ServiceNow
 Vulnerability Response module; please see the following link for details:
@@ -1218,13 +1188,13 @@ the given SSC application version and filter set.</p>
 <p>Set up application version.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_19"><a class="anchor" href="#_synopsis_19"></a>Synopsis</h3>
+<h3 id="_synopsis_18"><a class="anchor" href="#_synopsis_18"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> setup-appversion [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_19"><a class="anchor" href="#_description_19"></a>Description</h3>
+<h3 id="_description_18"><a class="anchor" href="#_description_18"></a>Description</h3>
 <div class="paragraph">
 <p>This action allows for preparing an application version for running an application
 security scan, creating the application and/or release if they do not exist yet.</p>
@@ -1299,13 +1269,13 @@ appropriate option values and setup commands to run.</p>
 <p>Generate a SonarQube External Issues report listing SSC SAST vulnerabilities.</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_20"><a class="anchor" href="#_synopsis_20"></a>Synopsis</h3>
+<h3 id="_synopsis_19"><a class="anchor" href="#_synopsis_19"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> sonarqube-sast-report [<a href="manpage/fcli-ssc-action-run.html">fcli ssc action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_20"><a class="anchor" href="#_description_20"></a>Description</h3>
+<h3 id="_description_19"><a class="anchor" href="#_description_19"></a>Description</h3>
 <div class="paragraph">
 <p>For information on how to import this report into SonarQube, see
 <a href="https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/" class="bare">https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/</a></p>
@@ -1347,8 +1317,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251120.112450-dev_feat.ci-updates<br>
-Last updated 2025-11-20 11:27:44 UTC
+Version 0.20251120.130327-dev_feat.ci-updates<br>
+Last updated 2025-11-20 13:06:36 UTC
 </div>
 </div>
 </body>

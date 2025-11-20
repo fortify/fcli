@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20251120.112450-dev_feat.ci-updates
+fcli_version: 0.20251120.130327-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251120.112450-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.112450-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.130327-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251120.112450-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251120.130327-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -40,7 +40,7 @@ fcli_version: 0.20251120.112450-dev_feat.ci-updates
 <li><a href="#_fortify_software_security_center">Fortify Software Security Center</a></li>
 </ul>
 </li>
-<li><a href="#_ci_vars">ci-vars</a>
+<li><a href="#_detect_env">detect-env</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_2">Synopsis</a></li>
 <li><a href="#_description_2">Description</a></li>
@@ -83,7 +83,7 @@ the <code><a href="manpage/fcli-action-run.html">fcli action run</a> &lt;action-
 <h2 id="_ci"><a class="anchor" href="#_ci"></a>ci</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Run CI pipeline</p>
+<p>Run CI pipeline</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h3>
@@ -371,25 +371,26 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_ci_vars"><a class="anchor" href="#_ci_vars"></a>ci-vars</h2>
+<h2 id="_detect_env"><a class="anchor" href="#_detect_env"></a>detect-env</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Collect CI-specific data</p>
+<p>Collect environment-specific data</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
 <div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> ci-vars [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
+<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> detect-env [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
 <div class="paragraph">
-<p>This action collects data used by the SSC &amp; FoD 'ci' actions, based on CI-specific
-data like CI-specific environment variables. Data is collected in a CI-agnostic
-global variable named 'ci'. Note that available properties on the global 'ci'
-variable may change across fcli releases, potentially breaking any custom actions
-that depend on these properties.</p>
+<p>This action collects data about the current environment in which fcli is being run,
+like the current CI/CD platform (GitHub, GitLab, Azure DevOps, &#8230;&#8203;), Git data from
+current source code directory, &#8230;&#8203; Collected data is stored in global.ci.* action
+variables for use by other actions, and printed to the output for user reference.
+This includes both environment-specific data, and any data derived from that data,
+like default FoD release name and SSC application version name.</p>
 </div>
 </div>
 </div>
@@ -398,7 +399,7 @@ that depend on these properties.</p>
 <h2 id="_fortify_env"><a class="anchor" href="#_fortify_env"></a>fortify-env</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Output environment variables for Fortify tools</p>
+<p>Output environment variables for Fortify tools</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
@@ -513,7 +514,7 @@ source &lt;(link:manpage/fcli-action-run.html[fcli action run] fortify-env)</pre
 <h2 id="_fortify_setup"><a class="anchor" href="#_fortify_setup"></a>fortify-setup</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Set up Fortify tools for CI/CD workflows</p>
+<p>Set up Fortify tools for CI/CD workflows</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
@@ -655,7 +656,7 @@ previously installed or registered:
 <h2 id="_package"><a class="anchor" href="#_package"></a>package</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(PREVIEW) Package source code</p>
+<p>Package source code</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
@@ -711,8 +712,8 @@ specified.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251120.112450-dev_feat.ci-updates<br>
-Last updated 2025-11-20 11:27:39 UTC
+Version 0.20251120.130327-dev_feat.ci-updates<br>
+Last updated 2025-11-20 13:06:30 UTC
 </div>
 </div>
 </body>

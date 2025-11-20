@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.112450-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.130327-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -67,7 +67,10 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows for tool installation and upgrade. By default, tools are installed to &lt;base-dir&gt;/&lt;tool-name&gt;/&lt;version&gt;. The base directory can be specified using the --base-dir option, defaulting to &lt;user.home&gt;/fortify/tools if not specified. Unless the --no-global-bin option is specified, wrapper scripts for invoking each tool will be installed to &lt;base-dir&gt;/bin, allowing users to add this single directory to the system PATH for easy invocation of all installed tools.</p>
+<p>This command allows for fine-grained control over tool installation and upgrade. If you are looking for a simpler way to set up Fortify tools, please consider using the 'fcli action run fortify-setup' command instead, which provides a higher-level interface for setting up Fortify tools and automatically detects environment characteristics.</p>
+</div>
+<div class="paragraph">
+<p>By default, tools are installed to &lt;base-dir&gt;/&lt;tool-name&gt;/&lt;version&gt;. The base directory can be specified using the --base-dir option, defaulting to &lt;user.home&gt;/fortify/tools if not specified. Unless the --no-global-bin option is specified, wrapper scripts for invoking each tool will be installed to &lt;base-dir&gt;/bin, allowing users to add this single directory to the system PATH for easy invocation of all installed tools if you like invoking those tools directly. Note however that tools installed through fcli can also be invoked through the 'fcli tool &lt;tool-name&gt; run' command, allowing to run either last installed version or a specific version without needing to modify the system PATH or having to remember the installation directory.</p>
 </div>
 <div class="paragraph">
 <p>It is also possibly to specify an explicit installation directory through the --install-dir option, for example to install the tool to a specific location that will be cached by a CI/CD system. The --install-dir option doesn&#8217;t create the &lt;base-dir&gt;/&lt;tool-name&gt;/&lt;version&gt; directory structure, and doesn&#8217;t install wrapper scripts to a shared bin-directory.</p>
@@ -115,7 +118,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--install-dir</strong>=<em>&lt;installDir&gt;</em></dt>
 <dd>
-<p>Tool installation directory. As described above, it is recommended to use --base-dir instead.</p>
+<p>Tool installation directory. As described above, it is recommended to use --base-dir instead for manual installations.</p>
 </dd>
 <dt class="hdlist1"><strong>--jre</strong>=<em>&lt;jrePath&gt;</em></dt>
 <dd>
@@ -123,7 +126,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--jre-platform</strong>=<em>&lt;jrePlatform&gt;</em></dt>
 <dd>
-<p>(PREVIEW) Specify the platform for which to install the JRE, implies --with-jre. See <a href="https://github.com/fortify/tool-definitions/blob/main/v1/jre.yaml" class="bare">https://github.com/fortify/tool-definitions/blob/main/v1/jre.yaml</a> for available platforms. Default value: current platform.</p>
+<p>Specify the platform for which to install the JRE, implies --with-jre. See <a href="https://github.com/fortify/tool-definitions/blob/main/v1/jre.yaml" class="bare">https://github.com/fortify/tool-definitions/blob/main/v1/jre.yaml</a> for available platforms. Default value: current platform.</p>
 </dd>
 <dt class="hdlist1"><strong>--[no-]global-bin</strong></dt>
 <dd>
@@ -159,7 +162,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--with-jre</strong></dt>
 <dd>
-<p>(PREVIEW) Install compatible JRE into the ScanCentral Client JRE directory, allowing ScanCentral Client to run even if no (compatible) JRE is installed elsewhere on the system.</p>
+<p>Install compatible JRE into the ScanCentral Client JRE directory, allowing ScanCentral Client to run even if no (compatible) JRE is installed elsewhere on the system.</p>
 </dd>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
@@ -231,7 +234,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-20 11:27:20 UTC
+Last updated 2025-11-20 13:06:11 UTC
 </div>
 </div>
 </body>
