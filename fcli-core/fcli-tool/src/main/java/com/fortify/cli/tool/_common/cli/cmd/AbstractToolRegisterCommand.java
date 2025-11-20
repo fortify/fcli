@@ -103,7 +103,8 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
             getToolName(), 
             result.getVersionDescriptor(), 
             result.getInstallation(), 
-            result.getAction().name()
+            result.getAction().name(),
+            true
         );
         
         return JsonHelper.getObjectMapper().<ObjectNode>valueToTree(descriptor);

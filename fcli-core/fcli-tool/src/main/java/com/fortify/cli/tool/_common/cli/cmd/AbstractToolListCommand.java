@@ -38,13 +38,14 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     public final JsonNode getJsonNode() {
         var toolName = getToolName();
         var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
+        var lastInstalledDescriptor = ToolInstallationDescriptor.loadLastModified(toolName);
         
         // Get versions from tool definitions
         Stream<ToolInstallationOutputDescriptor> definedVersions = toolDefinition.getVersionsStream()
-                .map(this::createToolOutputDescriptor);
+                .map(vd -> createToolOutputDescriptor(vd, lastInstalledDescriptor));
         
         // Get versions from state directory that aren't in definitions (e.g., "unknown" versions)
-        Stream<ToolInstallationOutputDescriptor> unknownVersions = getUnknownVersionsFromState(toolName, toolDefinition);
+        Stream<ToolInstallationOutputDescriptor> unknownVersions = getUnknownVersionsFromState(toolName, toolDefinition, lastInstalledDescriptor);
         
         // Combine both streams
         return Stream.concat(definedVersions, unknownVersions)
@@ -59,14 +60,15 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     
     protected abstract String getToolName();
     
-    private ToolInstallationOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor) {
+    private ToolInstallationOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor lastInstalledDescriptor) {
         var toolName = getToolName();
         var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
-        return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, "");
+        boolean isDefault = isDefaultVersion(installationDescriptor, lastInstalledDescriptor);
+        return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, "", isDefault);
     }
     
     private Stream<ToolInstallationOutputDescriptor> getUnknownVersionsFromState(String toolName, 
-            ToolDefinitionRootDescriptor toolDefinition) {
+            ToolDefinitionRootDescriptor toolDefinition, ToolInstallationDescriptor lastInstalledDescriptor) {
         Path stateDir = ToolInstallationHelper.getToolsStatePath().resolve(toolName);
         
         if (!Files.exists(stateDir) || !Files.isDirectory(stateDir)) {
@@ -99,10 +101,19 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
                     // Create synthetic version descriptor for unknown version (will be normalized)
                     var versionDescriptor = createSyntheticVersionDescriptor(toolDefinition, version);
                     var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+                    boolean isDefault = isDefaultVersion(installationDescriptor, lastInstalledDescriptor);
                     return new ToolInstallationOutputDescriptor(toolName, 
                             versionDescriptor, 
-                            installationDescriptor, "");
+                            installationDescriptor, "", isDefault);
                 });
+    }
+    
+    private boolean isDefaultVersion(ToolInstallationDescriptor installationDescriptor, ToolInstallationDescriptor lastInstalledDescriptor) {
+        if (installationDescriptor == null || lastInstalledDescriptor == null) {
+            return false;
+        }
+        return installationDescriptor.getInstallDir() != null 
+                && installationDescriptor.getInstallDir().equals(lastInstalledDescriptor.getInstallDir());
     }
     
     private ToolDefinitionVersionDescriptor createSyntheticVersionDescriptor(

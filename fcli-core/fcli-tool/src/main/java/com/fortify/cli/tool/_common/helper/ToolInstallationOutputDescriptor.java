@@ -45,9 +45,15 @@ public class ToolInstallationOutputDescriptor {
     private final String binDir;
     private final String globalBinDir;
     private final String installed;
+    private final boolean isDefault;
+    private final String isDefaultMarker;
     private final String __action__;
     
     public ToolInstallationOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor, String action) {
+        this(toolName, versionDescriptor, installationDescriptor, action, false);
+    }
+    
+    public ToolInstallationOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor, String action, boolean isDefault) {
         this.name = toolName;
         this.version = versionDescriptor.getVersion();
         this.aliases = reverse(versionDescriptor.getAliases());
@@ -59,6 +65,8 @@ public class ToolInstallationOutputDescriptor {
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
         this.globalBinDir = installationDescriptor==null ? null : installationDescriptor.getGlobalBinDir();
         this.installed = StringUtils.isBlank(this.installDir) ? "No" : "Yes";
+        this.isDefault = isDefault;
+        this.isDefaultMarker = isDefault ? "*" : "";
         this.__action__ = action;
     }
     

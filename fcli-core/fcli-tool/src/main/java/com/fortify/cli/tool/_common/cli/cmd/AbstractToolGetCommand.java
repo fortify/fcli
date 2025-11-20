@@ -49,12 +49,17 @@ public abstract class AbstractToolGetCommand extends AbstractOutputCommand imple
         // Load installation descriptor if tool is installed
         var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
         
+        // Check if this is the default (last installed) version
+        var lastInstalledDescriptor = ToolInstallationDescriptor.loadLastModified(toolName);
+        boolean isDefault = isDefaultVersion(installationDescriptor, lastInstalledDescriptor);
+        
         // Create output descriptor
         var outputDescriptor = new ToolInstallationOutputDescriptor(
             toolName,
             versionDescriptor,
             installationDescriptor,
-            ""
+            "",
+            isDefault
         );
         
         return objectMapper.valueToTree(outputDescriptor);
@@ -63,6 +68,14 @@ public abstract class AbstractToolGetCommand extends AbstractOutputCommand imple
     @Override
     public final boolean isSingular() {
         return true;
+    }
+    
+    private boolean isDefaultVersion(ToolInstallationDescriptor installationDescriptor, ToolInstallationDescriptor lastInstalledDescriptor) {
+        if (installationDescriptor == null || lastInstalledDescriptor == null) {
+            return false;
+        }
+        return installationDescriptor.getInstallDir() != null 
+                && installationDescriptor.getInstallDir().equals(lastInstalledDescriptor.getInstallDir());
     }
     
     /**

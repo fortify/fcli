@@ -90,7 +90,7 @@ public final class ToolInstaller {
         @JsonProperty(IActionCommandResultSupplier.actionFieldName) private final ToolInstallationAction action;
         
         public final ToolInstallationOutputDescriptor asOutputDescriptor() {
-            return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, action.name());
+            return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, action.name(), true);
         }
     }
     
