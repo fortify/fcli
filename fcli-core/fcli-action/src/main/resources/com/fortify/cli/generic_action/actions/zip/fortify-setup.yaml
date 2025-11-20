@@ -365,7 +365,7 @@ steps:
                         record.var-name: install_result
                         do:
                           - var.set:
-                              tool.status: installed
+                              tool.status: ${#ifBlank(install_result.__action__?.toLowerCase(),'installed')}
                               tool.installDir: ${install_result.installDir}
                               tool.binDir: ${install_result.binDir}
                               tool.actualVersion: ${install_result.version}

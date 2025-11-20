@@ -29,10 +29,12 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
@@ -75,15 +77,20 @@ public final class ToolInstaller {
     private final LazyObject<Path> _globalBinPath = new LazyObject<>();
     private boolean skippedCopyFrom;
     
-    @Data
+    public static enum ToolInstallationAction {
+        INSTALLED, SKIPPED_EXISTING, COPIED
+    }
+    
+    @Data @Builder
     public static final class ToolInstallationResult {
         private final String toolName;
         private final ToolDefinitionVersionDescriptor versionDescriptor;
         private final ToolDefinitionArtifactDescriptor artifactDescriptor;
         private final ToolInstallationDescriptor installationDescriptor;
+        @JsonProperty(IActionCommandResultSupplier.actionFieldName) private final ToolInstallationAction action;
         
         public final ToolInstallationOutputDescriptor asOutputDescriptor() {
-            return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, "INSTALLED");
+            return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, action.name());
         }
     }
     
@@ -242,13 +249,23 @@ public final class ToolInstaller {
             if ( preInstallAction!=null ) { preInstallAction.accept(this); }
             var versionDescriptor = getVersionDescriptor();
             warnIfDifferentTargetPath();
+            ToolInstallationAction action;
             if ( !hasMatchingTargetPath(getVersionDescriptor()) ) {
                 checkEmptyTargetPath();
                 installer.accept(this, artifactDescriptor);
+                action = determineInstallationAction();
+            } else {
+                action = ToolInstallationAction.SKIPPED_EXISTING;
             }
             // Always save descriptor (even when installation was skipped) to update timestamp,
             // making this the default version for 'tool run' commands
-            var result = new ToolInstallationResult(toolName, versionDescriptor, artifactDescriptor, createAndSaveInstallationDescriptor());
+            var result = ToolInstallationResult.builder()
+                .toolName(toolName)
+                .versionDescriptor(versionDescriptor)
+                .artifactDescriptor(artifactDescriptor)
+                .installationDescriptor(createAndSaveInstallationDescriptor())
+                .action(action)
+                .build();
             if ( postInstallAction!=null ) {
                 progressWriter.writeProgress("Running post-install actions");
                 postInstallAction.accept(this, result);
@@ -258,6 +275,13 @@ public final class ToolInstaller {
         } catch ( IOException e ) {
             throw new FcliSimpleException("Error installing "+toolName, e);
         }
+    }
+    
+    private ToolInstallationAction determineInstallationAction() {
+        if (copyFromPath != null && !skippedCopyFrom) {
+            return ToolInstallationAction.COPIED;
+        }
+        return ToolInstallationAction.INSTALLED;
     }
 
     private void downloadAndExtract(ToolDefinitionArtifactDescriptor artifactDescriptor) throws IOException {
