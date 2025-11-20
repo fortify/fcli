@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
@@ -84,7 +85,7 @@ public class FoDAttributeCreateCommand extends AbstractFoDJsonNodeOutputCommand 
 
     private void validate() {
         if ("Picklist".equalsIgnoreCase(attributeDataType) && (picklistValuesRaw == null || picklistValuesRaw.isEmpty())) {
-            throw new IllegalArgumentException("Picklist values must be specified when data type is Picklist.");
+            throw new FcliSimpleException("Picklist values must be specified when data type is Picklist.");
         }
     }
 

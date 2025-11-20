@@ -12,10 +12,14 @@
  */
 package com.fortify.cli.common.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import com.fortify.cli.common.exception.FcliSimpleException;
 
 
 class DateTimePeriodHelperTest {
@@ -38,9 +42,9 @@ class DateTimePeriodHelperTest {
 
     @Test @DisplayName("Rejects invalid leftover characters")
     void rejectsInvalid() {
-        assertThrows(IllegalArgumentException.class, ()->ALL.parsePeriodToMillis("10xm"));
-        assertThrows(IllegalArgumentException.class, ()->ALL.parsePeriodToMillis("10msXYZ"));
-        assertThrows(IllegalArgumentException.class, ()->ALL.parsePeriodToMillis("ms"));
+        assertThrows(FcliSimpleException.class, ()->ALL.parsePeriodToMillis("10xm"));
+        assertThrows(FcliSimpleException.class, ()->ALL.parsePeriodToMillis("10msXYZ"));
+        assertThrows(FcliSimpleException.class, ()->ALL.parsePeriodToMillis("ms"));
     }
 
     @Test @DisplayName("Parses minutes unaffected by ms handling")
@@ -71,7 +75,7 @@ class DateTimePeriodHelperTest {
 
     @Test @DisplayName("Rejects invalid estimated unit segment")
     void rejectsInvalidEstimated() {
-        assertThrows(IllegalArgumentException.class, ()->ALL.parsePeriodToMillis("1Q"));
+        assertThrows(FcliSimpleException.class, ()->ALL.parsePeriodToMillis("1Q"));
     }
 
     @Test @DisplayName("All range includes years")

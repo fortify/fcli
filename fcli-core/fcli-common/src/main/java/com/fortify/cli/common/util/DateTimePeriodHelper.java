@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -91,7 +93,7 @@ public class DateTimePeriodHelper {
         int lastEnd = 0;
         while(matcher.find()){
             if ( matcher.start()!=lastEnd ) {
-                throw new IllegalArgumentException("Invalid period segment: '"+periodString.substring(lastEnd, matcher.start())+"' in '"+periodString+"'");
+                throw new FcliSimpleException("Invalid period segment: '"+periodString.substring(lastEnd, matcher.start())+"' in '"+periodString+"'");
             }
             int num = Integer.parseInt(matcher.group(1));
             String type = matcher.group(2);
@@ -100,7 +102,7 @@ public class DateTimePeriodHelper {
             lastEnd = matcher.end();
         }
         if ( lastEnd!=periodString.length() ) {
-            throw new IllegalArgumentException("Invalid trailing characters in period: '"+periodString.substring(lastEnd)+"' in '"+periodString+"'");
+            throw new FcliSimpleException("Invalid trailing characters in period: '"+periodString.substring(lastEnd)+"' in '"+periodString+"'");
         }
         return instant.toEpochMilli();
     }

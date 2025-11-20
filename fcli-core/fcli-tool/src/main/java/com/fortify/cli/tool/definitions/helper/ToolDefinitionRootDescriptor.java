@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.exception.FcliSimpleException;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,7 +49,7 @@ public class ToolDefinitionRootDescriptor {
         return getVersionsStream()
                 .filter(v->matches(v, versionOrAlias))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Version or alias "+versionOrAlias+" not found"));
+                .orElseThrow(() -> new FcliSimpleException("Version or alias "+versionOrAlias+" not found"));
     }
     
     public final ToolDefinitionVersionDescriptor getVersionOrDefault(String versionOrAlias) {

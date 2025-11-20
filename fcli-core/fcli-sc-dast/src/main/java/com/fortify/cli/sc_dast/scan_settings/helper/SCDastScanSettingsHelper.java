@@ -14,6 +14,7 @@ package com.fortify.cli.sc_dast.scan_settings.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.UnirestInstance;
@@ -32,7 +33,7 @@ public class SCDastScanSettingsHelper {
             )
                     .filter(n->n.get("cicdToken").asText().equals(scanSettingsCicdTokenOrId))
                     .findFirst()
-                    .orElseThrow(()->new IllegalArgumentException("Cicd token "+scanSettingsCicdTokenOrId+" not found"));
+                    .orElseThrow(()->new FcliSimpleException("Cicd token "+scanSettingsCicdTokenOrId+" not found"));
         }
         return getDescriptor(settings);
     }

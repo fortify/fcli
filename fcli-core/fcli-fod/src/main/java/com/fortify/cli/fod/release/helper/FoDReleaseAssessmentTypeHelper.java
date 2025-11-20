@@ -74,7 +74,7 @@ public final class FoDReleaseAssessmentTypeHelper {
                     unirest, relId, scanType, entFreqType, false, true))
                 .filter(predicate)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new FcliSimpleException(
                     "Cannot find appropriate assessment type for specified options."));
     }
 

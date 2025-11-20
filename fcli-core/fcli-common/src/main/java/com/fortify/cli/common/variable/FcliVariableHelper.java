@@ -146,7 +146,7 @@ public final class FcliVariableHelper {
     
     private static final void checkVariableName(String variableName) {
         if ( !variableNamePattern.matcher(variableName).matches() ) {
-            throw new IllegalArgumentException(String.format("Variable name '%s' doesn't match pattern '%s'", variableName, variableNamePattern.pattern()));
+            throw new FcliSimpleException(String.format("Variable name '%s' doesn't match pattern '%s'", variableName, variableNamePattern.pattern()));
         }
     }
     

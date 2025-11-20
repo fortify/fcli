@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 
 import kong.unirest.Body;
@@ -86,7 +87,7 @@ public class SSCBulkRequestBuilder {
     /**
      * Add a request to the list of bulk requests to be executed, identified
      * by the given name. If a request with the given name has already been 
-     * added, an {@link IllegalArgumentException} will be thrown.
+     * added, an {@link FcliBugException} will be thrown.
      * 
      * @param name for this request
      * @param request {@link HttpRequest} to be added to the list of bulk requests
@@ -95,7 +96,7 @@ public class SSCBulkRequestBuilder {
     public SSCBulkRequestBuilder request(String name, HttpRequest<?> request) {
         if ( request==null ) { return this; }
         if ( nameToIndexMap.containsKey(name) ) {
-            throw new FcliTechnicalException(String.format("Request name '%s' was already added to bulk request", name));
+            throw new FcliBugException(String.format("Request name '%s' was already added to bulk request", name));
         }
         String uri = request.getUrl();
         nameToIndexMap.put(name, requests.size());

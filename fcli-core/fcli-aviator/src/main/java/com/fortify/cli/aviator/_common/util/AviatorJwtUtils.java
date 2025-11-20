@@ -38,7 +38,7 @@ public final class AviatorJwtUtils {
         try {
             String[] chunks = token.split("\\.");
             if (chunks.length < 2) {
-                throw new IllegalArgumentException(String.format("Invalid token structure: expected at least 2 parts, but found %d.", chunks.length));
+                throw new AviatorSimpleException(String.format("Invalid token structure: expected at least 2 parts, but found %d.", chunks.length));
             }
 
             Base64.Decoder decoder = Base64.getUrlDecoder();
@@ -46,13 +46,13 @@ public final class AviatorJwtUtils {
             try {
                 payloadJson = new String(decoder.decode(chunks[1]));
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("The token's payload is not valid Base64URL.", e);
+                throw new AviatorSimpleException("The token's payload is not valid Base64URL.", e);
             }
 
             try {
                 return objectMapper.readTree(payloadJson);
             } catch (IOException e) {
-                throw new IllegalArgumentException("The token's payload is not valid JSON.", e);
+                throw new AviatorSimpleException("The token's payload is not valid JSON.", e);
             }
         } catch (IllegalArgumentException e) {
             throw new AviatorSimpleException("Invalid JWT token: failed to parse payload JSON.", e);
