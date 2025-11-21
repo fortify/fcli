@@ -21,7 +21,7 @@ import picocli.CommandLine.Option;
  * exports, or both. Default is to exclude nothing.
  */
 public class ToolEnvExcludeMixin {
-    @Option(names = {"--excludes"}, split = ",", defaultValue = "", descriptionKey = "fcli.tool.env.exclude")
+    @Option(names = {"--excludes"}, split = ",", descriptionKey = "fcli.tool.env.exclude")
     private EnumSet<OutputComponent> exclude = EnumSet.noneOf(OutputComponent.class);
 
     public boolean isIncludePath() {

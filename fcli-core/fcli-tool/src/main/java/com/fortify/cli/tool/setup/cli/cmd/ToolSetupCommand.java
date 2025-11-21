@@ -46,6 +46,8 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
     
     @Override
     public Integer call() {
+        toolsMixin.validateOptions();
+        
         List<ToolSetupSpec> specs = toolsMixin.getToolSetupSpecs();
         List<ToolSetupResult> results = new ArrayList<>();
         
@@ -164,10 +166,11 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         }
         
         // Handle tool cache pattern
-        if (toolsMixin.getInstallDirPattern() != null && !"preinstalled".equals(version)) {
+        String effectiveInstallDirPattern = toolsMixin.getEffectiveInstallDirPattern();
+        if (effectiveInstallDirPattern != null && !"preinstalled".equals(version)) {
             String resolvedVersion = resolveSemanticVersion(spec.tool(), version);
             if (resolvedVersion != null) {
-                String cacheDir = toolsMixin.getInstallDirPattern()
+                String cacheDir = effectiveInstallDirPattern
                     .replace("{tool}", toolName)
                     .replace("{version}", resolvedVersion);
                 cmd += " --install-dir \"" + cacheDir + "\"";

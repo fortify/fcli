@@ -49,6 +49,44 @@ public class ToolSetupToolsMixin {
     @Getter private List<String> toolSpecs;
     
     /**
+     * Validate that --install-dir-pattern and --base-dir are mutually exclusive.
+     */
+    public void validateOptions() {
+        if (baseDir != null && installDirPattern != null) {
+            throw new FcliSimpleException("--base-dir and --install-dir-pattern are mutually exclusive");
+        }
+    }
+    
+    /**
+     * Get the effective install directory pattern, auto-detecting if not specified.
+     */
+    public String getEffectiveInstallDirPattern() {
+        if (installDirPattern != null) {
+            return installDirPattern;
+        }
+        if (baseDir != null) {
+            return null; // Use base-dir instead
+        }
+        
+        // Auto-detect CI tool cache
+        String runnerToolCache = System.getenv("RUNNER_TOOL_CACHE");
+        if (runnerToolCache != null && !runnerToolCache.isEmpty()) {
+            String arch = System.getenv("RUNNER_ARCH");
+            if (arch == null || arch.isEmpty()) {
+                arch = System.getProperty("os.arch", "x64").toUpperCase();
+            }
+            return runnerToolCache + "/{tool}/{version}/" + arch;
+        }
+        
+        String agentToolsDir = System.getenv("AGENT_TOOLSDIRECTORY");
+        if (agentToolsDir != null && !agentToolsDir.isEmpty()) {
+            return agentToolsDir + "/fortify/{tool}/{version}/x64";
+        }
+        
+        return null; // No pattern
+    }
+    
+    /**
      * Get the list of parsed tool setup specifications.
      * @return list of ToolSetupSpec
      */
