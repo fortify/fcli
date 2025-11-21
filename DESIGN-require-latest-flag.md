@@ -17,10 +17,10 @@ fcli tool fcli register --auto-detect --version v3 --require-latest
 ```
 
 ### Current Usage Pattern
-The `fortify-setup.yaml` action automatically adds `--require-latest` for semantic version patterns:
+The `fcli tool setup` command automatically adds `--require-latest` for semantic version patterns:
 
 ```yaml
-# Line 220-231 of fortify-setup.yaml
+# Line 220-231 of fcli tool setup command
 - if: ${tool.version != 'skip' && tool.path == null}
   var.set:
     tool.registerCmd: tool ${tool.name} register --auto-detect
@@ -101,7 +101,7 @@ private boolean isSemanticVersion(String version) {
 }
 ```
 
-**fortify-setup.yaml:**
+**fcli tool setup:**
 ```yaml
 # Simplified logic - no longer needs to add --require-latest
 - if: ${tool.version != 'skip' && tool.path == null}
@@ -189,7 +189,7 @@ The previous recommendation explored opt-out behavior with `--allow-any-matching
 
 **Current behavior (as of this change):**
 ```yaml
-# fortify-setup.yaml now always adds --require-latest
+# fcli tool setup now always adds --require-latest
 - if: ${tool.version != 'auto' && tool.version != 'preinstalled'}
   var.set:
     tool.registerCmd: ${tool.registerCmd} --version ${tool.version} --require-latest
@@ -216,7 +216,7 @@ Regardless of chosen approach, document:
 1. **Current behavior clearly:**
    - `--require-latest` is opt-in for semantic version patterns
    - Without flag, any matching version accepted
-   - fortify-setup action automatically adds flag for semantic patterns
+   - fcli tool setup always adds flag for semantic patterns
 
 2. **Semantic version expectations:**
    - `v3` means "latest v3.x.y" in most contexts, but "any v3.x.y" without `--require-latest`
@@ -281,6 +281,6 @@ Regardless of chosen approach, document:
 ## References
 
 - AbstractToolRegisterCommand.java: Lines 64, 132
-- fortify-setup.yaml: Lines 220-231
+- fcli tool setup: Lines 220-231
 - Developer Integration Guide: doc-resources/developer-integration-guide.md
 - TODO Documentation: TODO-documentation-enhancements.md

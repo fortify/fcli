@@ -48,10 +48,10 @@ Create dedicated guides for each major CI/CD platform:
 - [ ] Document component template structure (template.yml)
 - [ ] Explain dotenv artifact integration for environment variables
 - [ ] Show job definition with Fortify tools setup
-- [ ] Include examples: .gitlab-ci.yml with fortify-setup component
+- [ ] Include examples: .gitlab-ci.yml with fcli tool setup component
 
 **Shell Scripts:**
-- [ ] Document standalone fortify-setup.sh structure
+- [ ] Document standalone fcli tool setup.sh structure
 - [ ] Show platform detection logic (Linux/Mac/Windows)
 - [ ] Explain PATH vs explicit fcli bootstrapping
 - [ ] Include examples: Bash and PowerShell variants
@@ -59,7 +59,7 @@ Create dedicated guides for each major CI/CD platform:
 ### 1.3 Action Reference Documentation
 Comprehensive documentation for built-in actions:
 
-**fortify-setup.yaml:**
+**fcli tool setup:**
 - [ ] Complete parameter reference with examples for each option
 - [ ] Document all version resolution patterns (latest, v3, v3.6.1, auto, preinstalled, skip)
 - [ ] Explain --self and --self-type in detail (link to developer guide)
@@ -69,7 +69,7 @@ Comprehensive documentation for built-in actions:
 - [ ] Provide decision tree for choosing version patterns
 - [ ] Include complete examples: basic, air-gapped, multi-tool, tool-cache
 
-**fortify-env.yaml:**
+**fcli tool env:**
 - [ ] Complete parameter reference for all output formats
 - [ ] Document PATH, cmd-var, home-var modes with examples
 - [ ] Explain auto/include/exclude behavior for each tool
@@ -195,9 +195,9 @@ Document exit codes for tool register command:
 
 ### 6.1 Complete Working Examples
 Provide downloadable, runnable examples:
-- [ ] **GitHub Action:** Complete repository with fortify-setup action
+- [ ] **GitHub Action:** Complete repository with fcli tool setup command
 - [ ] **Azure DevOps:** Complete pipeline with Fortify tools task
-- [ ] **GitLab CI:** Complete .gitlab-ci.yml with fortify-setup component
+- [ ] **GitLab CI:** Complete .gitlab-ci.yml with fcli tool setup component
 - [ ] **Shell Script:** Standalone Bash script for Linux/Mac
 - [ ] **PowerShell Script:** Standalone script for Windows
 - [ ] **TypeScript Module:** Example using @fortify/setup programmatically
@@ -215,13 +215,13 @@ Provide downloadable, runnable examples:
 ## 7. Migration Guides
 
 ### 7.1 From Manual Installation
-- [ ] Document moving from manual tool installation to fortify-setup action
+- [ ] Document moving from manual tool installation to fcli tool setup command
 - [ ] Show before/after pipeline YAML comparison
 - [ ] Highlight benefits: consistency, versioning, caching
 
 ### 7.2 From Legacy Actions
 If older community actions exist:
-- [ ] Document migration path to official fortify-setup
+- [ ] Document migration path to official fcli tool setup
 - [ ] Show parameter mapping
 - [ ] Highlight new features and improvements
 
@@ -230,7 +230,7 @@ If older community actions exist:
 ## 8. API Documentation
 
 ### 8.1 Action Schema Documentation
-- [ ] Document action YAML schema structure for fortify-setup
+- [ ] Document fcli tool setup command YAML schema structure
 - [ ] Explain SpEL expression usage in actions
 - [ ] Show how to extend actions for custom tools
 
@@ -253,7 +253,7 @@ Create Mermaid diagrams:
 
 ### 9.2 Screenshots
 If applicable (for IDE/UI integrations):
-- [ ] GitHub Actions UI showing fortify-setup inputs
+- [ ] GitHub Actions UI showing fcli tool setup inputs
 - [ ] Azure DevOps task configuration
 - [ ] GitLab CI component usage
 
@@ -282,13 +282,13 @@ If applicable (for IDE/UI integrations):
 
 **P0 (Critical - Complete First):**
 - 1.1 Developer Integration Guide (port to fcli-doc)
-- 1.3 fortify-setup.yaml action reference
+- 1.3 fcli tool setup command reference
 - 2.1 Fcli semantic version strategy
 - 5.2 Exit code reference
 
 **P1 (High - Complete Second):**
 - 1.2 Platform-specific examples (at least GitHub, Azure, GitLab)
-- 1.3 fortify-env.yaml action reference
+- 1.3 fcli tool env command reference
 - 3.1-3.4 Design decision documentation
 - 5.1 Common issues troubleshooting
 
@@ -318,7 +318,7 @@ If applicable (for IDE/UI integrations):
 
 Documentation is complete when:
 1. ✅ Platform developer can bootstrap fcli without reading code
-2. ✅ All fortify-setup parameters documented with examples
+3. ✅ All fcli tool setup parameters documented with examples
 3. ✅ Semantic versioning strategy clearly explained
 4. ✅ Every exit code and error message has troubleshooting guidance
 5. ✅ At least 3 complete working examples available (GitHub, Azure, GitLab)
@@ -337,5 +337,5 @@ Documentation is complete when:
 **Next Steps:**
 1. Create tracking issues in fcli-doc project for each P0/P1 section
 2. Port developer-integration-guide.md to fcli-doc with navigation
-3. Begin comprehensive action reference documentation for fortify-setup.yaml
+3. Begin comprehensive action reference documentation for fcli tool setup
 4. Document semantic versioning strategy in fcli-doc

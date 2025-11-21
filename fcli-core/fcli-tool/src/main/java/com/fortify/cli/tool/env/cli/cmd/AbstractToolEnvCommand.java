@@ -149,7 +149,7 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
                     .orElse(List.of());
         }
         String versionSpec = selector.versionSpec();
-        if ("default".equalsIgnoreCase(versionSpec)) {
+        if ("default".equalsIgnoreCase(versionSpec) || "auto".equalsIgnoreCase(versionSpec)) {
             return installations.defaultInstallation()
                 .map(record -> List.of(toContext(selector.tool(), record)))
                 .orElse(List.of());

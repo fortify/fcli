@@ -5,10 +5,10 @@ This guide is for developers building platform-specific integrations with fcli (
 ## Overview
 
 Fcli provides two primary integration points for CI/CD platforms:
-1. **`fortify-setup.yaml` action** - Comprehensive tool installation and registration
-2. **`fortify-env.yaml` action** - Environment variable generation for installed tools
+1. **`fcli tool setup` command** - Comprehensive tool installation and registration
+2. **`fcli tool env` command** - Environment variable generation for installed tools
 
-Platform integrations should handle **fcli bootstrap** (getting fcli itself) and then delegate tool installation to these actions.
+Platform integrations should handle **fcli bootstrap** (getting fcli itself) and then delegate tool installation to these commands.
 
 ## Fcli Bootstrap Strategy
 
@@ -17,7 +17,7 @@ Platform integrations should handle **fcli bootstrap** (getting fcli itself) and
 Fcli cannot install itself (circular dependency). Platform integration tools must:
 1. Resolve fcli version/path using platform-specific logic
 2. Download/cache fcli if needed
-3. Pass bootstrapped fcli to `fortify-setup` action via `--self`
+3. Pass bootstrapped fcli to `fcli tool setup` command via `--self`
 
 ### Fcli Semantic Versioning (v3.x Support)
 
@@ -36,7 +36,7 @@ const downloadUrl = `https://github.com/fortify/fcli/releases/download/${version
 
 ### The `--self` and `--self-type` Parameters
 
-Pass bootstrapped fcli to `fortify-setup` action using these parameters:
+Pass bootstrapped fcli to `fcli tool setup` command using these parameters:
 
 #### `--self <path>`
 Path to bootstrapped fcli executable. This enables the action to use your pre-resolved fcli instead of attempting to install it.
@@ -83,8 +83,8 @@ else
     FCLI_TYPE="unstable"
 fi
 
-# Delegate to fortify-setup action
-"${FCLI_PATH}" action run fortify-setup \
+# Delegate to fcli tool setup command
+"${FCLI_PATH}" tool setup \
     --self "${FCLI_PATH}" \
     --self-type "${FCLI_TYPE}" \
     --fod-version v3 \
@@ -103,7 +103,7 @@ const fcliPath = await bootstrapFcli({
 // Determine stability based on resolution source
 const fcliType = fcliPath.source === 'download' ? 'unstable' : 'stable';
 
-// Delegate to fortify-setup action
+// Delegate to fcli tool setup command
 await runFortifySetup({
     self: fcliPath.path,
     selfType: fcliType,
@@ -127,8 +127,8 @@ await runFortifySetup({
 Implementation:
 1. Action downloads fcli (`fcli-version: v3`) from GitHub releases
 2. Marks as `unstable` (fresh download)
-3. Invokes: `fcli action run fortify-setup --self /path/to/fcli --self-type unstable --fod-version v3 --sc-client-version v24.4`
-4. Action outputs environment variables from `fortify-env` action
+3. Invokes: `fcli tool setup --tools fod:v3,sc-client:v24.4 --self /path/to/fcli`
+4. Action outputs environment variables from `fcli tool env` command
 
 ## Why `@fortify/setup` Doesn't Use Fcli Tool Definitions
 
@@ -144,7 +144,7 @@ Implementation:
 - Semantic patterns: `v3`, `v3.6` → download from `/v3/` or `/v3.6/` (relies on GitHub release tags)
 - Latest: Queries GitHub API for latest release
 
-Once fcli is bootstrapped, `fortify-setup.yaml` action uses tool definitions for all other tools (FoD CLI, SC Client, etc).
+Once fcli is bootstrapped, `fcli tool setup` command uses tool definitions for all other tools (FoD CLI, SC Client, etc).
 
 ## Environment Variable Generation
 
@@ -152,16 +152,16 @@ After tool installation, generate environment variables for CI/CD platform:
 
 ```bash
 # GitHub Actions format
-fcli action run fortify-env --format github --output-file "$GITHUB_ENV"
+fcli tool env --format github --output-file "$GITHUB_ENV"
 
 # Azure DevOps format  
-fcli action run fortify-env --format azure
+fcli tool env --format azure
 
 # GitLab CI format
-fcli action run fortify-env --format gitlab --output-file build.env
+fcli tool env --format gitlab --output-file build.env
 
 # Shell format
-eval "$(fcli action run fortify-env --format shell)"
+eval "$(fcli tool env --format shell)"
 ```
 
 ## Version Resolution Best Practices
@@ -216,14 +216,14 @@ fcli tool fcli register --auto-detect --version v3 --require-latest
 - Semantic version patterns (`v3`, `v24`, `v24.4`) where "latest matching" is expected
 - Skip for exact versions (`v3.6.1`), `latest`, `auto`, or `preinstalled`
 
-**The `fortify-setup` action handles this automatically based on version pattern.**
+**The `fcli tool setup` command handles this automatically based on version pattern.**
 
 ## Air-Gapped Environments
 
 Support offline environments using `--copy-from` parameters:
 
 ```bash
-fcli action run fortify-setup \
+fcli tool setup \
     --fcli-copy-from /shared/binaries/fcli \
     --fod-copy-from /shared/binaries/FoDUploader.jar \
     --sc-client-copy-from /shared/binaries/ScanCentralClient.jar \
@@ -329,8 +329,8 @@ Platform integration checklist:
 - [ ] Bootstrap fcli using platform-specific logic
 - [ ] Leverage fcli semantic version tags (`v3`, `v3.6`) for downloads
 - [ ] Pass bootstrapped fcli via `--self` and `--self-type`
-- [ ] Delegate tool installation to `fortify-setup` action
-- [ ] Generate environment variables via `fortify-env` action
+- [ ] Delegate tool installation to `fcli tool setup` command
+- [ ] Generate environment variables via `fcli tool env` command
 - [ ] Support tool cache integration where available
 - [ ] Handle air-gapped environments via `--copy-from` parameters
 - [ ] Use semantic versions by default (not `latest`)
@@ -338,4 +338,4 @@ Platform integration checklist:
 For complete examples, see:
 - `@fortify/setup` TypeScript module: `/fortify-setup-js/`
 - Shell script examples: `fortify-setup.sh`, `fortify-setup.ps1`
-- Action implementations: `fortify-setup.yaml`, `fortify-env.yaml`
+- Command implementations: `fcli tool setup`, `fcli tool env`
