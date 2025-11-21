@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.155618-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.160515-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -45,8 +45,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool setup</strong> [<strong>--air-gapped</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
-                [<strong>--tool-cache-pattern</strong>=<em>&lt;toolCachePattern&gt;</em>]
+<p><strong>fcli tool setup</strong> [<strong>--air-gapped</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
+                [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
                 [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] <strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
                 <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                 [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
@@ -76,13 +76,13 @@ This command allows for setting up multiple Fortify tools.</p>
 <dd>
 <p>Base directory for tool installations: &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;/.</p>
 </dd>
+<dt class="hdlist1"><strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em></dt>
+<dd>
+<p>Pattern for tool cache directory paths, with {tool} and {version} placeholders (e.g., /cache/{tool}/{version}). When specified, semantic versions are resolved to actual versions for proper cache naming.</p>
+</dd>
 <dt class="hdlist1"><strong>--self</strong>=<em>&lt;self&gt;</em></dt>
 <dd>
 <p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
-</dd>
-<dt class="hdlist1"><strong>--tool-cache-pattern</strong>=<em>&lt;toolCachePattern&gt;</em></dt>
-<dd>
-<p>Pattern for tool cache directory paths, with {tool} and {version} placeholders (e.g., /cache/{tool}/{version}). When specified, semantic versions are resolved to actual versions for proper cache naming.</p>
 </dd>
 <dt class="hdlist1"><strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em></dt>
 <dd>
@@ -133,7 +133,7 @@ This command allows for setting up multiple Fortify tools.</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-21 15:59:07 UTC
+Last updated 2025-11-21 16:07:56 UTC
 </div>
 </div>
 </body>
