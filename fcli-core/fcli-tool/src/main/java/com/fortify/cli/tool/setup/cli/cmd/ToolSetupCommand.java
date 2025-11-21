@@ -17,6 +17,7 @@ import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.exception.FcliCommandExecutionException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.common.util.OutputHelper;
@@ -142,8 +143,12 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
                 String installDir = extractInstallDirFromJsonOutput(result.getOut());
                 return new RegistrationResult(true, installDir != null ? installDir : "PATH");
             }
-        } catch (Exception e) {
+        } catch (FcliCommandExecutionException e) {
             // Registration failed, but don't throw - just log progress
+            System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
+            // Do not show stderr for expected registration failures
+        } catch (Exception e) {
+            // Other exceptions
             System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
         }
         return new RegistrationResult(false, null);
@@ -186,16 +191,24 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             }
         }
         
-        var result = executeFcliCommand(cmd);
-        if (result.getExitCode() != 0) {
-            throw new FcliSimpleException("Failed to install " + toolName);
+        try {
+            var result = executeFcliCommand(cmd);
+            
+            // Extract action and install directory from JSON output
+            String action = extractActionFromJsonOutput(result.getOut());
+            String installDir = extractInstallDirFromJsonOutput(result.getOut());
+            
+            return new InstallResult(action != null ? action : "installed", installDir != null ? installDir : "installed");
+        } catch (FcliCommandExecutionException e) {
+            // Show user-friendly error message
+            System.err.println("Installation for " + toolName + " failed:");
+            if (e.getResult().getErr() != null && !e.getResult().getErr().isEmpty()) {
+                System.err.println(e.getResult().getErr());
+            } else if (e.getResult().getOut() != null && !e.getResult().getOut().isEmpty()) {
+                System.err.println(e.getResult().getOut());
+            }
+            throw new FcliSimpleException("Installation of " + toolName + " failed");
         }
-        
-        // Extract action and install directory from JSON output
-        String action = extractActionFromJsonOutput(result.getOut());
-        String installDir = extractInstallDirFromJsonOutput(result.getOut());
-        
-        return new InstallResult(action != null ? action : "installed", installDir != null ? installDir : "installed");
     }
     
     private String extractInstallDirFromJsonOutput(String output) {
@@ -325,7 +338,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         var executor = FcliCommandExecutorFactory.builder()
                 .cmd(cmd)
                 .stdoutOutputType(OutputType.collect)  // Collect stdout to get the JSON output
-                .stderrOutputType(OutputType.suppress)  // Suppress stderr to avoid showing exceptions
+                .stderrOutputType(OutputType.collect)  // Collect stderr to show on failure
                 .build()
                 .create();
         return executor.execute();

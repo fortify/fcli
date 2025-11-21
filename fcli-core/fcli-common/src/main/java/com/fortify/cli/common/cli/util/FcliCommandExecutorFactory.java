@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliCommandExecutionException;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.IRecordCollectionSupport;
@@ -192,7 +193,7 @@ public final class FcliCommandExecutorFactory {
         }
         
         private final void throwExceptionOnNonZeroExitCode(Result r) {
-            throw new FcliSimpleException("Fcli command terminated with non-zero exit code "+r.getExitCode());
+            throw new FcliCommandExecutionException(r);
         }
         
         // We want to replicate the CommandSpec with new command instances, at least for the 
