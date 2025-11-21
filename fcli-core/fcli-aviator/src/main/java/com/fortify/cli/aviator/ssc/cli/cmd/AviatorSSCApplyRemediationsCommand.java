@@ -72,13 +72,14 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     @SneakyThrows
     private JsonNode processFprRemediations(UnirestInstance unirest, SSCArtifactDescriptor ad, AviatorLoggerImpl logger) {
         Path fprPath = Files.createTempFile("aviator_" + ad.getId() + "_", ".fpr");
-        try {
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()){
             logger.progress("Status: Downloading Audited FPR from SSC");
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_ARTIFACT(ad.getId(), true),
                     fprPath.toFile(),
-                    SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
+                    SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
+                    progressWriter);
 
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
 

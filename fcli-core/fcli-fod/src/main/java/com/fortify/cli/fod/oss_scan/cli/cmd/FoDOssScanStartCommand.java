@@ -14,6 +14,8 @@ package com.fortify.cli.fod.oss_scan.cli.cmd;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.oss.FoDScanOssHelper;
@@ -29,10 +31,13 @@ import picocli.CommandLine.Mixin;
 public class FoDOssScanStartCommand extends AbstractFoDScanStartCommand {
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
     @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         FoDScanOssStartRequest startScanRequest = FoDScanOssStartRequest.builder().build();
-        return FoDScanOssHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile());
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            return FoDScanOssHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+        }
     }
 }

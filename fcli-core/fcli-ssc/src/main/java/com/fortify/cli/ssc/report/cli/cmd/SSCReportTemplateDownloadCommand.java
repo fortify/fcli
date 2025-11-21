@@ -19,6 +19,8 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
@@ -36,6 +38,7 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCJsonNodeOutputC
     @Getter @Mixin private OutputHelperMixins.DownloadTemplate outputHelper;
     @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
     @Mixin private CommonOptionMixins.OptionalFile fileMixin;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -44,13 +47,16 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCJsonNodeOutputC
         if ( destination==null ) {
             destination = new File(String.format("./%s", descriptor.getFileName()));
         }
-        SSCFileTransferHelper.download(
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(descriptor.getIdString()),
                 destination,
-                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
-        );
+                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
+                progressWriter
+            );
         return descriptor.asJsonNode();
+        }
     }
 
     @Override

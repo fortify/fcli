@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
-import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.cli.common.rest.unirest.URIHelper;
 import com.fortify.cli.fod._common.util.FoDConstants;
 
@@ -41,12 +40,12 @@ public final class FoDFileTransferHelper {
     public static void setChunkSize(int chunkSize) { FoDFileTransferHelper.chunkSize = chunkSize; }
 
     @SneakyThrows
-    public static final JsonNode upload(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
+    public static final JsonNode upload(UnirestInstance unirest, HttpRequest<?> baseRequest, File f, IProgressWriter progressWriter) {
         if (!f.exists() || !f.canRead()) {
             throw new FcliSimpleException("Could not read file: " + f.getPath());
         }
         String body = null;
-        try ( FoDProgressMonitor uploadMonitor = new FoDProgressMonitor("Upload") ) {
+        try ( FoDProgressMonitor uploadMonitor = new FoDProgressMonitor(progressWriter, "Upload") ) {
             body =  unirest.request(baseRequest.getHttpMethod().name(), baseRequest.getUrl())
                     .noCharset()
                     .multiPartContent()
@@ -61,13 +60,13 @@ public final class FoDFileTransferHelper {
     }
 
     @SneakyThrows
-    public static final JsonNode uploadChunked(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
+    public static final JsonNode uploadChunked(UnirestInstance unirest, HttpRequest<?> baseRequest, File f, IProgressWriter progressWriter) {
         if (!f.exists() || !f.canRead()) {
             throw new FcliSimpleException("Could not read file: " + f.getPath());
         }
         long fileLen = f.length();
         String lastBody = null;
-        try (var fs = new FileInputStream(f); var progressMonitor = new FoDProgressMonitor("Upload"); ) {
+        try (var fs = new FileInputStream(f); var progressMonitor = new FoDProgressMonitor(progressWriter, "Upload"); ) {
             byte[] readByteArray = new byte[chunkSize];
             byte[] sendByteArray;
             int fragmentNumber = 0;
@@ -112,7 +111,7 @@ public final class FoDFileTransferHelper {
 
     @RequiredArgsConstructor
     private static final class FoDProgressMonitor implements ProgressMonitor, AutoCloseable {
-        private final IProgressWriter progressWriter = ProgressWriterType.auto.create();
+        private final IProgressWriter progressWriter;
         private final String action;
 
         @Override

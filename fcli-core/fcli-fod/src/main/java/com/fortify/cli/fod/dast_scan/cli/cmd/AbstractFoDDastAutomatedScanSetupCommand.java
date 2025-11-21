@@ -15,14 +15,15 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
@@ -39,11 +40,13 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractFoDDastAutomatedScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScanConfigDastAutomatedDescriptor> {
-    private static final Log LOG = LogFactory.getLog(AbstractFoDDastAutomatedScanSetupCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFoDDastAutomatedScanSetupCommand.class);
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mixin
     protected CommonOptionMixins.OptionalFile uploadFileMixin;
+
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
     // the File Id previously uploaded or uploaded using "uploadFileToUse" below
     private int fileId = 0;
@@ -70,13 +73,15 @@ public abstract class AbstractFoDDastAutomatedScanSetupCommand extends AbstractF
                 break;
             default:
         }
-        JsonNode response = FoDFileTransferHelper.upload(unirest, uploadFileRequest, uploadFileMixin.getFile());
-        int fileIdToUse = response.get("fileId").intValue();
-        fileId = fileIdToUse;
-        ArrayList<String> hosts = response.has("hosts") ?
+        try (var progressWriter = progressWriterFactory.create()) {
+            JsonNode response = FoDFileTransferHelper.upload(unirest, uploadFileRequest, uploadFileMixin.getFile(), progressWriter);
+            int fileIdToUse = response.get("fileId").intValue();
+            fileId = fileIdToUse;
+            ArrayList<String> hosts = response.has("hosts") ?
                 objectMapper.convertValue(response.get("hosts"), new com.fasterxml.jackson.core.type.TypeReference<ArrayList<String>>() {}) :
                 new ArrayList<>();
-        return new FileUploadResult(fileIdToUse, hosts);
+            return new FileUploadResult(fileIdToUse, hosts);
+        }
     }
 
     protected HttpRequest<?> getDastAutomatedUploadFileRequest(UnirestInstance unirest, String releaseId, String dastFileType) {

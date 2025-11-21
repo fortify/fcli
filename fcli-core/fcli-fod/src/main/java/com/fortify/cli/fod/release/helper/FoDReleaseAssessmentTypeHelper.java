@@ -16,8 +16,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +34,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public final class FoDReleaseAssessmentTypeHelper {
-    private static final Log LOG = LogFactory.getLog(FoDReleaseAssessmentTypeHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDReleaseAssessmentTypeHelper.class);
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private FoDReleaseAssessmentTypeHelper() {}

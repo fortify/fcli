@@ -17,6 +17,8 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.transfer.SSCFileTransferHelper;
@@ -33,24 +35,27 @@ public class SSCPluginInstallCommand extends AbstractSSCJsonNodeOutputCommand im
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
 
     @Mixin private CommonOptionMixins.RequiredFile pluginFileMixin;
-
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Option(names = {"--no-auto-enable"}, negatable = true)
     private boolean autoEnable = true;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        JsonNode pluginBody = SSCFileTransferHelper.restUpload(
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            JsonNode pluginBody = SSCFileTransferHelper.restUpload(
                 unirest,
                 SSCUrls.PLUGINS,
                 pluginFileMixin.getFile(),
-                JsonNode.class
-        );
-        
-        if(autoEnable){
-            String pluginId = JsonHelper.evaluateSpelExpression(pluginBody, "data.id", String.class);
-            pluginBody = SSCPluginStateHelper.enablePlugin(unirest, pluginId);
+                JsonNode.class,
+                progressWriter
+            );
+
+            if(autoEnable){
+                String pluginId = JsonHelper.evaluateSpelExpression(pluginBody, "data.id", String.class);
+                pluginBody = SSCPluginStateHelper.enablePlugin(unirest, pluginId);
+            }
+            return pluginBody;
         }
-        return pluginBody;
     }
     
     @Override

@@ -12,11 +12,11 @@
  */
 package com.fortify.cli.fod._common.rest.helper;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.protocol.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements an Apache HttpClient 4.x {@link ServiceUnavailableRetryStrategy}
@@ -24,7 +24,7 @@ import org.apache.http.protocol.HttpContext;
  * response.
  */
 public final class FoDRetryStrategy implements ServiceUnavailableRetryStrategy {
-    private static final Log LOG = LogFactory.getLog(FoDRetryStrategy.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDRetryStrategy.class);
     private final String HEADER_NAME = "X-Rate-Limit-Reset";
     private int maxRetries = 2;
     private final ThreadLocal<Long> interval = new ThreadLocal<Long>();

@@ -15,8 +15,8 @@ package com.fortify.cli.fod.mast_scan.cli.cmd;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -47,7 +47,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false) @CommandGroup("*-scan-setup")
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public class FoDMastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScanConfigMobileDescriptor> implements IRecordTransformer, IActionCommandResultSupplier {
-    private static final Log LOG = LogFactory.getLog(FoDMastScanSetupCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDMastScanSetupCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
 
