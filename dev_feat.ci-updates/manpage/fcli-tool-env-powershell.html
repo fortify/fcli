@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.145242-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.152103-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -45,7 +45,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool env powershell</strong> [<strong>-f</strong>=<em>&lt;file&gt;</em>] [<strong>-o</strong>=<em>&lt;outputType&gt;</em>[,<em>&lt;outputType&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+<p><strong>fcli tool env powershell</strong> [<strong>-f</strong>=<em>&lt;file&gt;</em>] [<strong>--excludes</strong>=<em>&lt;exclude&gt;</em>[,<em>&lt;exclude&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                          [<strong>--tools</strong>=<em>&lt;toolSelectors&gt;</em>[,<em>&lt;toolSelectors&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                          [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
@@ -66,13 +66,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--excludes</strong>=<em>&lt;exclude&gt;</em>[,<em>&lt;exclude&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of values to exclude from output. Allowed values: path, vars. Default: (none).</p>
+</dd>
 <dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
 <dd>
 <p>File to append generated PowerShell assignments to. Omit to write directly to standard output.</p>
-</dd>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--outputs</strong>=<em>&lt;outputType&gt;</em>[,<em>&lt;outputType&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>Comma-separated list deciding which values to emit. Allowed values: path, vars. Default: path,vars.</p>
 </dd>
 <dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSelectors&gt;</em>[,<em>&lt;toolSelectors&gt;</em>&#8230;&#8203;]</dt>
 <dd>
@@ -119,7 +119,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-21 14:55:29 UTC
+Last updated 2025-11-21 15:23:54 UTC
 </div>
 </div>
 </body>
