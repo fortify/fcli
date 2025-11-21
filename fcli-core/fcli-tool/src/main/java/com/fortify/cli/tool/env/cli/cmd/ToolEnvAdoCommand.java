@@ -17,23 +17,23 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.tool.env.cli.mixin.ToolEnvOutputTypeMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "ado")
 public final class ToolEnvAdoCommand extends AbstractToolEnvCommand {
-    @Mixin private ToolEnvOutputTypeMixin outputType;
+    @Mixin private ToolEnvExcludeMixin exclude;
 
     @Override
     protected void process(List<ToolEnvContext> contexts) {
         List<String> lines = new ArrayList<>();
         for (ToolEnvContext context : contexts) {
-            if (outputType.isIncludePath() && StringUtils.isNotBlank(context.binDir())) {
+            if (exclude.isIncludePath() && StringUtils.isNotBlank(context.binDir())) {
                 lines.add("##vso[task.prependpath]" + context.binDir());
             }
-            if (outputType.isIncludeVars()) {
+            if (exclude.isIncludeVars()) {
                 if (StringUtils.isNotBlank(context.installDir())) {
                     lines.add(String.format("##vso[task.setvariable variable=%s_HOME]%s", context.envPrefix(), context.installDir()));
                 }

@@ -19,7 +19,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.tool.env.cli.mixin.ToolEnvOutputTypeMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -29,11 +29,11 @@ public final class ToolEnvGitHubCommand extends AbstractToolEnvCommand {
     private static final String GITHUB_ENV = "GITHUB_ENV";
     private static final String GITHUB_PATH = "GITHUB_PATH";
 
-    @Mixin private ToolEnvOutputTypeMixin outputType;
+    @Mixin private ToolEnvExcludeMixin exclude;
 
     @Override
     protected void process(List<ToolEnvContext> contexts) {
-        if (outputType.isIncludeVars()) {
+        if (exclude.isIncludeVars()) {
             List<String> envLines = new ArrayList<>();
             for (ToolEnvContext context : contexts) {
                 if (StringUtils.isNotBlank(context.installDir())) {
@@ -45,7 +45,7 @@ public final class ToolEnvGitHubCommand extends AbstractToolEnvCommand {
             }
             writeLinesToPath(envLines, requireGithubFile(GITHUB_ENV, "environment"), "GitHub environment output");
         }
-        if (outputType.isIncludePath()) {
+        if (exclude.isIncludePath()) {
             List<String> pathLines = new ArrayList<>();
             for (ToolEnvContext context : contexts) {
                 if (StringUtils.isNotBlank(context.binDir())) {

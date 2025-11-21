@@ -17,19 +17,19 @@ import java.util.EnumSet;
 import picocli.CommandLine.Option;
 
 /**
- * Shared mixin that controls whether env commands emit PATH updates, variable
- * exports, or both. Default is to emit both.
+ * Shared mixin that controls whether env commands exclude PATH updates, variable
+ * exports, or both. Default is to exclude nothing.
  */
-public class ToolEnvOutputTypeMixin {
-    @Option(names = {"-o", "--outputs"}, split = ",", defaultValue = "path,vars", descriptionKey = "fcli.tool.env.output-type")
-    private EnumSet<OutputComponent> outputType = EnumSet.of(OutputComponent.path, OutputComponent.vars);
+public class ToolEnvExcludeMixin {
+    @Option(names = {"--excludes"}, split = ",", defaultValue = "", descriptionKey = "fcli.tool.env.exclude")
+    private EnumSet<OutputComponent> exclude = EnumSet.noneOf(OutputComponent.class);
 
     public boolean isIncludePath() {
-        return outputType.contains(OutputComponent.path);
+        return !exclude.contains(OutputComponent.path);
     }
 
     public boolean isIncludeVars() {
-        return outputType.contains(OutputComponent.vars);
+        return !exclude.contains(OutputComponent.vars);
     }
 
     public enum OutputComponent {

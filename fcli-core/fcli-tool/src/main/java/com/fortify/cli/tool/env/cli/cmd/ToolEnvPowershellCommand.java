@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.tool.env.cli.mixin.ToolEnvOutputTypeMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -27,17 +27,17 @@ public final class ToolEnvPowershellCommand extends AbstractToolEnvCommand {
     private static final String HOME_TEMPLATE = "{installDir != null ? '$env:' + defaultEnvPrefix + '_HOME = \"' + installDir + '\"' : ''}";
     private static final String CMD_TEMPLATE = "{cmd != null ? '$env:' + defaultEnvPrefix + '_CMD = \"' + cmd + '\"' : ''}";
 
-    @Mixin private ToolEnvOutputTypeMixin outputType;
+    @Mixin private ToolEnvExcludeMixin exclude;
     @Mixin private CommonOptionMixins.OptionalFile outputFile;
 
     @Override
     protected void process(List<ToolEnvContext> contexts) {
         List<String> lines = new ArrayList<>();
         for (ToolEnvContext context : contexts) {
-            if (outputType.isIncludePath()) {
+            if (exclude.isIncludePath()) {
                 addIfNotBlank(lines, renderTemplate(PATH_TEMPLATE, context));
             }
-            if (outputType.isIncludeVars()) {
+            if (exclude.isIncludeVars()) {
                 addIfNotBlank(lines, renderTemplate(HOME_TEMPLATE, context));
                 addIfNotBlank(lines, renderTemplate(CMD_TEMPLATE, context));
             }
