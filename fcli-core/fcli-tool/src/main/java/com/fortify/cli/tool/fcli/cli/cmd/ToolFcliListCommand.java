@@ -14,6 +14,7 @@ package com.fortify.cli.tool.fcli.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolListCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -22,5 +23,9 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class ToolFcliListCommand extends AbstractToolListCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    @Getter private String toolName = ToolFcliCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.FCLI;
+    }
 }

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
@@ -40,7 +41,7 @@ public abstract class AbstractToolGetCommand extends AbstractOutputCommand imple
     
     @Override
     public final JsonNode getJsonNode() {
-        var toolName = getToolName();
+        var toolName = getTool().getToolName();
         var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
         
         // Resolve version (handles aliases like 'latest')
@@ -79,7 +80,7 @@ public abstract class AbstractToolGetCommand extends AbstractOutputCommand imple
     }
     
     /**
-     * @return Tool name identifier (e.g., "sc-client", "fcli", "fod-uploader")
+     * @return Tool enum entry for this tool
      */
-    protected abstract String getToolName();
+    protected abstract Tool getTool();
 }

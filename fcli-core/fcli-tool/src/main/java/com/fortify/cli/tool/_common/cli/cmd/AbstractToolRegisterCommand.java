@@ -20,6 +20,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
 import com.fortify.cli.tool._common.helper.ToolRegistrationHelper;
 
@@ -62,17 +63,10 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     }
     
     /**
-     * Get the tool name (identifier). Subclasses must implement this to provide the tool name.
-     * @return Tool name
+     * Get the tool enum entry. Subclasses must implement this to provide the tool.
+     * @return Tool enum entry
      */
-    protected abstract String getToolName();
-    
-    /**
-     * Get the default binary name for the tool on the current platform. Subclasses must implement
-     * this to provide the binary name.
-     * @return Default binary name
-     */
-    protected abstract String getDefaultBinaryName();
+    protected abstract Tool getTool();
     
     /**
      * Detect tool version. Subclasses must implement this to provide tool-specific version detection.
@@ -92,15 +86,15 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     @SneakyThrows
     public ObjectNode getJsonNode() {
         var context = new ToolRegistrationHelper.RegistrationContext(
-            getToolName(), 
-            getDefaultBinaryName(), 
+            getTool().getToolName(), 
+            getTool().getDefaultBinaryName(), 
             this::detectVersion
         );
         
         var result = context.register(pathOption, requestedVersion);
         
         ToolInstallationOutputDescriptor descriptor = new ToolInstallationOutputDescriptor(
-            getToolName(), 
+            getTool().getToolName(), 
             result.getVersionDescriptor(), 
             result.getInstallation(), 
             result.getAction().name(),

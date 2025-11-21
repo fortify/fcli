@@ -26,7 +26,6 @@ import picocli.CommandLine.Command;
                 ToolDebrickedCliGetCommand.class,
                 ToolDebrickedCliRegisterCommand.class,
                 ToolDebrickedCliRunCommand.class,
-                ToolDebrickedCliEnvCommand.class,
                 ToolDebrickedCliUninstallCommand.class
         }
 

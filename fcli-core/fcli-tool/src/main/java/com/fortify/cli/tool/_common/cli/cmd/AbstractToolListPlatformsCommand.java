@@ -18,6 +18,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
@@ -31,7 +32,7 @@ public abstract class AbstractToolListPlatformsCommand extends AbstractOutputCom
     
     @Override
     public final JsonNode getJsonNode() {
-        return ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName())
+        return ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getTool().getToolName())
                 .getVersion(version).getBinaries().keySet().stream()
                 .map(this::createObjectNode)
                 .collect(JsonHelper.arrayNodeCollector());
@@ -42,7 +43,7 @@ public abstract class AbstractToolListPlatformsCommand extends AbstractOutputCom
         return false;
     }
     
-    protected abstract String getToolName();
+    protected abstract Tool getTool();
     
     private final ObjectNode createObjectNode(String platform) {
         return JsonHelper.getObjectMapper().createObjectNode()

@@ -14,6 +14,7 @@ package com.fortify.cli.tool.vuln_exporter.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
@@ -25,7 +26,11 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Install.CMD_NAME)
 public class ToolVulnExporterInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
-    @Getter private String toolName = ToolVulnExporterCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.VULN_EXPORTER;
+    }
     
     @Override
     protected String getFallbackPlatform() {

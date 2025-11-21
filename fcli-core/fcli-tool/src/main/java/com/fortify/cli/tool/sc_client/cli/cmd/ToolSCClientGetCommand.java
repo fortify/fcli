@@ -14,6 +14,7 @@ package com.fortify.cli.tool.sc_client.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolGetCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -22,5 +23,9 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class ToolSCClientGetCommand extends AbstractToolGetCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper;
-    @Getter private String toolName = ToolSCClientCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.SC_CLIENT;
+    }
 }

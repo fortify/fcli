@@ -10,19 +10,22 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.tool.sc_client.cli.cmd;
+package com.fortify.cli.tool.env.cli.cmd;
 
-import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.tool._common.cli.cmd.AbstractToolListPlatformsCommand;
-import com.fortify.cli.tool._common.helper.Tool;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "list-platforms", aliases = {"lsp"}) @CommandGroup("list-platforms")
-public class ToolSCClientListPlatformsCommand extends AbstractToolListPlatformsCommand {
-    
-    @Override
-    protected final Tool getTool() {
-        return Tool.SC_CLIENT;
-    }
-}
+@Command(
+        name = "env",
+        resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
+        subcommands = {
+            ToolEnvShellCommand.class,
+            ToolEnvPowershellCommand.class,
+            ToolEnvGitHubCommand.class,
+            ToolEnvGitLabCommand.class,
+            ToolEnvAdoCommand.class,
+            ToolEnvExprCommand.class
+        }
+)
+public final class ToolEnvCommands extends AbstractContainerCommand {}

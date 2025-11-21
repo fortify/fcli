@@ -15,6 +15,7 @@ package com.fortify.cli.tool.fcli.cli.cmd;
 import java.io.File;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool.fcli.helper.ToolFcliHelper;
 
 import picocli.CommandLine.Command;
@@ -23,13 +24,8 @@ import picocli.CommandLine.Command;
 public class ToolFcliRegisterCommand extends AbstractToolRegisterCommand {
     
     @Override
-    protected String getToolName() {
-        return ToolFcliCommands.TOOL_NAME;
-    }
-    
-    @Override
-    protected String getDefaultBinaryName() {
-        return ToolFcliHelper.getDefaultBinaryName();
+    protected final Tool getTool() {
+        return Tool.FCLI;
     }
     
     @Override

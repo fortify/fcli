@@ -15,15 +15,19 @@ package com.fortify.cli.tool.debricked_cli.cli.cmd;
 import java.util.List;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
-import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @Command(name = "run")
 public class ToolDebrickedCliRunCommand extends AbstractToolRunCommand {
-    @Getter private String toolName = ToolDebrickedCliCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.DEBRICKED_CLI;
+    }
 
     @Override
     protected List<String> getBaseCommand(ToolInstallationDescriptor descriptor) {

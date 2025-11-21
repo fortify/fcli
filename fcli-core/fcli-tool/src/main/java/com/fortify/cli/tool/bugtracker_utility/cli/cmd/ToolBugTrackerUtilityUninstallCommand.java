@@ -14,6 +14,7 @@ package com.fortify.cli.tool.bugtracker_utility.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolUninstallCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -22,5 +23,9 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Uninstall.CMD_NAME)
 public class ToolBugTrackerUtilityUninstallCommand extends AbstractToolUninstallCommand {
     @Getter @Mixin private OutputHelperMixins.Uninstall outputHelper;
-    @Getter private String toolName = ToolBugTrackerUtilityCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.BUGTRACKER_UTILITY;
+    }
 }

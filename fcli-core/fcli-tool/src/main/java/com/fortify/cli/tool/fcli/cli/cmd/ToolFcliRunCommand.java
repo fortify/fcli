@@ -17,16 +17,20 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
-import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 
 @Command(name = "run")
 public class ToolFcliRunCommand extends AbstractToolRunShellOrJavaCommand {
-    @Getter private String toolName = ToolFcliCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.FCLI;
+    }
 
     @Override
     protected List<String> getBaseCommand(ToolInstallationDescriptor descriptor) {

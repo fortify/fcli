@@ -16,6 +16,7 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.tool.bugtracker_utility.cli.cmd.ToolBugTrackerUtilityCommands;
 import com.fortify.cli.tool.debricked_cli.cli.cmd.ToolDebrickedCliCommands;
 import com.fortify.cli.tool.definitions.cli.cmd.ToolDefinitionsCommands;
+import com.fortify.cli.tool.env.cli.cmd.ToolEnvCommands;
 import com.fortify.cli.tool.fcli.cli.cmd.ToolFcliCommands;
 import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
 import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
@@ -27,6 +28,7 @@ import picocli.CommandLine.Command;
         name = "tool",
         resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
         subcommands = {
+            ToolEnvCommands.class,
             ToolBugTrackerUtilityCommands.class,
             ToolDebrickedCliCommands.class,
             ToolFcliCommands.class,

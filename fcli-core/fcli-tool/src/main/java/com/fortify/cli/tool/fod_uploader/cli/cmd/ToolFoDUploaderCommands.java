@@ -26,7 +26,6 @@ import picocli.CommandLine.Command;
                 ToolFoDUploaderGetCommand.class,
                 ToolFoDUploaderRegisterCommand.class,
                 ToolFoDUploaderRunCommand.class,
-                ToolFoDUploaderEnvCommand.class,
                 ToolFoDUploaderUninstallCommand.class
         }
 

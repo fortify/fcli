@@ -70,7 +70,7 @@ public abstract class AbstractToolRunShellOrJavaCommand extends AbstractToolRunC
     }
     
     protected List<String> getJavaHomeEnvVarNames() {
-        return List.of(getToolName().toUpperCase().replace('-', '_')+"JAVA_HOME", "JAVA_HOME");
+        return List.of(getTool().getToolName().toUpperCase().replace('-', '_')+"JAVA_HOME", "JAVA_HOME");
     }
     protected abstract List<String> getBaseCommand(ToolInstallationDescriptor descriptor);
     protected abstract String getJar(ToolInstallationDescriptor descriptor);

@@ -28,8 +28,9 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
+import com.fortify.cli.tool._common.helper.ToolInstallationsResolver;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -118,13 +119,20 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
     }
 
     private final ToolInstallationDescriptor getToolInstallationDescriptor() {
-        var toolName = getToolName();
-        if ( StringUtils.isBlank(versionToRun) ) { 
-            return checkNotNull(ToolInstallationDescriptor.loadLastModified(toolName), "No tool installations detected");
-        } else {
-            var versionDescriptor = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName).getVersion(versionToRun);
-            return checkNotNull(ToolInstallationDescriptor.load(toolName, versionDescriptor), "No tool installation detected for version "+versionToRun);
+        var installations = ToolInstallationsResolver.resolve(getTool());
+        var toolName = installations.tool().getToolName();
+        if (StringUtils.isBlank(versionToRun)) {
+            return checkNotNull(
+                    installations.defaultInstallation()
+                            .map(ToolInstallationsResolver.ToolInstallationRecord::installationDescriptor)
+                            .orElse(null),
+                    "No tool installations detected");
         }
+        var versionDescriptor = installations.definition().getVersion(versionToRun);
+        var descriptor = installations.findByVersion(versionDescriptor.getVersion())
+                .map(ToolInstallationsResolver.ToolInstallationRecord::installationDescriptor)
+                .orElseGet(() -> ToolInstallationDescriptor.load(toolName, versionDescriptor));
+        return checkNotNull(descriptor, "No tool installation detected for version " + versionToRun);
     }
 
     private ToolInstallationDescriptor checkNotNull(ToolInstallationDescriptor descriptor, String msg) {
@@ -134,7 +142,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         return descriptor;
     }
     
-    protected abstract String getToolName();
+    protected abstract Tool getTool();
     protected List<List<String>> getBaseCommands(ToolInstallationDescriptor descriptor) {
         return List.of(getBaseCommand(descriptor));
     }

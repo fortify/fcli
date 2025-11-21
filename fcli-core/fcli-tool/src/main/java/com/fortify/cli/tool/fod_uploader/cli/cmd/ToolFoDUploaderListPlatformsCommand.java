@@ -14,11 +14,15 @@ package com.fortify.cli.tool.fod_uploader.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolListPlatformsCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 
-import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @Command(name = "list-platforms", aliases = {"lsp"}) @CommandGroup("list-platforms")
 public class ToolFoDUploaderListPlatformsCommand extends AbstractToolListPlatformsCommand {
-    @Getter private String toolName = ToolFoDUploaderCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.FOD_UPLOADER;
+    }
 }

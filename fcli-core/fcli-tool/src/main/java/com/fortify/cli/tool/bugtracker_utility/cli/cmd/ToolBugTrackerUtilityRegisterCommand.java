@@ -15,7 +15,7 @@ package com.fortify.cli.tool.bugtracker_utility.cli.cmd;
 import java.io.File;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
+import com.fortify.cli.tool._common.helper.Tool;
 
 import picocli.CommandLine.Command;
 
@@ -23,16 +23,8 @@ import picocli.CommandLine.Command;
 public class ToolBugTrackerUtilityRegisterCommand extends AbstractToolRegisterCommand {
     
     @Override
-    protected String getToolName() {
-        return ToolBugTrackerUtilityCommands.TOOL_NAME;
-    }
-    
-    @Override
-    protected String getDefaultBinaryName() {
-        if (ToolPlatformHelper.isWindows()) {
-            return "FortifyBugTrackerUtility.bat";
-        }
-        return "FortifyBugTrackerUtility";
+    protected final Tool getTool() {
+        return Tool.BUGTRACKER_UTILITY;
     }
     
     @Override

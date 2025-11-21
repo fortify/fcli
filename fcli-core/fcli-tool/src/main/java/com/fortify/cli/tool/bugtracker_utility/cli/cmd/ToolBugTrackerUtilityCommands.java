@@ -26,7 +26,6 @@ import picocli.CommandLine.Command;
                 ToolBugTrackerUtilityGetCommand.class,
                 ToolBugTrackerUtilityRegisterCommand.class,
                 ToolBugTrackerUtilityRunCommand.class,
-                ToolBugTrackerUtilityEnvCommand.class,
                 ToolBugTrackerUtilityUninstallCommand.class
         }
 

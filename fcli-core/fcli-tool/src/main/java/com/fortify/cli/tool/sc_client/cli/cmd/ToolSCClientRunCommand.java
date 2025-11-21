@@ -22,10 +22,10 @@ import org.apache.commons.lang3.StringUtils;
 import com.fortify.cli.common.util.DebugHelper;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
-import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -34,7 +34,11 @@ import picocli.CommandLine.Option;
 public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
     @Option(names="--logdir", required=false)
     private Path logDir;
-    @Getter private String toolName = ToolSCClientCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.SC_CLIENT;
+    }
     
     @Override
     public List<String> getToolArgs() {

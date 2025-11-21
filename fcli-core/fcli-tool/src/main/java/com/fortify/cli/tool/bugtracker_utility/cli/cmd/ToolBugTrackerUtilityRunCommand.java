@@ -15,16 +15,20 @@ package com.fortify.cli.tool.bugtracker_utility.cli.cmd;
 import java.util.List;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
-import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 
 @Command(name = "run")
 public class ToolBugTrackerUtilityRunCommand extends AbstractToolRunShellOrJavaCommand {
-    @Getter private String toolName = ToolBugTrackerUtilityCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.BUGTRACKER_UTILITY;
+    }
 
     @Override
     protected List<String> getBaseCommand(ToolInstallationDescriptor descriptor) {

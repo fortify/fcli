@@ -14,6 +14,7 @@ package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolGetCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -22,5 +23,9 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class ToolDebrickedCliGetCommand extends AbstractToolGetCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper;
-    @Getter private String toolName = ToolDebrickedCliCommands.TOOL_NAME;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.DEBRICKED_CLI;
+    }
 }

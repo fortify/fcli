@@ -43,6 +43,7 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
@@ -103,19 +104,20 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return true;
     }
     
-    protected abstract String getToolName();
+    protected abstract Tool getTool();
     protected abstract void postInstall(ToolInstaller toolInstaller, ToolInstallationResult installationResult);
     protected abstract String getFallbackPlatform();
     
     /**
      * Get the default binary name for this tool (platform-specific).
      * This is used when --copy-from is specified to locate the binary to copy.
-     * Subclasses that support --copy-from must override this method.
+     * Subclasses that support --copy-from can override getTool() to provide the tool enum.
+     * The default binary name is obtained from the tool enum.
      * 
      * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar"), or null if copy-from not supported
      */
     protected String getDefaultBinaryName() {
-        return null;
+        return getTool().getDefaultBinaryName();
     }
     
     /**
@@ -140,8 +142,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
      */
     protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
         if (isCopyFromMode()) {
-            if (getDefaultBinaryName() == null) {
-                throw new FcliSimpleException("--copy-from is not supported for " + getToolName());
+            if (getTool().getDefaultBinaryName() == null) {
+                throw new FcliSimpleException("--copy-from is not supported for " + getTool().getToolName());
             }
             ToolInstaller.configureCopyFrom(builder, copyFromPath, 
                 ToolInstaller.OnCopyVersionMismatch.valueOf(onCopyVersionMismatch.name()), 
@@ -179,7 +181,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
                     .progressWriter(progressWriter)
                     .targetPathProvider(this::getTargetPath)
                     .globalBinPathProvider(this::getGlobalBinPath)
-                    .toolName(getToolName())
+                    .toolName(getTool().getToolName())
                     .requestedVersion(version);
             configureToolInstallerBuilder(builder);
             var installer = builder.build();
@@ -214,7 +216,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             result = installPath;
         } else {
             var basePath = getBasePath();
-            result = basePath.resolve(String.format("%s/%s", getToolName(), toolInstaller.getToolVersion()));
+            result = basePath.resolve(String.format("%s/%s", getTool().getToolName(), toolInstaller.getToolVersion()));
         }
         return result.normalize().toAbsolutePath();
     }

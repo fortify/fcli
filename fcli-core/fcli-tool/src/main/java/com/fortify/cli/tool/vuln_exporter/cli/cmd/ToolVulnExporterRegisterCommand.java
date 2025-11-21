@@ -15,7 +15,7 @@ package com.fortify.cli.tool.vuln_exporter.cli.cmd;
 import java.io.File;
 
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRegisterCommand;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 
 import picocli.CommandLine.Command;
@@ -24,16 +24,8 @@ import picocli.CommandLine.Command;
 public class ToolVulnExporterRegisterCommand extends AbstractToolRegisterCommand {
     
     @Override
-    protected String getToolName() {
-        return ToolVulnExporterCommands.TOOL_NAME;
-    }
-    
-    @Override
-    protected String getDefaultBinaryName() {
-        if (ToolPlatformHelper.isWindows()) {
-            return "FortifyVulnerabilityExporter.bat";
-        }
-        return "FortifyVulnerabilityExporter";
+    protected final Tool getTool() {
+        return Tool.VULN_EXPORTER;
     }
     
     @Override

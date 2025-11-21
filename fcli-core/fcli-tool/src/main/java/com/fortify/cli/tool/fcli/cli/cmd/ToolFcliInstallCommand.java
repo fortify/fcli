@@ -24,6 +24,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
+import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
@@ -38,11 +39,10 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Install.CMD_NAME)
 public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
-    @Getter private String toolName = ToolFcliCommands.TOOL_NAME;
     
     @Override
-    protected String getDefaultBinaryName() {
-        return ToolFcliHelper.getDefaultBinaryName();
+    protected final Tool getTool() {
+        return Tool.FCLI;
     }
     
     @Override
