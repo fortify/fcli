@@ -135,7 +135,13 @@ public final class JreHelper {
         if (detectedVersion == null || requiredVersion == null) {
             return false;
         }
-        return detectedVersion.equals(requiredVersion);
+        try {
+            int detected = Integer.parseInt(detectedVersion);
+            int required = Integer.parseInt(requiredVersion);
+            return detected >= required;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     /**

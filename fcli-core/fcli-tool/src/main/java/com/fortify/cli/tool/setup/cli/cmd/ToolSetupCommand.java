@@ -24,6 +24,7 @@ import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.tool._common.helper.Tool;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool.setup.cli.mixin.ToolSetupToolsMixin;
 import com.fortify.cli.tool.setup.cli.mixin.ToolSetupToolsMixin.ToolSetupSpec;
 
@@ -31,6 +32,8 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+// TODO Replace all fcli invocations (at least those for data retrieval; maybe consider keeping
+//      register and install commands) with direct API calls
 @Command(name = "setup")
 public class ToolSetupCommand extends AbstractRunnableCommand {
     @Mixin @Getter
@@ -266,34 +269,14 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
     
     private String resolveSemanticVersion(Tool tool, String version) {
         String versionToResolve = "auto".equals(version) ? "latest" : version;
-        String cmd = "tool " + tool.getToolName() + " list -q \"version=='" + versionToResolve + "' || aliases.contains('" + versionToResolve + "')\" --output json";
-        
         try {
-            var result = executeFcliCommand(cmd);
-            if (result.getExitCode() == 0 && !result.getOut().trim().isEmpty()) {
-                // Parse JSON output to get version
-                // For simplicity, extract version from the first line that contains it
-                String[] lines = result.getOut().split("\n");
-                for (String line : lines) {
-                    if (line.contains("\"version\"")) {
-                        // Simple JSON parsing - extract version value
-                        int versionStart = line.indexOf("\"version\":");
-                        if (versionStart != -1) {
-                            int valueStart = line.indexOf("\"", versionStart + 10);
-                            if (valueStart != -1) {
-                                int valueEnd = line.indexOf("\"", valueStart + 1);
-                                if (valueEnd != -1) {
-                                    return line.substring(valueStart + 1, valueEnd);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            var definition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(tool.getToolName());
+            var versionDescriptor = definition.getVersion(versionToResolve);
+            return versionDescriptor.getVersion();
         } catch (Exception e) {
             // Version resolution failed, return null
+            return null;
         }
-        return null;
     }
     
     private String findExistingJreForScClient(String version) {
