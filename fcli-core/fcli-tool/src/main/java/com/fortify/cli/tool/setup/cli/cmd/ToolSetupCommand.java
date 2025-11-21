@@ -164,10 +164,10 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         }
         
         // Handle tool cache pattern
-        if (toolsMixin.getToolCachePattern() != null && !"preinstalled".equals(version)) {
+        if (toolsMixin.getInstallDirPattern() != null && !"preinstalled".equals(version)) {
             String resolvedVersion = resolveSemanticVersion(spec.tool(), version);
             if (resolvedVersion != null) {
-                String cacheDir = toolsMixin.getToolCachePattern()
+                String cacheDir = toolsMixin.getInstallDirPattern()
                     .replace("{tool}", toolName)
                     .replace("{version}", resolvedVersion);
                 cmd += " --install-dir \"" + cacheDir + "\"";

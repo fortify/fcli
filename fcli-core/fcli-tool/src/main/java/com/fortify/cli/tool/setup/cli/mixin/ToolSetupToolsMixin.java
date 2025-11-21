@@ -42,8 +42,8 @@ public class ToolSetupToolsMixin {
     @Option(names = "--self")
     @Getter private String self;
     
-    @Option(names = "--tool-cache-pattern")
-    @Getter private String toolCachePattern;
+    @Option(names = "--install-dir-pattern")
+    @Getter private String installDirPattern;
     
     @Option(names = "--tools", split = ",", required = true)
     @Getter private List<String> toolSpecs;
