@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20251121.163141-dev_feat.ci-updates
+fcli_version: 0.20251121.173729-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251121.163141-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.163141-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.173729-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20251121.163141-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251121.173729-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -147,8 +147,8 @@ fcli_version: 0.20251121.163141-dev_feat.ci-updates
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
 <li><a href="#_env"><code>env</code></a></li>
-<li><a href="#_findjavahome"><code>findJavaHome</code></a></li>
 <li><a href="#_localrepo"><code>localRepo</code></a></li>
+<li><a href="#_opt"><code>opt</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
 <li><a href="#_uripart"><code>uriPart</code></a></li>
@@ -188,7 +188,7 @@ fcli_version: 0.20251121.163141-dev_feat.ci-updates
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20251121.163141-dev_feat.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20251121.173729-dev_feat.ci-updates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.5.0</p></td>
 </tr>
 </tbody>
@@ -310,7 +310,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20251121.163141-dev_feat.ci-updates supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20251121.173729-dev_feat.ci-updates supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json">2.5.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -3709,37 +3709,6 @@ values provided in the mapping object.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_findjavahome"><a class="anchor" href="#_findjavahome"></a><code>findJavaHome</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #findJavaHome(string majorVersion)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string majorVersion</em> - Required Java major version (e.g., '8', '11', '17', '21')</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Path to Java home directory or null if not found</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Searches for a Java installation with the specified major version by checking JAVA_HOME environment variable and java executable in PATH. Returns the Java home directory path or null if not found. Follows symlinks to determine actual Java home directory.</p>
-</div>
-<div class="paragraph">
-<p>This function executes java -version to verify the version, so it may be slow. It&#8217;s recommended to cache the result if calling multiple times with the same version parameter.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_localrepo"><a class="anchor" href="#_localrepo"></a><code>localRepo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -3775,6 +3744,30 @@ commit: {
 }
 }</p>
 </div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_opt"><a class="anchor" href="#_opt"></a><code>opt</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #opt(string arg0, string arg1)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string arg0</em> - no description available<br>
+<em>string arg1</em> - no description available</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
 </tr>
 </tbody>
 </table>
@@ -4281,8 +4274,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251121.163141-dev_feat.ci-updates<br>
-Last updated 2025-11-21 16:34:39 UTC
+Version 0.20251121.173729-dev_feat.ci-updates<br>
+Last updated 2025-11-21 17:40:16 UTC
 </div>
 </div>
 </body>
