@@ -424,11 +424,17 @@ public class ActionSpelFunctions {
         for (var elt : elts) {
             var names = elt.split("=");
             var envValue = EnvHelper.env(names[1]);
-            if (StringUtils.isNotBlank(envValue)) {
-                output.add(String.format("\"%s=%s\"", names[0], envValue));
+            var opt = opt(names[0], envValue);
+            if (StringUtils.isNotBlank(opt)) {
+                output.add(opt);
             }
         }
         return String.join(" ", output);
+    }
+    
+    public static final String opt(String name, String value) {
+        if ( StringUtils.isBlank(value) ) { return ""; }
+        return String.format("\"%s=%s\"", name, value);
     }
 
     @SpelFunction(cat=workflow,

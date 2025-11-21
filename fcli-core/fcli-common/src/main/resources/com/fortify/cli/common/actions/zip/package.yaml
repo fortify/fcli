@@ -61,6 +61,6 @@ steps:
   - if: ${#isBlank(cli.usePackage)}
     steps:
       - run.fcli:
-          SETUP_TOOLS: fcli tool setup "--tools=sc-client:${cli.scClientVersion}" "--tool-definitions=${cli.toolDefinitions}"
+          SETUP_TOOLS: fcli tool setup "--tools=sc-client:${cli.scClientVersion}" ${#opt("--tool-definitions", cli.toolDefinitions)}
           RUN_SC_CLIENT: fcli tool sc-client run --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}
       

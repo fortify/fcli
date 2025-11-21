@@ -14,6 +14,7 @@ package com.fortify.cli.tool.setup.cli.cmd;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
@@ -34,6 +35,16 @@ import picocli.CommandLine.Mixin;
 public class ToolSetupCommand extends AbstractRunnableCommand {
     @Mixin @Getter
     private ToolSetupToolsMixin toolsMixin;
+    
+    // Consumer to handle fcli command failures by printing error output
+    private final Consumer<OutputHelper.Result> onFail = result -> {
+        if (result.getErr() != null && !result.getErr().isEmpty()) {
+            System.err.println(result.getErr());
+        } else if (result.getOut() != null && !result.getOut().isEmpty()) {
+            System.err.println(result.getOut());
+        }
+        throw new FcliCommandExecutionException(result);
+    };
     
     // Record to hold setup result information
     private record ToolSetupResult(String toolName, String status, String version, String binDir) {}
@@ -139,7 +150,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         }
         
         try {
-            var result = executeFcliCommand(cmd);
+            var result = executeFcliCommandSilent(cmd);
             if (result.getExitCode() == 0) {
                 // Try to extract install directory from JSON output
                 String installDir = extractInstallDirFromJsonOutput(result.getOut());
@@ -148,7 +159,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         } catch (FcliCommandExecutionException e) {
             // Registration failed, but don't throw - just log progress
             System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
-            // Do not show stderr for expected registration failures
+            // Error output is shown by onFail
         } catch (Exception e) {
             // Other exceptions
             System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
@@ -205,11 +216,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         } catch (FcliCommandExecutionException e) {
             // Show user-friendly error message
             System.err.println("Installation for " + toolName + " failed:");
-            if (e.getResult().getErr() != null && !e.getResult().getErr().isEmpty()) {
-                System.err.println(e.getResult().getErr());
-            } else if (e.getResult().getOut() != null && !e.getResult().getOut().isEmpty()) {
-                System.err.println(e.getResult().getOut());
-            }
+            // Error output already printed by onFail
             throw new FcliSimpleException("Installation of " + toolName + " failed");
         }
     }
@@ -338,6 +345,17 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
     }
     
     private OutputHelper.Result executeFcliCommand(String cmd) {
+        var executor = FcliCommandExecutorFactory.builder()
+                .cmd(cmd)
+                .stdoutOutputType(OutputType.collect)  // Collect stdout to get the JSON output
+                .stderrOutputType(OutputType.collect)  // Collect stderr to show on failure
+                .onFail(onFail)
+                .build()
+                .create();
+        return executor.execute();
+    }
+    
+    private OutputHelper.Result executeFcliCommandSilent(String cmd) {
         var executor = FcliCommandExecutorFactory.builder()
                 .cmd(cmd)
                 .stdoutOutputType(OutputType.collect)  // Collect stdout to get the JSON output
