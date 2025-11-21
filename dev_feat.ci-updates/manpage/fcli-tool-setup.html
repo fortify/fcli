@@ -1,5 +1,5 @@
 ---
-title: fcli-util-variable-list(1)
+title: fcli-tool-setup(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-util-variable-list(1)</title>
+<title>fcli-tool-setup(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -25,20 +25,19 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-util-variable-list(1) Manual Page</h1>
+<h1>fcli-tool-setup(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
 <li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-util-variable-list - List fcli variables.</p>
+<p>fcli-tool-setup - Set up Fortify tools.</p>
 </div>
 </div>
 <div id="content">
@@ -46,18 +45,22 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli util variable list</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                        [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
-                        [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                        [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli tool setup</strong> [<strong>--air-gapped</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
+                [<strong>--tool-cache-pattern</strong>=<em>&lt;toolCachePattern&gt;</em>]
+                [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] <strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
+                <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Detects, registers, and installs Fortify tools (fcli, sc-client, fod-uploader, debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines. Supports auto-detection of pre-installed tools, dynamic installation with signature verification, platform-specific tool caching, air-gapped environments, and Docker multi-stage builds.
+This command allows for setting up multiple Fortify tools.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -65,34 +68,29 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dt class="hdlist1"><strong>--air-gapped</strong></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+<p>Air-gapped mode: all tools must be pre-installed, don&#8217;t update tool definitions.</p>
 </dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_output_options_also_see_documentation_link_below"><a class="anchor" href="#_output_options_also_see_documentation_link_below"></a>Output options (also see documentation link below)</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;type+args&gt;</em></dt>
+<dt class="hdlist1"><strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em></dt>
 <dd>
-<p>Select output type (csv, table, expr, json, xml, yaml) and optional type arguments.</p>
+<p>Base directory for tool installations: &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;/.</p>
 </dd>
-<dt class="hdlist1"><strong>--store</strong>=<em>&lt;var&gt;[:&lt;prop&gt;]</em></dt>
+<dt class="hdlist1"><strong>--self</strong>=<em>&lt;self&gt;</em></dt>
 <dd>
-<p>Store JSON results in an fcli variable for later reference.</p>
+<p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
 </dd>
-<dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
+<dt class="hdlist1"><strong>--tool-cache-pattern</strong>=<em>&lt;toolCachePattern&gt;</em></dt>
 <dd>
-<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+<p>Pattern for tool cache directory paths, with {tool} and {version} placeholders (e.g., /cache/{tool}/{version}). When specified, semantic versions are resolved to actual versions for proper cache naming.</p>
 </dd>
-<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dt class="hdlist1"><strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em></dt>
 <dd>
-<p>Write output to the specified file.</p>
+<p>Custom tool definitions URL (ignored in air-gapped mode).</p>
+</dd>
+<dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of tools to set up in the format tool[:version|path]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. If no version or path is specified, behavior is similar to 'auto' - look for tool-specific env var, fall back to PATH search, install if not found.</p>
 </dd>
 </dl>
 </div>
@@ -135,7 +133,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-21 13:30:33 UTC
+Last updated 2025-11-21 13:30:32 UTC
 </div>
 </div>
 </body>

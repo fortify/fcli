@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20251121.113657-dev_feat.ci-updates
+fcli_version: 0.20251121.132804-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251121.113657-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.113657-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.132804-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251121.113657-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251121.132804-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -46,18 +46,11 @@ fcli_version: 0.20251121.113657-dev_feat.ci-updates
 <li><a href="#_description_2">Description</a></li>
 </ul>
 </li>
-<li><a href="#_fortify_setup">fortify-setup</a>
+<li><a href="#_package">package</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_3">Synopsis</a></li>
 <li><a href="#_description_3">Description</a></li>
 <li><a href="#_options">Options</a></li>
-</ul>
-</li>
-<li><a href="#_package">package</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_4">Synopsis</a></li>
-<li><a href="#_description_4">Description</a></li>
-<li><a href="#_options_2">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -389,161 +382,19 @@ like default FoD release name and SSC application version name.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_fortify_setup"><a class="anchor" href="#_fortify_setup"></a>fortify-setup</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Set up Fortify tools for CI/CD workflows</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
-<div class="paragraph">
-<p>Detects, registers, and installs Fortify tools (fcli, sc-client, fod-uploader,
-debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines.</p>
-</div>
-<div class="paragraph">
-<p>Supports:
-- Auto-detection of pre-installed tools
-- Dynamic installation with signature verification
-- Platform-specific tool caching (GitHub, Azure, GitLab)
-- Air-gapped environments (pre-installed tools only)
-- Docker multi-stage builds (fcli bootstrap)</p>
-</div>
-<div class="paragraph">
-<p>Examples:
-  # Install sc-client, then use it to package source code
-  <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0
-  fcli tool sc-client run&#8201;&#8212;&#8201;package -o package.zip</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre># Pre-installed tools (air-gapped)
-link:manpage/fcli-action-run.html[fcli action run] fortify-setup --air-gapped \
-  --sc-client auto --fod-uploader auto</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre># Docker multi-stage build, installing from preinstalled fcli
-link:manpage/fcli-action-run.html[fcli action run] fortify-setup --self /base/usr/bin/fcli \
-  --fcli auto \
-  --base-dir /opt/fortify --sc-client 24.4.0</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Tools that are registered or installed through this action automatically become the
-default version for subsequent 'fcli tool &lt;tool-name&gt; run' commands. In the following
-example, the <a href="manpage/fcli-tool-sc-client-run.html"><code>fcli tool sc-client run</code></a> command will use sc-client v24.4.0 as specified
-on the <code><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup</code> command:
-- <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0
-- fcli tool sc-client run&#8201;&#8212;&#8201;package -o package.zip</p>
-</div>
-<div class="paragraph">
-<p>If you need direct access to any tools installations, the fortify-env action may be used
-to output environment variables pointing to the installed tool locations. In the following
-example, the output of <code><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-env</code> will include environment variables
-pointing to sc-client v24.4.0 and latest fod-uploader, alongside any other tools that were
-previously installed or registered:
-- <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup --sc-client 24.4.0 --fod-uploader latest
-- <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-env</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--fcli</dt>
-<dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
-</dd>
-<dt class="hdlist1">--sc-client</dt>
-<dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
-</dd>
-<dt class="hdlist1">--fod-uploader</dt>
-<dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
-</dd>
-<dt class="hdlist1">--debricked-cli</dt>
-<dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
-</dd>
-<dt class="hdlist1">--bugtracker-utility</dt>
-<dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
-</dd>
-<dt class="hdlist1">--vuln-exporter</dt>
-<dd>
-<p>Version to use: &lt;specific-version&gt;, latest, auto, preinstalled, skip. If omitted, tool is skipped unless explicit path or env var is set</p>
-</dd>
-<dt class="hdlist1">--with-jre</dt>
-<dd>
-<p>JRE handling for sc-client: yes (install with JRE), no (use system Java), auto (detect compatible JRE). Default: auto</p>
-</dd>
-<dt class="hdlist1">--fcli-path</dt>
-<dd>
-<p>Explicit path to fcli binary or installation directory</p>
-</dd>
-<dt class="hdlist1">--sc-client-path</dt>
-<dd>
-<p>Explicit path to sc-client binary or installation directory</p>
-</dd>
-<dt class="hdlist1">--fod-uploader-path</dt>
-<dd>
-<p>Explicit path to fod-uploader binary or installation directory</p>
-</dd>
-<dt class="hdlist1">--debricked-cli-path</dt>
-<dd>
-<p>Explicit path to debricked-cli binary or installation directory</p>
-</dd>
-<dt class="hdlist1">--bugtracker-utility-path</dt>
-<dd>
-<p>Explicit path to bugtracker-utility binary or installation directory</p>
-</dd>
-<dt class="hdlist1">--vuln-exporter-path</dt>
-<dd>
-<p>Explicit path to vuln-exporter binary or installation directory</p>
-</dd>
-<dt class="hdlist1">--base-dir</dt>
-<dd>
-<p>Base directory for tool installations: &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;/</p>
-</dd>
-<dt class="hdlist1">--self</dt>
-<dd>
-<p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
-</dd>
-<dt class="hdlist1">--air-gapped</dt>
-<dd>
-<p>Air-gapped mode: all tools must be pre-installed, don&#8217;t update tool definitions</p>
-</dd>
-<dt class="hdlist1">--tool-definitions</dt>
-<dd>
-<p>Custom tool definitions URL (ignored in air-gapped mode)</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_package"><a class="anchor" href="#_package"></a>package</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Package source code</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
+<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> package [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
+<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to package source code using ScanCentral Client. It will
 take care of installing the specified ScanCentral Client version, followed by
@@ -554,7 +405,7 @@ only ScanCentral logs, not fcli logs.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
+<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--use-package</dt>
@@ -590,8 +441,8 @@ specified.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251121.113657-dev_feat.ci-updates<br>
-Last updated 2025-11-21 11:39:53 UTC
+Version 0.20251121.132804-dev_feat.ci-updates<br>
+Last updated 2025-11-21 13:30:50 UTC
 </div>
 </div>
 </body>
