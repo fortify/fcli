@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20251120.135417-dev_feat.ci-updates
+fcli_version: 0.20251121.113657-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251120.135417-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251120.135417-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251121.113657-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251120.135417-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251121.113657-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -46,25 +46,18 @@ fcli_version: 0.20251120.135417-dev_feat.ci-updates
 <li><a href="#_description_2">Description</a></li>
 </ul>
 </li>
-<li><a href="#_fortify_env">fortify-env</a>
+<li><a href="#_fortify_setup">fortify-setup</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_3">Synopsis</a></li>
 <li><a href="#_description_3">Description</a></li>
 <li><a href="#_options">Options</a></li>
 </ul>
 </li>
-<li><a href="#_fortify_setup">fortify-setup</a>
+<li><a href="#_package">package</a>
 <ul class="sectlevel2">
 <li><a href="#_synopsis_4">Synopsis</a></li>
 <li><a href="#_description_4">Description</a></li>
 <li><a href="#_options_2">Options</a></li>
-</ul>
-</li>
-<li><a href="#_package">package</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_5">Synopsis</a></li>
-<li><a href="#_description_5">Description</a></li>
-<li><a href="#_options_3">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -396,134 +389,19 @@ like default FoD release name and SSC application version name.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_fortify_env"><a class="anchor" href="#_fortify_env"></a>fortify-env</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Output environment variables for Fortify tools</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-env [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
-<div class="paragraph">
-<p>Generates environment variable definitions for installed Fortify tools in various
-formats suitable for sourcing in shells or setting through CI/CD systems.</p>
-</div>
-<div class="paragraph">
-<p>Outputs environment variables for the last installed version of each tool by default,
-or for a specific version if requested. If a tool is not installed, it will be skipped
-unless a specific version is explicitly requested (which will cause an error).</p>
-</div>
-<div class="paragraph">
-<p>Supports multiple output formats:
-- shell: Bash/Zsh compatible export statements
-- powershell: PowerShell $env: syntax
-- cmd: Windows Command Prompt SET statements
-- github: GitHub Actions GITHUB_ENV format
-- azure: Azure Pipelines ##vso[task.setvariable] format
-- gitlab: GitLab CI export statements</p>
-</div>
-<div class="paragraph">
-<p>Examples:
-  # Generate env for all installed tools (shell format)
-  <a href="manpage/fcli-action-run.html">fcli action run</a> fortify-env</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre># Generate env for specific tools with versions
-link:manpage/fcli-action-run.html[fcli action run] fortify-env --sc-client-version 24.4.0 --fcli-version latest</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre># Generate env for GitHub Actions
-link:manpage/fcli-action-run.html[fcli action run] fortify-env --format github</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre># Generate env for specific tool only
-link:manpage/fcli-action-run.html[fcli action run] fortify-env --sc-client-version auto --skip-others</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre># Use in shell (bash/zsh)
-source &lt;(link:manpage/fcli-action-run.html[fcli action run] fortify-env)</pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--fcli-version</dt>
-<dd>
-<p>Version to output env for: &lt;specific-version&gt;, latest, auto (last installed), skip. Default: auto</p>
-</dd>
-<dt class="hdlist1">--sc-client-version</dt>
-<dd>
-<p>Version to output env for: &lt;specific-version&gt;, latest, auto (last installed), skip. Default: auto</p>
-</dd>
-<dt class="hdlist1">--fod-uploader-version</dt>
-<dd>
-<p>Version to output env for: &lt;specific-version&gt;, latest, auto (last installed), skip. Default: auto</p>
-</dd>
-<dt class="hdlist1">--debricked-cli-version</dt>
-<dd>
-<p>Version to output env for: &lt;specific-version&gt;, latest, auto (last installed), skip. Default: auto</p>
-</dd>
-<dt class="hdlist1">--bugtracker-utility-version</dt>
-<dd>
-<p>Version to output env for: &lt;specific-version&gt;, latest, auto (last installed), skip. Default: auto</p>
-</dd>
-<dt class="hdlist1">--vuln-exporter-version</dt>
-<dd>
-<p>Version to output env for: &lt;specific-version&gt;, latest, auto (last installed), skip. Default: auto</p>
-</dd>
-<dt class="hdlist1">--format</dt>
-<dd>
-<p>Output format: shell, powershell, cmd, github, azure, gitlab. Default: shell</p>
-</dd>
-<dt class="hdlist1">--path</dt>
-<dd>
-<p>Include PATH updates: include, exclude, auto (detect if needed). Default: auto</p>
-</dd>
-<dt class="hdlist1">--cmd-var</dt>
-<dd>
-<p>Include *_CMD variables: include, exclude, auto. Default: auto</p>
-</dd>
-<dt class="hdlist1">--home-var</dt>
-<dd>
-<p>Include *_HOME variables: include, exclude, auto. Default: auto</p>
-</dd>
-<dt class="hdlist1">--skip-others</dt>
-<dd>
-<p>Only output env for explicitly versioned tools (skip tools with version=auto)</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_fortify_setup"><a class="anchor" href="#_fortify_setup"></a>fortify-setup</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Set up Fortify tools for CI/CD workflows</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
+<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> fortify-setup [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
+<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
 <div class="paragraph">
 <p>Detects, registers, and installs Fortify tools (fcli, sc-client, fod-uploader,
 debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines.</p>
@@ -576,7 +454,7 @@ previously installed or registered:
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
+<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--fcli</dt>
@@ -659,13 +537,13 @@ previously installed or registered:
 <p>Package source code</p>
 </div>
 <div class="sect2">
-<h3 id="_synopsis_5"><a class="anchor" href="#_synopsis_5"></a>Synopsis</h3>
+<h3 id="_synopsis_4"><a class="anchor" href="#_synopsis_4"></a>Synopsis</h3>
 <div class="paragraph">
 <p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> package [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_description_5"><a class="anchor" href="#_description_5"></a>Description</h3>
+<h3 id="_description_4"><a class="anchor" href="#_description_4"></a>Description</h3>
 <div class="paragraph">
 <p>This action can be used to package source code using ScanCentral Client. It will
 take care of installing the specified ScanCentral Client version, followed by
@@ -676,7 +554,7 @@ only ScanCentral logs, not fcli logs.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_options_3"><a class="anchor" href="#_options_3"></a>Options</h3>
+<h3 id="_options_2"><a class="anchor" href="#_options_2"></a>Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--use-package</dt>
@@ -712,8 +590,8 @@ specified.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251120.135417-dev_feat.ci-updates<br>
-Last updated 2025-11-20 13:57:15 UTC
+Version 0.20251121.113657-dev_feat.ci-updates<br>
+Last updated 2025-11-21 11:39:53 UTC
 </div>
 </div>
 </body>
