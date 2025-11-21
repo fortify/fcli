@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.utils;
 
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -44,7 +45,7 @@ public class FileUtils {
         return fileContentCache.computeIfAbsent(filePath, path -> {
             try {
                 byte[] fileBytes = Files.readAllBytes(path);
-                String content = new String(fileBytes);
+                String content = new String(fileBytes, StandardCharsets.UTF_8);
                 return Arrays.asList(content.split("\\r?\\n"));
             } catch (IOException e) {
                 logger.error("Failed to read file: {}", path, e);
