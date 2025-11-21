@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -41,6 +43,7 @@ public final class ToolDefinitionsHelper {
     private static final String ZIP_FILE_NAME = "tool-definitions.yaml.zip";
     public static final Path DEFINITIONS_STATE_DIR = FcliDataHelper.getFcliStatePath().resolve("tool");
     public static final Path DEFINITIONS_STATE_ZIP = DEFINITIONS_STATE_DIR.resolve(ZIP_FILE_NAME);
+    public static final String DEFAULT_TOOL_DEFINITIONS_URL = "https://github.com/fortify/tool-definitions/releases/download/v1/tool-definitions.yaml.zip";
     private static final String DEFINITIONS_INTERNAL_ZIP = "com/fortify/cli/tool/config/"+ZIP_FILE_NAME;
     private static final Path DESCRIPTOR_PATH = ToolDefinitionsHelper.DEFINITIONS_STATE_DIR.resolve("state.json");
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
@@ -54,6 +57,9 @@ public final class ToolDefinitionsHelper {
     
     @SneakyThrows
     public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source) {
+        if (StringUtils.isBlank(source)) {
+            source = DEFAULT_TOOL_DEFINITIONS_URL;
+        }
         createDefinitionsStateDir(ToolDefinitionsHelper.DEFINITIONS_STATE_DIR);
         var zip = ToolDefinitionsHelper.DEFINITIONS_STATE_ZIP;
         var descriptor = update(source, zip);

@@ -71,8 +71,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         }
         
         for (ToolSetupSpec spec : specs) {
-            ToolSetupResult result = setupTool(spec);
-            results.add(result);
+            results.add(setupTool(spec));
         }
         
         // Print detailed summary
@@ -82,8 +81,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
     
     private void updateToolDefinitions() {
         String source = toolsMixin.getToolDefinitions();
-        String cmd = "tool definitions update" + (source != null ? " --source \"" + source + "\"" : "");
-        executeFcliCommand(cmd);
+        ToolDefinitionsHelper.updateToolDefinitions(source);
     }
     
     private ToolSetupResult setupTool(ToolSetupSpec spec) {
