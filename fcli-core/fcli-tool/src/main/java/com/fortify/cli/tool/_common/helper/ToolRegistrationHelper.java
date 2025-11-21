@@ -437,6 +437,15 @@ public class ToolRegistrationHelper {
         private ToolDefinitionVersionDescriptor resolveVersionDescriptor(String detectedVersion) {
             var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
             
+            // If version is unknown, create synthetic descriptor immediately without normalization
+            if ("unknown".equals(detectedVersion)) {
+                ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
+                syntheticDescriptor.setVersion("unknown");
+                syntheticDescriptor.setStable(true);
+                syntheticDescriptor.setAliases(new String[0]);
+                return syntheticDescriptor;
+            }
+            
             // Normalize version format to match tool definitions (e.g., 24.2.0.0050 -> 24.2.0)
             String normalizedVersion = toolDefinition.normalizeVersionFormat(detectedVersion);
             

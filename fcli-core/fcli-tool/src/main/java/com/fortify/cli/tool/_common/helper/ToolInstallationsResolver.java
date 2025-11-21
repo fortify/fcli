@@ -71,11 +71,19 @@ public final class ToolInstallationsResolver {
         if (versionFileName.equals(toolName)) {
             return false;
         }
+        // Special handling for "unknown" version - don't try to look it up in definitions
+        if ("unknown".equals(versionFileName)) {
+            return true;
+        }
         try {
             definition.getVersion(versionFileName);
             return false;
         } catch (IllegalArgumentException e) {
             var normalized = definition.normalizeVersionFormat(versionFileName);
+            // Also check if normalized version is "unknown"
+            if ("unknown".equals(normalized)) {
+                return true;
+            }
             try {
                 definition.getVersion(normalized);
                 return false;
