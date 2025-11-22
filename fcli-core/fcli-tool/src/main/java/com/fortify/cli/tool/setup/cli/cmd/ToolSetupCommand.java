@@ -33,7 +33,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 // TODO Replace all fcli invocations (at least those for data retrieval; maybe consider keeping
-//      register and install commands) with direct API calls
+//      register and install commands) with direct API calls (partially or all done; need to check)
+// TODO Both here and in env commands, support tool name aliases (debricked-cli/dcli, ...) on --tools
 @Command(name = "setup")
 public class ToolSetupCommand extends AbstractRunnableCommand {
     @Mixin @Getter

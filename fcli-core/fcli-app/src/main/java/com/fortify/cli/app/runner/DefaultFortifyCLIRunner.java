@@ -20,6 +20,7 @@ import com.fortify.cli.app.runner.util.FortifyCLIDynamicInitializer;
 import com.fortify.cli.app.runner.util.FortifyCLIStaticInitializer;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionStrategyFactory;
+import com.fortify.cli.common.cli.util.FcliHelpExclude;
 import com.fortify.cli.common.exception.FcliExecutionExceptionHandler;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
@@ -33,7 +34,7 @@ public final class DefaultFortifyCLIRunner {
     //@Getter(value = AccessLevel.PRIVATE, lazy = true)
     //private final CommandLine commandLine = createCommandLine();
     
-    private static final CommandLine createCommandLine() {
+    private static final CommandLine createCommandLine(boolean isFcliHelp) {
         FortifyCLIStaticInitializer.getInstance().initialize();
         CommandLine cl = new CommandLine(FCLIRootCommands.class);
         FcliCommandSpecHelper.setRootCommandLine(cl);
@@ -42,7 +43,9 @@ public final class DefaultFortifyCLIRunner {
         //cl.setParameterExceptionHandler(new I18nParameterExceptionHandler(cl.getParameterExceptionHandler()));
         cl.setExecutionExceptionHandler(FcliExecutionExceptionHandler.INSTANCE);
         cl.setDefaultValueProvider(FortifyCLIDefaultValueProvider.getInstance());
-        cl.setHelpFactory((commandSpec, colorScheme)->new FcliHelp(commandSpec, colorScheme));
+        cl.setHelpFactory((commandSpec, colorScheme)->isFcliHelp 
+                ? new FcliWrapperHelp(commandSpec, colorScheme) 
+                : new FcliHelp(commandSpec, colorScheme));
         return cl;
     }
     
@@ -52,10 +55,21 @@ public final class DefaultFortifyCLIRunner {
         if ( args.length>0 && "fcli".equalsIgnoreCase(args[0]) ) {
             args = Arrays.copyOfRange(args, 1, args.length);
         }
+        
+        // Check for --fcli-help and replace with --help
+        boolean isFcliHelp = false;
+        for (int i = 0; i < args.length; i++) {
+            if ("--fcli-help".equals(args[i])) {
+                args[i] = "--help";
+                isFcliHelp = true;
+                break;
+            }
+        }
+        
         String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
         //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
-        CommandLine cl = createCommandLine();
+        CommandLine cl = createCommandLine(isFcliHelp);
         FcliExecutionStrategyFactory.configureCommandLine(cl);
         cl.clearExecutionResults();
         return cl.execute(resolvedArgs);
@@ -88,6 +102,73 @@ public final class DefaultFortifyCLIRunner {
                 text = positionalParamText.concat(optionText).concat(groupsText).concat(endOfOptionsText).concat(commandText);
             }
             return insertSynopsisCommandName(synopsisHeadingLength, text);
+        }
+    }
+    
+    /**
+     * Custom Help class for wrapper tools (when --fcli-help is used).
+     * Suppresses synopsis, footer, and generic fcli options sections to show 
+     * only usage header, description, and command-specific option descriptions.
+     */
+    private static final class FcliWrapperHelp extends CommandLine.Help {
+        public FcliWrapperHelp(CommandSpec commandSpec, ColorScheme colorScheme) {
+            super(commandSpec, colorScheme);
+        }
+
+        public FcliWrapperHelp(Object command, Ansi ansi) {
+            super(command, ansi);
+        }
+
+        public FcliWrapperHelp(Object command) {
+            super(command);
+        }
+        
+        @Override
+        public String synopsisHeading(Object... params) {
+            return ""; // Suppress synopsis heading
+        }
+        
+        @Override
+        public String synopsis(int synopsisHeadingLength) {
+            return ""; // Suppress synopsis
+        }
+        
+        @Override
+        public String footerHeading(Object... params) {
+            return ""; // Suppress footer heading
+        }
+        
+        @Override
+        public String footer(Object... params) {
+            return ""; // Suppress footer
+        }
+        
+        @Override
+        public String optionListGroupSections() {
+            // Render all option groups except generic options
+            StringBuilder result = new StringBuilder();
+            for (ArgGroupSpec group : optionSectionGroups()) {
+                if (!isGenericOptionsGroup(group)) {
+                    result.append(createHeading(group.heading()));
+                    result.append(renderGroupLayout(group));
+                }
+            }
+            return result.toString();
+        }
+        
+        private boolean isGenericOptionsGroup(ArgGroupSpec group) {
+            try {
+                Object userObject = group.getter().get();
+                return userObject != null && userObject.getClass().isAnnotationPresent(FcliHelpExclude.class);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        
+        private String renderGroupLayout(ArgGroupSpec group) {
+            Layout layout = createDefaultLayout();
+            layout.addOptions(new java.util.ArrayList<>(group.allOptionsNested()), parameterLabelRenderer());
+            return layout.toString();
         }
     }
 }
