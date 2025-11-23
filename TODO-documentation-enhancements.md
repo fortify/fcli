@@ -63,8 +63,7 @@ Comprehensive documentation for built-in actions:
 - [ ] Complete parameter reference with examples for each option
 - [ ] Document all version resolution patterns (latest, v3, v3.6.1, auto, preinstalled, skip)
 - [ ] Explain --self and --self-type in detail (link to developer guide)
-- [ ] Document --copy-from variants for each tool with version matching behavior
-- [ ] Explain --on-copy-version-mismatch options (warn, error, ignore)
+- [ ] Document --copy-if-matching variants for each tool with version matching behavior
 - [ ] Document --use-tool-cache and platform detection
 - [ ] Provide decision tree for choosing version patterns
 - [ ] Include complete examples: basic, air-gapped, multi-tool, tool-cache
@@ -81,7 +80,7 @@ Document tool-related commands for manual usage:
 
 **fcli tool <name> install:**
 - [ ] Parameter reference with examples
-- [ ] Document version resolution and --copy-from behavior
+- [ ] Document version resolution and --copy-if-matching behavior
 - [ ] Explain tool cache detection and integration
 - [ ] Show air-gapped installation workflow
 
@@ -155,14 +154,9 @@ For tools with yearly versioning (FoD CLI, SC Client):
 ### 4.1 Complete Air-Gapped Workflow
 - [ ] Document pre-staging requirements
 - [ ] Show how to download all artifacts for offline use
-- [ ] Explain --copy-from parameters for each tool
+- [ ] Explain --copy-if-matching parameters for each tool
 - [ ] Document version detection from copy sources
 - [ ] Show complete example: staging → transfer → install
-
-### 4.2 Version Mismatch Handling
-- [ ] Document --on-copy-version-mismatch behavior in detail
-- [ ] Show examples of warn vs error vs ignore
-- [ ] Explain when each option is appropriate
 
 ---
 

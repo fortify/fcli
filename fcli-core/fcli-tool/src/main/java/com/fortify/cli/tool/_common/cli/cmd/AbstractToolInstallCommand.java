@@ -75,10 +75,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private Set<String> versionsToUninstall = new HashSet<>();
     @Option(names={"--no-global-bin"}, required = false, negatable = true, descriptionKey="fcli.tool.install.global-bin")
     private boolean installGlobalBin = true;
-    @Option(names={"--copy-from"}, required = false, descriptionKey="fcli.tool.install.copy-from")
-    private File copyFromPath;
-    @Option(names={"--on-copy-version-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-copy-version-mismatch", defaultValue = "skip")
-    private ToolInstaller.OnCopyVersionMismatch onCopyVersionMismatch;
+    @Option(names={"--copy-if-matching"}, required = false, hidden = true, descriptionKey="fcli.tool.install.copy-if-matching")
+    private File copyIfMatchingPath;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
@@ -110,28 +108,28 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     /**
      * Get the default binary name for this tool (platform-specific).
-     * This is used when --copy-from is specified to locate the binary to copy.
-     * Subclasses that support --copy-from can override getTool() to provide the tool enum.
+     * This is used when --copy-if-matching is specified to locate the binary to copy.
+     * Subclasses that support --copy-if-matching can override getTool() to provide the tool enum.
      * The default binary name is obtained from the tool enum.
      * 
-     * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar"), or null if copy-from not supported
+     * @return Binary name (e.g., "fcli", "scancentral", "FodUpload.jar"), or null if copy-if-matching not supported
      */
     protected String getDefaultBinaryName() {
         return getTool().getDefaultBinaryName();
     }
     
     /**
-     * Check if copy-from mode is enabled
+     * Check if copy-if-matching mode is enabled
      */
-    protected final boolean isCopyFromMode() {
-        return copyFromPath != null;
+    protected final boolean isCopyIfMatchingMode() {
+        return copyIfMatchingPath != null;
     }
     
     /**
-     * Get the copy-from path if specified
+     * Get the copy-if-matching path if specified
      */
-    protected final File getCopyFromPath() {
-        return copyFromPath;
+    protected final File getCopyIfMatchingPath() {
+        return copyIfMatchingPath;
     }
     
     /**
@@ -141,19 +139,18 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
      * @param builder The ToolInstaller builder to configure
      */
     protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
-        if (isCopyFromMode()) {
+        if (isCopyIfMatchingMode()) {
             if (getTool().getDefaultBinaryName() == null) {
-                throw new FcliSimpleException("--copy-from is not supported for " + getTool().getToolName());
+                throw new FcliSimpleException("--copy-if-matching is not supported for " + getTool().getToolName());
             }
-            ToolInstaller.configureCopyFrom(builder, copyFromPath, 
-                ToolInstaller.OnCopyVersionMismatch.valueOf(onCopyVersionMismatch.name()), 
+            ToolInstaller.configureCopyIfMatching(builder, copyIfMatchingPath, 
                 getInstallDirResolver(),
                 getToolVersionDetectorCallback());
         }
     }
     
     /**
-     * Get the install directory resolver for copy-from.
+     * Get the install directory resolver for copy-if-matching.
      * Default implementation uses ToolRegistrationHelper.resolveInstallDir.
      * Subclasses can override to provide custom resolution logic.
      */
@@ -162,7 +159,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     /**
-     * Get the tool-specific version detector callback for copy-from.
+     * Get the tool-specific version detector callback for copy-if-matching.
      * Default implementation returns null (only use install descriptor).
      * Subclasses can override to provide custom version detection.
      */

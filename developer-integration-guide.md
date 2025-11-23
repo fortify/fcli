@@ -51,8 +51,8 @@ Classification of the bootstrapped fcli's stability:
 
 **`unstable`:**
 - Fcli was dynamically downloaded from URL (GitHub releases)
-- Action treats as `--fcli-copy-from` source with version matching
-- Subject to `--on-copy-version-mismatch` behavior (default: `warn`)
+- Action treats as `--fcli-copy-if-matching` source with version matching
+- If version doesn't match, falls back to download
 - Use case: Fresh downloads where version may not exactly match requested pattern
 
 **Decision tree:**
@@ -182,21 +182,6 @@ eval "$(fcli tool env --format shell)"
 - Cache invalidation: `latest` key changes frequently
 - Harder to debug: "it worked yesterday" issues
 
-### Handling Version Mismatch
-
-When using `--self-type unstable`, the action may warn about version mismatches:
-
-```
-WARNING: fcli version 3.5.0 does not match requested pattern v3.6
-```
-
-**Options:**
-1. `--on-copy-version-mismatch warn` (default) - Log warning, continue
-2. `--on-copy-version-mismatch error` - Fail action
-3. `--on-copy-version-mismatch ignore` - Silent
-
-**Recommendation:** Keep default `warn` behavior. Users can override if needed.
-
 ## Tool Registration: `--require-latest` Flag
 
 When using `--auto-detect` with semantic version patterns, consider `--require-latest`:
@@ -220,20 +205,20 @@ fcli tool fcli register --auto-detect --version v3 --require-latest
 
 ## Air-Gapped Environments
 
-Support offline environments using `--copy-from` parameters:
+Support offline environments using `--copy-if-matching` parameters:
 
 ```bash
 fcli tool setup \
-    --fcli-copy-from /shared/binaries/fcli \
-    --fod-copy-from /shared/binaries/FoDUploader.jar \
-    --sc-client-copy-from /shared/binaries/ScanCentralClient.jar \
+    --fcli-copy-if-matching /shared/binaries/fcli \
+    --fod-copy-if-matching /shared/binaries/FoDUploader.jar \
+    --sc-client-copy-if-matching /shared/binaries/ScanCentralClient.jar \
     --air-gapped true
 ```
 
 **Requirements:**
 - Pre-stage binaries in accessible location
 - Version detection runs automatically on copy sources
-- Use `--on-copy-version-mismatch` to control validation strictness
+- Copy only occurs if detected version matches requested version
 
 ## Tool Cache Integration
 
@@ -305,17 +290,14 @@ Verify your integration handles:
 1. **Fresh download:** Fcli not installed, downloads from GitHub
 2. **Pre-installed:** Fcli in PATH, uses existing version
 3. **Tool cache:** Fcli in platform cache, reuses cached version
-4. **Version mismatch:** Requested v3.6, found v3.5 pre-installed
-5. **Air-gapped:** All binaries from `--copy-from` sources
+4. **Version mismatch:** Requested v3.6, found v3.5 pre-installed (should download)
+5. **Air-gapped:** All binaries from `--copy-if-matching` sources
 6. **Multiple tools:** Fcli + FoD CLI + SC Client in single setup
 
 ## Troubleshooting
 
 **Q: Action fails with "fcli not found"**  
 A: Forgot to pass `--self`? Platform integration must bootstrap fcli first.
-
-**Q: Version mismatch warnings**  
-A: Using `--self-type unstable` with semantic version pattern. Expected behavior. Use `--on-copy-version-mismatch error` if strict validation required.
 
 **Q: "Cannot install tool fcli"**  
 A: Circular dependency. Fcli cannot install itself. Use `--self` parameter.
@@ -332,7 +314,7 @@ Platform integration checklist:
 - [ ] Delegate tool installation to `fcli tool setup` command
 - [ ] Generate environment variables via `fcli tool env` command
 - [ ] Support tool cache integration where available
-- [ ] Handle air-gapped environments via `--copy-from` parameters
+- [ ] Handle air-gapped environments via `--copy-if-matching` parameters
 - [ ] Use semantic versions by default (not `latest`)
 
 For complete examples, see:

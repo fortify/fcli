@@ -173,9 +173,9 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         String toolName = spec.toolName();
         String cmd = "tool " + toolName + " install --version " + ("auto".equals(version) ? "latest" : version) + " --output json";
         
-        // For fcli, if --self is specified, use copy-from to avoid re-downloading
+        // For fcli, if --self is specified, use copy-if-matching to avoid re-downloading
         if (spec.tool() == Tool.FCLI && toolsMixin.getSelf() != null) {
-            cmd += " --copy-from \"" + toolsMixin.getSelf() + "\" --on-copy-version-mismatch skip";
+            cmd += " --copy-if-matching \"" + toolsMixin.getSelf() + "\"";
         }
         
         // Handle tool cache pattern

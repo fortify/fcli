@@ -31,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
-import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -62,9 +61,8 @@ public final class ToolInstaller {
     @Getter private final BiConsumer<ToolInstaller, ToolInstallationResult> postInstallAction;
     @Getter private final IProgressWriterI18n progressWriter;
     
-    // Copy-from configuration
-    @Getter private final File copyFromPath;
-    @Getter private final OnCopyVersionMismatch onCopyVersionMismatch;
+    // Copy-if-matching configuration
+    @Getter private final File copyIfMatchingPath;
     @Getter private final BiFunction<ToolInstaller, File, String> toolVersionDetectorCallback;
     @Getter private final Function<File, File> installDirResolver;
     
@@ -75,7 +73,7 @@ public final class ToolInstaller {
     private final LazyObject<ToolInstallationDescriptor> _previousInstallationDescriptor = new LazyObject<>();
     private final LazyObject<Path> _targetPath = new LazyObject<>();
     private final LazyObject<Path> _globalBinPath = new LazyObject<>();
-    private boolean skippedCopyFrom;
+    private boolean skippedCopyIfMatching;
     
     public static enum ToolInstallationAction {
         INSTALLED, SKIPPED_EXISTING, COPIED
@@ -98,10 +96,6 @@ public final class ToolInstaller {
         fail, warn
     }
     
-    public static enum OnCopyVersionMismatch {
-        skip, copy, fail
-    }
-    
     public static enum BinScriptType {
         bash, bat
     }
@@ -120,17 +114,17 @@ public final class ToolInstaller {
                 return rootDescriptor.getVersionOrDefault(detectedVersion);
             } catch (Exception e) {
                 // Version not found in definitions - treat as non-matching and use requested version
-                log.info("Detected version {} from --copy-from not found in tool definitions. " +
+                log.info("Detected version {} from --copy-if-matching not found in tool definitions. " +
                     "Downloading requested version {} instead.",
                     detectedVersion, requestedVersion);
-                skippedCopyFrom = true;
+                skippedCopyIfMatching = true;
                 return rootDescriptor.getVersionOrDefault(requestedVersion);
             }
         });
     }
     
-    public final boolean isSkippedCopyFrom() {
-        return skippedCopyFrom;
+    public final boolean isSkippedCopyIfMatching() {
+        return skippedCopyIfMatching;
     }
     
     public final ToolInstallationDescriptor getPreviousInstallationDescriptor() {
@@ -278,7 +272,7 @@ public final class ToolInstaller {
     }
     
     private ToolInstallationAction determineInstallationAction() {
-        if (copyFromPath != null && !skippedCopyFrom) {
+        if (copyIfMatchingPath != null && !skippedCopyIfMatching) {
             return ToolInstallationAction.COPIED;
         }
         return ToolInstallationAction.INSTALLED;
@@ -387,41 +381,40 @@ public final class ToolInstaller {
         return result;
     }
     
-    // ===== Copy-from logic methods =====
+    // ===== Copy-if-matching logic methods =====
     
     /**
-     * Configures the ToolInstaller builder with copy-from functionality.
+     * Configures the ToolInstaller builder with copy-if-matching functionality.
+     * Copy will only occur if the detected version matches the requested version.
      */
-    public static ToolInstallerBuilder configureCopyFrom(
+    public static ToolInstallerBuilder configureCopyIfMatching(
             ToolInstallerBuilder builder, 
-            File copyFromPath, 
-            OnCopyVersionMismatch onCopyVersionMismatch,
+            File copyIfMatchingPath,
             Function<File, File> installDirResolver,
             BiFunction<ToolInstaller, File, String> toolVersionDetectorCallback) {
         return builder
-            .copyFromPath(copyFromPath)
-            .onCopyVersionMismatch(onCopyVersionMismatch)
+            .copyIfMatchingPath(copyIfMatchingPath)
             .toolVersionDetectorCallback(toolVersionDetectorCallback)
             .installDirResolver(installDirResolver)
-            .versionDetector(ToolInstaller::copyFromVersionDetector)
-            .installer(ToolInstaller::copyFromInstaller);
+            .versionDetector(ToolInstaller::copyIfMatchingVersionDetector)
+            .installer(ToolInstaller::copyIfMatchingInstaller);
     }
     
     /**
-     * Resolves the install directory from the copy-from path.
+     * Resolves the install directory from the copy-if-matching path.
      * Uses the installDirResolver callback if provided, otherwise uses default logic.
      */
-    private File resolveInstallDirectory(File copyFromPath) {
-        if (copyFromPath == null) {
+    private File resolveInstallDirectory(File copyIfMatchingPath) {
+        if (copyIfMatchingPath == null) {
             return null;
         }
         
         if (installDirResolver != null) {
-            return installDirResolver.apply(copyFromPath);
+            return installDirResolver.apply(copyIfMatchingPath);
         }
         
         // Default: use ToolRegistrationHelper logic
-        return ToolRegistrationHelper.resolveInstallDir(copyFromPath);
+        return ToolRegistrationHelper.resolveInstallDir(copyIfMatchingPath);
     }
     
     /**
@@ -467,40 +460,29 @@ public final class ToolInstaller {
     
     /**
      * Detects version from copy source.
-     * Falls back to requested version if detection fails (unless onCopyVersionMismatch=fail).
+     * Falls back to requested version if detection fails, skipping the copy.
      */
-    private String copyFromVersionDetector() {
+    private String copyIfMatchingVersionDetector() {
         try {
-            var resolvedCopyPath = resolveInstallDirectory(copyFromPath);
+            var resolvedCopyPath = resolveInstallDirectory(copyIfMatchingPath);
             if (resolvedCopyPath == null) {
-                log.debug("Could not resolve install directory from: {}", copyFromPath);
-                if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                    throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
-                }
-                skippedCopyFrom = true;
+                log.debug("Could not resolve install directory from: {}", copyIfMatchingPath);
+                skippedCopyIfMatching = true;
                 return requestedVersion;
             }
             
             String detectedVersion = detectVersionFromCopySource(resolvedCopyPath);
             
             if (detectedVersion == null) {
-                log.debug("Unable to detect version from copy source: {}", copyFromPath);
-                if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                    throw new FcliSimpleException("Unable to detect version from copy source: " + copyFromPath);
-                }
-                skippedCopyFrom = true;
+                log.debug("Unable to detect version from copy source: {}", copyIfMatchingPath);
+                skippedCopyIfMatching = true;
                 return requestedVersion;
             }
             
             return detectedVersion;
-        } catch (FcliSimpleException e) {
-            throw e;
         } catch (Exception e) {
-            log.debug("Error in copyFromVersionDetector", e);
-            if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                throw new FcliTechnicalException("Error detecting version from copy source: " + copyFromPath, e);
-            }
-            skippedCopyFrom = true;
+            log.debug("Error in copyIfMatchingVersionDetector", e);
+            skippedCopyIfMatching = true;
             return requestedVersion;
         }
     }
@@ -508,7 +490,7 @@ public final class ToolInstaller {
     /**
      * Checks if copy source version matches requested version via tool definitions.
      */
-    private boolean checkCopyFromVersionMatch(String requestedVersion, String detectedVersion) {
+    private boolean checkCopyIfMatchingVersionMatch(String requestedVersion, String detectedVersion) {
         // Exact match
         if (requestedVersion.equals(detectedVersion)) {
             return true;
@@ -529,29 +511,6 @@ public final class ToolInstaller {
         }
         
         return false;
-    }
-    
-    /**
-     * Handles version mismatch according to onCopyVersionMismatch setting.
-     * Returns true if should proceed with copy, false if should skip.
-     */
-    private boolean handleCopyFromVersionMismatch(String requestedVersion, String detectedVersion) {
-        switch (onCopyVersionMismatch) {
-            case skip:
-                progressWriter.writeProgress(
-                    "Version mismatch (requested: " + requestedVersion + ", detected: " + detectedVersion + "). Skipping copy, will download instead.");
-                skippedCopyFrom = true;
-                return false;
-            case copy:
-                progressWriter.writeWarning(
-                    "Version mismatch: requested=" + requestedVersion + ", detected=" + detectedVersion + ". Copying anyway.");
-                return true;
-            case fail:
-                throw new FcliSimpleException(
-                    "Version mismatch: requested " + requestedVersion + " but copy source contains " + detectedVersion);
-            default:
-                throw new FcliBugException("Unexpected OnCopyVersionMismatch: " + onCopyVersionMismatch);
-        }
     }
     
     /**
@@ -577,23 +536,20 @@ public final class ToolInstaller {
     }
     
     /**
-     * Installer implementation for copy-from functionality.
-     * Falls back to regular download if copy is not possible or skipped.
+     * Installer implementation for copy-if-matching functionality.
+     * Falls back to regular download if copy is not possible or version doesn't match.
      */
     @SneakyThrows
-    private void copyFromInstaller(ToolDefinitionArtifactDescriptor artifactDescriptor) {
+    private void copyIfMatchingInstaller(ToolDefinitionArtifactDescriptor artifactDescriptor) {
         // Check if copy was already skipped during version detection
-        if (skippedCopyFrom) {
+        if (skippedCopyIfMatching) {
             progressWriter.writeProgress("Skipping copy, downloading instead");
             downloadAndExtract(artifactDescriptor);
             return;
         }
         
-        var resolvedCopyPath = resolveInstallDirectory(copyFromPath);
+        var resolvedCopyPath = resolveInstallDirectory(copyIfMatchingPath);
         if (resolvedCopyPath == null) {
-            if (onCopyVersionMismatch == OnCopyVersionMismatch.fail) {
-                throw new FcliSimpleException("Copy source directory not found: " + copyFromPath);
-            }
             progressWriter.writeProgress("Copy source directory not found, downloading instead");
             downloadAndExtract(artifactDescriptor);
             return;
@@ -602,12 +558,11 @@ public final class ToolInstaller {
         String detectedVersion = detectVersionFromCopySource(resolvedCopyPath);
         String requestedVersion = getRequestedVersion();
         
-        if (detectedVersion != null && !checkCopyFromVersionMatch(requestedVersion, detectedVersion)) {
-            if (!handleCopyFromVersionMismatch(requestedVersion, detectedVersion)) {
-                // Skip was requested, fall back to download
-                downloadAndExtract(artifactDescriptor);
-                return;
-            }
+        if (detectedVersion != null && !checkCopyIfMatchingVersionMatch(requestedVersion, detectedVersion)) {
+            progressWriter.writeProgress(
+                "Version mismatch (requested: " + requestedVersion + ", detected: " + detectedVersion + "). Skipping copy, will download instead.");
+            downloadAndExtract(artifactDescriptor);
+            return;
         }
         
         progressWriter.writeProgress("Copying from: " + resolvedCopyPath);
