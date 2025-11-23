@@ -14,8 +14,11 @@ package com.fortify.cli.tool.setup.cli.cmd;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.exception.FcliCommandExecutionException;
@@ -129,28 +132,73 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             }
         }
         
-        try {
-            var result = executeFcliCommandSilent(cmd);
-            if (result.getExitCode() == 0) {
-                // Try to extract install directory from JSON output
-                String installDir = extractInstallDirFromJsonOutput(result.getOut());
-                return new RegistrationResult(true, installDir != null ? installDir : "PATH");
-            }
-        } catch (FcliCommandExecutionException e) {
-            // Registration failed, but don't throw - just log progress
-            System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
-            // Error output is shown by onFail
-        } catch (Exception e) {
-            // Other exceptions
-            System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
+        AtomicReference<String> installDirRef = new AtomicReference<>();
+        Consumer<ObjectNode> recordConsumer = record -> 
+            installDirRef.set(extractTextField(record, "installDir", "binDir"));
+        
+        var result = executeFcliCommandWithRecordConsumer(cmd, recordConsumer, true);
+        if (result != null && result.getExitCode() == 0) {
+            return new RegistrationResult(true, installDirRef.get());
         }
+        
+        // Registration failed, but don't throw - just log progress
+        System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
         return new RegistrationResult(false, null);
+    }
+    
+    /**
+     * Execute an fcli command and capture the first ObjectNode record produced.
+     * 
+     * @param cmd The fcli command to execute
+     * @param recordConsumer Consumer to process each ObjectNode record
+     * @param suppressErrors If true, catch FcliCommandExecutionException and return null on failure
+     * @return The execution result, or null if suppressErrors is true and execution failed
+     */
+    private OutputHelper.Result executeFcliCommandWithRecordConsumer(String cmd, Consumer<ObjectNode> recordConsumer, boolean suppressErrors) {
+        try {
+            return FcliCommandExecutorFactory.builder()
+                    .cmd(cmd)
+                    .stdoutOutputType(OutputType.suppress)
+                    .stderrOutputType(OutputType.collect)
+                    .recordConsumer(recordConsumer)
+                    .onFail(suppressErrors ? null : onFail)
+                    .build()
+                    .create()
+                    .execute();
+        } catch (FcliCommandExecutionException e) {
+            if (suppressErrors) {
+                return null;
+            }
+            throw e;
+        }
+    }
+    
+    /**
+     * Extract a text field from an ObjectNode, with optional fallback to another field.
+     * 
+     * @param record The ObjectNode to extract from
+     * @param primaryField The primary field name to extract
+     * @param fallbackField Optional fallback field name if primary is null/missing
+     * @return The text value, or null if not found
+     */
+    private String extractTextField(ObjectNode record, String primaryField, String fallbackField) {
+        JsonNode node = record.get(primaryField);
+        if (node != null && !node.isNull()) {
+            return node.asText();
+        }
+        if (fallbackField != null) {
+            node = record.get(fallbackField);
+            if (node != null && !node.isNull()) {
+                return node.asText();
+            }
+        }
+        return null;
     }
     
     private InstallResult installTool(ToolSetupSpec spec) {
         String toolName = spec.toolName();
         String version = spec.getEffectiveVersion();
-        String cmd = "tool " + toolName + " install --version " + version + " --output json";
+        String cmd = "tool " + toolName + " install --version " + version;
         
         // For fcli, if --self is specified, use copy-if-matching to avoid re-downloading
         if (spec.tool() == Tool.FCLI && toolsMixin.getSelf() != null) {
@@ -186,64 +234,26 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             }
         }
         
+        AtomicReference<String> actionRef = new AtomicReference<>("installed");
+        AtomicReference<String> installDirRef = new AtomicReference<>();
+        Consumer<ObjectNode> recordConsumer = record -> {
+            String action = extractTextField(record, "__action__", null);
+            if (action != null) {
+                actionRef.set(action.equals("SKIPPED_EXISTING") ? "skipped_existing" : "installed");
+            }
+            installDirRef.set(extractTextField(record, "installDir", null));
+        };
+        
         try {
-            var result = executeFcliCommand(cmd);
-            
-            // Extract action and install directory from JSON output
-            String action = extractActionFromJsonOutput(result.getOut());
-            String installDir = extractInstallDirFromJsonOutput(result.getOut());
-            
-            return new InstallResult(action != null ? action : "installed", installDir != null ? installDir : "installed");
+            executeFcliCommandWithRecordConsumer(cmd, recordConsumer, false);
+            return new InstallResult(actionRef.get(), installDirRef.get());
         } catch (FcliCommandExecutionException e) {
-            // Show user-friendly error message
             System.err.println("Installation for " + toolName + " failed:");
-            // Error output already printed by onFail
             throw new FcliSimpleException("Installation of " + toolName + " failed");
         }
     }
     
-    private String extractInstallDirFromJsonOutput(String output) {
-        // Parse JSON output to extract installDir
-        String[] lines = output.split("\n");
-        for (String line : lines) {
-            String trimmed = line.trim();
-            if (trimmed.startsWith("\"installDir\"")) {
-                // Extract installDir value from JSON like: "installDir" : "/path/to/dir",
-                int colonIndex = line.indexOf(":");
-                if (colonIndex != -1) {
-                    String valuePart = line.substring(colonIndex + 1).trim();
-                    if (valuePart.startsWith("\"") && valuePart.endsWith("\",")) {
-                        return valuePart.substring(1, valuePart.length() - 2);
-                    } else if (valuePart.startsWith("\"") && valuePart.endsWith("\"")) {
-                        return valuePart.substring(1, valuePart.length() - 1);
-                    }
-                }
-            }
-        }
-        return null;
-    }
-    
-    private String extractActionFromJsonOutput(String output) {
-        // Look for action in JSON output like: "__action__" : "SKIPPED_EXISTING",
-        String[] lines = output.split("\n");
-        for (String line : lines) {
-            if (line.trim().startsWith("\"__action__\"")) {
-                int colonIndex = line.indexOf(":");
-                if (colonIndex != -1) {
-                    String valuePart = line.substring(colonIndex + 1).trim();
-                    if (valuePart.startsWith("\"") && valuePart.endsWith("\",")) {
-                        String action = valuePart.substring(1, valuePart.length() - 2);
-                        return action.equals("SKIPPED_EXISTING") ? "skipped_existing" : "installed";
-                    } else if (valuePart.startsWith("\"") && valuePart.endsWith("\"")) {
-                        String action = valuePart.substring(1, valuePart.length() - 1);
-                        return action.equals("SKIPPED_EXISTING") ? "skipped_existing" : "installed";
-                    }
-                }
-            }
-        }
-        // Default to installed
-        return "installed";
-    }
+
     
     private String resolveSemanticVersion(Tool tool, String version) {
         String versionToResolve = "auto".equals(version) ? "latest" : version;
@@ -305,24 +315,5 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         }
     }
     
-    private OutputHelper.Result executeFcliCommand(String cmd) {
-        var executor = FcliCommandExecutorFactory.builder()
-                .cmd(cmd)
-                .stdoutOutputType(OutputType.collect)  // Collect stdout to get the JSON output
-                .stderrOutputType(OutputType.collect)  // Collect stderr to show on failure
-                .onFail(onFail)
-                .build()
-                .create();
-        return executor.execute();
-    }
-    
-    private OutputHelper.Result executeFcliCommandSilent(String cmd) {
-        var executor = FcliCommandExecutorFactory.builder()
-                .cmd(cmd)
-                .stdoutOutputType(OutputType.collect)  // Collect stdout to get the JSON output
-                .stderrOutputType(OutputType.collect)  // Collect stderr to show on failure
-                .build()
-                .create();
-        return executor.execute();
-    }
+
 }
