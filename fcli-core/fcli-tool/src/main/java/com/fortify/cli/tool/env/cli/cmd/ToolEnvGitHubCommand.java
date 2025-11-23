@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
 
 import picocli.CommandLine.Command;
@@ -57,7 +58,7 @@ public final class ToolEnvGitHubCommand extends AbstractToolEnvCommand {
     }
 
     private static Path requireGithubFile(String envName, String description) {
-        String value = StringUtils.trimToNull(System.getenv(envName));
+        String value = StringUtils.trimToNull(EnvHelper.env(envName));
         if (value == null) {
             throw new FcliSimpleException(String.format("Environment variable %s must be set when generating GitHub %s output", envName, description));
         }

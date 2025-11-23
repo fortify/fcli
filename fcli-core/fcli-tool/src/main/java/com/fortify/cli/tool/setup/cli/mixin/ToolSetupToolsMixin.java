@@ -15,6 +15,7 @@ package com.fortify.cli.tool.setup.cli.mixin;
 import java.util.List;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool._common.helper.Tool;
 
 import lombok.Getter;
@@ -69,16 +70,16 @@ public class ToolSetupToolsMixin {
         }
         
         // Auto-detect CI tool cache
-        String runnerToolCache = System.getenv("RUNNER_TOOL_CACHE");
+        String runnerToolCache = EnvHelper.env("RUNNER_TOOL_CACHE");
         if (runnerToolCache != null && !runnerToolCache.isEmpty()) {
-            String arch = System.getenv("RUNNER_ARCH");
+            String arch = EnvHelper.env("RUNNER_ARCH");
             if (arch == null || arch.isEmpty()) {
                 arch = System.getProperty("os.arch", "x64").toUpperCase();
             }
             return runnerToolCache + "/{tool}/{version}/" + arch;
         }
         
-        String agentToolsDir = System.getenv("AGENT_TOOLSDIRECTORY");
+        String agentToolsDir = EnvHelper.env("AGENT_TOOLSDIRECTORY");
         if (agentToolsDir != null && !agentToolsDir.isEmpty()) {
             return agentToolsDir + "/fortify/{tool}/{version}/x64";
         }
@@ -147,7 +148,7 @@ public class ToolSetupToolsMixin {
             }
             if (argument == null || argument.isEmpty()) {
                 String envVar = tool.getDefaultEnvPrefix() + "_HOME";
-                return System.getenv(envVar);
+                return EnvHelper.env(envVar);
             }
             return null;
         }
@@ -169,7 +170,7 @@ public class ToolSetupToolsMixin {
             
             // Check VERSION environment variable
             String versionEnvVar = tool.getDefaultEnvPrefix() + "_VERSION";
-            String versionEnvValue = System.getenv(versionEnvVar);
+            String versionEnvValue = EnvHelper.env(versionEnvVar);
             if (versionEnvValue != null && !versionEnvValue.isEmpty()) {
                 return versionEnvValue;
             }

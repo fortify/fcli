@@ -270,7 +270,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
     
     private String findExistingJreForScClient(String version) {
         // First check SCANCENTRAL_JAVA_HOME environment variable
-        String scanCentralJavaHome = System.getenv("SCANCENTRAL_JAVA_HOME");
+        String scanCentralJavaHome = EnvHelper.env("SCANCENTRAL_JAVA_HOME");
         if (scanCentralJavaHome != null && !scanCentralJavaHome.isEmpty()) {
             return scanCentralJavaHome;
         }
@@ -284,7 +284,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             // Try JAVA_HOME_<version>_<arch>
             if (!osArch.isEmpty()) {
                 String envVar = "JAVA_HOME_" + javaVersion + "_" + osArch;
-                String javaHome = System.getenv(envVar);
+                String javaHome = EnvHelper.env(envVar);
                 if (javaHome != null && !javaHome.isEmpty()) {
                     return javaHome;
                 }
@@ -292,7 +292,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             
             // Try JAVA_HOME_<version>
             String envVar = "JAVA_HOME_" + javaVersion;
-            String javaHome = System.getenv(envVar);
+            String javaHome = EnvHelper.env(envVar);
             if (javaHome != null && !javaHome.isEmpty()) {
                 return javaHome;
             }
