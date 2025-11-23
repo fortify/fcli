@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251123.095330-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251123.103015-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -47,9 +47,7 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli tool debricked-cli install</strong> [<strong>-y</strong>] [<strong>--[no-]global-bin</strong>]
-                                [<strong>--copy-from</strong>=<em>&lt;copyFromPath&gt;</em>]
-                                [<strong>--on-copy-version-mismatch</strong>=<em>&lt;onCopyVersionMismat</em>
-            _                    ch&gt;_] [<strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em>]
+                                [<strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em>]
                                 [<strong>-p</strong>=<em>&lt;platform&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                                 [<strong>-v</strong>=<em>&lt;version&gt;</em>] [<strong>-u</strong>=<em>&lt;versionsToUninstall&gt;</em>[,
                                 <em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
@@ -111,10 +109,6 @@ fcli_version:
 <dd>
 <p>Base directory under which the tool will be installed.</p>
 </dd>
-<dt class="hdlist1"><strong>--copy-from</strong>=<em>&lt;copyFromPath&gt;</em></dt>
-<dd>
-<p>Copy tool from existing installation instead of downloading. Specify path to tool binary, bin directory, or install directory. Version is auto-detected from source. Primarily intended for CI/CD scenarios where tools are pre-installed or available in a base image, and need to be copied to a specific cache directory for artifact preservation.</p>
-</dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--install-dir</strong>=<em>&lt;installDir&gt;</em></dt>
 <dd>
 <p>Tool installation directory. As described above, it is recommended to use --base-dir instead for manual installations.</p>
@@ -122,10 +116,6 @@ fcli_version:
 <dt class="hdlist1"><strong>--[no-]global-bin</strong></dt>
 <dd>
 <p>By default, wrapper scripts will be installed to &lt;base-dir&gt;/bin; use --no-global-bin to skip installing/updating these wrapper scripts.</p>
-</dd>
-<dt class="hdlist1"><strong>--on-copy-version-mismatch</strong>=<em>&lt;onCopyVersionMismatch&gt;</em></dt>
-<dd>
-<p>Action to take when --copy-from version doesn&#8217;t match --version. Allowed values: skip, copy, fail. skip (default): ignore --copy-from and download instead; copy: copy regardless of version mismatch with warning; fail: throw error on version mismatch.</p>
 </dd>
 <dt class="hdlist1"><strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em></dt>
 <dd>
@@ -217,7 +207,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-23 09:56:21 UTC
+Last updated 2025-11-23 10:32:49 UTC
 </div>
 </div>
 </body>
