@@ -23,6 +23,7 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.exception.FcliCommandExecutionException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
@@ -126,7 +127,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             cmd += " --path \"" + spec.getEffectivePath() + "\"";
         } else {
             // Handle version-based registration (from <tool>:<version> or <TOOL>_VERSION or default)
-            cmd += " --path $PATH";
+            cmd += " --path \"" + EnvHelper.env("PATH") + "\"";
             if (spec.hasSpecificVersion()) {
                 cmd += " --version " + spec.getEffectiveVersion();
             }
