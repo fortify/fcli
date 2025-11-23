@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251123.103015-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251123.131726-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -58,8 +58,46 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Detects, registers, and installs Fortify tools (fcli, sc-client, fod-uploader, debricked-cli, bugtracker-utility, vuln-exporter) for use in CI/CD pipelines. Supports auto-detection of pre-installed tools, dynamic installation with signature verification, platform-specific tool caching, air-gapped environments, and Docker multi-stage builds.
-This command allows for setting up multiple Fortify tools.</p>
+<p>Detects, registers, and installs Fortify tools. Supports auto-detection of pre-installed tools, dynamic installation with signature verification, platform-specific tool caching, air-gapped environments, and Docker multi-stage builds.</p>
+</div>
+<div class="paragraph">
+<p>The --tools option specifies which tools to set up, along with optional version or path specifiers. The following tools are supported: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
+</div>
+<div class="paragraph">
+<p><code>&lt;tool&gt;:&lt;path&gt;</code>
+Register existing tool installation at given path, fail if path does not exist or does not contain expected tool binary.</p>
+</div>
+<div class="paragraph">
+<p><code>&lt;tool&gt;:&lt;version&gt;</code>
+Register existing installation if matching version is found on system PATH, otherwise download and install requested version.</p>
+</div>
+<div class="paragraph">
+<p><code>&lt;tool&gt;</code>
+Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX&gt;_VERSION</code> environment variables to determine version or path, with same behavior as above. If neither environment variable is specified, <code>latest</code> is used as version specifier.</p>
+</div>
+<div class="paragraph">
+<p>Following shows the exact environment variables that will be checked for each supported tool:
+- fcli:
+    FCLI_VERSION, FCLI_HOME
+- sc-client:
+    SCANCENTRAL_VERSION, SCANCENTRAL_HOME
+- fod-uploader:
+    FOD_UPLOADER_VERSION, FOD_UPLOADER_HOME
+- debricked-cli:
+    DEBRICKED_VERSION, DEBRICKED_HOME
+- bugtracker-utility:
+    FBTU_VERSION, FBTU_HOME
+- vuln-exporter:
+    FVE_VERSION, FVE_HOME</p>
+</div>
+<div class="paragraph">
+<p>For ScanCentral Client, the setup command will look for a compatible JRE based on the following environment variables (in this order):
+- SCANCENTRAL_JAVA_HOME
+- JAVA_HOME_&lt;version&gt;_&lt;arch&gt; (e.g., JAVA_HOME_17_X86_64)
+- JAVA_HOME_&lt;version&gt; (e.g., JAVA_HOME_17, JAVA_HOME_11)</p>
+</div>
+<div class="paragraph">
+<p>If no compatible JRE is found through these environment variables, a compatible JRE will be downloaded and installed. Note that we specifically do not look for the general <code>JAVA_HOME</code> environment variable, as that may point to an incompatible JRE version, or may change to a different JRE version over time, causing potential compatibility issues with ScanCentral Client.</p>
 </div>
 </div>
 </div>
@@ -90,7 +128,7 @@ This command allows for setting up multiple Fortify tools.</p>
 </dd>
 <dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Comma-separated list of tools to set up in the format tool[:version|path]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. If no version or path is specified, behavior is similar to 'auto' - look for tool-specific env var, fall back to PATH search, install if not found.</p>
+<p>Comma-separated list of tools to set up in the format &lt;tool&gt;[:&lt;version&gt;|&lt;path&gt;]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. Supported tools: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
 </dd>
 </dl>
 </div>
@@ -133,7 +171,7 @@ This command allows for setting up multiple Fortify tools.</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-23 10:32:49 UTC
+Last updated 2025-11-23 13:20:09 UTC
 </div>
 </div>
 </body>
