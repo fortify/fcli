@@ -91,63 +91,41 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         
         System.out.println("Setting up " + toolName + "...");
         
-        // Determine the effective version/path
-        String effectiveVersion = determineEffectiveVersion(spec);
-        
         // Try to register first
-        RegistrationResult regResult = tryRegisterTool(spec, effectiveVersion);
+        RegistrationResult regResult = tryRegisterTool(spec);
         if (regResult.success()) {
             System.out.println("✓ " + toolName + " registered successfully");
-            return new ToolSetupResult(toolName, "registered", effectiveVersion, regResult.installDir());
+            String displayVersion = spec.hasPath() ? "preinstalled" : spec.getEffectiveVersion();
+            return new ToolSetupResult(toolName, "registered", displayVersion, regResult.installDir());
+        }
+        
+        // If registration failed and a path was specified, fail immediately
+        if (spec.hasPath()) {
+            throw new FcliSimpleException("Tool " + toolName + " not found at specified path: " + spec.getEffectivePath());
         }
         
         // If registration failed and not air-gapped, try to install
         if (!toolsMixin.isAirGapped()) {
-            InstallResult installResult = installTool(spec, effectiveVersion);
+            InstallResult installResult = installTool(spec);
             System.out.println("✓ " + toolName + " " + installResult.action() + " successfully");
-            return new ToolSetupResult(toolName, installResult.action(), effectiveVersion, installResult.installDir());
+            return new ToolSetupResult(toolName, installResult.action(), spec.getEffectiveVersion(), installResult.installDir());
         } else {
             throw new FcliSimpleException("Tool " + toolName + " not found and air-gapped mode prevents installation");
         }
     }
     
-    private String determineEffectiveVersion(ToolSetupSpec spec) {
-        if (spec.hasArgument()) {
-            if (spec.isPathArgument()) {
-                return "preinstalled"; // or handle path
-            } else {
-                return spec.getVersion();
-            }
-        }
-        
-        // Check TOOL_VERSION environment variable
-        String versionEnvVar = spec.tool().getDefaultEnvPrefix() + "_VERSION";
-        String versionEnvValue = System.getenv(versionEnvVar);
-        if (versionEnvValue != null && !versionEnvValue.isEmpty()) {
-            return versionEnvValue;
-        }
-        
-        // Check TOOL_HOME environment variable
-        String envVar = spec.tool().getDefaultEnvPrefix() + "_HOME";
-        String envValue = System.getenv(envVar);
-        if (envValue != null && !envValue.isEmpty()) {
-            return "auto";
-        }
-        
-        // Fall back to auto
-        return "auto";
-    }
-    
-    private RegistrationResult tryRegisterTool(ToolSetupSpec spec, String version) {
+    private RegistrationResult tryRegisterTool(ToolSetupSpec spec) {
         String toolName = spec.toolName();
         String cmd = "tool " + toolName + " register";
         
-        if (spec.isPathArgument()) {
-            cmd += " --path \"" + spec.getPath() + "\"";
+        // Handle path-based registration (from <tool>:<path> or <TOOL>_HOME)
+        if (spec.hasPath()) {
+            cmd += " --path \"" + spec.getEffectivePath() + "\"";
         } else {
+            // Handle version-based registration (from <tool>:<version> or <TOOL>_VERSION or default)
             cmd += " --path $PATH";
-            if (!"auto".equals(version) && !"preinstalled".equals(version)) {
-                cmd += " --version " + version;
+            if (spec.hasSpecificVersion()) {
+                cmd += " --version " + spec.getEffectiveVersion();
             }
         }
         
@@ -169,9 +147,10 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         return new RegistrationResult(false, null);
     }
     
-    private InstallResult installTool(ToolSetupSpec spec, String version) {
+    private InstallResult installTool(ToolSetupSpec spec) {
         String toolName = spec.toolName();
-        String cmd = "tool " + toolName + " install --version " + ("auto".equals(version) ? "latest" : version) + " --output json";
+        String version = spec.getEffectiveVersion();
+        String cmd = "tool " + toolName + " install --version " + version + " --output json";
         
         // For fcli, if --self is specified, use copy-if-matching to avoid re-downloading
         if (spec.tool() == Tool.FCLI && toolsMixin.getSelf() != null) {
@@ -180,7 +159,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         
         // Handle tool cache pattern
         String effectiveInstallDirPattern = toolsMixin.getEffectiveInstallDirPattern();
-        if (effectiveInstallDirPattern != null && !"preinstalled".equals(version)) {
+        if (effectiveInstallDirPattern != null) {
             String resolvedVersion = resolveSemanticVersion(spec.tool(), version);
             if (resolvedVersion != null) {
                 String cacheDir = effectiveInstallDirPattern

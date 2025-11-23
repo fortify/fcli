@@ -118,6 +118,7 @@ public class ToolSetupToolsMixin {
     
     /**
      * Specification for a tool setup request.
+     * Consolidates path and version from both command-line arguments and environment variables.
      */
     public record ToolSetupSpec(Tool tool, String argument) {
         /**
@@ -128,32 +129,68 @@ public class ToolSetupToolsMixin {
         }
         
         /**
-         * Check if this spec has an explicit version or path argument.
-         */
-        public boolean hasArgument() {
-            return argument != null && !argument.isEmpty();
-        }
-        
-        /**
          * Check if the argument looks like a path (starts with / or \ or . or ~).
          */
-        public boolean isPathArgument() {
-            return hasArgument() && (argument.startsWith("/") || argument.startsWith("\\") 
+        private boolean isPathArgument() {
+            return argument != null && !argument.isEmpty() 
+                    && (argument.startsWith("/") || argument.startsWith("\\") 
                     || argument.startsWith(".") || argument.startsWith("~"));
         }
         
         /**
-         * Get the version if argument is not a path, null otherwise.
+         * Get the effective path from either command-line argument or <TOOL>_HOME environment variable.
+         * Returns null if neither is specified or if a version was specified instead.
          */
-        public String getVersion() {
-            return isPathArgument() ? null : argument;
+        public String getEffectivePath() {
+            if (isPathArgument()) {
+                return argument;
+            }
+            if (argument == null || argument.isEmpty()) {
+                String envVar = tool.getDefaultEnvPrefix() + "_HOME";
+                return System.getenv(envVar);
+            }
+            return null;
         }
         
         /**
-         * Get the path if argument is a path, null otherwise.
+         * Get the effective version from either command-line argument or <TOOL>_VERSION environment variable.
+         * Returns "latest" if neither path nor version is specified.
          */
-        public String getPath() {
-            return isPathArgument() ? argument : null;
+        public String getEffectiveVersion() {
+            // If a path is specified (via argument or HOME env var), no version
+            if (getEffectivePath() != null) {
+                return null;
+            }
+            
+            // If version specified via argument, use it
+            if (argument != null && !argument.isEmpty()) {
+                return argument;
+            }
+            
+            // Check VERSION environment variable
+            String versionEnvVar = tool.getDefaultEnvPrefix() + "_VERSION";
+            String versionEnvValue = System.getenv(versionEnvVar);
+            if (versionEnvValue != null && !versionEnvValue.isEmpty()) {
+                return versionEnvValue;
+            }
+            
+            // Default to latest
+            return "latest";
+        }
+        
+        /**
+         * Check if a specific path was provided (either via argument or HOME env var).
+         */
+        public boolean hasPath() {
+            return getEffectivePath() != null;
+        }
+        
+        /**
+         * Check if a specific version was provided (not "latest").
+         */
+        public boolean hasSpecificVersion() {
+            String version = getEffectiveVersion();
+            return version != null && !"latest".equals(version);
         }
     }
 }
