@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.app.runner.util;
 
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobArtifactState;
 import com.fortify.cli.sc_sast.scan.helper.SCSastScanJobState;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
+import com.fortify.cli.tool._common.helper.Tool;
 
 /**
  *
@@ -37,6 +39,7 @@ public class FortifyCLIResourceBundlePropertiesHelper {
         initializeSCSastProperties(props);
         initializeSSCProperties(props);
         initializeVersionRelatedProperties(props);
+        initializeToolProperties(props);
         return props;
     }
 
@@ -65,6 +68,17 @@ public class FortifyCLIResourceBundlePropertiesHelper {
     private static final void initializeVersionRelatedProperties(Properties props) {
         props.setProperty("fcli.action.supportedSchemaVersions", ActionSchemaVersionHelper.getSupportedSchemaVersionsString());
         props.setProperty("fcli.docBaseUrl", FcliBuildProperties.INSTANCE.getFcliDocBaseUrl());
+    }
+    
+    private static final void initializeToolProperties(Properties props) {
+        var supportedTools = new ArrayList<String>();
+        for (Tool tool : Tool.values()) {
+            String toolName = tool.getToolName();
+            String envPrefix = tool.getDefaultEnvPrefix();
+            props.setProperty("fcli.tool." + toolName + ".envPrefix", envPrefix);
+            supportedTools.add(toolName);
+        }
+        props.setProperty("fcli.tools.supported", String.join(", ", supportedTools) );
     }
     
     private static final String getValueNamesString(Enum<?>[] values) {
