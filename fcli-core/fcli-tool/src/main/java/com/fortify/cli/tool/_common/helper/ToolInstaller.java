@@ -118,7 +118,7 @@ public final class ToolInstaller {
             // Try to find version in definitions
             try {
                 return rootDescriptor.getVersionOrDefault(detectedVersion);
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 // Version not found in definitions - treat as non-matching and use requested version
                 log.info("Detected version {} from --copy-from not found in tool definitions. " +
                     "Downloading requested version {} instead.",
@@ -514,12 +514,18 @@ public final class ToolInstaller {
             return true;
         }
         
-        // Check if requestedVersion is an alias that resolves to detectedVersion
-        var versionDescriptor = getDefinitionRootDescriptor()
-            .getVersionOrDefault(requestedVersion);
-        
-        if (versionDescriptor != null && detectedVersion.equals(versionDescriptor.getVersion())) {
-            return true;
+        try {
+            // Check if requestedVersion is an alias that resolves to detectedVersion
+            var versionDescriptor = getDefinitionRootDescriptor()
+                .getVersionOrDefault(requestedVersion);
+            
+            if (versionDescriptor != null && detectedVersion.equals(versionDescriptor.getVersion())) {
+                return true;
+            }
+        } catch (Exception e) {
+            // Version lookup failed (e.g., version not in definitions)
+            // Treat as non-matching to allow graceful fallback
+            log.debug("Failed to resolve requested version in tool definitions: {}", requestedVersion, e);
         }
         
         return false;
