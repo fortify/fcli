@@ -28,11 +28,12 @@ import lombok.extern.slf4j.Slf4j;
  *   - user (string, optional): Username for user/password auth
  *   - password (string, optional): Password for user/password auth  
  *   - token (string, optional): UnifiedLoginToken for token-based auth
- *   - ci-token (string, optional): CIToken for CI/CD integration
+ *   - client-auth-token (string, optional): SC-SAST client auth token
+ *   - sc-sast-url (string, optional): SC-SAST controller URL
  *   - expire-in (string, optional): Token expiration time (e.g., "1d", "8h")
  *   - insecure (boolean, optional): Allow insecure connections
  * 
- * At least one auth method must be provided: (user+password), token, or ci-token.
+ * At least one auth method must be provided: (user+password) or token.
  * 
  * Returns:
  *   - success (boolean): Whether login was successful
@@ -56,7 +57,7 @@ public final class RpcMethodHandlerSscLogin implements IRpcMethodHandler {
         
         var loginArgs = buildLoginArgs(params);
         
-        log.debug("SSC login with args: {}", loginArgs.replaceAll("(--password|--token|--ci-token)\\s+\\S+", "$1 ***"));
+        log.debug("SSC login with args: {}", loginArgs.replaceAll("(--password|--token|--client-auth-token)\\s+\\S+", "$1 ***"));
         
         return sessionManager.executeLogin(ProductType.SSC, loginArgs);
     }
@@ -81,19 +82,22 @@ public final class RpcMethodHandlerSscLogin implements IRpcMethodHandler {
             hasAuth = true;
         }
         
-        if (params.has("ci-token")) {
-            sb.append("--ci-token ").append(quoteValue(params.get("ci-token").asText())).append(" ");
-            hasAuth = true;
-        }
-        
         if (!hasAuth) {
             throw RpcMethodException.invalidParams(
-                "SSC login requires one of: (user + password), token, or ci-token");
+                "SSC login requires one of: (user + password) or token");
         }
         
         // Optional parameters
         if (params.has("expire-in")) {
             sb.append("--expire-in ").append(params.get("expire-in").asText()).append(" ");
+        }
+        
+        if (params.has("client-auth-token")) {
+            sb.append("--client-auth-token ").append(quoteValue(params.get("client-auth-token").asText())).append(" ");
+        }
+        
+        if (params.has("sc-sast-url")) {
+            sb.append("--sc-sast-url ").append(quoteValue(params.get("sc-sast-url").asText())).append(" ");
         }
         
         if (params.has("insecure") && params.get("insecure").asBoolean(false)) {
