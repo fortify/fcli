@@ -272,4 +272,131 @@ class JsonRpcServerTest {
         // but the important thing is that it doesn't crash
         assertTrue(node.has("error") || node.has("result"));
     }
+    
+    @Test
+    void shouldReturnCacheKeyForExecuteAsync() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.executeAsync\",\"params\":{\"command\":\"util sample-data list\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("result"));
+        assertNull(node.get("error"));
+        
+        var result = node.get("result");
+        assertTrue(result.has("cacheKey"));
+        assertNotNull(result.get("cacheKey").asText());
+        assertEquals("started", result.get("status").asText());
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForExecuteAsyncWithoutCommand() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.executeAsync\",\"params\":{},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+    }
+    
+    @Test
+    void shouldReturnNotFoundForGetPageWithInvalidCacheKey() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("result"));
+        assertEquals("not_found", node.get("result").get("status").asText());
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForGetPageWithoutCacheKey() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+    }
+    
+    @Test
+    void shouldHandleCancelCollectionForNonExistentKey() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.cancelCollection\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("result"));
+        assertEquals(false, node.get("result").get("success").asBoolean());
+    }
+    
+    @Test
+    void shouldHandleClearCacheAll() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.clearCache\",\"params\":{},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("result"));
+        assertEquals(true, node.get("result").get("success").asBoolean());
+        assertNotNull(node.get("result").get("stats"));
+    }
+    
+    @Test
+    void shouldListAllNewMethodsInRpcListMethods() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("result"));
+        
+        var methods = node.get("result").get("methods");
+        assertTrue(methods.isArray());
+        // Verify minimum expected methods - don't hardcode exact count for maintainability
+        assertTrue(methods.size() >= 8, "Should have at least 8 methods including async ones");
+        
+        // Verify new methods are present
+        boolean hasExecuteAsync = false;
+        boolean hasGetPage = false;
+        boolean hasCancelCollection = false;
+        boolean hasClearCache = false;
+        
+        for (var method : methods) {
+            String name = method.get("name").asText();
+            if ("fcli.executeAsync".equals(name)) hasExecuteAsync = true;
+            if ("fcli.getPage".equals(name)) hasGetPage = true;
+            if ("fcli.cancelCollection".equals(name)) hasCancelCollection = true;
+            if ("fcli.clearCache".equals(name)) hasClearCache = true;
+        }
+        
+        assertTrue(hasExecuteAsync, "fcli.executeAsync method should be present");
+        assertTrue(hasGetPage, "fcli.getPage method should be present");
+        assertTrue(hasCancelCollection, "fcli.cancelCollection method should be present");
+        assertTrue(hasClearCache, "fcli.clearCache method should be present");
+    }
 }

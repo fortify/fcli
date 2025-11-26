@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.util._common.helper.FcliRecordsCache;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  * - Supports notifications (requests without id)
  * - Is compatible with GraalVM native image compilation
  * - Processes requests synchronously (appropriate for stdio-based IDE integration)
+ * - Includes caching for efficient paged access to large result sets
  * 
  * @author Ruud Senden
  */
@@ -47,16 +49,22 @@ public final class JsonRpcServer {
     private final ObjectMapper objectMapper;
     private final Map<String, IRpcMethodHandler> methodHandlers;
     private final AtomicBoolean running = new AtomicBoolean(false);
+    private final FcliRecordsCache cache;
     
     public JsonRpcServer(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.methodHandlers = new LinkedHashMap<>();
+        this.cache = new FcliRecordsCache();
         registerDefaultMethods();
     }
     
     private void registerDefaultMethods() {
         // Register built-in fcli methods
         registerMethod("fcli.execute", new RpcMethodHandlerFcliExecute(objectMapper));
+        registerMethod("fcli.executeAsync", new RpcMethodHandlerFcliExecuteAsync(objectMapper, cache));
+        registerMethod("fcli.getPage", new RpcMethodHandlerFcliGetPage(objectMapper, cache));
+        registerMethod("fcli.cancelCollection", new RpcMethodHandlerFcliCancelCollection(objectMapper, cache));
+        registerMethod("fcli.clearCache", new RpcMethodHandlerFcliClearCache(objectMapper, cache));
         registerMethod("fcli.listCommands", new RpcMethodHandlerFcliListCommands(objectMapper));
         registerMethod("fcli.version", new RpcMethodHandlerFcliVersion(objectMapper));
         registerMethod("rpc.listMethods", new RpcMethodHandlerListMethods(objectMapper, methodHandlers));
@@ -101,6 +109,7 @@ public final class JsonRpcServer {
             log.error("Error in JSON-RPC server", e);
         } finally {
             running.set(false);
+            cache.shutdown();
             log.info("JSON-RPC server stopped");
         }
     }

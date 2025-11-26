@@ -40,7 +40,11 @@ public final class RpcMethodHandlerListMethods implements IRpcMethodHandler {
     private final Map<String, IRpcMethodHandler> methodHandlers;
     
     private static final Map<String, String> METHOD_DESCRIPTIONS = Map.of(
-        "fcli.execute", "Execute an fcli command and return structured results or stdout",
+        "fcli.execute", "Execute an fcli command synchronously and return structured results or stdout",
+        "fcli.executeAsync", "Start async fcli command execution, returns cacheKey for retrieving results",
+        "fcli.getPage", "Retrieve a page of results from cache by cacheKey (from fcli.executeAsync)",
+        "fcli.cancelCollection", "Cancel an in-progress async collection by cacheKey",
+        "fcli.clearCache", "Clear cache entries (specific cacheKey or all)",
         "fcli.listCommands", "List available fcli commands with optional filtering",
         "fcli.version", "Get fcli version information",
         "rpc.listMethods", "List available RPC methods"
