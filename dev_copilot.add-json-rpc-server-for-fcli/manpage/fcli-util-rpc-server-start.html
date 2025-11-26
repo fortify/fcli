@@ -1,0 +1,212 @@
+---
+title: fcli-util-rpc-server-start(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-util-rpc-server-start(1)</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251126.130344-dev_copilot.add-json-rpc-server-for-fcli" %}
+
+
+<div id="header">
+<h1>fcli-util-rpc-server-start(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-util-rpc-server-start - (PREVIEW) Start fcli JSON-RPC server for IDE plugin integration</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli util rpc-server start</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
+                           [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The fcli JSON-RPC server provides a simple JSON-RPC 2.0 interface for IDE plugins and other tools to interact with Fortify products through fcli. Unlike the MCP server which is designed for LLM integration, the RPC server exposes a smaller set of general-purpose methods suitable for programmatic access from IDE plugins.</p>
+</div>
+<div class="paragraph">
+<p>The server reads JSON-RPC requests from stdin and writes responses to stdout, one JSON object per line.</p>
+</div>
+<div class="paragraph">
+<p>Available RPC methods:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>fcli.execute: Execute an fcli command synchronously and return structured results
+Parameters:</p>
+</li>
+<li>
+<p>command (string, required): The fcli command to execute (e.g., "ssc appversion list")</p>
+</li>
+<li>
+<p>collectRecords (boolean, optional): If true, collect structured records instead of stdout</p>
+</li>
+<li>
+<p>offset (integer, optional): For paging, the offset to start from (default: 0)</p>
+</li>
+<li>
+<p>limit (integer, optional): For paging, the maximum number of records (default: 100)</p>
+</li>
+<li>
+<p>fcli.executeAsync: Start async command execution, returns cacheKey for retrieving results
+Parameters:</p>
+</li>
+<li>
+<p>command (string, required): The fcli command to execute
+Returns: cacheKey to use with fcli.getPage</p>
+</li>
+<li>
+<p>fcli.getPage: Retrieve a page of results from cache
+Parameters:</p>
+</li>
+<li>
+<p>cacheKey (string, required): Cache key from fcli.executeAsync</p>
+</li>
+<li>
+<p>offset (integer, optional): Start offset (default: 0)</p>
+</li>
+<li>
+<p>limit (integer, optional): Max records per page (default: 100)</p>
+</li>
+<li>
+<p>wait (boolean, optional): Wait for completion if still loading (default: false)</p>
+</li>
+<li>
+<p>waitTimeoutMs (integer, optional): Max wait time in ms (default: 30000)</p>
+</li>
+<li>
+<p>fcli.cancelCollection: Cancel an in-progress async collection
+Parameters:</p>
+</li>
+<li>
+<p>cacheKey (string, required): Cache key to cancel</p>
+</li>
+<li>
+<p>fcli.clearCache: Clear cache entries
+Parameters:</p>
+</li>
+<li>
+<p>cacheKey (string, optional): Specific key to clear, or omit to clear all</p>
+</li>
+<li>
+<p>fcli.listCommands: List available fcli commands with optional filtering
+Parameters:</p>
+</li>
+<li>
+<p>module (string, optional): Filter by module (e.g., "ssc", "fod")</p>
+</li>
+<li>
+<p>runnableOnly (boolean, optional): If true, only return runnable (leaf) commands</p>
+</li>
+<li>
+<p>includeHidden (boolean, optional): If true, include hidden commands</p>
+</li>
+<li>
+<p>fcli.version: Get fcli version information
+Parameters: none</p>
+</li>
+<li>
+<p>rpc.listMethods: List available RPC methods
+Parameters: none</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For commands that return large datasets (e.g., issue lists), use fcli.executeAsync followed by fcli.getPage to efficiently retrieve paged results with background loading and caching.</p>
+</div>
+<div class="paragraph">
+<p>Example IDE plugin configuration (VS Code settings.json style):</p>
+</div>
+<div class="paragraph">
+<p>{
+  "fortify.fcli.path": "/path/to/fcli",
+  "fortify.rpc.args": ["util", "rpc-server", "start"]
+}</p>
+</div>
+<div class="paragraph">
+<p>Example JSON-RPC request/response:</p>
+</div>
+<div class="paragraph">
+<p>Request:  {"jsonrpc":"2.0","method":"fcli.version","id":1}
+Response: {"jsonrpc":"2.0","result":{"version":"x.y.z","buildDate":"&#8230;&#8203;"},"id":1}</p>
+</div>
+<div class="paragraph">
+<p>Note: Like the MCP server, you&#8217;ll need to have active fcli sessions for each product you want to interact with. Login sessions must be created separately using 'fcli &lt;product&gt; session login' commands.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-11-26 13:06:31 UTC
+</div>
+</div>
+</body>
+</html>
