@@ -13,7 +13,6 @@
 package com.fortify.cli.tool._common.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -27,16 +26,15 @@ import com.fortify.cli.tool._common.helper.ToolInstallationsResolver.ToolInstall
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 public abstract class AbstractToolListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
     public final JsonNode getJsonNode() {
         var toolName = getTool().getToolName();
-    ToolInstallations installations = ToolInstallationsResolver.resolve(getTool());
-    return installations.stream()
-        .map(record -> createToolOutputDescriptor(toolName, record))
-        .map(objectMapper::<ObjectNode>valueToTree)
-                .collect(JsonHelper.arrayNodeCollector());
+        ToolInstallations installations = ToolInstallationsResolver.resolve(getTool());
+        return installations.stream()
+            .map(record -> createToolOutputDescriptor(toolName, record))
+            .map(JsonHelper.getObjectMapper()::<ObjectNode>valueToTree)
+            .collect(JsonHelper.arrayNodeCollector());
     }
     
     @Override

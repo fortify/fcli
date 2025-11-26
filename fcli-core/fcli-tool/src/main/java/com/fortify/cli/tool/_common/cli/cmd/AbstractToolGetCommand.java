@@ -13,7 +13,7 @@
 package com.fortify.cli.tool._common.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.tool._common.helper.Tool;
@@ -34,7 +34,6 @@ import picocli.CommandLine.Parameters;
  * @author Ruud Senden
  */
 public abstract class AbstractToolGetCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @Parameters(index = "0", descriptionKey = "fcli.tool.get.version")
     private String requestedVersion;
@@ -63,7 +62,7 @@ public abstract class AbstractToolGetCommand extends AbstractOutputCommand imple
             isDefault
         );
         
-        return objectMapper.valueToTree(outputDescriptor);
+        return JsonHelper.getObjectMapper().valueToTree(outputDescriptor);
     }
     
     @Override
