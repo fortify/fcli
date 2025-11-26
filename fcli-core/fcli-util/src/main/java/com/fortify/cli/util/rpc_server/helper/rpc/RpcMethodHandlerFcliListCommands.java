@@ -66,9 +66,12 @@ public final class RpcMethodHandlerFcliListCommands implements IRpcMethodHandler
             
             // Apply filters
             if (module != null && !module.isBlank()) {
-                commandStream = commandStream.filter(spec -> 
-                    spec.qualifiedName(" ").startsWith("fcli " + module + " ") ||
-                    spec.qualifiedName(" ").equals("fcli " + module));
+                final String modulePrefix = "fcli " + module + " ";
+                final String moduleExact = "fcli " + module;
+                commandStream = commandStream.filter(spec -> {
+                    var qualifiedName = spec.qualifiedName(" ");
+                    return qualifiedName.startsWith(modulePrefix) || qualifiedName.equals(moduleExact);
+                });
             }
             
             if (runnableOnly) {

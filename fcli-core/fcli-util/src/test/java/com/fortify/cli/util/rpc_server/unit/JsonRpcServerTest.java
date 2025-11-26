@@ -37,7 +37,7 @@ class JsonRpcServerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        server = new JsonRpcServer(objectMapper, 2);
+        server = new JsonRpcServer(objectMapper);
     }
     
     @Test
@@ -155,6 +155,34 @@ class JsonRpcServerTest {
         assertNotNull(node.get("error"));
         assertEquals(-32602, node.get("error").get("code").asInt());
         assertTrue(node.get("error").get("message").asText().contains("command"));
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForZeroLimit() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"params\":{\"command\":\"util sample-data list\",\"collectRecords\":true,\"limit\":0},\"id\":1}");
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+        assertTrue(node.get("error").get("message").asText().contains("limit"));
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForNegativeOffset() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"params\":{\"command\":\"util sample-data list\",\"collectRecords\":true,\"offset\":-5},\"id\":1}");
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+        assertTrue(node.get("error").get("message").asText().contains("offset"));
     }
     
     @Test

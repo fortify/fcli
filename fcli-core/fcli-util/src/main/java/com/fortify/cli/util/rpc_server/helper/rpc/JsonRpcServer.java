@@ -20,8 +20,6 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  * - Handles single requests and batch requests
  * - Supports notifications (requests without id)
  * - Is compatible with GraalVM native image compilation
- * - Runs in a single thread for simplicity (IDE integration use case)
+ * - Processes requests synchronously (appropriate for stdio-based IDE integration)
  * 
  * @author Ruud Senden
  */
@@ -48,13 +46,11 @@ import lombok.extern.slf4j.Slf4j;
 public final class JsonRpcServer {
     private final ObjectMapper objectMapper;
     private final Map<String, IRpcMethodHandler> methodHandlers;
-    private final ExecutorService executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     
-    public JsonRpcServer(ObjectMapper objectMapper, int threadPoolSize) {
+    public JsonRpcServer(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.methodHandlers = new LinkedHashMap<>();
-        this.executor = Executors.newFixedThreadPool(threadPoolSize);
         registerDefaultMethods();
     }
     
@@ -77,6 +73,7 @@ public final class JsonRpcServer {
     /**
      * Start the server, reading from the given input stream and writing to the output stream.
      * This method blocks until the input stream is closed or an error occurs.
+     * Requests are processed synchronously in the order they are received.
      */
     public void start(InputStream input, OutputStream output) {
         running.set(true);
@@ -93,10 +90,8 @@ public final class JsonRpcServer {
                 }
                 
                 log.debug("Received request: {}", line);
-                final String requestLine = line;
                 
-                // Process synchronously for stdio mode
-                String responseJson = processRequest(requestLine);
+                String responseJson = processRequest(line);
                 if (responseJson != null) {
                     log.debug("Sending response: {}", responseJson);
                     writer.println(responseJson);
@@ -106,7 +101,6 @@ public final class JsonRpcServer {
             log.error("Error in JSON-RPC server", e);
         } finally {
             running.set(false);
-            executor.shutdown();
             log.info("JSON-RPC server stopped");
         }
     }
@@ -121,7 +115,6 @@ public final class JsonRpcServer {
     /**
      * Process a single JSON-RPC request line and return the response JSON.
      * Returns null for notifications (requests without id).
-     * This method is package-private for testing purposes.
      */
     public String processRequest(String requestJson) {
         try {
@@ -210,7 +203,11 @@ public final class JsonRpcServer {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize response", e);
-            return "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32603,\"message\":\"Internal error: serialization failed\"},\"id\":null}";
+            // Fallback to a hardcoded error response to avoid infinite recursion
+            // if serialization itself fails
+            return String.format(
+                "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":%d,\"message\":\"Internal error: serialization failed\"},\"id\":null}",
+                JsonRpcError.INTERNAL_ERROR);
         }
     }
 }

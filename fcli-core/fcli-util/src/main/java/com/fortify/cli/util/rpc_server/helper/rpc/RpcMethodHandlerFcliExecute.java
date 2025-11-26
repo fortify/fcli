@@ -65,6 +65,14 @@ public final class RpcMethodHandlerFcliExecute implements IRpcMethodHandler {
             throw RpcMethodException.invalidParams("'command' cannot be empty");
         }
         
+        if (offset < 0) {
+            throw RpcMethodException.invalidParams("'offset' must be non-negative");
+        }
+        
+        if (limit <= 0) {
+            throw RpcMethodException.invalidParams("'limit' must be greater than 0");
+        }
+        
         log.debug("Executing fcli command: {} (collectRecords={}, offset={}, limit={})", 
                   command, collectRecords, offset, limit);
         

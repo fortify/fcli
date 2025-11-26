@@ -20,11 +20,11 @@ import com.fortify.cli.util.rpc_server.helper.rpc.JsonRpcServer;
 
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 /**
  * Command to start the fcli JSON-RPC server for IDE plugin integration.
- * The server listens on stdin/stdout for JSON-RPC 2.0 requests.
+ * The server listens on stdin/stdout for JSON-RPC 2.0 requests and processes
+ * them synchronously.
  *
  * @author Ruud Senden
  */
@@ -32,15 +32,13 @@ import picocli.CommandLine.Option;
 @MCPExclude
 @Slf4j
 public class RPCServerStartCommand extends AbstractRunnableCommand {
-    @Option(names = {"--threads", "-t"}, defaultValue = "4")
-    private int threads;
     
     @Override
     public Integer call() throws Exception {
-        log.info("Starting JSON-RPC server with {} threads", threads);
+        log.info("Starting JSON-RPC server");
         
         var objectMapper = new ObjectMapper();
-        var server = new JsonRpcServer(objectMapper, threads);
+        var server = new JsonRpcServer(objectMapper);
         
         // Start the server on stdin/stdout
         server.start(System.in, System.out);
