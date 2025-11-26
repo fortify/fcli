@@ -13,7 +13,6 @@
 package com.fortify.cli.util.rpc_server.helper.rpc;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,21 +26,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * RPC method handler for executing fcli commands.
+ * RPC method handler for executing fcli commands synchronously.
  * 
  * Method: fcli.execute
  * Params:
  *   - command (string, required): The fcli command to execute (e.g., "ssc appversion list")
  *   - collectRecords (boolean, optional): If true, collect structured records instead of stdout
- *   - offset (integer, optional): For paging, the offset to start from (default: 0)
- *   - limit (integer, optional): For paging, the maximum number of records (default: 100)
  * 
  * Returns:
  *   - exitCode (integer): The command exit code
- *   - records (array, optional): Array of record objects if collectRecords=true
+ *   - records (array, optional): Array of ALL record objects if collectRecords=true
  *   - stdout (string, optional): Standard output if collectRecords=false
  *   - stderr (string): Standard error output
- *   - pagination (object, optional): Pagination info for paged results
+ * 
+ * Note: This method returns ALL records without paging. For commands that may return
+ * large datasets (e.g., issue list), use fcli.executeAsync + fcli.getPage instead.
  *
  * @author Ruud Senden
  */
@@ -49,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public final class RpcMethodHandlerFcliExecute implements IRpcMethodHandler {
     private final ObjectMapper objectMapper;
+    private final RpcSessionManager sessionManager;
     
     @Override
     public JsonNode execute(JsonNode params) throws RpcMethodException {
@@ -58,27 +58,16 @@ public final class RpcMethodHandlerFcliExecute implements IRpcMethodHandler {
         
         var command = params.get("command").asText();
         var collectRecords = params.has("collectRecords") && params.get("collectRecords").asBoolean(false);
-        var offset = params.has("offset") ? params.get("offset").asInt(0) : 0;
-        var limit = params.has("limit") ? params.get("limit").asInt(100) : 100;
         
         if (command == null || command.isBlank()) {
             throw RpcMethodException.invalidParams("'command' cannot be empty");
         }
         
-        if (offset < 0) {
-            throw RpcMethodException.invalidParams("'offset' must be non-negative");
-        }
-        
-        if (limit <= 0) {
-            throw RpcMethodException.invalidParams("'limit' must be greater than 0");
-        }
-        
-        log.debug("Executing fcli command: {} (collectRecords={}, offset={}, limit={})", 
-                  command, collectRecords, offset, limit);
+        log.debug("Executing fcli command: {} (collectRecords={})", command, collectRecords);
         
         try {
             if (collectRecords) {
-                return executeWithRecords(command, offset, limit);
+                return executeWithRecords(command);
             } else {
                 return executeWithStdout(command);
             }
@@ -93,13 +82,14 @@ public final class RpcMethodHandlerFcliExecute implements IRpcMethodHandler {
             .cmd(command)
             .stdoutOutputType(OutputType.collect)
             .stderrOutputType(OutputType.collect)
+            .defaultOptionsIfNotPresent(sessionManager.getSessionOptionsForCommand(command))
             .onFail(r -> {})
             .build().create().execute();
         
-        return buildResponse(result, null, null);
+        return buildResponse(result, null);
     }
     
-    private JsonNode executeWithRecords(String command, int offset, int limit) {
+    private JsonNode executeWithRecords(String command) {
         var allRecords = new ArrayList<JsonNode>();
         
         var result = FcliCommandExecutorFactory.builder()
@@ -107,27 +97,21 @@ public final class RpcMethodHandlerFcliExecute implements IRpcMethodHandler {
             .stdoutOutputType(OutputType.suppress)
             .stderrOutputType(OutputType.collect)
             .recordConsumer(allRecords::add)
+            .defaultOptionsIfNotPresent(sessionManager.getSessionOptionsForCommand(command))
             .onFail(r -> {})
             .build().create().execute();
         
-        // Apply pagination
-        var totalRecords = allRecords.size();
-        var endIndex = Math.min(offset + limit, totalRecords);
-        List<JsonNode> pagedRecords = offset >= totalRecords 
-            ? List.of() 
-            : allRecords.subList(offset, endIndex);
-        
-        var pagination = buildPagination(offset, limit, totalRecords);
-        return buildResponse(result, pagedRecords, pagination);
+        return buildResponse(result, allRecords);
     }
     
-    private ObjectNode buildResponse(Result result, List<JsonNode> records, ObjectNode pagination) {
+    private ObjectNode buildResponse(Result result, java.util.List<JsonNode> records) {
         var response = objectMapper.createObjectNode();
         response.put("exitCode", result.getExitCode());
         
         if (records != null) {
             ArrayNode recordsArray = response.putArray("records");
             records.forEach(recordsArray::add);
+            response.put("totalRecords", records.size());
         } else {
             response.put("stdout", result.getOut());
         }
@@ -136,25 +120,6 @@ public final class RpcMethodHandlerFcliExecute implements IRpcMethodHandler {
             response.put("stderr", result.getErr());
         }
         
-        if (pagination != null) {
-            response.set("pagination", pagination);
-        }
-        
         return response;
-    }
-    
-    private ObjectNode buildPagination(int offset, int limit, int totalRecords) {
-        var pagination = objectMapper.createObjectNode();
-        pagination.put("offset", offset);
-        pagination.put("limit", limit);
-        pagination.put("totalRecords", totalRecords);
-        pagination.put("totalPages", (int) Math.ceil((double) totalRecords / limit));
-        pagination.put("hasMore", offset + limit < totalRecords);
-        
-        if (offset + limit < totalRecords) {
-            pagination.put("nextOffset", offset + limit);
-        }
-        
-        return pagination;
     }
 }

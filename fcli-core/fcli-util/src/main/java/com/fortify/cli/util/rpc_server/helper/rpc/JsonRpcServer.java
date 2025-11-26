@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
  * - Is compatible with GraalVM native image compilation
  * - Processes requests synchronously (appropriate for stdio-based IDE integration)
  * - Includes caching for efficient paged access to large result sets
+ * - Manages product sessions (SSC, FoD) with automatic cleanup on shutdown
  * 
  * @author Ruud Senden
  */
@@ -50,17 +51,23 @@ public final class JsonRpcServer {
     private final Map<String, IRpcMethodHandler> methodHandlers;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final FcliRecordsCache cache;
+    private final RpcSessionManager sessionManager;
     
     public JsonRpcServer(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.methodHandlers = new LinkedHashMap<>();
         this.cache = new FcliRecordsCache();
+        this.sessionManager = new RpcSessionManager(objectMapper);
+        
+        // Configure cache to use session manager for resolving session options
+        this.cache.setOptionResolver(sessionManager::getSessionOptionsForCommand);
+        
         registerDefaultMethods();
     }
     
     private void registerDefaultMethods() {
         // Register built-in fcli methods
-        registerMethod("fcli.execute", new RpcMethodHandlerFcliExecute(objectMapper));
+        registerMethod("fcli.execute", new RpcMethodHandlerFcliExecute(objectMapper, sessionManager));
         registerMethod("fcli.executeAsync", new RpcMethodHandlerFcliExecuteAsync(objectMapper, cache));
         registerMethod("fcli.getPage", new RpcMethodHandlerFcliGetPage(objectMapper, cache));
         registerMethod("fcli.cancelCollection", new RpcMethodHandlerFcliCancelCollection(objectMapper, cache));
@@ -68,6 +75,14 @@ public final class JsonRpcServer {
         registerMethod("fcli.listCommands", new RpcMethodHandlerFcliListCommands(objectMapper));
         registerMethod("fcli.version", new RpcMethodHandlerFcliVersion(objectMapper));
         registerMethod("rpc.listMethods", new RpcMethodHandlerListMethods(objectMapper, methodHandlers));
+        
+        // Register product-specific session methods
+        for (var entry : sessionManager.getLoginHandlers().entrySet()) {
+            registerMethod("fcli." + entry.getKey() + ".login", entry.getValue());
+        }
+        for (var entry : sessionManager.getLogoutHandlers().entrySet()) {
+            registerMethod("fcli." + entry.getKey() + ".logout", entry.getValue());
+        }
     }
     
     /**
@@ -109,6 +124,8 @@ public final class JsonRpcServer {
             log.error("Error in JSON-RPC server", e);
         } finally {
             running.set(false);
+            // Logout all sessions on shutdown
+            sessionManager.logoutAll();
             cache.shutdown();
             log.info("JSON-RPC server stopped");
         }

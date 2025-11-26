@@ -13,6 +13,7 @@
 package com.fortify.cli.util._common.helper;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,33 +34,64 @@ public class FcliRunnerHelper {
      * Execute a command and collect stdout output.
      */
     public static Result collectStdout(String fullCmd) {
-        return FcliCommandExecutorFactory.builder()
+        return collectStdout(fullCmd, null);
+    }
+    
+    /**
+     * Execute a command and collect stdout output with default options.
+     */
+    public static Result collectStdout(String fullCmd, Map<String, String> defaultOptions) {
+        var builder = FcliCommandExecutorFactory.builder()
             .cmd(fullCmd)
             .stdoutOutputType(OutputType.collect)
             .stderrOutputType(OutputType.collect)
-            .onFail(r -> {})
-            .build().create().execute();
+            .onFail(r -> {});
+        
+        if (defaultOptions != null) {
+            builder.defaultOptionsIfNotPresent(defaultOptions);
+        }
+        
+        return builder.build().create().execute();
     }
     
     /**
      * Execute a command and collect structured records.
      */
     public static Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer) {
-        return FcliCommandExecutorFactory.builder()
+        return collectRecords(fullCmd, recordConsumer, null);
+    }
+    
+    /**
+     * Execute a command and collect structured records with default options.
+     */
+    public static Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer, Map<String, String> defaultOptions) {
+        var builder = FcliCommandExecutorFactory.builder()
             .cmd(fullCmd)
             .stdoutOutputType(OutputType.suppress)
             .stderrOutputType(OutputType.collect)
             .recordConsumer(recordConsumer)
-            .onFail(r -> {})
-            .build().create().execute();
+            .onFail(r -> {});
+        
+        if (defaultOptions != null) {
+            builder.defaultOptionsIfNotPresent(defaultOptions);
+        }
+        
+        return builder.build().create().execute();
     }
     
     /**
      * Execute a command and return a FcliToolResult with all collected records.
      */
     public static FcliToolResult collectRecordsAsResult(String fullCmd) {
+        return collectRecordsAsResult(fullCmd, null);
+    }
+    
+    /**
+     * Execute a command and return a FcliToolResult with all collected records and default options.
+     */
+    public static FcliToolResult collectRecordsAsResult(String fullCmd, Map<String, String> defaultOptions) {
         var records = new ArrayList<JsonNode>();
-        var result = collectRecords(fullCmd, records::add);
+        var result = collectRecords(fullCmd, records::add, defaultOptions);
         return FcliToolResult.fromRecords(result, records);
     }
     
@@ -67,7 +99,14 @@ public class FcliRunnerHelper {
      * Execute a command and return a FcliToolResult with stdout.
      */
     public static FcliToolResult collectStdoutAsResult(String fullCmd) {
-        var result = collectStdout(fullCmd);
+        return collectStdoutAsResult(fullCmd, null);
+    }
+    
+    /**
+     * Execute a command and return a FcliToolResult with stdout and default options.
+     */
+    public static FcliToolResult collectStdoutAsResult(String fullCmd, Map<String, String> defaultOptions) {
+        var result = collectStdout(fullCmd, defaultOptions);
         return FcliToolResult.fromPlainText(result);
     }
 }

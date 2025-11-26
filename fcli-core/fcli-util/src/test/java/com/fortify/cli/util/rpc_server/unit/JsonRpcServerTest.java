@@ -159,9 +159,9 @@ class JsonRpcServerTest {
     
     @Test
     void shouldReturnInvalidParamsForZeroLimit() throws Exception {
-        // Act
+        // Test limit validation in fcli.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"params\":{\"command\":\"util sample-data list\",\"collectRecords\":true,\"limit\":0},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"limit\":0},\"id\":1}");
         
         // Assert
         assertNotNull(response);
@@ -173,9 +173,9 @@ class JsonRpcServerTest {
     
     @Test
     void shouldReturnInvalidParamsForNegativeOffset() throws Exception {
-        // Act
+        // Test offset validation in fcli.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"params\":{\"command\":\"util sample-data list\",\"collectRecords\":true,\"offset\":-5},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"offset\":-5},\"id\":1}");
         
         // Assert
         assertNotNull(response);
@@ -398,5 +398,100 @@ class JsonRpcServerTest {
         assertTrue(hasGetPage, "fcli.getPage method should be present");
         assertTrue(hasCancelCollection, "fcli.cancelCollection method should be present");
         assertTrue(hasClearCache, "fcli.clearCache method should be present");
+    }
+    
+    @Test
+    void shouldListSessionMethodsInRpcListMethods() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("result"));
+        
+        var methods = node.get("result").get("methods");
+        assertTrue(methods.isArray());
+        // Verify we have at least 12 methods (8 core + 4 session methods)
+        assertTrue(methods.size() >= 12, "Should have at least 12 methods including session ones");
+        
+        // Verify session methods are present
+        boolean hasSscLogin = false;
+        boolean hasSscLogout = false;
+        boolean hasFodLogin = false;
+        boolean hasFodLogout = false;
+        
+        for (var method : methods) {
+            String name = method.get("name").asText();
+            if ("fcli.ssc.login".equals(name)) hasSscLogin = true;
+            if ("fcli.ssc.logout".equals(name)) hasSscLogout = true;
+            if ("fcli.fod.login".equals(name)) hasFodLogin = true;
+            if ("fcli.fod.logout".equals(name)) hasFodLogout = true;
+        }
+        
+        assertTrue(hasSscLogin, "fcli.ssc.login method should be present");
+        assertTrue(hasSscLogout, "fcli.ssc.logout method should be present");
+        assertTrue(hasFodLogin, "fcli.fod.login method should be present");
+        assertTrue(hasFodLogout, "fcli.fod.logout method should be present");
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForSscLoginWithoutUrl() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.ssc.login\",\"params\":{\"token\":\"test\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+        assertTrue(node.get("error").get("message").asText().contains("url"));
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForSscLoginWithoutAuth() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.ssc.login\",\"params\":{\"url\":\"https://ssc.example.com\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForFodLoginWithoutUrl() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.fod.login\",\"params\":{\"client-id\":\"test\",\"client-secret\":\"test\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
+        assertTrue(node.get("error").get("message").asText().contains("url"));
+    }
+    
+    @Test
+    void shouldReturnInvalidParamsForFodLoginWithoutAuth() throws Exception {
+        // Act
+        String response = server.processRequest(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.fod.login\",\"params\":{\"url\":\"https://ams.fortify.com\"},\"id\":1}"
+        );
+        
+        // Assert
+        assertNotNull(response);
+        var node = objectMapper.readTree(response);
+        assertNotNull(node.get("error"));
+        assertEquals(-32602, node.get("error").get("code").asInt());
     }
 }

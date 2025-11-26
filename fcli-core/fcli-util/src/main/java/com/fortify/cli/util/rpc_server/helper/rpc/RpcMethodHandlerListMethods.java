@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.util.rpc_server.helper.rpc;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,16 +40,29 @@ public final class RpcMethodHandlerListMethods implements IRpcMethodHandler {
     private final ObjectMapper objectMapper;
     private final Map<String, IRpcMethodHandler> methodHandlers;
     
-    private static final Map<String, String> METHOD_DESCRIPTIONS = Map.of(
-        "fcli.execute", "Execute an fcli command synchronously and return structured results or stdout",
-        "fcli.executeAsync", "Start async fcli command execution, returns cacheKey for retrieving results",
-        "fcli.getPage", "Retrieve a page of results from cache by cacheKey (from fcli.executeAsync)",
-        "fcli.cancelCollection", "Cancel an in-progress async collection by cacheKey",
-        "fcli.clearCache", "Clear cache entries (specific cacheKey or all)",
-        "fcli.listCommands", "List available fcli commands with optional filtering",
-        "fcli.version", "Get fcli version information",
-        "rpc.listMethods", "List available RPC methods"
-    );
+    private static final Map<String, String> METHOD_DESCRIPTIONS = new HashMap<>();
+    
+    static {
+        // Core execution methods
+        METHOD_DESCRIPTIONS.put("fcli.execute", "Execute an fcli command synchronously and return all results");
+        METHOD_DESCRIPTIONS.put("fcli.executeAsync", "Start async fcli command execution, returns cacheKey for paged retrieval");
+        METHOD_DESCRIPTIONS.put("fcli.getPage", "Retrieve a page of results from cache by cacheKey");
+        METHOD_DESCRIPTIONS.put("fcli.cancelCollection", "Cancel an in-progress async collection by cacheKey");
+        METHOD_DESCRIPTIONS.put("fcli.clearCache", "Clear cache entries (specific cacheKey or all)");
+        
+        // Info methods
+        METHOD_DESCRIPTIONS.put("fcli.listCommands", "List available fcli commands with optional filtering");
+        METHOD_DESCRIPTIONS.put("fcli.version", "Get fcli version information");
+        METHOD_DESCRIPTIONS.put("rpc.listMethods", "List available RPC methods");
+        
+        // SSC session methods
+        METHOD_DESCRIPTIONS.put("fcli.ssc.login", "Login to SSC (params: url, user+password or token or ci-token)");
+        METHOD_DESCRIPTIONS.put("fcli.ssc.logout", "Logout from SSC session");
+        
+        // FoD session methods
+        METHOD_DESCRIPTIONS.put("fcli.fod.login", "Login to FoD (params: url, client-id+client-secret or user+password+tenant)");
+        METHOD_DESCRIPTIONS.put("fcli.fod.logout", "Logout from FoD session");
+    }
     
     @Override
     public JsonNode execute(JsonNode params) throws RpcMethodException {

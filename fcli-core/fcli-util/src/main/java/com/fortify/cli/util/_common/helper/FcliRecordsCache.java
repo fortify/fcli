@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  * - Background async loading with partial result access
  * - Cancel support for long-running collections
  * - Thread-safe concurrent access
+ * - Support for session options through option resolver
  * 
  * @author Ruud Senden
  */
@@ -53,6 +55,7 @@ public class FcliRecordsCache {
     private final Map<String, CacheEntry> cache;
     private final Map<String, InProgressEntry> inProgress = new ConcurrentHashMap<>();
     private final ExecutorService backgroundExecutor;
+    private Function<String, Map<String, String>> optionResolver;
     
     public FcliRecordsCache() {
         this(DEFAULT_MAX_ENTRIES, DEFAULT_TTL, DEFAULT_BG_THREADS);
@@ -74,6 +77,13 @@ public class FcliRecordsCache {
             return t;
         });
         log.info("Initialized FcliRecordsCache: maxEntries={} ttl={}ms bgThreads={}", maxEntries, ttlMillis, bgThreads);
+    }
+    
+    /**
+     * Set a function to resolve default options for commands (e.g., session options).
+     */
+    public void setOptionResolver(Function<String, Map<String, String>> resolver) {
+        this.optionResolver = resolver;
     }
     
     /**
@@ -118,13 +128,16 @@ public class FcliRecordsCache {
     }
     
     private CompletableFuture<FcliToolResult> buildCollectionFuture(InProgressEntry entry, String command) {
+        // Resolve options before starting async execution
+        var defaultOptions = optionResolver != null ? optionResolver.apply(command) : null;
+        
         return CompletableFuture.supplyAsync(() -> {
             var records = entry.getRecords();
             var result = FcliRunnerHelper.collectRecords(command, record -> {
                 if (!Thread.currentThread().isInterrupted()) {
                     records.add(record);
                 }
-            });
+            }, defaultOptions);
             
             if (Thread.currentThread().isInterrupted()) {
                 return null;
