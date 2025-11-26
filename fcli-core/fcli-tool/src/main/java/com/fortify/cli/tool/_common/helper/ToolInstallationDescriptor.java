@@ -138,7 +138,7 @@ public class ToolInstallationDescriptor {
     }
     
     public Path getGlobalBinPath() {
-        return asPath(binDir);
+        return asPath(globalBinDir);
     }
     
     private static final ToolInstallationDescriptor load(Path descriptorPath) {
