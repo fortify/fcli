@@ -50,9 +50,14 @@ jobs:
           echo VERSION_PATCH=${patch} >> $GITHUB_ENV
           
       - name: DEV - Define release info
-        if: startsWith(github.ref, 'refs/heads/') && !env.DO_PROD_RELEASE
+        if: (startsWith(github.ref, 'refs/heads/') || github.event_name == 'pull_request') && !env.DO_PROD_RELEASE
         run: |
-          branch="${GITHUB_REF#refs/heads/}"
+          # For pull_request events, use head_ref (source branch); for push/workflow_dispatch, extract from ref
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            branch="${{ github.head_ref }}"
+          else
+            branch="${GITHUB_REF#refs/heads/}"
+          fi
           tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
           tag="${tag//dev_dev./dev_}" # Remove duplicate dev-prefix
           tag="${tag//dev_rel./dev_}" # Remove rel-prefix
@@ -74,12 +79,7 @@ jobs:
             echo DO_DEV_RELEASE=true >> $GITHUB_ENV
           else 
             echo "Tag ${tag} does not exist, no development release will be published"
-          fi 
-          
-      - name: PR - Define release info
-        if: github.event_name == 'pull_request' && !env.DO_PROD_RELEASE && !env.DO_RELEASE
-        run: |
-          echo DO_BUILD=true >> $GITHUB_ENV # Do a build with default settings for PRs
+          fi
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
@@ -104,6 +104,7 @@ jobs:
       version_major: ${{ env.VERSION_MAJOR }}
       version_minor: ${{ env.VERSION_MINOR }}
       version_patch: ${{ env.VERSION_PATCH }}
+      branch: ${{ env.BRANCH }}
 
   native_linux:
     name: native-image-linux
@@ -279,9 +280,6 @@ jobs:
     name: Trigger functional tests
     needs: [build, native_linux, native_mac, native_win, combine-artifacts]
     runs-on: ubuntu-latest
-    # TODO Also run on pull requests, but command below fails with (for example):
-    #  could not create workflow dispatch event: HTTP 422: No ref found for: refs/pull/849/merge (https://api.github.com/repos/fortify/fcli/actions/workflows/62959663/dispatches)
-    if: github.event_name != 'pull_request'
     steps:
       # Previously we had a workflow_run trigger on functional-tests.yaml, but:
       #  - This approach allows for starting functional tests a bit earlier (no need to wait for Docker builds)
@@ -290,7 +288,13 @@ jobs:
       - name: Check-out source code
         uses: actions/checkout@v4
       - run: | 
-          gh workflow run functional-tests.yml --ref ${GITHUB_REF} -f runId=${GITHUB_RUN_ID}
+          # Use branch output from build job if available, otherwise fall back to GITHUB_REF
+          if [ -n "${{ needs.build.outputs.branch }}" ]; then
+            ref="${{ needs.build.outputs.branch }}"
+          else
+            ref="${GITHUB_REF}"
+          fi
+          gh workflow run functional-tests.yml --ref "${ref}" -f runId=${GITHUB_RUN_ID}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
@@ -321,7 +325,7 @@ jobs:
         if: needs.build.outputs.do_dev_release
         run: |
           gh release delete ${{ needs.build.outputs.release_tag }} -y || true
-          gh release create ${{ needs.build.outputs.release_tag }} -p -t "Development Release - ${GITHUB_REF#refs/heads/} branch" -n 'See `Assets` section below for latest build artifacts'
+          gh release create ${{ needs.build.outputs.release_tag }} -p -t "Development Release - ${{ needs.build.outputs.branch }} branch" -n 'See `Assets` section below for latest build artifacts'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
@@ -341,32 +345,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: PROD - Publish v{major}.{minor} tag
-        if: needs.build.outputs.do_prod_release
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: v${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-                              
-      - name: PROD - Publish v{major} tag
-        if: needs.build.outputs.do_prod_release
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: v${{needs.build.outputs.version_major}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # TODO If we publish a feature/patch for an older major version,
-        #      for example from the rel/v2.x branch,
-        #      this may cause the older major version to be tagged as 'latest'
-      - name: PROD - Publish latest tag
-        if: needs.build.outputs.do_prod_release
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
   semantic_versions:
     name: Publish semantic versions
     if: needs.build.outputs.do_prod_release
@@ -376,6 +354,9 @@ jobs:
         semantic_version: 
           - v${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
           - v${{needs.build.outputs.version_major}}
+          # TODO If we publish a feature/patch for an older major version,
+          #      for example from the rel/v2.x branch,
+          #      this may cause the older major version to be tagged as 'latest'
           - latest
     runs-on: ubuntu-latest
     steps:
@@ -414,7 +395,13 @@ jobs:
       - name: Check-out source code
         uses: actions/checkout@v4
       - run: | 
-          gh workflow run docker.yml --ref ${GITHUB_REF} -f "releaseTag=${{ needs.build.outputs.release_tag }}" -f doPublish=${{ needs.build.outputs.do_release }}
+          # Use branch output from build job if available, otherwise fall back to GITHUB_REF
+          if [ -n "${{ needs.build.outputs.branch }}" ]; then
+            ref="${{ needs.build.outputs.branch }}"
+          else
+            ref="${GITHUB_REF}"
+          fi
+          gh workflow run docker.yml --ref "${ref}" -f "releaseTag=${{ needs.build.outputs.release_tag }}" -f doPublish=${{ needs.build.outputs.do_release }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
      
