@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251126.130344-dev_copilot.add-json-rpc-server-for-fcli" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251127.013104-dev_copilot.add-json-rpc-server-for-fcli" %}
 
 
 <div id="header">
@@ -57,31 +57,97 @@ fcli_version:
 <p>The fcli JSON-RPC server provides a simple JSON-RPC 2.0 interface for IDE plugins and other tools to interact with Fortify products through fcli. Unlike the MCP server which is designed for LLM integration, the RPC server exposes a smaller set of general-purpose methods suitable for programmatic access from IDE plugins.</p>
 </div>
 <div class="paragraph">
-<p>The server reads JSON-RPC requests from stdin and writes responses to stdout, one JSON object per line.</p>
+<p>The server reads JSON-RPC requests from stdin and writes responses to stdout, one JSON object per line. Sessions are automatically logged out when the server terminates.</p>
 </div>
 <div class="paragraph">
 <p>Available RPC methods:</p>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>SESSION METHODS (per product):</pre>
+</div>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p>fcli.execute: Execute an fcli command synchronously and return structured results
+<p>fcli.ssc.login: Login to SSC
+Parameters:</p>
+</li>
+<li>
+<p>url (string, required): SSC URL</p>
+</li>
+<li>
+<p>user (string): Username for user/password auth</p>
+</li>
+<li>
+<p>password (string): Password for user/password auth</p>
+</li>
+<li>
+<p>token (string): UnifiedLoginToken or CIToken</p>
+</li>
+<li>
+<p>client-auth-token (string, optional): SC-SAST client auth token</p>
+</li>
+<li>
+<p>sc-sast-url (string, optional): SC-SAST controller URL</p>
+</li>
+<li>
+<p>expire-in (string): Token expiration (e.g., "1d", "8h")</p>
+</li>
+<li>
+<p>insecure (boolean): Allow insecure connections
+Note: Requires one of (user+password) or token</p>
+</li>
+<li>
+<p>fcli.ssc.logout: Logout from SSC session</p>
+</li>
+<li>
+<p>fcli.fod.login: Login to FoD
+Parameters:</p>
+</li>
+<li>
+<p>url (string, required): FoD URL (e.g., "https://ams.fortify.com")</p>
+</li>
+<li>
+<p>client-id (string): API client ID</p>
+</li>
+<li>
+<p>client-secret (string): API client secret</p>
+</li>
+<li>
+<p>user (string): Username</p>
+</li>
+<li>
+<p>password (string): Password</p>
+</li>
+<li>
+<p>tenant (string): Tenant name (required for user/password)</p>
+</li>
+<li>
+<p>insecure (boolean): Allow insecure connections
+Note: Requires either (client-id+client-secret) or (user+password+tenant)</p>
+</li>
+<li>
+<p>fcli.fod.logout: Logout from FoD session</p>
+<div class="literalblock">
+<div class="content">
+<pre>EXECUTION METHODS:</pre>
+</div>
+</div>
+</li>
+<li>
+<p>fcli.execute: Execute an fcli command synchronously and return ALL results
 Parameters:</p>
 </li>
 <li>
 <p>command (string, required): The fcli command to execute (e.g., "ssc appversion list")</p>
 </li>
 <li>
-<p>collectRecords (boolean, optional): If true, collect structured records instead of stdout</p>
+<p>collectRecords (boolean, optional): If true, collect structured records instead of stdout
+Note: For large datasets, use fcli.executeAsync + fcli.getPage instead</p>
 </li>
 <li>
-<p>offset (integer, optional): For paging, the offset to start from (default: 0)</p>
-</li>
-<li>
-<p>limit (integer, optional): For paging, the maximum number of records (default: 100)</p>
-</li>
-<li>
-<p>fcli.executeAsync: Start async command execution, returns cacheKey for retrieving results
+<p>fcli.executeAsync: Start async command execution, returns cacheKey for paged retrieval
 Parameters:</p>
 </li>
 <li>
@@ -120,6 +186,11 @@ Parameters:</p>
 </li>
 <li>
 <p>cacheKey (string, optional): Specific key to clear, or omit to clear all</p>
+<div class="literalblock">
+<div class="content">
+<pre>INFO METHODS:</pre>
+</div>
+</div>
 </li>
 <li>
 <p>fcli.listCommands: List available fcli commands with optional filtering
@@ -145,26 +216,19 @@ Parameters: none</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>For commands that return large datasets (e.g., issue lists), use fcli.executeAsync followed by fcli.getPage to efficiently retrieve paged results with background loading and caching.</p>
+<p>Typical workflow:
+1. Call fcli.ssc.login or fcli.fod.login with credentials
+2. Execute commands via fcli.execute or fcli.executeAsync
+3. Session options are automatically added to commands
+4. Sessions are logged out automatically when RPC server terminates</p>
 </div>
 <div class="paragraph">
-<p>Example IDE plugin configuration (VS Code settings.json style):</p>
+<p>Example JSON-RPC requests:</p>
 </div>
 <div class="paragraph">
-<p>{
-  "fortify.fcli.path": "/path/to/fcli",
-  "fortify.rpc.args": ["util", "rpc-server", "start"]
-}</p>
-</div>
-<div class="paragraph">
-<p>Example JSON-RPC request/response:</p>
-</div>
-<div class="paragraph">
-<p>Request:  {"jsonrpc":"2.0","method":"fcli.version","id":1}
-Response: {"jsonrpc":"2.0","result":{"version":"x.y.z","buildDate":"&#8230;&#8203;"},"id":1}</p>
-</div>
-<div class="paragraph">
-<p>Note: Like the MCP server, you&#8217;ll need to have active fcli sessions for each product you want to interact with. Login sessions must be created separately using 'fcli &lt;product&gt; session login' commands.</p>
+<p>{"jsonrpc":"2.0","method":"fcli.ssc.login","params":{"url":"https://ssc.example.com","token":"mytoken"},"id":1}
+{"jsonrpc":"2.0","method":"fcli.execute","params":{"command":"ssc appversion list","collectRecords":true},"id":2}
+{"jsonrpc":"2.0","method":"fcli.ssc.logout","id":3}</p>
 </div>
 </div>
 </div>
@@ -205,7 +269,7 @@ Response: {"jsonrpc":"2.0","result":{"version":"x.y.z","buildDate":"&#8230;&#820
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-11-26 13:06:31 UTC
+Last updated 2025-11-27 01:33:46 UTC
 </div>
 </div>
 </body>
