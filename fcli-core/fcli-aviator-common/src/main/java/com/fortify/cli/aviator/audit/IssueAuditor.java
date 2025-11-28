@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,8 +43,8 @@ import com.fortify.cli.aviator.fpr.Vulnerability;
 import com.fortify.cli.aviator.fpr.filter.Filter;
 import com.fortify.cli.aviator.fpr.filter.FilterSet;
 import com.fortify.cli.aviator.fpr.filter.FolderDefinition;
-import com.fortify.cli.aviator.fpr.filter.SearchTree;
 import com.fortify.cli.aviator.fpr.filter.TagDefinition;
+import com.fortify.cli.aviator.fpr.filter.VulnerabilityFilterer;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
@@ -279,51 +278,55 @@ public class IssueAuditor {
         }
         return false;
     }
+
     private List<Vulnerability> filterVulnerabilities(List<Vulnerability> allVulnerabilities, FilterSet fs) {
         List<String> targetFolderNames = filterSelection.getTargetFolderNames();
 
         List<Filter> folderFilters = fs.getFilters().stream()
-                .filter(f -> "setFolder".equalsIgnoreCase(f.getAction())).collect(Collectors.toList());
-        List<Filter> hideFilters = fs.getFilters().stream()
-                .filter(f -> "hide".equalsIgnoreCase(f.getAction())).collect(Collectors.toList());
+            .filter(f -> "setFolder".equalsIgnoreCase(f.getAction()))
+            .collect(Collectors.toList());
 
-        Map<Filter, SearchTree> parsedQueries = new HashMap<>();
-        // Use a stream to populate the map
-        Stream.concat(folderFilters.stream(), hideFilters.stream()).forEach(f -> {
-            try {
-                parsedQueries.put(f, com.fortify.cli.aviator.fpr.filter.engine.FilterParser.parse(f.getQuery()));
-            } catch (Exception e) {
-                LOG.error("Failed to parse filter query: '{}'. This filter will be skipped.", f.getQuery(), e);
-                parsedQueries.put(f, new com.fortify.cli.aviator.fpr.filter.SearchTree(null));
-            }
-        });
+        List<Filter> hideFilters = fs.getFilters().stream()
+            .filter(f -> "hide".equalsIgnoreCase(f.getAction()))
+            .collect(Collectors.toList());
 
         Map<String, List<Vulnerability>> folderContents = new HashMap<>();
-        for (Vulnerability vuln : allVulnerabilities) {
+
+        // 1. Process "setFolder" filters
+        if (folderFilters.isEmpty()) {
+            folderContents.put("Default", new ArrayList<>(allVulnerabilities));
+        } else {
             for (Filter folderFilter : folderFilters) {
-                if (com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator.evaluate(parsedQueries.get(folderFilter), vuln)) {
-                    folderContents.computeIfAbsent(folderFilter.getActionParam(), k -> new ArrayList<>()).add(vuln);
-                    break;
+                List<Vulnerability> matches = VulnerabilityFilterer.filter(allVulnerabilities, folderFilter.getQuery());
+                folderContents.computeIfAbsent(folderFilter.getActionParam(), k -> new ArrayList<>()).addAll(matches);
+            }
+        }
+
+        // 2. Process "hide" filters
+        for (Filter hideFilter : hideFilters) {
+            for (List<Vulnerability> folderList : folderContents.values()) {
+                if (folderList.isEmpty()) continue;
+
+                List<Vulnerability> toHide = VulnerabilityFilterer.filter(folderList, hideFilter.getQuery());
+                if (!toHide.isEmpty()) {
+                    folderList.removeAll(toHide);
                 }
             }
         }
 
-        folderContents.values().forEach(vulnList ->
-                vulnList.removeIf(vuln -> hideFilters.stream().anyMatch(
-                        hideFilter -> com.fortify.cli.aviator.fpr.filter.engine.VulnerabilityEvaluator.evaluate(parsedQueries.get(hideFilter), vuln)
-                ))
-        );
-
+        // 3. Selection Logic (Flatten all or select specific folders)
         if (!filterSelection.isFilteringByFolder()) {
-            List<Vulnerability> result = folderContents.values().stream().flatMap(List::stream).collect(Collectors.toList());
+            List<Vulnerability> result = folderContents.values().stream()
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
             logger.info("FilterSet '{}' applied. {} of {} total vulnerabilities remain.", fs.getTitle(), result.size(), allVulnerabilities.size());
             return result;
         } else {
-            // This logic correctly finds folder IDs based on user-provided names.
             Set<String> targetFolderIds = fs.getFolderDefinitions().stream()
-                    .filter(fd -> targetFolderNames.stream().anyMatch(name -> name.equalsIgnoreCase(fd.getName())))
-                    .map(FolderDefinition::getId)
-                    .collect(Collectors.toSet());
+                .filter(fd -> targetFolderNames.stream().anyMatch(name -> name.equalsIgnoreCase(fd.getName())))
+                .map(FolderDefinition::getId)
+                .collect(Collectors.toSet());
 
             if (targetFolderIds.isEmpty()) {
                 String available = fs.getFolderDefinitions().stream().map(FolderDefinition::getName).collect(Collectors.joining("', '", "'", "'"));
@@ -331,54 +334,13 @@ public class IssueAuditor {
             }
 
             List<Vulnerability> result = folderContents.entrySet().stream()
-                    .filter(entry -> targetFolderIds.contains(entry.getKey()))
-                    .flatMap(entry -> entry.getValue().stream())
-                    .collect(Collectors.toList());
+                .filter(entry -> targetFolderIds.contains(entry.getKey()))
+                .flatMap(entry -> entry.getValue().stream())
+                .distinct()
+                .collect(Collectors.toList());
 
             logger.info("Filtered by folder(s) '{}'. {} vulnerabilities remain.", targetFolderNames, result.size());
             return result;
-        }
-    }
-
-    private void updateSkippedIssue(UserPrompt userPrompt, String reasonTemplate, int issuesInCategory, int totalIssues) {
-        if (userPrompt == null || userPrompt.getIssueData() == null) {
-            LOG.error("Cannot update skipped issue status for null userPrompt or issue data.");
-            return;
-        }
-        String instanceId = userPrompt.getIssueData().getInstanceID();
-        AuditIssue auditIssue = auditIssueMap.get(instanceId);
-
-        String comment = reasonTemplate
-                .replace("{issues_new_in_category}", String.valueOf(issuesInCategory))
-                .replace("{MAX_PER_CATEGORY}", String.valueOf(MAX_PER_CATEGORY))
-                .replace("{issues_new_total}", String.valueOf(totalIssues))
-                .replace("{MAX_TOTAL}", String.valueOf(MAX_TOTAL));
-
-        if (auditIssue != null) {
-            LOG.debug("Updating existing audit entry for skipped issue: {}", instanceId);
-            try {
-                auditProcessor.addCommentToIssueXml(instanceId, comment, Constants.USER_NAME);
-            } catch (Exception e) {
-                LOG.error("Failed to add comment to XML for skipped issue {}: {}", instanceId, e.getMessage());
-            }
-
-            auditProcessor.updateIssueTag(auditIssue, Constants.AVIATOR_STATUS_TAG_ID, Constants.PROCESSED_BY_AVIATOR);
-
-            Map<String, String> tags = auditIssue.getTags();
-            String currentAnalysisStatus = tags.get(Constants.ANALYSIS_TAG_ID);
-            if (currentAnalysisStatus == null || currentAnalysisStatus.isEmpty() || "Not Set".equalsIgnoreCase(currentAnalysisStatus)) {
-                auditProcessor.updateIssueTag(auditIssue, Constants.ANALYSIS_TAG_ID, Constants.PENDING_REVIEW);
-                LOG.debug("Set Analysis tag to Pending Review for skipped issue: {}", instanceId);
-            } else {
-                LOG.debug("Skipped issue {} already has Analysis status '{}', not changing.", instanceId, currentAnalysisStatus);
-            }
-
-        } else {
-            try {
-                auditProcessor.addSkippedIssueElement(instanceId, comment);
-            } catch (Exception e) {
-                LOG.error("Failed to add skipped issue element to audit.xml for {}: {}", instanceId, e.getMessage());
-            }
         }
     }
 }
