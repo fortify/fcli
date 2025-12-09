@@ -141,12 +141,13 @@ public class ToolSetupToolsMixin {
         /**
          * Get the effective path from either command-line argument or <TOOL>_HOME environment variable.
          * Returns null if neither is specified or if a version was specified instead.
+         * Special case: "auto" is treated the same as no argument - checks HOME environment variable.
          */
         public String getEffectivePath() {
             if (isPathArgument()) {
                 return argument;
             }
-            if (argument == null || argument.isEmpty()) {
+            if (argument == null || argument.isEmpty() || "auto".equals(argument)) {
                 String envVar = tool.getDefaultEnvPrefix() + "_HOME";
                 return EnvHelper.env(envVar);
             }
@@ -155,7 +156,7 @@ public class ToolSetupToolsMixin {
         
         /**
          * Get the effective version from either command-line argument or <TOOL>_VERSION environment variable.
-         * Returns "latest" if neither path nor version is specified.
+         * Returns "latest" if neither path nor version is specified. The special value "auto" is converted to "latest".
          */
         public String getEffectiveVersion() {
             // If a path is specified (via argument or HOME env var), no version
@@ -163,16 +164,16 @@ public class ToolSetupToolsMixin {
                 return null;
             }
             
-            // If version specified via argument, use it
+            // If version specified via argument, use it (convert "auto" to "latest")
             if (argument != null && !argument.isEmpty()) {
-                return argument;
+                return "auto".equals(argument) ? "latest" : argument;
             }
             
-            // Check VERSION environment variable
+            // Check VERSION environment variable (convert "auto" to "latest")
             String versionEnvVar = tool.getDefaultEnvPrefix() + "_VERSION";
             String versionEnvValue = EnvHelper.env(versionEnvVar);
             if (versionEnvValue != null && !versionEnvValue.isEmpty()) {
-                return versionEnvValue;
+                return "auto".equals(versionEnvValue) ? "latest" : versionEnvValue;
             }
             
             // Default to latest

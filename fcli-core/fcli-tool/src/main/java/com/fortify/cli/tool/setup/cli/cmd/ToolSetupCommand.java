@@ -58,7 +58,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
     private record ToolSetupResult(String toolName, String status, String version, String binDir) {}
     
     // Record to hold registration result
-    private record RegistrationResult(boolean success, String installDir) {}
+    private record RegistrationResult(boolean success, String version, String installDir) {}
     
     // Record to hold install result
     private record InstallResult(String action, String installDir) {}
@@ -99,7 +99,7 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
         RegistrationResult regResult = tryRegisterTool(spec);
         if (regResult.success()) {
             System.out.println("✓ " + toolName + " registered successfully");
-            String displayVersion = spec.hasPath() ? "preinstalled" : spec.getEffectiveVersion();
+            String displayVersion = spec.hasPath() ? "preinstalled" : regResult.version();
             return new ToolSetupResult(toolName, "registered", displayVersion, regResult.installDir());
         }
         
@@ -133,18 +133,21 @@ public class ToolSetupCommand extends AbstractRunnableCommand {
             }
         }
         
+        AtomicReference<String> versionRef = new AtomicReference<>();
         AtomicReference<String> installDirRef = new AtomicReference<>();
-        Consumer<ObjectNode> recordConsumer = record -> 
+        Consumer<ObjectNode> recordConsumer = record -> {
+            versionRef.set(extractTextField(record, "version", null));
             installDirRef.set(extractTextField(record, "installDir", "binDir"));
+        };
         
         var result = executeFcliCommandWithRecordConsumer(cmd, recordConsumer, true);
         if (result != null && result.getExitCode() == 0) {
-            return new RegistrationResult(true, installDirRef.get());
+            return new RegistrationResult(true, versionRef.get(), installDirRef.get());
         }
         
         // Registration failed, but don't throw - just log progress
         System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
-        return new RegistrationResult(false, null);
+        return new RegistrationResult(false, null, null);
     }
     
     /**
