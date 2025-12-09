@@ -20,12 +20,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -41,7 +43,8 @@ import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.tool._common.helper.ToolRegistry;
+import com.fortify.cli.tool._common.helper.Tool;
+import com.fortify.cli.tool._common.helper.ToolDependency;
 
 import lombok.SneakyThrows;
 
@@ -365,7 +368,11 @@ public final class ToolDefinitionsHelper {
     }
 
     private static Set<String> getRequiredYamlFileNames() {
-        return ToolRegistry.getRegisteredToolNames().stream().map(s -> s + ".yaml").collect(Collectors.toSet());
+        var toolNames = Stream.concat(
+            Arrays.stream(Tool.values()).map(Tool::getToolName),
+            Arrays.stream(ToolDependency.values()).map(ToolDependency::getToolName)
+        );
+        return toolNames.map(s -> s + ".yaml").collect(Collectors.toSet());
     }
 
     private static final void addYamlOutputDescriptors(List<ToolDefinitionsOutputDescriptor> result) {

@@ -28,6 +28,7 @@ import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.Tool;
+import com.fortify.cli.tool._common.helper.ToolDependency;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
@@ -192,7 +193,7 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
         }
 
         private ToolDefinitionArtifactDescriptor getJreArtifactDescriptor(String jreVersion, String platform) {
-            var toolDefinitions = ToolDefinitionsHelper.getToolDefinitionRootDescriptor("jre");
+            var toolDefinitions = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(ToolDependency.JRE.getToolName());
             var jreVersionDescriptor = toolDefinitions.getVersion(jreVersion);
             var jreBinaryDescriptor = jreVersionDescriptor.getBinaries().get(platform);
             if ( jreBinaryDescriptor==null ) { throw new FcliSimpleException("No JRE found for platform "+platform); }
