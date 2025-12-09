@@ -166,12 +166,16 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
             try {
                 FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.LanguageLevels, String.valueOf(technologyStackId), languageLevel, true);
                 if (lookupDescriptor != null && lookupDescriptor.getValue() != null) {
-                    return Integer.valueOf(lookupDescriptor.getValue());
+                    try {
+                        return Integer.valueOf(lookupDescriptor.getValue());
+                    } catch (NumberFormatException ex) {
+                        throw new FcliTechnicalException("Failed to parse language level ID from lookup descriptor value: " + lookupDescriptor.getValue(), ex);
+                    }
                 }
                 // If lookup returns null, the language level is invalid - return null instead of falling back to currentSetup
                 return null;
             } catch (JsonProcessingException ex) {
-                throw new FcliTechnicalException(ex.getMessage());
+                throw new FcliTechnicalException("Error processing technology stack lookup", ex);
             }
         } else if (currentSetup != null && currentSetup.getLanguageLevelId() != null 
                    && currentSetup.getTechnologyStackId() != null 
