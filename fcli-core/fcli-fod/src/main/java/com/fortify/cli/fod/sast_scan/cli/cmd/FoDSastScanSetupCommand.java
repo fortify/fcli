@@ -58,16 +58,16 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
     private String technologyStack;
     @Option(names = {"--language-level"})
     private String languageLevel;
-    @Option(names = {"--oss"})
-    private final Boolean performOpenSourceAnalysis = false;
+    @Option(names = {"--oss"}, negatable = true)
+    private Boolean performOpenSourceAnalysis;
     @Option(names = {"--audit-preference"}, required = true)
     private FoDEnums.AuditPreferenceTypes auditPreferenceType;
     @Option(names = {"--include-third-party-libs"})
     private final Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
     private final Boolean useSourceControl = false;
-    @Option(names={"--use-aviator"})
-    private Boolean useAviator = false;
+    @Option(names = {"--use-aviator"}, negatable = true)
+    private Boolean useAviator;
 
     // TODO We don't actually use a progress writer, but for now we can't
     //      remove the --progress option to maintain backward compatibility.
@@ -116,26 +116,59 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         validateEntitlement(currentSetup, entitlementIdToUse, relId, atd);
         LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
-        var technologyStackId = getTechnologyStackId(unirest);
-        var languageLevelId = getLanguageLevelId(unirest, technologyStackId);
+        // Determine technology stack / language level IDs:
+        // Always lookup the configured technology stack (including the default "Auto Detect"),
+        // so the associated numeric id (e.g. 32) is used when the user did not explicitly pass the option.
+        Integer technologyStackId = getTechnologyStackId(unirest);
 
-        FoDScanConfigSastSetupRequest setupSastScanRequest = FoDScanConfigSastSetupRequest.builder()
+        Integer languageLevelId;
+        if (languageLevel != null && languageLevel.length() > 0) {
+            languageLevelId = getLanguageLevelId(unirest, technologyStackId);
+        } else if (currentSetup != null && currentSetup.getLanguageLevelId() != null) {
+            languageLevelId = currentSetup.getLanguageLevelId();
+        } else {
+            languageLevelId = null;
+        }
+
+        var builder = FoDScanConfigSastSetupRequest.builder()
                 .entitlementId(entitlementIdToUse)
                 .assessmentTypeId(assessmentTypeId)
                 .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
                 .technologyStackId(technologyStackId)
                 .languageLevelId(languageLevelId)
-                .performOpenSourceAnalysis(performOpenSourceAnalysis)
                 .auditPreferenceType(auditPreferenceType.name())
                 .includeThirdPartyLibraries(includeThirdPartyLibraries)
-                .useSourceControl(useSourceControl)
-                .includeFortifyAviator(useAviator).build();
+                .useSourceControl(useSourceControl);
+
+        // OSS value priority: CLI option (if specified) > existing setup value
+        Boolean ossValue = null;
+        if (performOpenSourceAnalysis != null) {
+            ossValue = performOpenSourceAnalysis;
+        } else if (currentSetup != null && currentSetup.getPerformOpenSourceAnalysis() != null) {
+            ossValue = currentSetup.getPerformOpenSourceAnalysis();
+        }
+        if (ossValue != null) {
+            builder.performOpenSourceAnalysis(ossValue);
+        }
+
+        // Aviator value priority: CLI option (if specified) > existing setup value
+        Boolean aviatorValue = null;
+        if (useAviator != null) {
+            aviatorValue = useAviator;
+        } else if (currentSetup != null && currentSetup.getIncludeFortifyAviator() != null) {
+            aviatorValue = currentSetup.getIncludeFortifyAviator();
+        }
+        if (aviatorValue != null) {
+            builder.includeFortifyAviator(aviatorValue);
+        }
+
+        FoDScanConfigSastSetupRequest setupSastScanRequest = builder.build();
 
         return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
     }
 
     private Integer getLanguageLevelId(UnirestInstance unirest, Integer technologyStackId) {
-        Integer languageLevelId = 0;
+        Integer languageLevelId = null;
         FoDLookupDescriptor lookupDescriptor = null;
         if (languageLevel != null && languageLevel.length() > 0) {
             try {
@@ -156,8 +189,14 @@ public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScan
         } catch (JsonProcessingException ex) {
             throw new FcliTechnicalException(ex.getMessage());
         }
-        // TODO return 0 or null, or throw exception?
-        return lookupDescriptor==null ? 0 : Integer.valueOf(lookupDescriptor.getValue());
+        if (lookupDescriptor == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(lookupDescriptor.getValue());
+        } catch (NumberFormatException ex) {
+            throw new FcliTechnicalException("Failed to parse technology stack ID from lookup descriptor value: " + lookupDescriptor.getValue(), ex);
+        }
     }
 
     private void validateEntitlement(FoDScanConfigSastDescriptor currentSetup, Integer entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {

@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.fod.sast_scan.helper;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FoDScanConfigSastSetupRequest {
     private Integer assessmentTypeId;
     private String entitlementFrequencyType;

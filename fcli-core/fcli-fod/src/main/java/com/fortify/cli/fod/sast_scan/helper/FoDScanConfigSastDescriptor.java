@@ -34,4 +34,5 @@ public class FoDScanConfigSastDescriptor extends JsonNodeHolder {
     private String languageLevel;
     private Boolean performOpenSourceAnalysis;
     private String auditPreferenceType;
+    private Boolean includeFortifyAviator;
 }
