@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.102642-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.121213-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -67,10 +67,11 @@ fcli_version:
               _                   name&gt;_]
                                  [<strong>--network-auth-type</strong>=<em>&lt;networkAuthenticationType</em>
        _                          &gt;_] [<strong>-p</strong>=<em>&lt;password&gt;</em>] [<strong>--policy</strong>=<em>&lt;scanPolicy&gt;</em>]
-                                 <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [<strong>--timebox</strong>=<em>&lt;timebox&gt;</em>]
-                                 [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>] [<strong>-u</strong>=<em>&lt;username&gt;</em>]
-                                 <strong>--url</strong>=<em>&lt;siteUrl&gt;</em> [<strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em>]
-                                 [<strong>-e</strong>=<em>&lt;exclusions&gt;</em>[,<em>&lt;exclusions&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                                 [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
+                                 [<strong>--timebox</strong>=<em>&lt;timebox&gt;</em>] [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>]
+                                 [<strong>-u</strong>=<em>&lt;username&gt;</em>] <strong>--url</strong>=<em>&lt;siteUrl&gt;</em>
+                                 [<strong>--vpn</strong>=<em>&lt;fodConnectNetwork&gt;</em>] [<strong>-e</strong>=<em>&lt;exclusions&gt;</em>[,
+                                 <em>&lt;exclusions&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                                  [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
                                  [<strong>--debug</strong>]] [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -163,6 +164,10 @@ If you wish to use a Login Macro for authentication then you can upload it direc
 <dt class="hdlist1"><strong>--policy</strong>=<em>&lt;scanPolicy&gt;</em></dt>
 <dd>
 <p>The Scan Policy to use. Use 'fod rest lookup DastAutomatedScanPolicies' to display valid values.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>--redundant-page-detection</strong></dt>
 <dd>
@@ -279,7 +284,7 @@ If you wish to use a Login Macro for authentication then you can upload it direc
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 10:29:18 UTC
+Last updated 2025-12-09 12:14:41 UTC
 </div>
 </div>
 </body>
