@@ -87,8 +87,8 @@ class ToolFcliSpec extends FcliBaseSpec {
         // Verify source installation exists
         assert Files.exists(sourceBinScript)
         
-        // Now reinstall using --copy-from (should detect version and skip if already installed)
-        def copyArgs = "tool fcli install -y --copy-from ${sourceBinScript} -b ${baseDir} --progress none"
+        // Now reinstall using --copy-if-matching (should detect version and skip if already installed)
+        def copyArgs = "tool fcli install -y --copy-if-matching ${sourceBinScript} -b ${baseDir} --progress none"
         
         when:
             def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
@@ -98,8 +98,8 @@ class ToolFcliSpec extends FcliBaseSpec {
                 it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
                 it[1].contains("fcli")
                 it[1].contains(copyFromVersion)
-                // Accept either INSTALLED or SKIPPED_EXISTING (depends on whether it was already installed)
-                it[1].contains("INSTALLED") || it[1].contains("SKIPPED_EXISTING")
+                // Accept COPIED (successful copy) or SKIPPED_EXISTING (already installed)
+                it[1].contains("COPIED") || it[1].contains("SKIPPED_EXISTING")
                 Files.exists(sourceBinScript)
                 Files.exists(globalBinScript)
             }
@@ -118,8 +118,8 @@ class ToolFcliSpec extends FcliBaseSpec {
         def installArgs = "tool fcli install -y -v=${sourceVersion} -b ${baseDir} --platform ${platform} --progress none"
         Fcli.run(installArgs, {it.expectZeroExitCode()})
         
-        // Now use --copy-from with the bin directory
-        def copyArgs = "tool fcli install -y --copy-from ${sourceBinDir} -b ${baseDir} --progress none"
+        // Now use --copy-if-matching with the bin directory
+        def copyArgs = "tool fcli install -y --copy-if-matching ${sourceBinDir} -b ${baseDir} --progress none"
         
         when:
             def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
@@ -129,8 +129,8 @@ class ToolFcliSpec extends FcliBaseSpec {
                 it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
                 it[1].contains("fcli")
                 it[1].contains(sourceVersion)
-                // Accept either INSTALLED or SKIPPED_EXISTING (depends on whether already installed)
-                it[1].contains("INSTALLED") || it[1].contains("SKIPPED_EXISTING")
+                // Accept COPIED (successful copy) or SKIPPED_EXISTING (already installed)
+                it[1].contains("COPIED") || it[1].contains("SKIPPED_EXISTING")
                 Files.exists(sourceBinScript)
             }
         
@@ -148,8 +148,8 @@ class ToolFcliSpec extends FcliBaseSpec {
         def installArgs = "tool fcli install -y -v=${sourceVersion} -b ${baseDir} --platform ${platform} --progress none"
         Fcli.run(installArgs, {it.expectZeroExitCode()})
         
-        // Now use --copy-from with the install directory
-        def copyArgs = "tool fcli install -y --copy-from ${sourceInstallDir} -b ${baseDir} --progress none"
+        // Now use --copy-if-matching with the install directory
+        def copyArgs = "tool fcli install -y --copy-if-matching ${sourceInstallDir} -b ${baseDir} --progress none"
         
         when:
             def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
@@ -159,8 +159,8 @@ class ToolFcliSpec extends FcliBaseSpec {
                 it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
                 it[1].contains("fcli")
                 it[1].contains(sourceVersion)
-                // Accept either INSTALLED or SKIPPED_EXISTING (depends on whether already installed)
-                it[1].contains("INSTALLED") || it[1].contains("SKIPPED_EXISTING")
+                // Accept COPIED (successful copy) or SKIPPED_EXISTING (already installed)
+                it[1].contains("COPIED") || it[1].contains("SKIPPED_EXISTING")
                 Files.exists(sourceBinScript)
             }
         
@@ -174,12 +174,12 @@ class ToolFcliSpec extends FcliBaseSpec {
         Files.createDirectories(nonExecutablePath.getParent())
         Files.writeString(nonExecutablePath, "not an executable")
         
-        def copyArgs = "tool fcli install -y --copy-from ${nonExecutablePath} -b ${baseDir} --progress none"
+        def copyArgs = "tool fcli install -y --copy-if-matching ${nonExecutablePath} -b ${baseDir} --progress none"
         
         when:
             def result = Fcli.run(copyArgs, {it.expectZeroExitCode()})
         then:
-            // When copy-from source is invalid, it should fall back to download
+            // When copy-if-matching source is invalid, it should fall back to download
             // and successfully install the latest version
             result.exitCode == 0
             result.stdout.size() > 0
