@@ -91,10 +91,10 @@ steps:
   # new, module-specific session.
   - with:
       sessions:
-        - login: ${#fcliCmd(loginEnvPrefix, loginCmd)} --${module}-session ${sessionName} ${#optsFromEnv(loginOpts)}
-          logout: ${#fcliCmd(logoutEnvPrefix, logoutCmd)} --${module}-session ${sessionName} ${#optsFromEnv(logoutOpts)}
+        - login: ${#fcliCmd(loginEnvPrefix, loginCmd)} "--${module}-session=${sessionName}" ${#optsFromEnv(loginOpts)}
+          logout: ${#fcliCmd(logoutEnvPrefix, logoutCmd)} "--${module}-session=${sessionName}" ${#optsFromEnv(logoutOpts)}
       do:
         - run.fcli: 
-            ci: ${#actionCmd(ciEnvPrefix, module, 'ci')} --${module}-session=${sessionName}
+            ci: ${#actionCmd(ciEnvPrefix, module, 'ci')} "--${module}-session=${sessionName}"
       
       

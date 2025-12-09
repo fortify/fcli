@@ -14,8 +14,8 @@ package com.fortify.cli.fod.sast_scan.cli.cmd;
 
 import java.util.Objects;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -51,7 +51,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false) @CommandGroup("*-scan-setup")
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public class FoDSastScanSetupCommand extends AbstractFoDScanSetupCommand<FoDScanConfigSastDescriptor> implements IRecordTransformer {
-    private static final Log LOG = LogFactory.getLog(FoDSastScanSetupCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDSastScanSetupCommand.class);
     @Getter @Mixin private OutputHelperMixins.Setup outputHelper;
 
     @Option(names = {"--technology-stack"}, required = true, defaultValue = "Auto Detect")

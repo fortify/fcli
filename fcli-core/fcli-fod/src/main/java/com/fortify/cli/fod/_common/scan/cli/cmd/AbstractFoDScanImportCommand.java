@@ -57,7 +57,7 @@ public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOu
             HttpRequest<?> baseRequest = getBaseRequest(unirest, releaseId)
                     .queryString("importScanSessionId", importScanSessionId)
                     .queryString("fileLength", file.length());
-            FoDFileTransferHelper.uploadChunked(unirest, baseRequest, file);
+            FoDFileTransferHelper.uploadChunked(unirest, baseRequest, file, progressWriter);
             postUpload(unirest, progressWriter, file);
             return releaseDescriptor.asObjectNode()
                     .put("importScanSessionId", importScanSessionId)

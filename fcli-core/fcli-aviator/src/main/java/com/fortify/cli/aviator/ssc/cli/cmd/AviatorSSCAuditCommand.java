@@ -143,12 +143,13 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
         String prefix = String.format("aviator_%s_%s_", av.getApplicationName().replaceAll("[^a-zA-Z0-9.-]", "_"), av.getVersionName().replaceAll("[^a-zA-Z0-9.-]", "_"));
         Path tempFpr = Files.createTempFile(prefix, ".fpr");
 
-        try {
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), true),
                     tempFpr.toFile(),
-                    SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
+                    SSCFileTransferHelper.ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN,
+                    progressWriter);
             return tempFpr;
         } catch (UnexpectedHttpResponseException e) {
             Files.deleteIfExists(tempFpr);
@@ -163,8 +164,10 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
 
     @SneakyThrows
     private String uploadAuditedFprToSSC(UnirestInstance unirest, File auditedFpr, SSCAppVersionDescriptor av) {
-        JsonNode uploadResponse = SSCFileTransferHelper.restUpload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr, JsonNode.class);
-        return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
+        try (IProgressWriter progressWriter = progressWriterFactoryMixin.create()) {
+            JsonNode uploadResponse = SSCFileTransferHelper.restUpload(unirest, SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()), auditedFpr, JsonNode.class, progressWriter);
+            return uploadResponse.path("data").path("id").asText("UPLOAD_FAILED");
+        }
     }
 
     @Override

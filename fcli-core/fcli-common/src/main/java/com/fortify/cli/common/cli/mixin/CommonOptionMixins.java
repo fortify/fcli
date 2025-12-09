@@ -50,7 +50,17 @@ public class CommonOptionMixins {
         @Option(names = {"-f", "--file"}, required=true)
         @Getter private File file;
     }
-    
+
+    public static class SkipIfExistsOption {
+        @Option(names = { "--skip-if-exists" })
+        @Getter private boolean skipIfExists;
+    }
+
+    public static class AutoRequiredAttrsOption {
+        @Option(names = { "--auto-required-attrs" })
+        @Getter private boolean autoRequiredAttrs;
+    }
+
     public static class RequireConfirmation {
         @Mixin private CommandHelperMixin commandHelper;
         @Option(names = {"-y", "--confirm"}, defaultValue = "false")

@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -46,7 +46,7 @@ import picocli.CommandLine.Option;
 @Command(name = "list-components", aliases = "lsc")
 @CommandGroup("oss-components")
 public final class FoDOssComponentsListCommand extends AbstractFoDJsonNodeOutputCommand {
-    private static final Log LOG = LogFactory.getLog(FoDOssComponentsListCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDOssComponentsListCommand.class);
     @Getter
     @Mixin
     private OutputHelperMixins.TableWithQuery outputHelper;

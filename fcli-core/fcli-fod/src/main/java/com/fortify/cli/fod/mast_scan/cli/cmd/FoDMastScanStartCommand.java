@@ -17,13 +17,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
@@ -48,7 +49,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
 public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
-    private static final Log LOG = LogFactory.getLog(FoDMastScanStartCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FoDMastScanStartCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
@@ -132,7 +133,9 @@ public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
                 .scanTool(FcliBuildProperties.INSTANCE.getFcliProjectName())
                 .scanToolVersion(FcliBuildProperties.INSTANCE.getFcliVersion()).build();
 
-        return FoDScanMobileHelper.startScan(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile());
+        try (IProgressWriter progressWriter = progressWriterFactory.create()) {
+            return FoDScanMobileHelper.startScan(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile(), progressWriter);
+        }
     }
 
     private void validateEntitlement(FoDScanConfigMobileDescriptor currentSetup, Integer entitlementIdToUse, String relId, FoDReleaseAssessmentTypeDescriptor atd) {

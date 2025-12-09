@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
@@ -39,7 +40,7 @@ public class FoDScanMobileHelper extends FoDScanHelper {
 
     // TODO Split into multiple methods
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanMobileStartRequest req,
-                                                    File scanFile) {
+                                                    File scanFile, IProgressWriter progressWriter) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.MOBILE_SCANS_START).routeParam("relId", relId)
                 .queryString("startDate", (req.getStartDate()))
@@ -52,7 +53,7 @@ public class FoDScanMobileHelper extends FoDScanHelper {
             request = request.queryString("entitlementId", req.getEntitlementId());
         }
 
-        JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
+        JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile, progressWriter);
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new FcliSimpleException("Unable to retrieve scan id from response when starting Mobile scan.");

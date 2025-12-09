@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -48,41 +49,39 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     //private static final Logger LOG = LoggerFactory.getLogger(FoDAppCreateCommand.class);
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
+    @Mixin private CommonOptionMixins.SkipIfExistsOption skipIfExistsOption;
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
-    protected String applicationName;
+    private String applicationName;
 
     @Option(names = {"--description", "-d"})
-    protected String description;
-    @Option(names={"--skip-if-exists"})
-    private boolean skipIfExists = false;
+    private String description;
     @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
-    protected ArrayList<String> notifications;
+    private ArrayList<String> notifications;
     @Mixin private FoDMicroserviceAndReleaseNameResolverMixin.RequiredOption releaseNameResolverMixin;
     @Option(names = {"--release-description"})
-    protected String releaseDescription;
+    private String releaseDescription;
     @Option(names = {"--owner"}, required = false)
-    protected String owner;
+    private String owner;
     @Option(names = {"--groups"}, required = false, split=",")
-    protected ArrayList<String> userGroups;
-    @Option(names={"--auto-required-attrs"}, required = false)
-    protected boolean autoRequiredAttrs = false;
+    private ArrayList<String> userGroups;
 
     @Mixin
-    protected FoDAppTypeOptions.RequiredAppTypeOption appType;
+    private FoDAppTypeOptions.RequiredAppTypeOption appType;
     @Mixin
-    protected FoDCriticalityTypeOptions.RequiredOption criticalityType;
+    private FoDCriticalityTypeOptions.RequiredOption criticalityType;
     @Mixin
-    protected FoDAttributeUpdateOptions.OptionalAttrCreateOption appAttrs;
+    private FoDAttributeUpdateOptions.OptionalAttrCreateOption appAttrs;
     @Mixin
-    protected FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
+    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         boolean msCreated = false;
         boolean relCreated = false;
-        if (skipIfExists) {
+        if (skipIfExistsOption.isSkipIfExists()) {
             var descriptor = FoDAppHelper.getAppDescriptor(unirest, applicationName, false);
             if (descriptor != null) {
                 return addActionCommandResult(descriptor.asObjectNode(), false, false, false);
@@ -102,7 +101,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .sdlcStatus(sdlcStatus.getSdlcStatusType())
                 .owner(unirest, owner)
                 .appType(appType.getAppType())
-                .autoAttributes(unirest, appAttrs.getAttributes(), autoRequiredAttrs)
+                .autoAttributes(unirest, appAttrs.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs())
                 .userGroups(unirest, userGroups)
                 .build().validate();
         msCreated = (microserviceName != null && StringUtils.isNotBlank(microserviceName));

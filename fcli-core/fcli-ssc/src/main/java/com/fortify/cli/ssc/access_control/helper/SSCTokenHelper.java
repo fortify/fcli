@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
@@ -175,16 +176,19 @@ public class SSCTokenHelper {
                     .getBody().getData();
             result.setToken(token);
             return result;
-        } catch ( UnexpectedHttpResponseException e ) {
-            if ( e.getStatus()==404 || e.getStatus()==401 ) {
+        } catch (UnexpectedHttpResponseException e) {
+            if (e.getStatus() == 404) {
                 // Older SSC versions don't support this endpoint, so we create an SSCTokenData instance
                 // containing just the token itself.
                 var result = new SSCTokenData();
                 result.setToken(token);
                 return result; 
+            } else if (e.getStatus() == 401) {
+                throw new FcliSimpleException("Authentication failed due to invalid token. Please try with a valid token.");
             } else {
-                throw e;
+                throw new FcliSimpleException("Error connecting to SSC for token validation.", e);
             }
+
         }
     }
     

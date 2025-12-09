@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
 import lombok.Data;
 
@@ -27,15 +29,17 @@ public final class ToolDefinitionsOutputDescriptor {
     private final String name;
     private final String source;
     private final String lastUpdate;
+    @JsonProperty(IActionCommandResultSupplier.actionFieldName) private final String actionResult;
     
-    public ToolDefinitionsOutputDescriptor(String name, ToolDefinitionsStateDescriptor stateDescriptor) {
-        this(name, stateDescriptor.getSource(), stateDescriptor.getLastUpdate());
+    public ToolDefinitionsOutputDescriptor(String name, ToolDefinitionsStateDescriptor stateDescriptor, String actionResult) {
+        this(name, stateDescriptor.getSource(), stateDescriptor.getLastUpdate(), actionResult);
     }
     
-    public ToolDefinitionsOutputDescriptor(String name, String source, Date lastUpdate) {
+    public ToolDefinitionsOutputDescriptor(String name, String source, Date lastUpdate, String actionResult) {
         this.name = name;
         this.source = getFormattedString(source);
         this.lastUpdate = lastUpdate==null ? null : new SimpleDateFormat("yyyy-MM-dd HH:mm").format(lastUpdate);
+        this.actionResult = actionResult;
     }
     
     private static final String getFormattedString(String str) {
