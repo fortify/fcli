@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.common.cli.cmd;
 
+import com.fortify.cli.common.cli.util.FcliWrappedHelpExclude;
+
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 /**
@@ -21,6 +24,12 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 public abstract class AbstractContainerCommand {
-    @Option(names = {"-h", "--help"}, usageHelp = true)
-    private boolean usageHelpRequested;
+    @ArgGroup(headingKey = "fcli.genericOptions.heading") 
+    private ContainerCommandOptions containerCommandOptions = new ContainerCommandOptions();
+
+    @FcliWrappedHelpExclude
+    private static class ContainerCommandOptions {
+        @Option(names = {"-h", "--help"}, usageHelp = true)
+        private boolean usageHelpRequested;
+    }
 }

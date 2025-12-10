@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
-import com.fortify.cli.common.cli.util.FcliHelpExclude;
+import com.fortify.cli.common.cli.util.FcliWrappedHelpExclude;
 import com.fortify.cli.common.log.LogMaskLevel;
 import com.fortify.cli.common.mcp.MCPExclude;
 
@@ -80,10 +80,10 @@ public abstract class AbstractRunnableCommand implements Callable<Integer> {
      * tools, it's probably better to define a separate usageHelp(cmd) tool, rather
      * than having a --help option on every individual tool.
      * 
-     * We also {@link FcliHelpExclude} this group from --fcli-help output, as these
+     * We also {@link FcliWrappedHelpExclude} this group from wrapper help output, as these
      * options are specific to fcli itself and not relevant to wrapper tools.
      */
-    @FcliHelpExclude
+    @FcliWrappedHelpExclude
     public static final class GenericOptionsArgGroup {
         @Option(names = {"-h", "--help"}, usageHelp = true) @MCPExclude
         private boolean usageHelpRequested;

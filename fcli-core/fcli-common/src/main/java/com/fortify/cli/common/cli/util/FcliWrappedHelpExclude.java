@@ -19,12 +19,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark ArgGroup classes that should be excluded from --fcli-help output.
- * This is useful for generic options that are specific to fcli itself and not relevant
- * to wrapper tools.
+ * Annotation to mark ArgGroup classes that should be excluded from wrapper help output
+ * (when -Xwrapped option is used). This is useful for generic options that are specific
+ * to fcli itself and not relevant to wrapper tools.
  *
  * @author Ruud Senden
  */
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface FcliHelpExclude {}
+public @interface FcliWrappedHelpExclude {}
