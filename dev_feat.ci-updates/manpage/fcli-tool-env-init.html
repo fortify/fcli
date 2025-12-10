@@ -1,5 +1,5 @@
 ---
-title: fcli-tool-setup(1)
+title: fcli-tool-env-init(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-tool-setup(1)</title>
+<title>fcli-tool-env-init(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -21,11 +21,11 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161127-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251210.130329-dev_feat.ci-updates" %}
 
 
 <div id="header">
-<h1>fcli-tool-setup(1) Manual Page</h1>
+<h1>fcli-tool-env-init(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -37,7 +37,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-tool-setup - Set up Fortify tools.</p>
+<p>fcli-tool-env-init - Initialize Fortify tool environment.</p>
 </div>
 </div>
 <div id="content">
@@ -45,12 +45,12 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool setup</strong> [<strong>--air-gapped</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
-                [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
-                [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] <strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
-                <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+<p><strong>fcli tool env init</strong> [<strong>--air-gapped</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
+                   [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
+                   [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] <strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
+                   <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                   [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
 </div>
 </div>
 </div>
@@ -72,7 +72,7 @@ Register existing tool installation at given path, fail if path does not exist o
 Register existing installation if matching version is found on system PATH, otherwise download and install requested version.</p>
 </div>
 <div class="paragraph">
-<p><code>&lt;tool&gt;</code>
+<p><code>&lt;tool&gt;</code> OR <code>&lt;tool&gt;:auto</code>
 Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX&gt;_VERSION</code> environment variables to determine version or path, with same behavior as above. If neither environment variable is specified, <code>latest</code> is used as version specifier.</p>
 </div>
 <div class="paragraph">
@@ -91,7 +91,7 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
     FVE_VERSION, FVE_HOME</p>
 </div>
 <div class="paragraph">
-<p>For ScanCentral Client, the setup command will look for a compatible JRE based on the following environment variables (in this order):
+<p>For ScanCentral Client, the init command will look for a compatible JRE based on the following environment variables (in this order):
 - SCANCENTRAL_JAVA_HOME
 - JAVA_HOME_&lt;version&gt;_&lt;arch&gt; (e.g., JAVA_HOME_17_X86_64)
 - JAVA_HOME_&lt;version&gt; (e.g., JAVA_HOME_17, JAVA_HOME_11)</p>
@@ -171,7 +171,7 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:14:14 UTC
+Last updated 2025-12-10 13:06:11 UTC
 </div>
 </div>
 </body>

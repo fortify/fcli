@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161127-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251210.130329-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -66,7 +66,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows for fine-grained control over tool installation and upgrade. If you are looking for a simpler way to set up Fortify tools, please consider using the 'fcli tool setup' command instead, which provides a higher-level interface for setting up Fortify tools and automatically detects environment characteristics.</p>
+<p>This command allows for fine-grained control over tool installation and upgrade. If you are looking for a simpler way to set up Fortify tools, please consider using the 'fcli tool env init' command instead, which provides a higher-level interface for setting up Fortify tools and automatically detects environment characteristics.</p>
 </div>
 <div class="paragraph">
 <p>By default, tools are installed to &lt;base-dir&gt;/&lt;tool-name&gt;/&lt;version&gt;. The base directory can be specified using the --base-dir option, defaulting to &lt;user.home&gt;/fortify/tools if not specified. Unless the --no-global-bin option is specified, wrapper scripts for invoking each tool will be installed to &lt;base-dir&gt;/bin, allowing users to add this single directory to the system PATH for easy invocation of all installed tools if you like invoking those tools directly. Note however that tools installed through fcli can also be invoked through the 'fcli tool &lt;tool-name&gt; run' command, allowing to run either last installed version or a specific version without needing to modify the system PATH or having to remember the installation directory.</p>
@@ -209,7 +209,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:14:14 UTC
+Last updated 2025-12-10 13:06:11 UTC
 </div>
 </div>
 </body>

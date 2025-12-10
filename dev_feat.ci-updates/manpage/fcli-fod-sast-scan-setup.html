@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161127-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251210.130329-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -47,8 +47,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod sast-scan setup</strong> [<strong>--include-third-party-libs</strong>] [<strong>--oss</strong>]
-                         [<strong>--skip-if-exists</strong>] [<strong>--use-aviator</strong>]
+<p><strong>fcli fod sast-scan setup</strong> [<strong>--include-third-party-libs</strong>] [<strong>--[no-]oss</strong>]
+                         [<strong>--skip-if-exists</strong>] [<strong>--[no-]use-aviator</strong>]
                          [<strong>--use-source-control</strong>]
                          <strong>--assessment-type</strong>=<em>&lt;assessmentType&gt;</em>
                          <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
@@ -109,7 +109,7 @@ If you do not specify a '--technology-stack' and '--language-level' (if appropri
 <dd>
 <p>The language level of the technology stack (if needed).</p>
 </dd>
-<dt class="hdlist1"><strong>--oss</strong></dt>
+<dt class="hdlist1"><strong>--[no-]oss</strong></dt>
 <dd>
 <p>Perform Open Source Analysis scan.</p>
 </dd>
@@ -129,7 +129,7 @@ If you do not specify a '--technology-stack' and '--language-level' (if appropri
 <dd>
 <p>The technology stack of the application. Default value: Auto Detect.</p>
 </dd>
-<dt class="hdlist1"><strong>--use-aviator</strong></dt>
+<dt class="hdlist1"><strong>--[no-]use-aviator</strong></dt>
 <dd>
 <p>Use Fortify Aviator to audit results and provide enhanced remediation guidance.</p>
 </dd>
@@ -216,7 +216,7 @@ If you do not specify a '--technology-stack' and '--language-level' (if appropri
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:14:13 UTC
+Last updated 2025-12-10 13:06:09 UTC
 </div>
 </div>
 </body>

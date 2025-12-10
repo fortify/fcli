@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161127-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251210.130329-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -37,7 +37,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-tool-env - Generate environment data for installed tools.</p>
+<p>fcli-tool-env - Initialize and manage tool environment.</p>
 </div>
 </div>
 <div id="content">
@@ -53,7 +53,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Use these commands to emit shell statements, CI/CD environment files, or custom templates for one or more Fortify tool installations. Combine with --tools to target specific tools and versions.</p>
+<p>The 'fcli tool env' commands provide a unified interface for setting up Fortify tools and generating environment configurations. Use 'fcli tool env init' to detect, register, and install tools, then use the format-specific commands (shell, github, ado, etc.) to emit environment variables and PATH updates for one or more Fortify tool installations.</p>
 </div>
 </div>
 </div>
@@ -75,6 +75,10 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><a href="fcli-tool-env-init.html"><strong>init</strong></a></dt>
+<dd>
+<p>Initialize Fortify tool environment.</p>
+</dd>
 <dt class="hdlist1"><a href="fcli-tool-env-shell.html"><strong>shell</strong></a></dt>
 <dd>
 <p>Emit POSIX shell exports.</p>
@@ -107,7 +111,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:14:14 UTC
+Last updated 2025-12-10 13:06:11 UTC
 </div>
 </div>
 </body>
