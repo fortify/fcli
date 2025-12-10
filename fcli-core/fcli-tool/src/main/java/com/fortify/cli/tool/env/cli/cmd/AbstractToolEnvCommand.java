@@ -259,7 +259,7 @@ public abstract class AbstractToolEnvCommand extends AbstractRunnableCommand {
     }
 
     private Tool resolveTool(String toolName) {
-        Tool exact = Tool.getByToolName(toolName);
+        Tool exact = Tool.getByToolNameOrAlias(toolName);
         if (exact != null) {
             return exact;
         }

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.tool.setup.cli.cmd;
+package com.fortify.cli.tool.env.cli.cmd;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +29,8 @@ import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
-import com.fortify.cli.tool.setup.cli.mixin.ToolSetupToolsMixin;
-import com.fortify.cli.tool.setup.cli.mixin.ToolSetupToolsMixin.ToolSetupSpec;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin.ToolSetupSpec;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -38,11 +38,10 @@ import picocli.CommandLine.Mixin;
 
 // TODO Replace all fcli invocations (at least those for data retrieval; maybe consider keeping
 //      register and install commands) with direct API calls (partially or all done; need to check)
-// TODO Both here and in env commands, support tool name aliases (debricked-cli/dcli, ...) on --tools
-@Command(name = "setup")
-public class ToolSetupCommand extends AbstractRunnableCommand {
+@Command(name = "init")
+public class ToolEnvInitCommand extends AbstractRunnableCommand {
     @Mixin @Getter
-    private ToolSetupToolsMixin toolsMixin;
+    private ToolEnvInitMixin toolsMixin;
     
     // Consumer to handle fcli command failures by printing error output
     private final Consumer<OutputHelper.Result> onFail = result -> {

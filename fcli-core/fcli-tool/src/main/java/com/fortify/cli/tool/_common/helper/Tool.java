@@ -15,29 +15,38 @@ package com.fortify.cli.tool._common.helper;
 import java.util.HashMap;
 import java.util.Map;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * Enumeration of all supported tools with their metadata and helper implementations.
  * Provides centralized tool configuration including names, binary names, and environment prefixes.
  * 
  * @author Ruud Senden
  */
-@RequiredArgsConstructor
 public enum Tool {
-    FCLI(new ToolHelperFcli()),
-    SC_CLIENT(new ToolHelperSCClient()),
-    FOD_UPLOADER(new ToolHelperFoDUploader()),
-    BUGTRACKER_UTILITY(new ToolHelperBugTrackerUtility()),
-    VULN_EXPORTER(new ToolHelperVulnExporter()),
-    DEBRICKED_CLI(new ToolHelperDebrickedCli());
+    FCLI(new ToolHelperFcli(), "fcli"),
+    SC_CLIENT(new ToolHelperSCClient(), "sc-client", "scancentral-client"),
+    FOD_UPLOADER(new ToolHelperFoDUploader(), "fod-uploader"),
+    BUGTRACKER_UTILITY(new ToolHelperBugTrackerUtility(), "bugtracker-utility", "fbtu"),
+    VULN_EXPORTER(new ToolHelperVulnExporter(), "vuln-exporter", "fve"),
+    DEBRICKED_CLI(new ToolHelperDebrickedCli(), "debricked-cli", "dcli");
     
     private static final Map<String, Tool> TOOL_NAME_MAP = new HashMap<>();
+    private static final Map<String, Tool> TOOL_ALIAS_MAP = new HashMap<>();
     
     static {
         for (Tool tool : values()) {
             TOOL_NAME_MAP.put(tool.getToolName(), tool);
+            for (String alias : tool.aliases) {
+                TOOL_ALIAS_MAP.put(alias, tool);
+            }
         }
+    }
+    
+    private final IToolHelper toolHelper;
+    private final String[] aliases;
+    
+    Tool(IToolHelper toolHelper, String... aliases) {
+        this.toolHelper = toolHelper;
+        this.aliases = aliases;
     }
     
     /**
@@ -49,7 +58,26 @@ public enum Tool {
         return TOOL_NAME_MAP.get(toolName);
     }
     
-    private final IToolHelper toolHelper;
+    /**
+     * Get the Tool enum entry by tool name or alias.
+     * @param nameOrAlias the tool name or alias (e.g., "fcli", "dcli", "scancentral-client")
+     * @return the corresponding Tool enum entry, or null if not found
+     */
+    public static Tool getByToolNameOrAlias(String nameOrAlias) {
+        Tool tool = TOOL_NAME_MAP.get(nameOrAlias);
+        if (tool == null) {
+            tool = TOOL_ALIAS_MAP.get(nameOrAlias);
+        }
+        return tool;
+    }
+    
+    /**
+     * Get all aliases for this tool (includes the canonical name).
+     * @return array of all aliases including the tool name
+     */
+    public String[] getAliases() {
+        return aliases.clone();
+    }
     
     /**
      * Get the tool name identifier (e.g., "fcli", "sc-client").

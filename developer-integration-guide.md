@@ -5,8 +5,8 @@ This guide is for developers building platform-specific integrations with fcli (
 ## Overview
 
 Fcli provides two primary integration points for CI/CD platforms:
-1. **`fcli tool setup` command** - Comprehensive tool installation and registration
-2. **`fcli tool env` command** - Environment variable generation for installed tools
+1. **`fcli tool env init` command** - Comprehensive tool installation and registration
+2. **`fcli tool env <format>` commands** - Environment variable generation for installed tools
 
 Platform integrations should handle **fcli bootstrap** (getting fcli itself) and then delegate tool installation to these commands.
 
@@ -17,7 +17,7 @@ Platform integrations should handle **fcli bootstrap** (getting fcli itself) and
 Fcli cannot install itself (circular dependency). Platform integration tools must:
 1. Resolve fcli version/path using platform-specific logic
 2. Download/cache fcli if needed
-3. Pass bootstrapped fcli to `fcli tool setup` command via `--self`
+3. Pass bootstrapped fcli to `fcli tool env init` command via `--self`
 
 ### Fcli Semantic Versioning (v3.x Support)
 
@@ -34,34 +34,17 @@ const downloadUrl = `https://github.com/fortify/fcli/releases/download/${version
 // This works for all three patterns due to GitHub release tags
 ```
 
-### The `--self` and `--self-type` Parameters
+### The `--self` Parameter
 
-Pass bootstrapped fcli to `fcli tool setup` command using these parameters:
+Pass bootstrapped fcli to `fcli tool env init` command using the `--self` parameter:
 
 #### `--self <path>`
-Path to bootstrapped fcli executable. This enables the action to use your pre-resolved fcli instead of attempting to install it.
+Path to bootstrapped fcli executable. This enables fcli to potentially use `--copy-if-matching` logic when installing the fcli tool itself, copying from the bootstrapped version if the version matches the requested version, otherwise downloading.
 
-#### `--self-type <stable|unstable>`
-Classification of the bootstrapped fcli's stability:
-
-**`stable` (default):**
-- Fcli is from trusted/verified source: pre-installed, CI/CD tool cache, explicit path
-- Action registers this fcli immediately and proceeds with version detection
-- No version mismatch handling needed
-
-**`unstable`:**
-- Fcli was dynamically downloaded from URL (GitHub releases)
-- Action treats as `--fcli-copy-if-matching` source with version matching
-- If version doesn't match, falls back to download
-- Use case: Fresh downloads where version may not exactly match requested pattern
-
-**Decision tree:**
-```
-Downloaded from GitHub releases? → unstable
-From tool cache? → stable
-Pre-installed in environment? → stable
-Explicit user-provided path? → stable
-```
+**When to use:**
+- Always pass `--self` when your platform integration has bootstrapped fcli
+- Improves performance by avoiding redundant downloads when versions match
+- Particularly useful in CI/CD environments with tool caches
 
 ## Integration Patterns
 
@@ -74,21 +57,17 @@ Explicit user-provided path? → stable
 # Detect or download fcli
 if command -v fcli &> /dev/null; then
     FCLI_PATH=$(command -v fcli)
-    FCLI_TYPE="stable"
 else
     # Download from GitHub releases
     VERSION="${FCLI_VERSION:-v3}"
     FCLI_PATH="/tmp/fcli"
     curl -L "https://github.com/fortify/fcli/releases/download/${VERSION}/fcli-linux.tgz" | tar xz -C /tmp
-    FCLI_TYPE="unstable"
 fi
 
-# Delegate to fcli tool setup command
-"${FCLI_PATH}" tool setup \
-    --self "${FCLI_PATH}" \
-    --self-type "${FCLI_TYPE}" \
-    --fod-version v3 \
-    --sc-client-version v24.4
+# Delegate to fcli tool env init command
+"${FCLI_PATH}" tool env init \
+  --self "${FCLI_PATH}" \
+  --tools fod-uploader:v3,sc-client:v24.4
 ```
 
 ### Pattern 2: TypeScript/JavaScript Module (@fortify/setup)
@@ -100,15 +79,10 @@ const fcliPath = await bootstrapFcli({
     useToolCache: true
 });
 
-// Determine stability based on resolution source
-const fcliType = fcliPath.source === 'download' ? 'unstable' : 'stable';
-
-// Delegate to fcli tool setup command
-await runFortifySetup({
-    self: fcliPath.path,
-    selfType: fcliType,
-    fodVersion: 'v3',
-    scClientVersion: 'v24.4'
+// Delegate to fcli tool env init command
+await runFortifyEnv({
+    args: ['init', '--self', fcliPath.path, '--tools', 'fod-uploader:v3,sc-client:v24.4'],
+    verbose: true
 });
 ```
 
@@ -126,9 +100,8 @@ await runFortifySetup({
 
 Implementation:
 1. Action downloads fcli (`fcli-version: v3`) from GitHub releases
-2. Marks as `unstable` (fresh download)
-3. Invokes: `fcli tool setup --tools fod:v3,sc-client:v24.4 --self /path/to/fcli`
-4. Action outputs environment variables from `fcli tool env` command
+2. Invokes: `fcli tool env init --self /path/to/fcli --tools fod-uploader:v3,sc-client:v24.4`
+3. Action outputs environment variables from `fcli tool env <format>` commands
 
 ## Why `@fortify/setup` Doesn't Use Fcli Tool Definitions
 
@@ -144,7 +117,7 @@ Implementation:
 - Semantic patterns: `v3`, `v3.6` → download from `/v3/` or `/v3.6/` (relies on GitHub release tags)
 - Latest: Queries GitHub API for latest release
 
-Once fcli is bootstrapped, `fcli tool setup` command uses tool definitions for all other tools (FoD CLI, SC Client, etc).
+Once fcli is bootstrapped, `fcli tool env init` command uses tool definitions for all other tools (FoD CLI, SC Client, etc).
 
 ## Environment Variable Generation
 
@@ -152,16 +125,16 @@ After tool installation, generate environment variables for CI/CD platform:
 
 ```bash
 # GitHub Actions format
-fcli tool env --format github --output-file "$GITHUB_ENV"
+fcli tool env github
 
 # Azure DevOps format  
-fcli tool env --format azure
+fcli tool env ado
 
 # GitLab CI format
-fcli tool env --format gitlab --output-file build.env
+fcli tool env gitlab --file build.env
 
 # Shell format
-eval "$(fcli tool env --format shell)"
+eval "$(fcli tool env shell)"
 ```
 
 ## Version Resolution Best Practices
@@ -201,18 +174,16 @@ fcli tool fcli register --auto-detect --version v3 --require-latest
 - Semantic version patterns (`v3`, `v24`, `v24.4`) where "latest matching" is expected
 - Skip for exact versions (`v3.6.1`), `latest`, `auto`, or `preinstalled`
 
-**The `fcli tool setup` command handles this automatically based on version pattern.**
+**The `fcli tool env init` command handles this automatically based on version pattern.**
 
 ## Air-Gapped Environments
 
 Support offline environments using `--copy-if-matching` parameters:
 
 ```bash
-fcli tool setup \
-    --fcli-copy-if-matching /shared/binaries/fcli \
-    --fod-copy-if-matching /shared/binaries/FoDUploader.jar \
-    --sc-client-copy-if-matching /shared/binaries/ScanCentralClient.jar \
-    --air-gapped true
+fcli tool env init \
+    --tools fcli:/shared/binaries/fcli,fod-uploader:/shared/binaries/FoDUploader.jar,sc-client:/shared/binaries/ScanCentralClient.jar \
+    --air-gapped
 ```
 
 **Requirements:**
@@ -247,7 +218,7 @@ return { path: cachedPath, source: 'cache' };
 
 ```typescript
 // src/index.ts
-import { bootstrapFcli, runFortifySetup, runFortifyEnv } from '@fortify/setup';
+import { runFortifyEnv } from '@fortify/setup';
 import * as core from '@actions/core';
 
 async function run() {
@@ -262,17 +233,20 @@ async function run() {
         const fcliType = fcliPath.source === 'download' ? 'unstable' : 'stable';
 
         // Install tools
-        await runFortifySetup({
-            self: fcliPath.path,
-            selfType: fcliType,
-            fodVersion: core.getInput('fod-version'),
-            scClientVersion: core.getInput('sc-client-version')
+        const tools = [];
+        const fodVersion = core.getInput('fod-version');
+        const scClientVersion = core.getInput('sc-client-version');
+        if (fodVersion) tools.push(`fod-uploader:${fodVersion}`);
+        if (scClientVersion) tools.push(`sc-client:${scClientVersion}`);
+        
+        await runFortifyEnv({
+            args: ['init', '--self', fcliPath.path, '--self-type', fcliType, '--tools', tools.join(',')],
+            verbose: true
         });
 
         // Generate environment variables
         await runFortifyEnv({
-            format: 'github',
-            outputFile: process.env.GITHUB_ENV
+            args: ['github']
         });
 
     } catch (error) {
@@ -299,7 +273,7 @@ Verify your integration handles:
 **Q: Action fails with "fcli not found"**  
 A: Forgot to pass `--self`? Platform integration must bootstrap fcli first.
 
-**Q: "Cannot install tool fcli"**  
+**Q: "Cannot initialize tool fcli"**  
 A: Circular dependency. Fcli cannot install itself. Use `--self` parameter.
 
 **Q: GitHub download fails from `/v3/` URL**  
@@ -311,8 +285,8 @@ Platform integration checklist:
 - [ ] Bootstrap fcli using platform-specific logic
 - [ ] Leverage fcli semantic version tags (`v3`, `v3.6`) for downloads
 - [ ] Pass bootstrapped fcli via `--self` and `--self-type`
-- [ ] Delegate tool installation to `fcli tool setup` command
-- [ ] Generate environment variables via `fcli tool env` command
+- [ ] Delegate tool installation to `fcli tool env init` command
+- [ ] Generate environment variables via `fcli tool env <format>` commands
 - [ ] Support tool cache integration where available
 - [ ] Handle air-gapped environments via `--copy-if-matching` parameters
 - [ ] Use semantic versions by default (not `latest`)
@@ -320,4 +294,4 @@ Platform integration checklist:
 For complete examples, see:
 - `@fortify/setup` TypeScript module: `/fortify-setup-js/`
 - Shell script examples: `fortify-setup.sh`, `fortify-setup.ps1`
-- Command implementations: `fcli tool setup`, `fcli tool env`
+- Command implementations: `fcli-core/fcli-tool/src/main/java/com/fortify/cli/tool/env/`

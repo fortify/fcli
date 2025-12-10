@@ -20,6 +20,7 @@ import picocli.CommandLine.Command;
         name = "env",
         resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
         subcommands = {
+            ToolEnvInitCommand.class,
             ToolEnvShellCommand.class,
             ToolEnvPowershellCommand.class,
             ToolEnvGitHubCommand.class,

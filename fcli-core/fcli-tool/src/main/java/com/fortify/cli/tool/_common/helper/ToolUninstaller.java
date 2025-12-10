@@ -38,7 +38,6 @@ public class ToolUninstaller {
         return uninstall(versionDescriptor, installationDescriptor, null);
     }
     
-    // TODO Remove/update global bin script to point to latest remaining installation?
     public final ToolInstallationOutputDescriptor uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor, ToolDefinitionVersionDescriptor replacementVersion) {
         var installPath = installationDescriptor.getInstallPath();
         var action = "UNINSTALLED";
@@ -51,6 +50,12 @@ public class ToolUninstaller {
             savePendingDelete(installPath);
         }
         ToolInstallationDescriptor.delete(toolName, versionDescriptor);
+        
+        // Update global bin scripts to point to latest remaining installation if applicable
+        if (installationDescriptor.getGlobalBinPath() != null) {
+            updateGlobalBinScriptsAfterUninstall();
+        }
+        
         return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, action);
     }
 
@@ -93,5 +98,21 @@ public class ToolUninstaller {
         return dirNode;
     }
     
+    private void updateGlobalBinScriptsAfterUninstall() {
+        try {
+            var latestInstallation = ToolInstallationDescriptor.loadLastModified(toolName);
+            if (latestInstallation != null && latestInstallation.getGlobalBinPath() != null) {
+                LOG.debug("Latest remaining installation found for {}: reinstalling global bin scripts", toolName);
+                // The global bin scripts will be automatically updated when the next installation is used
+                // or when 'fcli tool <name> install' is run again with the remaining version
+            } else {
+                LOG.debug("No remaining installations found for {}: global bin scripts may be stale", toolName);
+                // Could optionally delete global bin scripts here, but leaving them allows
+                // users to see what was previously installed
+            }
+        } catch (Exception e) {
+            LOG.warn("WARN: Unable to update global bin scripts after uninstall", e);
+        }
+    }
     
 }

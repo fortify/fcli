@@ -20,7 +20,6 @@ import com.fortify.cli.tool.env.cli.cmd.ToolEnvCommands;
 import com.fortify.cli.tool.fcli.cli.cmd.ToolFcliCommands;
 import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
 import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
-import com.fortify.cli.tool.setup.cli.cmd.ToolSetupCommand;
 import com.fortify.cli.tool.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
 
 import picocli.CommandLine.Command;
@@ -29,7 +28,6 @@ import picocli.CommandLine.Command;
         name = "tool",
         resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
         subcommands = {
-            ToolSetupCommand.class,
             ToolEnvCommands.class,
             ToolBugTrackerUtilityCommands.class,
             ToolDebrickedCliCommands.class,

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.tool.setup.cli.mixin;
+package com.fortify.cli.tool.env.cli.mixin;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ import picocli.CommandLine.Option;
  * Examples:
  * --tools sc-client,fcli:v3,debricked-cli:/opt/debricked
  */
-public class ToolSetupToolsMixin {
+public class ToolEnvInitMixin {
     
     @Option(names = "--air-gapped")
     @Getter private boolean airGapped;
@@ -109,7 +109,7 @@ public class ToolSetupToolsMixin {
         if (toolName.isEmpty()) {
             throw new FcliSimpleException("Tool name cannot be empty in specification: " + spec);
         }
-        Tool tool = Tool.getByToolName(toolName);
+        Tool tool = Tool.getByToolNameOrAlias(toolName);
         if (tool == null) {
             throw new FcliSimpleException("Unknown tool: " + toolName);
         }
