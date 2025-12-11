@@ -33,10 +33,9 @@ import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
-import com.fortify.cli.tool._common.helper.ToolJavaVersionHelper;
+import com.fortify.cli.tool._common.helper.ToolJreInstallHelper;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
@@ -50,7 +49,7 @@ import picocli.CommandLine.Option;
 public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
-    @Option(names= {"--with-jre"}) private boolean withJre;
+    @Option(names= {"--with-jre"}, negatable = true) private Boolean withJre;
     @Option(names= {"--jre-platform"}) private String jrePlatform;
     @Option(names= {"--jre"}) private Path jrePath;
     
@@ -67,16 +66,8 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Override
     protected void configureToolInstallerBuilder(ToolInstaller.ToolInstallerBuilder builder) {
         // Add pre-install validation for --jre option
-        if (jrePath != null) {
-            builder.preInstallAction((installer) -> {
-                // Validate mutual exclusivity
-                if (withJre || StringUtils.isNotBlank(jrePlatform)) {
-                    throw new FcliSimpleException("Options --jre and --with-jre/--jre-platform are mutually exclusive");
-                }
-                
-                // Validate provided JRE is compatible
-                validateJreCompatibility(installer.getVersionDescriptor());
-            });
+        if (jrePath != null && (Boolean.TRUE.equals(withJre) || StringUtils.isNotBlank(jrePlatform))) {
+            throw new FcliSimpleException("Options --jre and --with-jre/--jre-platform are mutually exclusive");
         }
     }
     
@@ -84,12 +75,32 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
         updateClientAuthToken(installer.getTargetPath());
         
-        // Store JRE location in install descriptor if provided
-        if (jrePath != null) {
-            installationResult.getInstallationDescriptor().setJreHome(jrePath.toAbsolutePath().normalize().toString());
+        // Determine JRE configuration using generalized helper
+        var jreConfig = ToolJreInstallHelper.JreInstallConfig.builder()
+            .explicitJrePath(jrePath)
+            .requestEmbeddedJre(Boolean.TRUE.equals(withJre) || StringUtils.isNotBlank(jrePlatform))
+            .skipEmbeddedJre(Boolean.FALSE.equals(withJre))
+            .embeddedJrePath(installer.getTargetPath().resolve("jre"))
+            .envVarPrefixes(new String[]{"SC_CLIENT", "SCANCENTRAL"})
+            .versionDescriptor(installer.getVersionDescriptor())
+            .toolName("ScanCentral Client")
+            .build();
+        
+        var jreResult = ToolJreInstallHelper.determineJreConfig(jreConfig);
+        
+        // Update installation descriptor with JRE info
+        var descriptor = installationResult.getInstallationDescriptor();
+        descriptor.setJreHome(jreResult.getJrePath());
+        descriptor.setJreSource(jreResult.getJreSource());
+        if (jreResult.getJreEnvVarName() != null) {
+            descriptor.setJreEnvVar(jreResult.getJreEnvVarName());
         }
         
-        if ( withJre || StringUtils.isNotBlank(jrePlatform) ) { installJre(installer); }
+        // Install embedded JRE if needed
+        if (jreResult.isRequiresEmbeddedJreInstall()) {
+            installJre(installer);
+        }
+        
         installer.installGlobalBinScript(BinScriptType.bash, "scancentral", "bin/scancentral");
         installer.installGlobalBinScript(BinScriptType.bat, "scancentral.bat", "bin/scancentral.bat");
         installer.installGlobalBinScript(BinScriptType.bash, "pwtool", "bin/pwtool");
@@ -105,30 +116,6 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING);
         }
-    }
-    
-    private void validateJreCompatibility(ToolDefinitionVersionDescriptor versionDescriptor) {
-        String requiredJreVersion = getRequiredJreVersion(versionDescriptor);
-        String detectedVersion = ToolJavaVersionHelper.detectJavaVersion(jrePath);
-        
-        if (!ToolJavaVersionHelper.isCompatibleVersion(detectedVersion, requiredJreVersion)) {
-            throw new FcliSimpleException(String.format(
-                "Incompatible JRE version. ScanCentral Client %s requires Java %s, but provided JRE at '%s' is version %s",
-                versionDescriptor.getVersion(),
-                requiredJreVersion,
-                jrePath,
-                detectedVersion != null ? detectedVersion : "unknown"
-            ));
-        }
-    }
-    
-    private String getRequiredJreVersion(ToolDefinitionVersionDescriptor versionDescriptor) {
-        var extraProperties = versionDescriptor.getExtraProperties();
-        var jreVersion = extraProperties == null ? null : extraProperties.get("jre");
-        if (StringUtils.isBlank(jreVersion)) {
-            throw new FcliSimpleException("Tool definitions don't list JRE version for this ScanCentral Client version");
-        }
-        return jreVersion;
     }
     
     private void installJre(ToolInstaller scClientInstaller) throws IOException {

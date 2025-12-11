@@ -46,11 +46,24 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data
 public class ToolInstallationDescriptor {
+    public enum JreSource {
+        /** JRE was explicitly specified via --jre option by user */
+        EXPLICIT,
+        /** JRE was auto-detected from environment variable */
+        ENV_VAR,
+        /** JRE was installed automatically via --with-jre */
+        EMBEDDED
+    }
+    
     private static final Logger LOG = LoggerFactory.getLogger(ToolInstallationDescriptor.class);
     private String installDir;
     private String binDir;
     private String globalBinDir;
     private String jreHome;
+    /** How the JRE was specified (null for backward compatibility with old descriptors) */
+    private JreSource jreSource;
+    /** Environment variable name from which JRE was detected (only set when jreSource==ENV_VAR) */
+    private String jreEnvVar;
     
     public ToolInstallationDescriptor(Path installPath, Path binPath, Path globalBinPath) {
         this.installDir = installPath==null ? null : installPath.toAbsolutePath().normalize().toString();

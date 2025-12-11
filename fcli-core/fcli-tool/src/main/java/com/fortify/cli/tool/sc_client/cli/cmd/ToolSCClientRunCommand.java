@@ -17,13 +17,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fortify.cli.common.util.DebugHelper;
-import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolJreResolver;
 import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
 import lombok.SneakyThrows;
@@ -34,6 +32,7 @@ import picocli.CommandLine.Option;
 public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
     @Option(names="--logdir", required=false)
     private Path logDir;
+    private String detectedJavaHome;
     
     @Override
     protected final Tool getTool() {
@@ -60,16 +59,21 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
     }
     
     @Override
-    protected List<String> getJavaHomeEnvVarNames() {
-        return List.of("SCANCENTRAL_JAVA_HOME", "JAVA_HOME");
-    }
-    
-    @Override
     protected List<String> getJavaBaseCommand(ToolInstallationDescriptor descriptor) {
-        // Get java command, preferring stored JRE location
-        String javaCommand = getJavaCommandForDescriptor(descriptor);
+        // Use generalized JRE resolver
+        var resolveConfig = ToolJreResolver.JreResolveConfig.builder()
+            .descriptor(descriptor)
+            .envVarPrefixes(new String[]{"SC_CLIENT", "SCANCENTRAL"})
+            .compatibleVersions(new String[]{"21", "17", "11", "8"})
+            .javaExecutableName(ToolPlatformHelper.isWindows() ? "java.exe" : "java")
+            .includeGenericJavaHome(true)
+            .build();
+        
+        var resolveResult = ToolJreResolver.resolveJavaCommand(resolveConfig);
+        detectedJavaHome = resolveResult.getJavaHome();
+        
         var cmd = new ArrayList<String>();
-        cmd.add(javaCommand);
+        cmd.add(resolveResult.getJavaCommand());
         if ( logDir!=null ) {
             cmd.add("-Dlog4j.dir="+logDir.toAbsolutePath().normalize().toString());
         }
@@ -78,41 +82,14 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
         return cmd;
     }
     
-    private String getJavaCommandForDescriptor(ToolInstallationDescriptor descriptor) {
-        var baseJavaCmd = ToolPlatformHelper.isWindows() ? "java.exe" : "java";
-        
-        // First check if JRE was specified during installation
-        String storedJreHome = descriptor.getJreHome();
-        if (StringUtils.isNotBlank(storedJreHome)) {
-            var javaCmdFromStored = Path.of(storedJreHome, "bin", baseJavaCmd);
-            if (Files.exists(javaCmdFromStored)) {
-                return javaCmdFromStored.toString();
-            }
-        }
-        
-        // Check for embedded JRE
-        var embeddedJavaCmdPath = descriptor.getInstallPath().resolve("jre/bin").resolve(baseJavaCmd);
-        if (Files.exists(embeddedJavaCmdPath)) {
-            return embeddedJavaCmdPath.toString();
-        }
-        
-        // Check environment variables
-        for (var javaHomeEnvVarName : getJavaHomeEnvVarNames()) {
-            var javaHome = EnvHelper.env(javaHomeEnvVarName);
-            var javaCmdPathFromEnv = javaHome == null ? null : Path.of(javaHome, "bin", baseJavaCmd);
-            if (javaCmdPathFromEnv != null && Files.exists(javaCmdPathFromEnv)) {
-                return javaCmdPathFromEnv.toString();
-            }
-        }
-        
-        // Fallback to java from PATH
-        return "java";
-    }
-    
     @Override
     protected void updateProcessBuilder(ProcessBuilder pb) {
         if ( logDir!=null ) {
             pb.environment().put("SCANCENTRAL_LOG", logDir.toAbsolutePath().normalize().toString());
+        }
+        // Set SCANCENTRAL_JAVA_HOME if we detected a Java home
+        if ( detectedJavaHome!=null ) {
+            pb.environment().put("SCANCENTRAL_JAVA_HOME", detectedJavaHome);
         }
     }
     

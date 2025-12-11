@@ -26,7 +26,6 @@ import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.exception.FcliCommandExecutionException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
-import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.tool._common.helper.Tool;
@@ -236,15 +235,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             cmd += " --install-dir \"" + toolsMixin.getBaseDir() + "\"";
         }
         
-        if (spec.tool() == Tool.SC_CLIENT) {
-            // Handle JRE for sc-client: try to find existing JRE, otherwise install with --with-jre
-            String jrePath = findExistingJreForScClient(version);
-            if (jrePath != null) {
-                cmd += " --jre \"" + jrePath + "\"";
-            } else {
-                cmd += " --with-jre";
-            }
-        }
+        // JRE handling for sc-client is now done automatically by the install command
         
         AtomicReference<String> actionRef = new AtomicReference<>("installed");
         AtomicReference<String> installDirRef = new AtomicReference<>();
@@ -276,45 +267,6 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             return versionDescriptor.getVersion();
         } catch (Exception e) {
             // Version resolution failed, return null
-            return null;
-        }
-    }
-    
-    private String findExistingJreForScClient(String version) {
-        // First check SCANCENTRAL_JAVA_HOME environment variable
-        String scanCentralJavaHome = EnvHelper.env("SCANCENTRAL_JAVA_HOME");
-        if (scanCentralJavaHome != null && !scanCentralJavaHome.isEmpty()) {
-            return scanCentralJavaHome;
-        }
-        
-        // Check generic JAVA_HOME_<major-version> patterns
-        // For sc-client, we need Java 8 or higher, try in order: 21, 17, 11, 8
-        String[] javaVersions = {"21", "17", "11", "8"};
-        String osArch = System.getProperty("os.arch", "").toUpperCase();
-        
-        for (String javaVersion : javaVersions) {
-            // Try JAVA_HOME_<version>_<arch>
-            if (!osArch.isEmpty()) {
-                String envVar = "JAVA_HOME_" + javaVersion + "_" + osArch;
-                String javaHome = EnvHelper.env(envVar);
-                if (javaHome != null && !javaHome.isEmpty()) {
-                    return javaHome;
-                }
-            }
-            
-            // Try JAVA_HOME_<version>
-            String envVar = "JAVA_HOME_" + javaVersion;
-            String javaHome = EnvHelper.env(envVar);
-            if (javaHome != null && !javaHome.isEmpty()) {
-                return javaHome;
-            }
-        }
-        
-        // Try to find a suitable JRE using JreHelper
-        try {
-            return JreHelper.findJavaHome("8");
-        } catch (Exception e) {
-            // If no suitable JRE found, return null to trigger --with-jre
             return null;
         }
     }

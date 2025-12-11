@@ -36,6 +36,79 @@ public final class JreHelper {
     private JreHelper() {}
     
     /**
+     * Result of JRE detection, including the path and how it was found.
+     */
+    public static final class JreDetectionResult {
+        private final String javaHome;
+        private final String envVarName;
+        
+        public JreDetectionResult(String javaHome, String envVarName) {
+            this.javaHome = javaHome;
+            this.envVarName = envVarName;
+        }
+        
+        public String getJavaHome() {
+            return javaHome;
+        }
+        
+        public String getEnvVarName() {
+            return envVarName;
+        }
+    }
+    
+    /**
+     * Finds a compatible JRE by checking environment variables in a specific order.
+     * Does NOT check generic JAVA_HOME or search PATH - those are runtime fallbacks only.
+     * 
+     * Search order:
+     * 1. &lt;prefix1&gt;_JAVA_HOME, &lt;prefix2&gt;_JAVA_HOME, ... (tool-specific prefixes)
+     * 2. JAVA_HOME_&lt;version&gt;_&lt;arch&gt; patterns (e.g., JAVA_HOME_17_X86_64) for each compatibleVersion
+     * 3. JAVA_HOME_&lt;version&gt; patterns (e.g., JAVA_HOME_17, JAVA_HOME_11) for each compatibleVersion
+     * 
+     * @param envPrefixes Tool-specific environment variable prefixes (e.g., "SC_CLIENT", "SCANCENTRAL").
+     *                    Will check &lt;PREFIX&gt;_JAVA_HOME for each prefix. May be null.
+     * @param compatibleVersions Java versions to search for, in priority order (e.g., "21", "17", "11", "8"). May be null.
+     * @return JreDetectionResult with Java home path and env var name, or null if not found
+     */
+    public static JreDetectionResult findJavaHomeFromEnv(String[] envPrefixes, String[] compatibleVersions) {
+        // Check tool-specific _JAVA_HOME environment variables
+        if (envPrefixes != null) {
+            for (String prefix : envPrefixes) {
+                String envVarName = prefix + "_JAVA_HOME";
+                String javaHome = EnvHelper.env(envVarName);
+                if (StringUtils.isNotBlank(javaHome)) {
+                    return new JreDetectionResult(javaHome, envVarName);
+                }
+            }
+        }
+        
+        // Check JAVA_HOME_<version>_<arch> and JAVA_HOME_<version> patterns
+        if (compatibleVersions != null) {
+            String osArch = System.getProperty("os.arch", "").toUpperCase();
+            
+            for (String version : compatibleVersions) {
+                // Try JAVA_HOME_<version>_<arch>
+                if (StringUtils.isNotBlank(osArch)) {
+                    String envVarName = "JAVA_HOME_" + version + "_" + osArch;
+                    String javaHome = EnvHelper.env(envVarName);
+                    if (StringUtils.isNotBlank(javaHome)) {
+                        return new JreDetectionResult(javaHome, envVarName);
+                    }
+                }
+                
+                // Try JAVA_HOME_<version>
+                String envVarName = "JAVA_HOME_" + version;
+                String javaHome = EnvHelper.env(envVarName);
+                if (StringUtils.isNotBlank(javaHome)) {
+                    return new JreDetectionResult(javaHome, envVarName);
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
      * Searches for a Java installation with the specified major version.
      * First checks JAVA_HOME environment variable, then searches PATH entries.
      * 
@@ -201,6 +274,47 @@ public final class JreHelper {
         } catch (IOException e) {
             return null;
         }
+    }
+    
+    /**
+     * Finds a compatible JRE with fallbacks for runtime use.
+     * 
+     * Search order:
+     * 1. Environment variables via findJavaHomeFromEnv()
+     * 2. Generic JAVA_HOME (if includeGenericJavaHome is true)
+     * 3. Search PATH for compatible Java installations
+     * 
+     * @param envPrefixes Tool-specific environment variable prefixes. May be null.
+     * @param compatibleVersions Java versions to search for, in priority order. May be null.
+     * @param includeGenericJavaHome If true, includes JAVA_HOME and PATH search as fallbacks
+     * @return JreDetectionResult with Java home path and env var name, or null if not found
+     */
+    public static JreDetectionResult findJavaHomeWithFallbacks(String[] envPrefixes, String[] compatibleVersions, boolean includeGenericJavaHome) {
+        // First try environment variables
+        JreDetectionResult result = findJavaHomeFromEnv(envPrefixes, compatibleVersions);
+        if (result != null) {
+            return result;
+        }
+        
+        // Check generic JAVA_HOME if requested (runtime fallback only)
+        if (includeGenericJavaHome) {
+            String javaHome = EnvHelper.env("JAVA_HOME");
+            if (StringUtils.isNotBlank(javaHome)) {
+                return new JreDetectionResult(javaHome, "JAVA_HOME");
+            }
+            
+            // Try to find a suitable JRE in PATH
+            if (compatibleVersions != null) {
+                for (String version : compatibleVersions) {
+                    String foundJavaHome = findJavaHome(version);
+                    if (foundJavaHome != null) {
+                        return new JreDetectionResult(foundJavaHome, null); // No env var, found in PATH
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
     
     /**
