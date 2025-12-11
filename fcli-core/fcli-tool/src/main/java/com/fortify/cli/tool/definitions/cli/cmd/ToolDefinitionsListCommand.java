@@ -29,7 +29,7 @@ public class ToolDefinitionsListCommand extends AbstractOutputCommand implements
     
     @Override
     public JsonNode getJsonNode() {
-        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.getOutputDescriptors());
+        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.listToolDefinitions());
     }
     
     @Override

@@ -30,7 +30,7 @@ public class ToolDefinitionsResetCommand extends AbstractOutputCommand implement
     
     @Override
     public JsonNode getJsonNode() {
-        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.reset());
+        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.resetToolDefinitions());
     }
     
     @Override

@@ -58,13 +58,24 @@ public final class ToolDefinitionsHelper {
     private static final Path DESCRIPTOR_PATH = ToolDefinitionsHelper.DEFINITIONS_STATE_DIR.resolve("state.json");
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
 
-    public static final List<ToolDefinitionsOutputDescriptor> getOutputDescriptors() {
+    /**
+     * List current tool definitions.
+     * @return List of tool definitions output descriptors
+     */
+    public static final List<ToolDefinitionsOutputDescriptor> listToolDefinitions() {
         List<ToolDefinitionsOutputDescriptor> result = new ArrayList<>();
         addZipOutputDescriptor(result);
         addYamlOutputDescriptors(result);
         return result;
     }
     
+    /**
+     * Update tool definitions from the specified source if needed based on forceUpdate and maxAge.
+     * @param source Tool definitions source zip URL or file path; if null or blank, default URL is used
+     * @param forceUpdate If true, always update regardless of age
+     * @param maxAge Optional max age string (e.g., "4h", "1d"); if null, default max age of 6 hours is used
+     * @return
+     */
     @SneakyThrows
     public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source, boolean forceUpdate, String maxAge) {
         String normalizedSource = normalizeSource(source);
@@ -78,13 +89,17 @@ public final class ToolDefinitionsHelper {
         return getOutputDescriptors(normalizedSource, shouldUpdate);
     }
 
+    /**
+     * Reset tool definitions to internal defaults by deleting state files.
+     * @return List of tool definitions output descriptors after reset
+     */
     @SneakyThrows
-    public static final List<ToolDefinitionsOutputDescriptor> reset() {
+    public static final List<ToolDefinitionsOutputDescriptor> resetToolDefinitions() {
         if (Files.exists(DEFINITIONS_STATE_ZIP)) {
             Files.delete(DEFINITIONS_STATE_ZIP);
             FcliDataHelper.deleteFile(DESCRIPTOR_PATH, false);
         }
-        return getOutputDescriptors();
+        return listToolDefinitions();
     }
 
     private static final String normalizeSource(String source) {
