@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20251211.163010-dev_feat.ci-updates
+fcli_version: 0.20251211.172310-dev_feat.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20251211.163010-dev_feat.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251211.163010-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251211.172310-dev_feat.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20251211.163010-dev_feat.ci-updates</span>
+<span id="revnumber">version 0.20251211.172310-dev_feat.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -520,10 +520,12 @@ TOOL_DEFINITIONS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.<br>
 By default:<br>
  - If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
- - If <code>SC_CLIENT_VERSION</code> and <code>SC_CLIENT_HOME</code> are not set, the most recently installed ScanCentral Client version will be used, or the latest available version will be installed if none is installed yet. Use <code>SC_CLIENT_VERSION</code> to specify a different version (e.g., <code>latest</code>, <code>24.4.0</code>, or <code>auto</code> for most recent installed).<br>
+ - <code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.<br>
+ - If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, the most recently installed ScanCentral Client version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.<br>
  - Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.<br>
  - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.<br>
- - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br></p></td>
+ - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br>
+ - Set <code>PREINSTALLED</code> to <code>true</code> to require that ScanCentral Client is already installed, preventing tool definitions from being updated or ScanCentral Client from being installed.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN<br>
@@ -539,7 +541,10 @@ DEBRICKED_HOME</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The fcli <code>ci</code> action supports running a Debricked Software Composition Analysis (SCA) scan, which is enabled automatically if <code>DEBRICKED_ACCESS_TOKEN</code> is provided. The <code>DO_DEBRICKED_SCAN</code> environment variable can be set to <code>false</code> to (temporarily) disable the Debricked scan. The <code>DEBRICKED_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <code>debricked scan</code> command.<br>
 By default:<br>
  - If <code>DEBRICKED_HOME</code> is specified, the pre-installed Debricked CLI at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
- - If <code>DEBRICKED_VERSION</code> and <code>DEBRICKED_HOME</code> are not set, the most recently installed Debricked CLI version will be used, or the latest available version will be installed if none is installed yet. Use <code>DEBRICKED_VERSION</code> to specify a different version (e.g., <code>latest</code>, <code>2.1.0</code>, or <code>auto</code> for most recent installed).<br></p></td>
+ - <code>DEBRICKED_VERSION</code> may be specified to request a specific Debricked CLI version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.<br>
+ - If neither <code>DEBRICKED_VERSION</code> nor <code>DEBRICKED_HOME</code> are set, the most recently installed Debricked CLI version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.<br>
+ - Tool definitions to identify available Debricked CLI versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br>
+ - Set <code>PREINSTALLED</code> to <code>true</code> to require that Debricked CLI is already installed, preventing tool definitions from being updated or Debricked CLI from being installed.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_WAIT<br>
@@ -1314,8 +1319,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20251211.163010-dev_feat.ci-updates<br>
-Last updated 2025-12-11 16:33:18 UTC
+Version 0.20251211.172310-dev_feat.ci-updates<br>
+Last updated 2025-12-11 17:26:21 UTC
 </div>
 </div>
 </body>
