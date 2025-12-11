@@ -138,7 +138,6 @@ steps:
                 "--av=${global.ci.av}"
                 "--debricked-token=${#env('DEBRICKED_ACCESS_TOKEN')}"
                 "--cli-version=${#env('DEBRICKED_CLI_VERSION')?:'auto'}"
-                "--tool-definitions=${#env('TOOL_DEFINITIONS')?:''}"
                 "--skip-wait=true"
               skip.if-reason:
                 - ${debricked.skipReason}                # Skip if Debricked scan is skipped

@@ -70,8 +70,8 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         List<ToolSetupSpec> specs = toolsMixin.getToolSetupSpecs();
         List<ToolSetupResult> results = new ArrayList<>();
         
-        // Update tool definitions if not air-gapped
-        if (!toolsMixin.isAirGapped()) {
+        // Update tool definitions if not in preinstalled mode and not all tools have explicit paths
+        if (!toolsMixin.isPreinstalledMode() && !toolsMixin.allToolsHavePaths()) {
             updateToolDefinitions();
         }
         
@@ -107,13 +107,14 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             throw new FcliSimpleException("Tool " + toolName + " not found at specified path: " + spec.getEffectivePath());
         }
         
-        // If registration failed and not air-gapped, try to install
-        if (!toolsMixin.isAirGapped()) {
+        // If registration failed and not in preinstalled mode, try to install
+        if (!toolsMixin.isPreinstalledMode()) {
             InstallResult installResult = installTool(spec);
             System.out.println("✓ " + toolName + " " + installResult.action() + " successfully");
             return new ToolSetupResult(toolName, installResult.action(), spec.getEffectiveVersion(), installResult.installDir());
         } else {
-            throw new FcliSimpleException("Tool " + toolName + " not found and air-gapped mode prevents installation");
+            String requestedVersion = spec.getEffectiveVersion();
+            throw new FcliSimpleException("Tool " + toolName + " version '" + requestedVersion + "' not found and preinstalled mode prevents installation");
         }
     }
     
@@ -148,8 +149,10 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             return new RegistrationResult(true, versionRef.get(), installDirRef.get());
         }
         
-        // Registration failed, but don't throw - just log progress
-        System.out.println("Tool " + toolName + " not found in PATH, will proceed with installation");
+        // Registration failed
+        if (!toolsMixin.isPreinstalledMode()) {
+            System.out.println("Tool " + toolName + " not found, will proceed with installation");
+        }
         return new RegistrationResult(false, null, null);
     }
     

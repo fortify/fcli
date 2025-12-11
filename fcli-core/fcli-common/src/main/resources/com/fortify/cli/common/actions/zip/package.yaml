@@ -38,9 +38,8 @@ cli.options:
   toolDefinitions:
     names: --tool-definitions
     description: |
-      Custom tool definitions to use for identifying available ScanCentral Client versions and download URLs. Defaults to the value of the TOOL_DEFINITIONS environment variable, or the built-in default if not specified.
-    required: false 
-    default: ${#env('TOOL_DEFINITIONS')}
+      Custom tool definitions to use for identifying available ScanCentral Client versions and download URLs.
+    required: false
   extraOpts:
     names: --extra-opts
     description: |

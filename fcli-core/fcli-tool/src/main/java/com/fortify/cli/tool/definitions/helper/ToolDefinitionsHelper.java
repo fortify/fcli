@@ -103,7 +103,11 @@ public final class ToolDefinitionsHelper {
     }
 
     private static final String normalizeSource(String source) {
-        return StringUtils.isBlank(source) ? DEFAULT_TOOL_DEFINITIONS_URL : source;
+        if (StringUtils.isNotBlank(source)) {
+            return source;
+        }
+        String envValue = com.fortify.cli.common.util.EnvHelper.env("TOOL_DEFINITIONS");
+        return StringUtils.isNotBlank(envValue) ? envValue : DEFAULT_TOOL_DEFINITIONS_URL;
     }
 
     private static final void createDefinitionsStateDir(Path dir) throws IOException {

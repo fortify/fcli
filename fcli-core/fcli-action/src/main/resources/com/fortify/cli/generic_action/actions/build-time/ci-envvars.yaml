@@ -217,19 +217,17 @@ formatters:
           the `fcli sc-sast scan start` command, for example to request a scan completion email notification.
           Note that these environment variables only control the submission of the scan request; see the
           information below for details on waiting for the scan to complete. 
-      - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_CLI_VERSION\nDEBRICKED_HOME
+      - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
         desc: >-
           The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
           is enabled automatically if `DEBRICKED_ACCESS_TOKEN` is provided. The `DO_DEBRICKED_SCAN` environment
           variable can be set to `false` to (temporarily) disable the Debricked scan. The `DEBRICKED_SCAN_EXTRA_OPTS`
           environment variable can be used to provide additional options to the `debricked scan` command.\nBy default:\n
-          - If `SETUP_AIRGAPPED` is set to `true`, the Debricked CLI must be pre-installed (via `DEBRICKED_HOME` or
-          available in PATH) and tool definitions will not be updated.\n
           - If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
           and used, skipping automatic installation. The path should point to the installation directory or binary.\n
-          - If `DEBRICKED_CLI_VERSION` and `DEBRICKED_HOME` are not set, the most recently installed Debricked CLI
+          - If `DEBRICKED_VERSION` and `DEBRICKED_HOME` are not set, the most recently installed Debricked CLI
           version will be used, or the latest available version will be installed if none is installed yet. Use
-          `DEBRICKED_CLI_VERSION` to specify a different version (e.g., `latest`, `2.1.0`, or `auto` for most recent
+          `DEBRICKED_VERSION` to specify a different version (e.g., `latest`, `2.1.0`, or `auto` for most recent
           installed).\n
       - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
         desc: >-
@@ -307,14 +305,11 @@ formatters:
           providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
           Note that any custom action must set the `global.package.output` action variable, pointing to the package or
           MBS file to be scanned.
-      - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSETUP_AIRGAPPED\nSOURCE_DIR\nTOOL_DEFINITIONS
+      - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR\nTOOL_DEFINITIONS
         desc: >-
           These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
           and the given package or MBS file (which must already exist) will be used. To pass additional options to the
           `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\nBy default:\n
-          - If `SETUP_AIRGAPPED` is set to `true`, air-gapped mode will be enabled. In this mode, all required tools
-          (ScanCentral Client, Debricked CLI, etc.) must be pre-installed and tool definitions will not be updated from
-          remote sources. Tools can be pre-installed via `*_HOME` environment variables or must be available in PATH.\n
           - If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
           and used, skipping automatic installation. The path should point to the installation directory or binary.\n
           - If `SC_CLIENT_VERSION` and `SC_CLIENT_HOME` are not set, the most recently installed ScanCentral Client version
@@ -323,6 +318,6 @@ formatters:
           - Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.\n
           - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.\n
           - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
-          location (unless `SETUP_AIRGAPPED` is `true`); use `TOOL_DEFINITIONS` to use customized tool definitions.\n
+          location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
         
       

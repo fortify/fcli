@@ -183,7 +183,7 @@ Support offline environments using `--copy-if-matching` parameters:
 ```bash
 fcli tool env init \
     --tools fcli:/shared/binaries/fcli,fod-uploader:/shared/binaries/FoDUploader.jar,sc-client:/shared/binaries/ScanCentralClient.jar \
-    --air-gapped
+    --preinstalled
 ```
 
 **Requirements:**

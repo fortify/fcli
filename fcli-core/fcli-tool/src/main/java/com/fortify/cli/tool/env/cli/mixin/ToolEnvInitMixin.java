@@ -32,8 +32,8 @@ import picocli.CommandLine.Option;
  */
 public class ToolEnvInitMixin {
     
-    @Option(names = "--air-gapped")
-    @Getter private boolean airGapped;
+    @Option(names = "--preinstalled")
+    @Getter private Boolean preinstalled;
     
     @Option(names = "--tool-definitions")
     @Getter private String toolDefinitions;
@@ -49,6 +49,23 @@ public class ToolEnvInitMixin {
     
     @Option(names = "--tools", split = ",", required = true)
     @Getter private List<String> toolSpecs;
+    
+    /**
+     * Check if preinstalled mode is enabled via option or environment variable.
+     */
+    public boolean isPreinstalledMode() {
+        if (preinstalled != null && preinstalled) {
+            return true;
+        }
+        return EnvHelper.asBoolean(EnvHelper.env("PREINSTALLED"));
+    }
+    
+    /**
+     * Check if all tools have explicit paths configured (via argument or _HOME env var).
+     */
+    public boolean allToolsHavePaths() {
+        return getToolSetupSpecs().stream().allMatch(ToolSetupSpec::hasPath);
+    }
     
     /**
      * Validate that --install-dir-pattern and --base-dir are mutually exclusive.
