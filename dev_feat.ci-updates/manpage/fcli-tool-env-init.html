@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251211.151927-dev_feat.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251211.163010-dev_feat.ci-updates" %}
 
 
 <div id="header">
@@ -45,7 +45,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool env init</strong> [<strong>--air-gapped</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
+<p><strong>fcli tool env init</strong> [<strong>--preinstalled</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
                    [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
                    [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] <strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
                    <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
@@ -107,10 +107,6 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--air-gapped</strong></dt>
-<dd>
-<p>Air-gapped mode: all tools must be pre-installed, don&#8217;t update tool definitions.</p>
-</dd>
 <dt class="hdlist1"><strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em></dt>
 <dd>
 <p>Base directory for tool installations: &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;/.</p>
@@ -119,13 +115,17 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <dd>
 <p>Pattern for tool cache directory paths, with {tool} and {version} placeholders (e.g., /cache/{tool}/{version}). When specified, semantic versions are resolved to actual versions for proper cache naming.</p>
 </dd>
+<dt class="hdlist1"><strong>--preinstalled</strong></dt>
+<dd>
+<p>Preinstalled mode: all tools must be pre-installed, don&#8217;t update tool definitions. Can also be enabled via PREINSTALLED environment variable.</p>
+</dd>
 <dt class="hdlist1"><strong>--self</strong>=<em>&lt;self&gt;</em></dt>
 <dd>
 <p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
 </dd>
 <dt class="hdlist1"><strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em></dt>
 <dd>
-<p>Custom tool definitions URL (ignored in air-gapped mode).</p>
+<p>Custom tool definitions URL or file path. Defaults to TOOL_DEFINITIONS environment variable if set, otherwise uses built-in default. Ignored if all tools have explicit paths or preinstalled mode is enabled.</p>
 </dd>
 <dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
@@ -172,7 +172,7 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-11 15:22:09 UTC
+Last updated 2025-12-11 16:32:54 UTC
 </div>
 </div>
 </body>
