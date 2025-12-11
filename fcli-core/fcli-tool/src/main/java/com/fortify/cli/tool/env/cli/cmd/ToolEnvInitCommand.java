@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
@@ -124,11 +126,15 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         if (spec.hasPath()) {
             cmd += " --path \"" + spec.getEffectivePath() + "\"";
         } else {
-            // Handle version-based registration (from <tool>:<version> or <TOOL>_VERSION or default)
+            // Handle version-based registration from PATH
             cmd += " --path \"" + EnvHelper.env("PATH") + "\"";
-            if (spec.hasSpecificVersion()) {
-                cmd += " --version " + spec.getEffectiveVersion();
-            }
+        }
+
+        String version = spec.getEffectiveVersion();
+        // For 'auto', don't specify --version (register will find any available version)
+        // For other versions including 'latest', pass to register command for resolution
+        if (StringUtils.isNotBlank(version) && !"auto".equals(version)) {
+            cmd += " --version " + version;
         }
         
         AtomicReference<String> versionRef = new AtomicReference<>();
@@ -199,7 +205,11 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
     
     private InstallResult installTool(ToolSetupSpec spec) {
         String toolName = spec.toolName();
+        // Convert 'auto' to 'latest' for installation
         String version = spec.getEffectiveVersion();
+        if ("auto".equals(version)) {
+            version = "latest";
+        }
         String cmd = "tool " + toolName + " install --version " + version;
         
         // For fcli, if --self is specified, use copy-if-matching to avoid re-downloading
@@ -258,6 +268,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
 
     
     private String resolveSemanticVersion(Tool tool, String version) {
+        // Convert 'auto' to 'latest' for version resolution
         String versionToResolve = "auto".equals(version) ? "latest" : version;
         try {
             var definition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(tool.getToolName());

@@ -17,6 +17,7 @@ import java.util.List;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool._common.helper.Tool;
+import com.networknt.schema.utils.StringUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -156,7 +157,8 @@ public class ToolEnvInitMixin {
         
         /**
          * Get the effective version from either command-line argument or <TOOL>_VERSION environment variable.
-         * Returns "latest" if neither path nor version is specified. The special value "auto" is converted to "latest".
+         * Returns "auto" if neither path nor version is specified (meaning: try any available, install latest if none found).
+         * The special value "auto" is NOT converted to "latest" - that conversion happens in the init command logic.
          */
         public String getEffectiveVersion() {
             // If a path is specified (via argument or HOME env var), no version
@@ -164,20 +166,20 @@ public class ToolEnvInitMixin {
                 return null;
             }
             
-            // If version specified via argument, use it (convert "auto" to "latest")
-            if (argument != null && !argument.isEmpty()) {
-                return "auto".equals(argument) ? "latest" : argument;
+            // If version specified via argument and not 'auto', use it as-is
+            if (StringUtils.isNotBlank(argument) && !"auto".equals(argument)) {
+                return argument;
             }
             
-            // Check VERSION environment variable (convert "auto" to "latest")
+            // Check VERSION environment variable if no version argument or 'auto' specified
             String versionEnvVar = tool.getDefaultEnvPrefix() + "_VERSION";
             String versionEnvValue = EnvHelper.env(versionEnvVar);
             if (versionEnvValue != null && !versionEnvValue.isEmpty()) {
-                return "auto".equals(versionEnvValue) ? "latest" : versionEnvValue;
+                return versionEnvValue;
             }
             
-            // Default to latest
-            return "latest";
+            // Default to auto (register any available, install latest if none found)
+            return "auto";
         }
         
         /**
@@ -188,11 +190,10 @@ public class ToolEnvInitMixin {
         }
         
         /**
-         * Check if a specific version was provided (not "latest").
+         * Check if version is 'auto' (meaning: try any available version, install latest if none found).
          */
-        public boolean hasSpecificVersion() {
-            String version = getEffectiveVersion();
-            return version != null && !"latest".equals(version);
+        public boolean isAutoVersion() {
+            return "auto".equals(getEffectiveVersion());
         }
     }
 }
