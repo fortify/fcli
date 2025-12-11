@@ -84,8 +84,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
     }
     
     private void updateToolDefinitions() {
-        String source = toolsMixin.getToolDefinitions();
-        ToolDefinitionsHelper.updateToolDefinitions(source);
+        ToolDefinitionsHelper.updateToolDefinitions(toolsMixin.getToolDefinitions(), false, null);
     }
     
     private ToolSetupResult setupTool(ToolSetupSpec spec) {

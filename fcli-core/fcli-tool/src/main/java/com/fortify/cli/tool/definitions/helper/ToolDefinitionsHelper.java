@@ -64,28 +64,18 @@ public final class ToolDefinitionsHelper {
         addYamlOutputDescriptors(result);
         return result;
     }
-    public static final List<ToolDefinitionsOutputDescriptor> getOutputDescriptors(String source, boolean shouldUpdate) {
-        List<ToolDefinitionsOutputDescriptor> result = new ArrayList<>();
-        addZipOutputDescriptor(result, shouldUpdate);
-        addYamlOutputDescriptors(result,source, shouldUpdate);
-        return result;
-    }
-
-    @SneakyThrows
-    public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source) {
-        return updateToolDefinitions(source, false, null);
-    }
-
+    
     @SneakyThrows
     public static final List<ToolDefinitionsOutputDescriptor> updateToolDefinitions(String source, boolean forceUpdate, String maxAge) {
+        String normalizedSource = normalizeSource(source);
         boolean shouldUpdate = shouldUpdateToolDefinitions(forceUpdate, maxAge);
         if (shouldUpdate) {
             createDefinitionsStateDir(ToolDefinitionsHelper.DEFINITIONS_STATE_DIR);
             var zip = ToolDefinitionsHelper.DEFINITIONS_STATE_ZIP;
-            var descriptor = update(source, zip);
+            var descriptor = update(normalizedSource, zip);
             FcliDataHelper.saveFile(DESCRIPTOR_PATH, descriptor, true);
         }
-        return getOutputDescriptors(source, shouldUpdate);
+        return getOutputDescriptors(normalizedSource, shouldUpdate);
     }
 
     @SneakyThrows
@@ -97,15 +87,26 @@ public final class ToolDefinitionsHelper {
         return getOutputDescriptors();
     }
 
+    private static final String normalizeSource(String source) {
+        return StringUtils.isBlank(source) ? DEFAULT_TOOL_DEFINITIONS_URL : source;
+    }
+
     private static final void createDefinitionsStateDir(Path dir) throws IOException {
         if (!Files.exists(dir)) {
             Files.createDirectories(dir);
         }
     }
 
-    private static FileTime getModifiedTime(Path path) throws IOException {
+    private static final FileTime getModifiedTime(Path path) throws IOException {
         if (!Files.exists(path)) return null;
         return Files.getLastModifiedTime(path);
+    }
+
+    private static List<ToolDefinitionsOutputDescriptor> getOutputDescriptors(String source, boolean shouldUpdate) {
+        List<ToolDefinitionsOutputDescriptor> result = new ArrayList<>();
+        addZipOutputDescriptor(result, shouldUpdate);
+        addYamlOutputDescriptors(result, source, shouldUpdate);
+        return result;
     }
 
     private static final ToolDefinitionsStateDescriptor update(String source, Path dest) throws IOException {
