@@ -91,8 +91,10 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
     private ToolSetupResult setupTool(ToolSetupSpec spec) {
         Tool tool = spec.tool();
         String toolName = tool.getToolName();
+        String requestedVersion = spec.getEffectiveVersion();
+        String versionInfo = spec.hasPath() ? " at " + spec.getEffectivePath() : (requestedVersion != null ? " version '" + requestedVersion + "'" : "");
         
-        System.out.println("Setting up " + toolName + "...");
+        System.out.println("Setting up " + toolName + versionInfo + "...");
         
         // Try to register first
         RegistrationResult regResult = tryRegisterTool(spec);
@@ -113,7 +115,6 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             System.out.println("✓ " + toolName + " " + installResult.action() + " successfully");
             return new ToolSetupResult(toolName, installResult.action(), spec.getEffectiveVersion(), installResult.installDir());
         } else {
-            String requestedVersion = spec.getEffectiveVersion();
             throw new FcliSimpleException("Tool " + toolName + " version '" + requestedVersion + "' not found and preinstalled mode prevents installation");
         }
     }
@@ -151,7 +152,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         
         // Registration failed
         if (!toolsMixin.isPreinstalledMode()) {
-            System.out.println("Tool " + toolName + " not found, will proceed with installation");
+            System.out.println("Tool " + toolName + " version '" + spec.getEffectiveVersion() + "' not found, will proceed with installation");
         }
         return new RegistrationResult(false, null, null);
     }
