@@ -145,11 +145,6 @@ public enum Tool {
         public String getDefaultBinaryName() {
             return ToolPlatformHelper.isWindows() ? "scancentral.bat" : "scancentral";
         }
-        
-        @Override
-        public String getDefaultEnvPrefix() {
-            return "SCANCENTRAL";
-        }
     }
     
     /**
