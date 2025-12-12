@@ -26,6 +26,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolDependency;
@@ -34,7 +35,6 @@ import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 import com.fortify.cli.tool._common.helper.ToolJreInstallHelper;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
@@ -119,7 +119,7 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     }
     
     private void installJre(ToolInstaller scClientInstaller) throws IOException {
-        var platform = StringUtils.isNotBlank(jrePlatform) ? jrePlatform : ToolPlatformHelper.getPlatform();
+        var platform = StringUtils.isNotBlank(jrePlatform) ? jrePlatform : PlatformHelper.getPlatform();
         new SCClientJREInstaller(scClientInstaller).installJre(platform);
     }
     

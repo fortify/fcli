@@ -18,11 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fortify.cli.common.util.DebugHelper;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolJreResolver;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -54,7 +54,7 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
 
     @Override
     protected List<String> getBaseCommand(ToolInstallationDescriptor descriptor) {
-        var ext = ToolPlatformHelper.isWindows() ? ".bat" : "";
+        var ext = PlatformHelper.isWindows() ? ".bat" : "";
         return List.of(descriptor.getBinPath().resolve("scancentral"+ext).toString());
     }
     
@@ -65,7 +65,7 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
             .descriptor(descriptor)
             .envVarPrefixes(new String[]{"SC_CLIENT", "SCANCENTRAL"})
             .compatibleVersions(new String[]{"21", "17", "11", "8"})
-            .javaExecutableName(ToolPlatformHelper.isWindows() ? "java.exe" : "java")
+            .javaExecutableName(PlatformHelper.isWindows() ? "java.exe" : "java")
             .includeGenericJavaHome(true)
             .build();
         

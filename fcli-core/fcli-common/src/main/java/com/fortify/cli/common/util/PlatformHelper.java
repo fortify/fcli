@@ -10,32 +10,40 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.tool._common.helper;
+package com.fortify.cli.common.util;
 
 import java.util.Locale;
 
-public class ToolPlatformHelper {
-    public static final String getOSString() {
+/**
+ * Utility methods for platform detection and normalization.
+ * Provides OS and architecture detection, normalization, and GitHub Actions compatibility.
+ * 
+ * @author Ruud Senden
+ */
+public final class PlatformHelper {
+    private PlatformHelper() {}
+    
+    public static String getOSString() {
         return normalizeOs(System.getProperty("os.name", "unknown"));
     }
     
-    public static final String getArchString() {
+    public static String getArchString() {
         return normalizeArch(System.getProperty("os.arch", "unknown"));
     }
     
-    public static final String getPlatform() {
+    public static String getPlatform() {
         return String.format("%s/%s", getOSString(), getArchString());
     }
     
-    public static final boolean isWindows() {
+    public static boolean isWindows() {
         return "windows".equals(getOSString());
     }
     
-    public static final boolean isLinux() {
+    public static boolean isLinux() {
         return "linux".equals(getOSString());
     }
     
-    public static final boolean isMac() {
+    public static boolean isMac() {
         return "darwin".equals(getOSString());
     }
     
@@ -156,5 +164,25 @@ public class ToolPlatformHelper {
             return "";
         }
         return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
+    }
+    
+    /**
+     * Returns the architecture suffix used by GitHub Actions for JAVA_HOME environment variables.
+     * GitHub Actions uses patterns like JAVA_HOME_17_X64 instead of standard os.arch values.
+     * 
+     * @return GitHub Actions-style architecture suffix (e.g., "X64", "X86", "ARM64"), or null if not recognized
+     */
+    public static String getGitHubActionsArchSuffix() {
+        String arch = getArchString();
+        switch (arch) {
+            case "x64":
+                return "X64";
+            case "x86":
+                return "X86";
+            case "arm64":
+                return "ARM64";
+            default:
+                return null;
+        }
     }
 }

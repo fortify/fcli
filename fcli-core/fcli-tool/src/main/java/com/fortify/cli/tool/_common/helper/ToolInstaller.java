@@ -37,6 +37,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
@@ -155,7 +156,7 @@ public final class ToolInstaller {
     }
     
     public final ToolInstallationResult install() {
-        var artifactDescriptor = getArtifactDescriptor(ToolPlatformHelper.getPlatform())
+        var artifactDescriptor = getArtifactDescriptor(PlatformHelper.getPlatform())
                 .orElseGet(()->getArtifactDescriptor(fallbackPlatform)
                         .orElseThrow(()->new IllegalStateException("Appropriate artifact for system platform cannot be determined automatically, please specify platform explicitly")));
         return install(artifactDescriptor);

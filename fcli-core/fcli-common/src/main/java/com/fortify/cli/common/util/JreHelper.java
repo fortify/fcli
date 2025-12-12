@@ -87,9 +87,20 @@ public final class JreHelper {
             String osArch = System.getProperty("os.arch", "").toUpperCase();
             
             for (String version : compatibleVersions) {
-                // Try JAVA_HOME_<version>_<arch>
+                // Try JAVA_HOME_<version>_<arch> with raw os.arch value (e.g., JAVA_HOME_17_AMD64, JAVA_HOME_17_X86_64, JAVA_HOME_17_AARCH64)
                 if (StringUtils.isNotBlank(osArch)) {
                     String envVarName = "JAVA_HOME_" + version + "_" + osArch;
+                    String javaHome = EnvHelper.env(envVarName);
+                    if (StringUtils.isNotBlank(javaHome)) {
+                        return new JreDetectionResult(javaHome, envVarName);
+                    }
+                }
+                
+                // Try GitHub Actions-style patterns (e.g., JAVA_HOME_17_X64)
+                // GitHub Actions uses X64 for 64-bit x86 architectures and X86 for 32-bit
+                String githubActionsArch = PlatformHelper.getGitHubActionsArchSuffix();
+                if (githubActionsArch != null) {
+                    String envVarName = "JAVA_HOME_" + version + "_" + githubActionsArch;
                     String javaHome = EnvHelper.env(envVarName);
                     if (StringUtils.isNotBlank(javaHome)) {
                         return new JreDetectionResult(javaHome, envVarName);
@@ -349,4 +360,6 @@ public final class JreHelper {
         String[] parts = versionString.split("[._-]");
         return parts.length > 0 ? parts[0] : null;
     }
+    
+
 }

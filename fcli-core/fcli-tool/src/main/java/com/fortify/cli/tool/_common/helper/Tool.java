@@ -15,6 +15,8 @@ package com.fortify.cli.tool._common.helper;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fortify.cli.common.util.PlatformHelper;
+
 /**
  * Enumeration of all supported tools with their metadata and helper implementations.
  * Provides centralized tool configuration including names, binary names, and environment prefixes.
@@ -126,7 +128,7 @@ public enum Tool {
         
         @Override
         public String getDefaultBinaryName() {
-            return ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli";
+            return PlatformHelper.isWindows() ? "fcli.exe" : "fcli";
         }
     }
     
@@ -143,7 +145,7 @@ public enum Tool {
         
         @Override
         public String getDefaultBinaryName() {
-            return ToolPlatformHelper.isWindows() ? "scancentral.bat" : "scancentral";
+            return PlatformHelper.isWindows() ? "scancentral.bat" : "scancentral";
         }
     }
     
@@ -160,7 +162,7 @@ public enum Tool {
         
         @Override
         public String getDefaultBinaryName() {
-            return ToolPlatformHelper.isWindows() ? "FoDUpload.bat" : "FoDUpload";
+            return PlatformHelper.isWindows() ? "FoDUpload.bat" : "FoDUpload";
         }
     }
     
@@ -177,7 +179,7 @@ public enum Tool {
         
         @Override
         public String getDefaultBinaryName() {
-            return ToolPlatformHelper.isWindows() ? "FortifyBugTrackerUtility.bat" : "FortifyBugTrackerUtility";
+            return PlatformHelper.isWindows() ? "FortifyBugTrackerUtility.bat" : "FortifyBugTrackerUtility";
         }
         
         @Override
@@ -199,7 +201,7 @@ public enum Tool {
         
         @Override
         public String getDefaultBinaryName() {
-            return ToolPlatformHelper.isWindows() ? "FortifyVulnerabilityExporter.bat" : "FortifyVulnerabilityExporter";
+            return PlatformHelper.isWindows() ? "FortifyVulnerabilityExporter.bat" : "FortifyVulnerabilityExporter";
         }
         
         @Override
@@ -221,7 +223,7 @@ public enum Tool {
         
         @Override
         public String getDefaultBinaryName() {
-            return ToolPlatformHelper.isWindows() ? "debricked.exe" : "debricked";
+            return PlatformHelper.isWindows() ? "debricked.exe" : "debricked";
         }
         
         @Override

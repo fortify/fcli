@@ -14,10 +14,10 @@ package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
 import java.util.List;
 
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunCommand;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
 
 import picocli.CommandLine.Command;
 
@@ -31,7 +31,7 @@ public class ToolDebrickedCliRunCommand extends AbstractToolRunCommand {
 
     @Override
     protected List<String> getBaseCommand(ToolInstallationDescriptor descriptor) {
-        var baseCmd = ToolPlatformHelper.isWindows() ? "debricked.exe" : "debricked";
+        var baseCmd = PlatformHelper.isWindows() ? "debricked.exe" : "debricked";
         return List.of(descriptor.getBinPath().resolve(baseCmd).toString());
     }
 }

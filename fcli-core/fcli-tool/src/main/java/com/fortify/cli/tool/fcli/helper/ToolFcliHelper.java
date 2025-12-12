@@ -15,7 +15,7 @@ package com.fortify.cli.tool.fcli.helper;
 import java.io.File;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
-import com.fortify.cli.tool._common.helper.ToolPlatformHelper;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionDetector;
 
 /**
@@ -30,7 +30,7 @@ public class ToolFcliHelper {
      * @return "fcli.exe" on Windows, "fcli" on other platforms
      */
     public static String getDefaultBinaryName() {
-        return ToolPlatformHelper.isWindows() ? "fcli.exe" : "fcli";
+        return PlatformHelper.isWindows() ? "fcli.exe" : "fcli";
     }
     
     /**
