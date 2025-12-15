@@ -42,185 +42,54 @@ class ToolEnvInitSpec extends FcliBaseSpec {
     @Shared String debrickedVersion = "2.6.7"
     @Shared String fcliVersion = "latest"
     
-    // Tests for sc-client
+    // Parameterized tests for single tool setup (options-based)
     
-    def "init.sc-client.options.specific-version"() {
-        def args = "tool env init --tools=sc-client:${scClientVersion} --base-dir ${baseDir}"
+    @Unroll
+    def "init.options.#tool.#versionType"() {
+        def args = "tool env init --tools=${toolSpec} --base-dir ${baseDir}"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size() > 0
-                it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
+                it.any { line -> line.contains("Setting up ${tool}") }
+                it.any { line -> line.contains("✓") && line.contains(tool) }
             }
+        where:
+            tool            | versionType | toolSpec
+            "sc-client"     | "specific"  | "sc-client:23.1.0"
+            "sc-client"     | "auto"      | "sc-client:auto"
+            "sc-client"     | "latest"    | "sc-client:latest"
+            "debricked-cli" | "specific"  | "debricked-cli:2.6.7"
+            "debricked-cli" | "auto"      | "debricked-cli:auto"
+            "debricked-cli" | "latest"    | "debricked-cli:latest"
+            "fcli"          | "auto"      | "fcli:auto"
+            "fcli"          | "latest"    | "fcli:latest"
     }
     
-    def "init.sc-client.env.specific-version"() {
+    // Parameterized tests for single tool setup (environment variable-based)
+    
+    @Unroll
+    def "init.env.#tool.#versionType"() {
         def args = "tool env init --base-dir ${baseDir}"
-        def env = ["SC_CLIENT_VERSION": scClientVersion]
         when:
             def result = Fcli.run(args, env, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size() > 0
-                it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
+                it.any { line -> line.contains("Setting up ${tool}") }
+                it.any { line -> line.contains("✓") && line.contains(tool) }
             }
-    }
-    
-    def "init.sc-client.options.auto-version"() {
-        def args = "tool env init --tools=sc-client:auto --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
-            }
-    }
-    
-    def "init.sc-client.env.auto-version"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        def env = ["SC_CLIENT_VERSION": "auto"]
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
-            }
-    }
-    
-    def "init.sc-client.options.latest-version"() {
-        def args = "tool env init --tools=sc-client:latest --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
-            }
-    }
-    
-    def "init.sc-client.env.latest-version"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        def env = ["SC_CLIENT_VERSION": "latest"]
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
-            }
-    }
-    
-    // Tests for debricked-cli
-    
-    def "init.debricked-cli.options.specific-version"() {
-        def args = "tool env init --tools=debricked-cli:${debrickedVersion} --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up debricked-cli") }
-                it.any { line -> line.contains("✓") && line.contains("debricked-cli") }
-            }
-    }
-    
-    def "init.debricked-cli.env.specific-version"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        def env = ["DEBRICKED_VERSION": debrickedVersion]
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up debricked-cli") }
-                it.any { line -> line.contains("✓") && line.contains("debricked-cli") }
-            }
-    }
-    
-    def "init.debricked-cli.options.auto-version"() {
-        def args = "tool env init --tools=debricked-cli:auto --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up debricked-cli") }
-                it.any { line -> line.contains("✓") && line.contains("debricked-cli") }
-            }
-    }
-    
-    def "init.debricked-cli.env.auto-version"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        def env = ["DEBRICKED_VERSION": "auto"]
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up debricked-cli") }
-                it.any { line -> line.contains("✓") && line.contains("debricked-cli") }
-            }
-    }
-    
-    // Tests for fcli
-    
-    def "init.fcli.options.latest-version"() {
-        def args = "tool env init --tools=fcli:${fcliVersion} --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up fcli") }
-                it.any { line -> line.contains("✓") && line.contains("fcli") }
-            }
-    }
-    
-    def "init.fcli.env.latest-version"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        def env = ["FCLI_VERSION": fcliVersion]
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up fcli") }
-                it.any { line -> line.contains("✓") && line.contains("fcli") }
-            }
-    }
-    
-    def "init.fcli.options.auto-version"() {
-        def args = "tool env init --tools=fcli:auto --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up fcli") }
-                it.any { line -> line.contains("✓") && line.contains("fcli") }
-            }
-    }
-    
-    def "init.fcli.env.auto-version"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        def env = ["FCLI_VERSION": "auto"]
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up fcli") }
-                it.any { line -> line.contains("✓") && line.contains("fcli") }
-            }
+        where:
+            tool            | versionType | env
+            "sc-client"     | "specific"  | ["SC_CLIENT_VERSION": "23.1.0"]
+            "sc-client"     | "auto"      | ["SC_CLIENT_VERSION": "auto"]
+            "sc-client"     | "latest"    | ["SC_CLIENT_VERSION": "latest"]
+            "debricked-cli" | "specific"  | ["DEBRICKED_VERSION": "2.6.7"]
+            "debricked-cli" | "auto"      | ["DEBRICKED_VERSION": "auto"]
+            "debricked-cli" | "latest"    | ["DEBRICKED_VERSION": "latest"]
+            "fcli"          | "auto"      | ["FCLI_VERSION": "auto"]
+            "fcli"          | "latest"    | ["FCLI_VERSION": "latest"]
     }
     
     // Tests for multiple tools (common CI integration scenario)
@@ -357,48 +226,6 @@ class ToolEnvInitSpec extends FcliBaseSpec {
         then:
             result.nonZeroExitCode
             result.stderr.any { line -> line.contains("not found") || line.contains("preinstalled mode") }
-    }
-    
-    // Parameterized tests for version specification variants
-    
-    @Unroll
-    def "init.parameterized.#tool.#versionType"() {
-        def args = "tool env init --tools=${toolSpec} --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up ${tool}") }
-                it.any { line -> line.contains("✓") && line.contains(tool) }
-            }
-        where:
-            tool            | versionType | toolSpec
-            "sc-client"     | "specific"  | "sc-client:23.1.0"
-            "sc-client"     | "auto"      | "sc-client:auto"
-            "sc-client"     | "latest"    | "sc-client:latest"
-            "debricked-cli" | "specific"  | "debricked-cli:2.6.7"
-            "debricked-cli" | "auto"      | "debricked-cli:auto"
-            "debricked-cli" | "latest"    | "debricked-cli:latest"
-    }
-    
-    @Unroll
-    def "init.parameterized.env.#tool"() {
-        def args = "tool env init --base-dir ${baseDir}"
-        when:
-            def result = Fcli.run(args, env, {it.expectZeroExitCode()})
-        then:
-            verifyAll(result.stdout) {
-                size() > 0
-                it.any { line -> line.contains("Setting up ${tool}") }
-                it.any { line -> line.contains("✓") && line.contains(tool) }
-            }
-        where:
-            tool            | env
-            "sc-client"     | ["SC_CLIENT_VERSION": "23.1.0"]
-            "sc-client"     | ["SC_CLIENT_VERSION": "auto"]
-            "debricked-cli" | ["DEBRICKED_VERSION": "2.6.7"]
-            "debricked-cli" | ["DEBRICKED_VERSION": "auto"]
     }
     
     // Test install vs register behavior
