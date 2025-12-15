@@ -172,12 +172,27 @@ public class ToolEnvInitMixin {
         }
         
         /**
-         * Check if the argument looks like a path (starts with / or \ or . or ~).
+         * Check if the argument looks like a path.
+         * Handles Unix paths (/, ~, .), Windows paths (C:\, \\), and UNC paths.
          */
         private boolean isPathArgument() {
-            return argument != null && !argument.isEmpty() 
-                    && (argument.startsWith("/") || argument.startsWith("\\") 
-                    || argument.startsWith(".") || argument.startsWith("~"));
+            if (argument == null || argument.isEmpty()) {
+                return false;
+            }
+            // Unix-style absolute paths
+            if (argument.startsWith("/") || argument.startsWith("~") || argument.startsWith(".")) {
+                return true;
+            }
+            // Windows-style paths: C:\ or C:/ or \\server
+            if (argument.length() >= 3 && argument.charAt(1) == ':' 
+                    && (argument.charAt(2) == '\\' || argument.charAt(2) == '/')) {
+                return true;
+            }
+            // UNC paths: \\server\share
+            if (argument.startsWith("\\\\")) {
+                return true;
+            }
+            return false;
         }
         
         /**
