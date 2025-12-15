@@ -41,6 +41,8 @@ class ToolEnvInitSpec extends FcliBaseSpec {
     @Shared String scClientVersion = "23.1.0"
     @Shared String debrickedVersion = "2.6.7"
     @Shared String fcliVersion = "latest"
+    // Platform-aware success marker - matches what fcli outputs
+    @Shared String successMarker = System.getProperty("os.name", "").toLowerCase().contains("win") ? "[OK]" : "✓"
     
     // Parameterized tests for single tool setup (options-based)
     
@@ -53,7 +55,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up ${tool}") }
-                it.any { line -> line.contains("✓") && line.contains(tool) }
+                it.any { line -> line.contains(successMarker) && line.contains(tool) && (line.contains("installed") || line.contains("registered")) }
             }
         where:
             tool            | versionType | toolSpec
@@ -78,7 +80,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up ${tool}") }
-                it.any { line -> line.contains("✓") && line.contains(tool) }
+                it.any { line -> line.contains(successMarker) && line.contains(tool) && (line.contains("installed") || line.contains("registered")) }
             }
         where:
             tool            | versionType | env
@@ -103,8 +105,8 @@ class ToolEnvInitSpec extends FcliBaseSpec {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
                 it.any { line -> line.contains("Setting up fcli") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("fcli") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && (line.contains("installed") || line.contains("registered")) }
+                it.any { line -> line.contains(successMarker) && line.contains("fcli") && (line.contains("installed") || line.contains("registered")) }
             }
     }
     
@@ -121,8 +123,8 @@ class ToolEnvInitSpec extends FcliBaseSpec {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
                 it.any { line -> line.contains("Setting up fcli") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("fcli") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && (line.contains("installed") || line.contains("registered")) }
+                it.any { line -> line.contains(successMarker) && line.contains("fcli") && (line.contains("installed") || line.contains("registered")) }
             }
     }
     
@@ -139,7 +141,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && (line.contains("installed") || line.contains("registered")) }
                 // Environment variables should be ignored when --tools is specified
                 !it.any { line -> line.contains("Setting up fcli") }
                 !it.any { line -> line.contains("Setting up debricked-cli") }
@@ -162,7 +164,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") && line.contains("registered") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && line.contains("registered") }
             }
     }
     
@@ -181,7 +183,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") && line.contains("registered") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && line.contains("registered") }
             }
     }
     
@@ -196,7 +198,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && (line.contains("installed") || line.contains("registered")) }
             }
     }
     
@@ -244,7 +246,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") && line.contains("installed") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && line.contains("installed") }
             }
             Files.exists(scClientDir)
     }
@@ -258,7 +260,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") && line.contains("registered") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && line.contains("registered") }
                 // Should NOT contain "installed" since it's already present
                 !it.any { line -> line.contains("installed") }
             }
@@ -279,7 +281,7 @@ class ToolEnvInitSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up sc-client") }
-                it.any { line -> line.contains("✓") && line.contains("sc-client") && line.contains("installed") }
+                it.any { line -> line.contains(successMarker) && line.contains("sc-client") && line.contains("installed") }
             }
             Files.exists(altDir)
     }
@@ -341,7 +343,7 @@ fi
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up debricked-cli") }
-                it.any { line -> line.contains("✓") && line.contains("debricked-cli") && line.contains("registered") }
+                it.any { line -> line.contains(successMarker) && line.contains("debricked-cli") && line.contains("registered") }
                 // Should register either from baseDir (if previously installed) or from PATH
             }
     }
@@ -365,7 +367,7 @@ fi
             verifyAll(result.stdout) {
                 size() > 0
                 it.any { line -> line.contains("Setting up debricked-cli") }
-                it.any { line -> line.contains("✓") && line.contains("debricked-cli") }
+                it.any { line -> line.contains(successMarker) && line.contains("debricked-cli") }
             }
     }
 }

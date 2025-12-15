@@ -28,6 +28,7 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin;
@@ -41,6 +42,9 @@ import picocli.CommandLine.Mixin;
 //      register and install commands) with direct API calls (partially or all done; need to check)
 @Command(name = "init")
 public class ToolEnvInitCommand extends AbstractRunnableCommand {
+    // Platform-aware success marker: checkmark on Unix/Linux, [OK] on Windows
+    private static final String SUCCESS_MARKER = PlatformHelper.isWindows() ? "[OK]" : "✓";
+    
     @Mixin @Getter
     private ToolEnvInitMixin toolsMixin;
     
@@ -99,7 +103,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         // Try to register first
         RegistrationResult regResult = tryRegisterTool(spec);
         if (regResult.success()) {
-            System.out.println("✓ " + toolName + " registered successfully");
+            System.out.println(SUCCESS_MARKER + " " + toolName + " registered successfully");
             String displayVersion = spec.hasPath() ? "preinstalled" : regResult.version();
             return new ToolSetupResult(toolName, "registered", displayVersion, regResult.installDir());
         }
@@ -112,7 +116,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         // If registration failed and not in preinstalled mode, try to install
         if (!toolsMixin.isPreinstalledMode()) {
             InstallResult installResult = installTool(spec);
-            System.out.println("✓ " + toolName + " " + installResult.action() + " successfully");
+            System.out.println(SUCCESS_MARKER + " " + toolName + " " + installResult.action() + " successfully");
             return new ToolSetupResult(toolName, installResult.action(), spec.getEffectiveVersion(), installResult.installDir());
         } else {
             throw new FcliSimpleException("Tool " + toolName + " version '" + requestedVersion + "' not found and preinstalled mode prevents installation");
@@ -280,9 +284,8 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         System.out.println("Fortify tools setup complete. " + results.size() + " tool(s) processed.");
         
         for (ToolSetupResult result : results) {
-            System.out.println("  ✓ " + result.toolName + ": " + result.version + " (" + result.status + ") at " + result.binDir);
+            System.out.println("  " + SUCCESS_MARKER + " " + result.toolName + ": " + result.version + " (" + result.status + ") at " + result.binDir);
         }
     }
-    
 
 }
