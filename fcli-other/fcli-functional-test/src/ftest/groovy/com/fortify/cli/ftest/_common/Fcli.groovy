@@ -47,7 +47,33 @@ public class Fcli {
         List<String> args,
         FcliResultValidator validator = {it.expectSuccess()}) 
     {
-        def result = _run(args)
+        def result = _run(args, [:])
+        validator.validate(result)
+        return result
+    }
+    
+    /**
+     * This method runs fcli with the arguments provided and environment variables,
+     * returning an FcliResult instance representing fcli execution result. Environment
+     * variables are set before execution and cleared/restored afterward. For 
+     * ReflectiveRunner, environment variables are set as fcli.env.* system properties;
+     * for ExternalRunner, they are passed as environment variables to the child process.
+     * By default, this method will throw an exception if fcli returned a non-zero exit 
+     * code, or if there was any output on stderr. If needed, callers can provide a 
+     * custom validator closure as the third argument to override this behavior.
+     * @param args Arguments to pass to fcli
+     * @param env Map of environment variables to set for this fcli invocation
+     * @param validate Optional closure to override validation of the fcli execution
+     *        result; by default, an exception will be thrown if fcli execution was
+     *        unsuccessful.
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult run(
+        List<String> args,
+        Map<String,String> env,
+        FcliResultValidator validator = {it.expectSuccess()}) 
+    {
+        def result = _run(args, env)
         validator.validate(result)
         return result
     }
@@ -73,6 +99,32 @@ public class Fcli {
         return run(toArgsList(argsString), validator)
     }
     
+    /**
+     * This method runs fcli with the arguments provided and environment variables,
+     * returning an FcliResult instance representing fcli execution result. The given 
+     * arguments string should contain the individual fcli arguments separated by spaces. 
+     * To keep a space inside an individual argument, it can be escaped with a backslash.
+     * Environment variables are set before execution and cleared/restored afterward. 
+     * For ReflectiveRunner, environment variables are set as fcli.env.* system properties;
+     * for ExternalRunner, they are passed as environment variables to the child process.
+     * By default, this method will throw an exception if fcli returned a non-zero exit 
+     * code, or if there was any output on stderr. If needed, callers can provide a 
+     * custom validator closure as the third argument to override this behavior.
+     * @param argsString Arguments to pass to fcli
+     * @param env Map of environment variables to set for this fcli invocation
+     * @param validate Optional closure to override validation of the fcli execution
+     *        result; by default, an exception will be thrown if fcli execution was
+     *        unsuccessful.
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult run(
+        String argsString,
+        Map<String,String> env,
+        FcliResultValidator validator = {it.expectSuccess()})
+    {
+        return run(toArgsList(argsString), env, validator)
+    }
+    
     private static final List<String> toArgsList(String argsString) {
         argsString.replace("\\ ", "KEEPSPACE")
             .split(" ")
@@ -84,18 +136,19 @@ public class Fcli {
      * instance representing fcli execution result. This method throws an exception 
      * if there was an error trying to execute fcli, for example if the configured
      * fcli executable cannot be found. Being private, this method can only be
-     * invoked by the two run-methods above, essentially requiring callers to
+     * invoked by the run-methods above, essentially requiring callers to
      * provide a validation closure.
      * @param args Arguments to pass to fcli
+     * @param env Map of environment variables to set for this fcli invocation
      * @return FcliResult describing fcli execution result
      */
-    private static final FcliResult _run(List<String> args) {
+    private static final FcliResult _run(List<String> args, Map<String,String> env) {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         }
         println "==> fcli "+args.collect({mask(it)}).join(" ")
         new FcliOutputCapturer().start().withCloseable {
-            int exitCode = runner.run(args)
+            int exitCode = runner.run(args, env)
             return new FcliResult(exitCode, it.stdout, it.stderr)
         }
     }
@@ -187,7 +240,7 @@ public class Fcli {
     }
     
     private static interface IRunner extends AutoCloseable {
-        int run(List<String> args);
+        int run(List<String> args, Map<String,String> env);
     }
     
     @Immutable
@@ -195,9 +248,9 @@ public class Fcli {
         List fcliCmd
         
         @Override
-        int run(List<String> args) {
+        int run(List<String> args, Map<String,String> env) {
             def fullCmd = fcliCmd+args
-            def proc = fullCmd.execute()
+            def proc = fullCmd.execute(buildEnvArray(env), null)
             // TODO This is the only method that works for properly
             //      getting all process output, however potentially
             //      this could wait indefinitely, for example if
@@ -205,6 +258,14 @@ public class Fcli {
             //      implement some time-out mechanism. 
             proc.waitForProcessOutput(System.out, System.err)
             return proc.exitValue()
+        }
+        
+        private List<String> buildEnvArray(Map<String,String> additionalEnv) {
+            def envMap = new LinkedHashMap<String,String>(System.getenv())
+            if (additionalEnv) {
+                envMap.putAll(additionalEnv)
+            }
+            return envMap.collect { k, v -> "${k}=${v}" as String }
         }
         
         @Override
@@ -222,14 +283,36 @@ public class Fcli {
         }
         
         @Override
-        int run(List<String> args) {
+        int run(List<String> args, Map<String,String> env) {
             if ( runnerClass==null ) {
                 runnerClass = Class.forName("com.fortify.cli.app.runner.DefaultFortifyCLIRunner")
             }
-            // Static run(String... args) method; need to convert List<String> to Object[] and invoke reflectively
-            def method = runnerClass.getMethod("run", String[].class)
-            String[] a = args as String[]
-            return (int)method.invoke(null, (Object)a)
+            
+            // Set environment variables as fcli.env.* system properties
+            Map<String,String> savedProps = [:]
+            if (env) {
+                env.each { k, v ->
+                    String propName = "fcli.env.${k}"
+                    savedProps[propName] = System.getProperty(propName)
+                    System.setProperty(propName, v)
+                }
+            }
+            
+            try {
+                // Static run(String... args) method; need to convert List<String> to Object[] and invoke reflectively
+                def method = runnerClass.getMethod("run", String[].class)
+                String[] a = args as String[]
+                return (int)method.invoke(null, (Object)a)
+            } finally {
+                // Restore original system properties
+                savedProps.each { propName, originalValue ->
+                    if (originalValue == null) {
+                        System.clearProperty(propName)
+                    } else {
+                        System.setProperty(propName, originalValue)
+                    }
+                }
+            }
         }
         
         @Override

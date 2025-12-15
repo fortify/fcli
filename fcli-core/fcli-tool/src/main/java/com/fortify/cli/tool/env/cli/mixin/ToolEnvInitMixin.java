@@ -47,7 +47,7 @@ public class ToolEnvInitMixin {
     @Option(names = "--install-dir-pattern")
     @Getter private String installDirPattern;
     
-    @Option(names = "--tools", split = ",", required = true)
+    @Option(names = "--tools", split = ",", required = false)
     @Getter private List<String> toolSpecs;
     
     /**
@@ -68,11 +68,20 @@ public class ToolEnvInitMixin {
     }
     
     /**
-     * Validate that --install-dir-pattern and --base-dir are mutually exclusive.
+     * Validate options and populate tools from environment if --tools not specified.
      */
     public void validateOptions() {
         if (baseDir != null && installDirPattern != null) {
             throw new FcliSimpleException("--base-dir and --install-dir-pattern are mutually exclusive");
+        }
+        
+        // If --tools not specified, auto-detect from environment variables
+        if (toolSpecs == null || toolSpecs.isEmpty()) {
+            toolSpecs = autoDetectToolsFromEnvironment();
+            if (toolSpecs.isEmpty()) {
+                throw new FcliSimpleException("No tools specified via --tools option and no tool environment variables found. " +
+                    "Either specify --tools or set environment variables like SC_CLIENT_VERSION, FCLI_VERSION, etc.");
+            }
         }
     }
     
@@ -103,6 +112,21 @@ public class ToolEnvInitMixin {
         }
         
         return null; // No pattern
+    }
+    
+    /**
+     * Auto-detect tools from environment variables.
+     * Scans for <TOOL>_VERSION or <TOOL>_HOME environment variables for all supported tools.
+     */
+    private List<String> autoDetectToolsFromEnvironment() {
+        return java.util.Arrays.stream(Tool.values())
+            .filter(tool -> {
+                String versionVar = tool.getDefaultEnvPrefix() + "_VERSION";
+                String homeVar = tool.getDefaultEnvPrefix() + "_HOME";
+                return EnvHelper.env(versionVar) != null || EnvHelper.env(homeVar) != null;
+            })
+            .map(tool -> tool.getToolName() + ":auto")
+            .toList();
     }
     
     /**

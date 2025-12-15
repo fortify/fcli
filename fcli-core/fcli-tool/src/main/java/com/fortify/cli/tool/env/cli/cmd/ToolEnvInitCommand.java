@@ -236,7 +236,7 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
                 }
             }
         } else if (toolsMixin.getBaseDir() != null) {
-            cmd += " --install-dir \"" + toolsMixin.getBaseDir() + "\"";
+            cmd += " --base-dir \"" + toolsMixin.getBaseDir() + "\"";
         }
         
         // JRE handling for sc-client is now done automatically by the install command
