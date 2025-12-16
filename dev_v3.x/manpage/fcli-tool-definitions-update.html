@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161934-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251216.092544-dev_v3.x" %}
 
 
 <div id="header">
@@ -50,7 +50,7 @@ fcli_version:
                              [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                              [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                              [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                             [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                             [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-f</strong> | <strong>--max-age</strong>=<em>timeout</em>]</p>
 </div>
 </div>
 </div>
@@ -73,6 +73,14 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--force</strong></dt>
+<dd>
+<p>Update the tool definitions even if they are up-to-date.</p>
+</dd>
+<dt class="hdlist1"><strong>--max-age</strong>=<em>timeout</em></dt>
+<dd>
+<p>Only update tool definitions if the current definitions are older than the specified maximum age, for example 1m (1 minute), 4h (4 hours) or 1d (1 day), to avoid downloading the definitions multiple times in a short period of time. Default value: null</p>
+</dd>
 <dt class="hdlist1"><strong>-s</strong>, <strong>--source</strong>=<em>&lt;source&gt;</em></dt>
 <dd>
 <p>URL or file to get the tool definitions from. If not specified, default tool definitions provided by OpenText are downloaded from a predefined URL.</p>
@@ -143,7 +151,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:22:17 UTC
+Last updated 2025-12-16 09:28:21 UTC
 </div>
 </div>
 </body>

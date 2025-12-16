@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161934-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251216.092544-dev_v3.x" %}
 
 
 <div id="header">
@@ -59,6 +59,51 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p>This command allows for running ScanCentral Client as previously installed through the 'fcli tool sc-client install' command. It is recommended to use double dashes to separate fcli options from ScanCentral Client options, i.e., 'fcli tool sc-client run &lt;fcli options&gt;&#8201;&#8212;&#8201;&lt;ScanCentral Client options&gt;' to explicitly differentiate between fcli options and ScanCentral Client options.</p>
+</div>
+<div class="paragraph">
+<p>JRE RESOLUTION:
+The command determines which JRE to use based on how the installation was configured:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Explicit JRE (--jre): Always uses the exact path specified during installation; fails if path no longer exists</p>
+</li>
+<li>
+<p>Embedded JRE (--with-jre): Always uses the embedded JRE installed with ScanCentral Client</p>
+</li>
+<li>
+<p>Auto-detected JRE (no --jre or --with-jre): Re-checks environment variables on each run to detect JRE upgrades:</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>SC_CLIENT_JAVA_HOME environment variable</p>
+</li>
+<li>
+<p>SCANCENTRAL_JAVA_HOME environment variable</p>
+</li>
+<li>
+<p>JAVA_HOME_&lt;version&gt;_&lt;arch&gt; patterns (e.g., JAVA_HOME_17_X86_64, JAVA_HOME_17_X64 for GitHub Actions)</p>
+</li>
+<li>
+<p>JAVA_HOME_&lt;version&gt; patterns (e.g., JAVA_HOME_17, JAVA_HOME_11)</p>
+</li>
+<li>
+<p>JAVA_HOME environment variable (fallback)</p>
+</li>
+<li>
+<p>Stored path from installation (if env vars not set)</p>
+</li>
+<li>
+<p>Java from system PATH</p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The detected JAVA_HOME is automatically set as SCANCENTRAL_JAVA_HOME in the process environment for ScanCentral Client to use.</p>
 </div>
 </div>
 </div>
@@ -137,7 +182,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:22:17 UTC
+Last updated 2025-12-16 09:28:21 UTC
 </div>
 </div>
 </body>

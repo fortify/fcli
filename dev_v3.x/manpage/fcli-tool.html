@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251209.161934-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20251216.092544-dev_v3.x" %}
 
 
 <div id="header">
@@ -31,7 +31,7 @@ fcli_version:
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
 <li><a href="#_commands">Commands</a></li>
 </ul>
 </div>
@@ -53,12 +53,15 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The commands in this module allow for installing other Fortify tools like FoD Uploader, ScanCentral Client and FortifyVulnerabilityExporter, and managing those installations.</p>
+<p>The commands in this module allow for installing, managing, and running Fortify tools like ScanCentral Client and Fortify Bug Tracker Utility.</p>
+</div>
+<div class="paragraph">
+<p>Note that if you are looking for an easy way to set up Fortify tools, please consider using the 'fcli tool env init' command instead, which provides a higher-level interface for setting up Fortify tools and automatically detects environment characteristics.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -75,6 +78,10 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><a href="fcli-tool-env.html"><strong>env</strong></a></dt>
+<dd>
+<p>Initialize and manage tool environment.</p>
+</dd>
 <dt class="hdlist1"><a href="fcli-tool-bugtracker-utility.html"><strong>bugtracker-utility</strong>, <strong>fbtu</strong></a></dt>
 <dd>
 <p>Manage FortifyBugTrackerUtility installations.</p>
@@ -111,7 +118,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2025-12-09 16:22:17 UTC
+Last updated 2025-12-16 09:28:20 UTC
 </div>
 </div>
 </body>
