@@ -14,18 +14,16 @@ package com.fortify.cli.common.output.transform.mask;
 
 import java.io.PrintStream;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fortify.cli.common.log.LogMaskHelper;
-import com.fortify.cli.common.log.LogSensitivityLevel;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
  * Singleton helper for installing/uninstalling masking on System.out and System.err.
- * Delegates to LogMaskHelper for pattern/value registration to avoid duplication.
- * Respects the configured --log-mask level for sensitivity-based masking.
+ * All mask registration is now handled by LogMaskHelper, which automatically registers
+ * values for both log and stdio masking. This class is solely responsible for installing
+ * the masking PrintStream wrappers.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class StdIoMaskHelper {
@@ -73,20 +71,6 @@ public final class StdIoMaskHelper {
         originalOut = null;
         originalErr = null;
         installed = false;
-        return this;
-    }
-    
-    /**
-     * Register a specific sensitive value to be masked in stdio output.
-     * Delegates to LogMaskHelper with high sensitivity level.
-     * 
-     * @param sensitiveValue exact value to mask
-     * @return this for method chaining
-     */
-    public synchronized StdIoMaskHelper registerValue(String sensitiveValue) {
-        if (StringUtils.isNotBlank(sensitiveValue)) {
-            LogMaskHelper.INSTANCE.registerStdioValue(LogSensitivityLevel.high, sensitiveValue, "<REDACTED>");
-        }
         return this;
     }
     
