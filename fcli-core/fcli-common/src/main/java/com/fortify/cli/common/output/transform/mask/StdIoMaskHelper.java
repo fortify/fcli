@@ -16,15 +16,16 @@ import java.io.PrintStream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.common.regex.MultiPatternReplacer;
+import com.fortify.cli.common.log.LogMaskHelper;
+import com.fortify.cli.common.log.LogSensitivityLevel;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
  * Singleton helper for installing/uninstalling masking on System.out and System.err.
- * Follows the same design pattern as LogMaskHelper for consistency.
- * Provides fluent API for registering patterns and sensitive values.
+ * Delegates to LogMaskHelper for pattern/value registration to avoid duplication.
+ * Respects the configured --log-mask level for sensitivity-based masking.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class StdIoMaskHelper {
@@ -32,7 +33,6 @@ public final class StdIoMaskHelper {
     
     private PrintStream originalOut;
     private PrintStream originalErr;
-    private final MultiPatternReplacer multiPatternReplacer = new MultiPatternReplacer();
     private boolean installed = false;
     
     /**
@@ -43,8 +43,6 @@ public final class StdIoMaskHelper {
         if (installed) {
             return this;
         }
-        
-        registerDefaultPatterns();
         
         originalOut = System.out;
         originalErr = System.err;
@@ -79,86 +77,27 @@ public final class StdIoMaskHelper {
     }
     
     /**
-     * Register a regex pattern for masking sensitive content.
-     * Uses capture group 1 for replacement (same as LogMaskHelper).
-     * 
-     * @param patternString regex pattern with capture group for sensitive part
-     * @param replacement replacement string (e.g., "<REDACTED>")
-     * @return this for method chaining
-     */
-    public synchronized StdIoMaskHelper registerPattern(String patternString, String replacement) {
-        multiPatternReplacer.registerPattern(patternString, replacement);
-        return this;
-    }
-    
-    /**
-     * Register a specific sensitive value to be masked.
-     * The value will be replaced with the given replacement string.
-     * 
-     * @param sensitiveValue exact value to mask
-     * @param replacement replacement string
-     * @return this for method chaining
-     */
-    public synchronized StdIoMaskHelper registerValue(String sensitiveValue, String replacement) {
-        if (StringUtils.isNotBlank(sensitiveValue)) {
-            multiPatternReplacer.registerValue(sensitiveValue, replacement);
-        }
-        return this;
-    }
-    
-    /**
-     * Register a sensitive value with default "<REDACTED>" replacement.
+     * Register a specific sensitive value to be masked in stdio output.
+     * Delegates to LogMaskHelper with high sensitivity level.
      * 
      * @param sensitiveValue exact value to mask
      * @return this for method chaining
      */
     public synchronized StdIoMaskHelper registerValue(String sensitiveValue) {
-        return registerValue(sensitiveValue, "<REDACTED>");
+        if (StringUtils.isNotBlank(sensitiveValue)) {
+            LogMaskHelper.INSTANCE.registerStdioValue(LogSensitivityLevel.high, sensitiveValue, "<REDACTED>");
+        }
+        return this;
     }
     
     /**
-     * Apply all registered patterns and values to mask sensitive content.
+     * Apply masking to stdio output using LogMaskHelper.
      * 
      * @param input text that may contain sensitive data
      * @return masked text with sensitive content replaced
      */
-    public String mask(String input) {
-        if (StringUtils.isBlank(input)) {
-            return input;
-        }
-        try {
-            return multiPatternReplacer.applyReplacements(input, null);
-        } catch (Exception e) {
-            // Never fail masking - return safe fallback
-            return "<MASKED DUE TO ERROR>";
-        }
-    }
-    
-    /**
-     * Register default patterns for common sensitive data.
-     * Called automatically during install().
-     */
-    private void registerDefaultPatterns() {
-        // Authorization headers
-        registerPattern("Authorization: (?:[a-zA-Z]+ )?(.*?)(?:\\Q[\\r]\\E|\\Q[\\n]\\E)*\\\"?$", "<REDACTED>");
-        
-        // Bearer tokens
-        registerPattern("(?i)(bearer\\s+)([\\w\\-._~+/]+=*)", "<REDACTED>");
-        
-        // API keys
-        registerPattern("(?i)(api[_-]?key[\"'\\s:=]+)([\\w\\-._~+/]+=*)", "<REDACTED>");
-        
-        // Passwords
-        registerPattern("(?i)(password[\"'\\s:=]+)([^\\s\"']+)", "<REDACTED>");
-        
-        // Secrets
-        registerPattern("(?i)(secret[\"'\\s:=]+)([^\\s\"']+)", "<REDACTED>");
-        
-        // JSON tokens
-        registerPattern("(?:\\\"token\\\"|\\\"access_token\\\"):\\s*\\\"(.*?)\\\"", "<REDACTED TOKEN>");
-        
-        // X-API-Key headers
-        registerPattern("(?i)(x-api-key[\"'\\s:=]+)([^\\s\"']+)", "<REDACTED>");
+    private String mask(String input) {
+        return LogMaskHelper.INSTANCE.maskStdio(input);
     }
     
     public synchronized boolean isInstalled() {
