@@ -12,60 +12,64 @@
  */
 package com.fortify.cli.common.output.transform.mask;
 
-import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.function.Function;
 
 /**
  * PrintStream wrapper that masks sensitive content before delegating to the underlying stream.
  * Handles all text-based output methods (print, println, printf, format, write).
+ * 
+ * We create a custom OutputStream that wraps the original stream and applies masking,
+ * then pass that to the PrintStream superclass. This avoids infinite recursion issues.
  */
 public final class MaskingPrintStream extends PrintStream {
-    private final PrintStream delegate;
-    private final Function<String, String> masker;
-    private final Charset charset;
     
     public MaskingPrintStream(PrintStream delegate, Function<String, String> masker) {
-        super(new ByteArrayOutputStream());
-        this.delegate = delegate;
-        this.masker = masker;
-        this.charset = StandardCharsets.UTF_8;
+        super(new MaskingOutputStream(delegate, masker), true);
     }
     
-    @Override
-    public void print(String s) {
-        delegate.print(masker.apply(s));
-    }
-    
-    @Override
-    public void println(String x) {
-        delegate.println(masker.apply(x));
-    }
-    
-    @Override
-    public PrintStream printf(String format, Object... args) {
-        var formatted = String.format(format, args);
-        delegate.print(masker.apply(formatted));
-        return this;
-    }
-    
-    @Override
-    public PrintStream printf(Locale l, String format, Object... args) {
-        var formatted = String.format(l, format, args);
-        delegate.print(masker.apply(formatted));
-        return this;
-    }
-    
-    @Override
-    public void write(byte[] buf, int off, int len) {
-        if (buf == null || len == 0) {
-            return;
+    /**
+     * OutputStream that applies masking before writing to the delegate stream.
+     */
+    private static final class MaskingOutputStream extends OutputStream {
+        private final PrintStream delegate;
+        private final Function<String, String> masker;
+        private final Charset charset = StandardCharsets.UTF_8;
+        
+        MaskingOutputStream(PrintStream delegate, Function<String, String> masker) {
+            this.delegate = delegate;
+            this.masker = masker;
         }
-        var text = new String(buf, off, len, charset);
-        delegate.print(masker.apply(text));
+        
+        @Override
+        public void write(int b) {
+            // For single bytes, just pass through without masking to avoid overhead
+            // Masking is applied at the array level where we can process text
+            delegate.write(b);
+        }
+        
+        @Override
+        public void write(byte[] buf, int off, int len) {
+            if (buf == null || len == 0) {
+                return;
+            }
+            var text = new String(buf, off, len, charset);
+            var masked = masker.apply(text);
+            var maskedBytes = masked.getBytes(charset);
+            delegate.write(maskedBytes, 0, maskedBytes.length);
+        }
+        
+        @Override
+        public void flush() {
+            delegate.flush();
+        }
+        
+        @Override
+        public void close() {
+            delegate.close();
+        }
     }
-    
 }

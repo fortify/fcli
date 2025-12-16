@@ -44,6 +44,9 @@ public final class LogMaskHelper {
     @Setter private LogMaskLevel logMaskLevel;
     private final Map<LogMessageType, MultiPatternReplacer> multiPatternReplacers = new HashMap<>();
     
+    /** Global pattern replacer for stdio masking (applies to all output regardless of message type) */
+    private final MultiPatternReplacer stdioPatternReplacer = new MultiPatternReplacer();
+    
     /**
      * Register a value to be masked, based on the semantics as described in {@link MaskValue}. If
      * {@link MaskValue} is <code>null</code>, the given value will not be registered for masking.
@@ -107,6 +110,17 @@ public final class LogMaskHelper {
     }
     
     /**
+     * Register a value to be masked in stdio (stdout/stderr), with sensitivity level checking.
+     * This is specifically for user-provided data and CLI options that should be masked in console output.
+     */
+    public final LogMaskHelper registerStdioValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement) {
+        if ( isMaskingNeeded(sensitivityLevel) ) {
+            stdioPatternReplacer.registerValue(valueToMask, replacement);
+        }
+        return this;
+    }
+    
+    /**
      * Register a pattern that describes one or more values to be masked, with the given sensitivity 
      * level and for the given log message type(s). If no log message types are provided, the pattern
      * will be registered for all log message types. See {@link MultiPatternReplacer#registerPattern(String, String)}
@@ -117,6 +131,17 @@ public final class LogMaskHelper {
             for ( var logMessageType : getLogMessageTypesOrDefault(logMessageTypes) ) {
                 getMultiPatternReplacer(logMessageType).registerPattern(patternString, replacement);
             }
+        }
+        return this;
+    }
+    
+    /**
+     * Register a pattern to be masked in stdio (stdout/stderr), with sensitivity level checking.
+     * This is specifically for patterns matching user-provided data in console output.
+     */
+    public final LogMaskHelper registerStdioPattern(LogSensitivityLevel sensitivityLevel, String patternString, String replacement) {
+        if ( isMaskingNeeded(sensitivityLevel) ) {
+            stdioPatternReplacer.registerPattern(patternString, replacement);
         }
         return this;
     }
@@ -164,5 +189,24 @@ public final class LogMaskHelper {
         }
     }
     
+    /**
+     * Mask the given stdio (stdout/stderr) output using registered stdio patterns and values.
+     * This should only be used for masking console output, not log files.
+     * @param msg the message to mask
+     * @return masked message with sensitive content replaced
+     */
+    public final String maskStdio(String msg) {
+        if ( StringUtils.isBlank(msg) ) {
+            return msg;
+        }
+        try {
+            return stdioPatternReplacer.applyReplacements(msg,
+                // Register discovered values for future stdio masking with high sensitivity
+                (v,r)->registerStdioValue(LogSensitivityLevel.high, v, r));
+        } catch ( Exception e ) {
+            // Never fail masking - return safe fallback
+            return "<MASKED DUE TO ERROR>";
+        }
+    }
 
 }
