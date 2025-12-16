@@ -13,6 +13,7 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
+import com.fortify.cli.common.output.transform.mask.StdIoMaskHelper;
 import com.fortify.cli.common.util.ConsoleHelper;
 
 /**
@@ -34,8 +35,10 @@ public class FortifyCLI {
     private static final int execute(String[] args) {
         try {
             ConsoleHelper.installAnsiConsole();
+            StdIoMaskHelper.INSTANCE.install();
             return DefaultFortifyCLIRunner.run(args);
         } finally {
+            StdIoMaskHelper.INSTANCE.uninstall();
             ConsoleHelper.uninstallAnsiConsole();
         }
     }

@@ -42,6 +42,7 @@ import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
+import com.fortify.cli.common.output.transform.mask.StdIoMaskHelper;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -114,6 +115,7 @@ public final class ActionCliOptionsProcessor {
                 description = option.getKey();
             }
             LogMaskHelper.INSTANCE.registerValue(mask.getSensitivityLevel(), LogMaskSource.CLI_OPTION, description, value, mask.getPattern());
+            StdIoMaskHelper.INSTANCE.registerValue(value);
         }
         optionValues.set(option.getKey(), convertOptionValue(value, option, optionValues));
     }

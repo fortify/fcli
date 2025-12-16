@@ -97,14 +97,18 @@ steps:
         cmd: fcli tool dcli run -- scan ${cli.sourceDir} -t ${cli.debrickedAccessToken} -r ${repo} -b ${branch} ${extraScanOpts} 
         stdout: collect
         stderr: collect
+        on.success:
+          - out.write:
+              stdout: ${RUN_DEBRICKED_CLI.stdout}
+              stderr: ${RUN_DEBRICKED_CLI.stderr}
         on.fail:
+          - out.write:
+              stdout: ${RUN_DEBRICKED_CLI.stdout}
+              stderr: ${RUN_DEBRICKED_CLI.stderr}
           - if: ${#isNotBlank(RUN_DEBRICKED_CLI.stdout)  && !RUN_DEBRICKED_CLI.stdout.contains('vulnerabilities found') && !RUN_DEBRICKED_CLI.stdout.contains('For full details, visit:')}
             throw: Debricked Scan failed with errors.
           - var.set:
               global.debrickedScan.policyFailure: true
-  - out.write:
-      stdout: ${RUN_DEBRICKED_CLI.stdout}
-      stderr: ${RUN_DEBRICKED_CLI.stderr}
   - run.fcli:
       IMPORT_DEBRICKED_SCAN_REPORT: fcli ssc artifact import-debricked --av ${av} -t ${cli.debrickedAccessToken} -r ${repo} -b ${branch} --store ${global.debrickedPublish.fcliVarName}
   - if: ${!cli.skipWait}
