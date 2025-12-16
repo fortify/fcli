@@ -102,13 +102,16 @@ public final class LogMaskHelper {
      */
     public final LogMaskHelper registerValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement, LogMessageType... logMessageTypes) {
         if ( isMaskingNeeded(sensitivityLevel) ) {
+            var encodedValue = URLEncoder.encode(valueToMask, StandardCharsets.UTF_8);
             for ( var logMessageType : getLogMessageTypesOrDefault(logMessageTypes) ) {
                 getMultiPatternReplacer(logMessageType)
                     .registerValue(valueToMask, replacement)
-                    .registerValue(URLEncoder.encode(valueToMask, StandardCharsets.UTF_8), replacement);
+                    .registerValue(encodedValue, replacement);
             }
             // Also register for stdio masking - any value sensitive enough to mask in logs should be masked in console output
-            stdioPatternReplacer.registerValue(valueToMask, replacement);
+            stdioPatternReplacer
+                .registerValue(valueToMask, replacement)
+                .registerValue(encodedValue, replacement);
         }
         return this;
     }
