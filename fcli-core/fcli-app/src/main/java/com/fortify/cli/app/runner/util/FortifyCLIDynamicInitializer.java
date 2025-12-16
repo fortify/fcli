@@ -99,17 +99,8 @@ public final class FortifyCLIDynamicInitializer {
 
     private void registerDefaultLogMaskPatterns() {
         LogMaskHelper.INSTANCE
-            // Log file patterns
             .registerPattern(LogSensitivityLevel.high, "Authorization: (?:[a-zA-Z]+ )?(.*?)(?:\\Q[\\r]\\E|\\Q[\\n]\\E)*\\\"?$", "<REDACTED>", LogMessageType.HTTP_OUT)
-            .registerPattern(LogSensitivityLevel.high, "(?:\\\"token\\\"|\\\"access_token\\\"):\\s*\\\"(.*?)\\\"", "<REDACTED TOKEN (RESPONSE)>", LogMessageType.HTTP_IN)
-            
-            // Stdio patterns (only for user-provided data, not all HTTP traffic)
-            // These patterns focus on command-line visible tokens and credentials
-            .registerStdioPattern(LogSensitivityLevel.high, "(?i)(bearer\\s+)([\\w\\-._~+/]+=*)", "<REDACTED>")
-            .registerStdioPattern(LogSensitivityLevel.high, "(?i)(api[_-]?key[\"'\\s:=]+)([\\w\\-._~+/]+=*)", "<REDACTED>")
-            .registerStdioPattern(LogSensitivityLevel.high, "(?i)(password[\"'\\s:=]+)([^\\s\"']+)", "<REDACTED>")
-            .registerStdioPattern(LogSensitivityLevel.high, "(?i)(secret[\"'\\s:=]+)([^\\s\"']+)", "<REDACTED>")
-            .registerStdioPattern(LogSensitivityLevel.high, "(?i)(x-api-key[\"'\\s:=]+)([^\\s\"']+)", "<REDACTED>");
+            .registerPattern(LogSensitivityLevel.high, "(?:\\\"token\\\"|\\\"access_token\\\"):\\s*\\\"(.*?)\\\"", "<REDACTED TOKEN (RESPONSE)>", LogMessageType.HTTP_IN);
     }
 
     @SuppressWarnings("unchecked")

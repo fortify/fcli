@@ -96,7 +96,9 @@ public final class LogMaskHelper {
     /**
      * Register a value to be masked with the given {@link LogSensitivityLevel}, for the given log 
      * message type(s). If no log message types are provided, the mask will be applied to all log 
-     * message types. See {@link MultiPatternReplacer#registerValue(String, String)} for details.
+     * message types. Automatically also registers the value for stdio masking since any value
+     * sensitive enough to mask in logs should also be masked in console output.
+     * See {@link MultiPatternReplacer#registerValue(String, String)} for details.
      */
     public final LogMaskHelper registerValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement, LogMessageType... logMessageTypes) {
         if ( isMaskingNeeded(sensitivityLevel) ) {
@@ -105,6 +107,8 @@ public final class LogMaskHelper {
                     .registerValue(valueToMask, replacement)
                     .registerValue(URLEncoder.encode(valueToMask, StandardCharsets.UTF_8), replacement);
             }
+            // Also register for stdio masking - any value sensitive enough to mask in logs should be masked in console output
+            stdioPatternReplacer.registerValue(valueToMask, replacement);
         }
         return this;
     }
@@ -135,16 +139,7 @@ public final class LogMaskHelper {
         return this;
     }
     
-    /**
-     * Register a pattern to be masked in stdio (stdout/stderr), with sensitivity level checking.
-     * This is specifically for patterns matching user-provided data in console output.
-     */
-    public final LogMaskHelper registerStdioPattern(LogSensitivityLevel sensitivityLevel, String patternString, String replacement) {
-        if ( isMaskingNeeded(sensitivityLevel) ) {
-            stdioPatternReplacer.registerPattern(patternString, replacement);
-        }
-        return this;
-    }
+
 
     /**
      * Return either the given log message types, or all log message types if no log message types given.
