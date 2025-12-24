@@ -1,0 +1,221 @@
+---
+title: fcli-sc-dast-scan-wait-for(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-sc-dast-scan-wait-for(1)</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.14.2" %}
+
+
+<div id="header">
+<h1>fcli-sc-dast-scan-wait-for(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_ssc_session_name_options">SSC session name options</a></li>
+<li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-sc-dast-scan-wait-for - Wait for one or more scans to reach or exit specified scan statuses.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli sc-dast scan wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+                           [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
+                           [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
+                           [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
+                           [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequeste</em>
+    _                       d&gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>]
+                           [<strong>-s</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                           [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
+                           [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
+                           [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+                           [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-u</strong>=<em>any-match|all-match</em> |
+                           <strong>-w</strong>=<em>any-match|all-match</em>]
+                           [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] <em>scan-id&#8217;s</em>&#8230;&#8203;</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Although this command offers a lot of options to cover many different use cases, you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait for completion of a single scan. If any error state or unknown state is detected, an exception will be thrown.</p>
+</div>
+<div class="paragraph">
+<p>The following states are currently known by fcli:
+Queued, Pending, Paused, Running, Complete, Interrupted, Unknown, ImportingScanResults, ImportScanResultsFailed, FailedToStart, PausingScan, ResumingScan, CompletingScan, ResumeScanQueued, ForcedComplete, FailedToResume, LicenseUnavailable, PendingApproval, Rejected, ImportScanFileQueued, PendingScanFileImport, ImportingScanFile, FailedToImportScanFile, ProcessingScanArtifacts, FailedToPause, UnknownScanStatusType</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
+<dd>
+<p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
+</dd>
+<dt class="hdlist1"><strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em></dt>
+<dd>
+<p>Action to take when a failure state is returned for any of the records: wait, terminate, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em></dt>
+<dd>
+<p>Action to take when timeout occurs: terminate, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em></dt>
+<dd>
+<p>Action to take when an unknown state is returned for any of the records: wait, terminate, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em></dt>
+<dd>
+<p>Action to take when an unknown state is passed in any of the --while or --until options: ignore, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>-s</strong>, <strong>--any-state</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more scan states against which to match the given scans.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
+<dd>
+<p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour).</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--until</strong>=<em>any-match|all-match</em></dt>
+<dd>
+<p>Wait until either any or all scans match. If neither --until or --while are specified, default is to wait until all scans match.</p>
+</dd>
+<dt class="hdlist1"><strong>-w</strong>, <strong>--while</strong>=<em>any-match|all-match</em></dt>
+<dd>
+<p>Wait while either any or all scans match.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ssc_session_name_options"><a class="anchor" href="#_ssc_session_name_options"></a>SSC session name options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options_also_see_documentation_link_below"><a class="anchor" href="#_output_options_also_see_documentation_link_below"></a>Output options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;type+args&gt;</em></dt>
+<dd>
+<p>Select output type (csv, table, expr, json, xml, yaml) and optional type arguments.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>&lt;var&gt;[:&lt;prop&gt;]</em></dt>
+<dd>
+<p>Store JSON results in an fcli variable for later reference.</p>
+</dd>
+<dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
+<dd>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write output to the specified file.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>scan-id&#8217;s</em>&#8230;&#8203;</dt>
+<dd>
+<p>One or more scan id&#8217;s.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2025-12-24 18:31:17 UTC
+</div>
+</div>
+</body>
+</html>
