@@ -13,10 +13,11 @@
 package com.fortify.cli.license.ncd_report.collector;
 
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.report.collector.IReportResultsCollector;
+import com.fortify.cli.common.report.collector.IReportContext;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
 import com.fortify.cli.common.report.writer.IReportWriter;
+import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.license.ncd_report.cli.cmd.NcdReportCreateCommand;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
@@ -36,16 +37,18 @@ import lombok.experimental.Accessors;
  *
  */
 @Accessors(fluent = true)
-public final class NcdReportResultsCollector implements IReportResultsCollector {
+public final class NcdReportContext implements IReportContext {
     @Getter private final NcdReportConfig reportConfig;
     @Getter private final IProgressWriterI18n progressWriter;
+    @Getter private final UnirestContext unirestContext;
     private final IReportWriter reportWriter;
     private final NcdReportResultsWriters writers;
     private final NcdReportRepositoryProcessor repositoryProcessor;
     
-    public NcdReportResultsCollector(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+    public NcdReportContext(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter, UnirestContext unirestContext) {
         this.reportConfig = reportConfig;
         this.progressWriter = progressWriter;
+        this.unirestContext = unirestContext;
         this.reportWriter = reportWriter;
         this.writers = new NcdReportResultsWriters(reportWriter, progressWriter);
         this.repositoryProcessor = new NcdReportRepositoryProcessor(reportConfig, writers, reportWriter.summary());

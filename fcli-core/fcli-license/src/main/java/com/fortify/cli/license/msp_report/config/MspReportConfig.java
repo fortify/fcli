@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.license.msp_report.collector.MspReportContext;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor 
 @Data
-public class MspReportConfig implements IReportSourceSupplierConfig<MspReportResultsCollector> {
+public class MspReportConfig implements IReportSourceSupplierConfig<MspReportContext> {
     private String mspName;
     private LocalDate contractStartDate;
     private MspReportSourcesConfig sources;

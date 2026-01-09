@@ -188,13 +188,12 @@ sources:
 
   ado:                              
     # Optional Azure DevOps API URL. If not defined, 'https://dev.azure.com' will be used.
+    # Note that organization(s) are defined below and should not be included in the baseUrl.
   - baseUrl: https://dev.azure.com
     # Optional Azure Devops token expression to authenticate with the given Azure DevOps API URL. 
-    # If not specified, only public repositories will be loaded, and low GitHub rate 
-    # limits may affect report generation. Common approaches for configuring the Azure DevOps 
-    # token:
-    #  #env("AZURE_DEVOPS_TOKEN")       : Read token from the given environment variable
-    #                               during report generation
+    # If not specified, only public repositories will be loaded, and low Azure DevOps rate 
+    # limits may affect report generation. See GitHub comments above for different ways to 
+    # retrieve the token value.
     tokenExpression: >                          
       #env("AZURE_DEVOPS_TOKEN")
 
@@ -210,7 +209,7 @@ sources:
       # Required organization name
     - name: fortify
 
-      # Required project name(s)
+      # Optional project name(s). By default, all projects will be processed.
       projects:
       - name: foo
       - name: bar

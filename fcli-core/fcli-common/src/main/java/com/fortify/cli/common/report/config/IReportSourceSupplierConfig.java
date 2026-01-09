@@ -14,8 +14,8 @@ package com.fortify.cli.common.report.config;
 
 import java.util.Collection;
 
-import com.fortify.cli.common.report.collector.IReportResultsCollector;
+import com.fortify.cli.common.report.collector.IReportContext;
 
-public interface IReportSourceSupplierConfig<R extends IReportResultsCollector> {
+public interface IReportSourceSupplierConfig<R extends IReportContext> {
     Collection<? extends IReportSourceConfig<R>> getSourceConfigs();
 }

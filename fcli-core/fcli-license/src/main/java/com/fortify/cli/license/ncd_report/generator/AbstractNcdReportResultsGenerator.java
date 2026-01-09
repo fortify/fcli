@@ -10,11 +10,11 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.license.msp_report.generator;
+package com.fortify.cli.license.ncd_report.generator;
 
-import com.fortify.cli.common.report.generator.AbstractReportUnirestResultsGenerator;
+import com.fortify.cli.common.report.generator.AbstractReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 
 /**
  * Base class for source-specific unirest-based generator implementations, 
@@ -24,8 +24,8 @@ import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
  *  
  * @author rsenden
  */
-public abstract class AbstractMspReportUnirestResultsGenerator<T extends IUrlConfig> extends AbstractReportUnirestResultsGenerator<T,MspReportResultsCollector> {
-    public AbstractMspReportUnirestResultsGenerator(T sourceConfig, MspReportResultsCollector resultsCollector) {
-        super(sourceConfig, resultsCollector);
+public abstract class AbstractNcdReportResultsGenerator<C extends IUrlConfig> extends AbstractReportResultsGenerator<C,NcdReportContext> {
+    public AbstractNcdReportResultsGenerator(C sourceConfig, NcdReportContext reportContext) {
+        super(sourceConfig, reportContext);
     }
 }

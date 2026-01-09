@@ -16,16 +16,22 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import com.fortify.cli.common.util.JavaHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Manages a command-scoped cache of Unirest instances.
  * Each instance is lazily initialized on first access and automatically
- * shut down when this context is closed.
- * <p>
- * This class is AutoCloseable and should be used with try-with-resources
- * to ensure proper cleanup.
+ * shut down when this context is closed. Instances of this class are managed 
+ * by FcliInitializationExecutionStrategy. Command classes that need access to
+ * Unirest instances should usually declare the UnirestContextMixin mixin, or
+ * alternatively implement IUnirestContextAware directly. All Unirest instances
+ * created by this context are wrapped in a NonClosingUnirestInstanceWrapper to
+ * avoid accidental shutdown by client code, but will be automatically closed
+ * after command execution through the try-with-resources block in 
+ * FcliInitializationExecutionStrategy.
  */
 @Slf4j
 public class UnirestContext implements AutoCloseable {
@@ -34,11 +40,11 @@ public class UnirestContext implements AutoCloseable {
 
     /**
      * Returns a stable identity string similar to the default Object.toString() output
-     * (i.e. fully qualified class name + '@' + identity hash). This deliberately
+     * (i.e. simple class name + '@' + identity hash). This deliberately
      * bypasses any overridden toString() implementation that might be added later.
      */
     public String identity() {
-        return getClass().getSimpleName()+"@"+Integer.toHexString(System.identityHashCode(this));
+        return JavaHelper.identity(this);
     }
 
     /**

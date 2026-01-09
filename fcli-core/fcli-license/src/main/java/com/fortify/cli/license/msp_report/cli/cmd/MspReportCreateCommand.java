@@ -19,7 +19,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.cli.cmd.AbstractConfigurableReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.common.rest.cli.mixin.UnirestContextMixin;
+import com.fortify.cli.license.msp_report.collector.MspReportContext;
 import com.fortify.cli.license.msp_report.config.MspReportConfig;
 
 import lombok.Getter;
@@ -28,8 +29,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
-public final class MspReportCreateCommand extends AbstractConfigurableReportGenerateCommand<MspReportConfig, MspReportResultsCollector> {
+public final class MspReportCreateCommand extends AbstractConfigurableReportGenerateCommand<MspReportConfig, MspReportContext> {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
+    @Mixin private UnirestContextMixin unirestContextMixin;
     @Option(names = {"-c","--config"}, required = true, defaultValue = "MspReportConfig.yml")
     @Getter private File configFile;
     @Option(names = {"-s","--start-date"}, required = true)
@@ -55,7 +57,7 @@ public final class MspReportCreateCommand extends AbstractConfigurableReportGene
     }
     
     @Override
-    protected MspReportResultsCollector createResultsCollector(MspReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
-        return new MspReportResultsCollector(config, reportWriter, progressWriter);
+    protected MspReportContext createReportContext(MspReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+        return new MspReportContext(config, reportWriter, progressWriter, unirestContextMixin.getUnirestContext());
     }
 }

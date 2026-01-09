@@ -15,10 +15,11 @@ package com.fortify.cli.license.msp_report.collector;
 import java.time.format.DateTimeFormatter;
 
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.report.collector.IReportResultsCollector;
+import com.fortify.cli.common.report.collector.IReportContext;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
 import com.fortify.cli.common.report.writer.IReportWriter;
+import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.license.msp_report.cli.cmd.MspReportCreateCommand;
 import com.fortify.cli.license.msp_report.config.MspReportConfig;
@@ -39,18 +40,20 @@ import lombok.experimental.Accessors;
  *
  */
 @Accessors(fluent = true)
-public final class MspReportResultsCollector implements IReportResultsCollector {
+public final class MspReportContext implements IReportContext {
     @Getter private final MspReportConfig reportConfig;
     @Getter private final IProgressWriterI18n progressWriter;
+    @Getter private final UnirestContext unirestContext;
     private final IReportWriter reportWriter;
     private final MspReportResultsWriters writers;
     @Getter private final MspReportAppCollector appCollector;
     @Getter private final MspReportAppVersionCollector appVersionCollector;
     @Getter private final MspReportArtifactCollector artifactCollector;
     
-    public MspReportResultsCollector(MspReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+    public MspReportContext(MspReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter, UnirestContext unirestContext) {
         this.reportConfig = reportConfig;
         this.progressWriter = progressWriter;
+        this.unirestContext = unirestContext;
         this.reportWriter = reportWriter;
         this.writers = new MspReportResultsWriters(reportWriter, progressWriter);
         this.appCollector = new MspReportAppCollector(this.writers, reportWriter.summary());

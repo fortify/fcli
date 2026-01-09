@@ -17,7 +17,7 @@ import java.util.Optional;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
-import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 import com.fortify.cli.license.ncd_report.generator.gitlab.NcdReportGitLabResultsGenerator;
 
 import kong.unirest.Config;
@@ -54,7 +54,7 @@ public class NcdReportGitLabSourceConfig extends AbstractNcdReportRepoSelectorCo
     }
     
     @Override
-    public IReportResultsGenerator generator(NcdReportResultsCollector resultsCollector) {
-        return new NcdReportGitLabResultsGenerator(this, resultsCollector);
+    public IReportResultsGenerator generator(NcdReportContext reportContext) {
+        return new NcdReportGitLabResultsGenerator(this, reportContext);
     }
 }

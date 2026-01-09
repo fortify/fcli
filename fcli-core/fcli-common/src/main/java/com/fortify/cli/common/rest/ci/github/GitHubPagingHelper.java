@@ -10,15 +10,19 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.github;
+package com.fortify.cli.common.rest.ci.github;
+
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.LinkHeaderNextPageUrlProducerFactory;
 import com.fortify.cli.common.rest.paging.PagingHelper;
+import com.fortify.cli.common.util.Break;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
+import kong.unirest.UnirestInstance;
 
 /**
  * This class provides utility methods for handling GitHub paging.
@@ -34,5 +38,27 @@ public class GitHubPagingHelper {
     
     public static final INextPageUrlProducer nextPageUrlProducer() {
         return LinkHeaderNextPageUrlProducerFactory.nextPageUrlProducer("Link", "next");
+    }
+    
+    /**
+     * Process items from a paged GitHub API response with Break support.
+     * GitHub returns items directly as an array in the response body.
+     * 
+     * @param unirest UnirestInstance for making requests
+     * @param request Initial request
+     * @param itemProcessor Function to process each item, returns Break.TRUE to stop
+     */
+    public static void processPagedItems(UnirestInstance unirest, HttpRequest<?> request, Function<JsonNode, Break> itemProcessor) {
+        PagingHelper.processPagesWithBreak(unirest, request, nextPageUrlProducer(), response -> {
+            JsonNode body = response.getBody();
+            if (body.isArray()) {
+                for (JsonNode item : body) {
+                    if (itemProcessor.apply(item).doBreak()) {
+                        return Break.TRUE;
+                    }
+                }
+            }
+            return Break.FALSE;
+        });
     }
 }

@@ -21,6 +21,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -28,6 +29,7 @@ import com.fortify.cli.common.action.runner.processor.IActionRequestHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
+import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spel.ISpelEvaluator;
 
@@ -93,6 +95,10 @@ public class ActionRunnerContext implements AutoCloseable {
         return spelEvaluatorFactory.getSpelEvaluator();
     }
     
+    public final UnirestContext getUnirestContext() {
+        return config.getUnirestContext();
+    }
+    
     @RequiredArgsConstructor
     private static final class ActionConfigSpelEvaluatorFactory extends AbstractSpelEvaluatorFactory {
         private final ActionRunnerContext actionRunnerContext;
@@ -102,6 +108,7 @@ public class ActionRunnerContext implements AutoCloseable {
             configureSpelContext(spelContext, config.getActionConfigSpelEvaluatorConfigurers(), config);
             configureSpelContext(spelContext, config.getActionContextSpelEvaluatorConfigurers(), actionRunnerContext);
             spelContext.setVariable("action", new ActionRunnerContextSpelFunctions(actionRunnerContext));
+            spelContext.setVariable("ci", new ActionCiSpelFunctions(actionRunnerContext));
         }
     }
     

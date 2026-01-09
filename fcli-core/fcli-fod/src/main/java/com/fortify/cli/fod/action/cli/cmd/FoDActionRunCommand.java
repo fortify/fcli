@@ -46,15 +46,15 @@ public class FoDActionRunCommand extends AbstractActionRunCommand {
     }
     
     protected void configureActionContext(ActionRunnerContext ctx) {
-        ctx.addRequestHelper("fod", new FoDDataExtractRequestHelper(unirestInstanceSupplier::getUnirestInstance, FoDProductHelper.INSTANCE));
+        ctx.addRequestHelper("fod", new FoDActionRequestHelper(unirestInstanceSupplier::getUnirestInstance, FoDProductHelper.INSTANCE));
     }
     
     protected void configureSpelContext(ActionRunnerContext actionRunnerContext, SimpleEvaluationContext spelContext) {
         spelContext.setVariable("fod", new FoDActionSpelFunctions(unirestInstanceSupplier, actionRunnerContext));
     }
     
-    private static final class FoDDataExtractRequestHelper extends BasicActionRequestHelper {
-        public FoDDataExtractRequestHelper(IUnirestInstanceSupplier unirestInstanceSupplier, IProductHelper productHelper) {
+    private static final class FoDActionRequestHelper extends BasicActionRequestHelper {
+        public FoDActionRequestHelper(IUnirestInstanceSupplier unirestInstanceSupplier, IProductHelper productHelper) {
             super(unirestInstanceSupplier, productHelper);
         }
     }

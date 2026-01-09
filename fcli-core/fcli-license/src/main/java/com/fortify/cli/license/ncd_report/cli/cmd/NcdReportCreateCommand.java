@@ -18,7 +18,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.cli.cmd.AbstractConfigurableReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.common.rest.cli.mixin.UnirestContextMixin;
+import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 
 import lombok.Getter;
@@ -27,8 +28,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
-public final class NcdReportCreateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportResultsCollector> {
+public final class NcdReportCreateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportContext> {
     @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
+    @Mixin private UnirestContextMixin unirestContextMixin;
     @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
     @Getter private File configFile;
     
@@ -43,7 +45,7 @@ public final class NcdReportCreateCommand extends AbstractConfigurableReportGene
     }
     
     @Override
-    protected NcdReportResultsCollector createResultsCollector(NcdReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
-        return new NcdReportResultsCollector(config, reportWriter, progressWriter);
+    protected NcdReportContext createReportContext(NcdReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+        return new NcdReportContext(config, reportWriter, progressWriter, unirestContextMixin.getUnirestContext());
     }
 }

@@ -9,14 +9,15 @@ Find all fully qualified class names (FQCNs) used in Java code (not in import st
 
 1. **Initial Search**: Use regex search to find potential FQCNs:
    ```regex
-   ^[^/\n]*[^import\s].*\b(com|org|java|javax|lombok)(\.[a-z][a-z0-9_])*\.[A-Z][a-zA-Z0-9]*
+   ^(?!package )(?!import ).*\b(com|org|java|javax|lombok)(\.[a-z][a-z0-9_]*)+\.[A-Z][a-zA-Z0-9]*
    ```
    - Search in: `**/com/fortify/cli/**/*.java`
-   - This pattern finds lines that contain FQCNs but are not import or package statements
+   - This pattern uses negative lookahead to exclude lines starting with "package " or "import "
+   - It finds lines that contain FQCNs in actual code (not import/package statements)
 
-2. **Filter Results**: The search will include:
-   - Package declarations (ignore these)
-   - Import statements (ignore these)
+2. **Filter Results**: The search may still include some false positives like:
+   - Static import statements (ignore these)
+   - Comments containing FQCNs (can be ignored or fixed)
    - Actual FQCNs in code (these need fixing)
 
 ## Common FQCN Patterns to Replace

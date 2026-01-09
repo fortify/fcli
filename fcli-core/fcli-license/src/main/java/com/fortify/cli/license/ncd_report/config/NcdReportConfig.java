@@ -20,7 +20,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor 
 @Data
-public class NcdReportConfig implements IReportSourceSupplierConfig<NcdReportResultsCollector> {
+public class NcdReportConfig implements IReportSourceSupplierConfig<NcdReportContext> {
     private static final DateTimePeriodHelper PERIOD_HELPER = new DateTimePeriodHelper(Period.DAYS);
     private NcdReportSourcesConfig sources;
     private Optional<NcdReportContributorConfig> contributor;

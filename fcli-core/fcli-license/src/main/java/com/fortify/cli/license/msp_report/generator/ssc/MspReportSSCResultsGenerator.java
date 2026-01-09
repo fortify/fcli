@@ -16,29 +16,20 @@ import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVe
 import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_End_Customer_Name;
 import static com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_License_Type;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.license.msp_report.collector.MspReportContext;
 import com.fortify.cli.license.msp_report.config.MspReportSSCSourceConfig;
-import com.fortify.cli.license.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
+import com.fortify.cli.license.msp_report.generator.AbstractMspReportResultsGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.bulk.SSCBulkEmbedder;
-import com.fortify.cli.ssc._common.rest.ssc.helper.SSCInputTransformer;
-import com.fortify.cli.ssc._common.rest.ssc.helper.SSCPagingHelper;
 import com.fortify.cli.ssc._common.rest.ssc.helper.SSCPagingHelper.SSCContinueNextPageSupplier;
-import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
 import com.fortify.cli.ssc.attribute.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeDefinitionHelper;
 
-import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
-import kong.unirest.UnirestInstance;
 
 /**
  * This class is responsible for loading MSP data from SSC.
@@ -46,16 +37,26 @@ import kong.unirest.UnirestInstance;
  * @author rsenden
  *
  */
-public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResultsGenerator<MspReportSSCSourceConfig> {
+public class MspReportSSCResultsGenerator extends AbstractMspReportResultsGenerator<MspReportSSCSourceConfig> {
     private final SSCBulkEmbedder appVersionBulkEmbedder = new SSCBulkEmbedder(SSCAppVersionEmbedderSupplier.attrValuesByName);
+    
+    /**
+     * REST helper for SSC API operations. A new instance is created for each
+     * source configuration, ensuring proper isolation of API credentials and
+     * configuration (base URL, token, etc.).
+     */
+    private final MspReportSSCRestHelper restHelper;
+    private final MspReportSSCUnirestInstanceSupplier unirestInstanceSupplier;
 
     /**
      * Constructor to configure this instance with the given 
      * {@link MspReportSSCSourceConfig} and
-     * {@link MspReportResultsCollector}.
+     * {@link MspReportContext}.
      */
-    public MspReportSSCResultsGenerator(MspReportSSCSourceConfig sourceConfig, MspReportResultsCollector resultsCollector) {        
-        super(sourceConfig, resultsCollector);
+    public MspReportSSCResultsGenerator(MspReportSSCSourceConfig sourceConfig, MspReportContext reportContext) {        
+        super(sourceConfig, reportContext);
+        this.unirestInstanceSupplier = new MspReportSSCUnirestInstanceSupplier(reportContext.unirestContext(), sourceConfig);
+        this.restHelper = new MspReportSSCRestHelper(unirestInstanceSupplier);
     }
 
     /**
@@ -67,15 +68,14 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     @Override
     protected void generateResults() {
         validateSSCAttributes();
-        SSCPagingHelper.pagedRequest(unirest().get("/api/v1/projects?limit=100"))
-            .forEach(this::processAppPage);
+        restHelper.processProjectPages(this::processAppPage);
     }
     
     /**
      * Validate SSC application version attributes
      */
     private void validateSSCAttributes() {
-        var attrDefHelper = new SSCAttributeDefinitionHelper(unirest());
+        var attrDefHelper = new SSCAttributeDefinitionHelper(restHelper.getUnirest());
         attrDefHelper.getAttributeDefinitionDescriptor(MSP_License_Type.name())
             .check(true, SSCAttributeDefinitionType.SINGLE, "Application", "Scan", "Demo");
         attrDefHelper.getAttributeDefinitionDescriptor(MSP_End_Customer_Name.name())
@@ -85,16 +85,16 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     }
     
     private void processAppPage(HttpResponse<JsonNode> response) {
-        var apps = ((ArrayNode)SSCInputTransformer.getDataOrSelf(response.getBody()));
+        var apps = restHelper.extractData(response.getBody());
         JsonHelper.stream(apps).forEach(this::processApp);
     }
     
     private void processApp(JsonNode appNode) {
         var descriptor = JsonHelper.treeToValue(appNode, MspReportSSCAppDescriptor.class);
-        resultsCollector().progressWriter().writeI18nProgress("processing.app", descriptor.getName());
+        reportContext().progressWriter().writeI18nProgress("processing.app", descriptor.getName());
         try {
             loadVersionsForApp(descriptor);
-            descriptor.check(resultsCollector().logger());
+            descriptor.check(reportContext().logger());
             var summary = processApp(descriptor);
             var status = descriptor.getWarnCounter().getCount()>0 
                     ? MspReportProcessingStatus.warn
@@ -102,31 +102,29 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
             var reason = status==MspReportProcessingStatus.warn
                     ? "Processed with warnings"
                     : "Successfully processed";
-            resultsCollector().appCollector()
+            reportContext().appCollector()
                 .report(sourceConfig(), new MspReportSSCProcessedAppDescriptor(descriptor, status, reason, summary));
         } catch ( Exception e ) {
-            resultsCollector().logger().error("Error Processing application %s", e, descriptor.getName());
-            resultsCollector().appCollector()
+            reportContext().logger().error("Error Processing application %s", e, descriptor.getName());
+            reportContext().appCollector()
                 .report(sourceConfig(), new MspReportSSCProcessedAppDescriptor(descriptor, MspReportProcessingStatus.error, e.getMessage(), new MspReportSSCAppSummaryDescriptor()));
         }
     }
     
     private void loadVersionsForApp(MspReportSSCAppDescriptor descriptor) {
-        SSCPagingHelper.pagedRequest(
-            unirest().get("/api/v1/projects/{id}/versions?limit=100")
-                .routeParam("id", descriptor.getId()))
-            .forEach(r->loadAppVersionPage(descriptor, r.getBody()));
+        restHelper.processProjectVersionPages(descriptor.getId(), 
+            r->loadAppVersionPage(descriptor, r.getBody()));
     }
     
     private void loadAppVersionPage(MspReportSSCAppDescriptor appDescriptor, JsonNode body) {
-        var appVersions = appVersionBulkEmbedder.transformInput(unirest(), body);
+        var appVersions = appVersionBulkEmbedder.transformInput(restHelper.getUnirest(), body);
         JsonHelper.stream(appVersions)
             .map(node->JsonHelper.treeToValue(node, MspReportSSCAppVersionDescriptor.class))
-            .forEach(versionDescriptor -> appDescriptor.addVersionDescriptor(resultsCollector().logger(), versionDescriptor));
+            .forEach(versionDescriptor -> appDescriptor.addVersionDescriptor(reportContext().logger(), versionDescriptor));
     }
 
     private MspReportSSCAppSummaryDescriptor processApp(MspReportSSCAppDescriptor appDescriptor) {
-        try ( var scanCollector = resultsCollector().scanCollector(sourceConfig(), appDescriptor) ) {
+        try ( var scanCollector = reportContext().scanCollector(sourceConfig(), appDescriptor) ) {
             appDescriptor.getVersionDescriptors()
                 .forEach(versionDescriptor->processAppVersion(versionDescriptor, scanCollector));
             return scanCollector.summary();
@@ -136,24 +134,22 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     private void processAppVersion(MspReportSSCAppVersionDescriptor versionDescriptor, MspReportAppScanCollector scanCollector) {
         try {
             var continueNextPageSupplier = new SSCContinueNextPageSupplier();
-            HttpRequest<?> req = unirest().get("/api/v1/projectVersions/{pvId}/artifacts?limit=100&embed=scans")
-                    .routeParam("pvId", versionDescriptor.getVersionId());
-            SSCPagingHelper.pagedRequest(req, continueNextPageSupplier)
-                .forEach(r->processArtifactPage(r.getBody(), versionDescriptor, scanCollector, continueNextPageSupplier));
-            resultsCollector().appVersionCollector()
+            restHelper.processArtifactPages(versionDescriptor.getVersionId(), continueNextPageSupplier,
+                r->processArtifactPage(r.getBody(), versionDescriptor, scanCollector, continueNextPageSupplier));
+            reportContext().appVersionCollector()
                 .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(versionDescriptor, MspReportProcessingStatus.success, "Successfully processed"));
         } catch ( Exception e ) {
-            resultsCollector().logger().error("Error loading artifacts for application version %s", e, versionDescriptor.getAppAndVersionName());
-            resultsCollector().appVersionCollector()
+            reportContext().logger().error("Error loading artifacts for application version %s", e, versionDescriptor.getAppAndVersionName());
+            reportContext().appVersionCollector()
                 .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(versionDescriptor, MspReportProcessingStatus.error, e.getMessage()));
             throw e;
         }
     }
 
     private void processArtifactPage(JsonNode body, MspReportSSCAppVersionDescriptor versionDescriptor, MspReportAppScanCollector scanCollector, SSCContinueNextPageSupplier continueNextPageSupplier) {
-        var done = JsonHelper.stream((ArrayNode)SSCInputTransformer.getDataOrSelf(body))
+        var done = JsonHelper.stream(restHelper.extractData(body))
             .map(this::createArtifactDescriptor)
-            .peek(d->resultsCollector().artifactCollector().report(sourceConfig(), versionDescriptor, d))
+            .peek(d->reportContext().artifactCollector().report(sourceConfig(), versionDescriptor, d))
             .flatMap(MspReportSSCScanDescriptor::from)
             .map(scanCollector::report)
             .filter(Break.TRUE::equals)
@@ -165,27 +161,10 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     private MspReportSSCArtifactDescriptor createArtifactDescriptor(JsonNode artifactNode) {
         return JsonHelper.treeToValue(artifactNode, MspReportSSCArtifactDescriptor.class);
     }
-
-    /**
-     * Add the Authorization header to the configuration
-     * of the given {@link UnirestInstance}, based on the
-     * tokenExpression provided in the source configuration. 
-     */
+    
     @Override
-    protected void configure(UnirestInstance unirest) {
-        String tokenExpression = sourceConfig().getTokenExpression();
-        if ( StringUtils.isBlank(tokenExpression) ) {
-            throw new FcliSimpleException("SSC configuration requires tokenExpression property");
-        }
-        // TODO Doesn't really make sense to use this method with null input object
-        //      We should have a corresponding method in SpelHelper that doesn't take
-        //      any input
-        String token = JsonHelper.evaluateSpelExpression(null, tokenExpression, String.class);
-        if ( StringUtils.isBlank(token) ) {
-            throw new FcliSimpleException("No token found from expression: "+tokenExpression);
-        } else {
-            unirest.config().setDefaultHeader("Authorization", "FortifyToken "+SSCTokenConverter.toRestToken(token));
-        }
+    public void close() {
+        unirestInstanceSupplier.close();
     }
     
     /**
