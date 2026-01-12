@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory;
 import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory.SpelFunctionDescriptor;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.util.ReflectionHelper;
 
 /**
  *
@@ -30,6 +32,7 @@ public class ActionSpelFunctionsTest {
     public void testDuplicateSpelFunctionNames() {
         Map<String, List<SpelFunctionDescriptor>> byName = SpelFunctionDescriptorsFactory
                 .getActionSpelFunctionsDescriptors().stream()
+                .filter(d -> !hasNonBlankPrefix(d.getClazz()))
                 .collect(Collectors.groupingBy(SpelFunctionDescriptor::getName));
             List<String> duplicateMessages = byName.entrySet().stream()
                 .filter(e -> e.getValue().size() > 1)
@@ -47,5 +50,10 @@ public class ActionSpelFunctionsTest {
                 System.err.println(msg);
                 throw new IllegalStateException(msg);
             }
+    }
+    
+    private boolean hasNonBlankPrefix(Class<?> clazz) {
+        var prefix = ReflectionHelper.getAnnotationValue(clazz, SpelFunctionPrefix.class, SpelFunctionPrefix::value, () -> "");
+        return prefix != null && !prefix.isBlank();
     }
 }

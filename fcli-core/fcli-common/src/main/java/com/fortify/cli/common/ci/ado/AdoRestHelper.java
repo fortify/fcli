@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.ado;
+package com.fortify.cli.common.ci.ado;
 
 import java.util.function.Function;
 
@@ -35,24 +35,73 @@ import lombok.RequiredArgsConstructor;
 public class AdoRestHelper {
     private final AdoUnirestInstanceSupplier unirestInstanceSupplier;
     
-    // === Code Analysis Results ===
+    // === SARIF Upload (Advanced Security) ===
     
     /**
-     * Upload code analysis results to Azure DevOps.
+     * Upload SARIF report to Azure DevOps Advanced Security.
+     * Requires GitHub Advanced Security for Azure DevOps license.
+     * 
+     * SARIF format: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
+     * ADO Advanced Security: https://learn.microsoft.com/en-us/azure/devops/repos/security/github-advanced-security
+     * 
+     * @param organization Organization name
+     * @param project Project name or ID
+     * @param repositoryId Repository ID
+     * @param ref Git ref (branch/tag)
+     * @param commitSha Commit SHA
+     * @param sarifContent SARIF report content
+     * @return Response from Azure DevOps API
+     */
+    public ObjectNode uploadSarif(String organization, String project,
+                                   String repositoryId, String ref, String commitSha,
+                                   String sarifContent) {
+        var body = JsonHelper.getObjectMapper().createObjectNode()
+            .put("repository", repositoryId)
+            .put("ref", ref)
+            .put("commitSha", commitSha)
+            .put("sarif", sarifContent);
+        
+        return getUnirest()
+            .post("/{organization}/{project}/_apis/alert/sarif")
+            .routeParam("organization", organization)
+            .routeParam("project", project)
+            .queryString("api-version", "7.1-preview.1")
+            .header("Content-Type", "application/json")
+            .body(body)
+            .asObject(ObjectNode.class)
+            .getBody();
+    }
+    
+    /**
+     * Publish test results to Azure DevOps (available on all tiers).
+     * While primarily for test results, this can be adapted for security findings on free tier.
+     * 
+     * Supported formats: JUnit, NUnit, XUnit, VSTest, CTest
+     * API documentation: https://learn.microsoft.com/en-us/rest/api/azure/devops/test/results
+     * 
+     * For security findings, format as test failures where:
+     * - Test name = vulnerability title
+     * - Error message = vulnerability description  
+     * - Stack trace = file path and line number
      * 
      * @param project Project name or ID
      * @param buildId Build ID
-     * @param results Analysis results (JSON format)
+     * @param testResults Test results in specified format
+     * @param testRunner Test runner type (JUnit, NUnit, XUnit, VSTest, CTest)
      * @return Response from Azure DevOps API
      */
-    public ObjectNode uploadCodeAnalysisResults(String project, int buildId, String results) {
+    public ObjectNode publishTestResults(String project, int buildId,
+                                          String testResults, String testRunner) {
+        var body = JsonHelper.getObjectMapper().createObjectNode()
+            .put("testRunner", testRunner)
+            .put("results", testResults);
+        
         return getUnirest()
-            .post("/{project}/_apis/build/builds/{buildId}/testresults")
+            .post("/{project}/_apis/test/runs")
             .routeParam("project", project)
-            .routeParam("buildId", String.valueOf(buildId))
             .queryString("api-version", "7.0")
             .header("Content-Type", "application/json")
-            .body(results)
+            .body(body)
             .asObject(ObjectNode.class)
             .getBody();
     }

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.ado;
+package com.fortify.cli.common.ci.ado;
 
 import java.util.function.Function;
 

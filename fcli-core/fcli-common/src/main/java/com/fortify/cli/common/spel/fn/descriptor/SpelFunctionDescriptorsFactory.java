@@ -50,6 +50,7 @@ public final class SpelFunctionDescriptorsFactory {
                 "com.fortify.cli.common.action.runner.ActionRunnerContextSpelFunctions",
                 "com.fortify.cli.fod.action.helper.FoDActionSpelFunctions",
                 "com.fortify.cli.ssc.action.helper.SSCActionSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions",
                 "com.fortify.cli.common.action.helper.ci.ActionAdoSpelFunctions",
                 "com.fortify.cli.common.action.helper.ci.ActionGitHubSpelFunctions",
                 "com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions"

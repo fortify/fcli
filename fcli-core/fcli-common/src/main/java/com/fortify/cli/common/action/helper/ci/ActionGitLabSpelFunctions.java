@@ -12,14 +12,18 @@
  */
 package com.fortify.cli.common.action.helper.ci;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.ci.gitlab.GitLabEnvironment;
+import com.fortify.cli.common.ci.gitlab.GitLabRestHelper;
+import com.fortify.cli.common.ci.gitlab.GitLabUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.ci.gitlab.GitLabEnvironment;
-import com.fortify.cli.common.rest.ci.gitlab.GitLabRestHelper;
-import com.fortify.cli.common.rest.ci.gitlab.GitLabUnirestInstanceSupplier;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
@@ -35,8 +39,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-@SpelFunctionPrefix("ci.gitlab()")
-public class ActionGitLabSpelFunctions {
+@SpelFunctionPrefix("ci.gitlab().")
+public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
     private final ActionRunnerContext ctx;
     private final GitLabEnvironment env;
     private GitLabRestHelper restHelper;
@@ -55,21 +59,40 @@ public class ActionGitLabSpelFunctions {
      * Returns null if not running in GitLab CI.
      * Can be accessed in action YAML as: ${#ci.gitlab().env}
      */
+    @SpelFunction(cat=ci, desc="Returns GitLab CI environment data as ObjectNode",
+            returns="Environment data or `null` if not running in GitLab CI")
+    @Override
     public ObjectNode getEnv() {
         return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
     }
     
-    // === Security Report Upload (Convenience Methods) ===
+    /**
+     * Returns "gitlab" as the CI system type.
+     */
+    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
+            returns="\"gitlab\"")
+    @Override
+    public String getType() {
+        return "gitlab";
+    }
+    
+    // === Security Report Upload (Ultimate/Premium Tier - Paid) ===
     
     /**
      * Upload security report using detected environment values.
-     * Throws exception if not in GitLab CI or required env vars not set.
+     * Requires GitLab Ultimate or Premium tier.
      * 
-     * @param reportContent Report content (JSON format)
-     * @param reportType Report type (sast, dast, dependency_scanning, etc.)
+     * Report schemas: https://docs.gitlab.com/ee/development/integrations/secure.html
+     * 
+     * @param reportContent Report content (JSON matching GitLab security report schema)
+     * @param reportType Report type (sast, dast, dependency_scanning, container_scanning, etc.)
      * @return Response from GitLab API
      */
-    public ObjectNode uploadSecurityReport(String reportContent, String reportType) {
+    @SpelFunction(cat=ci, desc="Uploads security report to GitLab (paid tier, requires Ultimate/Premium)",
+            returns="Response from GitLab API")
+    public ObjectNode uploadSecurityReport(
+            @SpelFunctionParam(name="reportContent", desc="security report in GitLab schema format") String reportContent,
+            @SpelFunctionParam(name="reportType", desc="report type: sast, dast, dependency_scanning, container_scanning, etc.") String reportType) {
         requireEnv("uploadSecurityReport");
         return getRestHelper().uploadSecurityReport(
             env.projectId(), env.pipelineId(), reportType, reportContent);
@@ -78,9 +101,48 @@ public class ActionGitLabSpelFunctions {
     /**
      * Upload security report with explicit parameters.
      */
-    public ObjectNode uploadSecurityReport(String reportContent, int projectId, 
-                                            int pipelineId, String reportType) {
+    @SpelFunction(cat=ci, desc="Uploads security report to GitLab with explicit parameters (paid tier)",
+            returns="Response from GitLab API")
+    public ObjectNode uploadSecurityReport(
+            @SpelFunctionParam(name="reportContent", desc="report content (JSON format)") String reportContent,
+            @SpelFunctionParam(name="projectId", desc="project ID") int projectId,
+            @SpelFunctionParam(name="pipelineId", desc="pipeline ID") int pipelineId,
+            @SpelFunctionParam(name="reportType", desc="report type (sast, dast, dependency_scanning, etc.)") String reportType) {
         return getRestHelper().uploadSecurityReport(projectId, pipelineId, reportType, reportContent);
+    }
+    
+    // === Code Quality Report (Free Tier) ===
+    
+    /**
+     * Upload code quality report to current merge request (available on all tiers).
+     * Shows code quality degradation in merge request UI.
+     * 
+     * Code quality format: https://docs.gitlab.com/ee/ci/testing/code_quality.html#implement-a-custom-tool
+     * 
+     * @param reportContent Code quality report (JSON array with description, severity, location)
+     * @return Response from GitLab API
+     */
+    @SpelFunction(cat=ci, desc="Uploads code quality report to merge request (free tier, all GitLab tiers)",
+            returns="Response from GitLab API")
+    public ObjectNode uploadCodeQualityReport(
+            @SpelFunctionParam(name="reportContent", desc="code quality report as JSON array") String reportContent) {
+        requireEnv("uploadCodeQualityReport");
+        if (!env.pullRequest().active()) {
+            throw new FcliSimpleException("Not running in merge request context. CI_MERGE_REQUEST_IID is not set.");
+        }
+        return getRestHelper().uploadCodeQualityReport(env.projectId(), env.pullRequest().id(), reportContent);
+    }
+    
+    /**
+     * Upload code quality report with explicit parameters.
+     */
+    @SpelFunction(cat=ci, desc="Uploads code quality report with explicit parameters (free tier)",
+            returns="Response from GitLab API")
+    public ObjectNode uploadCodeQualityReport(
+            @SpelFunctionParam(name="reportContent", desc="code quality report as JSON array") String reportContent,
+            @SpelFunctionParam(name="projectId", desc="project ID") int projectId,
+            @SpelFunctionParam(name="mergeRequestIid", desc="merge request IID") int mergeRequestIid) {
+        return getRestHelper().uploadCodeQualityReport(projectId, mergeRequestIid, reportContent);
     }
     
     // === Merge Request Comments (Auto-Detect Context) ===
@@ -92,18 +154,26 @@ public class ActionGitLabSpelFunctions {
      * @param body Comment body (Markdown supported)
      * @return Created note object
      */
-    public ObjectNode addMrComment(String body) {
-        if (!env.isMergeRequest()) {
+    @SpelFunction(cat=ci, desc="Adds a comment to the current merge request",
+            returns="Created note object")
+    public ObjectNode addMrComment(
+            @SpelFunctionParam(name="body", desc="comment body (Markdown supported)") String body) {
+        if (!env.pullRequest().active()) {
             throw new FcliSimpleException("Not running in merge request context. CI_MERGE_REQUEST_IID is not set.");
         }
         return getRestHelper().createMergeRequestNote(
-            env.projectId(), env.mergeRequestId(), body);
+            env.projectId(), env.pullRequest().id(), body);
     }
     
     /**
      * Add a merge request comment with explicit parameters.
      */
-    public ObjectNode addMrComment(int projectId, int mrIid, String body) {
+    @SpelFunction(cat=ci, desc="Adds a merge request comment with explicit parameters",
+            returns="Created note object")
+    public ObjectNode addMrComment(
+            @SpelFunctionParam(name="projectId", desc="project ID") int projectId,
+            @SpelFunctionParam(name="mrIid", desc="merge request IID") int mrIid,
+            @SpelFunctionParam(name="body", desc="comment body (Markdown supported)") String body) {
         return getRestHelper().createMergeRequestNote(projectId, mrIid, body);
     }
     

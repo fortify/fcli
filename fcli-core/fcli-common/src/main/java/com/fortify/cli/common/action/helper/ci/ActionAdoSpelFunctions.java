@@ -12,14 +12,18 @@
  */
 package com.fortify.cli.common.action.helper.ci;
 
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.ci.ado.AdoEnvironment;
+import com.fortify.cli.common.ci.ado.AdoRestHelper;
+import com.fortify.cli.common.ci.ado.AdoUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.ci.ado.AdoEnvironment;
-import com.fortify.cli.common.rest.ci.ado.AdoRestHelper;
-import com.fortify.cli.common.rest.ci.ado.AdoUnirestInstanceSupplier;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
@@ -35,8 +39,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-@SpelFunctionPrefix("ci.ado()")
-public class ActionAdoSpelFunctions {
+@SpelFunctionPrefix("ci.ado().")
+public class ActionAdoSpelFunctions implements IActionSpelFunctions {
     private final ActionRunnerContext ctx;
     private final AdoEnvironment env;
     private AdoRestHelper restHelper;
@@ -55,33 +59,98 @@ public class ActionAdoSpelFunctions {
      * Returns null if not running in Azure DevOps.
      * Can be accessed in action YAML as: ${#ci.ado().env}
      */
+    @SpelFunction(cat=ci, desc="Returns Azure DevOps environment data as ObjectNode",
+            returns="Environment data or `null` if not running in Azure DevOps")
+    @Override
     public ObjectNode getEnv() {
         return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
     }
     
-
-    // === Code Analysis Results Upload (Convenience Methods) ===
+    /**
+     * Returns "ado" as the CI system type.
+     */
+    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
+            returns="\"ado\"")
+    @Override
+    public String getType() {
+        return "ado";
+    }
+    // === SARIF Upload (Advanced Security - Paid Tier) ===
     
     /**
-     * Upload code analysis results using detected environment values.
-     * Note: Requires additional build context that may need explicit parameters.
+     * Upload SARIF report to Azure DevOps Advanced Security.
+     * Requires GitHub Advanced Security for Azure DevOps license.
      * 
-     * @param results Analysis results (JSON format)
+     * SARIF format: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
+     * 
+     * @param sarifContent SARIF report content
+     * @param repositoryId Repository ID (GUID)
+     * @return Response from Azure DevOps API
+     */
+    @SpelFunction(cat=ci, desc="Uploads SARIF to ADO Advanced Security (paid tier, requires GHAS license)",
+            returns="Response from Azure DevOps API")
+    public ObjectNode uploadSarif(
+            @SpelFunctionParam(name="sarifContent", desc="SARIF report content") String sarifContent,
+            @SpelFunctionParam(name="repositoryId", desc="repository ID (GUID)") String repositoryId) {
+        requireEnv("uploadSarif");
+        // Extract organization from organization URL
+        var orgUrl = env.organization();
+        var organization = orgUrl != null ? orgUrl.replaceAll(".*/", "") : null;
+        return getRestHelper().uploadSarif(
+            organization, env.project(), repositoryId, env.ciBranch().short_(), env.ciCommit().id().full(), sarifContent);
+    }
+    
+    /**
+     * Upload SARIF report with explicit parameters.
+     */
+    @SpelFunction(cat=ci, desc="Uploads SARIF to ADO Advanced Security with explicit parameters (paid tier)",
+            returns="Response from Azure DevOps API")
+    public ObjectNode uploadSarif(
+            @SpelFunctionParam(name="sarifContent", desc="SARIF report content") String sarifContent,
+            @SpelFunctionParam(name="organization", desc="organization name") String organization,
+            @SpelFunctionParam(name="project", desc="project name") String project,
+            @SpelFunctionParam(name="repositoryId", desc="repository ID (GUID)") String repositoryId,
+            @SpelFunctionParam(name="ref", desc="git ref (branch/tag)") String ref,
+            @SpelFunctionParam(name="commitSha", desc="commit SHA") String commitSha) {
+        return getRestHelper().uploadSarif(organization, project, repositoryId, ref, commitSha, sarifContent);
+    }
+    
+    // === Test Results (Free Tier - Can be adapted for security findings) ===
+    
+    /**
+     * Publish test results using detected environment values.
+     * While primarily for test results, this can be adapted to display security findings on free tier.
+     * 
+     * Supported formats: JUnit, NUnit, XUnit, VSTest, CTest
+     * For security findings, format as test failures where test name = vulnerability title.
+     * 
+     * @param testResults Test results content (JUnit XML, NUnit XML, etc.)
+     * @param testRunner Test runner type (JUnit, NUnit, XUnit, VSTest, CTest)
      * @param buildId Build ID
      * @return Response from Azure DevOps API
      */
-    public ObjectNode uploadCodeAnalysisResults(String results, int buildId) {
-        return getRestHelper().uploadCodeAnalysisResults(
-            env.project(), buildId, results);
+    @SpelFunction(cat=ci, desc="Publishes test results (free tier, can show security findings as test failures)",
+            returns="Response from Azure DevOps API")
+    public ObjectNode publishTestResults(
+            @SpelFunctionParam(name="testResults", desc="test results in XML format (JUnit, NUnit, XUnit, etc.)") String testResults,
+            @SpelFunctionParam(name="testRunner", desc="test runner type (JUnit, NUnit, XUnit, VSTest, CTest)") String testRunner,
+            @SpelFunctionParam(name="buildId", desc="build ID") int buildId) {
+        requireEnv("publishTestResults");
+        return getRestHelper().publishTestResults(env.project(), buildId, testResults, testRunner);
     }
     
     /**
-     * Upload code analysis results with explicit parameters.
+     * Publish test results with explicit parameters.
      */
-    public ObjectNode uploadCodeAnalysisResults(String results, String project, int buildId) {
-        return getRestHelper().uploadCodeAnalysisResults(project, buildId, results);
+    @SpelFunction(cat=ci, desc="Publishes test results with explicit parameters (free tier)",
+            returns="Response from Azure DevOps API")
+    public ObjectNode publishTestResults(
+            @SpelFunctionParam(name="testResults", desc="test results in XML format") String testResults,
+            @SpelFunctionParam(name="project", desc="project name") String project,
+            @SpelFunctionParam(name="buildId", desc="build ID") int buildId,
+            @SpelFunctionParam(name="testRunner", desc="test runner type (JUnit, NUnit, XUnit, VSTest, CTest)") String testRunner) {
+        return getRestHelper().publishTestResults(project, buildId, testResults, testRunner);
     }
-    
     // === Pull Request Comments (Auto-Detect Context) ===
     
     /**
@@ -93,13 +162,17 @@ public class ActionAdoSpelFunctions {
      * @param comment Comment text
      * @return Created thread object
      */
-    public ObjectNode addPrThread(String repositoryId, String comment) {
+    @SpelFunction(cat=ci, desc="Adds a comment thread to the current pull request",
+            returns="Created thread object")
+    public ObjectNode addPrThread(
+            @SpelFunctionParam(name="repositoryId", desc="repository ID (GUID)") String repositoryId,
+            @SpelFunctionParam(name="comment", desc="comment text") String comment) {
         requireEnv("addPrThread");
-        if (!env.isPullRequest()) {
+        if (!env.pullRequest().active()) {
             throw new FcliSimpleException("Not running in pull request context. Build.SourceBranch does not indicate a PR.");
         }
         return getRestHelper().createPullRequestThread(
-            env.project(), repositoryId, env.pullRequestId(), comment);
+            env.project(), repositoryId, env.pullRequest().id(), comment);
     }
     
     // === REST Helper Access ===

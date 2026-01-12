@@ -21,10 +21,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.ci.gitlab.GitLabRestHelper;
+import com.fortify.cli.common.ci.gitlab.GitLabUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.ci.gitlab.GitLabRestHelper;
-import com.fortify.cli.common.rest.ci.gitlab.GitLabUnirestInstanceSupplier;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryBranchCommitCollector;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryProcessor;

@@ -39,48 +39,56 @@ steps:
           global.ssc.dastExportAction:  # SSC DAST export action
           global.fod.scaExportAction:   # FoD SCA (composition analysis) export action
           global.ssc.scaExportAction:   # SSC SCA (composition analysis) export action
-      
+      # Initialize helper
+      - var.set:
+          ci.helper: ${#ci.detect()}
+          ci.type:   ${ci.helper.type}
+          ci.env:    ${ci.helper.env}
       # GitHub
-      - if: ${#isNotBlank(#env('GITHUB_REPOSITORY'))}
+      - if: ${ci.type=='github'}
         var.set:
           global.ci.name:                GitHub
           global.ci.id:                  github
-          global.ci.qualifiedRepoName:   ${#env('GITHUB_REPOSITORY')}
-          global.ci.sourceBranch:        ${#env('GITHUB_HEAD_REF')?:#env('GITHUB_REF_NAME')}
-          global.ci.commitSHA:           ${#env('GITHUB_SHA')}
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('GITHUB_WORKSPACE')?:'.'}
-          global.ci.jobSummaryFile:      ${#ifBlank(global.ci.jobSummaryFile,#env('GITHUB_STEP_SUMMARY'))}
+          global.ci.qualifiedRepoName:   ${ci.env.ciRepository.name.full}
+          global.ci.sourceBranch:        ${ci.env.ciBranch.short}
+          global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
+          global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
+          global.ci.jobSummaryFile:      ${#ifBlank(global.ci.jobSummaryFile,ci.env.jobSummaryFile)}
           
       # GitLab
-      - if: ${#env('GITLAB_CI')=='true'}
+      - if: ${ci.type=='gitlab'}
         var.set:
           global.ci.name:                GitLab
           global.ci.id:                  gitlab
-          global.ci.qualifiedRepoName:   ${#env('CI_REPOSITORY_URL')?.replaceAll('[^:]+://[^/]+/','')?.replaceAll('\.git$', '')}
-          global.ci.sourceBranch:        ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
-          global.ci.commitSHA:           ${#env('CI_COMMIT_SHA')}
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
+          global.ci.qualifiedRepoName:   ${ci.env.ciRepository.name.full}
+          global.ci.sourceBranch:        ${ci.env.ciBranch.short}
+          global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
+          global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
           
       # Azure DevOps
-      - if: ${#isNotBlank(#env('Build.Repository.Name'))}
+      - if: ${ci.type=='ado'}
         var.set:
           global.ci.name:                Azure DevOps
           global.ci.id:                  ado
-          global.ci.qualifiedRepoName:   ${#env('Build.Repository.Name')}
-          global.ci.sourceBranch:        ${(#env('Build.SourceBranch')?:'').matches('refs/pull/.*')?((#env('System.PullRequest.SourceBranch')?:#env('System.PullRequest.SourceBranchName')?:'').replaceAll('^refs/heads/','')):((#env('Build.SourceBranchName')?:#env('Build.SourceBranch')?:'').replaceAll('^refs/heads/','')) }
-          global.ci.commitSHA:           ${#env('Build.SourceVersion')}
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
+          global.ci.qualifiedRepoName:   ${ci.env.ciRepository.name.full}
+          global.ci.sourceBranch:        ${ci.env.ciBranch.short}
+          global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
+          global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
           
       # Jenkins
       - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
         var.set:
           global.ci.name:                Jenkins
           global.ci.id:                  jenkins
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('WORKSPACE')?:'.'}
-          
+          global.ci.sourceDir:           ${#env('WORKSPACE')}
+      
+      # Override sourceDir with SOURCE_DIR if specified (custom user variable)
+      - if: ${#isNotBlank(#env('SOURCE_DIR'))}
+        var.set:
+          global.ci.sourceDir: ${#env('SOURCE_DIR')}
       # Generic local repository detection
       - var.set:
-          global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,#env('SOURCE_DIR')?:'.')}
+          global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,'.')}
       - var.set:
           global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
       
@@ -89,9 +97,9 @@ steps:
         var.set:
           global.ci.name:              local Git repository
           global.ci.id:                local-git
-          global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository?.name?.full?:global.ci.localRepo?.repository?.name?.short}
-          global.ci.sourceBranch:      ${global.ci.localRepo?.branch?.short}
-          global.ci.commitSHA:         ${global.ci.localRepo?.commit?.id?.full}
+          global.ci.qualifiedRepoName: ${global.ci.localRepo.repository?.name?.full?:global.ci.localRepo.repository?.name?.short}
+          global.ci.sourceBranch:      ${global.ci.localRepo.branch?.short}
+          global.ci.commitSHA:         ${global.ci.localRepo.commit?.id?.full}
     
       # Additional generic variables based on the output of the CI-specific sections above
       - var.set:

@@ -10,11 +10,17 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.github;
+package com.fortify.cli.common.ci.github;
 
 import java.util.regex.Pattern;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.ci.CiBranch;
+import com.fortify.cli.common.ci.CiCommit;
+import com.fortify.cli.common.ci.CiCommitId;
+import com.fortify.cli.common.ci.CiPullRequest;
+import com.fortify.cli.common.ci.CiRepository;
+import com.fortify.cli.common.ci.CiRepositoryName;
 import com.fortify.cli.common.util.EnvHelper;
 
 import lombok.Builder;
@@ -23,22 +29,23 @@ import lombok.Builder;
  * Immutable record holding detected GitHub Actions environment data.
  * Provides context-aware branch detection for both regular commits and pull requests.
  * 
+ * <p>This class provides standardized nested structures ({@link CiRepository}, {@link CiBranch}, 
+ * {@link CiCommit}) that match the format returned by the {@code localRepo()} SpEL function,
+ * plus GitHub-specific properties.
+ * 
  * @author rsenden
  */
 @Reflectable
 @Builder
 public record GitHubEnvironment(
-    String owner,
-    String repository,
-    String repositoryFullName,
-    String sourceBranch,
-    String targetBranch,
-    String ref,
-    String sha,
-    String workspaceDir,
-    String jobSummaryFile,
-    boolean isPullRequest,
-    Integer pullRequestNumber
+    // Standardized nested structures matching localRepo() format
+    CiRepository ciRepository,
+    CiBranch ciBranch,
+    CiCommit ciCommit,
+    CiPullRequest pullRequest,
+    // GitHub-specific properties
+    String jobSummaryFile
+    
 ) {
     private static final Pattern PR_NUMBER_PATTERN = Pattern.compile("refs/pull/(\\d+)/");
     
@@ -51,7 +58,6 @@ public record GitHubEnvironment(
     public static final String ENV_BASE_REF = "GITHUB_BASE_REF";
     public static final String ENV_WORKSPACE = "GITHUB_WORKSPACE";
     public static final String ENV_STEP_SUMMARY = "GITHUB_STEP_SUMMARY";
-    public static final String ENV_SOURCE_DIR = "SOURCE_DIR";
     public static final String ENV_SERVER_URL = "GITHUB_SERVER_URL"; // Base URL for GitHub Enterprise
     public static final String ENV_API_URL = "GITHUB_API_URL"; // API URL for GitHub Enterprise
     public static final String ENV_TOKEN = "GITHUB_TOKEN";
@@ -70,19 +76,46 @@ public record GitHubEnvironment(
         var prInfo = isPr ? detectPullRequestInfo(ref) : null;
         var repoParts = ghRepo.split("/", 2);
         
+        var repo = repoParts.length > 1 ? repoParts[1] : ghRepo;
+        var sourceBranch = branchInfo[0];
+        var targetBranch = branchInfo[1];
+        var sha = EnvHelper.env(ENV_SHA);
+        
+        // Build standardized structures
+        var ciRepository = CiRepository.builder()
+            .workDir(EnvHelper.envOrDefault(ENV_WORKSPACE, "."))
+            .remoteUrl(null)  // Could be constructed from server URL, but typically not needed
+            .name(CiRepositoryName.builder()
+                .short_(repo)
+                .full(ghRepo)
+                .build())
+            .build();
+        
+        var ciBranch = CiBranch.builder()
+            .full(ref)
+            .short_(sourceBranch)
+            .build();
+        
+        var ciCommit = CiCommit.builder()
+            .id(CiCommitId.builder()
+                .full(sha)
+                .short_(sha != null && sha.length() >= 7 ? sha.substring(0, 7) : sha)
+                .build())
+            .message(null)  // Not available in GitHub Actions environment
+            .author(null)   // Not available in GitHub Actions environment
+            .committer(null)  // Not available in GitHub Actions environment
+            .build();
+        
+        var pullRequest = isPr 
+            ? CiPullRequest.active(prInfo, targetBranch)
+            : CiPullRequest.inactive();
+        
         return GitHubEnvironment.builder()
-            .owner(repoParts[0])
-            .repository(repoParts.length > 1 ? repoParts[1] : ghRepo)
-            .repositoryFullName(ghRepo)
-            .sourceBranch(branchInfo[0])
-            .targetBranch(branchInfo[1])
-            .ref(ref)
-            .sha(EnvHelper.env(ENV_SHA))
-            .workspaceDir(EnvHelper.envOrDefault(ENV_SOURCE_DIR, 
-                EnvHelper.envOrDefault(ENV_WORKSPACE, ".")))
             .jobSummaryFile(EnvHelper.env(ENV_STEP_SUMMARY))
-            .isPullRequest(isPr)
-            .pullRequestNumber(prInfo)
+            .ciRepository(ciRepository)
+            .ciBranch(ciBranch)
+            .ciCommit(ciCommit)
+            .pullRequest(pullRequest)
             .build();
     }
     
@@ -123,9 +156,11 @@ public record GitHubEnvironment(
      * Uses source branch for PRs, current branch for regular commits.
      */
     public String getQualifiedRepoName() {
-        return sourceBranch != null 
-            ? repositoryFullName + ":" + sourceBranch
-            : repositoryFullName;
+        var branch = ciBranch != null ? ciBranch.short_() : null;
+        var repoFull = ciRepository != null && ciRepository.name() != null ? ciRepository.name().full() : null;
+        return branch != null && repoFull != null
+            ? repoFull + ":" + branch
+            : repoFull;
     }
     
     /**
@@ -133,6 +168,6 @@ public record GitHubEnvironment(
      * Returns source branch for PRs, current branch otherwise.
      */
     public String getBranchForVersioning() {
-        return sourceBranch;
+        return ciBranch != null ? ciBranch.short_() : null;
     }
 }

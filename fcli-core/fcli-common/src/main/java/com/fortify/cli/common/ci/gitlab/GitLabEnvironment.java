@@ -10,9 +10,15 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.gitlab;
+package com.fortify.cli.common.ci.gitlab;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.ci.CiBranch;
+import com.fortify.cli.common.ci.CiCommit;
+import com.fortify.cli.common.ci.CiCommitId;
+import com.fortify.cli.common.ci.CiPullRequest;
+import com.fortify.cli.common.ci.CiRepository;
+import com.fortify.cli.common.ci.CiRepositoryName;
 import com.fortify.cli.common.util.EnvHelper;
 
 import lombok.Builder;
@@ -21,20 +27,22 @@ import lombok.Builder;
  * Immutable record holding detected GitLab CI environment data.
  * Provides context-aware branch detection for both regular commits and merge requests.
  * 
+ * <p>This class provides standardized nested structures ({@link CiRepository}, {@link CiBranch},
+ * {@link CiCommit}) that match the format returned by the {@code localRepo()} SpEL function,
+ * plus GitLab-specific properties.
+ * 
  * @author rsenden
  */
 @Reflectable
 @Builder
 public record GitLabEnvironment(
+    // Standardized nested structures matching localRepo() format
+    CiRepository ciRepository,
+    CiBranch ciBranch,
+    CiCommit ciCommit,
+    CiPullRequest pullRequest,
+    // GitLab-specific properties
     int projectId,
-    String projectName,
-    String projectPath,
-    String sourceBranch,
-    String targetBranch,
-    String sha,
-    String sourceDir,
-    boolean isMergeRequest,
-    Integer mergeRequestId,
     Integer pipelineId
 ) {
     // Environment variable names
@@ -50,7 +58,6 @@ public record GitLabEnvironment(
     public static final String ENV_MR_TARGET_BRANCH = "CI_MERGE_REQUEST_TARGET_BRANCH_NAME";
     public static final String ENV_PIPELINE_ID = "CI_PIPELINE_ID";
     public static final String ENV_REPOSITORY_URL = "CI_REPOSITORY_URL";
-    public static final String ENV_SOURCE_DIR = "SOURCE_DIR";
     public static final String ENV_SERVER_URL = "CI_SERVER_URL"; // Base GitLab URL
     public static final String ENV_API_V4_URL = "CI_API_V4_URL"; // API v4 URL
     public static final String ENV_TOKEN = "GITLAB_TOKEN";
@@ -66,19 +73,55 @@ public record GitLabEnvironment(
         var isMr = EnvHelper.env(ENV_MR_IID) != null;
         var branchInfo = detectBranchInfo(isMr);
         var projectPath = detectProjectPath();
+        var projectName = EnvHelper.env(ENV_PROJECT_NAME);
+        var sha = EnvHelper.env(ENV_COMMIT_SHA);
+        var sourceBranch = branchInfo[0];
+        var targetBranch = branchInfo[1];
+        
+        // Build standardized structures
+        var ciRepository = CiRepository.builder()
+            .workDir(EnvHelper.envOrDefault(ENV_PROJECT_DIR, "."))
+            .remoteUrl(EnvHelper.env(ENV_REPOSITORY_URL))
+            .name(CiRepositoryName.builder()
+                .short_(projectName)
+                .full(projectPath)
+                .build())
+            .build();
+        
+        // Construct full ref for consistency with GitHub/localRepo
+        String fullRef = null;
+        if (isMr) {
+            fullRef = String.format("refs/merge-requests/%s/head", EnvHelper.env(ENV_MR_IID));
+        } else if (sourceBranch != null) {
+            fullRef = "refs/heads/" + sourceBranch;
+        }
+        
+        var ciBranch = CiBranch.builder()
+            .full(fullRef)
+            .short_(sourceBranch)
+            .build();
+        
+        var ciCommit = CiCommit.builder()
+            .id(CiCommitId.builder()
+                .full(sha)
+                .short_(sha != null && sha.length() >= 7 ? sha.substring(0, 7) : sha)
+                .build())
+            .message(null)  // Not available in GitLab CI environment
+            .author(null)   // Not available in GitLab CI environment
+            .committer(null)  // Not available in GitLab CI environment
+            .build();
+        
+        var pullRequest = isMr
+            ? CiPullRequest.active(parseIntOrNull(EnvHelper.env(ENV_MR_IID)), targetBranch)
+            : CiPullRequest.inactive();
         
         return GitLabEnvironment.builder()
             .projectId(projectIdStr != null ? Integer.parseInt(projectIdStr) : 0)
-            .projectName(EnvHelper.env(ENV_PROJECT_NAME))
-            .projectPath(projectPath)
-            .sourceBranch(branchInfo[0])
-            .targetBranch(branchInfo[1])
-            .sha(EnvHelper.env(ENV_COMMIT_SHA))
-            .sourceDir(EnvHelper.envOrDefault(ENV_SOURCE_DIR,
-                EnvHelper.envOrDefault(ENV_PROJECT_DIR, ".")))
-            .isMergeRequest(isMr)
-            .mergeRequestId(parseIntOrNull(EnvHelper.env(ENV_MR_IID)))
             .pipelineId(parseIntOrNull(EnvHelper.env(ENV_PIPELINE_ID)))
+            .ciRepository(ciRepository)
+            .ciBranch(ciBranch)
+            .ciCommit(ciCommit)
+            .pullRequest(pullRequest)
             .build();
     }
     
@@ -113,9 +156,11 @@ public record GitLabEnvironment(
      * Uses source branch for MRs, current branch for regular commits.
      */
     public String getQualifiedRepoName() {
-        return sourceBranch != null
-            ? projectPath + ":" + sourceBranch
-            : projectPath;
+        var branch = ciBranch != null ? ciBranch.short_() : null;
+        var repoFull = ciRepository != null && ciRepository.name() != null ? ciRepository.name().full() : null;
+        return branch != null && repoFull != null
+            ? repoFull + ":" + branch
+            : repoFull;
     }
     
     /**
@@ -123,7 +168,7 @@ public record GitLabEnvironment(
      * Returns source branch for MRs, current branch otherwise.
      */
     public String getBranchForVersioning() {
-        return sourceBranch;
+        return ciBranch != null ? ciBranch.short_() : null;
     }
     
     private static Integer parseIntOrNull(String value) {

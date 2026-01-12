@@ -10,9 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.ado;
-
-import java.util.Base64;
+package com.fortify.cli.common.ci.github;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
@@ -30,31 +28,30 @@ import kong.unirest.UnirestInstance;
 import lombok.Builder;
 
 /**
- * Provides UnirestInstance configuration for Azure DevOps REST API operations.
- * Handles base URL (including organization/collection), authentication tokens, 
- * proxy configuration, and other ADO-specific settings.
+ * Provides UnirestInstance configuration for GitHub REST API operations.
+ * Handles base URL, authentication tokens, and GitHub-specific headers.
  * 
  * @author rsenden
  */
 @Reflectable
 @Builder
-public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
-    private static final String TYPE = "ado";
+public class GitHubUnirestInstanceSupplier implements IUnirestInstanceSupplier {
+    private static final String TYPE = "github";
     private final UnirestContext unirestContext;
     
     @Builder.Default
     private final IUrlConfig urlConfig = UrlConfig.builder()
-        .url(EnvHelper.env(AdoEnvironment.ENV_ORGANIZATION_URL))
+        .url(EnvHelper.envOrDefault(GitHubEnvironment.ENV_API_URL, "https://api.github.com"))
         .build();
     
     @Builder.Default
-    private final String token = EnvHelper.env(AdoEnvironment.ENV_TOKEN);
+    private final String token = EnvHelper.env(GitHubEnvironment.ENV_TOKEN);
     
     /**
      * Unique cache key for this supplier instance, ensuring that each instance
      * uses its own dedicated UnirestInstance with the appropriate configuration
-     * (base URL, organization, authentication token, etc.). The key is based on 
-     * the instance's identity hash code to guarantee proper isolation across instances.
+     * (base URL, authentication token, etc.). The key is based on the instance's
+     * identity hash code to guarantee proper isolation across instances.
      */
     private final String cacheKey = JavaHelper.identity(this);
     
@@ -64,8 +61,8 @@ public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
      * @param unirestContext UnirestContext instance (required)
      * @return Builder instance
      */
-    public static AdoUnirestInstanceSupplierBuilder builder(UnirestContext unirestContext) {
-        return new AdoUnirestInstanceSupplierBuilder().unirestContext(unirestContext);
+    public static GitHubUnirestInstanceSupplierBuilder builder(UnirestContext unirestContext) {
+        return new GitHubUnirestInstanceSupplierBuilder().unirestContext(unirestContext);
     }
     
     /**
@@ -74,7 +71,7 @@ public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
      * @param unirestContext UnirestContext instance (required)
      * @return Configured supplier instance
      */
-    public static AdoUnirestInstanceSupplier fromEnv(UnirestContext unirestContext) {
+    public static GitHubUnirestInstanceSupplier fromEnv(UnirestContext unirestContext) {
         return builder(unirestContext).build();
     }
     
@@ -89,8 +86,9 @@ public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, TYPE, urlConfig.getUrl());
         if (token != null) {
-            String auth = Base64.getEncoder().encodeToString((":" + token).getBytes());
-            unirest.config().setDefaultHeader("Authorization", "Basic " + auth);
+            unirest.config().setDefaultHeader("Authorization", "Bearer " + token);
         }
+        unirest.config().setDefaultHeader("Accept", "application/vnd.github+json");
+        unirest.config().setDefaultHeader("X-GitHub-Api-Version", "2022-11-28");
     }
 }

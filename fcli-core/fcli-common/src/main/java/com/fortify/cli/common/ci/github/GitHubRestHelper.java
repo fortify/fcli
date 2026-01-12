@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.github;
+package com.fortify.cli.common.ci.github;
 
 import java.util.function.Function;
 
@@ -37,10 +37,14 @@ import lombok.RequiredArgsConstructor;
 public class GitHubRestHelper {
     private final GitHubUnirestInstanceSupplier unirestInstanceSupplier;
     
-    // === Code Scanning / SARIF Upload ===
+    // === Code Scanning / SARIF Upload (Advanced Security) ===
     
     /**
-     * Upload SARIF report to GitHub Code Scanning.
+     * Upload SARIF report to GitHub Code Scanning (requires GitHub Advanced Security).
+     * 
+     * SARIF format: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
+     * GitHub SARIF support: https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning
+     * API documentation: https://docs.github.com/en/rest/code-scanning
      * 
      * @param owner Repository owner
      * @param repo Repository name
@@ -63,6 +67,136 @@ public class GitHubRestHelper {
             .post("/repos/{owner}/{repo}/code-scanning/sarifs")
             .routeParam("owner", owner)
             .routeParam("repo", repo)
+            .body(body)
+            .asObject(ObjectNode.class)
+            .getBody();
+    }
+    
+    /**
+     * Create a check run for the commit (available on all tiers including free).
+     * This can report scan results without requiring GitHub Advanced Security.
+     * For file/line-level findings, use createCheckRunWithAnnotations instead.
+     * 
+     * API documentation: https://docs.github.com/en/rest/checks/runs
+     * 
+     * @param owner Repository owner
+     * @param repo Repository name
+     * @param name Check run name
+     * @param headSha Commit SHA
+     * @param status Status (queued, in_progress, completed)
+     * @param conclusion Conclusion (success, failure, neutral, cancelled, skipped, timed_out, action_required) - required if status=completed
+     * @param title Summary title
+     * @param summary Summary text (Markdown supported, max 65535 chars)
+     * @return Response from GitHub API
+     */
+    public ObjectNode createCheckRun(String owner, String repo, String name,
+                                      String headSha, String status, String conclusion,
+                                      String title, String summary) {
+        return createCheckRunWithAnnotations(owner, repo, name, headSha, status, conclusion, title, summary, null);
+    }
+    
+    /**
+     * Create a check run with annotations for file/line-level details (available on all tiers).
+     * Annotations allow displaying vulnerability details at specific file locations.
+     * Automatically handles pagination for more than 50 annotations by creating the check run
+     * with the first 50, then updating with remaining annotations in batches of 50.
+     * 
+     * Annotation format:
+     * - path: File path relative to repository root
+     * - start_line: Starting line number (required)
+     * - end_line: Ending line number (defaults to start_line)
+     * - annotation_level: notice, warning, or failure
+     * - message: Annotation message (Markdown supported)
+     * - title: Optional short title
+     * 
+     * API documentation: https://docs.github.com/en/rest/checks/runs#create-a-check-run
+     * 
+     * @param owner Repository owner
+     * @param repo Repository name
+     * @param name Check run name
+     * @param headSha Commit SHA
+     * @param status Status (queued, in_progress, completed)
+     * @param conclusion Conclusion (required if status=completed)
+     * @param title Summary title
+     * @param summary Summary text (Markdown supported)
+     * @param annotations Array of annotation objects (automatic pagination for >50)
+     * @return Response from GitHub API (from initial create request)
+     */
+    public ObjectNode createCheckRunWithAnnotations(String owner, String repo, String name,
+                                                     String headSha, String status, String conclusion,
+                                                     String title, String summary, ArrayNode annotations) {
+        // Prepare first batch (up to 50 annotations)
+        ArrayNode firstBatch = null;
+        if (annotations != null && annotations.size() > 0) {
+            firstBatch = JsonHelper.getObjectMapper().createArrayNode();
+            int batchSize = Math.min(50, annotations.size());
+            for (int i = 0; i < batchSize; i++) {
+                firstBatch.add(annotations.get(i));
+            }
+        }
+        
+        // Create check run with first batch
+        var body = JsonHelper.getObjectMapper().createObjectNode()
+            .put("name", name)
+            .put("head_sha", headSha)
+            .put("status", status);
+        
+        if (conclusion != null) {
+            body.put("conclusion", conclusion);
+        }
+        
+        if (title != null || summary != null || firstBatch != null) {
+            var output = body.putObject("output");
+            if (title != null) output.put("title", title);
+            if (summary != null) output.put("summary", summary);
+            if (firstBatch != null) {
+                output.set("annotations", firstBatch);
+            }
+        }
+        
+        var response = getUnirest()
+            .post("/repos/{owner}/{repo}/check-runs")
+            .routeParam("owner", owner)
+            .routeParam("repo", repo)
+            .body(body)
+            .asObject(ObjectNode.class)
+            .getBody();
+        
+        // If more than 50 annotations, update check run with remaining batches
+        if (annotations != null && annotations.size() > 50) {
+            var checkRunId = response.get("id").asLong();
+            for (int offset = 50; offset < annotations.size(); offset += 50) {
+                var batch = JsonHelper.getObjectMapper().createArrayNode();
+                int batchEnd = Math.min(offset + 50, annotations.size());
+                for (int i = offset; i < batchEnd; i++) {
+                    batch.add(annotations.get(i));
+                }
+                updateCheckRunAnnotations(owner, repo, checkRunId, batch);
+            }
+        }
+        
+        return response;
+    }
+    
+    /**
+     * Update check run with additional annotations.
+     * Used internally by createCheckRunWithAnnotations for pagination.
+     * 
+     * @param owner Repository owner
+     * @param repo Repository name
+     * @param checkRunId Check run ID
+     * @param annotations Array of annotation objects (max 50)
+     */
+    private void updateCheckRunAnnotations(String owner, String repo, long checkRunId, ArrayNode annotations) {
+        var body = JsonHelper.getObjectMapper().createObjectNode();
+        var output = body.putObject("output");
+        output.set("annotations", annotations);
+        
+        getUnirest()
+            .patch("/repos/{owner}/{repo}/check-runs/{check_run_id}")
+            .routeParam("owner", owner)
+            .routeParam("repo", repo)
+            .routeParam("check_run_id", String.valueOf(checkRunId))
             .body(body)
             .asObject(ObjectNode.class)
             .getBody();

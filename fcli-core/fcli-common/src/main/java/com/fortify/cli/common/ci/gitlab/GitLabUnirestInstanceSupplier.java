@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.rest.ci.gitlab;
+package com.fortify.cli.common.ci.gitlab;
 
 import org.apache.commons.lang3.StringUtils;
 
