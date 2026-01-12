@@ -14,6 +14,8 @@ package com.fortify.cli.common.ci.github;
 
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
@@ -68,7 +70,7 @@ public record GitHubEnvironment(
      */
     public static GitHubEnvironment detect() {
         var ghRepo = EnvHelper.env(ENV_REPOSITORY);
-        if (ghRepo == null) return null;
+        if (StringUtils.isBlank(ghRepo)) return null;
         
         var ref = EnvHelper.env(ENV_REF);
         var isPr = isPullRequest(ref);

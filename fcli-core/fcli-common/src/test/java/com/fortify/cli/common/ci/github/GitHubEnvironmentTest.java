@@ -35,6 +35,8 @@ public class GitHubEnvironmentTest {
     
     @Test
     void testDetectReturnsNullWhenNotInGitHub() {
+        // Explicitly clear GITHUB_REPOSITORY to override actual GitHub Actions environment
+        System.setProperty("fcli.env.GITHUB_REPOSITORY", "");
         var env = GitHubEnvironment.detect();
         assertNull(env);
     }
