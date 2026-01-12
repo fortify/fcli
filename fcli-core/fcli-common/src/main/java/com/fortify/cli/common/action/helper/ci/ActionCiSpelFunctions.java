@@ -76,7 +76,7 @@ public class ActionCiSpelFunctions {
      * 
      * @return GitHub Actions helper
      */
-    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, desc="Returns GitHub Actions helper", returns="GitHub Actions helper instance"))
+    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, returns="GitHub Actions helper instance"))
     private final ActionGitHubSpelFunctions github = new ActionGitHubSpelFunctions(ctx);
     
     /**
@@ -85,7 +85,7 @@ public class ActionCiSpelFunctions {
      * 
      * @return GitLab CI helper
      */
-    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, desc="Returns GitLab CI helper", returns="GitLab CI helper instance"))
+    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, returns="GitLab CI helper instance"))
     private final ActionGitLabSpelFunctions gitlab = new ActionGitLabSpelFunctions(ctx);
     
     /**
@@ -94,7 +94,7 @@ public class ActionCiSpelFunctions {
      * 
      * @return Azure DevOps helper
      */
-    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, desc="Returns Azure DevOps helper", returns="Azure DevOps helper instance"))
+    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, returns="Azure DevOps helper instance"))
     private final ActionAdoSpelFunctions ado = new ActionAdoSpelFunctions(ctx);
     
     /**
