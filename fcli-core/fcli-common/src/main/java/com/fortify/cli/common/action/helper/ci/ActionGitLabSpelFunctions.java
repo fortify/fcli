@@ -60,7 +60,8 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
      * Can be accessed in action YAML as: ${#ci.gitlab().env}
      */
     @SpelFunction(cat=ci, desc="Returns GitLab CI environment data as ObjectNode",
-            returns="Environment data or `null` if not running in GitLab CI")
+            returns="Environment data or `null` if not running in GitLab CI",
+            returnType=GitLabEnvironment.class)
     @Override
     public ObjectNode getEnv() {
         return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;

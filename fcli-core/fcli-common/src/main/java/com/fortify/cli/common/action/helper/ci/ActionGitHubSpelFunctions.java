@@ -61,7 +61,8 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * Can be accessed in action YAML as: ${#ci.github().env}
      */
     @SpelFunction(cat=ci, desc="Returns GitHub Actions environment data as ObjectNode",
-            returns="Environment data or `null` if not running in GitHub Actions")
+            returns="Environment data or `null` if not running in GitHub Actions",
+            returnType=GitHubEnvironment.class)
     @Override
     public ObjectNode getEnv() {
         return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;

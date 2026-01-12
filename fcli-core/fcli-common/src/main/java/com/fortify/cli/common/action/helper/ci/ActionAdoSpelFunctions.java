@@ -60,7 +60,8 @@ public class ActionAdoSpelFunctions implements IActionSpelFunctions {
      * Can be accessed in action YAML as: ${#ci.ado().env}
      */
     @SpelFunction(cat=ci, desc="Returns Azure DevOps environment data as ObjectNode",
-            returns="Environment data or `null` if not running in Azure DevOps")
+            returns="Environment data or `null` if not running in Azure DevOps",
+            returnType=AdoEnvironment.class)
     @Override
     public ObjectNode getEnv() {
         return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;

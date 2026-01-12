@@ -63,6 +63,7 @@ import com.fortify.cli.common.ci.CiCommitMessage;
 import com.fortify.cli.common.ci.CiPerson;
 import com.fortify.cli.common.ci.CiRepository;
 import com.fortify.cli.common.ci.CiRepositoryName;
+import com.fortify.cli.common.ci.LocalRepoInfo;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
@@ -552,7 +553,8 @@ public class ActionSpelFunctions {
                     committer: { name, email, when }
                 }
                 }
-                """, returns="Git repository information or null if not a git work dir")
+                """, returns="Git repository information or null if not a git work dir",
+                returnType=LocalRepoInfo.class)
         public static final ObjectNode localRepo(
                 @SpelFunctionParam(name="sourceDir", desc="directory assumed to be inside a git working tree") String sourceDir) {
             if (StringUtils.isBlank(sourceDir)) { return null; }

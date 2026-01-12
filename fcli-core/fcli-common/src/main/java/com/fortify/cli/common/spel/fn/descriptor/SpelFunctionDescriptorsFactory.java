@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.ArrayListWithAsJsonMethod;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
@@ -114,9 +115,14 @@ public final class SpelFunctionDescriptorsFactory {
     private static final SpelFunctionReturnDescriptor createReturnDescriptor(Method spelFunctionMethod) {
         var type = getJsonType(spelFunctionMethod.getReturnType());
         var desc = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::returns, ()->"N/A");
+        var returnType = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::returnType, ()->void.class);
+        var returnTypeClassName = (returnType != null && returnType != void.class) ? returnType.getName() : null;
+        var returnTypeStructure = (returnType != null && returnType != void.class) ? buildReturnTypeStructure(returnType) : null;
         return SpelFunctionReturnDescriptor.builder()
                 .type(type)
                 .description(desc)
+                .returnType(returnTypeClassName)
+                .returnTypeStructure(returnTypeStructure)
                 .build();
     }
     
@@ -141,6 +147,81 @@ public final class SpelFunctionDescriptorsFactory {
     
     private static final <T> T getParamAnnotationValue(Parameter parameter, Function<SpelFunctionParam,T> valueRetriever, Supplier<T> defaultValueSupplier) {
         return ReflectionHelper.getAnnotationValue(parameter, SpelFunctionParam.class, valueRetriever, defaultValueSupplier);
+    }
+
+    private static final String buildReturnTypeStructure(Class<?> clazz) {
+        if (clazz == null || clazz == void.class || !clazz.isRecord()) {
+            return null;
+        }
+        
+        var mapper = com.fortify.cli.common.json.JsonHelper.getObjectMapper();
+        var structure = buildReturnTypeStructureNode(clazz, mapper);
+        
+        if (structure == null || structure.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(structure);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    private static final ObjectNode buildReturnTypeStructureNode(Class<?> clazz, com.fasterxml.jackson.databind.ObjectMapper mapper) {
+        if (clazz == null || clazz == void.class || !clazz.isRecord()) {
+            return null;
+        }
+        
+        var structure = mapper.createObjectNode();
+        
+        // Sort components by name for deterministic output
+        Stream.of(clazz.getRecordComponents())
+            .sorted((a, b) -> a.getName().compareTo(b.getName()))
+            .forEach(component -> {
+            var componentType = component.getType();
+            // Check for @JsonProperty annotation on the accessor method
+            var componentName = component.getName();
+            try {
+                var accessor = component.getAccessor();
+                var jsonProperty = accessor.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class);
+                if (jsonProperty != null && !jsonProperty.value().isEmpty()) {
+                    componentName = jsonProperty.value();
+                }
+            } catch (Exception e) {
+                // If we can't get the annotation, just use the component name
+            }
+            
+            if (componentType.isRecord()) {
+                // Recursively build structure for nested records
+                var nestedStructure = buildReturnTypeStructureNode(componentType, mapper);
+                if (nestedStructure != null) {
+                    structure.set(componentName, nestedStructure);
+                }
+            } else if (String.class.isAssignableFrom(componentType)) {
+                structure.put(componentName, "string");
+            } else if (Boolean.class.isAssignableFrom(componentType) || boolean.class.isAssignableFrom(componentType)) {
+                structure.put(componentName, "boolean");
+            } else if (Number.class.isAssignableFrom(componentType) || componentType.isPrimitive()) {
+                structure.put(componentName, "number");
+            } else if (componentType.isEnum()) {
+                structure.put(componentName, "enum");
+            } else if (Map.class.isAssignableFrom(componentType)) {
+                structure.put(componentName, "map");
+            } else if (Collection.class.isAssignableFrom(componentType) || componentType.isArray()) {
+                structure.put(componentName, "array");
+            } else {
+                // For other complex types, recursively try to build structure
+                var nestedStructure = buildReturnTypeStructureNode(componentType, mapper);
+                if (nestedStructure != null) {
+                    structure.set(componentName, nestedStructure);
+                } else {
+                    structure.put(componentName, "object");
+                }
+            }
+        });
+        
+        return structure.isEmpty() ? null : structure;
     }
 
     // TODO Remove duplication with ActionSchemaHelper::getJsonType
@@ -200,7 +281,8 @@ public final class SpelFunctionDescriptorsFactory {
     public static final class SpelFunctionReturnDescriptor {
         private final String type;
         private final String description;
-
+        private final String returnType;
+        private final String returnTypeStructure;
     }
     
     public static void main(String[] args) {

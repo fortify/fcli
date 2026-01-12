@@ -343,5 +343,8 @@ formatters:
     |${returns != null ? returns.description : ''}
     
     ${#isBlank(description)?'':('2+a|'+description)}
+
+    ${returns.returnTypeStructure != null ? ('2+a|*Return Type Structure:* +\n\n' + '[source,json]\n----\n' + returns.returnTypeStructure + '\n----\n') : ''}
+    
     |===
     
