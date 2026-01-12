@@ -90,7 +90,13 @@ public class GitLabRestHelper {
      * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
      */
     public void processGroupProjects(String groupId, boolean includeSubgroups, Function<JsonNode, Break> processor) {
-        new GitLabGroupProjectsProcessor(getUnirest(), groupId, includeSubgroups).process(processor);
+        GitLabPagingHelper.processPagedItems(
+            getUnirest(),
+            getUnirest().get("/groups/{id}/projects")
+                .routeParam("id", groupId)
+                .queryString("include_subgroups", includeSubgroups),
+            processor
+        );
     }
 
     /**
@@ -100,7 +106,12 @@ public class GitLabRestHelper {
      * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
      */
     public void processBranches(String projectId, Function<JsonNode, Break> processor) {
-        new GitLabBranchesProcessor(getUnirest(), projectId).process(processor);
+        GitLabPagingHelper.processPagedItems(
+            getUnirest(),
+            getUnirest().get("/projects/{id}/repository/branches")
+                .routeParam("id", projectId),
+            processor
+        );
     }
 
     /**
@@ -112,7 +123,13 @@ public class GitLabRestHelper {
      * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
      */
     public void processCommits(String projectId, String refName, String since, Function<JsonNode, Break> processor) {
-        new GitLabCommitsProcessor(getUnirest(), projectId, refName, since).process(processor);
+        var request = getUnirest().get("/projects/{id}/repository/commits")
+            .routeParam("id", projectId)
+            .queryString("ref_name", refName);
+        if (since != null) {
+            request = request.queryString("since", since);
+        }
+        GitLabPagingHelper.processPagedItems(getUnirest(), request, processor);
     }
     
     /**
@@ -140,57 +157,5 @@ public class GitLabRestHelper {
      */
     private UnirestInstance getUnirest() {
         return unirestInstanceSupplier.getUnirestInstance();
-    }
-    
-    // === Inner Classes ===
-    
-    @RequiredArgsConstructor
-    private static final class GitLabGroupProjectsProcessor {
-        private final UnirestInstance unirest;
-        private final String groupId;
-        private final boolean includeSubgroups;
-        
-        public void process(Function<JsonNode, Break> processor) {
-            GitLabPagingHelper.processPagedItems(
-                unirest,
-                unirest.get("/groups/{id}/projects")
-                    .routeParam("id", groupId)
-                    .queryString("include_subgroups", includeSubgroups),
-                processor
-            );
-        }
-    }
-    
-    @RequiredArgsConstructor
-    private static final class GitLabBranchesProcessor {
-        private final UnirestInstance unirest;
-        private final String projectId;
-        
-        public void process(Function<JsonNode, Break> processor) {
-            GitLabPagingHelper.processPagedItems(
-                unirest,
-                unirest.get("/projects/{id}/repository/branches")
-                    .routeParam("id", projectId),
-                processor
-            );
-        }
-    }
-    
-    @RequiredArgsConstructor
-    private static final class GitLabCommitsProcessor {
-        private final UnirestInstance unirest;
-        private final String projectId;
-        private final String refName;
-        private final String since;
-        
-        public void process(Function<JsonNode, Break> processor) {
-            var request = unirest.get("/projects/{id}/repository/commits")
-                .routeParam("id", projectId)
-                .queryString("ref_name", refName);
-            if (since != null) {
-                request = request.queryString("since", since);
-            }
-            GitLabPagingHelper.processPagedItems(unirest, request, processor);
-        }
     }
 }

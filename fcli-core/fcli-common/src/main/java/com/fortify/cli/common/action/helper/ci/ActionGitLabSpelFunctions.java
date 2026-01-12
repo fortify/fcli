@@ -20,6 +20,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.ci.gitlab.GitLabEnvironment;
 import com.fortify.cli.common.rest.ci.gitlab.GitLabRestHelper;
 import com.fortify.cli.common.rest.ci.gitlab.GitLabUnirestInstanceSupplier;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-public class ActionGitLabHelper {
+@SpelFunctionPrefix("ci.gitlab()")
+public class ActionGitLabSpelFunctions {
     private final ActionRunnerContext ctx;
     private final GitLabEnvironment env;
     private GitLabRestHelper restHelper;
@@ -43,7 +45,7 @@ public class ActionGitLabHelper {
      * Create helper with automatic environment detection.
      * Does not throw if not in CI - use getEnv() != null to check.
      */
-    public ActionGitLabHelper(ActionRunnerContext ctx) {
+    public ActionGitLabSpelFunctions(ActionRunnerContext ctx) {
         this.ctx = ctx;
         this.env = GitLabEnvironment.detect();
     }

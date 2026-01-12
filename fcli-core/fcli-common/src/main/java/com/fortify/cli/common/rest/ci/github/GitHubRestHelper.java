@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.rest.ci.github;
 
-import java.util.Base64;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.Break;
+import com.fortify.cli.common.util.GzipHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,7 @@ public class GitHubRestHelper {
     public ObjectNode uploadSarif(String owner, String repo, String ref, 
                                    String sarifContent, String commitSha) {
         // GitHub requires SARIF content to be gzip-compressed and base64-encoded
-        var compressed = gzipAndBase64(sarifContent);
+        var compressed = GzipHelper.gzipAndBase64(sarifContent);
         
         var body = JsonHelper.getObjectMapper().createObjectNode()
             .put("sarif", compressed)
@@ -130,7 +130,11 @@ public class GitHubRestHelper {
      * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
      */
     public void processRepositories(String owner, Function<JsonNode, Break> processor) {
-        new GitHubRepositoriesProcessor(getUnirest(), owner).process(processor);
+        GitHubPagingHelper.processPagedItems(
+            getUnirest(),
+            getUnirest().get("/orgs/{owner}/repos").routeParam("owner", owner),
+            processor
+        );
     }
     
     /**
@@ -141,7 +145,13 @@ public class GitHubRestHelper {
      * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
      */
     public void processBranches(String owner, String repo, Function<JsonNode, Break> processor) {
-        new GitHubBranchesProcessor(getUnirest(), owner, repo).process(processor);
+        GitHubPagingHelper.processPagedItems(
+            getUnirest(),
+            getUnirest().get("/repos/{owner}/{repo}/branches?per_page=100")
+                .routeParam("owner", owner)
+                .routeParam("repo", repo),
+            processor
+        );
     }
     
 
@@ -155,7 +165,14 @@ public class GitHubRestHelper {
      * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
      */
     public void processCommits(String owner, String repo, String sha, String since, Function<JsonNode, Break> processor) {
-        new GitHubCommitsProcessor(getUnirest(), owner, repo, sha, since).process(processor);
+        var request = getUnirest().get("/repos/{owner}/{repo}/commits?per_page=100")
+            .routeParam("owner", owner)
+            .routeParam("repo", repo)
+            .queryString("sha", sha);
+        if (since != null) {
+            request = request.queryString("since", since);
+        }
+        GitHubPagingHelper.processPagedItems(getUnirest(), request, processor);
     }
     
     /**
@@ -183,61 +200,4 @@ public class GitHubRestHelper {
     private UnirestInstance getUnirest() {
         return unirestInstanceSupplier.getUnirestInstance();
     }
-    
-    private String gzipAndBase64(String content) {
-        // TODO: Implement gzip compression and base64 encoding
-        // For now, just return base64-encoded content
-        return Base64.getEncoder().encodeToString(content.getBytes());
-    }
-    
-    // === Inner Classes ===
-    
-    @RequiredArgsConstructor
-    private static final class GitHubRepositoriesProcessor {
-        private final UnirestInstance unirest;
-        private final String owner;
-        
-        public void process(Function<JsonNode, Break> processor) {
-            GitHubPagingHelper.processPagedItems(
-                unirest,
-                unirest.get("/orgs/{owner}/repos").routeParam("owner", owner),
-                processor
-            );
-        }
-    }    
-    @RequiredArgsConstructor
-    private static final class GitHubBranchesProcessor {
-        private final UnirestInstance unirest;
-        private final String owner;
-        private final String repo;
-        
-        public void process(Function<JsonNode, Break> processor) {
-            GitHubPagingHelper.processPagedItems(
-                unirest,
-                unirest.get("/repos/{owner}/{repo}/branches?per_page=100")
-                    .routeParam("owner", owner)
-                    .routeParam("repo", repo),
-                processor
-            );
-        }
-    }
-    
-    @RequiredArgsConstructor
-    private static final class GitHubCommitsProcessor {
-        private final UnirestInstance unirest;
-        private final String owner;
-        private final String repo;
-        private final String sha;
-        private final String since;
-        
-        public void process(Function<JsonNode, Break> processor) {
-            var request = unirest.get("/repos/{owner}/{repo}/commits?per_page=100")
-                .routeParam("owner", owner)
-                .routeParam("repo", repo)
-                .queryString("sha", sha);
-            if (since != null) {
-                request = request.queryString("since", since);
-            }
-            GitHubPagingHelper.processPagedItems(unirest, request, processor);
-        }
-    }}
+}

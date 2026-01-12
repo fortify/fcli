@@ -14,6 +14,7 @@ package com.fortify.cli.common.action.helper.ci;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +52,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
+@SpelFunctionPrefix("ci.ado()")
 public class ActionCiSpelFunctions {
     private final ActionRunnerContext ctx;
     
@@ -60,8 +62,8 @@ public class ActionCiSpelFunctions {
      * 
      * @return GitHub Actions helper
      */
-    public ActionGitHubHelper github() {
-        return new ActionGitHubHelper(ctx);
+    public ActionGitHubSpelFunctions github() {
+        return new ActionGitHubSpelFunctions(ctx);
     }
     
     /**
@@ -70,8 +72,8 @@ public class ActionCiSpelFunctions {
      * 
      * @return GitLab CI helper
      */
-    public ActionGitLabHelper gitlab() {
-        return new ActionGitLabHelper(ctx);
+    public ActionGitLabSpelFunctions gitlab() {
+        return new ActionGitLabSpelFunctions(ctx);
     }
     
     /**
@@ -80,7 +82,7 @@ public class ActionCiSpelFunctions {
      * 
      * @return Azure DevOps helper
      */
-    public ActionAdoHelper ado() {
-        return new ActionAdoHelper(ctx);
+    public ActionAdoSpelFunctions ado() {
+        return new ActionAdoSpelFunctions(ctx);
     }
 }

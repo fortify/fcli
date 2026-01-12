@@ -30,6 +30,6 @@ public @interface SpelFunction {
     String returns();
     
     public static enum SpelFunctionCategory {
-        txt, date, workflow, fortify, fcli, util
+        txt, date, workflow, fortify, fcli, util, ci
     }
 }

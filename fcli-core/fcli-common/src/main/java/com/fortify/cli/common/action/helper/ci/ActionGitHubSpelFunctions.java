@@ -20,6 +20,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.ci.github.GitHubEnvironment;
 import com.fortify.cli.common.rest.ci.github.GitHubRestHelper;
 import com.fortify.cli.common.rest.ci.github.GitHubUnirestInstanceSupplier;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-public class ActionGitHubHelper {
+@SpelFunctionPrefix("ci.github()")
+public class ActionGitHubSpelFunctions {
     private final ActionRunnerContext ctx;
     private final GitHubEnvironment env;
     private GitHubRestHelper restHelper;
@@ -43,7 +45,7 @@ public class ActionGitHubHelper {
      * Create helper with automatic environment detection.
      * Does not throw if not in CI - use getEnv() != null to check.
      */
-    public ActionGitHubHelper(ActionRunnerContext ctx) {
+    public ActionGitHubSpelFunctions(ActionRunnerContext ctx) {
         this.ctx = ctx;
         this.env = GitHubEnvironment.detect();
     }

@@ -131,6 +131,9 @@ The `fcli-common` module provides utility classes in `com.fortify.cli.common.uti
 - **`ZipHelper`**: Stream-based zip entry processing
   - Use `processZipEntries(inputStream, processor)` to iterate zip entries without full extraction
   - Processor returns `Break.TRUE` to stop iteration early
+- **`GzipHelper`**: Gzip compression utilities
+  - `gzipAndBase64(content)` — compress string with gzip and encode as Base64 (required by GitHub Code Scanning SARIF upload)
+  - `gzip(bytes)` — compress byte array using gzip, returns compressed byte array
 
 ### String & Formatting
 - **`StringHelper`**: String manipulation utilities
