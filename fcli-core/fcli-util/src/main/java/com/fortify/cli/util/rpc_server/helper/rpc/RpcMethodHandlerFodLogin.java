@@ -1,0 +1,115 @@
+/*
+ * Copyright 2021-2025 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.util.rpc_server.helper.rpc;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.util.rpc_server.helper.rpc.RpcSessionManager.ProductType;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * RPC method handler for FoD session login.
+ * 
+ * Method: fcli.fod.login
+ * Params:
+ *   - url (string, required): FoD URL (e.g., "https://ams.fortify.com")
+ *   - client-id (string, optional): API client ID for client credentials auth
+ *   - client-secret (string, optional): API client secret for client credentials auth
+ *   - user (string, optional): Username for user/password auth
+ *   - password (string, optional): Password for user/password auth
+ *   - tenant (string, optional): Tenant name (required for user/password auth)
+ *   - insecure (boolean, optional): Allow insecure connections
+ * 
+ * Authentication requires either (client-id + client-secret) or (user + password + tenant).
+ * 
+ * Returns:
+ *   - success (boolean): Whether login was successful
+ *   - sessionName (string): The session name created
+ *   - product (string): "fod"
+ *   - message (string): Status message
+ *
+ * @author Ruud Senden
+ */
+@Slf4j
+@RequiredArgsConstructor
+public final class RpcMethodHandlerFodLogin implements IRpcMethodHandler {
+    private final ObjectMapper objectMapper;
+    private final RpcSessionManager sessionManager;
+    
+    @Override
+    public JsonNode execute(JsonNode params) throws RpcMethodException {
+        if (params == null || !params.has("url")) {
+            throw RpcMethodException.invalidParams("'url' parameter is required");
+        }
+        
+        var loginArgs = buildLoginArgs(params);
+        
+        log.debug("FoD login with args: {}", loginArgs.replaceAll("(--password|--client-secret)\\s+\\S+", "$1 ***"));
+        
+        return sessionManager.executeLogin(ProductType.FOD, loginArgs);
+    }
+    
+    private String buildLoginArgs(JsonNode params) throws RpcMethodException {
+        var sb = new StringBuilder();
+        
+        // URL is required
+        sb.append("--url ").append(quoteValue(params.get("url").asText())).append(" ");
+        
+        // Authentication - at least one method required
+        boolean hasAuth = false;
+        
+        if (params.has("client-id") && params.has("client-secret")) {
+            sb.append("--client-id ").append(quoteValue(params.get("client-id").asText())).append(" ");
+            sb.append("--client-secret ").append(quoteValue(params.get("client-secret").asText())).append(" ");
+            hasAuth = true;
+        }
+        
+        if (params.has("user") && params.has("password")) {
+            if (!params.has("tenant")) {
+                throw RpcMethodException.invalidParams(
+                    "FoD user/password login requires 'tenant' parameter");
+            }
+            sb.append("--user ").append(quoteValue(params.get("user").asText())).append(" ");
+            sb.append("--password ").append(quoteValue(params.get("password").asText())).append(" ");
+            sb.append("--tenant ").append(quoteValue(params.get("tenant").asText())).append(" ");
+            hasAuth = true;
+        }
+        
+        if (!hasAuth) {
+            throw RpcMethodException.invalidParams(
+                "FoD login requires either (client-id + client-secret) or (user + password + tenant)");
+        }
+        
+        // Optional parameters
+        if (params.has("insecure") && params.get("insecure").asBoolean(false)) {
+            sb.append("-k ");
+        }
+        
+        return sb.toString().trim();
+    }
+    
+    /**
+     * Quote a value for use in fcli command arguments.
+     * Always quotes the value to ensure special characters are handled correctly.
+     * The value is placed in double quotes with any internal quotes escaped.
+     */
+    private String quoteValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return "\"\"";
+        }
+        // Escape any double quotes in the value and wrap in double quotes
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
+}
