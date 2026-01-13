@@ -60,7 +60,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * Returns null if not running in GitHub Actions.
      * Can be accessed in action YAML as: ${#ci.github().env}
      */
-    @SpelFunction(cat=ci, desc="Returns GitHub Actions environment data as ObjectNode",
+    @SpelFunction(cat=ci, desc="Returns GitHub Actions environment data as ObjectNode (auto-detected for the current workflow run)",
             returns="Environment data or `null` if not running in GitHub Actions",
             returnType=GitHubEnvironment.class)
     @Override
@@ -89,7 +89,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * @param sarifContent SARIF report content as string
      * @return Response from GitHub API
      */
-    @SpelFunction(cat=ci, desc="Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS)",
+    @SpelFunction(cat=ci, desc="Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run",
             returns="Response from GitHub API")
     public ObjectNode uploadSarif(
             @SpelFunctionParam(name="sarifContent", desc="SARIF report content as string") String sarifContent) {
@@ -100,20 +100,6 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
         var ref = env.ciBranch().full();
         var sha = env.ciCommit().id().full();
         return getRestHelper().uploadSarif(owner, repo, ref, sarifContent, sha);
-    }
-    
-    /**
-     * Upload SARIF report with explicit parameters.
-     */
-    @SpelFunction(cat=ci, desc="Uploads SARIF to GitHub Code Scanning with explicit parameters (paid tier)",
-            returns="Response from GitHub API")
-    public ObjectNode uploadSarif(
-            @SpelFunctionParam(name="sarifContent", desc="SARIF report content") String sarifContent,
-            @SpelFunctionParam(name="owner", desc="repository owner") String owner,
-            @SpelFunctionParam(name="repo", desc="repository name") String repo,
-            @SpelFunctionParam(name="ref", desc="git ref") String ref,
-            @SpelFunctionParam(name="commitSha", desc="commit SHA") String commitSha) {
-        return getRestHelper().uploadSarif(owner, repo, ref, sarifContent, commitSha);
     }
     
     // === Check Runs (Free Tier Alternative with file/line details) ===
@@ -130,7 +116,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * @param summary Summary text (Markdown supported, max 65535 chars)
      * @return Response from GitHub API
      */
-    @SpelFunction(cat=ci, desc="Creates check run (free tier, for summary only)",
+    @SpelFunction(cat=ci, desc="Creates check run (free tier, for summary only) using repository and commit detected from the current run",
             returns="Response from GitHub API")
     public ObjectNode createCheckRun(
             @SpelFunctionParam(name="name", desc="check run name") String name,
@@ -169,7 +155,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * @param annotations Array of annotation objects (automatic pagination for large sets)
      * @return Response from GitHub API
      */
-    @SpelFunction(cat=ci, desc="Creates check run with file/line annotations (free tier, shows vulnerabilities at source locations, auto-paginates)",
+    @SpelFunction(cat=ci, desc="Creates check run with file/line annotations (free tier, shows vulnerabilities at source locations, auto-paginates) using the detected repository/commit",
             returns="Response from GitHub API")
     public ObjectNode createCheckRunWithAnnotations(
             @SpelFunctionParam(name="name", desc="check run name") String name,
@@ -186,24 +172,6 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
         return getRestHelper().createCheckRunWithAnnotations(owner, repo, name, sha, status, conclusion, title, summary, annotations);
     }
     
-    /**
-     * Create a check run with annotations and explicit parameters.
-     */
-    @SpelFunction(cat=ci, desc="Creates check run with annotations using explicit parameters (free tier, auto-paginates)",
-            returns="Response from GitHub API")
-    public ObjectNode createCheckRunWithAnnotations(
-            @SpelFunctionParam(name="owner", desc="repository owner") String owner,
-            @SpelFunctionParam(name="repo", desc="repository name") String repo,
-            @SpelFunctionParam(name="name", desc="check run name") String name,
-            @SpelFunctionParam(name="headSha", desc="commit SHA") String headSha,
-            @SpelFunctionParam(name="status", desc="status: queued, in_progress, completed") String status,
-            @SpelFunctionParam(name="conclusion", desc="conclusion: success, failure, neutral, etc.") String conclusion,
-            @SpelFunctionParam(name="title", desc="summary title") String title,
-            @SpelFunctionParam(name="summary", desc="summary text in Markdown") String summary,
-            @SpelFunctionParam(name="annotations", desc="array of annotation objects (auto-paginated)") ArrayNode annotations) {
-        return getRestHelper().createCheckRunWithAnnotations(owner, repo, name, headSha, status, conclusion, title, summary, annotations);
-    }
-    
     // === Pull Request Comments (Auto-Detect Context) ===
     
     /**
@@ -213,7 +181,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * @param body Comment body (Markdown supported)
      * @return Created comment object
      */
-    @SpelFunction(cat=ci, desc="Adds a comment to the current pull request",
+    @SpelFunction(cat=ci, desc="Adds a comment to the current pull request detected from the workflow run",
             returns="Created comment object")
     public ObjectNode addPrComment(
             @SpelFunctionParam(name="body", desc="comment body (Markdown supported)") String body) {
@@ -235,7 +203,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
      * @param body Comment body (Markdown supported)
      * @return Created review comment object
      */
-    @SpelFunction(cat=ci, desc="Adds a review comment on a specific file and line in the current pull request",
+    @SpelFunction(cat=ci, desc="Adds a review comment on a specific file and line in the pull request detected from the workflow run",
             returns="Created review comment object")
     public ObjectNode addReviewComment(
             @SpelFunctionParam(name="path", desc="file path relative to repository root") String path,
@@ -249,22 +217,6 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
         var repo = repoName.short_();
         var sha = env.ciCommit().id().full();
         return getRestHelper().createReviewComment(owner, repo, env.pullRequest().id(), sha, path, line, body);
-    }
-    
-    /**
-     * Add a review comment with explicit parameters.
-     */
-    @SpelFunction(cat=ci, desc="Adds a review comment with explicit parameters",
-            returns="Created review comment object")
-    public ObjectNode addReviewComment(
-            @SpelFunctionParam(name="owner", desc="repository owner") String owner,
-            @SpelFunctionParam(name="repo", desc="repository name") String repo,
-            @SpelFunctionParam(name="prNumber", desc="pull request number") int prNumber,
-            @SpelFunctionParam(name="commitId", desc="commit ID") String commitId,
-            @SpelFunctionParam(name="path", desc="file path relative to repository root") String path,
-            @SpelFunctionParam(name="line", desc="line number") int line,
-            @SpelFunctionParam(name="body", desc="comment body (Markdown supported)") String body) {
-        return getRestHelper().createReviewComment(owner, repo, prNumber, commitId, path, line, body);
     }
     
     // === REST Helper Access ===

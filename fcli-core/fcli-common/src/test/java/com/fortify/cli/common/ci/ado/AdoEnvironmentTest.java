@@ -42,6 +42,8 @@ public class AdoEnvironmentTest {
         System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.System.TeamProject", "MyProject");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");
+        System.setProperty("fcli.env.Build.Repository.ID", "11111111-2222-3333-4444-555555555555");
+        System.setProperty("fcli.env.Build.BuildId", "101");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/heads/main");
         System.setProperty("fcli.env.Build.SourceBranchName", "main");
         System.setProperty("fcli.env.Build.SourceVersion", "9876543210abcdef9876543210abcdef98765432");
@@ -52,6 +54,8 @@ public class AdoEnvironmentTest {
         assertNotNull(env);
         assertEquals("https://dev.azure.com/myorg/", env.organization());
         assertEquals("MyProject", env.project());
+        assertEquals("11111111-2222-3333-4444-555555555555", env.repositoryId());
+        assertEquals(101, env.buildId());
         
         assertNotNull(env.ciRepository());
         assertEquals("/home/vsts/work/1/s", env.ciRepository().workDir());
@@ -77,6 +81,8 @@ public class AdoEnvironmentTest {
         System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.System.TeamProject", "MyProject");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");
+        System.setProperty("fcli.env.Build.Repository.ID", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        System.setProperty("fcli.env.Build.BuildId", "202");
         System.setProperty("fcli.env.Build.SourceBranch", "refs/pull/123/merge");
         System.setProperty("fcli.env.Build.SourceVersion", "abcdef1234567890");
         System.setProperty("fcli.env.System.PullRequest.SourceBranch", "refs/heads/feature-xyz");
@@ -98,6 +104,8 @@ public class AdoEnvironmentTest {
         assertEquals(true, env.pullRequest().active());
         assertEquals(123, env.pullRequest().id());
         assertEquals("develop", env.pullRequest().target());
+        assertEquals("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", env.repositoryId());
+        assertEquals(202, env.buildId());
     }
     
     @Test

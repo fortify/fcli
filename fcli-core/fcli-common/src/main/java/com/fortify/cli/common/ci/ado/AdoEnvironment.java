@@ -45,7 +45,9 @@ public record AdoEnvironment(
     CiPullRequest pullRequest,
     // Azure DevOps-specific properties
     String organization,
-    String project
+    String project,
+    String repositoryId,
+    Integer buildId
 ) {
     // CI system type identifier
     public static final String TYPE = "ado";
@@ -54,6 +56,8 @@ public record AdoEnvironment(
     public static final String ENV_ORGANIZATION_URL = "System.TeamFoundationCollectionUri";
     public static final String ENV_PROJECT = "System.TeamProject";
     public static final String ENV_REPOSITORY_NAME = "Build.Repository.Name";
+    public static final String ENV_REPOSITORY_ID = "Build.Repository.ID";
+    public static final String ENV_BUILD_ID = "Build.BuildId";
     public static final String ENV_SOURCE_BRANCH = "Build.SourceBranch";
     public static final String ENV_SOURCE_BRANCH_NAME = "Build.SourceBranchName";
     public static final String ENV_SOURCE_VERSION = "Build.SourceVersion";
@@ -80,6 +84,8 @@ public record AdoEnvironment(
         var sourceBranch = branchInfo[0];
         var targetBranch = branchInfo[1];
         var sha = EnvHelper.env(ENV_SOURCE_VERSION);
+        var repositoryId = EnvHelper.env(ENV_REPOSITORY_ID);
+        var buildId = parseIntOrNull(EnvHelper.env(ENV_BUILD_ID));
         
         // Build standardized structures
         // Extract simple repo name from full path if present
@@ -122,6 +128,8 @@ public record AdoEnvironment(
         return AdoEnvironment.builder()
             .organization(EnvHelper.env(ENV_ORGANIZATION_URL))
             .project(EnvHelper.env(ENV_PROJECT))
+            .repositoryId(repositoryId)
+            .buildId(buildId)
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
