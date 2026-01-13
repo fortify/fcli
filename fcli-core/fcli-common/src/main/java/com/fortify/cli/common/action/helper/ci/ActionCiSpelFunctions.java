@@ -21,6 +21,7 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * SpEL functions for detecting the current CI system and accessing 
@@ -31,6 +32,7 @@ import lombok.experimental.Accessors;
 @Reflectable
 @Accessors(fluent=true)
 @SpelFunctionPrefix("_ci.")
+@Slf4j
 public class ActionCiSpelFunctions {
     private final IActionSpelFunctions[] ciSpelFunctions;
     
@@ -63,9 +65,11 @@ public class ActionCiSpelFunctions {
     public IActionSpelFunctions detect() {
         for (var ciSpelFunctions : ciSpelFunctions) {
             if (ciSpelFunctions.getEnv() != null) {
+                log.debug("Detected CI environment: {}", ciSpelFunctions.getEnv());
                 return ciSpelFunctions;
             }
         }
+        log.debug("No CI environment detected");
         return ActionUnknownCiSpelFunctions.INSTANCE;
     }
     
