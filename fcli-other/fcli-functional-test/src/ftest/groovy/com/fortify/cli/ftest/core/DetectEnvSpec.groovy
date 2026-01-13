@@ -34,7 +34,7 @@ class DetectEnvSpec extends FcliBaseSpec {
             "GITHUB_STEP_SUMMARY": "/tmp/summary.md"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
             def allOutput = result.stdout + result.stderr
         then:
             // Check combined output (stdout + stderr) since detection messages may go to stderr
@@ -61,7 +61,7 @@ class DetectEnvSpec extends FcliBaseSpec {
             "CI_PIPELINE_ID": "9876"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
@@ -85,7 +85,7 @@ class DetectEnvSpec extends FcliBaseSpec {
             "System.TeamProject": "MyProject"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
@@ -104,7 +104,7 @@ class DetectEnvSpec extends FcliBaseSpec {
             "WORKSPACE": "/var/jenkins_home/workspace/my-job"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
@@ -124,7 +124,7 @@ class DetectEnvSpec extends FcliBaseSpec {
             "GITHUB_WORKSPACE": "/workspace"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
@@ -146,7 +146,7 @@ class DetectEnvSpec extends FcliBaseSpec {
             "CI_MERGE_REQUEST_TARGET_BRANCH_NAME": "main"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
@@ -157,7 +157,7 @@ class DetectEnvSpec extends FcliBaseSpec {
     
     def "detect-env-no-ci"() {
         when:
-            def result = Fcli.run("action run detect-env", [:], {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv([:]), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
@@ -172,11 +172,45 @@ class DetectEnvSpec extends FcliBaseSpec {
             "SOURCE_DIR": "/custom/source/path"
         ]
         when:
-            def result = Fcli.run("action run detect-env", env, {it.expectZeroExitCode()})
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
         then:
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
                 it.any { it.contains("sourceDir: /custom/source/path") }
             }
+    }
+
+    private Map<String,String> ciEnv(Map<String,String> env) {
+        def result = new LinkedHashMap<String,String>(blankCiEnv())
+        env.each { k, v -> result.put(k, v == null ? "" : v.toString()) }
+        return result
+    }
+    
+    private static Map<String,String> blankCiEnv() {
+        return new LinkedHashMap<String,String>(CI_ENV_BLANKS)
+    }
+    
+    @Lazy
+    private static final Map<String,String> CI_ENV_BLANKS = buildBlankCiEnv()
+    
+    private static Map<String,String> buildBlankCiEnv() {
+        def envNames = new LinkedHashSet<String>(fetchAllCiEnvVarNames())
+        def result = new LinkedHashMap<String,String>()
+        envNames.each { result.put(it, "") }
+        return Collections.unmodifiableMap(result)
+    }
+
+    private static Collection<String> fetchAllCiEnvVarNames() {
+        try {
+            def helperClass = Class.forName("com.fortify.cli.common.ci.CiEnvironmentTestHelper")
+            def method = helperClass.getMethod("getAllCiEnvironmentVariableNames")
+            def result = method.invoke(null)
+            if (result instanceof Collection) {
+                return result
+            }
+        } catch (ClassNotFoundException ignored) {
+            // Continue with empty fallback if helper not accessible on classpath
+        }
+        return Collections.emptyList()
     }
 }

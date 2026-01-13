@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.ci.gitlab;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
@@ -45,6 +47,9 @@ public record GitLabEnvironment(
     int projectId,
     Integer pipelineId
 ) {
+    // CI system type identifier
+    public static final String TYPE = "gitlab";
+    
     // Environment variable names
     public static final String ENV_GITLAB_CI = "GITLAB_CI";
     public static final String ENV_PROJECT_ID = "CI_PROJECT_ID";
@@ -70,7 +75,7 @@ public record GitLabEnvironment(
         if (!"true".equals(EnvHelper.env(ENV_GITLAB_CI))) return null;
         
         var projectIdStr = EnvHelper.env(ENV_PROJECT_ID);
-        var isMr = EnvHelper.env(ENV_MR_IID) != null;
+        var isMr = StringUtils.isNotBlank(EnvHelper.env(ENV_MR_IID));
         var branchInfo = detectBranchInfo(isMr);
         var projectPath = detectProjectPath();
         var projectName = EnvHelper.env(ENV_PROJECT_NAME);
@@ -92,7 +97,7 @@ public record GitLabEnvironment(
         String fullRef = null;
         if (isMr) {
             fullRef = String.format("refs/merge-requests/%s/head", EnvHelper.env(ENV_MR_IID));
-        } else if (sourceBranch != null) {
+        } else if (StringUtils.isNotBlank(sourceBranch)) {
             fullRef = "refs/heads/" + sourceBranch;
         }
         
@@ -104,7 +109,7 @@ public record GitLabEnvironment(
         var ciCommit = CiCommit.builder()
             .id(CiCommitId.builder()
                 .full(sha)
-                .short_(sha != null && sha.length() >= 7 ? sha.substring(0, 7) : sha)
+                .short_(StringUtils.isNotBlank(sha) && sha.length() >= 7 ? sha.substring(0, 7) : sha)
                 .build())
             .message(null)  // Not available in GitLab CI environment
             .author(null)   // Not available in GitLab CI environment
@@ -116,7 +121,7 @@ public record GitLabEnvironment(
             : CiPullRequest.inactive();
         
         return GitLabEnvironment.builder()
-            .projectId(projectIdStr != null ? Integer.parseInt(projectIdStr) : 0)
+            .projectId(StringUtils.isNotBlank(projectIdStr) ? Integer.parseInt(projectIdStr) : 0)
             .pipelineId(parseIntOrNull(EnvHelper.env(ENV_PIPELINE_ID)))
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)
@@ -146,7 +151,7 @@ public record GitLabEnvironment(
      */
     private static String detectProjectPath() {
         var repoUrl = EnvHelper.env(ENV_REPOSITORY_URL);
-        return repoUrl != null
+        return StringUtils.isNotBlank(repoUrl)
             ? repoUrl.replaceAll("[^:]+://[^/]+/", "").replaceAll("\\.git$", "")
             : EnvHelper.env(ENV_PROJECT_PATH);
     }
@@ -172,6 +177,6 @@ public record GitLabEnvironment(
     }
     
     private static Integer parseIntOrNull(String value) {
-        return value != null ? Integer.parseInt(value) : null;
+        return StringUtils.isBlank(value) ? null : Integer.parseInt(value);
     }
 }

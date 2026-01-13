@@ -19,33 +19,26 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.common.ci.CiEnvironmentTestHelper;
+
 public class AdoEnvironmentTest {
     
     @AfterEach
     void clearSystemProperties() {
-        System.clearProperty("fcli.env.System.TeamFoundationCollectionUri");
-        System.clearProperty("fcli.env.System.TeamProject");
-        System.clearProperty("fcli.env.Build.Repository.Name");
-        System.clearProperty("fcli.env.Build.SourceBranch");
-        System.clearProperty("fcli.env.Build.SourceBranchName");
-        System.clearProperty("fcli.env.Build.SourceVersion");
-        System.clearProperty("fcli.env.Build.SourcesDirectory");
-        System.clearProperty("fcli.env.System.DefaultWorkingDirectory");
-        System.clearProperty("fcli.env.System.PullRequest.SourceBranch");
-        System.clearProperty("fcli.env.System.PullRequest.SourceBranchName");
-        System.clearProperty("fcli.env.System.PullRequest.TargetBranch");
-        System.clearProperty("fcli.env.System.PullRequest.TargetBranchName");
-        System.clearProperty("fcli.env.System.PullRequest.PullRequestId");
+        CiEnvironmentTestHelper.clearAllCiEnvironmentVariables();
     }
     
     @Test
     void testDetectReturnsNullWhenNotInAdo() {
+        // Clear all CI environment variables to ensure detection returns null even when running in ADO
+        CiEnvironmentTestHelper.clearAllCiEnvironmentVariables();
         var env = AdoEnvironment.detect();
         assertNull(env);
     }
     
     @Test
     void testDetectRegularCommit() {
+
         System.setProperty("fcli.env.System.TeamFoundationCollectionUri", "https://dev.azure.com/myorg/");
         System.setProperty("fcli.env.System.TeamProject", "MyProject");
         System.setProperty("fcli.env.Build.Repository.Name", "MyRepo");

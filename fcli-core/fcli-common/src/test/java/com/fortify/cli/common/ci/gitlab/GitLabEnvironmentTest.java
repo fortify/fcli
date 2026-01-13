@@ -19,26 +19,19 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.common.ci.CiEnvironmentTestHelper;
+
 public class GitLabEnvironmentTest {
     
     @AfterEach
     void clearSystemProperties() {
-        System.clearProperty("fcli.env.GITLAB_CI");
-        System.clearProperty("fcli.env.CI_PROJECT_ID");
-        System.clearProperty("fcli.env.CI_PROJECT_NAME");
-        System.clearProperty("fcli.env.CI_PROJECT_PATH");
-        System.clearProperty("fcli.env.CI_PROJECT_DIR");
-        System.clearProperty("fcli.env.CI_COMMIT_SHA");
-        System.clearProperty("fcli.env.CI_COMMIT_BRANCH");
-        System.clearProperty("fcli.env.CI_MERGE_REQUEST_IID");
-        System.clearProperty("fcli.env.CI_MERGE_REQUEST_SOURCE_BRANCH_NAME");
-        System.clearProperty("fcli.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME");
-        System.clearProperty("fcli.env.CI_PIPELINE_ID");
-        System.clearProperty("fcli.env.CI_REPOSITORY_URL");
+        CiEnvironmentTestHelper.clearAllCiEnvironmentVariables();
     }
     
     @Test
     void testDetectReturnsNullWhenNotInGitLab() {
+        // Clear all CI environment variables to ensure detection returns null even when running in GitLab
+        CiEnvironmentTestHelper.clearAllCiEnvironmentVariables();
         var env = GitLabEnvironment.detect();
         assertNull(env);
     }

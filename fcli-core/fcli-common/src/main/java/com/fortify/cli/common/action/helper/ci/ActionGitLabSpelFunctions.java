@@ -74,7 +74,7 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
             returns="\"gitlab\"")
     @Override
     public String getType() {
-        return "gitlab";
+        return GitLabEnvironment.TYPE;
     }
     
     // === Security Report Upload (Ultimate/Premium Tier - Paid) ===

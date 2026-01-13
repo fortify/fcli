@@ -75,7 +75,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
             returns="\"github\"")
     @Override
     public String getType() {
-        return "github";
+        return GitHubEnvironment.TYPE;
     }
     
     // === SARIF Upload (Advanced Security - Paid Tier) ===

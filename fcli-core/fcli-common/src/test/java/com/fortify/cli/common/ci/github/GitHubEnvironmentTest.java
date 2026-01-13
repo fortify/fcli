@@ -19,24 +19,19 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.fortify.cli.common.ci.CiEnvironmentTestHelper;
+
 public class GitHubEnvironmentTest {
     
     @AfterEach
     void clearSystemProperties() {
-        System.clearProperty("fcli.env.GITHUB_REPOSITORY");
-        System.clearProperty("fcli.env.GITHUB_REF");
-        System.clearProperty("fcli.env.GITHUB_REF_NAME");
-        System.clearProperty("fcli.env.GITHUB_SHA");
-        System.clearProperty("fcli.env.GITHUB_HEAD_REF");
-        System.clearProperty("fcli.env.GITHUB_BASE_REF");
-        System.clearProperty("fcli.env.GITHUB_WORKSPACE");
-        System.clearProperty("fcli.env.GITHUB_STEP_SUMMARY");
+        CiEnvironmentTestHelper.clearAllCiEnvironmentVariables();
     }
     
     @Test
     void testDetectReturnsNullWhenNotInGitHub() {
-        // Explicitly clear GITHUB_REPOSITORY to override actual GitHub Actions environment
-        System.setProperty("fcli.env.GITHUB_REPOSITORY", "");
+        // Clear all CI environment variables to ensure detection returns null even when running in GitHub
+        CiEnvironmentTestHelper.clearAllCiEnvironmentVariables();
         var env = GitHubEnvironment.detect();
         assertNull(env);
     }

@@ -74,7 +74,7 @@ public class ActionAdoSpelFunctions implements IActionSpelFunctions {
             returns="\"ado\"")
     @Override
     public String getType() {
-        return "ado";
+        return AdoEnvironment.TYPE;
     }
     // === SARIF Upload (Advanced Security - Paid Tier) ===
     

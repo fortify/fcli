@@ -51,6 +51,9 @@ public record GitHubEnvironment(
 ) {
     private static final Pattern PR_NUMBER_PATTERN = Pattern.compile("refs/pull/(\\d+)/");
     
+    // CI system type identifier
+    public static final String TYPE = "github";
+    
     // Environment variable names
     public static final String ENV_REPOSITORY = "GITHUB_REPOSITORY";
     public static final String ENV_REF = "GITHUB_REF";
@@ -101,7 +104,7 @@ public record GitHubEnvironment(
         var ciCommit = CiCommit.builder()
             .id(CiCommitId.builder()
                 .full(sha)
-                .short_(sha != null && sha.length() >= 7 ? sha.substring(0, 7) : sha)
+                .short_(StringUtils.isNotBlank(sha) && sha.length() >= 7 ? sha.substring(0, 7) : sha)
                 .build())
             .message(null)  // Not available in GitHub Actions environment
             .author(null)   // Not available in GitHub Actions environment
@@ -122,7 +125,7 @@ public record GitHubEnvironment(
     }
     
     private static boolean isPullRequest(String ref) {
-        return ref != null && ref.startsWith("refs/pull/");
+        return StringUtils.isNotBlank(ref) && ref.startsWith("refs/pull/");
     }
     
     /**
@@ -148,7 +151,7 @@ public record GitHubEnvironment(
      * Extract pull request number from ref.
      */
     private static Integer detectPullRequestInfo(String ref) {
-        if (ref == null) return null;
+        if (StringUtils.isBlank(ref)) return null;
         var matcher = PR_NUMBER_PATTERN.matcher(ref);
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : null;
     }

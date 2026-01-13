@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.ci.ado;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.ci.CiBranch;
 import com.fortify.cli.common.ci.CiCommit;
@@ -45,6 +47,9 @@ public record AdoEnvironment(
     String organization,
     String project
 ) {
+    // CI system type identifier
+    public static final String TYPE = "ado";
+    
     // Environment variable names
     public static final String ENV_ORGANIZATION_URL = "System.TeamFoundationCollectionUri";
     public static final String ENV_PROJECT = "System.TeamProject";
@@ -67,10 +72,10 @@ public record AdoEnvironment(
      */
     public static AdoEnvironment detect() {
         var repoName = EnvHelper.env(ENV_REPOSITORY_NAME);
-        if (repoName == null) return null;
+        if (StringUtils.isBlank(repoName)) return null;
         
         var sourceBranchRaw = EnvHelper.env(ENV_SOURCE_BRANCH);
-        var isPr = sourceBranchRaw != null && sourceBranchRaw.startsWith("refs/pull/");
+        var isPr = StringUtils.isNotBlank(sourceBranchRaw) && sourceBranchRaw.startsWith("refs/pull/");
         var branchInfo = detectBranchInfo(isPr, sourceBranchRaw);
         var sourceBranch = branchInfo[0];
         var targetBranch = branchInfo[1];
@@ -103,7 +108,7 @@ public record AdoEnvironment(
         var ciCommit = CiCommit.builder()
             .id(CiCommitId.builder()
                 .full(sha)
-                .short_(sha != null && sha.length() >= 7 ? sha.substring(0, 7) : sha)
+                .short_(StringUtils.isNotBlank(sha) && sha.length() >= 7 ? sha.substring(0, 7) : sha)
                 .build())
             .message(null)  // Not available in Azure DevOps environment
             .author(null)   // Not available in Azure DevOps environment
@@ -135,14 +140,14 @@ public record AdoEnvironment(
         if (isPr) {
             sourceBranch = EnvHelper.envOrDefault(ENV_PR_SOURCE_BRANCH,
                 EnvHelper.env(ENV_PR_SOURCE_BRANCH_NAME));
-            sourceBranch = sourceBranch != null ? sourceBranch.replaceAll("^refs/heads/", "") : null;
+            sourceBranch = StringUtils.isNotBlank(sourceBranch) ? sourceBranch.replaceAll("^refs/heads/", "") : null;
             
             targetBranch = EnvHelper.envOrDefault(ENV_PR_TARGET_BRANCH,
                 EnvHelper.env(ENV_PR_TARGET_BRANCH_NAME));
-            targetBranch = targetBranch != null ? targetBranch.replaceAll("^refs/heads/", "") : null;
+            targetBranch = StringUtils.isNotBlank(targetBranch) ? targetBranch.replaceAll("^refs/heads/", "") : null;
         } else {
             sourceBranch = EnvHelper.envOrDefault(ENV_SOURCE_BRANCH_NAME,
-                sourceBranchRaw != null ? sourceBranchRaw.replaceAll("^refs/heads/", "") : null);
+                StringUtils.isNotBlank(sourceBranchRaw) ? sourceBranchRaw.replaceAll("^refs/heads/", "") : null);
             targetBranch = null;
         }
         
@@ -170,6 +175,6 @@ public record AdoEnvironment(
     }
     
     private static Integer parseIntOrNull(String value) {
-        return value != null ? Integer.parseInt(value) : null;
+        return StringUtils.isBlank(value) ? null : Integer.parseInt(value);
     }
 }
