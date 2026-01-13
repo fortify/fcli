@@ -54,7 +54,8 @@ public final class SpelFunctionDescriptorsFactory {
                 "com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions",
                 "com.fortify.cli.common.action.helper.ci.ActionAdoSpelFunctions",
                 "com.fortify.cli.common.action.helper.ci.ActionGitHubSpelFunctions",
-                "com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions"
+                "com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionBitbucketSpelFunctions"
         );
     }
     

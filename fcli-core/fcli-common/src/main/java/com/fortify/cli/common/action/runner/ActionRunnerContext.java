@@ -22,6 +22,7 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ci.ActionAdoSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.ActionBitbucketSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.ActionGitHubSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions;
@@ -119,7 +120,8 @@ public class ActionRunnerContext implements AutoCloseable {
             var ciSpecificSpelFunctions = new IActionSpelFunctions[] {
                 new ActionGitHubSpelFunctions(actionRunnerContext),
                 new ActionGitLabSpelFunctions(actionRunnerContext),
-                new ActionAdoSpelFunctions(actionRunnerContext)
+                new ActionAdoSpelFunctions(actionRunnerContext),
+                new ActionBitbucketSpelFunctions(actionRunnerContext)
             };
             spelContext.setVariable("_ci", new ActionCiSpelFunctions(ciSpecificSpelFunctions));
             for ( var ciSpelFunctions : ciSpecificSpelFunctions ) {

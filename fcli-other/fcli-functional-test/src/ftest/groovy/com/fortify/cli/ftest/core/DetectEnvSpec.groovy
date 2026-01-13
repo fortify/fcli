@@ -97,6 +97,28 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("sourceDir: /home/vsts/work/1/s") }
             }
     }
+
+    def "detect-env-bitbucket"() {
+        def env = [
+            "BITBUCKET_WORKSPACE": "acme",
+            "BITBUCKET_REPO_SLUG": "awesome-repo",
+            "BITBUCKET_BRANCH": "main",
+            "BITBUCKET_COMMIT": "11223344556677889900aabbccddeeff00112233",
+            "BITBUCKET_CLONE_DIR": "/opt/build/source"
+        ]
+        when:
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
+        then:
+            def allOutput = result.stdout + result.stderr
+            verifyAll(allOutput) {
+                it.any { it.contains("Detected Bitbucket") || it.contains("name: Bitbucket") }
+                it.any { it.contains("id: bitbucket") }
+                it.any { it.contains("qualifiedRepoName: acme/awesome-repo") }
+                it.any { it.contains("sourceBranch: main") }
+                it.any { it.contains("commitSHA: 11223344556677889900aabbccddeeff00112233") }
+                it.any { it.contains("sourceDir: /opt/build/source") }
+            }
+    }
     
     def "detect-env-jenkins"() {
         def env = [

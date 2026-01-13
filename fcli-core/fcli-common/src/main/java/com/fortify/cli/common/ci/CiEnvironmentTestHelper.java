@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.fortify.cli.common.ci.ado.AdoEnvironment;
+import com.fortify.cli.common.ci.bitbucket.BitbucketEnvironment;
 import com.fortify.cli.common.ci.github.GitHubEnvironment;
 import com.fortify.cli.common.ci.gitlab.GitLabEnvironment;
 
@@ -37,7 +38,8 @@ public final class CiEnvironmentTestHelper {
     private static final List<Class<?>> CI_ENVIRONMENT_CLASSES = List.of(
         GitHubEnvironment.class,
         GitLabEnvironment.class,
-        AdoEnvironment.class
+        AdoEnvironment.class,
+        BitbucketEnvironment.class
     );
 
     /**

@@ -75,6 +75,16 @@ steps:
           global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
           global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
           
+      # Bitbucket
+      - if: ${ci.type=='bitbucket'}
+        var.set:
+          global.ci.name:                Bitbucket
+          global.ci.id:                  bitbucket
+          global.ci.qualifiedRepoName:   ${ci.env.ciRepository.name.full}
+          global.ci.sourceBranch:        ${ci.env.ciBranch.short}
+          global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
+          global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
+          
       # Jenkins
       - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
         var.set:

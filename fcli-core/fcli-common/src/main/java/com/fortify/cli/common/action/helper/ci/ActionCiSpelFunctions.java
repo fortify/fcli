@@ -53,7 +53,7 @@ public class ActionCiSpelFunctions {
     @SpelFunction(cat=ci, desc="""
             Auto-detects current CI system; returns an object that provides CI-specific SpEL functions.
             The returned object is guaranteed to have non-null `type` and `env` properties, with `type`
-            corresponding to one of the documented known CI systems (github/gitlab/ado), allowing the
+            corresponding to one of the documented known CI systems (github/gitlab/ado/bitbucket), allowing the
             SpEL functions as documented for that CI system to be called on the returned object. For 
             example, if `type` equals `github`, the documented `github.*` SpEL functions may be called
             on the returned object. If no known CI system is detected, `type` will be "unknown", `env`
