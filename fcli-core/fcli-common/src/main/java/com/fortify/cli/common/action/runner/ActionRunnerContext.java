@@ -21,7 +21,11 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.action.helper.ci.ActionAdoSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.ActionGitHubSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -108,7 +112,19 @@ public class ActionRunnerContext implements AutoCloseable {
             configureSpelContext(spelContext, config.getActionConfigSpelEvaluatorConfigurers(), config);
             configureSpelContext(spelContext, config.getActionContextSpelEvaluatorConfigurers(), actionRunnerContext);
             spelContext.setVariable("action", new ActionRunnerContextSpelFunctions(actionRunnerContext));
-            spelContext.setVariable("ci", new ActionCiSpelFunctions(actionRunnerContext));
+            registerCiVariables(spelContext);
+        }
+
+        private void registerCiVariables(SimpleEvaluationContext spelContext) {
+            var ciSpecificSpelFunctions = new IActionSpelFunctions[] {
+                new ActionGitHubSpelFunctions(actionRunnerContext),
+                new ActionGitLabSpelFunctions(actionRunnerContext),
+                new ActionAdoSpelFunctions(actionRunnerContext)
+            };
+            spelContext.setVariable("_ci", new ActionCiSpelFunctions(ciSpecificSpelFunctions));
+            for ( var ciSpelFunctions : ciSpecificSpelFunctions ) {
+                spelContext.setVariable(ciSpelFunctions.getType(), ciSpelFunctions);
+            }
         }
     }
     

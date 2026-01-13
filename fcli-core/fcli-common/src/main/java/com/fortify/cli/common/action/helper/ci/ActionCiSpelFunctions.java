@@ -14,105 +14,28 @@ package com.fortify.cli.common.action.helper.ci;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
 
-import java.util.function.Function;
-
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
- * Factory class for CI system helpers, registered as the #ci SpEL variable in actions.
- * Provides factory methods to obtain platform-specific helpers:
- * 
- * <ul>
- *   <li>{@code #ci.github()} - GitHub Actions helper</li>
- *   <li>{@code #ci.gitlab()} - GitLab CI helper</li>
- *   <li>{@code #ci.ado()} - Azure DevOps helper</li>
- *   <li>{@code #ci.detect()} - Auto-detect current CI system</li>
- * </ul>
- * 
- * Each helper automatically detects the CI environment and provides convenient
- * access to platform-specific operations like uploading reports, adding PR comments,
- * and streaming repository data.
- * 
- * <p><b>Example usage in actions:</b></p>
- * <pre>
- * # Upload SARIF report to GitHub
- * - var.set:
- *     sarifReport: {fmt: sarif}
- *     result: ${#ci.github().uploadSarif(sarifReport)}
- * 
- * # Add PR comment
- * - var.set:
- *     comment: ${#ci.github().addPrComment("Scan completed!")}
- * 
- * # Access environment properties
- * - if: ${#ci.github().env != null}
- *   log.info: "Running in ${#ci.github().env.owner}/${#ci.github().env.repository}"
- * 
- * # Auto-detect CI system
- * - var.set:
- *     detected: ${#ci.detect()}
- * - log.info: "Detected CI system: ${detected.type}"
- * </pre>
- * 
- * @author rsenden
+ * SpEL functions for detecting the current CI system and accessing 
+ * the CI-specific helper methods.
+ *
+ * @author Ruud Senden
  */
 @Reflectable
-@RequiredArgsConstructor
 @Accessors(fluent=true)
-@SpelFunctionPrefix("ci.")
+@SpelFunctionPrefix("_ci.")
 public class ActionCiSpelFunctions {
-    private final ActionRunnerContext ctx;
+    private final IActionSpelFunctions[] ciSpelFunctions;
     
-    /**
-     * Get GitHub Actions helper.
-     * Automatically detects GitHub Actions environment on first property access.
-     * 
-     * @return GitHub Actions helper
-     */
-    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, returns="GitHub Actions helper instance"))
-    private final ActionGitHubSpelFunctions github = new ActionGitHubSpelFunctions(ctx);
-    
-    /**
-     * Get GitLab CI helper.
-     * Automatically detects GitLab CI environment on first property access.
-     * 
-     * @return GitLab CI helper
-     */
-    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, returns="GitLab CI helper instance"))
-    private final ActionGitLabSpelFunctions gitlab = new ActionGitLabSpelFunctions(ctx);
-    
-    /**
-     * Get Azure DevOps helper.
-     * Automatically detects Azure DevOps environment on first property access.
-     * 
-     * @return Azure DevOps helper
-     */
-    @Getter(lazy=true, onMethod_=@SpelFunction(cat=ci, returns="Azure DevOps helper instance"))
-    private final ActionAdoSpelFunctions ado = new ActionAdoSpelFunctions(ctx);
-    
-    /**
-     * Enum defining all available CI system implementations.
-     * Provides a centralized registry for easy iteration and future extensibility.
-     */
-    @RequiredArgsConstructor
-    public enum CiSystemType {
-        GITHUB(ActionCiSpelFunctions::github),
-        GITLAB(ActionCiSpelFunctions::gitlab),
-        ADO(ActionCiSpelFunctions::ado),
-        UNKNOWN(x->new ActionUnknownCiSpelFunctions());
-        
-        private final Function<ActionCiSpelFunctions, IActionSpelFunctions> instanceGetter;
-        
-        public Function<ActionCiSpelFunctions, IActionSpelFunctions> getInstanceGetter() {
-            return instanceGetter;
-        }
+    public ActionCiSpelFunctions(IActionSpelFunctions... ciSpelFunctions) {
+        this.ciSpelFunctions = ciSpelFunctions;
     }
     
     /**
@@ -127,17 +50,52 @@ public class ActionCiSpelFunctions {
      * 
      * @return Detected CI system helper, or ActionUnknownCiSpelFunctions if none detected
      */
-    @SpelFunction(cat=ci, desc="Auto-detects current CI system; returns helper for detected system or unknown. "
-            + "Use `type` property to check detected system (github/gitlab/ado/unknown), "
-            + "then refer to `#ci.<type>().*` documentation for available methods",
-            returns="CI helper instance for detected system")
+    @SpelFunction(cat=ci, desc="""
+            Auto-detects current CI system; returns an object that provides CI-specific SpEL functions.
+            The returned object is guaranteed to have non-null `type` and `env` properties, with `type`
+            corresponding to one of the documented known CI systems (github/gitlab/ado), allowing the
+            SpEL functions as documented for that CI system to be called on the returned object. For 
+            example, if `type` equals `github`, the documented `github.*` SpEL functions may be called
+            on the returned object. If no known CI system is detected, `type` will be "unknown", `env`
+            will be an empty JSON object, and no other SpEL functions will be available. 
+            """,
+            returns="CI-specific object providing SpEL functions for the detected CI system")
     public IActionSpelFunctions detect() {
-        for (CiSystemType ciType : CiSystemType.values()) {
-            IActionSpelFunctions helper = ciType.getInstanceGetter().apply(this);
-            if (helper.getEnv() != null) {
-                return helper;
+        for (var ciSpelFunctions : ciSpelFunctions) {
+            if (ciSpelFunctions.getEnv() != null) {
+                return ciSpelFunctions;
             }
         }
-        throw new IllegalStateException("detect() should always return a value; UNKNOWN should match");
+        return ActionUnknownCiSpelFunctions.INSTANCE;
+    }
+    
+    /**
+     * Unknown/unsupported CI system implementation.
+     * Used when no known CI system is detected.
+     * 
+     * @author rsenden
+     */
+    @Reflectable
+    private static final class ActionUnknownCiSpelFunctions implements IActionSpelFunctions {
+        private static final ActionUnknownCiSpelFunctions INSTANCE = new ActionUnknownCiSpelFunctions();
+        /**
+         * Returns an empty ObjectNode since no CI environment was detected.
+         */
+        @SpelFunction(cat=ci, desc="Returns empty ObjectNode (no CI environment detected)",
+                returns="Empty ObjectNode")
+        @Override
+        public ObjectNode getEnv() {
+            return JsonHelper.getObjectMapper().createObjectNode();
+        }
+        
+        /**
+         * Returns "unknown" as the CI system type.
+         */
+        @SpelFunction(cat=ci, desc="Returns CI system type identifier",
+                returns="\"unknown\"")
+        @Override
+        public String getType() {
+            return "unknown";
+        }
     }
 }

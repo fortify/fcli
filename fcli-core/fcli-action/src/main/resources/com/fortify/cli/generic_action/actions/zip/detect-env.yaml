@@ -41,9 +41,9 @@ steps:
           global.ssc.scaExportAction:   # SSC SCA (composition analysis) export action
       # Initialize helper
       - var.set:
-          ci.helper: ${#ci.detect()}
-          ci.type:   ${ci.helper.type}
-          ci.env:    ${ci.helper.env}
+          ci.detected: ${#_ci.detect()}
+          ci.type:     ${ci.detected.type}
+          ci.env:      ${ci.detected.env}
       # GitHub
       - if: ${ci.type=='github'}
         var.set:

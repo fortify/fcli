@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-@SpelFunctionPrefix("ci.gitlab().")
+@SpelFunctionPrefix("gitlab.")
 public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
     private final ActionRunnerContext ctx;
     private final GitLabEnvironment env;

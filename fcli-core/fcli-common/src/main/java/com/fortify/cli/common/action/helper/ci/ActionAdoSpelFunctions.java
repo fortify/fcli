@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-@SpelFunctionPrefix("ci.ado().")
+@SpelFunctionPrefix("ado.")
 public class ActionAdoSpelFunctions implements IActionSpelFunctions {
     private final ActionRunnerContext ctx;
     private final AdoEnvironment env;

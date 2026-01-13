@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Reflectable
 @RequiredArgsConstructor
-@SpelFunctionPrefix("ci.github().")
+@SpelFunctionPrefix("github.")
 public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
     private final ActionRunnerContext ctx;
     private final GitHubEnvironment env;
