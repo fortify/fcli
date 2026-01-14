@@ -68,7 +68,7 @@ public record AdoEnvironment(
     public static final String ENV_PR_TARGET_BRANCH = "System.PullRequest.TargetBranch";
     public static final String ENV_PR_TARGET_BRANCH_NAME = "System.PullRequest.TargetBranchName";
     public static final String ENV_PR_ID = "System.PullRequest.PullRequestId";
-    public static final String ENV_TOKEN = "AZURE_DEVOPS_TOKEN";
+    public static final String ENV_TOKEN = "ADO_TOKEN";
     
     /**
      * Detect Azure DevOps CI environment from environment variables.

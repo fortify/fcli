@@ -20,7 +20,6 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.util.EnvHelper;
@@ -40,14 +39,15 @@ import lombok.Builder;
 @Builder
 public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
     private final UnirestContext unirestContext;
+    private final IUrlConfig urlConfig;
+    private final String token;
     
+    /**
+     * Indicates whether this supplier was configured from environment variables.
+     * When true, error messages will include environment-specific guidance.
+     */
     @Builder.Default
-    private final IUrlConfig urlConfig = UrlConfig.builder()
-        .url(EnvHelper.env(AdoEnvironment.ENV_ORGANIZATION_URL))
-        .build();
-    
-    @Builder.Default
-    private final String token = EnvHelper.env(AdoEnvironment.ENV_TOKEN);
+    private final boolean configuredFromEnv = false;
     
     /**
      * Unique cache key for this supplier instance, ensuring that each instance
@@ -74,7 +74,13 @@ public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
      * @return Configured supplier instance
      */
     public static AdoUnirestInstanceSupplier fromEnv(UnirestContext unirestContext) {
-        return builder(unirestContext).build();
+        return builder(unirestContext)
+            .urlConfig(UrlConfig.builder()
+                .url(EnvHelper.env(AdoEnvironment.ENV_ORGANIZATION_URL))
+                .build())
+            .token(EnvHelper.env(AdoEnvironment.ENV_TOKEN))
+            .configuredFromEnv(true)
+            .build();
     }
     
     @Override
@@ -83,7 +89,7 @@ public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
     }
     
     private void configureUnirest(UnirestInstance unirest) {
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
+        AdoUnexpectedHttpResponseConfigurer.configure(unirest, token, configuredFromEnv);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, AdoEnvironment.TYPE, urlConfig.getUrl());

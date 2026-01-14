@@ -18,7 +18,6 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.util.EnvHelper;
@@ -37,14 +36,15 @@ import lombok.Builder;
 @Builder
 public class GitHubUnirestInstanceSupplier implements IUnirestInstanceSupplier {
     private final UnirestContext unirestContext;
+    private final IUrlConfig urlConfig;
+    private final String token;
     
+    /**
+     * Indicates whether this supplier was configured from environment variables.
+     * When true, error messages will include environment-specific guidance.
+     */
     @Builder.Default
-    private final IUrlConfig urlConfig = UrlConfig.builder()
-        .url(EnvHelper.envOrDefault(GitHubEnvironment.ENV_API_URL, "https://api.github.com"))
-        .build();
-    
-    @Builder.Default
-    private final String token = EnvHelper.env(GitHubEnvironment.ENV_TOKEN);
+    private final boolean configuredFromEnv = false;
     
     /**
      * Unique cache key for this supplier instance, ensuring that each instance
@@ -71,7 +71,13 @@ public class GitHubUnirestInstanceSupplier implements IUnirestInstanceSupplier {
      * @return Configured supplier instance
      */
     public static GitHubUnirestInstanceSupplier fromEnv(UnirestContext unirestContext) {
-        return builder(unirestContext).build();
+        return builder(unirestContext)
+            .urlConfig(UrlConfig.builder()
+                .url(EnvHelper.envOrDefault(GitHubEnvironment.ENV_API_URL, "https://api.github.com"))
+                .build())
+            .token(EnvHelper.env(GitHubEnvironment.ENV_TOKEN))
+            .configuredFromEnv(true)
+            .build();
     }
     
     @Override
@@ -80,7 +86,7 @@ public class GitHubUnirestInstanceSupplier implements IUnirestInstanceSupplier {
     }
     
     private void configureUnirest(UnirestInstance unirest) {
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
+        GitHubUnexpectedHttpResponseConfigurer.configure(unirest, token, configuredFromEnv);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, GitHubEnvironment.TYPE, urlConfig.getUrl());

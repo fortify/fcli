@@ -20,7 +20,6 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.util.EnvHelper;
@@ -40,17 +39,17 @@ import lombok.NonNull;
 @Reflectable
 @Builder
 public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
-    private static final String API_V4_PATH = "/api/v4";
     @NonNull
     private final UnirestContext unirestContext;
+    private final IUrlConfig urlConfig;
+    private final String token;
     
+    /**
+     * Indicates whether this supplier was configured from environment variables.
+     * When true, error messages will include environment-specific guidance.
+     */
     @Builder.Default
-    private final IUrlConfig urlConfig = UrlConfig.builder()
-        .url(normalizeGitLabUrl(EnvHelper.envOrDefault(GitLabEnvironment.ENV_API_V4_URL, "https://gitlab.com")))
-        .build();
-    
-    @Builder.Default
-    private final String token = EnvHelper.env(GitLabEnvironment.ENV_TOKEN);
+    private final boolean configuredFromEnv = false;
     
     /**
      * Unique cache key for this supplier instance, ensuring that each instance
@@ -59,53 +58,6 @@ public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
      * identity hash code to guarantee proper isolation across instances.
      */
     private final String cacheKey = JavaHelper.identity(this);
-    
-    /**
-     * Normalizes a GitLab URL by ensuring it includes the /api/v4 path.
-     * If the URL already ends with /api/v4, /api/v3, /api, or contains /api/ in the path,
-     * returns the URL unchanged. Otherwise, appends /api/v4.
-     * 
-     * @param url The base URL to normalize
-     * @return Normalized URL with API path
-     */
-    private static String normalizeGitLabUrl(String url) {
-        if (StringUtils.isBlank(url)) {
-            return "https://gitlab.com" + API_V4_PATH;
-        }
-        
-        // Remove trailing slashes for consistent checking
-        while (url.endsWith("/")) {
-            url = url.substring(0, url.length() - 1);
-        }
-        
-        // Check if URL already contains API path
-        if (url.contains("/api/")) {
-            return url;
-        }
-        
-        // Append /api/v4 to base URL
-        return url + API_V4_PATH;
-    }
-    
-    /**
-     * Custom setter for urlConfig that normalizes the URL before setting.
-     * This method is called by Lombok's builder when urlConfig is set.
-     */
-    public static class GitLabUnirestInstanceSupplierBuilder {
-        public GitLabUnirestInstanceSupplierBuilder urlConfig(IUrlConfig urlConfig) {
-            if (urlConfig != null && urlConfig.getUrl() != null) {
-                String normalizedUrl = normalizeGitLabUrl(urlConfig.getUrl());
-                this.urlConfig$value = UrlConfig.builderFrom(urlConfig)
-                    .url(normalizedUrl)
-                    .build();
-                this.urlConfig$set = true;
-            } else {
-                this.urlConfig$value = urlConfig;
-                this.urlConfig$set = true;
-            }
-            return this;
-        }
-    }
     
     /**
      * Create a builder with required UnirestContext.
@@ -124,7 +76,16 @@ public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
      * @return Configured supplier instance
      */
     public static GitLabUnirestInstanceSupplier fromEnv(UnirestContext unirestContext) {
-        return builder(unirestContext).build();
+        return builder(unirestContext)
+            .urlConfig(UrlConfig.builder()
+                .url(EnvHelper.envOrDefault(GitLabEnvironment.ENV_API_V4_URL, "https://gitlab.com"))
+                .build())
+            .token(StringUtils.firstNonBlank(
+                EnvHelper.env(GitLabEnvironment.ENV_TOKEN),      // Custom GITLAB_TOKEN (highest priority)
+                EnvHelper.env(GitLabEnvironment.ENV_JOB_TOKEN)   // Built-in CI_JOB_TOKEN (automatic fallback)
+            ))
+            .configuredFromEnv(true)
+            .build();
     }
     
     @Override
@@ -133,12 +94,57 @@ public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
     }
     
     private void configureUnirest(UnirestInstance unirest) {
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
+        GitLabUnexpectedHttpResponseConfigurer.configure(unirest, token, configuredFromEnv);
         UnirestJsonHeaderConfigurer.configure(unirest);
-        UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
-        ProxyHelper.configureProxy(unirest, GitLabEnvironment.TYPE, urlConfig.getUrl());
+        
+        // Normalize URL config to ensure /api/v4 path is present
+        IUrlConfig normalizedUrlConfig = normalizeUrlConfig(urlConfig);
+        UnirestUrlConfigConfigurer.configure(unirest, normalizedUrlConfig);
+        ProxyHelper.configureProxy(unirest, GitLabEnvironment.TYPE, normalizedUrlConfig.getUrl());
+        
         if (token != null) {
             unirest.config().setDefaultHeader("PRIVATE-TOKEN", token);
         }
+    }
+    
+    /**
+     * Normalizes a URL config by ensuring the URL includes the /api/v4 path.
+     * Returns a new UrlConfig if normalization was needed, otherwise returns the original.
+     * 
+     * @param urlConfig The URL config to normalize
+     * @return Normalized URL config
+     */
+    private static IUrlConfig normalizeUrlConfig(IUrlConfig urlConfig) {
+        return urlConfig==null
+            ? urlConfig 
+            : UrlConfig.builderFrom(urlConfig)
+                .url(normalizeUrl(urlConfig.getUrl()))
+                .build();
+    }
+    
+    /**
+     * Normalizes a GitLab URL by ensuring it includes the /api/v4 path.
+     * If the URL already contains /api/, returns it unchanged. Otherwise, appends /api/v4.
+     * 
+     * @param url The base URL to normalize
+     * @return Normalized URL with API path
+     */
+    private static String normalizeUrl(String url) {
+        if (StringUtils.isBlank(url)) {
+            return "https://gitlab.com/api/v4";
+        }
+        
+        // Remove trailing slashes for consistent checking
+        while (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        
+        // Check if URL already contains API path
+        if (url.contains("/api/")) {
+            return url;
+        }
+        
+        // Append /api/v4 to base URL
+        return url + "/api/v4";
     }
 }

@@ -23,7 +23,6 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.util.EnvHelper;
@@ -52,23 +51,18 @@ import lombok.Builder;
 @Builder
 public class BitbucketUnirestInstanceSupplier implements IUnirestInstanceSupplier {
     private final UnirestContext unirestContext;
-
+    private final IUrlConfig urlConfig;
+    private final String oauthToken;
+    private final String token;
+    private final String username;
+    private final String appPassword;
+    
+    /**
+     * Indicates whether this supplier was configured from environment variables.
+     * When true, error messages will include environment-specific guidance.
+     */
     @Builder.Default
-    private final IUrlConfig urlConfig = UrlConfig.builder()
-        .url(EnvHelper.envOrDefault(BitbucketEnvironment.ENV_API_URL, "https://api.bitbucket.org/2.0"))
-        .build();
-
-    @Builder.Default
-    private final String oauthToken = EnvHelper.env(BitbucketEnvironment.ENV_STEP_OAUTH_TOKEN);
-
-    @Builder.Default
-    private final String token = EnvHelper.env(BitbucketEnvironment.ENV_TOKEN);
-
-    @Builder.Default
-    private final String username = EnvHelper.env(BitbucketEnvironment.ENV_USERNAME);
-
-    @Builder.Default
-    private final String appPassword = EnvHelper.env(BitbucketEnvironment.ENV_APP_PASSWORD);
+    private final boolean configuredFromEnv = false;
 
     private final String cacheKey = JavaHelper.identity(this);
 
@@ -77,7 +71,16 @@ public class BitbucketUnirestInstanceSupplier implements IUnirestInstanceSupplie
     }
 
     public static BitbucketUnirestInstanceSupplier fromEnv(UnirestContext unirestContext) {
-        return builder(unirestContext).build();
+        return builder(unirestContext)
+            .urlConfig(UrlConfig.builder()
+                .url(EnvHelper.envOrDefault(BitbucketEnvironment.ENV_API_URL, "https://api.bitbucket.org/2.0"))
+                .build())
+            .oauthToken(EnvHelper.env(BitbucketEnvironment.ENV_STEP_OAUTH_TOKEN))
+            .token(EnvHelper.env(BitbucketEnvironment.ENV_TOKEN))
+            .username(EnvHelper.env(BitbucketEnvironment.ENV_USERNAME))
+            .appPassword(EnvHelper.env(BitbucketEnvironment.ENV_APP_PASSWORD))
+            .configuredFromEnv(true)
+            .build();
     }
 
     @Override
@@ -86,17 +89,22 @@ public class BitbucketUnirestInstanceSupplier implements IUnirestInstanceSupplie
     }
 
     private void configureUnirest(UnirestInstance unirest) {
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
+        var bearer = StringUtils.firstNonBlank(oauthToken, token);
+        var hasExplicitAuth = StringUtils.isNotBlank(bearer) || 
+            (StringUtils.isNotBlank(username) && StringUtils.isNotBlank(appPassword));
+        var usingProxy = !hasExplicitAuth && isBitbucketPipelines();
+        
+        BitbucketUnexpectedHttpResponseConfigurer.configure(unirest, 
+            StringUtils.firstNonBlank(bearer, username), usingProxy, configuredFromEnv);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         
-        var bearer = StringUtils.firstNonBlank(oauthToken, token);
         if (StringUtils.isNotBlank(bearer)) {
             unirest.config().setDefaultHeader("Authorization", "Bearer " + bearer);
         } else if (StringUtils.isNotBlank(username) && StringUtils.isNotBlank(appPassword)) {
             var basic = Base64.getEncoder().encodeToString((username + ":" + appPassword).getBytes(StandardCharsets.UTF_8));
             unirest.config().setDefaultHeader("Authorization", "Basic " + basic);
-        } else if (isBitbucketPipelines()) {
+        } else if (usingProxy) {
             // In Bitbucket Pipelines without explicit credentials, use the authentication proxy
             // which automatically adds the required Auth header. The proxy runs on different
             // addresses depending on whether we're in a Docker container (pipe) or not.

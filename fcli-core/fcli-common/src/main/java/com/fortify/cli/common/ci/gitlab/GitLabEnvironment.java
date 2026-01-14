@@ -66,6 +66,7 @@ public record GitLabEnvironment(
     public static final String ENV_SERVER_URL = "CI_SERVER_URL"; // Base GitLab URL
     public static final String ENV_API_V4_URL = "CI_API_V4_URL"; // API v4 URL
     public static final String ENV_TOKEN = "GITLAB_TOKEN";
+    public static final String ENV_JOB_TOKEN = "CI_JOB_TOKEN"; // Built-in job token (automatic)
     
     /**
      * Detect GitLab CI environment from environment variables.
