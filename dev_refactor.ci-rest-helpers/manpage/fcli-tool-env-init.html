@@ -1,0 +1,179 @@
+---
+title: fcli-tool-env-init(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-env-init(1)</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260114.131926-dev_refactor.ci-rest-helpers" %}
+
+
+<div id="header">
+<h1>fcli-tool-env-init(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-env-init - Initialize Fortify tool environment.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool env init</strong> [<strong>--preinstalled</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
+                   [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
+                   [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
+                   <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                   [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Detects, registers, and installs Fortify tools. Supports auto-detection of pre-installed tools, dynamic installation with signature verification, platform-specific tool caching, air-gapped environments, and Docker multi-stage builds.</p>
+</div>
+<div class="paragraph">
+<p>The --tools option specifies which tools to set up, along with optional version or path specifiers. The following tools are supported: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
+</div>
+<div class="paragraph">
+<p><code>&lt;tool&gt;:&lt;path&gt;</code>
+Register existing tool installation at given path, fail if path does not exist or does not contain expected tool binary.</p>
+</div>
+<div class="paragraph">
+<p><code>&lt;tool&gt;:&lt;version&gt;</code>
+Register existing installation if matching version is found in previously installed versions or on system PATH (resolving semantic version aliases like 'latest'), otherwise download and install requested version.</p>
+</div>
+<div class="paragraph">
+<p><code>&lt;tool&gt;</code> OR <code>&lt;tool&gt;:auto</code>
+Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX&gt;_VERSION</code> environment variables to determine version or path, with same behavior as above. If neither environment variable is specified, attempts to register any available version from previously installed versions or first match in system PATH. If no existing installation is found, installs 'latest' version.</p>
+</div>
+<div class="paragraph">
+<p>Following shows the exact environment variables that will be checked for each supported tool:
+- fcli:
+    FCLI_VERSION, FCLI_HOME
+- sc-client:
+    SC_CLIENT_VERSION, SC_CLIENT_HOME
+- fod-uploader:
+    FOD_UPLOADER_VERSION, FOD_UPLOADER_HOME
+- debricked-cli:
+    DEBRICKED_VERSION, DEBRICKED_HOME
+- bugtracker-utility:
+    FBTU_VERSION, FBTU_HOME
+- vuln-exporter:
+    FVE_VERSION, FVE_HOME</p>
+</div>
+<div class="paragraph">
+<p>For ScanCentral Client, the init command will look for a compatible JRE based on the following environment variables (in this order):
+- SC_CLIENT_JAVA_HOME
+- SCANCENTRAL_JAVA_HOME
+- JAVA_HOME_&lt;version&gt;_&lt;arch&gt; (e.g., JAVA_HOME_17_X86_64, JAVA_HOME_17_AMD64, or JAVA_HOME_17_X64 for GitHub Actions)
+- JAVA_HOME_&lt;version&gt; (e.g., JAVA_HOME_17, JAVA_HOME_11)</p>
+</div>
+<div class="paragraph">
+<p>If no compatible JRE is found through these environment variables, a compatible JRE will be downloaded and installed. Note that we specifically do not look for the general <code>JAVA_HOME</code> environment variable, as that may point to an incompatible JRE version, or may change to a different JRE version over time, causing potential compatibility issues with ScanCentral Client.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em></dt>
+<dd>
+<p>Base directory for tool installations: &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;/.</p>
+</dd>
+<dt class="hdlist1"><strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em></dt>
+<dd>
+<p>Pattern for tool cache directory paths, with {tool} and {version} placeholders (e.g., /cache/{tool}/{version}). When specified, semantic versions are resolved to actual versions for proper cache naming.</p>
+</dd>
+<dt class="hdlist1"><strong>--preinstalled</strong></dt>
+<dd>
+<p>Preinstalled mode: all tools must be pre-installed, don&#8217;t update tool definitions. Can also be enabled via PREINSTALLED environment variable.</p>
+</dd>
+<dt class="hdlist1"><strong>--self</strong>=<em>&lt;self&gt;</em></dt>
+<dd>
+<p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
+</dd>
+<dt class="hdlist1"><strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em></dt>
+<dd>
+<p>Custom tool definitions URL or file path. Defaults to TOOL_DEFINITIONS environment variable if set, otherwise uses built-in default. Ignored if all tools have explicit paths or preinstalled mode is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of tools to set up in the format &lt;tool&gt;[:&lt;version&gt;|&lt;path&gt;]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. Supported tools: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-01-14 13:22:05 UTC
+</div>
+</div>
+</body>
+</html>

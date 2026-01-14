@@ -1,5 +1,6 @@
 - 'dev_copilot.add-json-rpc-server-for-fcli'
 - 'dev_feat.ci-updates'
+- 'dev_refactor.ci-rest-helpers'
 - 'dev_try.jline-ansi'
 - 'dev_v1.x'
 - 'dev_v2.x'
