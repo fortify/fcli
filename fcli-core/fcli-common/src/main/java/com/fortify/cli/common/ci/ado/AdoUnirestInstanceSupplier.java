@@ -39,7 +39,6 @@ import lombok.Builder;
 @Reflectable
 @Builder
 public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
-    private static final String TYPE = "ado";
     private final UnirestContext unirestContext;
     
     @Builder.Default
@@ -87,7 +86,7 @@ public class AdoUnirestInstanceSupplier implements IUnirestInstanceSupplier {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
-        ProxyHelper.configureProxy(unirest, TYPE, urlConfig.getUrl());
+        ProxyHelper.configureProxy(unirest, AdoEnvironment.TYPE, urlConfig.getUrl());
         if (token != null) {
             String auth = Base64.getEncoder().encodeToString((":" + token).getBytes());
             unirest.config().setDefaultHeader("Authorization", "Basic " + auth);

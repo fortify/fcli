@@ -27,6 +27,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseC
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.FcliDockerHelper;
 import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.UnirestInstance;
@@ -34,13 +35,22 @@ import lombok.Builder;
 
 /**
  * Supplies UnirestInstance instances configured for Bitbucket REST API calls,
- * handling base URL overrides, proxy settings, and authentication via OAuth
- * access token or username/app-password pairs.
+ * handling base URL overrides, proxy settings, and authentication.
+ * 
+ * <p>Authentication Methods (checked in order):
+ * <ol>
+ * <li><b>Bearer Token</b>: {@code BITBUCKET_STEP_OAUTH_ACCESS_TOKEN} or {@code BITBUCKET_TOKEN}</li>
+ * <li><b>Basic Auth</b>: {@code BITBUCKET_USERNAME} + {@code BITBUCKET_APP_PASSWORD}</li>
+ * <li><b>Bitbucket Pipelines Proxy</b> (automatic when running in Bitbucket Pipelines without credentials):
+ *     Uses localhost:29418 proxy (or host.docker.internal:29418 in Docker containers/pipes) which
+ *     automatically adds authentication headers for the Reports API without requiring explicit credentials.</li>
+ * </ol>
+ * 
+ * @author rsenden
  */
 @Reflectable
 @Builder
 public class BitbucketUnirestInstanceSupplier implements IUnirestInstanceSupplier {
-    private static final String TYPE = "bitbucket";
     private final UnirestContext unirestContext;
 
     @Builder.Default
@@ -79,13 +89,29 @@ public class BitbucketUnirestInstanceSupplier implements IUnirestInstanceSupplie
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
-        ProxyHelper.configureProxy(unirest, TYPE, urlConfig.getUrl());
+        
         var bearer = StringUtils.firstNonBlank(oauthToken, token);
         if (StringUtils.isNotBlank(bearer)) {
             unirest.config().setDefaultHeader("Authorization", "Bearer " + bearer);
         } else if (StringUtils.isNotBlank(username) && StringUtils.isNotBlank(appPassword)) {
             var basic = Base64.getEncoder().encodeToString((username + ":" + appPassword).getBytes(StandardCharsets.UTF_8));
             unirest.config().setDefaultHeader("Authorization", "Basic " + basic);
+        } else if (isBitbucketPipelines()) {
+            // In Bitbucket Pipelines without explicit credentials, use the authentication proxy
+            // which automatically adds the required Auth header. The proxy runs on different
+            // addresses depending on whether we're in a Docker container (pipe) or not.
+            String proxyHost = FcliDockerHelper.isRunningInContainer() 
+                ? "host.docker.internal" 
+                : "localhost";
+            unirest.config().proxy(proxyHost, 29418);
+            return; // Skip standard proxy configuration when using Bitbucket auth proxy
         }
+        
+        ProxyHelper.configureProxy(unirest, BitbucketEnvironment.TYPE, urlConfig.getUrl());
+    }
+    
+    private boolean isBitbucketPipelines() {
+        // Detect if running in Bitbucket Pipelines by checking for pipeline-specific env var
+        return StringUtils.isNotBlank(EnvHelper.env(BitbucketEnvironment.ENV_PIPELINE_UUID));
     }
 }

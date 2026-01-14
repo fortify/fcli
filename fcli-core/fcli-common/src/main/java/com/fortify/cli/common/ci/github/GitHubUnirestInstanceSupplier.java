@@ -36,7 +36,6 @@ import lombok.Builder;
 @Reflectable
 @Builder
 public class GitHubUnirestInstanceSupplier implements IUnirestInstanceSupplier {
-    private static final String TYPE = "github";
     private final UnirestContext unirestContext;
     
     @Builder.Default
@@ -84,7 +83,7 @@ public class GitHubUnirestInstanceSupplier implements IUnirestInstanceSupplier {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
-        ProxyHelper.configureProxy(unirest, TYPE, urlConfig.getUrl());
+        ProxyHelper.configureProxy(unirest, GitHubEnvironment.TYPE, urlConfig.getUrl());
         if (token != null) {
             unirest.config().setDefaultHeader("Authorization", "Bearer " + token);
         }

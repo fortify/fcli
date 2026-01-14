@@ -40,7 +40,6 @@ import lombok.NonNull;
 @Reflectable
 @Builder
 public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
-    private static final String TYPE = "gitlab";
     private static final String API_V4_PATH = "/api/v4";
     @NonNull
     private final UnirestContext unirestContext;
@@ -137,7 +136,7 @@ public class GitLabUnirestInstanceSupplier implements IUnirestInstanceSupplier {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
-        ProxyHelper.configureProxy(unirest, TYPE, urlConfig.getUrl());
+        ProxyHelper.configureProxy(unirest, GitLabEnvironment.TYPE, urlConfig.getUrl());
         if (token != null) {
             unirest.config().setDefaultHeader("PRIVATE-TOKEN", token);
         }
