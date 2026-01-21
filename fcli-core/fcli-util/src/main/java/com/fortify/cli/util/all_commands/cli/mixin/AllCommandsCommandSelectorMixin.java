@@ -13,12 +13,15 @@
 package com.fortify.cli.util.all_commands.cli.mixin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
@@ -31,6 +34,8 @@ import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
 import lombok.Data;
 import lombok.Getter;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.Model.PositionalParamSpec;
 import picocli.CommandLine.Option;
 
 /**
@@ -102,9 +107,202 @@ public class AllCommandsCommandSelectorMixin {
         var fullAliases = computeFullAliases(spec);
         result.set("fullAliases", fullAliases.stream().map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
         result.put("fullAliasesString", String.join(", ", fullAliases));
-        result.set("options", spec.optionsMap().keySet().stream().map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
-        result.put("optionsString", spec.optionsMap().keySet().stream().collect(Collectors.joining(", ")));
+
+        var mapper = JsonHelper.getObjectMapper();
+        ArrayNode commandParameters = mapper.createArrayNode();
+        ArrayNode commandOptions = mapper.createArrayNode();
+        ArrayNode outputOptions = mapper.createArrayNode();
+        ArrayNode genericOptions = mapper.createArrayNode();
+
+        var positionalParams = spec.positionalParameters();
+        for (int i = 0; i < positionalParams.size(); i++) {
+            commandParameters.add(createParameterNode(spec, positionalParams.get(i), i));
+        }
+
+        spec.options().forEach(option -> {
+            ObjectNode optionNode = createOptionNode(spec, option);
+            switch (getOptionCategory(option)) {
+                case OUTPUT -> outputOptions.add(optionNode);
+                case GENERIC -> genericOptions.add(optionNode);
+                case COMMAND -> commandOptions.add(optionNode);
+            }
+        });
+
+        // 1) legacy flat fields first
+        result.set("options", spec.optionsMap().keySet().stream()
+                .map(TextNode::new)
+                .collect(JsonHelper.arrayNodeCollector()));
+        result.put("optionsString", spec.optionsMap().keySet().stream()
+                .collect(Collectors.joining(", ")));
+
+        // 2) grouped fields LAST
+        result.set("commandParameters", commandParameters);
+        result.set("commandOptions", commandOptions);
+        result.set("outputOptions", outputOptions);
+        result.set("genericOptions", genericOptions);
+
         return result;
+    }
+
+    private static ObjectNode createOptionNode(CommandSpec spec, OptionSpec option) {
+        var mapper = JsonHelper.getObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+
+        // names
+        ArrayNode namesArray = mapper.createArrayNode();
+        for (String name : option.names()) {
+            namesArray.add(name);
+        }
+        node.set("names", namesArray);
+
+        // description
+        String description = String.join(" ", option.description());
+        node.put("description", description);
+
+        // required
+        node.put("required", option.required());
+
+                Class<?> type = option.type();
+
+        // allowedValues: completion candidates or enum constants
+        ArrayNode allowed = null;
+        var completionCandidates = option.completionCandidates();
+        if (completionCandidates != null && completionCandidates.iterator().hasNext()) {
+            allowed = mapper.createArrayNode();
+            completionCandidates.forEach(allowed::add);
+        } else if (type != null && type.isEnum()) {
+            allowed = mapper.createArrayNode();
+            for (Object v : type.getEnumConstants()) {
+                allowed.add(v.toString());
+            }
+        }
+        if (allowed != null) {
+            node.set("allowedValues", allowed);
+        }
+
+                // Does the option take a value, or is it a pure flag?
+        boolean takesValue = option.arity().max() != 0;
+
+        String datatype;
+        boolean multiselect;
+
+        if (!takesValue) {
+            // key only, no value => Boolean flag
+            datatype = "Boolean";
+            multiselect = false;
+        } else {
+            boolean multiValued =
+                    (type != null && (type.isArray() || Collection.class.isAssignableFrom(type)))
+                    || (option.splitRegex() != null && allowed == null);
+
+            boolean hasAllowed = allowed != null && allowed.size() > 0;
+            boolean isFileType = type != null && java.io.File.class.isAssignableFrom(type);
+
+            if (isFileType) {
+                // options that accept file paths
+                datatype = "File";
+                multiselect = multiValued;
+            } else if (hasAllowed) {
+                // value chosen from a fixed set
+                datatype = "List";
+                multiselect = multiValued;   // false for enums like --log-level / --log-mask
+            } else if (multiValued) {
+                // multiple values (free-form)
+                datatype = "List";
+                multiselect = true;
+            } else {
+                // free-form single value
+                datatype = "String";
+                multiselect = false;
+            }
+        }
+
+        node.put("multiselect", multiselect);
+        node.put("datatype", datatype);
+
+        // shortLabel: bundle override, then computed
+        String longName = Arrays.stream(option.names())
+                .filter(n -> n.startsWith("--"))
+                .findFirst()
+                .orElse(option.names().length > 0 ? option.names()[0] : "");
+        String key = longName.replaceFirst("^-+", "");
+        String shortLabel = null;
+        if (!key.isBlank()) {
+            shortLabel = FcliCommandSpecHelper.getMessageString(spec, key + ".shortLabel");
+        }
+        if (shortLabel == null || shortLabel.isBlank()) {
+            shortLabel = computeShortLabelFromKey(key);
+        }
+        node.put("shortLabel", shortLabel);
+
+        return node;
+    }
+
+    private static ObjectNode createParameterNode(CommandSpec spec, PositionalParamSpec param, int index) {
+        var mapper = JsonHelper.getObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+
+        int paramNumber = index + 1;
+        node.put("index", paramNumber);
+
+        String label = param.paramLabel();
+        if (label == null || label.isBlank()) {
+            label = "Param" + paramNumber;
+        }
+        node.put("label", label);
+
+        String description = String.join(" ", param.description());
+        node.put("description", description);
+        node.put("required", true);
+        node.put("multiselect", false);
+        node.put("datatype", "String");
+        node.put("shortLabel", "Param" + paramNumber);
+
+        return node;
+    }
+    private static String computeShortLabelFromKey(String key) {
+        if (key == null) {
+            return null;
+        }
+        String noDashes = key.replaceFirst("^-+", "");
+        String spaced = noDashes.replace('-', ' ');
+        if (spaced.isEmpty()) {
+            return spaced;
+        }
+        char[] chars = spaced.toCharArray();
+        chars[0] = Character.toUpperCase(chars[0]);
+        return new String(chars);
+    }
+
+    private static enum OptionCategory { COMMAND, OUTPUT, GENERIC }
+
+    private static OptionCategory getOptionCategory(OptionSpec option) {
+        String longName = Arrays.stream(option.names())
+                .filter(n -> n.startsWith("--"))
+                .findFirst()
+                .orElse(option.names().length > 0 ? option.names()[0] : "");
+
+        // Output options
+        if (longName.equals("--output")
+                || longName.equals("--style")
+                || longName.equals("--store")
+                || longName.equals("--to-file")) {
+            return OptionCategory.OUTPUT;
+        }
+
+        // Generic/global options
+        if (longName.equals("--env-prefix")
+                || longName.equals("--log-file")
+                || longName.equals("--log-level")
+                || longName.equals("--log-mask")
+                || longName.equals("--debug")
+                || longName.equals("--help")
+                || longName.endsWith("-session")) {
+            return OptionCategory.GENERIC;
+        }
+
+        // Default: command-specific
+        return OptionCategory.COMMAND;
     }
 
     /**
