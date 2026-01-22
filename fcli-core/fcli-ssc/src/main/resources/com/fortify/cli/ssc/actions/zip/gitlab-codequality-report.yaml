@@ -85,7 +85,7 @@ steps:
   - if: ${cli.publish==true}
     steps:
       - var.set:
-          gitlabUpload: ${#ci.gitlab().uploadCodeQualityReport(reportContents)}
+          gitlabUpload: ${#gitlab.uploadCodeQualityReport(reportContents)}
       - log.info: Report published to GitLab merge request
 
 formatters:

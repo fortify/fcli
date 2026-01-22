@@ -66,13 +66,13 @@ public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
 
     @SpelFunction(cat=ci, desc="Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data",
             returns="Response from Bitbucket API")
-    public ObjectNode upsertReport(
+    public ObjectNode uploadReport(
             @SpelFunctionParam(name="reportId", desc="Code Insights report key (for example test-001)") String reportId,
             @SpelFunctionParam(name="reportContent", desc="JSON payload that follows Bitbucket's Code Insights report schema") String reportContent) {
-        requireEnv("upsertReport");
-        var owner = requireWorkspace("upsertReport");
-        var slug = requireRepositorySlug("upsertReport");
-        var commit = requireCommitSha("upsertReport");
+        requireEnv("uploadReport");
+        var owner = requireWorkspace("uploadReport");
+        var slug = requireRepositorySlug("uploadReport");
+        var commit = requireCommitSha("uploadReport");
         var id = requireValue("reportId", reportId);
         return getRestHelper().upsertCommitReport(owner, slug, commit, id, reportContent);
     }

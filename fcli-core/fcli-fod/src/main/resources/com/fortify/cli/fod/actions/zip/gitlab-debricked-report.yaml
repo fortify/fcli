@@ -69,7 +69,7 @@ steps:
   - if: ${cli.publish==true}
     steps:
       - var.set:
-          gitlabUpload: ${#ci.gitlab().uploadSecurityReport('dependency_scanning', reportContents)}
+          gitlabUpload: ${#gitlab.uploadSecurityReport('dependency_scanning', reportContents)}
       - log.info: Report published to GitLab Security Dashboard
 
 formatters:

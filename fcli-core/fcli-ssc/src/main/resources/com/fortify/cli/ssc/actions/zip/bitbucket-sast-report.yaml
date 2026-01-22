@@ -116,8 +116,8 @@ steps:
   - if: ${cli.publish==true}
     steps:
       - var.set:
-          bitbucketReportUpload: ${#ci.bitbucket().upsertReport('fortify-sast', reportContents)}
-          bitbucketAnnotationsUpload: ${#ci.bitbucket().addReportAnnotations('fortify-sast', annotationsContents)}
+          bitbucketReportUpload: ${#bitbucket.uploadReport('fortify-sast', reportContents)}
+          bitbucketAnnotationsUpload: ${#bitbucket.addReportAnnotations('fortify-sast', annotationsContents)}
       - log.info: Report and annotations published to Bitbucket Code Insights
 
 formatters:
