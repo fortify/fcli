@@ -75,22 +75,15 @@ public final class ToolInstallationsResolver {
         if ("unknown".equals(versionFileName)) {
             return true;
         }
-        try {
-            definition.getVersion(versionFileName);
+        if (definition.getOptionalVersion(versionFileName).isPresent()) {
             return false;
-        } catch (IllegalArgumentException e) {
-            var normalized = definition.normalizeVersionFormat(versionFileName);
-            // Also check if normalized version is "unknown"
-            if ("unknown".equals(normalized)) {
-                return true;
-            }
-            try {
-                definition.getVersion(normalized);
-                return false;
-            } catch (IllegalArgumentException ignored) {
-                return true;
-            }
         }
+        var normalized = definition.normalizeVersionFormat(versionFileName);
+        // Also check if normalized version is "unknown"
+        if ("unknown".equals(normalized)) {
+            return true;
+        }
+        return definition.getOptionalVersion(normalized).isEmpty();
     }
 
     private static ToolInstallationRecord createRecord(String toolName,

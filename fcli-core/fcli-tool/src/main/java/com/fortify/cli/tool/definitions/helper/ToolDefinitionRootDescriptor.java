@@ -58,10 +58,18 @@ public class ToolDefinitionRootDescriptor {
     }
     
     public final ToolDefinitionVersionDescriptor getVersionOrDefault(String versionOrAlias) {
-        if ( StringUtils.isBlank(versionOrAlias) || "default".equals(versionOrAlias)) {
-            versionOrAlias = "latest";
+        return getVersion(normalizeVersionOrAliasForDefault(versionOrAlias));
+    }
+    
+    public final Optional<ToolDefinitionVersionDescriptor> getOptionalVersionOrDefault(String versionOrAlias) {
+        return getOptionalVersion(normalizeVersionOrAliasForDefault(versionOrAlias));
+    }
+    
+    private static String normalizeVersionOrAliasForDefault(String versionOrAlias) {
+        if (StringUtils.isBlank(versionOrAlias) || "default".equals(versionOrAlias)) {
+            return "latest";
         }
-        return getVersion(versionOrAlias);
+        return versionOrAlias;
     }
     
     private static final boolean matches(ToolDefinitionVersionDescriptor descriptor, String versionOrAlias) {
