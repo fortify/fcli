@@ -230,7 +230,7 @@ steps:
             DEBRICKED_EXPORT:
               cmd: ${#actionCmd('DEBRICKED_EXPORT', 'ssc', global.ci.ssc_scaExportAction)} "--av=${global.ci.av}"
               skip.if-reason:
-                - ${DEBRICKED_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
+                - ${DEBRICKED_WAIT.dependencySkipReason}                    # Skip if DEBRICKED_WAIT was skipped or failed
                 - ${#actionCmdSkipFromEnvReason('DEBRICKED_EXPORT', false)} # Skip if DO_DEBRICKED_EXPORT==false
                 - ${#actionCmdSkipNoActionReason('DEBRICKED_EXPORT', 'ssc', global.ci.ssc_scaExportAction)}
           
