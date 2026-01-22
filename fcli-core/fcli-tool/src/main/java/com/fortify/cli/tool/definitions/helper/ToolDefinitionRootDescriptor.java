@@ -15,6 +15,7 @@ package com.fortify.cli.tool.definitions.helper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -46,10 +47,14 @@ public class ToolDefinitionRootDescriptor {
     }
     
     public final ToolDefinitionVersionDescriptor getVersion(String versionOrAlias) {
+        return getOptionalVersion(versionOrAlias)
+                .orElseThrow(() -> new FcliSimpleException("Version or alias "+versionOrAlias+" not found"));
+    }
+
+    public final Optional<ToolDefinitionVersionDescriptor> getOptionalVersion(String versionOrAlias) {
         return getVersionsStream()
                 .filter(v->matches(v, versionOrAlias))
-                .findFirst()
-                .orElseThrow(() -> new FcliSimpleException("Version or alias "+versionOrAlias+" not found"));
+                .findFirst();
     }
     
     public final ToolDefinitionVersionDescriptor getVersionOrDefault(String versionOrAlias) {

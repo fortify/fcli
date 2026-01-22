@@ -46,6 +46,39 @@ Path to bootstrapped fcli executable. This enables fcli to potentially use `--co
 - Improves performance by avoiding redundant downloads when versions match
 - Particularly useful in CI/CD environments with tool caches
 
+#### Special Tool Specification: `fcli:self` and `fcli:bootstrapped`
+
+When using `--self`, you can specify `fcli:self` or `fcli:bootstrapped` in the `--tools` list to register the bootstrapped fcli binary directly without searching PATH:
+
+```bash
+# Register the bootstrapped fcli from --self parameter (using fcli:self)
+fcli tool env init \
+  --self /path/to/bootstrapped/fcli \
+  --tools fcli:self,sc-client:latest
+
+# Or using fcli:bootstrapped (same behavior, different name)
+fcli tool env init \
+  --self /path/to/bootstrapped/fcli \
+  --tools fcli:bootstrapped,sc-client:latest
+```
+
+**Naming:**
+- Use `fcli:self` when calling `fcli tool env init` directly (matches the `--self` option)
+- Use `fcli:bootstrapped` in platform integrations like `@fortify/setup` (matches the concept)
+- Both are functionally identical - choose based on context and readability
+
+This is particularly useful when:
+- You've bootstrapped fcli but don't want it in PATH during registration
+- You want explicit control over which fcli gets registered
+- You're in containerized or isolated environments
+
+**Requirements:**
+- The `--self` path must point to an actual fcli executable or JAR file, not a wrapper script
+- The fcli binary must be executable and respond to `--version` command
+- Wrapper scripts that set environment variables (e.g., debug logging) may interfere with version detection
+
+**Validation:** Specifying `fcli:self` or `fcli:bootstrapped` requires the `--self` option to be present, otherwise the command will fail with a clear error message.
+
 ## Integration Patterns
 
 ### Pattern 1: Shell Script Bootstrap
@@ -67,7 +100,7 @@ fi
 # Delegate to fcli tool env init command
 "${FCLI_PATH}" tool env init \
   --self "${FCLI_PATH}" \
-  --tools fod-uploader:v3,sc-client:v24.4
+  --tools fcli:self,fod-uploader:v3,sc-client:v24.4
 ```
 
 ### Pattern 2: TypeScript/JavaScript Module (@fortify/setup)
@@ -81,7 +114,7 @@ const fcliPath = await bootstrapFcli({
 
 // Delegate to fcli tool env init command
 await runFortifyEnv({
-    args: ['init', '--self', fcliPath.path, '--tools', 'fod-uploader:v3,sc-client:v24.4'],
+    args: ['init', '--self', fcliPath.path, '--tools', 'fcli:bootstrapped,fod-uploader:v3,sc-client:v24.4'],
     verbose: true
 });
 ```
@@ -100,7 +133,7 @@ await runFortifyEnv({
 
 Implementation:
 1. Action downloads fcli (`fcli-version: v3`) from GitHub releases
-2. Invokes: `fcli tool env init --self /path/to/fcli --tools fod-uploader:v3,sc-client:v24.4`
+2. Invokes: `fcli tool env init --self /path/to/fcli --tools fcli:bootstrapped,fod-uploader:v3,sc-client:v24.4`
 3. Action outputs environment variables from `fcli tool env <format>` commands
 
 ## Why `@fortify/setup` Doesn't Use Fcli Tool Definitions

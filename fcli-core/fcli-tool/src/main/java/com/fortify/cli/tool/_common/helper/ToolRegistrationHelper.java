@@ -450,16 +450,15 @@ public class ToolRegistrationHelper {
             String normalizedVersion = toolDefinition.normalizeVersionFormat(detectedVersion);
             
             // Try to find matching version in tool definitions using normalized version
-            try {
-                return toolDefinition.getVersion(normalizedVersion);
-            } catch (IllegalArgumentException e) {
-                // Version not found in definitions, create synthetic descriptor with normalized version
-                ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
-                syntheticDescriptor.setVersion(normalizedVersion);
-                syntheticDescriptor.setStable(true);
-                syntheticDescriptor.setAliases(new String[0]);
-                return syntheticDescriptor;
-            }
+            return toolDefinition.getOptionalVersion(normalizedVersion)
+                .orElseGet(() -> {
+                    // Version not found in definitions, create synthetic descriptor with normalized version
+                    ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
+                    syntheticDescriptor.setVersion(normalizedVersion);
+                    syntheticDescriptor.setStable(true);
+                    syntheticDescriptor.setAliases(new String[0]);
+                    return syntheticDescriptor;
+                });
         }
     }
     
