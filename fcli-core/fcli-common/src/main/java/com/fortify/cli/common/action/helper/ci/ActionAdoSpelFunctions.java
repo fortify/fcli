@@ -158,7 +158,7 @@ public class ActionAdoSpelFunctions implements IActionSpelFunctions {
     
     private AdoRestHelper getRestHelper() {
         if (restHelper == null) {
-            var supplier = AdoUnirestInstanceSupplier.builder(ctx.getUnirestContext()).build();
+            var supplier = AdoUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
             restHelper = new AdoRestHelper(supplier);
         }
         return restHelper;

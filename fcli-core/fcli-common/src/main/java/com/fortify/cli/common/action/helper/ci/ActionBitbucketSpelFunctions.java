@@ -92,7 +92,7 @@ public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
 
     private BitbucketRestHelper getRestHelper() {
         if (restHelper == null) {
-            var supplier = BitbucketUnirestInstanceSupplier.builder(ctx.getUnirestContext()).build();
+            var supplier = BitbucketUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
             restHelper = new BitbucketRestHelper(supplier);
         }
         return restHelper;

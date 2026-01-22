@@ -145,7 +145,7 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
     
     private GitLabRestHelper getRestHelper() {
         if (restHelper == null) {
-            var supplier = GitLabUnirestInstanceSupplier.builder(ctx.getUnirestContext()).build();
+            var supplier = GitLabUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
             restHelper = new GitLabRestHelper(supplier);
         }
         return restHelper;

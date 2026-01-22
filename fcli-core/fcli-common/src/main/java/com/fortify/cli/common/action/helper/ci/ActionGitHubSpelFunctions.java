@@ -223,7 +223,7 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
     
     private GitHubRestHelper getRestHelper() {
         if (restHelper == null) {
-            var supplier = GitHubUnirestInstanceSupplier.builder(ctx.getUnirestContext()).build();
+            var supplier = GitHubUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
             restHelper = new GitHubRestHelper(supplier);
         }
         return restHelper;
