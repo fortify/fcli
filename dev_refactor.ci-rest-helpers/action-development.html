@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260122.153312-dev_refactor.ci-rest-helpers
+fcli_version: 0.20260122.163503-dev_refactor.ci-rest-helpers
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260122.153312-dev_refactor.ci-rest-helpers
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260122.153312-dev_refactor.ci-rest-helpers" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260122.163503-dev_refactor.ci-rest-helpers" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260122.153312-dev_refactor.ci-rest-helpers</span>
+<span id="revnumber">version 0.20260122.163503-dev_refactor.ci-rest-helpers</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -106,7 +106,7 @@ fcli_version: 0.20260122.153312-dev_refactor.ci-rest-helpers
 <li><a href="#_bitbucket_addreportannotations"><code>bitbucket.addReportAnnotations</code></a></li>
 <li><a href="#_bitbucket_getenv"><code>bitbucket.getEnv</code></a></li>
 <li><a href="#_bitbucket_gettype"><code>bitbucket.getType</code></a></li>
-<li><a href="#_bitbucket_upsertreport"><code>bitbucket.upsertReport</code></a></li>
+<li><a href="#_bitbucket_uploadreport"><code>bitbucket.uploadReport</code></a></li>
 <li><a href="#_github_addprcomment"><code>github.addPrComment</code></a></li>
 <li><a href="#_github_addreviewcomment"><code>github.addReviewComment</code></a></li>
 <li><a href="#_github_createcheckrun"><code>github.createCheckRun</code></a></li>
@@ -212,7 +212,7 @@ fcli_version: 0.20260122.153312-dev_refactor.ci-rest-helpers
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260122.153312-dev_refactor.ci-rest-helpers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260122.163503-dev_refactor.ci-rest-helpers</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -334,7 +334,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260122.153312-dev_refactor.ci-rest-helpers supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260122.163503-dev_refactor.ci-rest-helpers supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -2864,7 +2864,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_bitbucket_upsertreport"><a class="anchor" href="#_bitbucket_upsertreport"></a><code>bitbucket.upsertReport</code></h3>
+<h3 id="_bitbucket_uploadreport"><a class="anchor" href="#_bitbucket_uploadreport"></a><code>bitbucket.uploadReport</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2873,7 +2873,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.upsertReport(string reportId, string reportContent)</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.uploadReport(string reportId, string reportContent)</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
@@ -5174,8 +5174,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260122.153312-dev_refactor.ci-rest-helpers<br>
-Last updated 2026-01-22 15:35:59 UTC
+Version 0.20260122.163503-dev_refactor.ci-rest-helpers<br>
+Last updated 2026-01-22 16:37:56 UTC
 </div>
 </div>
 </body>
