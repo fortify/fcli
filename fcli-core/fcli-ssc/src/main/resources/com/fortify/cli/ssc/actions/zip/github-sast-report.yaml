@@ -112,7 +112,7 @@ steps:
   - if: ${cli.publish==true}
     steps:
       - var.set:
-          githubUpload: ${#ci.github().uploadSarif(reportContents)}
+          githubUpload: ${#github.uploadSarif(reportContents)}
       - log.info: Report published to GitHub Code Scanning
 
 formatters:
