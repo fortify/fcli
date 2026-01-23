@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20260121.120245-dev_v3.x
+fcli_version: 0.20260123.164044-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260121.120245-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260121.120245-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.164044-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260121.120245-dev_v3.x</span>
+<span id="revnumber">version 0.20260123.164044-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -301,11 +301,15 @@ For information on how to create or update findings into AWS Security Hub, see
 <dl>
 <dt class="hdlist1">--report-file, -r</dt>
 <dd>
-<p>Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json</p>
+<p>Optional report output file name (or 'stdout' / 'stderr'). Defaults to bb-fortify-report.json if --publish not specified</p>
 </dd>
 <dt class="hdlist1">--annotations-file, -a</dt>
 <dd>
-<p>Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json</p>
+<p>Optional annotations output file name (or 'stdout' / 'stderr'). Defaults to bb-fortify-annotations.json if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report and annotations to Bitbucket Code Insights</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -778,7 +782,11 @@ previous scan for this PR.</p>
 <dl>
 <dt class="hdlist1">--file, -f</dt>
 <dd>
-<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif</p>
+<p>Optional output file name (or 'stdout' / 'stderr'). Defaults to gh-fortify-sast.sarif if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report to GitHub Code Scanning (requires GITHUB_TOKEN environment variable with 'security-events: write' permission)</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -826,7 +834,11 @@ previous scan for this PR.</p>
 <dl>
 <dt class="hdlist1">--file, -f</dt>
 <dd>
-<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json</p>
+<p>Optional output file name (or 'stdout' / 'stderr'). Defaults to gl-fortify-codequality.json if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report to GitLab merge request</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -874,7 +886,11 @@ previous scan for this PR.</p>
 <dl>
 <dt class="hdlist1">--file, -f</dt>
 <dd>
-<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-dast.json</p>
+<p>Optional output file name (or 'stdout' / 'stderr'). Defaults to gl-fortify-dast.json if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report to GitLab Security Dashboard</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -918,7 +934,11 @@ previous scan for this PR.</p>
 <dl>
 <dt class="hdlist1">--file, -f</dt>
 <dd>
-<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-debricked-depscan.json</p>
+<p>Optional output file name (or 'stdout' / 'stderr'). Defaults to gl-fortify-debricked-depscan.json if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report to GitLab Security Dashboard</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -962,7 +982,11 @@ previous scan for this PR.</p>
 <dl>
 <dt class="hdlist1">--file, -f</dt>
 <dd>
-<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json</p>
+<p>Optional output file name (or 'stdout' / 'stderr'). Defaults to gl-fortify-sast.json if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report to GitLab Security Dashboard</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -1010,7 +1034,11 @@ previous scan for this PR.</p>
 <dl>
 <dt class="hdlist1">--file, -f</dt>
 <dd>
-<p>Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sonatype-depscan.json</p>
+<p>Optional output file name (or 'stdout' / 'stderr'). Defaults to gl-fortify-sonatype-depscan.json if --publish not specified</p>
+</dd>
+<dt class="hdlist1">--publish</dt>
+<dd>
+<p>Publish report to GitLab Security Dashboard</p>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -1063,7 +1091,8 @@ only ScanCentral logs, not fcli logs.</p>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
 <p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
-specified.</p>
+specified. Note: For ScanCentral SAST, it&#8217;s recommended to first run 'fcli sc-sast client setup' to automatically detect and install the appropriate
+ScanCentral Client version, which will then be automatically picked up when requesting 'auto' version here.</p>
 </dd>
 <dt class="hdlist1">--source-dir, -d</dt>
 <dd>
@@ -1319,8 +1348,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260121.120245-dev_v3.x<br>
-Last updated 2026-01-21 12:05:44 UTC
+Version 0.20260123.164044-dev_v3.x<br>
+Last updated 2026-01-23 16:43:45 UTC
 </div>
 </div>
 </body>

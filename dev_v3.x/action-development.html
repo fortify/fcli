@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260121.120245-dev_v3.x
+fcli_version: 0.20260123.164044-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260121.120245-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260121.120245-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.164044-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260121.120245-dev_v3.x</span>
+<span id="revnumber">version 0.20260123.164044-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -96,6 +96,29 @@ fcli_version: 0.20260121.120245-dev_v3.x
 <ul class="sectlevel2">
 <li><a href="#_expression_syntax">Expression Syntax</a></li>
 <li><a href="#_spel_functions">SpEL Functions</a></li>
+<li><a href="#_ci">[ci]</a></li>
+<li><a href="#_ci_detect"><code>_ci.detect</code></a></li>
+<li><a href="#_ado_addprthread"><code>ado.addPrThread</code></a></li>
+<li><a href="#_ado_getenv"><code>ado.getEnv</code></a></li>
+<li><a href="#_ado_gettype"><code>ado.getType</code></a></li>
+<li><a href="#_ado_publishtestresults"><code>ado.publishTestResults</code></a></li>
+<li><a href="#_ado_uploadsarif"><code>ado.uploadSarif</code></a></li>
+<li><a href="#_bitbucket_addreportannotations"><code>bitbucket.addReportAnnotations</code></a></li>
+<li><a href="#_bitbucket_getenv"><code>bitbucket.getEnv</code></a></li>
+<li><a href="#_bitbucket_gettype"><code>bitbucket.getType</code></a></li>
+<li><a href="#_bitbucket_uploadreport"><code>bitbucket.uploadReport</code></a></li>
+<li><a href="#_github_addprcomment"><code>github.addPrComment</code></a></li>
+<li><a href="#_github_addreviewcomment"><code>github.addReviewComment</code></a></li>
+<li><a href="#_github_createcheckrun"><code>github.createCheckRun</code></a></li>
+<li><a href="#_github_createcheckrunwithannotations"><code>github.createCheckRunWithAnnotations</code></a></li>
+<li><a href="#_github_getenv"><code>github.getEnv</code></a></li>
+<li><a href="#_github_gettype"><code>github.getType</code></a></li>
+<li><a href="#_github_uploadsarif"><code>github.uploadSarif</code></a></li>
+<li><a href="#_gitlab_addmrcomment"><code>gitlab.addMrComment</code></a></li>
+<li><a href="#_gitlab_getenv"><code>gitlab.getEnv</code></a></li>
+<li><a href="#_gitlab_gettype"><code>gitlab.getType</code></a></li>
+<li><a href="#_gitlab_uploadcodequalityreport"><code>gitlab.uploadCodeQualityReport</code></a></li>
+<li><a href="#_gitlab_uploadsecurityreport"><code>gitlab.uploadSecurityReport</code></a></li>
 <li><a href="#_date">[date]</a></li>
 <li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
 <li><a href="#_date_2"><code>date</code></a></li>
@@ -147,6 +170,7 @@ fcli_version: 0.20260121.120245-dev_v3.x
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
 <li><a href="#_env"><code>env</code></a></li>
+<li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_localrepo"><code>localRepo</code></a></li>
 <li><a href="#_opt"><code>opt</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
@@ -188,8 +212,8 @@ fcli_version: 0.20260121.120245-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260121.120245-dev_v3.x</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.5.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260123.164044-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
 </table>
@@ -255,7 +279,7 @@ contents of some of the fcli built-in actions using one of the following approac
 <td class="content">
 <div class="paragraph">
 <p>Online action sources reference a development version of the action schema. For custom actions, please make
-sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json</a> instead. Please see the next section for more details.</p>
+sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</a> instead. Please see the next section for more details.</p>
 </div>
 </td>
 </tr>
@@ -265,7 +289,7 @@ sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-s
 <div class="sect2">
 <h3 id="_schema_based_code_assistance"><a class="anchor" href="#_schema_based_code_assistance"></a>Schema-based code assistance</h3>
 <div class="paragraph">
-<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json">action schema</a>, which allows YAML editors
+<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">action schema</a>, which allows YAML editors
 and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may
 need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used
 IDE plugins that are known to work with one of the schema associations listed below:</p>
@@ -289,7 +313,7 @@ IDE plugins that are known to work with one of the schema associations listed be
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</pre>
 </div>
 </div>
 </li>
@@ -297,7 +321,7 @@ IDE plugins that are known to work with one of the schema associations listed be
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</pre>
 </div>
 </div>
 </li>
@@ -310,8 +334,8 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260121.120245-dev_v3.x supports
-schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json">2.5.0</a>. Other
+<p>As shown in the sample schema statements above, the current fcli version 0.20260123.164044-dev_v3.x supports
+schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
 same schema minor version range.</p>
@@ -403,12 +427,12 @@ provide more details on the expected contents for each property type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.5.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -2491,6 +2515,815 @@ for example:</p>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_ci"><a class="anchor" href="#_ci"></a>[ci]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_ci_detect"><a class="anchor" href="#_ci_detect"></a><code>_ci.detect</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #_ci.detect()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CI-specific object providing SpEL functions for the detected CI system</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Auto-detects current CI system; returns an object that provides CI-specific SpEL functions.
+The returned object is guaranteed to have non-null <code>type</code> and <code>env</code> properties, with <code>type</code>
+corresponding to one of the documented known CI systems (github/gitlab/ado/bitbucket), allowing the
+SpEL functions as documented for that CI system to be called on the returned object. For
+example, if <code>type</code> equals <code>github</code>, the documented <code>github.*</code> SpEL functions may be called
+on the returned object. If no known CI system is detected, <code>type</code> will be "unknown", <code>env</code>
+will be an empty JSON object, and no other SpEL functions will be available.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ado_addprthread"><a class="anchor" href="#_ado_addprthread"></a><code>ado.addPrThread</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.addPrThread(string comment)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string comment</em> - comment text</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created thread object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a comment thread to the current pull request; auto-detects project, repository, and PR context</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ado_getenv"><a class="anchor" href="#_ado_getenv"></a><code>ado.getEnv</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.getEnv()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in Azure DevOps</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns Azure DevOps environment data as ObjectNode (auto-detected for the current pipeline run)</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>Return Type Structure:</strong><br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "buildId" : "number",
+  "ciBranch" : {
+    "full" : "string",
+    "short" : "string"
+  },
+  "ciCommit" : {
+    "author" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "committer" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "id" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "message" : {
+      "full" : "string",
+      "short" : "string"
+    }
+  },
+  "ciRepository" : {
+    "name" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "remoteUrl" : "string",
+    "workDir" : "string"
+  },
+  "organization" : "string",
+  "project" : "string",
+  "pullRequest" : {
+    "active" : "boolean",
+    "id" : "number",
+    "target" : "string"
+  },
+  "repositoryId" : "string"
+}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ado_gettype"><a class="anchor" href="#_ado_gettype"></a><code>ado.getType</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ado.getType()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"ado"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns CI system type identifier</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ado_publishtestresults"><a class="anchor" href="#_ado_publishtestresults"></a><code>ado.publishTestResults</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.publishTestResults(string testRunner, string testResults)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string testRunner</em> - test runner type (JUnit, NUnit, XUnit, VSTest, CTest)<br>
+<em>string testResults</em> - test results in XML format (JUnit, NUnit, XUnit, etc.)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Azure DevOps API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Publishes test results (free tier); auto-detects project and build ID from the current pipeline run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_ado_uploadsarif"><a class="anchor" href="#_ado_uploadsarif"></a><code>ado.uploadSarif</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.uploadSarif(string sarifContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Azure DevOps API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_bitbucket_addreportannotations"><a class="anchor" href="#_bitbucket_addreportannotations"></a><code>bitbucket.addReportAnnotations</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.addReportAnnotations(string reportId, string annotationsContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportId</em> - Code Insights report key to associate the annotations with<br>
+<em>string annotationsContent</em> - JSON array of annotation objects that match Bitbucket&#8217;s schema</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Bitbucket API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Appends annotations to an existing Bitbucket Code Insights report for the detected commit</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_bitbucket_getenv"><a class="anchor" href="#_bitbucket_getenv"></a><code>bitbucket.getEnv</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.getEnv()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in Bitbucket Pipelines</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns Bitbucket Pipelines environment data as ObjectNode (auto-detected for the current step)</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>Return Type Structure:</strong><br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "ciBranch" : {
+    "full" : "string",
+    "short" : "string"
+  },
+  "ciCommit" : {
+    "author" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "committer" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "id" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "message" : {
+      "full" : "string",
+      "short" : "string"
+    }
+  },
+  "ciRepository" : {
+    "name" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "remoteUrl" : "string",
+    "workDir" : "string"
+  },
+  "pipelineUuid" : "string",
+  "pullRequest" : {
+    "active" : "boolean",
+    "id" : "number",
+    "target" : "string"
+  },
+  "repositoryFullName" : "string",
+  "repositoryOwner" : "string",
+  "repositorySlug" : "string",
+  "workspace" : "string"
+}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_bitbucket_gettype"><a class="anchor" href="#_bitbucket_gettype"></a><code>bitbucket.getType</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bitbucket.getType()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"bitbucket"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns CI system type identifier</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_bitbucket_uploadreport"><a class="anchor" href="#_bitbucket_uploadreport"></a><code>bitbucket.uploadReport</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.uploadReport(string reportId, string reportContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportId</em> - Code Insights report key (for example test-001)<br>
+<em>string reportContent</em> - JSON payload that follows Bitbucket&#8217;s Code Insights report schema</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Bitbucket API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_addprcomment"><a class="anchor" href="#_github_addprcomment"></a><code>github.addPrComment</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.addPrComment(string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string body</em> - comment body (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created comment object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a comment to the current pull request detected from the workflow run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_addreviewcomment"><a class="anchor" href="#_github_addreviewcomment"></a><code>github.addReviewComment</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.addReviewComment(string path, object line, string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - file path relative to repository root<br>
+<em>object line</em> - line number<br>
+<em>string body</em> - comment body (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created review comment object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a review comment on a specific file and line in the pull request detected from the workflow run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_createcheckrun"><a class="anchor" href="#_github_createcheckrun"></a><code>github.createCheckRun</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.createCheckRun(string name, string status, string conclusion, string title, string summary)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - check run name<br>
+<em>string status</em> - status: queued, in_progress, completed<br>
+<em>string conclusion</em> - conclusion: success, failure, neutral, cancelled, skipped, timed_out, action_required<br>
+<em>string title</em> - summary title<br>
+<em>string summary</em> - summary text in Markdown (max 65535 chars)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates check run (free tier, for summary only) using repository and commit detected from the current run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_createcheckrunwithannotations"><a class="anchor" href="#_github_createcheckrunwithannotations"></a><code>github.createCheckRunWithAnnotations</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.createCheckRunWithAnnotations(string name, string status, string conclusion, string title, string summary, object annotations)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - check run name<br>
+<em>string status</em> - status: queued, in_progress, completed<br>
+<em>string conclusion</em> - conclusion: success, failure, neutral, etc.<br>
+<em>string title</em> - summary title<br>
+<em>string summary</em> - summary text in Markdown<br>
+<em>object annotations</em> - array of annotation objects with path, line, level, message (auto-paginated)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates check run with file/line annotations (free tier, shows vulnerabilities at source locations, auto-paginates) using the detected repository/commit</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_getenv"><a class="anchor" href="#_github_getenv"></a><code>github.getEnv</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.getEnv()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in GitHub Actions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns GitHub Actions environment data as ObjectNode (auto-detected for the current workflow run)</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>Return Type Structure:</strong><br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "ciBranch" : {
+    "full" : "string",
+    "short" : "string"
+  },
+  "ciCommit" : {
+    "author" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "committer" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "id" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "message" : {
+      "full" : "string",
+      "short" : "string"
+    }
+  },
+  "ciRepository" : {
+    "name" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "remoteUrl" : "string",
+    "workDir" : "string"
+  },
+  "jobSummaryFile" : "string",
+  "pullRequest" : {
+    "active" : "boolean",
+    "id" : "number",
+    "target" : "string"
+  }
+}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_gettype"><a class="anchor" href="#_github_gettype"></a><code>github.getType</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #github.getType()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"github"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns CI system type identifier</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_github_uploadsarif"><a class="anchor" href="#_github_uploadsarif"></a><code>github.uploadSarif</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.uploadSarif(string sarifContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content as string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_addmrcomment"><a class="anchor" href="#_gitlab_addmrcomment"></a><code>gitlab.addMrComment</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.addMrComment(string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string body</em> - comment body (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created note object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a comment to the merge request detected from the current pipeline run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_getenv"><a class="anchor" href="#_gitlab_getenv"></a><code>gitlab.getEnv</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.getEnv()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment data or <code>null</code> if not running in GitLab CI</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns GitLab CI environment data as ObjectNode (auto-detected for the current pipeline run)</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>Return Type Structure:</strong><br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "ciBranch" : {
+    "full" : "string",
+    "short" : "string"
+  },
+  "ciCommit" : {
+    "author" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "committer" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "id" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "message" : {
+      "full" : "string",
+      "short" : "string"
+    }
+  },
+  "ciRepository" : {
+    "name" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "remoteUrl" : "string",
+    "workDir" : "string"
+  },
+  "pipelineId" : "number",
+  "projectId" : "number",
+  "pullRequest" : {
+    "active" : "boolean",
+    "id" : "number",
+    "target" : "string"
+  }
+}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_gettype"><a class="anchor" href="#_gitlab_gettype"></a><code>gitlab.getType</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #gitlab.getType()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"gitlab"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns CI system type identifier</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_uploadcodequalityreport"><a class="anchor" href="#_gitlab_uploadcodequalityreport"></a><code>gitlab.uploadCodeQualityReport</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.uploadCodeQualityReport(string reportContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportContent</em> - code quality report as JSON array</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitLab API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads code quality report to the detected merge request (free tier, all GitLab tiers)</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_uploadsecurityreport"><a class="anchor" href="#_gitlab_uploadsecurityreport"></a><code>gitlab.uploadSecurityReport</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.uploadSecurityReport(string reportType, string reportContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportType</em> - report type: sast, dast, dependency_scanning, container_scanning, etc.<br>
+<em>string reportContent</em> - security report in GitLab schema format</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitLab API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using project/pipeline detected from the current run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_date"><a class="anchor" href="#_date"></a>[date]</h3>
 
 </div>
@@ -3709,6 +4542,30 @@ values provided in the mapping object.</p>
 </table>
 </div>
 <div class="sect2">
+<h3 id="_jsonstringify"><a class="anchor" href="#_jsonstringify"></a><code>jsonStringify</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #jsonStringify(object input[, boolean pretty])</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object input</em> - the object to convert to JSON string<br>
+<em>boolean pretty</em> - whether to pretty-print the JSON</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JSON string representation of the given object</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_localrepo"><a class="anchor" href="#_localrepo"></a><code>localRepo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -3743,6 +4600,49 @@ commit: {
     committer: { name, email, when }
 }
 }</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>Return Type Structure:</strong><br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "branch" : {
+    "full" : "string",
+    "short" : "string"
+  },
+  "commit" : {
+    "author" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "committer" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "id" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "message" : {
+      "full" : "string",
+      "short" : "string"
+    }
+  },
+  "repository" : {
+    "name" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "remoteUrl" : "string",
+    "workDir" : "string"
+  }
+}</code></pre>
+</div>
 </div></div></td>
 </tr>
 </tbody>
@@ -4274,8 +5174,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260121.120245-dev_v3.x<br>
-Last updated 2026-01-21 12:05:27 UTC
+Version 0.20260123.164044-dev_v3.x<br>
+Last updated 2026-01-23 16:43:29 UTC
 </div>
 </div>
 </body>
