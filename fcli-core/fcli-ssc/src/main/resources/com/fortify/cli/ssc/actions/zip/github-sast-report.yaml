@@ -31,7 +31,7 @@ cli.options:
     required: false
   publish:
     names: --publish
-    description: "Publish report to GitHub Code Scanning"
+    description: "Publish report to GitHub Code Scanning (requires GITHUB_TOKEN environment variable with 'security-events: write' permission)"
     required: false
     type: boolean
   appversion:

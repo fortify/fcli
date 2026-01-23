@@ -26,7 +26,8 @@ cli.options:
     names: --sc-client-version, -v
     description: |
       Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
-      specified.
+      specified. Note: For ScanCentral SAST, it's recommended to first run 'fcli sc-sast client setup' to automatically detect and install the appropriate
+      ScanCentral Client version, which will then be automatically picked up when requesting 'auto' version here.
     required: true
     default: ${#env('SC_CLIENT_VERSION')?:'auto'}
   sourceDir:

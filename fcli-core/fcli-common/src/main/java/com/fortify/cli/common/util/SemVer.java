@@ -27,17 +27,22 @@ import lombok.Getter;
  * return an empty {@link Optional}, and comparison methods regard a
  * non-proper semantic version as not equal to/less than a true semantic 
  * version.
+ * 
+ * <p>This class supports both standard 3-part semantic versions (major.minor.patch)
+ * and extended versions with 4 or more parts (e.g., major.minor.patch.build). 
+ * Extended versions are considered valid and comparable.
  *
  * @author Ruud Senden
  */
 @Getter
-public final class SemVer {
-    private static final Pattern semverPattern = Pattern.compile("([1-9]\\d*)\\.(\\d+)\\.(\\d+)(?:-(.*))?");
+public final class SemVer implements Comparable<SemVer> {
+    private static final Pattern semverPattern = Pattern.compile("([1-9]\\d*)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+(?:\\.\\d+)*))?(?:-(.*))?");
     private final String semver;
     private final boolean properSemver;
     private final Optional<String> major;  
     private final Optional<String> minor;
     private final Optional<String> patch;
+    private final Optional<String> additionalParts;
     private final Optional<String> label;
     private final Optional<String> majorMinor;
     private final Optional<String> majorMinorPatch;
@@ -50,10 +55,30 @@ public final class SemVer {
         this.major = optionalFormat(matcher, "{1}");
         this.minor = optionalFormat(matcher, "{2}");
         this.patch = optionalFormat(matcher, "{3}");
-        this.label = optionalFormat(matcher, "{4}");
+        this.additionalParts = optionalFormat(matcher, "{4}");
+        this.label = optionalFormat(matcher, "{5}");
         this.majorMinor = optionalFormat(matcher, "{1}.{2}");
         this.majorMinorPatch = optionalFormat(matcher, "{1}.{2}.{3}");
-        this.version = Optional.ofNullable(!matcher.matches() ? null : Version.parse(semver));
+        this.version = Optional.ofNullable(!matcher.matches() ? null : parseVersion(matcher));
+    }
+    
+    private static Version parseVersion(Matcher matcher) {
+        String versionStr = matcher.group(1) + "." + matcher.group(2) + "." + matcher.group(3);
+        String additional = matcher.group(4);
+        String label = matcher.group(5);
+        
+        if (additional != null) {
+            versionStr += "." + additional;
+        }
+        if (label != null) {
+            versionStr += "-" + label;
+        }
+        
+        try {
+            return Version.parse(versionStr);
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     /**
@@ -118,7 +143,7 @@ public final class SemVer {
      * than true semvers.
      * 
      * @param other semver to compare this semver against
-     * @return
+     * @return -1, 0, or 1 for less than, equal, or greater than
      */
     public final int compareTo(SemVer other) {
         if ( this.semver.equals(other.semver) ) {
@@ -136,18 +161,25 @@ public final class SemVer {
     
     /**
      * Return an optional string based on the given matcher and format, where format
-     * represents a {@link MessageFormat} format that can reference {0} for entire match,
-     * {1} for major version, {2} for minor version, {3} for patch version, and {4} for
-     * version label.
-     * @param matcher
-     * @param format
-     * @return
+     * represents a {@link MessageFormat} format that can reference:
+     * <ul>
+     * <li>{0} - entire match</li>
+     * <li>{1} - major version</li>
+     * <li>{2} - minor version</li>
+     * <li>{3} - patch version</li>
+     * <li>{4} - additional parts (4th, 5th, etc. numeric parts)</li>
+     * <li>{5} - version label (text after hyphen)</li>
+     * </ul>
+     * @param matcher regex matcher
+     * @param format MessageFormat pattern
+     * @return formatted string or empty
      */
     private static final Optional<String> optionalFormat(Matcher matcher, String format) {
         return Optional.ofNullable(!matcher.matches() 
                 ? null
                 : new MessageFormat(format).format(new Object[] {
-                        matcher.group(0), matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4)
+                        matcher.group(0), matcher.group(1), matcher.group(2), 
+                        matcher.group(3), matcher.group(4), matcher.group(5)
                 }));
     }
 }

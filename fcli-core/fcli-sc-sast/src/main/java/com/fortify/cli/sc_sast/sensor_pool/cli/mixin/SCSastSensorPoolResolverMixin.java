@@ -41,6 +41,11 @@ public class SCSastSensorPoolResolverMixin {
     public static final class OptionalOption extends AbstractSCSastSensorPoolResolverMixin {
         @Option(names = {"--sensor-pool", "--pool"}, required = false, descriptionKey = "fcli.sc-sast.sensor-pool.resolver.nameOrUuid")
         @Getter private String sensorPoolNameOrUuid;
+        
+        @Override
+        public String getSensorPoolUuid(UnirestInstance unirest) {
+            return hasValue() ? super.getSensorPoolUuid(unirest) : null;
+        }
     }
     
     public static final class RequiredOption extends AbstractSCSastSensorPoolResolverMixin {

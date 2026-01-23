@@ -114,11 +114,31 @@ steps:
               status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
               skip.if-reason:
                 - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
+
+            DETECT_SC_CLIENT_VERSION:
+              cmd: ${#fcliCmd('DETECT_SC_CLIENT_VERSION', 'sc-sast client list-compatible-versions')} "--av=${global.ci.av}" "--latest-only=true"
+              skip.if-reason:
+                - ${sast.skipReason} # Skip if SAST scan is skipped
+                - ${#isNotBlank(#env('SC_CLIENT_VERSION'))?'User requested explicit ScanCentral SAST client version':''} # Skip if SC_CLIENT_VERSION is specified
+              records.for-each:
+                record.var-name: versionRecord
+                do:
+                  - var.set:
+                      scClientVersion: ${versionRecord.compatibleClientVersion}
+              on.success:
+                - log.info: 'Detected compatible ScanCentral SAST client version: ${scClientVersion}'
+              on.fail:
+                - log.warn: 'Warning: Unable to detect compatible ScanCentral SAST client version, attempting with default version'
+                - var.set:
+                    DETECT_SC_CLIENT_VERSION.status: 'WARNING'
+                    DETECT_SC_CLIENT_VERSION.statusReason: 'Unable to detect compatible ScanCentral SAST client version'
+                    DETECT_SC_CLIENT_VERSION.dependencySkipReason:  # Clear to allow downstream steps
+                    DETECT_SC_CLIENT_VERSION.exitCode: 0            # Don't contribute to final exit code
                   
             PACKAGE_ACTION:
               # Maybe use similar approach as DEBRICKED_SCAN_ACTION, explicitly passing all options?
               # If we decide to do so, we should do the same in FoD ci action 
-              cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} "--source-dir=${global.ci.sourceDir}"
+              cmd: ${#actionCmd('PACKAGE_ACTION', 'ssc', 'package')} "--source-dir=${global.ci.sourceDir}" "${#opt('--sc-client-version', scClientVersion)}"
               skip.if-reason:
                 - ${sast.skipReason} # Skip if SAST scan is skipped
                   

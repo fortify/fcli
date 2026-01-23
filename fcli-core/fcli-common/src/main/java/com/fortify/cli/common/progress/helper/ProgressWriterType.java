@@ -13,13 +13,9 @@
 package com.fortify.cli.common.progress.helper;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.ConsoleHelper;
@@ -35,8 +31,6 @@ public enum ProgressWriterType {
     stderr(SimpleStdErrProgressWriter::new),
     single_line(SingleLineProgressWriter::new), 
     ansi(AnsiProgressWriter::new);
-    
-    private static final Logger LOG = LoggerFactory.getLogger(ProgressWriterType.class);
     
     @Override
     public String toString() {
@@ -64,8 +58,6 @@ public enum ProgressWriterType {
         protected final PrintStream stderr;
         protected final PrintStream originalStdout;
         protected final PrintStream originalStderr;
-        private final List<String> warnings = new ArrayList<>();
-        private final List<String> info = new ArrayList<>();
 
         protected AbstractProgressWriter() {
             this.originalStdout = System.out;
@@ -81,40 +73,28 @@ public enum ProgressWriterType {
             System.setOut(originalStdout);
             System.setErr(originalStderr);
             clearProgress();
-            warnings.forEach(originalStderr::println);
-            info.forEach(originalStdout::println);
         }
         
         @Override
         public final void writeWarning(String message, Object... args) {
-            var msg = format(message, args);
-            LOG.warn(msg);
-            writeWarning(msg);
+            writeWarning(format(message, args));
         }
 
-        protected void writeWarning(String message) {
-            warnings.add(message);
-        }
+        protected abstract void writeWarning(String message);
         
         @Override
         public final void writeProgress(String message, Object... args) {
-            var msg = format(message, args);
-            LOG.info(msg);
-            writeProgress(msg);
+            writeProgress(format(message, args));
         }
         
         protected abstract void writeProgress(String message);
         
         @Override
         public final void writeInfo(String message, Object... args) {
-            var msg = format(message, args);
-            LOG.info(msg);
-            writeInfo(msg);
+            writeInfo(format(message, args));
         }
 
-        protected void writeInfo(String message) {
-            info.add(message);
-        }
+        protected abstract void writeInfo(String message);
         
         private final String format(String message, Object... args) {
             if ( args==null || args.length==0 ) {
@@ -140,6 +120,12 @@ public enum ProgressWriterType {
         public void writeProgress(String message) {}
         
         @Override
+        protected void writeInfo(String message) {}
+        
+        @Override
+        protected void writeWarning(String message) {}
+        
+        @Override
         public void clearProgress() {}
     }
     
@@ -160,6 +146,14 @@ public enum ProgressWriterType {
             originalStdout.println(message);
         }
         @Override
+        protected void writeInfo(String message) {
+            originalStdout.println(message);
+        }
+        @Override
+        protected void writeWarning(String message) {
+            originalStderr.println(message);
+        }
+        @Override
         public void clearProgress() {}
     }
     private static final class SimpleStdErrProgressWriter extends AbstractProgressWriter {
@@ -176,6 +170,14 @@ public enum ProgressWriterType {
             if ( message.indexOf('\n') > 0 ) {
                 message += "\n";
             }
+            originalStderr.println(message);
+        }
+        @Override
+        protected void writeInfo(String message) {
+            originalStdout.println(message);
+        }
+        @Override
+        protected void writeWarning(String message) {
             originalStderr.println(message);
         }
         @Override
@@ -200,6 +202,16 @@ public enum ProgressWriterType {
             var abbreviatedMessage = terminalWidth==null ? message : StringUtils.abbreviate(message, terminalWidth);
             originalStdout.print(abbreviatedMessage);
             this.lastNumberOfChars = abbreviatedMessage.length();
+        }
+        @Override
+        protected void writeInfo(String message) {
+            clearProgress();
+            originalStdout.println(message);
+        }
+        @Override
+        protected void writeWarning(String message) {
+            clearProgress();
+            originalStderr.println(message);
         }
         @Override
         public void clearProgress() {
@@ -242,6 +254,16 @@ public enum ProgressWriterType {
             originalStdout.print(WRAP_DISABLE+message+WRAP_ENABLE);
             //originalStdout.print(SAVE_CURSOR + message);
             this.lastNumberOfLines = (int)message.chars().filter(ch -> ch == '\n').count()+1;
+        }
+        @Override
+        protected void writeInfo(String message) {
+            clearProgress();
+            originalStdout.println(message);
+        }
+        @Override
+        protected void writeWarning(String message) {
+            clearProgress();
+            originalStderr.println(message);
         }
         @Override
         public void clearProgress() {
