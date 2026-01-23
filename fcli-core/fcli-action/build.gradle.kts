@@ -1,13 +1,13 @@
 plugins { id("fcli.module-conventions") }
 
-// Build-time action to generate CI env vars output
-val buildTimeActionCiEnvvars = tasks.register<JavaExec>("buildTimeAction_ci_envvars") {
+// Build-time action to generate CI documentation output
+val buildTimeActionCiDoc = tasks.register<JavaExec>("buildTimeAction_ci_doc") {
     group = "build resources"
-    description = "Generate build-time CI environment variables action output"
+    description = "Generate build-time CI documentation action output"
     systemProperty("fcli.terminal.width", "80") // Set text table width to 80 characters
     val outputDirProvider = layout.buildDirectory.dir("generated-action-output-resources")
-    val ciEnvVarsLog = layout.buildDirectory.file("ci-envvars.log")
-    val inputYaml = project.layout.projectDirectory.file("src/main/resources/com/fortify/cli/generic_action/actions/build-time/ci-envvars.yaml")
+    val ciDocLog = layout.buildDirectory.file("ci-doc.log")
+    val inputYaml = project.layout.projectDirectory.file("src/main/resources/com/fortify/cli/generic_action/actions/build-time/ci-doc.yaml")
     inputs.file(inputYaml)
     inputs.property("projectVersion", project.version)
     outputs.dir(outputDirProvider)
@@ -17,6 +17,6 @@ val buildTimeActionCiEnvvars = tasks.register<JavaExec>("buildTimeAction_ci_envv
     classpath = runtimeCp.filter { !it.path.contains("/build/classes/") } + files(configurations.annotationProcessor.get())
     mainClass.set("com.fortify.cli.common.action.cli.cmd.RunBuildTimeFcliAction")
     doFirst {
-        args = listOf(ciEnvVarsLog.get().asFile.absolutePath, inputYaml.asFile.absolutePath, "-d", outputDirProvider.get().asFile.absolutePath)
+        args = listOf(ciDocLog.get().asFile.absolutePath, inputYaml.asFile.absolutePath, "-d", outputDirProvider.get().asFile.absolutePath)
     }
 }

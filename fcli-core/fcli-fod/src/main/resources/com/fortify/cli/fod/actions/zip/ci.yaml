@@ -13,9 +13,15 @@ usage:
     * Perform post-scan activities, like checking policy outcome, exporting results, ...
     
     Configuration for this fcli action is done through environment variables; the
-    table below lists the environment variables supported by this action.
-                
-    ${#include('/ci-envvars-fod.ci'+(isAsciiDoc?'.adoc':'.txt'))}
+    sections below list the environment variables supported by this action.
+    
+    === Session
+    
+    ${#include('/session-fod'+(isAsciiDoc?'.adoc':'.txt'))}
+    
+    === CI Integration
+    
+    ${#include('/ci-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
 
 config:
   output: immediate

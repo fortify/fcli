@@ -19,11 +19,23 @@ usage:
         
     === Fortify on Demand
     
-    ${#include('/ci-envvars-fod.all'+(isAsciiDoc?'.adoc':'.txt'))}
+    ==== Session
+    
+    ${#include('/session-fod'+(isAsciiDoc?'.adoc':'.txt'))}
+    
+    ==== CI Integration
+    
+    ${#include('/ci-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
     
     === Fortify Software Security Center
+    
+    ==== Session
+    
+    ${#include('/session-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
+    
+    ==== CI Integration
         
-    ${#include('/ci-envvars-ssc.all'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-core-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
     
 config:
   output: immediate

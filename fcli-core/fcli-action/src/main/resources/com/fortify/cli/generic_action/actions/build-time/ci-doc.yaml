@@ -2,9 +2,10 @@
 
 author: Fortify
 usage:
-  header: Generate CI env vars documentation
+  header: Generate CI documentation
   description: |
-    TODO
+    Generate CI/CD integration documentation including environment variable
+    references and usage guides.
 
 config:
   output: immediate
@@ -19,21 +20,42 @@ steps:
   - var.set:
       fodDefinitions: {fmt: fodDefinitions}
       sscDefinitions: {fmt: sscDefinitions}
+      commonDefinitions: {fmt: commonDefinitions}
+      bootstrapDefinitions: {fmt: bootstrapDefinitions}
+  # Generate bootstrap fragment
+  - var.rm:
+      - asciiDocCells
+  - var.set:
+      bootstrapEnvVars: ${bootstrapDefinitions.bootstrap}
+  - with:
+      writers:
+        tableWriter:
+          to: var:textTable
+          type: table
+          style: border
+      do:
+      - records.for-each:
+          from: ${bootstrapEnvVars}
+          record.var-name: envVar 
+          do:
+          - writer.append:
+              tableWriter: {fmt: textCell}
+          - var.set:
+              asciiDocCells..: {fmt: asciiDocCell}
+  - out.write:
+      ${cli.outputDir}/bootstrap.txt: {fmt: bootstrapTextTable}
+      ${cli.outputDir}/bootstrap.adoc: {fmt: bootstrapAsciiDocTable}
+  # Generate session fragments (session-fod, session-ssc)
   - records.for-each:
-      from: ${{'fod.all', 'fod.ci', 'ssc.all', 'ssc.ci'}} 
-      record.var-name: type
+      from: ${{'fod', 'ssc'}} 
+      record.var-name: module
       do:
       - var.rm:
           - asciiDocCells
       - var.set:
-          module: ${#substringBefore(type, '.')}
           asciiDocActionUrl: ${module}-actions.html
-          includeSessionEnvVars: ${type.endsWith('.all')}
-          definitions: ${type.startsWith('fod')?fodDefinitions:sscDefinitions}
+          definitions: ${module=='fod'?fodDefinitions:sscDefinitions}
           sessionEnvVars: ${definitions.session}
-          commonEnvVarProperties: ${definitions.commonEnvVarProperties}
-          commonDefinitions: {fmt: commonDefinitions}
-          ciEnvVars: ${{definitions.preScan, commonDefinitions.package, definitions.scan, definitions.postScan}} 
       - with:
           writers:
             tableWriter:
@@ -41,9 +63,7 @@ steps:
               type: table
               style: border
           do:
-            # Append FoD/SSC-specific session env vars if these need to be included
-          - if: ${includeSessionEnvVars}
-            records.for-each:
+          - records.for-each:
               from: ${sessionEnvVars}
               record.var-name: envVar 
               do:
@@ -51,11 +71,35 @@ steps:
                   tableWriter: {fmt: textCell}
               - var.set:
                   asciiDocCells..: {fmt: asciiDocCell}
-            # Append other ci env vars. We may need to split ciEnvVars and commonEnvVars
-            # to allow for intermingling SSC/FoD-specific and common env vars to build
-            # a table in logical order.
+      - out.write:
+          ${cli.outputDir}/session-${module}.txt: {fmt: textTable}
+          ${cli.outputDir}/session-${module}.adoc: {fmt: asciiDocTable}
+  # Generate ci-core fragments (ci-core-fod, ci-core-ssc)
+  - records.for-each:
+      from: ${{'fod', 'ssc'}} 
+      record.var-name: module
+      do:
+      - var.rm:
+          - asciiDocCells
+          - asciiDocSections
+      - var.set:
+          asciiDocActionUrl: ${module}-actions.html
+          definitions: ${module=='fod'?fodDefinitions:sscDefinitions}
+          ciEnvVarSections: ${{definitions.preScan, commonDefinitions.package, definitions.scan, definitions.postScan}}
+          section0Title: ${module=='fod'?'Release Configuration':'Application Version Configuration'}
+          section1Title: Packaging Configuration
+          section2Title: Scan Configuration
+          section3Title: Post-Scan Configuration
+      # Generate text output (single table)
+      - with:
+          writers:
+            tableWriter:
+              to: var:textTable
+              type: table
+              style: border
+          do:
           - records.for-each:
-              from: ${ciEnvVars}
+              from: ${ciEnvVarSections}
               record.var-name: envVars
               do:
               - records.for-each:
@@ -64,14 +108,90 @@ steps:
                   do:
                     - writer.append:
                         tableWriter: {fmt: textCell}
-                    - var.set:
-                        asciiDocCells..: {fmt: asciiDocCell}
+      # Generate AsciiDoc section 0
+      - var.rm:
+          - asciiDocCells
+      - var.set:
+          sectionTitle: "${section0Title}"
+      - records.for-each:
+          from: ${ciEnvVarSections[0]}
+          record.var-name: envVar
+          do:
+          - var.set:
+              asciiDocCells..: {fmt: asciiDocCell}
+      - var.set:
+          asciiDocSections..: {fmt: asciiDocSection}
+      # Generate AsciiDoc section 1
+      - var.rm:
+          - asciiDocCells
+      - var.set:
+          sectionTitle: "${section1Title}"
+      - records.for-each:
+          from: ${ciEnvVarSections[1]}
+          record.var-name: envVar
+          do:
+          - var.set:
+              asciiDocCells..: {fmt: asciiDocCell}
+      - var.set:
+          asciiDocSections..: {fmt: asciiDocSection}
+      # Generate AsciiDoc section 2
+      - var.rm:
+          - asciiDocCells
+      - var.set:
+          sectionTitle: "${section2Title}"
+      - records.for-each:
+          from: ${ciEnvVarSections[2]}
+          record.var-name: envVar
+          do:
+          - var.set:
+              asciiDocCells..: {fmt: asciiDocCell}
+      - var.set:
+          asciiDocSections..: {fmt: asciiDocSection}
+      # Generate AsciiDoc section 3
+      - var.rm:
+          - asciiDocCells
+      - var.set:
+          sectionTitle: "${section3Title}"
+      - records.for-each:
+          from: ${ciEnvVarSections[3]}
+          record.var-name: envVar
+          do:
+          - var.set:
+              asciiDocCells..: {fmt: asciiDocCell}
+      - var.set:
+          asciiDocSections..: {fmt: asciiDocSection}
       - out.write:
-          ${cli.outputDir}/ci-envvars-${type}.txt: {fmt: textTable}
-          ${cli.outputDir}/ci-envvars-${type}.adoc: {fmt: asciiDocTable}
+          ${cli.outputDir}/ci-core-${module}.txt: {fmt: textTable}
+          ${cli.outputDir}/ci-core-${module}.adoc: {fmt: asciiDocMultiSectionTable}
           
 formatters:
   # TODO realNode references should ideally be fixed in action framework
+  bootstrapTextTable: |
+    ${textTable}
+    
+    * These variables are typically set by CI/CD bootstrapping tools like `@fortify/cli-action` (GitHub Actions)
+      or similar CI-specific integrations. When using fcli directly, these are not required.
+  bootstrapAsciiDocTable: |
+    [%autowidth]
+    |===
+    |Environment Variable|Description 
+    
+    ${#join("", asciiDocCells)}
+    |===
+    
+    NOTE: These variables are typically set by CI/CD bootstrapping tools like `@fortify/cli-action` (GitHub Actions)
+    or similar CI-specific integrations. When using fcli directly, these are not required.
+  asciiDocMultiSectionTable: |
+    ${#join("\n\n", asciiDocSections)}
+  asciiDocSection: |
+    ==== ${sectionTitle}
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description 
+    
+    ${#join("", asciiDocCells)}
+    |===
   textTable: |
     ${textTable}
     
@@ -328,5 +448,28 @@ formatters:
           location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
           - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
           from being updated or ScanCentral Client from being installed.\n
+  
+  bootstrapDefinitions:
+    bootstrap:
+      - names: FCLI_PATH
+        desc: >-
+          Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead
+          of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations
+          to control which fcli version is used and skip the download/verification process.
+      - names: FCLI_URL
+        desc: >-
+          Custom URL for downloading the fcli archive. When set, this overrides the default GitHub release URL.
+          Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific
+          fcli archive (e.g., `fcli-linux.tgz`, `fcli-windows.zip`, `fcli-mac.tgz`).
+      - names: FCLI_RSA_SHA256_URL
+        desc: >-
+          Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature
+          URL (which is `FCLI_URL` + `.rsa_sha256`). Required when using a custom `FCLI_URL` with signature
+          verification enabled.
+      - names: FCLI_VERIFY_SIGNATURE
+        desc: >-
+          Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to `false`
+          to skip verification (not recommended). By default, signature verification is enabled to ensure
+          the downloaded fcli binary has not been tampered with.
         
       
