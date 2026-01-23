@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260122.170524-dev_refactor.ci-rest-helpers" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.144104-dev_refactor.ci-rest-helpers" %}
 
 
 <div id="header">
@@ -32,6 +32,7 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
+<li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
 <li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
 </ul>
 </div>
@@ -46,11 +47,14 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli tool env init</strong> [<strong>--preinstalled</strong>] [<strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em>]
-                   [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
+                   [<strong>--install-dir-pattern</strong>=<em>&lt;installDirPattern&gt;</em>]
+                   [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>--self</strong>=<em>&lt;self&gt;</em>]
                    [<strong>--tool-definitions</strong>=<em>&lt;toolDefinitions&gt;</em>] [<strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,
                    <em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                   [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+                   [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
+                   [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+                   [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -119,6 +123,10 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <dd>
 <p>Preinstalled mode: all tools must be pre-installed, don&#8217;t update tool definitions. Can also be enabled via PREINSTALLED environment variable.</p>
 </dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
 <dt class="hdlist1"><strong>--self</strong>=<em>&lt;self&gt;</em></dt>
 <dd>
 <p>Path to bootstrapped fcli executable. Not intended for end users; typically set by platform integration tools.</p>
@@ -130,6 +138,31 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Comma-separated list of tools to set up in the format &lt;tool&gt;[:&lt;version&gt;|&lt;path&gt;]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. Supported tools: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options_also_see_documentation_link_below"><a class="anchor" href="#_output_options_also_see_documentation_link_below"></a>Output options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;type+args&gt;</em></dt>
+<dd>
+<p>Select output type (csv, table, expr, json, xml, yaml) and optional type arguments.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>&lt;var&gt;[:&lt;prop&gt;]</em></dt>
+<dd>
+<p>Store JSON results in an fcli variable for later reference.</p>
+</dd>
+<dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
+<dd>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write output to the specified file.</p>
 </dd>
 </dl>
 </div>
@@ -172,7 +205,7 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-01-22 17:08:17 UTC
+Last updated 2026-01-23 14:43:46 UTC
 </div>
 </div>
 </body>
