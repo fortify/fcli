@@ -21,7 +21,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.164044-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260124.024826-dev_v3.x" %}
 
 
 <div id="header">
@@ -47,7 +47,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast sensor list</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+<p><strong>fcli sc-sast sensor list</strong> [<strong>--latest-only</strong>] [<strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                         [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em>]
+                         [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                          [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                          [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                          [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
@@ -60,7 +62,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command lists sensor information for all available SanCentral SAST sensors. It calls the SSC API and as such requires an active SSC session.</p>
+<p>This command lists sensor information for all available SanCentral SAST sensors. It calls the SSC API and as such requires an active SSC session. When used without --pool, --appversion, or --latest-only options, it returns detailed sensor information. When used with --pool, --appversion, or --latest-only, it returns compatible ScanCentral Client versions based on the active sensors in the specified pool, application version&#8217;s pool, or all pools.</p>
 </div>
 </div>
 </div>
@@ -69,6 +71,22 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--av, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--latest-only</strong></dt>
+<dd>
+<p>Show only the latest compatible client version instead of all sensors or versions.</p>
+</dd>
+<dt class="hdlist1"><strong>--pool, --sensor-pool</strong>=<em>&lt;sensorPoolNameOrUuid&gt;</em></dt>
+<dd>
+<p>Sensor pool Uuid or Name.</p>
+</dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
 <p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
@@ -152,7 +170,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-01-23 16:43:21 UTC
+Last updated 2026-01-24 02:51:02 UTC
 </div>
 </div>
 </body>
