@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20260123.173107-dev_doc.ci-updates
+fcli_version: 0.20260124.115517-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.173107-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260124.115517-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260123.173107-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260124.115517-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -44,13 +44,6 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 <ul class="sectlevel2">
 <li><a href="#_synopsis_2">Synopsis</a></li>
 <li><a href="#_description_2">Description</a></li>
-</ul>
-</li>
-<li><a href="#_package">package</a>
-<ul class="sectlevel2">
-<li><a href="#_synopsis_3">Synopsis</a></li>
-<li><a href="#_description_3">Description</a></li>
-<li><a href="#_options">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -533,69 +526,11 @@ like default FoD release name and SSC application version name.</p>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_package"><a class="anchor" href="#_package"></a>package</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Package source code</p>
-</div>
-<div class="sect2">
-<h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
-<div class="paragraph">
-<p><strong><a href="manpage/fcli-action-run.html">fcli action run</a> package [<a href="manpage/fcli-action-run.html">fcli action run</a> options] [action options, see below]</strong></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
-<div class="paragraph">
-<p>This action can be used to package source code using ScanCentral Client. It will
-take care of installing the specified ScanCentral Client version, followed by
-executing the 'scancentral package' command using the specified ScanCentral
-Client version. To enable debug logging on the scancentral command, use the
-fcli --debug option, optionally combined with --log-level=NONE to collect
-only ScanCentral logs, not fcli logs.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options"><a class="anchor" href="#_options"></a>Options</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--use-package</dt>
-<dd>
-<p>Use an existing package file instead of trying to package the given source code directory. If specified, this ignores all other options.</p>
-</dd>
-<dt class="hdlist1">--sc-client-version, -v</dt>
-<dd>
-<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
-specified. Note: For ScanCentral SAST, it&#8217;s recommended to first run 'fcli sc-sast client setup' to automatically detect and install the appropriate
-ScanCentral Client version, which will then be automatically picked up when requesting 'auto' version here.</p>
-</dd>
-<dt class="hdlist1">--source-dir, -d</dt>
-<dd>
-<p>Specify the source directory to be packaged. Defaults to the value of the SOURCE_DIR environment variable, or current working directory if not specified.</p>
-</dd>
-<dt class="hdlist1">--tool-definitions</dt>
-<dd>
-<p>Custom tool definitions to use for identifying available ScanCentral Client versions and download URLs.</p>
-</dd>
-<dt class="hdlist1">--extra-opts</dt>
-<dd>
-<p>Extra options to be passed to the 'scancentral package' command. Defaults to the options specified in the EXTRA_PACKAGE_OPTS environment variable, or no extra options if not specified.</p>
-</dd>
-<dt class="hdlist1">--output, -o</dt>
-<dd>
-<p>Name of the zip file in which packaged source code should be stored. Defaults to package.zip in the current working directory.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260123.173107-dev_doc.ci-updates<br>
-Last updated 2026-01-23 17:34:00 UTC
+Version 0.20260124.115517-dev_doc.ci-updates<br>
+Last updated 2026-01-24 11:58:04 UTC
 </div>
 </div>
 </body>

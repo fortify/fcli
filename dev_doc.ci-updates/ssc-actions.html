@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20260123.173107-dev_doc.ci-updates
+fcli_version: 0.20260124.115517-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.173107-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260124.115517-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260123.173107-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260124.115517-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1187,9 +1187,15 @@ only ScanCentral logs, not fcli logs.</p>
 </dd>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
-<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
-specified. Note: For ScanCentral SAST, it&#8217;s recommended to first run 'fcli sc-sast client setup' to automatically detect and install the appropriate
-ScanCentral Client version, which will then be automatically picked up when requesting 'auto' version here.</p>
+<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable. If not
+specified, fcli will automatically detect the appropriate ScanCentral Client version by querying available sensors in SSC for the application
+version specified through --appversion, or globally if --appversion is not specified. Note that automatic detection requires an active SSC
+session. Use 'auto' to explicitly request automatic detection, or specify an explicit version to skip detection.</p>
+</dd>
+<dt class="hdlist1">--appversion, --av</dt>
+<dd>
+<p>SSC application version (name or id) for which to detect the appropriate ScanCentral Client version. If not specified, detection will use
+sensors from all pools. This option is only used when --sc-client-version is not specified or set to 'auto'.</p>
 </dd>
 <dt class="hdlist1">--source-dir, -d</dt>
 <dd>
@@ -1445,8 +1451,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260123.173107-dev_doc.ci-updates<br>
-Last updated 2026-01-23 17:34:07 UTC
+Version 0.20260124.115517-dev_doc.ci-updates<br>
+Last updated 2026-01-24 11:58:10 UTC
 </div>
 </div>
 </body>

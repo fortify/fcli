@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260123.173107-dev_doc.ci-updates
+fcli_version: 0.20260124.115517-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260123.173107-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260124.115517-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260123.173107-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260124.115517-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -172,7 +172,6 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 <li><a href="#_env"><code>env</code></a></li>
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_localrepo"><code>localRepo</code></a></li>
-<li><a href="#_opt"><code>opt</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
 <li><a href="#_uripart"><code>uriPart</code></a></li>
@@ -188,6 +187,7 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 <li><a href="#_extraopts"><code>extraOpts</code></a></li>
 <li><a href="#_fclicmd"><code>fcliCmd</code></a></li>
 <li><a href="#_fclicmdskipfromenvreason"><code>fcliCmdSkipFromEnvReason</code></a></li>
+<li><a href="#_opt"><code>opt</code></a></li>
 <li><a href="#_optsfromenv"><code>optsFromEnv</code></a></li>
 <li><a href="#_skipblankenvreason"><code>skipBlankEnvReason</code></a></li>
 <li><a href="#_skipreasonif"><code>skipReasonIf</code></a></li>
@@ -212,7 +212,7 @@ fcli_version: 0.20260123.173107-dev_doc.ci-updates
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260123.173107-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260124.115517-dev_doc.ci-updates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -334,7 +334,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260123.173107-dev_doc.ci-updates supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260124.115517-dev_doc.ci-updates supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4649,30 +4649,6 @@ commit: {
 </table>
 </div>
 <div class="sect2">
-<h3 id="_opt"><a class="anchor" href="#_opt"></a><code>opt</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #opt(string arg0, string arg1)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string arg0</em> - no description available<br>
-<em>string arg1</em> - no description available</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_properties"><a class="anchor" href="#_properties"></a><code>properties</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -5085,6 +5061,35 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </table>
 </div>
 <div class="sect2">
+<h3 id="_opt"><a class="anchor" href="#_opt"></a><code>opt</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #opt(string name, string value)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - the option name<br>
+<em>string value</em> - the option value; if blank, function returns empty string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Formatted option string <code>"name=value"</code> if value is not blank, empty string otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns a formatted option string in the form <code>"name=value"</code> if the value is not blank, or an empty string if the value is blank. This is useful for conditionally including command-line options based on whether environment variables or other values are set.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_optsfromenv"><a class="anchor" href="#_optsfromenv"></a><code>optsFromEnv</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -5174,8 +5179,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260123.173107-dev_doc.ci-updates<br>
-Last updated 2026-01-23 17:33:50 UTC
+Version 0.20260124.115517-dev_doc.ci-updates<br>
+Last updated 2026-01-24 11:57:54 UTC
 </div>
 </div>
 </body>
