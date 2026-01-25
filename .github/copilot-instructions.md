@@ -96,12 +96,15 @@ Fcli is a modular CLI tool for interacting with Fortify products (FoD, SSC, Scan
   2. Quote the entire expression: `"${a ? b : #c()}"` ensures YAML treats it as a string
   3. Use SpEL function alternatives to avoid problematic operators (e.g., `#ifBlank(value, default)` instead of ternary)
 - **Best practices:**
-  - **ALWAYS quote expressions containing `#` or `:` characters** - this is the most common source of action YAML parse errors
-  - Test complex expressions with `get_errors` tool after editing
-  - Look for YAML parse errors in fcli build output
   - Prefer quoted expressions when in doubt
   - Use `#opt()` and `#ifBlank()` SpEL functions to conditionally include values without ternary operators
-  - Run tests after editing action YAML: `./gradlew :fcli-core:fcli-<product>:test` (e.g., `fcli-ssc`, `fcli-fod`)
+  - **Quick validation (no rebuild required if no related Java changes):** After editing action YAML, validate syntax immediately:
+    - `./fcli <product> action help <path-to-yaml>` — validates and displays action help
+    - `./fcli <product> action get <path-to-yaml>` — validates and displays raw YAML
+    - Example: `./fcli ssc action help fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip/package.yaml`
+    - These commands parse the full YAML structure and SpEL expressions without needing a rebuild
+  - Use `get_errors` tool after editing for IDE-level validation
+  - Run module tests after editing: `./gradlew :fcli-core:fcli-<product>:test` (e.g., `fcli-ssc`, `fcli-fod`)
 
 **Common SpEL functions for actions:**
 - `#opt(name, value)` — returns `"name=value"` if value is not blank, empty string otherwise
