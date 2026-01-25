@@ -17,45 +17,85 @@ cli.options:
     description: Required output directory
   
 steps:
+  # Load all definition objects from formatters section into variables
+  # These contain environment variable definitions for different products and CI systems
   - var.set:
       fodDefinitions: {fmt: fodDefinitions}
       sscDefinitions: {fmt: sscDefinitions}
       commonDefinitions: {fmt: commonDefinitions}
-      bootstrapDefinitions: {fmt: bootstrapDefinitions}
-  # Generate bootstrap fragment
-  - var.rm:
-      - asciiDocCells
-  - var.set:
-      bootstrapEnvVars: ${bootstrapDefinitions.bootstrap}
-  - with:
-      writers:
-        tableWriter:
-          to: var:textTable
-          type: table
-          style: border
+      fortifySetupDefinitions: {fmt: fortifySetupDefinitions}
+      ciSystemDefinitions: {fmt: ciSystemDefinitions}
+      fcliToolBootstrapEnvVars: {fmt: fcliToolBootstrapEnvVars}
+  # ============================================================================
+  # STEP 1: Generate Bootstrap Fragments (version-specific)
+  # ============================================================================
+  # Creates bootstrap-v{version}.txt/adoc files for each @fortify/setup version
+  # Each fragment includes:
+  #   - @fortify/setup-specific env vars (FCLI_PATH, FCLI_URL, FCLI_VERIFY_SIGNATURE, etc.)
+  #   - fcli-specific env vars (TOOL_DEFINITIONS - applies to all versions)
+  # Example outputs: bootstrap-v1.0.x.txt, bootstrap-v1.0.x.adoc
+  # NOTE: When adding a new @fortify/setup version, add its key to the array below AND define it in fortifySetupDefinitions
+  - records.for-each:
+      from: ${{'fortify-setup-1.0.x'}}
+      record.var-name: bootstrapKey
       do:
-      - records.for-each:
-          from: ${bootstrapEnvVars}
-          record.var-name: envVar 
+      # Reset AsciiDoc cell accumulator for this bootstrap version
+      - var.rm:
+          - asciiDocCells
+      # Load bootstrap definition and extract version + env vars
+      - var.set:
+          bootstrapDef: ${fortifySetupDefinitions[bootstrapKey]}
+          bootstrapVersion: ${bootstrapKey.replaceAll('fortify-setup-', '')}
+          bootstrapEnvVars: ${fortifySetupDefinitions[bootstrapKey].envVars}
+      # Generate table containing both @fortify/setup and fcli env vars
+      - with:
+          writers:
+            tableWriter:
+              to: var:textTable
+              type: table
+              style: border
           do:
-          - writer.append:
-              tableWriter: {fmt: textCell}
-          - var.set:
-              asciiDocCells..: {fmt: asciiDocCell}
-  - out.write:
-      ${cli.outputDir}/bootstrap.txt: {fmt: bootstrapTextTable}
-      ${cli.outputDir}/bootstrap.adoc: {fmt: bootstrapAsciiDocTable}
-  # Generate session fragments (session-fod, session-ssc)
+          # Process @fortify/setup-specific env vars (version-dependent)
+          - records.for-each:
+              from: ${bootstrapEnvVars}
+              record.var-name: envVar 
+              do:
+              - writer.append:
+                  tableWriter: {fmt: textCell}
+              - var.set:
+                  asciiDocCells..: {fmt: asciiDocCell}
+          # Process fcli-specific env vars (applies to all @fortify/setup versions)
+          - records.for-each:
+              from: ${fcliToolBootstrapEnvVars}
+              record.var-name: envVar
+              do:
+              - writer.append:
+                  tableWriter: {fmt: textCell}
+              - var.set:
+                  asciiDocCells..: {fmt: asciiDocCell}
+      # Write version-specific bootstrap fragment files
+      - out.write:
+          ${cli.outputDir}/bootstrap-v${bootstrapVersion}.txt: {fmt: bootstrapTextTable}
+          ${cli.outputDir}/bootstrap-v${bootstrapVersion}.adoc: {fmt: bootstrapAsciiDocTable}
+  # ============================================================================
+  # STEP 2: Generate Session Fragments (product-specific)
+  # ============================================================================
+  # Creates session-{product}.txt/adoc files for each Fortify product
+  # Contains authentication and connection configuration env vars
+  # Example outputs: session-fod.txt/adoc, session-ssc.txt/adoc
   - records.for-each:
       from: ${{'fod', 'ssc'}} 
       record.var-name: module
       do:
+      # Reset AsciiDoc cell accumulator for this product
       - var.rm:
           - asciiDocCells
+      # Load product-specific definitions and extract session env vars
       - var.set:
           asciiDocActionUrl: ${module}-actions.html
           definitions: ${module=='fod'?fodDefinitions:sscDefinitions}
           sessionEnvVars: ${definitions.session}
+      # Generate table containing session configuration env vars
       - with:
           writers:
             tableWriter:
@@ -71,17 +111,29 @@ steps:
                   tableWriter: {fmt: textCell}
               - var.set:
                   asciiDocCells..: {fmt: asciiDocCell}
+      # Write product-specific session fragment files
       - out.write:
           ${cli.outputDir}/session-${module}.txt: {fmt: textTable}
           ${cli.outputDir}/session-${module}.adoc: {fmt: asciiDocTable}
-  # Generate ci-core fragments (ci-core-fod, ci-core-ssc)
+  # ============================================================================
+  # STEP 3: Generate CI Integration Core Fragments (product-specific)
+  # ============================================================================
+  # Creates ci-core-{product}.txt/adoc files with CI integration env vars
+  # Text output: Single table with all env vars
+  # AsciiDoc output: Multi-section table organized by workflow phase:
+  #   - FoD: Release Configuration, Packaging, Scan, Post-Scan
+  #   - SSC: Application Version Configuration, Packaging, Scan, Post-Scan
+  # Example outputs: ci-core-fod.txt/adoc, ci-core-ssc.txt/adoc
   - records.for-each:
       from: ${{'fod', 'ssc'}} 
       record.var-name: module
       do:
+      # Reset accumulators for this product
       - var.rm:
           - asciiDocCells
           - asciiDocSections
+      # Prepare environment variable sections and titles for this product
+      # Sections organize env vars by workflow phase (pre-scan, package, scan, post-scan)
       - var.set:
           asciiDocActionUrl: ${module}-actions.html
           definitions: ${module=='fod'?fodDefinitions:sscDefinitions}
@@ -90,7 +142,7 @@ steps:
           section1Title: Packaging Configuration
           section2Title: Scan Configuration
           section3Title: Post-Scan Configuration
-      # Generate text output (single table)
+      # Generate text output: Single flat table containing all CI env vars
       - with:
           writers:
             tableWriter:
@@ -98,6 +150,7 @@ steps:
               type: table
               style: border
           do:
+          # Iterate through all sections and their env vars
           - records.for-each:
               from: ${ciEnvVarSections}
               record.var-name: envVars
@@ -108,7 +161,7 @@ steps:
                   do:
                     - writer.append:
                         tableWriter: {fmt: textCell}
-      # Generate AsciiDoc section 0
+      # Generate AsciiDoc output: Section 0 (Release/AppVersion Configuration)
       - var.rm:
           - asciiDocCells
       - var.set:
@@ -121,7 +174,7 @@ steps:
               asciiDocCells..: {fmt: asciiDocCell}
       - var.set:
           asciiDocSections..: {fmt: asciiDocSection}
-      # Generate AsciiDoc section 1
+      # Generate AsciiDoc output: Section 1 (Packaging Configuration)
       - var.rm:
           - asciiDocCells
       - var.set:
@@ -134,7 +187,7 @@ steps:
               asciiDocCells..: {fmt: asciiDocCell}
       - var.set:
           asciiDocSections..: {fmt: asciiDocSection}
-      # Generate AsciiDoc section 2
+      # Generate AsciiDoc output: Section 2 (Scan Configuration)
       - var.rm:
           - asciiDocCells
       - var.set:
@@ -147,7 +200,7 @@ steps:
               asciiDocCells..: {fmt: asciiDocCell}
       - var.set:
           asciiDocSections..: {fmt: asciiDocSection}
-      # Generate AsciiDoc section 3
+      # Generate AsciiDoc output: Section 3 (Post-Scan Configuration)
       - var.rm:
           - asciiDocCells
       - var.set:
@@ -160,17 +213,118 @@ steps:
               asciiDocCells..: {fmt: asciiDocCell}
       - var.set:
           asciiDocSections..: {fmt: asciiDocSection}
+      # Write product-specific CI core fragment files
       - out.write:
           ${cli.outputDir}/ci-core-${module}.txt: {fmt: textTable}
           ${cli.outputDir}/ci-core-${module}.adoc: {fmt: asciiDocMultiSectionTable}
+  # ============================================================================
+  # STEP 4: Generate CI-Specific Versioned Documentation (complete guides)
+  # ============================================================================
+  # Creates complete CI integration guides for each CI system version
+  # Each guide includes:
+  #   - Version information table (fcli + @fortify/setup + CI action versions)
+  #   - Bootstrap configuration (env vars specific to that @fortify/setup version)
+  #   - Session configuration (FoD/SSC authentication)
+  #   - CI Integration sections (current fcli version's `ci` action env vars)
+  # Example outputs: fod-github-v3.0.x.adoc, ssc-github-v3.0.x.adoc
+  # NOTE: When adding a new CI system version, add its key to the array below AND define it in ciSystemDefinitions
+  - records.for-each:
+      from: ${{'github-3.0.x'}}
+      record.var-name: ciSystemKey
+      do:
+      # Extract CI system definition and resolve bootstrap version reference
+      - var.set:
+          ciSystemDef: ${ciSystemDefinitions[ciSystemKey]}
+          ciVersion: ${ciSystemKey.replaceAll('.*-', '')}  # Extract '3.0.x' from 'github-3.0.x'
+          ciSystem: ${ciSystemKey.replaceAll('-.*', '')}  # Extract 'github' from 'github-3.0.x'
+          bootstrapKey: ${'fortify-setup-'+ciSystemDefinitions[ciSystemKey]['bootstrap-version']}
+          bootstrapDef: ${fortifySetupDefinitions['fortify-setup-'+ciSystemDefinitions[ciSystemKey]['bootstrap-version']]}
+      # Generate docs for both FoD and SSC
+      - records.for-each:
+          from: ${{'fod', 'ssc'}}
+          record.var-name: module
+          do:
+          # Reset cell accumulators for this document
+          - var.rm:
+              - bootstrapEnvVarCells
+              - fcliEnvVarCells
+              - sessionEnvVarCells
+              - preScanEnvVarCells
+              - packageEnvVarCells
+              - scanEnvVarCells
+              - postScanEnvVarCells
+          - var.set:
+              definitions: ${module=='fod'?fodDefinitions:sscDefinitions}
+              asciiDocActionUrl: ${module}-actions.html
+          # Build bootstrap env var cells
+          - records.for-each:
+              from: ${bootstrapDef.envVars}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  bootstrapEnvVarCells..: {fmt: asciiDocCell}
+          # Build fcli env var cells
+          - records.for-each:
+              from: ${fcliToolBootstrapEnvVars}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  fcliEnvVarCells..: {fmt: asciiDocCell}
+          # Build session env var cells
+          - records.for-each:
+              from: ${definitions.session}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  sessionEnvVarCells..: {fmt: asciiDocCell}
+          # Build pre-scan env var cells
+          - records.for-each:
+              from: ${definitions.preScan}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  preScanEnvVarCells..: {fmt: asciiDocCell}
+          # Build package env var cells
+          - records.for-each:
+              from: ${commonDefinitions.package}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  packageEnvVarCells..: {fmt: asciiDocCell}
+          # Build scan env var cells
+          - records.for-each:
+              from: ${definitions.scan}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  scanEnvVarCells..: {fmt: asciiDocCell}
+          # Build post-scan env var cells
+          - records.for-each:
+              from: ${definitions.postScan}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  postScanEnvVarCells..: {fmt: asciiDocCell}
+          # Write complete CI integration guide for this CI system version + product
+          - out.write:
+              ${cli.outputDir}/${module}-${ciSystem}-v${ciVersion}.adoc: {fmt: ciSystemFullDoc}
           
 formatters:
-  # TODO realNode references should ideally be fixed in action framework
+  # ============================================================================
+  # BASE FORMATTERS - Text and AsciiDoc Table Formatting
+  # ============================================================================
+  
+  # Format bootstrap fragment as plain text table with explanatory footer
+  # Used for: bootstrap-v{version}.txt files
+  # TODO: realNode references should ideally be fixed in action framework
   bootstrapTextTable: |
     ${textTable}
     
     * These variables are typically set by CI/CD bootstrapping tools like `@fortify/cli-action` (GitHub Actions)
       or similar CI-specific integrations. When using fcli directly, these are not required.
+  
+  # Format bootstrap fragment as AsciiDoc table with explanatory note
+  # Used for: bootstrap-v{version}.adoc files
   bootstrapAsciiDocTable: |
     [%autowidth]
     |===
@@ -181,8 +335,14 @@ formatters:
     
     NOTE: These variables are typically set by CI/CD bootstrapping tools like `@fortify/cli-action` (GitHub Actions)
     or similar CI-specific integrations. When using fcli directly, these are not required.
+  
+  # Combine multiple AsciiDoc sections into a single document
+  # Used for: ci-core-{product}.adoc files (multi-section tables)
   asciiDocMultiSectionTable: |
     ${#join("\n\n", asciiDocSections)}
+  
+  # Format a single AsciiDoc section with title and table
+  # Used by: ci-core fragment generation (one section per workflow phase)
   asciiDocSection: |
     ==== ${sectionTitle}
     
@@ -192,14 +352,23 @@ formatters:
     
     ${#join("", asciiDocCells)}
     |===
+  
+  # Format plain text table with product-specific action reference note
+  # Used for: session-{product}.txt and ci-core-{product}.txt files
   textTable: |
     ${textTable}
     
     * Any fcli action references in this table refer to actions in the `fcli ${module}` module; please see
       `fcli ${module} action help <action-name>` for more information.
+  
+  # Format a single table cell for plain text output
+  # Handles realNode wrapper and converts action references to backtick format
   textCell:
     Environment Variable: ${(envVar.realNode==null?envVar:envVar.realNode).names}
     Description: ${(envVar.realNode==null?envVar:envVar.realNode).desc.replaceAll('actionRef:([\w-_]+)(#[\w-_]+)', '`$1`')}
+  
+  # Format a simple AsciiDoc table (without multi-section support)
+  # Used for: session-{product}.adoc files
   asciiDocTable: |
     [%autowidth]
     |===
@@ -207,10 +376,123 @@ formatters:
     
     ${#join("", asciiDocCells)}
     |===
+  
+  # Format a single AsciiDoc table cell with line breaks and action links
+  # Handles realNode wrapper, preserves line breaks, converts action references to links
   asciiDocCell: |
     |${(envVar.realNode==null?envVar:envVar.realNode).names.replaceAll('\n', ' +\\n')}
     |${(envVar.realNode==null?envVar:envVar.realNode).desc.replaceAll('\n', ' +\\n').replaceAll('actionRef:([\w-_]+)(#[\w-_]+)', 'link:'+asciiDocActionUrl+'$2[$1]')}
     
+  # ============================================================================
+  # COMPLETE CI INTEGRATION GUIDE FORMATTER
+  # ============================================================================
+  # Generates a complete AsciiDoc document for a specific CI system version + product
+  # Used for: {product}-{ciSystem}-v{version}.adoc files (e.g., fod-github-v3.0.x.adoc)
+  # Includes: Version table, bootstrap config, session config, CI integration sections
+  ciSystemFullDoc: |
+    = ${module=='fod'?'Fortify on Demand':'Software Security Center'} CI Integration - ${#capitalize(ciSystem)} Actions v${ciVersion}
+    :fcli-version: ${#fcliBuildProperties().fcliVersion}
+    :fortify-setup-version: ${ciSystemDef['bootstrap-version']}
+    :ci-action-version: ${ciVersion}
+    :generation-date: ${#formatDateTime('yyyy-MM-dd')}
+    :toc: left
+    :toclevels: 3
+    
+    [discrete]
+    == Version Information
+    
+    [%autowidth]
+    |===
+    |Component|Version
+    
+    |fcli|{fcli-version}
+    |@fortify/setup|{fortify-setup-version}
+    |${#capitalize(ciSystem)} Action|{ci-action-version}
+    |Generated|{generation-date}
+    |===
+    
+    NOTE: ${ciSystemDef.notes}
+    
+    [discrete]
+    == Bootstrap Configuration
+    
+    These environment variables control how @fortify/setup bootstraps fcli and how fcli locates tool definitions.
+    They are typically set in your CI workflow configuration file.
+    
+    [discrete]
+    === @fortify/setup Environment Variables
+    
+    Configured by @fortify/setup ${ciSystemDef['bootstrap-version']} to control fcli download and verification.
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", bootstrapEnvVarCells)}
+    |===
+    
+    [discrete]
+    === fcli Environment Variables
+    
+    These fcli-specific variables work with all @fortify/setup versions and control fcli behavior.
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", fcliEnvVarCells)}
+    |===
+    
+    [discrete]
+    == Session Configuration
+    
+    Configure authentication and connection details for ${module=='fod'?'Fortify on Demand':'Software Security Center'}.
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", sessionEnvVarCells)}
+    |===
+    
+    [discrete]
+    == CI Integration
+    
+    Environment variables for controlling scan behavior and post-scan actions.
+    
+    ==== ${module=='fod'?'Release Configuration':'Application Version Configuration'}
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", preScanEnvVarCells)}
+    |===
+    
+    ==== Packaging Configuration
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", packageEnvVarCells)}
+    |===
+    
+    ==== Scan Configuration
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", scanEnvVarCells)}
+    |===
+    
+    ==== Post-Scan Configuration
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", postScanEnvVarCells)}
+    |===
+  
+  # ============================================================================
+  # ENVIRONMENT VARIABLE DEFINITIONS - Fortify on Demand (FoD)
+  # ============================================================================
+  # Contains all FoD-specific environment variable definitions organized by workflow phase
   fodDefinitions:
     commonEnvVarProperties:
     session:
@@ -229,6 +511,7 @@ formatters:
         desc: >-
           Extra login options, for example for disabling SSL checks or changing connection time-outs; see 
           `fcli fod session login` documentation.
+    # Pre-scan configuration: Release setup and preparation
     preScan:
       - names: FOD_RELEASE
         desc: >-
@@ -247,6 +530,7 @@ formatters:
           release representing your default branch by passing the `--copy-from` option through
           `SETUP_EXTRA_OPTS`. To allow this action to create new applications, depending on FoD version,
           you may (also) need to provide the `--app-owner <user id or name>` option through `SETUP_EXTRA_OPTS`.
+    # Scan configuration: SAST scan submission and wait behavior
     scan:
       - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
@@ -262,6 +546,7 @@ formatters:
           will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
           extra options to the `fcli fod sast-scan wait-for` command. Note that `DO_SAST_WAIT` is deprecated; 
           please use `DO_WAIT` instead.
+    # Post-scan configuration: Summary, policy checks, PR comments, exports
     postScan:
       - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
         desc: >-
@@ -295,7 +580,12 @@ formatters:
           `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
           actions to be used.
           
+  # ============================================================================
+  # ENVIRONMENT VARIABLE DEFINITIONS - Software Security Center (SSC)
+  # ============================================================================
+  # Contains all SSC-specific environment variable definitions organized by workflow phase
   sscDefinitions:
+    # Session configuration: SSC authentication and connection settings
     session:
       - names: SSC_URL
         desc: >-
@@ -315,6 +605,7 @@ formatters:
         desc: >-
             Extra SSC login options, for example for disabling SSL checks or changing connection time-outs; 
             see `fcli ssc session login` documentation.
+    # Pre-scan configuration: Application version setup and preparation
     preScan:
       - names: SSC_APPVERSION
         desc: >-
@@ -328,6 +619,7 @@ formatters:
           environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
           application version representing your default branch by passing the `--copy-from` option through
           `SETUP_EXTRA_OPTS`.
+    # Scan configuration: SAST and Debricked scan submission and wait behavior
     scan:
       - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
         desc: >-
@@ -362,6 +654,7 @@ formatters:
           extra options to the `fcli sc-sast scan wait-for` command, and similarly, the `DEBRICKED_WAIT_EXTRA_OPTS`
           environment variable can be used to pass extra options to the `fcli ssc artifact wait-for` command.
           Note that `DO_SAST_WAIT` is deprecated; please use `DO_WAIT` instead.
+    # Post-scan configuration: Aviator audit, summary, policy checks, PR comments, exports
     postScan:
       - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
         desc: >-
@@ -419,7 +712,12 @@ formatters:
           `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
           actions to be used.
                   
+  # ============================================================================
+  # COMMON DEFINITIONS - Shared Across Products
+  # ============================================================================
+  # Environment variable definitions used by both FoD and SSC
   commonDefinitions:
+    # Packaging configuration: ScanCentral Client setup and package generation
     package:
       - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
         desc: >- 
@@ -449,27 +747,83 @@ formatters:
           - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
           from being updated or ScanCentral Client from being installed.\n
   
-  bootstrapDefinitions:
-    bootstrap:
-      - names: FCLI_PATH
-        desc: >-
-          Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead
-          of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations
-          to control which fcli version is used and skip the download/verification process.
-      - names: FCLI_URL
-        desc: >-
-          Custom URL for downloading the fcli archive. When set, this overrides the default GitHub release URL.
-          Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific
-          fcli archive (e.g., `fcli-linux.tgz`, `fcli-windows.zip`, `fcli-mac.tgz`).
-      - names: FCLI_RSA_SHA256_URL
-        desc: >-
-          Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature
-          URL (which is `FCLI_URL` + `.rsa_sha256`). Required when using a custom `FCLI_URL` with signature
-          verification enabled.
-      - names: FCLI_VERIFY_SIGNATURE
-        desc: >-
-          Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to `false`
-          to skip verification (not recommended). By default, signature verification is enabled to ensure
-          the downloaded fcli binary has not been tampered with.
+  # ============================================================================
+  # FORTIFY SETUP DEFINITIONS - @fortify/setup Versions
+  # ============================================================================
+  # Each entry represents a specific @fortify/setup version and its environment variables
+  # Pattern: fortify-setup-{major}.{minor}.x → @fortify/setup v{major}.{minor}.x
+  #
+  # HOW TO ADD A NEW @fortify/setup VERSION:
+  # 1. Add a new entry below with key 'fortify-setup-{major}.{minor}.x'
+  # 2. Define 'notes' (version-specific info) and 'envVars' (array of environment variables)
+  # 3. Add the new key to the hardcoded array in STEP 1 above (search for 'fortify-setup-1.0.x')
+  # 4. Run ./gradlew :fcli-core:fcli-action:buildTimeAction_ci_doc to test
+  # 5. Verify generated files: bootstrap-v{version}.txt and bootstrap-v{version}.adoc
+  fortifySetupDefinitions:
+    # @fortify/setup v1.0.x - Initial release
+    fortify-setup-1.0.x:
+      notes: >-
+        @fortify/setup v1.0.x bootstraps latest fcli v3.x by default. Follows semantic versioning:
+        breaking changes in fcli (v4) will require @fortify/setup v2.x, which will be used by
+        GitHub Action v4.x and similar CI integrations.
+      envVars:
+        - names: FCLI_PATH
+          desc: >-
+            Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead
+            of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations
+            to control which fcli version is used and skip the download/verification process.
+        - names: FCLI_URL
+          desc: >-
+            Custom URL for downloading the fcli archive. When set, this overrides the default GitHub release URL.
+            Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific
+            fcli archive (e.g., `fcli-linux.tgz`, `fcli-windows.zip`, `fcli-mac.tgz`).
+        - names: FCLI_RSA_SHA256_URL
+          desc: >-
+            Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature
+            URL (which is `FCLI_URL` + `.rsa_sha256`). Required when using a custom `FCLI_URL` with signature
+            verification enabled.
+        - names: FCLI_VERIFY_SIGNATURE
+          desc: >-
+            Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to `false`
+            to skip verification (not recommended). By default, signature verification is enabled to ensure
+            the downloaded fcli binary has not been tampered with.
+  
+  # ============================================================================
+  # FCLI-SPECIFIC ENVIRONMENT VARIABLES
+  # ============================================================================
+  # These variables are implemented in fcli (not @fortify/setup) and apply to all bootstrap versions
+  # Hardcoded here rather than in bootstrap definitions since they're version-independent
+  fcliToolBootstrapEnvVars:
+    - names: TOOL_DEFINITIONS
+      desc: >-
+        URL or file path to custom tool definitions YAML file. This fcli environment variable controls
+        where fcli retrieves tool version information for ScanCentral Client, Debricked CLI, and other
+        tools. Useful for air-gapped environments or when using custom tool repositories. When set,
+        fcli will use the specified tool definitions instead of downloading from the default GitHub location.
+  
+  # ============================================================================
+  # CI SYSTEM DEFINITIONS - Version Tracking
+  # ============================================================================
+  # Each entry represents a specific CI action version and its dependencies
+  # Pattern: {ciSystem}-{major}.{minor}.x (e.g., github-3.0.x, gitlab-2.1.x)
+  # Each definition includes:
+  #   - bootstrap-version: References fortify-setup-{version} for env vars (e.g., "1.0.x")
+  #   - notes: Version-specific documentation and compatibility info
+  #
+  # HOW TO ADD A NEW CI SYSTEM VERSION:
+  # 1. Add a new entry below with key '{ciSystem}-{major}.{minor}.x' (e.g., 'github-3.1.x')
+  # 2. Set 'bootstrap-version' to reference an existing fortify-setup version (e.g., "1.1.x")
+  # 3. Define 'notes' with version-specific information and compatibility details
+  # 4. Add the new key to the hardcoded array in STEP 4 above (search for 'github-3.0.x')
+  # 5. Run ./gradlew :fcli-core:fcli-action:buildTimeAction_ci_doc to test
+  # 6. Verify generated files: {product}-{ciSystem}-v{version}.adoc for both fod and ssc
+  ciSystemDefinitions:
+    # GitHub Action v3.0.x - Uses @fortify/setup v1.0.x
+    github-3.0.x:
+      bootstrap-version: "1.0.x"
+      notes: >-
+        GitHub Action v3.0.x uses @fortify/setup v1.0.x to bootstrap fcli v3.x, then runs `fcli action run ci`.
+        Follows semantic versioning: breaking changes in fcli require major version bump across all components
+        (fcli v4 → @fortify/setup v2 → GitHub Action v4).
         
       
