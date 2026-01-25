@@ -1,0 +1,359 @@
+---
+title: Software Security Center CI Integration - Github Actions v3.0.x
+fcli_version: 0.20260125.162621-dev_doc.ci-updates
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Software Security Center CI Integration - Github Actions v3.0.x</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260125.162621-dev_doc.ci-updates" %}
+
+
+<div id="header">
+<h1>Software Security Center CI Integration - Github Actions v3.0.x</h1>
+<div class="details">
+<span id="revnumber">version 0.20260125.162621-dev_doc.ci-updates</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel3">
+<li><a href="#_application_version_configuration">Application Version Configuration</a></li>
+<li><a href="#_packaging_configuration">Packaging Configuration</a></li>
+<li><a href="#_scan_configuration">Scan Configuration</a></li>
+<li><a href="#_post_scan_configuration">Post-Scan Configuration</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<h2 id="_version_information" class="discrete">Version Information</h2>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Component</th>
+<th class="tableblock halign-left valign-top">Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fcli</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260125.162621-dev_doc.ci-updates</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">@fortify/setup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.0.x</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Github Action</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3.0.x</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generated</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2026-01-25</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+GitHub Action v3.0.x uses @fortify/setup v1.0.x to bootstrap fcli v3.x, then runs <code>fcli action run ci</code>. Follows semantic versioning: breaking changes in fcli require major version bump across all components (fcli v4 → @fortify/setup v2 → GitHub Action v4).
+</td>
+</tr>
+</table>
+</div>
+<h2 id="_bootstrap_configuration" class="discrete">Bootstrap Configuration</h2>
+<div class="paragraph">
+<p>These environment variables control how @fortify/setup bootstraps fcli and how fcli locates tool definitions.
+They are typically set in your CI workflow configuration file.</p>
+</div>
+<h3 id="_fortifysetup_environment_variables" class="discrete">@fortify/setup Environment Variables</h3>
+<div class="paragraph">
+<p>Configured by @fortify/setup 1.0.x to control fcli download and verification.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_PATH</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations to control which fcli version is used and skip the download/verification process.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for downloading the fcli archive. When set, this overrides the default GitHub release URL. Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific fcli archive (e.g., <code>fcli-linux.tgz</code>, <code>fcli-windows.zip</code>, <code>fcli-mac.tgz</code>).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_RSA_SHA256_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature URL (which is <code>FCLI_URL</code> + <code>.rsa_sha256</code>). Required when using a custom <code>FCLI_URL</code> with signature verification enabled.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_VERIFY_SIGNATURE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to <code>false</code> to skip verification (not recommended). By default, signature verification is enabled to ensure the downloaded fcli binary has not been tampered with.</p></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_fcli_environment_variables" class="discrete">fcli Environment Variables</h3>
+<div class="paragraph">
+<p>These fcli-specific variables work with all @fortify/setup versions and control fcli behavior.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">URL or file path to custom tool definitions YAML file. This fcli environment variable controls where fcli retrieves tool version information for ScanCentral Client, Debricked CLI, and other tools. Useful for air-gapped environments or when using custom tool repositories. When set, fcli will use the specified tool definitions instead of downloading from the default GitHub location.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_session_configuration" class="discrete">Session Configuration</h2>
+<div class="paragraph">
+<p>Configure authentication and connection details for Software Security Center.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Software Security Center (SSC) URL, for example <code><a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a></code>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with an SSC token (recommended). Most actions should work fine with a CIToken.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_USER<br>
+SSC_PASSWORD</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with SSC user credentials.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SC_SAST_TOKEN</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ScanCentral SAST Client Authentication Token for authenticating with ScanCentral SAST Controller. This  environment variable is required when running a ScanCentral SAST scan.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_LOGIN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extra SSC login options, for example for disabling SSL checks or changing connection time-outs;  see <code>fcli ssc session login</code> documentation.</p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_ci_integration" class="discrete">CI Integration</h2>
+<div class="paragraph">
+<p>Environment variables for controlling scan behavior and post-scan actions.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_application_version_configuration"><a class="anchor" href="#_application_version_configuration"></a>Application Version Configuration</h4>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSC_APPVERSION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fortify SSC application version to use with this action. This should be specified as <code>&lt;app-name&gt;:&lt;version-name&gt;</code>.  Default value is based on repository and branch name, for example <code>myOrg/myRepo:myBranch</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP<br>
+SETUP_ACTION<br>
+SETUP_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or version will be created if they do not yet exist using the fcli-provided <a href="ssc-actions.html#_setup_appversion">setup-appversion</a> action, or, if specified, the custom fcli action specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the <code>SETUP_EXTRA_OPTS</code>  environment variable.<br>
+<br>
+Depending on your Git workflow, it is recommended to copy state from the application version representing your default branch by passing the <code>--copy-from</code> option through <code>SETUP_EXTRA_OPTS</code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_packaging_configuration"><a class="anchor" href="#_packaging_configuration"></a>Packaging Configuration</h4>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PACKAGE_ACTION<br>
+PACKAGE_ACTION_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, when running a SAST scan, the fcli <a href="ssc-actions.html#_package">package</a> action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default <a href="ssc-actions.html#_package">package</a> action. If the standard fcli <a href="ssc-actions.html#_package">package</a> action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use <code>PACKAGE_ACTION</code> to use a custom action for packaging, optionally providing extra options to this custom action through the <code>PACKAGE_ACTION_EXTRA_OPTS</code> environment variable. Note that any custom action must set the <code>global.package.output</code> action variable, pointing to the package or MBS file to be scanned.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE<br>
+PACKAGE_EXTRA_OPTS<br>
+SC_CLIENT_VERSION<br>
+SC_CLIENT_HOME<br>
+SOURCE_DIR<br>
+TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.<br>
+By default:<br>
+ - If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
+ - <code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.<br>
+ - If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, the most recently installed ScanCentral Client version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.<br>
+ - Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.<br>
+ - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.<br>
+ - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br>
+ - Set <code>PREINSTALLED</code> to <code>true</code> to require that ScanCentral Client is already installed, preventing tool definitions from being updated or ScanCentral Client from being installed.<br></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_scan_configuration"><a class="anchor" href="#_scan_configuration"></a>Scan Configuration</h4>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN<br>
+SAST_SCAN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The fcli <code>ci</code> action by default runs a SAST scan, optionally in combination with other scan types. The <code>DO_SAST_SCAN</code> environment variable can be set to <code>false</code> to disable the SAST scan. The <code>SAST_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <code>fcli sc-sast scan start</code> command, for example to request a scan completion email notification. Note that these environment variables only control the submission of the scan request; see the information below for details on waiting for the scan to complete.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_DEBRICKED_SCAN<br>
+DEBRICKED_SCAN_EXTRA_OPTS<br>
+DEBRICKED_ACCESS_TOKEN<br>
+DEBRICKED_VERSION<br>
+DEBRICKED_HOME</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The fcli <code>ci</code> action supports running a Debricked Software Composition Analysis (SCA) scan, which is enabled automatically if <code>DEBRICKED_ACCESS_TOKEN</code> is provided. The <code>DO_DEBRICKED_SCAN</code> environment variable can be set to <code>false</code> to (temporarily) disable the Debricked scan. The <code>DEBRICKED_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <code>debricked scan</code> command.<br>
+By default:<br>
+ - If <code>DEBRICKED_HOME</code> is specified, the pre-installed Debricked CLI at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.<br>
+ - <code>DEBRICKED_VERSION</code> may be specified to request a specific Debricked CLI version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.<br>
+ - If neither <code>DEBRICKED_VERSION</code> nor <code>DEBRICKED_HOME</code> are set, the most recently installed Debricked CLI version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.<br>
+ - Tool definitions to identify available Debricked CLI versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.<br>
+ - Set <code>PREINSTALLED</code> to <code>true</code> to require that Debricked CLI is already installed, preventing tool definitions from being updated or Debricked CLI from being installed.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_WAIT<br>
+DO_SAST_WAIT<br>
+SAST_WAIT_EXTRA_OPTS<br>
+DEBRICKED_WAIT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, the fcli <code>ci</code> action will wait for all started scans to complete; set <code>DO_WAIT</code> to <code>false</code> to just kick off any configured scans without waiting for completion. Note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <code>fcli sc-sast scan wait-for</code> command, and similarly, the <code>DEBRICKED_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <code>fcli ssc artifact wait-for</code> command. Note that <code>DO_SAST_WAIT</code> is deprecated; please use <code>DO_WAIT</code> instead.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_post_scan_configuration"><a class="anchor" href="#_post_scan_configuration"></a>Post-Scan Configuration</h4>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AVIATOR_URL<br>
+AVIATOR_TOKEN<br>
+AVIATOR_LOGIN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aviator URL and JWT token to use for Aviator operations (see below). The <code>AVIATOR_TOKEN</code> environment variable should hold the actual token contents; prefixes like <code>file:</code> or <code>string:</code> (like the <code>--token</code> option on the <code>fcli aviator session login</code> command) are not supported. The <code>AVIATOR_LOGIN_EXTRA_OPTS</code> environment variable can be used to pass additional options to the <code>fcli aviator session login</code> command.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_AVIATOR_AUDIT<br>
+AVIATOR_APP<br>
+AVIATOR_AUDIT_EXTRA_OPTS<br>
+AVIATOR_WAIT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_AVIATOR_AUDIT</code> is not set to <code>false</code>, and Aviator URL and token have been configured, scan results will be sent to Aviator for AI-driven auditing. The Aviator application name can optionally be configured through <code>AVIATOR_APP</code>, which defaults to the SSC application name. The <code>AVIATOR_AUDIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <code>fcli aviator ssc audit</code> command, for example to adjust tag mappings. The <code>AVIATOR_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <code>fcli ssc artifact wait-for</code> command, which will be run to wait for SSC to process the audited results.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_APPVERSION_SUMMARY<br>
+APPVERSION_SUMMARY_ACTION<br>
+APPVERSION_SUMMARY_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_APPVERSION_SUMMARY</code> is not set to <code>false</code>, an application version summary will be generated using the fcli-provided <a href="ssc-actions.html#_appversion_summary">appversion-summary</a> action or, if specified, the custom fcli action specified through <code>APPVERSION_SUMMARY_ACTION</code>. Extra options for the fcli action can be specified through the <code>APPVERSION_SUMMARY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_CHECK_POLICY<br>
+CHECK_POLICY_ACTION<br>
+CHECK_POLICY_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_CHECK_POLICY</code> is set to true (implied if any of the other two <code>CHECK_POLICY_*</code> variables are set), a policy check will be run after scan completion using the fcli-provided <a href="ssc-actions.html#_check_policy">check-policy</a> action or, if specified, the custom fcli action specified through <code>CHECK_POLICY_ACTION</code>. Extra options for a custom fcli action can be passed through the <code>CHECK_POLICY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_PR_COMMENT<br>
+PR_COMMENT_ACTION<br>
+PR_COMMENT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="ssc-actions.html#_github_pr_comment">github-pr-comment</a> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_EXPORT<br>
+SAST_EXPORT_ACTION<br>
+SAST_EXPORT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="ssc-actions.html#_github_sast_report">github-sast-report</a> or <a href="ssc-actions.html#_gitlab_sast_report">gitlab-sast-report</a>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_DEBRICKED_EXPORT<br>
+DEBRICKED_EXPORT_ACTION<br>
+DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_DEBRICKED_EXPORT</code> is not set to <code>false</code> and a Debricked scan was completed, the Debricked vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="ssc-actions.html#_gitlab_debricked_report">gitlab-debricked-report</a>, or, if specified, the custom fcli action specified through <code>DEBRICKED_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>DEBRICKED_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.<br></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.20260125.162621-dev_doc.ci-updates<br>
+Last updated 2026-01-25 16:29:56 UTC
+</div>
+</div>
+</body>
+</html>
