@@ -1,6 +1,6 @@
 ---
 title: <code>fortify/github-action/setup</code>
-fcli_version: 0.20260126.154256-dev_doc.ci-updates
+fcli_version: 0.20260126.174857-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,25 +21,35 @@ fcli_version: 0.20260126.154256-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260126.154256-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260126.174857-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1><code>fortify/github-action/setup</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20260126.154256-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260126.174857-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_version_information">Version Information</a></li>
+<li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
 <li><a href="#_example_usage">Example Usage</a></li>
+</ul>
+</li>
+<li><a href="#_configuration">Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_version_information"><a class="anchor" href="#_version_information"></a>Version Information</h2>
 <div class="sectionbody">
-<h2 id="_version_information" class="discrete">Version Information</h2>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -54,7 +64,7 @@ fcli_version: 0.20260126.154256-dev_doc.ci-updates
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">fcli</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260126.154256-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260126.174857-dev_doc.ci-updates</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">@fortify/setup</p></td>
@@ -70,14 +80,16 @@ fcli_version: 0.20260126.154256-dev_doc.ci-updates
 </tr>
 </tbody>
 </table>
-<h2 id="_overview" class="discrete">Overview</h2>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>This Github Action provides a setup component that bootstraps fcli and other Fortify tools for use in custom CI/CD workflows. This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.</p>
 </div>
 <div class="paragraph">
 <p>Adds fcli version pinning via FCLI_BOOTSTRAP_VERSION. Uses RUNNER_TOOL_CACHE for persistent caching when full version specified.</p>
-</div>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_example_usage"><a class="anchor" href="#_example_usage"></a>Example Usage</h3>
@@ -101,11 +113,17 @@ jobs:
           fcli fod session logout</code></pre>
 </div>
 </div>
-<h2 id="_configuration" class="discrete">Configuration</h2>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both Fortify on Demand (FoD) and Software Security Center (SSC) integrations.</p>
 </div>
-<h3 id="_setup_bootstrap" class="discrete">Setup &amp; Bootstrap</h3>
+<div class="sect2">
+<h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
 <div class="paragraph">
 <p>These environment variables control tool installation and initialization.</p>
 </div>
@@ -147,10 +165,12 @@ jobs:
 </table>
 </div>
 </div>
+</div>
+</div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260126.154256-dev_doc.ci-updates<br>
-Last updated 2026-01-26 15:46:35 UTC
+Version 0.20260126.174857-dev_doc.ci-updates<br>
+Last updated 2026-01-26 17:52:39 UTC
 </div>
 </div>
 </body>
