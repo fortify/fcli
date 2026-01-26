@@ -76,8 +76,9 @@ val packageCiDocs = tasks.register<Zip>("packageCiDocs") {
     description = "Package CI-specific versioned documentation for GitHub Pages publishing"
     dependsOn(buildTimeActionCiDoc, "createDistDir")
     from(layout.buildDirectory.dir("generated-action-output-resources")) {
-        include("*-github-v*.adoc")
-        include("*-gitlab-v*.adoc")
+        // Include CI-specific versioned documentation with new naming pattern
+        include("*-ci-*-v*.adoc")   // e.g., github-ci-fod-v3.0.x.adoc, github-ci-ssc-v3.0.x.adoc
+        include("*-setup-v*.adoc")  // e.g., github-setup-v3.0.x.adoc
         // Exclude fragments that are packaged in fcli.jar as resources
         exclude("bootstrap-*.txt", "bootstrap-*.adoc")
         exclude("session-*.txt", "session-*.adoc")

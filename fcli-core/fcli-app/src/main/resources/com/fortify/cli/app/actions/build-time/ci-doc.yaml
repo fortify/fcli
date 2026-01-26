@@ -36,7 +36,7 @@ steps:
   # Example outputs: bootstrap-v1.0.x.txt, bootstrap-v1.0.x.adoc
   # NOTE: When adding a new @fortify/setup version, add its key to the array below AND define it in fortifySetupDefinitions
   - records.for-each:
-      from: ${{'fortify-setup-1.0.x'}}
+      from: ${{'fortify-setup-2.1.x'}}
       record.var-name: bootstrapKey
       do:
       # Reset AsciiDoc cell accumulator for this bootstrap version
@@ -45,7 +45,7 @@ steps:
       # Load bootstrap definition and extract version + env vars
       - var.set:
           bootstrapDef: ${fortifySetupDefinitions[bootstrapKey]}
-          bootstrapVersion: ${bootstrapKey.replaceAll('fortify-setup-', '')}
+          fortifySetupVersion: ${bootstrapKey.replaceAll('fortify-setup-', '')}
           bootstrapEnvVars: ${fortifySetupDefinitions[bootstrapKey].envVars}
       # Generate table containing both @fortify/setup and fcli env vars
       - with:
@@ -75,8 +75,8 @@ steps:
                   asciiDocCells..: {fmt: asciiDocCell}
       # Write version-specific bootstrap fragment files
       - out.write:
-          ${cli.outputDir}/bootstrap-v${bootstrapVersion}.txt: {fmt: bootstrapTextTable}
-          ${cli.outputDir}/bootstrap-v${bootstrapVersion}.adoc: {fmt: bootstrapAsciiDocTable}
+          ${cli.outputDir}/bootstrap-v${fortifySetupVersion}.txt: {fmt: bootstrapTextTable}
+          ${cli.outputDir}/bootstrap-v${fortifySetupVersion}.adoc: {fmt: bootstrapAsciiDocTable}
   # ============================================================================
   # STEP 2: Generate Session Fragments (product-specific)
   # ============================================================================
@@ -224,22 +224,63 @@ steps:
   # Each guide includes:
   #   - Version information table (fcli + @fortify/setup + CI action versions)
   #   - Bootstrap configuration (env vars specific to that @fortify/setup version)
-  #   - Session configuration (FoD/SSC authentication)
-  #   - CI Integration sections (current fcli version's `ci` action env vars)
-  # Example outputs: fod-github-v3.0.x.adoc, ssc-github-v3.0.x.adoc
-  # NOTE: When adding a new CI system version, add its key to the array below AND define it in ciSystemDefinitions
+  #   - Session configuration (FoD/SSC authentication - CI docs only)
+  #   - CI Integration sections (current fcli version's `ci` action env vars - CI docs only)
+  #
+  # Generates three types of documents per CI system version:
+  #   1. {ciSystem}-setup-v{version}.adoc - Bootstrap env vars only (product-independent)
+  #   2. {ciSystem}-ci-fod-v{version}.adoc - Complete FoD CI integration guide
+  #   3. {ciSystem}-ci-ssc-v{version}.adoc - Complete SSC CI integration guide
+  #
+  # Example outputs for github-3.0.x:
+  #   - github-setup-v3.0.x.adoc
+  #   - github-ci-fod-v3.0.x.adoc
+  #   - github-ci-ssc-v3.0.x.adoc
+  #
+  # NOTE: Documents to generate are auto-detected from ciSystemDefinitions keys.
+  # To add a new CI system/version, just add its definition to ciSystemDefinitions below.
   - records.for-each:
-      from: ${{'github-3.0.x'}}
-      record.var-name: ciSystemKey
+      from: ${#properties(ciSystemDefinitions)}
+      record.var-name: ciSystemEntry
       do:
-      # Extract CI system definition and resolve bootstrap version reference
+      # Extract CI system key (e.g., 'github-3.0.x') and definition from the property entry
       - var.set:
-          ciSystemDef: ${ciSystemDefinitions[ciSystemKey]}
-          ciVersion: ${ciSystemKey.replaceAll('.*-', '')}  # Extract '3.0.x' from 'github-3.0.x'
-          ciSystem: ${ciSystemKey.replaceAll('-.*', '')}  # Extract 'github' from 'github-3.0.x'
-          bootstrapKey: ${'fortify-setup-'+ciSystemDefinitions[ciSystemKey]['bootstrap-version']}
-          bootstrapDef: ${fortifySetupDefinitions['fortify-setup-'+ciSystemDefinitions[ciSystemKey]['bootstrap-version']]}
-      # Generate docs for both FoD and SSC
+          ciSystemKey: ${ciSystemEntry.key}
+          ciSystemDef: ${ciSystemEntry.value}
+          ciVersion: ${ciSystemEntry.key.replaceAll('.*-', '')}  # Extract '3.0.x' from 'github-3.0.x'
+          ciSystem: ${ciSystemEntry.key.replaceAll('-.*', '')}  # Extract 'github' from 'github-3.0.x'
+          bootstrapKey: ${'fortify-setup-'+ciSystemEntry.value['fortify-setup-version']}
+          bootstrapDef: ${fortifySetupDefinitions['fortify-setup-'+ciSystemEntry.value['fortify-setup-version']]}
+      
+      # ----------------------------------------------------------------------------
+      # Generate {ciSystem}-setup-v{version}.adoc (product-independent)
+      # Contains only bootstrap configuration (@fortify/setup + fcli env vars)
+      # ----------------------------------------------------------------------------
+      - var.rm:
+          - bootstrapEnvVarCells
+          - fcliEnvVarCells
+      # Build bootstrap env var cells
+      - records.for-each:
+          from: ${bootstrapDef.envVars}
+          record.var-name: envVar
+          do:
+          - var.set:
+              bootstrapEnvVarCells..: {fmt: asciiDocCell}
+      # Build fcli env var cells
+      - records.for-each:
+          from: ${fcliToolBootstrapEnvVars}
+          record.var-name: envVar
+          do:
+          - var.set:
+              fcliEnvVarCells..: {fmt: asciiDocCell}
+      # Write setup document
+      - out.write:
+          ${cli.outputDir}/${ciSystem}-setup-v${ciVersion}.adoc: {fmt: ciSystemSetupDoc}
+      
+      # ----------------------------------------------------------------------------
+      # Generate {ciSystem}-ci-{product}-v{version}.adoc for FoD and SSC
+      # Contains complete CI integration guide (bootstrap + session + CI sections)
+      # ----------------------------------------------------------------------------
       - records.for-each:
           from: ${{'fod', 'ssc'}}
           record.var-name: module
@@ -305,9 +346,9 @@ steps:
               do:
               - var.set:
                   postScanEnvVarCells..: {fmt: asciiDocCell}
-          # Write complete CI integration guide for this CI system version + product
+          # Write complete CI integration guide
           - out.write:
-              ${cli.outputDir}/${module}-${ciSystem}-v${ciVersion}.adoc: {fmt: ciSystemFullDoc}
+              ${cli.outputDir}/${ciSystem}-ci-${module}-v${ciVersion}.adoc: {fmt: ciSystemFullDoc}
           
 formatters:
   # ============================================================================
@@ -387,12 +428,12 @@ formatters:
   # COMPLETE CI INTEGRATION GUIDE FORMATTER
   # ============================================================================
   # Generates a complete AsciiDoc document for a specific CI system version + product
-  # Used for: {product}-{ciSystem}-v{version}.adoc files (e.g., fod-github-v3.0.x.adoc)
+  # Used for: {ciSystem}-ci-{product}-v{version}.adoc files (e.g., github-ci-fod-v3.0.x.adoc)
   # Includes: Version table, bootstrap config, session config, CI integration sections
   ciSystemFullDoc: |
     = ${module=='fod'?'Fortify on Demand':'Software Security Center'} CI Integration - ${#capitalize(ciSystem)} Actions v${ciVersion}
     :fcli-version: ${#fcliBuildProperties().fcliVersion}
-    :fortify-setup-version: ${ciSystemDef['bootstrap-version']}
+    :fortify-setup-version: ${ciSystemDef['fortify-setup-version']}
     :ci-action-version: ${ciVersion}
     :generation-date: ${#formatDateTime('yyyy-MM-dd')}
     :toc: left
@@ -422,7 +463,7 @@ formatters:
     [discrete]
     === @fortify/setup Environment Variables
     
-    Configured by @fortify/setup ${ciSystemDef['bootstrap-version']} to control fcli download and verification.
+    Configured by @fortify/setup ${ciSystemDef['fortify-setup-version']} to control fcli download and verification.
     
     [%autowidth]
     |===
@@ -487,6 +528,66 @@ formatters:
     |===
     |Environment Variable|Description
     ${#join("", postScanEnvVarCells)}
+    |===
+  
+  # ============================================================================
+  # SETUP GUIDE FORMATTER (Product-Independent)
+  # ============================================================================
+  # Generates a setup-only AsciiDoc document for a specific CI system version
+  # Used for: {ciSystem}-setup-v{version}.adoc files (e.g., github-setup-v3.0.x.adoc)
+  # Includes: Version table, bootstrap configuration only (no product-specific content)
+  # This document applies to both FoD and SSC as it contains only @fortify/setup env vars
+  ciSystemSetupDoc: |
+    = ${#capitalize(ciSystem)} Action Setup - ${#capitalize(ciSystem)} Actions v${ciVersion}
+    :fcli-version: ${#fcliBuildProperties().fcliVersion}
+    :fortify-setup-version: ${ciSystemDef['fortify-setup-version']}
+    :ci-action-version: ${ciVersion}
+    :generation-date: ${#formatDateTime('yyyy-MM-dd')}
+    :toc: left
+    :toclevels: 3
+    
+    [discrete]
+    == Version Information
+    
+    [%autowidth]
+    |===
+    |Component|Version
+    
+    |fcli|{fcli-version}
+    |@fortify/setup|{fortify-setup-version}
+    |${#capitalize(ciSystem)} Action|{ci-action-version}
+    |Generated|{generation-date}
+    |===
+    
+    NOTE: ${ciSystemDef.notes}
+    
+    [discrete]
+    == Bootstrap Configuration
+    
+    These environment variables control how @fortify/setup bootstraps fcli and how fcli locates tool definitions.
+    They are typically set in your CI workflow configuration file and apply to both Fortify on Demand (FoD)
+    and Software Security Center (SSC) integrations.
+    
+    [discrete]
+    === @fortify/setup Environment Variables
+    
+    Configured by @fortify/setup ${ciSystemDef['fortify-setup-version']} to control fcli download and verification.
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", bootstrapEnvVarCells)}
+    |===
+    
+    [discrete]
+    === fcli Environment Variables
+    
+    These fcli-specific variables work with all @fortify/setup versions and control fcli behavior.
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", fcliEnvVarCells)}
     |===
   
   # ============================================================================
@@ -756,33 +857,42 @@ formatters:
   # HOW TO ADD A NEW @fortify/setup VERSION:
   # 1. Add a new entry below with key 'fortify-setup-{major}.{minor}.x'
   # 2. Define 'notes' (version-specific info) and 'envVars' (array of environment variables)
-  # 3. Add the new key to the hardcoded array in STEP 1 above (search for 'fortify-setup-1.0.x')
+  # 3. Add the new key to the hardcoded array in STEP 1 above (search for 'fortify-setup-2.1.x')
   # 4. Run ./gradlew :fcli-core:fcli-action:buildTimeAction_ci_doc to test
   # 5. Verify generated files: bootstrap-v{version}.txt and bootstrap-v{version}.adoc
   fortifySetupDefinitions:
-    # @fortify/setup v1.0.x - Initial release
-    fortify-setup-1.0.x:
+    # @fortify/setup v2.1.x - Version pinning support
+    fortify-setup-2.1.x:
       notes: >-
-        @fortify/setup v1.0.x bootstraps latest fcli v3.x by default. Follows semantic versioning:
-        breaking changes in fcli (v4) will require @fortify/setup v2.x, which will be used by
-        GitHub Action v4.x and similar CI integrations.
+        @fortify/setup v2.1.x adds fcli version pinning support via FCLI_BOOTSTRAP_VERSION environment variable.
+        Supports versions with or without 'v' prefix (e.g., 'v3.14.1' or '3.14.1'). Uses RUNNER_TOOL_CACHE
+        for persistent caching when FCLI_BOOTSTRAP_VERSION is set to full major.minor.patch version.
+        Bootstraps latest fcli v3.x by default. Follows semantic versioning: breaking changes in fcli (v4)
+        will require @fortify/setup v3.x.
       envVars:
-        - names: FCLI_PATH
+        - names: FCLI_BOOTSTRAP_VERSION
+          desc: >-
+            Fcli version to bootstrap (e.g., 'v3', 'v3.14', 'v3.14.1', or without 'v' prefix: '3.14.1').
+            When set to a full major.minor.patch version, GitHub Actions will use RUNNER_TOOL_CACHE for
+            persistent caching across workflow runs. Partial versions (e.g., 'v3') or unset will use
+            RUNNER_TEMP for job-specific temporary storage. Ignored if FCLI_BOOTSTRAP_URL is set.
+        - names: FCLI_BOOTSTRAP_PATH
           desc: >-
             Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead
             of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations
             to control which fcli version is used and skip the download/verification process.
-        - names: FCLI_URL
+        - names: FCLI_BOOTSTRAP_URL
           desc: >-
-            Custom URL for downloading the fcli archive. When set, this overrides the default GitHub release URL.
-            Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific
-            fcli archive (e.g., `fcli-linux.tgz`, `fcli-windows.zip`, `fcli-mac.tgz`).
-        - names: FCLI_RSA_SHA256_URL
+            Custom URL for downloading the fcli archive. When set, this overrides FCLI_BOOTSTRAP_VERSION and
+            the default GitHub release URL. Useful for air-gapped environments or internal mirrors. The URL
+            should point to a platform-specific fcli archive (e.g., `fcli-linux.tgz`, `fcli-windows.zip`,
+            `fcli-mac.tgz`).
+        - names: FCLI_BOOTSTRAP_RSA_SHA256_URL
           desc: >-
             Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature
-            URL (which is `FCLI_URL` + `.rsa_sha256`). Required when using a custom `FCLI_URL` with signature
-            verification enabled.
-        - names: FCLI_VERIFY_SIGNATURE
+            URL (which is `FCLI_BOOTSTRAP_URL` + `.rsa_sha256`). Required when using a custom `FCLI_BOOTSTRAP_URL`
+            with signature verification enabled.
+        - names: FCLI_BOOTSTRAP_VERIFY_SIGNATURE
           desc: >-
             Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to `false`
             to skip verification (not recommended). By default, signature verification is enabled to ensure
@@ -807,23 +917,23 @@ formatters:
   # Each entry represents a specific CI action version and its dependencies
   # Pattern: {ciSystem}-{major}.{minor}.x (e.g., github-3.0.x, gitlab-2.1.x)
   # Each definition includes:
-  #   - bootstrap-version: References fortify-setup-{version} for env vars (e.g., "1.0.x")
+  #   - fortify-setup-version: References fortify-setup-{version} for env vars (e.g., "2.0.x")
   #   - notes: Version-specific documentation and compatibility info
   #
   # HOW TO ADD A NEW CI SYSTEM VERSION:
   # 1. Add a new entry below with key '{ciSystem}-{major}.{minor}.x' (e.g., 'github-3.1.x')
-  # 2. Set 'bootstrap-version' to reference an existing fortify-setup version (e.g., "1.1.x")
+  # 2. Set 'fortify-setup-version' to reference an existing fortify-setup version (e.g., "2.0.x")
   # 3. Define 'notes' with version-specific information and compatibility details
   # 4. Add the new key to the hardcoded array in STEP 4 above (search for 'github-3.0.x')
   # 5. Run ./gradlew :fcli-core:fcli-action:buildTimeAction_ci_doc to test
   # 6. Verify generated files: {product}-{ciSystem}-v{version}.adoc for both fod and ssc
   ciSystemDefinitions:
-    # GitHub Action v3.0.x - Uses @fortify/setup v1.0.x
+    # GitHub Action v3.0.x - Uses @fortify/setup v2.1.x
     github-3.0.x:
-      bootstrap-version: "1.0.x"
+      fortify-setup-version: "2.1.x"
       notes: >-
-        GitHub Action v3.0.x uses @fortify/setup v1.0.x to bootstrap fcli v3.x, then runs `fcli action run ci`.
+        GitHub Action v3.0.x uses @fortify/setup v2.1.x to bootstrap fcli v3.x, then runs `fcli action run ci`.
         Follows semantic versioning: breaking changes in fcli require major version bump across all components
-        (fcli v4 → @fortify/setup v2 → GitHub Action v4).
+        (fcli v4 → @fortify/setup v3 → GitHub Action v4).
         
       
