@@ -44,7 +44,8 @@ public class ActionDescriptionRenderer {
     }
     
     public final String render(TemplateExpression descriptionExpression) {
-        return insertControlCharacters(spelEvaluator.evaluate(descriptionExpression, input, String.class));
+        var rendered = spelEvaluator.evaluate(descriptionExpression, input, String.class);
+        return insertControlCharacters(rendered);
     }
     
     private static final String insertControlCharacters(String s) {

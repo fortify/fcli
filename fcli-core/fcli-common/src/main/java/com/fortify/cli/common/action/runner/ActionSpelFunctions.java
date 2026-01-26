@@ -472,7 +472,14 @@ public class ActionSpelFunctions {
         var mapper = JsonHelper.getObjectMapper();
         var result = mapper.createArrayNode();
         o.properties()
-                .forEach(p -> result.add(mapper.createObjectNode().put("key", p.getKey()).set("value", p.getValue())));
+                .forEach(p -> {
+                    var entry = mapper.createObjectNode()
+                            .put("key", p.getKey());
+                    // Unwrap JsonNodeWrapper if present to avoid property access issues
+                    var value = p.getValue();
+                    entry.set("value", value);
+                    result.add(entry);
+                });
         return result;
     }
 
@@ -725,6 +732,81 @@ public class ActionSpelFunctions {
                 } catch (Exception e) { return new String[]{fallbackShort, null}; }
             }
 
+    }
+    
+    @SpelFunction(cat=txt, desc = """
+            Renders an fcli command reference as plain text with backticks, suitable for help output.
+            Example: fcliCmdText('fcli fod sast-scan start') returns '`fcli fod sast-scan start`'
+            """,
+            returns="Command name in backticks")
+    public static final String fcliCmdText(
+            @SpelFunctionParam(name="command", desc="Full fcli command to render (e.g., 'fcli fod session login')") String command)
+    {
+        return String.format("`%s`", command);
+    }
+    
+    @SpelFunction(cat=txt, desc = """
+            Renders an fcli command reference as an AsciiDoc link to the manpage HTML.
+            The base URL can be customized by providing a second parameter. If the base URL contains
+            '${cmd}', it will be replaced with the command converted to dash-separated format.
+            Otherwise, the command is appended to the base URL with .html extension.
+            Example: fcliCmdLink('fcli fod sast-scan start') returns 
+            'link:../manpage/fcli-fod-sast-scan-start.html[`fcli fod sast-scan start`]'
+            """,
+            returns="AsciiDoc link to command manpage")
+    public static final String fcliCmdLink(
+            @SpelFunctionParam(name="command", desc="Full fcli command to render (e.g., 'fcli fod session login')") String command,
+            @SpelFunctionParam(name="baseUrl", desc="Optional base URL for manpage links. Default: '../manpage'", 
+                               optional=true, type="string") String... baseUrls)
+    {
+        var baseUrl = (baseUrls != null && baseUrls.length > 0) ? baseUrls[0] : "../manpage";
+        var commandDashed = command.replace(" ", "-");
+        
+        // If baseUrl contains ${cmd}, replace it with the dashed command
+        String url;
+        if ( baseUrl.contains("${cmd}") ) {
+            url = baseUrl.replace("${cmd}", commandDashed);
+        } else {
+            url = baseUrl + "/" + commandDashed + ".html";
+        }
+        
+        return String.format("link:%s[`%s`]", url, command);
+    }
+    
+    @SpelFunction(cat=txt, desc = """
+            Processes text containing fcliCmd:command: references and replaces them with either
+            plain text (backticks) or AsciiDoc links depending on the output format.
+            The function looks for patterns like 'fcliCmd:fcli fod session login:' and replaces
+            them appropriately based on whether isAsciiDoc is true or false in the context.
+            """,
+            returns="Processed text with fcliCmd references replaced")
+    public static final String processFcliCmdRefs(
+            @SpelFunctionParam(name="text", desc="Text containing fcliCmd:...: references") String text,
+            @SpelFunctionParam(name="isAsciiDoc", desc="Whether to render as AsciiDoc links (true) or plain text (false)") boolean isAsciiDoc,
+            @SpelFunctionParam(name="baseUrl", desc="Optional base URL for AsciiDoc manpage links. Default: '../manpage'", 
+                               optional=true, type="string") String... baseUrls)
+    {
+        if ( text == null ) { return ""; }
+        var baseUrl = (baseUrls != null && baseUrls.length > 0) ? baseUrls[0] : "../manpage";
+        
+        Pattern pattern = Pattern.compile("fcliCmd:([^:]+):");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer result = new StringBuffer();
+        
+        while (matcher.find()) {
+            String command = matcher.group(1);
+            String replacement;
+            
+            if ( isAsciiDoc ) {
+                replacement = fcliCmdLink(command, baseUrl);
+            } else {
+                replacement = fcliCmdText(command);
+            }
+            
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
     
     private static final class ActionSpelFunctionsHelper {
