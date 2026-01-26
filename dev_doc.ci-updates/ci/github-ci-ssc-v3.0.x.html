@@ -1,6 +1,6 @@
 ---
 title: Software Security Center CI Integration - Github Actions v3.0.x
-fcli_version: 0.20260125.162621-dev_doc.ci-updates
+fcli_version: 0.20260126.125537-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260125.162621-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260125.162621-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260126.125537-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Software Security Center CI Integration - Github Actions v3.0.x</h1>
 <div class="details">
-<span id="revnumber">version 0.20260125.162621-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260126.125537-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -57,11 +57,11 @@ fcli_version: 0.20260125.162621-dev_doc.ci-updates
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">fcli</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260125.162621-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260126.125537-dev_doc.ci-updates</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">@fortify/setup</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">1.0.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.1.x</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Github Action</p></td>
@@ -69,7 +69,7 @@ fcli_version: 0.20260125.162621-dev_doc.ci-updates
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Generated</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2026-01-25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2026-01-26</p></td>
 </tr>
 </tbody>
 </table>
@@ -80,7 +80,7 @@ fcli_version: 0.20260125.162621-dev_doc.ci-updates
 <div class="title">Note</div>
 </td>
 <td class="content">
-GitHub Action v3.0.x uses @fortify/setup v1.0.x to bootstrap fcli v3.x, then runs <code>fcli action run ci</code>. Follows semantic versioning: breaking changes in fcli require major version bump across all components (fcli v4 → @fortify/setup v2 → GitHub Action v4).
+GitHub Action v3.0.x uses @fortify/setup v2.1.x to bootstrap fcli v3.x, then runs <code>fcli action run ci</code>. Follows semantic versioning: breaking changes in fcli require major version bump across all components (fcli v4 → @fortify/setup v3 → GitHub Action v4).
 </td>
 </tr>
 </table>
@@ -92,7 +92,7 @@ They are typically set in your CI workflow configuration file.</p>
 </div>
 <h3 id="_fortifysetup_environment_variables" class="discrete">@fortify/setup Environment Variables</h3>
 <div class="paragraph">
-<p>Configured by @fortify/setup 1.0.x to control fcli download and verification.</p>
+<p>Configured by @fortify/setup 2.1.x to control fcli download and verification.</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -105,19 +105,23 @@ They are typically set in your CI workflow configuration file.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_PATH</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fcli version to bootstrap (e.g., 'v3', 'v3.14', 'v3.14.1', or without 'v' prefix: '3.14.1'). When set to a full major.minor.patch version, GitHub Actions will use RUNNER_TOOL_CACHE for persistent caching across workflow runs. Partial versions (e.g., 'v3') or unset will use RUNNER_TEMP for job-specific temporary storage. Ignored if FCLI_BOOTSTRAP_URL is set.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_PATH</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations to control which fcli version is used and skip the download/verification process.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for downloading the fcli archive. When set, this overrides the default GitHub release URL. Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific fcli archive (e.g., <code>fcli-linux.tgz</code>, <code>fcli-windows.zip</code>, <code>fcli-mac.tgz</code>).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for downloading the fcli archive. When set, this overrides FCLI_BOOTSTRAP_VERSION and the default GitHub release URL. Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific fcli archive (e.g., <code>fcli-linux.tgz</code>, <code>fcli-windows.zip</code>, <code>fcli-mac.tgz</code>).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_RSA_SHA256_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature URL (which is <code>FCLI_URL</code> + <code>.rsa_sha256</code>). Required when using a custom <code>FCLI_URL</code> with signature verification enabled.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_RSA_SHA256_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature URL (which is <code>FCLI_BOOTSTRAP_URL</code> + <code>.rsa_sha256</code>). Required when using a custom <code>FCLI_BOOTSTRAP_URL</code> with signature verification enabled.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_VERIFY_SIGNATURE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERIFY_SIGNATURE</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to <code>false</code> to skip verification (not recommended). By default, signature verification is enabled to ensure the downloaded fcli binary has not been tampered with.</p></td>
 </tr>
 </tbody>
@@ -351,8 +355,8 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260125.162621-dev_doc.ci-updates<br>
-Last updated 2026-01-25 16:29:56 UTC
+Version 0.20260126.125537-dev_doc.ci-updates<br>
+Last updated 2026-01-26 13:00:17 UTC
 </div>
 </div>
 </body>
