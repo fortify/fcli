@@ -30,7 +30,6 @@ val ghPagesVersionedOutDir = ghPagesOutDir.map { it.dir("versioned") }
 val ghPagesStaticOutDir = ghPagesOutDir.map { it.dir("static") }
 val actionSchemaOutDir = ghPagesStaticOutDir.map { it.dir("schemas/action") }
 val ciDocsExtractDir = docsOutDir.map { it.dir("ci-extracted") }
-val ciDocsVersionedOutDir = ghPagesVersionedOutDir.map { it.dir("ci") }
 
 // Prepare directories
 val prepare = tasks.register("prepare") {
@@ -44,8 +43,7 @@ val prepare = tasks.register("prepare") {
         htmlOutDir,
         ghPagesOutDir,
         actionSchemaOutDir,
-        ciDocsExtractDir,
-        ciDocsVersionedOutDir
+        ciDocsExtractDir
     )
     doLast {
         listOf(
@@ -56,8 +54,7 @@ val prepare = tasks.register("prepare") {
             htmlOutDir,
             ghPagesOutDir,
             actionSchemaOutDir,
-            ciDocsExtractDir,
-            ciDocsVersionedOutDir
+            ciDocsExtractDir
         ).forEach { it.get().asFile.mkdirs() }
     }
 }
@@ -242,10 +239,11 @@ val asciiDoctorStaticJekyll = registerAsciidoctorTaskHtml(
 
 // CI docs Jekyll conversion - versioned (not static), changes with each fcli version
 // Published alongside other versioned docs like action-development.html
+// Note: ci-doc.yaml action generates ci/ subdirectory structure, so we output to versioned root
 val asciiDoctorCiDocsJekyll = registerAsciidoctorTaskHtml(
     "asciiDoctorCiDocsJekyll",
     extractCiDocs,
-    ciDocsVersionedOutDir,
+    ghPagesVersionedOutDir,
     true,
     ciDocsExtractDir.get().asFile
 )

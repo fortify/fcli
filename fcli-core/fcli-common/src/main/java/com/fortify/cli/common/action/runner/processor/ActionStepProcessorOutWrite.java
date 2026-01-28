@@ -55,6 +55,10 @@ public class ActionStepProcessorOutWrite extends AbstractActionStepProcessorMapE
     }
     
     private final void write(File file, String output) throws IOException {
+        var parentDir = file.getParentFile();
+        if ( parentDir!=null && !parentDir.exists() ) {
+            parentDir.mkdirs();
+        }
         try ( var out = new PrintStream(file, StandardCharsets.UTF_8) ) {
             out.println(output);
         }

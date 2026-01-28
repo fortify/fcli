@@ -30,6 +30,7 @@ import com.fortify.cli.common.json.ArrayListWithAsJsonMethod;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctions;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.ReflectionHelper;
 
@@ -74,6 +75,7 @@ public final class SpelFunctionDescriptorsFactory {
     private static final ArrayListWithAsJsonMethod<SpelFunctionDescriptor> collectSpelFunctions(Collection<Class<?>> spelFunctionClazzes) {
         return spelFunctionClazzes.stream()
             .flatMap(c->createFunctionDescriptorsStream(c))
+            .flatMap(d->createNestedFunctionDescriptorsStream(d))
             .sorted((a, b) -> a.getCategoryAndName().compareTo(b.getCategoryAndName()))
             .collect(Collectors.toCollection(ArrayListWithAsJsonMethod::new));
     }
@@ -82,6 +84,67 @@ public final class SpelFunctionDescriptorsFactory {
         return Stream.of(spelFunctionClazz.getDeclaredMethods())
                 .filter(m->!Modifier.isPrivate(m.getModifiers()))
                 .map(m->createSpelFunctionDescriptor(spelFunctionClazz, m));
+    }
+    
+    /**
+     * For each descriptor, check if its return type is annotated with @SpelFunctions.
+     * If so, generate additional descriptors for all public methods of that return type,
+     * using the original function name as the prefix.
+     */
+    private static final Stream<SpelFunctionDescriptor> createNestedFunctionDescriptorsStream(SpelFunctionDescriptor parentDescriptor) {
+        // First yield the parent descriptor itself
+        Stream<SpelFunctionDescriptor> parentStream = Stream.of(parentDescriptor);
+        
+        // Check if return type has @SpelFunctions annotation
+        Class<?> returnType = parentDescriptor.getClazz();
+        try {
+            // Try to resolve the actual return type from the method
+            Method method = Stream.of(returnType.getDeclaredMethods())
+                .filter(m -> m.getName().equals(parentDescriptor.getName().replaceAll(".*\\.", "")))
+                .filter(m -> !Modifier.isPrivate(m.getModifiers()))
+                .findFirst()
+                .orElse(null);
+            
+            if (method != null) {
+                Class<?> actualReturnType = method.getReturnType();
+                if (actualReturnType.isAnnotationPresent(SpelFunctions.class)) {
+                    // Process all public methods of the return type
+                    String prefix = parentDescriptor.getName() + ".";
+                    Stream<SpelFunctionDescriptor> nestedStream = Stream.of(actualReturnType.getDeclaredMethods())
+                        .filter(m -> Modifier.isPublic(m.getModifiers()))
+                        .filter(m -> m.isAnnotationPresent(SpelFunction.class))
+                        .map(m -> createNestedSpelFunctionDescriptor(actualReturnType, m, prefix));
+                    
+                    return Stream.concat(parentStream, nestedStream);
+                }
+            }
+        } catch (Exception e) {
+            // If we can't process nested functions, just return the parent
+        }
+        
+        return parentStream;
+    }
+    
+    /**
+     * Create a descriptor for a method from a class annotated with @SpelFunctions,
+     * using the provided prefix instead of the class-level @SpelFunctionPrefix.
+     */
+    private static final SpelFunctionDescriptor createNestedSpelFunctionDescriptor(Class<?> spelFunctionClazz, Method spelFunctionMethod, String prefix) {
+        var category = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::cat, ()->com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util).name();
+        var name = prefix + spelFunctionMethod.getName();
+        var desc = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::desc, ()->"");
+        var params = createParamDescriptors(spelFunctionMethod);
+        var returns = createReturnDescriptor(spelFunctionMethod);
+        var signature = createSignature(name, params, returns);
+        return SpelFunctionDescriptor.builder()
+                .clazz(spelFunctionClazz)
+                .category(category)
+                .name(name)
+                .description(desc)
+                .params(params)
+                .returns(returns)
+                .signature(signature)
+                .build();
     }
     
     private static final SpelFunctionDescriptor createSpelFunctionDescriptor(Class<?> spelFunctionClazz, Method spelFunctionMethod) {
