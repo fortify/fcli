@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260126.174857-dev_doc.ci-updates
+fcli_version: 0.20260128.164259-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260126.174857-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260128.164259-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260126.174857-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260128.164259-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -154,8 +154,6 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 <li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
 <li><a href="#_txt">[txt]</a></li>
 <li><a href="#_abbreviate"><code>abbreviate</code></a></li>
-<li><a href="#_fclicmdlink"><code>fcliCmdLink</code></a></li>
-<li><a href="#_fclicmdtext"><code>fcliCmdText</code></a></li>
 <li><a href="#_fmt"><code>fmt</code></a></li>
 <li><a href="#_htmltosinglelinetext"><code>htmlToSingleLineText</code></a></li>
 <li><a href="#_htmltotext"><code>htmlToText</code></a></li>
@@ -165,16 +163,25 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 <li><a href="#_join"><code>join</code></a></li>
 <li><a href="#_joinornull"><code>joinOrNull</code></a></li>
 <li><a href="#_numberedlist"><code>numberedList</code></a></li>
-<li><a href="#_processfclicmdrefs"><code>processFcliCmdRefs</code></a></li>
 <li><a href="#_regexquote"><code>regexQuote</code></a></li>
 <li><a href="#_repeat"><code>repeat</code></a></li>
 <li><a href="#_replaceallfromregexmap"><code>replaceAllFromRegExMap</code></a></li>
 <li><a href="#_substringafter"><code>substringAfter</code></a></li>
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
+<li><a href="#_docrenderer"><code>docRenderer</code></a></li>
+<li><a href="#_docrenderer_actionurl"><code>docRenderer.actionUrl</code></a></li>
+<li><a href="#_docrenderer_asciidoc"><code>docRenderer.asciidoc</code></a></li>
+<li><a href="#_docrenderer_manpagebaseurl"><code>docRenderer.manpageBaseUrl</code></a></li>
+<li><a href="#_docrenderer_render"><code>docRenderer.render</code></a></li>
+<li><a href="#_docrenderer_text"><code>docRenderer.text</code></a></li>
 <li><a href="#_env"><code>env</code></a></li>
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_localrepo"><code>localRepo</code></a></li>
+<li><a href="#_objectmerger"><code>objectMerger</code></a></li>
+<li><a href="#_objectmerger_arraysconcat"><code>objectMerger.arraysConcat</code></a></li>
+<li><a href="#_objectmerger_arraysreplace"><code>objectMerger.arraysReplace</code></a></li>
+<li><a href="#_objectmerger_merge"><code>objectMerger.merge</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
 <li><a href="#_uripart"><code>uriPart</code></a></li>
@@ -215,7 +222,7 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260126.174857-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260128.164259-dev_doc.ci-updates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -337,7 +344,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260126.174857-dev_doc.ci-updates supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260128.164259-dev_doc.ci-updates supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4152,69 +4159,6 @@ default time zone id will be used.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_fclicmdlink"><a class="anchor" href="#_fclicmdlink"></a><code>fcliCmdLink</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fcliCmdLink(string command[, string baseUrl])</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string command</em> - Full fcli command to render (e.g., 'fcli fod session login')<br>
-<em>string baseUrl</em> - Optional base URL for manpage links. Default: '../manpage'</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AsciiDoc link to command manpage</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Renders an fcli command reference as an AsciiDoc link to the manpage HTML.
-The base URL can be customized by providing a second parameter. If the base URL contains
-'${cmd}', it will be replaced with the command converted to dash-separated format.
-Otherwise, the command is appended to the base URL with .html extension.
-Example: fcliCmdLink('fcli fod sast-scan start') returns
-'<a href="../manpage/fcli-fod-sast-scan-start.html"><code>fcli fod sast-scan start</code></a>'</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_fclicmdtext"><a class="anchor" href="#_fclicmdtext"></a><code>fcliCmdText</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #fcliCmdText(string command)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string command</em> - Full fcli command to render (e.g., 'fcli fod session login')</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Command name in backticks</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Renders an fcli command reference as plain text with backticks, suitable for help output.
-Example: fcliCmdText('fcli fod sast-scan start') returns &#8216;fcli fod sast-scan start&#8217;</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_fmt"><a class="anchor" href="#_fmt"></a><code>fmt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -4446,39 +4390,6 @@ Example: fcliCmdText('fcli fod sast-scan start') returns &#8216;fcli fod sast-sc
 </table>
 </div>
 <div class="sect2">
-<h3 id="_processfclicmdrefs"><a class="anchor" href="#_processfclicmdrefs"></a><code>processFcliCmdRefs</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #processFcliCmdRefs(string text, boolean isAsciiDoc[, string baseUrl])</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text containing fcliCmd:&#8230;&#8203;: references<br>
-<em>boolean isAsciiDoc</em> - Whether to render as AsciiDoc links (true) or plain text (false)<br>
-<em>string baseUrl</em> - Optional base URL for AsciiDoc manpage links. Default: '../manpage'</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Processed text with fcliCmd references replaced</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Processes text containing fcliCmd:command: references and replaces them with either
-plain text (backticks) or AsciiDoc links depending on the output format.
-The function looks for patterns like 'fcliCmd:fcli fod session login:' and replaces
-them appropriately based on whether isAsciiDoc is true or false in the context.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_regexquote"><a class="anchor" href="#_regexquote"></a><code>regexQuote</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -4618,6 +4529,165 @@ values provided in the mapping object.</p>
 
 </div>
 <div class="sect2">
+<h3 id="_docrenderer"><a class="anchor" href="#_docrenderer"></a><code>docRenderer</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DocRenderer builder instance</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Create a document renderer for processing documentation references (fcliCmd and actionRef).
+This is primarily for internal fcli use in documentation generation actions.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_actionurl"><a class="anchor" href="#_docrenderer_actionurl"></a><code>docRenderer.actionUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.actionUrl(string url)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for action reference links</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Set the base URL for action links (e.g., 'fod-actions.html')</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_asciidoc"><a class="anchor" href="#_docrenderer_asciidoc"></a><code>docRenderer.asciidoc</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.asciidoc()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Configure renderer for AsciiDoc output</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_manpagebaseurl"><a class="anchor" href="#_docrenderer_manpagebaseurl"></a><code>docRenderer.manpageBaseUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.manpageBaseUrl(string url)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for fcli command manpage links</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Set the base URL for manpage links (default: '../manpage')</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_render"><a class="anchor" href="#_docrenderer_render"></a><code>docRenderer.render</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #docRenderer.render(string text)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text containing documentation references</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Rendered text with all references processed</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Render text, processing all fcliCmd:command: and actionRef:action-name#anchor references.
+- fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
+- actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_text"><a class="anchor" href="#_docrenderer_text"></a><code>docRenderer.text</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.text()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Configure renderer for plain text output</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -4742,6 +4812,110 @@ commit: {
   }
 }</code></pre>
 </div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_objectmerger"><a class="anchor" href="#_objectmerger"></a><code>objectMerger</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #objectMerger()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JsonNodeMerger builder instance</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Create a JsonNode merger for deep merging objects with configurable array handling</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_objectmerger_arraysconcat"><a class="anchor" href="#_objectmerger_arraysconcat"></a><code>objectMerger.arraysConcat</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #objectMerger.arraysConcat()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This merger for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Configure arrays to be concatenated (target elements + source elements)</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_objectmerger_arraysreplace"><a class="anchor" href="#_objectmerger_arraysreplace"></a><code>objectMerger.arraysReplace</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #objectMerger.arraysReplace()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This merger for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Configure arrays to be replaced by source (default behavior)</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_objectmerger_merge"><a class="anchor" href="#_objectmerger_merge"></a><code>objectMerger.merge</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #objectMerger.merge(object target, object source)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object target</em> - the target node to merge into (may be null)<br>
+<em>object source</em> - the source node to merge from (may be null)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Merged JsonNode, or null if both inputs are null</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Performs deep merge of source into target using configured strategy.
+For ObjectNodes: properties are merged recursively, with source overriding target.
+For ArrayNodes: behavior depends on strategy (replace or concat).
+For ValueNodes: source replaces target.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -5278,8 +5452,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260126.174857-dev_doc.ci-updates<br>
-Last updated 2026-01-26 17:51:50 UTC
+Version 0.20260128.164259-dev_doc.ci-updates<br>
+Last updated 2026-01-28 16:45:55 UTC
 </div>
 </div>
 </body>

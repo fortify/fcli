@@ -1,6 +1,6 @@
 ---
 title: <code>fortify/github-action</code>
-fcli_version: 0.20260126.174857-dev_doc.ci-updates
+fcli_version: 0.20260128.164259-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260126.174857-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260128.164259-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1><code>fortify/github-action</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20260126.174857-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260128.164259-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -35,7 +35,7 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 <li><a href="#_version_information">Version Information</a></li>
 <li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
-<li><a href="#_example_usage">Example Usage</a></li>
+<li><a href="#_quick_start_example">Quick Start Example</a></li>
 </ul>
 </li>
 <li><a href="#_configuration">Configuration</a>
@@ -76,19 +76,19 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">fcli</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260126.174857-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260128.164259-dev_doc.ci-updates</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">@fortify/setup</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.1.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">v2.1.x</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Github Action</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3.0.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CI Integration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">v3.0.x</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Generated</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2026-01-26</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2026-01-28</p></td>
 </tr>
 </tbody>
 </table>
@@ -98,13 +98,16 @@ fcli_version: 0.20260126.174857-dev_doc.ci-updates
 <h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This Github Action provides seamless integration of Software Security Center Application Security Testing (AST) into your CI/CD workflows. The action leverages <code>@fortify/setup</code> to bootstrap fcli, then executes fcli-based CI workflows through the fcliCmd:fcli action run: command.</p>
+<p>This GitHub Action provides seamless integration of Software Security Center Application Security Testing (AST) into your CI/CD workflows. The action leverages <code>@fortify/setup</code> to bootstrap fcli, then executes fcli-based CI workflows through the <a href="../manpage/fcli-action-run.html"><code>fcli action run</code></a> command.</p>
 </div>
 <div class="paragraph">
 <p>Adds fcli version pinning via FCLI_BOOTSTRAP_VERSION. Uses RUNNER_TOOL_CACHE for persistent caching when full version specified.</p>
 </div>
 <div class="sect2">
-<h3 id="_example_usage"><a class="anchor" href="#_example_usage"></a>Example Usage</h3>
+<h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
+<div class="paragraph">
+<p>Minimal configuration to get started with SSC SAST scanning.</p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">name: Software Security Center SAST Scan
@@ -237,7 +240,7 @@ SSC_PASSWORD</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP
 SETUP_ACTION
 SETUP_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or version will be created if they do not yet exist using the fcli-provided actionRef:setup-appversion#_setup_appversion action, or, if specified, the custom fcli action specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the <code>SETUP_EXTRA_OPTS</code>  environment variable.</p>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or version will be created if they do not yet exist using the fcli-provided <a href="ssc-actions.html#_setup_appversion">setup-appversion</a> action, or, if specified, the custom fcli action specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the <code>SETUP_EXTRA_OPTS</code>  environment variable.</p>
 <p class="tableblock">Depending on your Git workflow, it is recommended to copy state from the application version representing your default branch by passing the <code>--copy-from</code> option through <code>SETUP_EXTRA_OPTS</code>.</p></td>
 </tr>
 </tbody>
@@ -258,7 +261,7 @@ SETUP_EXTRA_OPTS</p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">PACKAGE_ACTION
 PACKAGE_ACTION_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">By default, when running a SAST scan, the fcli actionRef:package#_package action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default actionRef:package#_package action. If the standard fcli actionRef:package#_package action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use <code>PACKAGE_ACTION</code> to use a custom action for packaging, optionally providing extra options to this custom action through the <code>PACKAGE_ACTION_EXTRA_OPTS</code> environment variable. Note that any custom action must set the <code>global.package.output</code> action variable, pointing to the package or MBS file to be scanned.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">By default, when running a SAST scan, the fcli <a href="ssc-actions.html#_package">package</a> action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default <a href="ssc-actions.html#_package">package</a> action. If the standard fcli <a href="ssc-actions.html#_package">package</a> action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use <code>PACKAGE_ACTION</code> to use a custom action for packaging, optionally providing extra options to this custom action through the <code>PACKAGE_ACTION_EXTRA_OPTS</code> environment variable. Note that any custom action must set the <code>global.package.output</code> action variable, pointing to the package or MBS file to be scanned.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE
@@ -350,31 +353,31 @@ AVIATOR_WAIT_EXTRA_OPTS</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_APPVERSION_SUMMARY
 APPVERSION_SUMMARY_ACTION
 APPVERSION_SUMMARY_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_APPVERSION_SUMMARY</code> is not set to <code>false</code>, an application version summary will be generated using the fcli-provided actionRef:appversion-summary#_appversion_summary action or, if specified, the custom fcli action specified through <code>APPVERSION_SUMMARY_ACTION</code>. Extra options for the fcli action can be specified through the <code>APPVERSION_SUMMARY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_APPVERSION_SUMMARY</code> is not set to <code>false</code>, an application version summary will be generated using the fcli-provided <a href="ssc-actions.html#_appversion_summary">appversion-summary</a> action or, if specified, the custom fcli action specified through <code>APPVERSION_SUMMARY_ACTION</code>. Extra options for the fcli action can be specified through the <code>APPVERSION_SUMMARY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_CHECK_POLICY
 CHECK_POLICY_ACTION
 CHECK_POLICY_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_CHECK_POLICY</code> is set to true (implied if any of the other two <code>CHECK_POLICY_*</code> variables are set), a policy check will be run after scan completion using the fcli-provided actionRef:check-policy#_check_policy action or, if specified, the custom fcli action specified through <code>CHECK_POLICY_ACTION</code>. Extra options for a custom fcli action can be passed through the <code>CHECK_POLICY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_CHECK_POLICY</code> is set to true (implied if any of the other two <code>CHECK_POLICY_*</code> variables are set), a policy check will be run after scan completion using the fcli-provided <a href="ssc-actions.html#_check_policy">check-policy</a> action or, if specified, the custom fcli action specified through <code>CHECK_POLICY_ACTION</code>. Extra options for a custom fcli action can be passed through the <code>CHECK_POLICY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_PR_COMMENT
 PR_COMMENT_ACTION
 PR_COMMENT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like actionRef:github-pr-comment#_github_pr_comment or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="ssc-actions.html#_github_pr_comment">github-pr-comment</a> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_EXPORT
 SAST_EXPORT_ACTION
 SAST_EXPORT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like actionRef:github-sast-report#_github_sast_report or actionRef:gitlab-sast-report#_gitlab_sast_report, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="ssc-actions.html#_github_sast_report">github-sast-report</a> or <a href="ssc-actions.html#_gitlab_sast_report">gitlab-sast-report</a>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_DEBRICKED_EXPORT
 DEBRICKED_EXPORT_ACTION
 DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_DEBRICKED_EXPORT</code> is not set to <code>false</code> and a Debricked scan was completed, the Debricked vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like actionRef:gitlab-debricked-report#_gitlab_debricked_report, or, if specified, the custom fcli action specified through <code>DEBRICKED_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>DEBRICKED_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If <code>DO_DEBRICKED_EXPORT</code> is not set to <code>false</code> and a Debricked scan was completed, the Debricked vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="ssc-actions.html#_gitlab_debricked_report">gitlab-debricked-report</a>, or, if specified, the custom fcli action specified through <code>DEBRICKED_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>DEBRICKED_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p></td>
 </tr>
 </tbody>
 </table>
@@ -384,8 +387,8 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260126.174857-dev_doc.ci-updates<br>
-Last updated 2026-01-26 17:52:39 UTC
+Version 0.20260128.164259-dev_doc.ci-updates<br>
+Last updated 2026-01-28 16:46:43 UTC
 </div>
 </div>
 </body>
