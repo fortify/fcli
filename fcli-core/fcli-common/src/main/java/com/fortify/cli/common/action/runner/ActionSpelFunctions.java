@@ -777,10 +777,7 @@ public class ActionSpelFunctions {
      * // Plain text rendering
      * #docRenderer().text().render(description)
      * 
-     * // AsciiDoc rendering with action links
-     * #docRenderer().asciidoc().actionUrl("fod-actions.html").render(description)
-     * 
-     * // With product context for resolving '_' in actionRef
+     * // AsciiDoc rendering with automatic action links
      * #docRenderer().asciidoc().currentProduct("fod").render(description)
      * 
      * // With CI context for resolving ciOutputRef
@@ -794,7 +791,6 @@ public class ActionSpelFunctions {
     @SpelFunctions
     public static final class DocRenderer {
         private boolean isAsciiDoc = false;
-        private String actionUrl = null;
         private String manpageBaseUrl = "../manpage";
         private String currentProduct = null;
         private CiContext ciContext = null;
@@ -808,12 +804,6 @@ public class ActionSpelFunctions {
         @SpelFunction(cat=util, desc="Configure renderer for AsciiDoc output", returns="This renderer for method chaining")
         public DocRenderer asciidoc() {
             this.isAsciiDoc = true;
-            return this;
-        }
-        
-        @SpelFunction(cat=util, desc="Set the base URL for action links (e.g., 'fod-actions.html')", returns="This renderer for method chaining")
-        public DocRenderer actionUrl(@SpelFunctionParam(name="url", desc="Base URL for action reference links") String url) {
-            this.actionUrl = url;
             return this;
         }
         
@@ -913,9 +903,10 @@ public class ActionSpelFunctions {
                 }
                 
                 String replacement;
-                if (isAsciiDoc && actionUrl != null) {
-                    // Construct URL: product-actions.html#anchor
-                    String url = resolvedProduct + "-actions.html" + anchor;
+                if (isAsciiDoc) {
+                    // Use FcliBuildProperties.getFcliDocBaseUrl() to construct absolute URL
+                    String baseUrl = FcliBuildProperties.INSTANCE.getFcliDocBaseUrl();
+                    String url = baseUrl + "/" + resolvedProduct + "-actions.html" + anchor;
                     replacement = String.format("link:%s[%s]", url, actionName);
                 } else {
                     replacement = String.format("`%s`", actionName);

@@ -522,14 +522,14 @@ formatters:
               description: Run OpenText Application Security Testing (AST) scans in GitHub Actions workflows
               overview:
                 fod: |
-                  This GitHub Action provides seamless integration of ${fortifyProductName}
+                  This GitHub Action provides seamless integration of ${productNames.fod}
                   for automated Application Security Testing (AST) into your CI/CD
                   workflows. The action leverages the ciOutputRef:setup action to set up
                   fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
                   related tasks, providing a unified yet customizable experience across your AST scan workflows
                   on GitHub and other CI systems.
                 ssc: |
-                  This GitHub Action provides seamless integration of ${fortifyProductName}
+                  This GitHub Action provides seamless integration of ${productNames.ssc}
                   for automated Application Security Testing (AST) into your CI/CD
                   workflows. The action leverages the ciOutputRef:setup action to set up
                   fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
@@ -539,9 +539,9 @@ formatters:
                 fod:
                   quickstart:
                     title: Quick Start Example
-                    summary: Minimal configuration to get started with FoD SAST scanning.
+                    summary: Minimal configuration for running OpenText Fortify AST scans.
                     snippet: |
-                      name: ${productNames.fod} SAST Scan
+                      name: ${productNames.fod} Scan
                       on:
                         push:
                           branches: [main]
@@ -563,9 +563,9 @@ formatters:
                 ssc:
                   quickstart:
                     title: Quick Start Example
-                    summary: Minimal configuration to get started with SSC SAST scanning.
+                    summary: Minimal configuration for running OpenText Fortify AST scans.
                     snippet: |
-                      name: ${productNames.ssc} SAST Scan
+                      name: ${productNames.ssc} Scan
                       on:
                         push:
                           branches: [main]
@@ -639,7 +639,7 @@ formatters:
   # ============================================================================
 
   ciSystemFullDoc: |
-    = `${docTitle}`
+    = ${docTitle}
     :subtitle: ${fortifyProductName}
     :fcli-version: ${#fcliBuildProperties().fcliVersion}
     :fortify-setup-version: ${setupVersion}
@@ -827,7 +827,7 @@ formatters:
   
   asciiDocCell: |
     |${(envVar.realNode!=null?envVar.realNode:envVar).names.replaceAll('\\n', ' +\\\\n')}
-    |${#docRenderer().asciidoc().actionUrl(asciiDocActionUrl).currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
+    |${#docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
     
   asciiDocSection: |
     ==== ${sectionTitle}
@@ -949,7 +949,6 @@ steps:
           fortifyProductName: ${productNames[product]}
           productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
           sessionEnvVars: ${productEnvVars.session}
-          asciiDocActionUrl: "${product}-actions.html"
       
       # Build cells for output
       - var.rm: [asciiDocCells]
@@ -994,7 +993,6 @@ steps:
       - var.set:
           fortifyProductName: ${productNames[product]}
           productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
-          asciiDocActionUrl: "${product}-actions.html"
           ciEnvVarSections: "${{productEnvVars.preScan, commonEnvVars.package, productEnvVars.scan, productEnvVars.postScan}}"
           sectionTitles: "${{
             (product=='fod'?'Release Configuration':'Application Version Configuration'),
@@ -1135,10 +1133,9 @@ steps:
                         product: ${productEntry.key}
                         productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
                         fortifyProductName: ${productNames[product]}
-                        asciiDocActionUrl: "${product}-actions.html"
                         outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
                         docTitle: ${outputDocMeta.title}
-                        docOverview: ${#docRenderer().asciidoc().actionUrl(asciiDocActionUrl).currentProduct(product).ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview[product])}
+                        docOverview: ${#docRenderer().asciidoc().currentProduct(product).ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview[product])}
                     
                     # Build product-specific sample sections if samples defined
                     - var.rm: [sampleSections]
