@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a>
-fcli_version: 0.20260129.123301-dev_doc.ci-updates
+fcli_version: 0.20260129.170514-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.123301-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.170514-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-action.html"><code>fcli action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260129.123301-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260129.170514-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -121,18 +121,18 @@ sections below list the environment variables supported by this action.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FOD_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fortify on Demand URL, for example <code><a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a></code>. This must be rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OpenText Core Application Security (Fortify on Demand) URL, for example <code><a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a></code>. This must be rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FOD_CLIENT_ID
 FOD_CLIENT_SECRET</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with an API key: Fortify on Demand Client ID (API key) and Secret (API secret).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with an API key: OpenText Core Application Security (Fortify on Demand) Client ID (API key) and Secret (API secret).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FOD_TENANT
 FOD_USER
 FOD_PASSWORD</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with user credentials: Fortify on Demand tenant, user and password. It is recommended to use a Personal Access Token instead of an actual user password.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with user credentials: OpenText Core Application Security (Fortify on Demand) tenant, user and password. It is recommended to use a Personal Access Token instead of an actual user password.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FOD_LOGIN_EXTRA_OPTS</p></td>
@@ -161,7 +161,7 @@ FOD_PASSWORD</p></td>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FOD_RELEASE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fortify on Demand release to use with this action. This should be specified as <code>&lt;app-name&gt;:&lt;release-name&gt;</code> (for non-microservices applications) or <code>&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;</code> (for microservices  applications). Default value is based on repository and branch name, for example <code>myOrg/myRepo:myBranch</code>. Note that you&#8217;ll need to explicitly configure <code>FOD_RELEASE</code> for microservices applications, as the default value lacks a microservice name.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OpenText Core Application Security (Fortify on Demand) release to use with this action. This should be specified as <code>&lt;app-name&gt;:&lt;release-name&gt;</code> (for non-microservices applications) or <code>&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;</code> (for microservices  applications). Default value is based on repository and branch name, for example <code>myOrg/myRepo:myBranch</code>. Note that you&#8217;ll need to explicitly configure <code>FOD_RELEASE</code> for microservices applications, as the default value lacks a microservice name.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP
@@ -300,7 +300,7 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Software Security Center (SSC) URL, for example <code><a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a></code>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OpenText Application Security (Fortify Software Security Center) URL, for example <code><a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a></code>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_TOKEN</p></td>
@@ -527,8 +527,8 @@ like default FoD release name and SSC application version name.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260129.123301-dev_doc.ci-updates<br>
-Last updated 2026-01-29 12:35:53 UTC
+Version 0.20260129.170514-dev_doc.ci-updates<br>
+Last updated 2026-01-29 17:08:11 UTC
 </div>
 </div>
 </body>

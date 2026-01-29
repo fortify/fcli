@@ -1,6 +1,6 @@
 ---
-title: <code>fortify/github-action</code><br>
-fcli_version: 0.20260129.123301-dev_doc.ci-updates
+title: <code>fortify/github-action</code>
+fcli_version: 0.20260129.170514-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -9,7 +9,6 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="author" content="Software Security Center">
 <title>fortify/github-action</title>
 
 {% include asciidoc-head.html %}
@@ -22,14 +21,14 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.123301-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.170514-dev_doc.ci-updates" %}
 
 
 <div id="header">
-<h1><code>fortify/github-action</code><br></h1>
+<h1><code>fortify/github-action</code></h1>
+<div class="subtitle">OpenText Application Security (Fortify Software Security Center)</div>
 <div class="details">
-<span id="author" class="author">Software Security Center</span><br>
-<span id="revnumber">version 0.20260129.123301-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260129.170514-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -71,7 +70,7 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">fcli</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260129.123301-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260129.170514-dev_doc.ci-updates</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">@fortify/setup</p></td>
@@ -93,7 +92,12 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 <h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This GitHub Action provides seamless integration of Software Security Center Application Security Testing (AST) into your CI/CD workflows. The action leverages @fortify/setup to bootstrap fcli, then executes fcli-based CI workflows through the <a href="../manpage/fcli-action-run.html"><code>fcli action run</code></a> command.</p>
+<p>This GitHub Action provides seamless integration of
+for automated Application Security Testing (AST) into your CI/CD
+workflows. The action leverages the <a href="setup-action.html">fortify/github-action/setup</a> action to set up
+fcli, then executes the fcli <a href="generic-actions.html#_ci">ci</a> action to run the requested scans and
+related tasks, providing a unified yet customizable experience across your AST scan workflows
+on GitHub and other CI systems.</p>
 </div>
 <div class="sect2">
 <h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
@@ -102,7 +106,7 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">name: Software Security Center SAST Scan
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">name: OpenText Application Security (Fortify Software Security Center) SAST Scan
 on:
   push:
     branches: [main]
@@ -156,7 +160,7 @@ jobs:
 <div class="sect2">
 <h3 id="_authentication_connection"><a class="anchor" href="#_authentication_connection"></a>Authentication &amp; Connection</h3>
 <div class="paragraph">
-<p>Configure credentials and connection details for Software Security Center.</p>
+<p>Configure credentials and connection details for OpenText Application Security (Fortify Software Security Center).</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -170,7 +174,7 @@ jobs:
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Software Security Center (SSC) URL, for example <code><a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a></code>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OpenText Application Security (Fortify Software Security Center) URL, for example <code><a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a></code>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_TOKEN</p></td>
@@ -359,8 +363,8 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260129.123301-dev_doc.ci-updates<br>
-Last updated 2026-01-29 12:36:31 UTC
+Version 0.20260129.170514-dev_doc.ci-updates<br>
+Last updated 2026-01-29 17:08:48 UTC
 </div>
 </div>
 </body>

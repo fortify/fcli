@@ -1,6 +1,6 @@
 ---
 title: <code>fortify/github-action/setup</code>
-fcli_version: 0.20260129.123301-dev_doc.ci-updates
+fcli_version: 0.20260129.170514-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.123301-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.170514-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1><code>fortify/github-action/setup</code></h1>
 <div class="details">
-<span id="revnumber">version 0.20260129.123301-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260129.170514-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -64,7 +64,7 @@ fcli_version: 0.20260129.123301-dev_doc.ci-updates
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">fcli</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260129.123301-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260129.170514-dev_doc.ci-updates</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">@fortify/setup</p></td>
@@ -105,7 +105,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: fortify/github-action/setup@v3
         env:
-          FCLI_BOOTSTRAP_VERSION: v3.14.1  # Pin to specific version
+          FCLI_BOOTSTRAP_VERSION: v3.5.0  # Pin to specific version for stability
       - name: Run custom fcli commands
         run: |
           fcli fod session login
@@ -120,7 +120,7 @@ jobs:
 <h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both Fortify on Demand (FoD) and Software Security Center (SSC) integrations.</p>
+<p>Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both OpenText Core Application Security (Fortify on Demand) and OpenText Application Security (Fortify Software Security Center) integrations.</p>
 </div>
 <div class="sect2">
 <h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
@@ -169,8 +169,8 @@ jobs:
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260129.123301-dev_doc.ci-updates<br>
-Last updated 2026-01-29 12:36:31 UTC
+Version 0.20260129.170514-dev_doc.ci-updates<br>
+Last updated 2026-01-29 17:08:48 UTC
 </div>
 </div>
 </body>
