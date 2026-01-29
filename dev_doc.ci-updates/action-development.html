@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260129.170514-dev_doc.ci-updates
+fcli_version: 0.20260129.174038-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260129.170514-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.170514-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.174038-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260129.170514-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260129.174038-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -170,7 +170,6 @@ fcli_version: 0.20260129.170514-dev_doc.ci-updates
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
 <li><a href="#_docrenderer"><code>docRenderer</code></a></li>
-<li><a href="#_docrenderer_actionurl"><code>docRenderer.actionUrl</code></a></li>
 <li><a href="#_docrenderer_asciidoc"><code>docRenderer.asciidoc</code></a></li>
 <li><a href="#_docrenderer_cicontext"><code>docRenderer.ciContext</code></a></li>
 <li><a href="#_docrenderer_currentproduct"><code>docRenderer.currentProduct</code></a></li>
@@ -220,7 +219,7 @@ fcli_version: 0.20260129.170514-dev_doc.ci-updates
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260129.170514-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260129.174038-dev_doc.ci-updates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -342,7 +341,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260129.170514-dev_doc.ci-updates supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260129.174038-dev_doc.ci-updates supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4552,34 +4551,6 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_actionurl"><a class="anchor" href="#_docrenderer_actionurl"></a><code>docRenderer.actionUrl</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.actionUrl(string url)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for action reference links</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Set the base URL for action links (e.g., 'fod-actions.html')</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_docrenderer_asciidoc"><a class="anchor" href="#_docrenderer_asciidoc"></a><code>docRenderer.asciidoc</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -5406,8 +5377,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260129.170514-dev_doc.ci-updates<br>
-Last updated 2026-01-29 17:08:00 UTC
+Version 0.20260129.174038-dev_doc.ci-updates<br>
+Last updated 2026-01-29 17:43:28 UTC
 </div>
 </div>
 </body>
