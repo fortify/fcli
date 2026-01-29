@@ -648,18 +648,6 @@ formatters:
     :toc: left
     :toclevels: 3
     
-    == Version Information
-    
-    [%autowidth]
-    |===
-    |Component|Version
-    
-    |fcli|{fcli-version}
-    |${setupDef.name}|{fortify-setup-version}
-    |CI Integration|{ci-action-version}
-    |Generated|{generation-date}
-    |===
-    
     == Overview
     
     ${docOverview}
@@ -722,25 +710,13 @@ formatters:
     |===
   
   ciSystemSetupDoc: |
-    = `${docTitle}`
+    = ${docTitle}
     :fcli-version: ${#fcliBuildProperties().fcliVersion}
     :fortify-setup-version: ${setupVersion}
     :ci-action-version: ${ciVersion}
     :generation-date: ${#formatDateTime('yyyy-MM-dd')}
     :toc: left
     :toclevels: 3
-    
-    == Version Information
-    
-    [%autowidth]
-    |===
-    |Component|Version
-    
-    |fcli|{fcli-version}
-    |${setupDef.name}|{fortify-setup-version}
-    |CI Integration|{ci-action-version}
-    |Generated|{generation-date}
-    |===
     
     == Overview
     
