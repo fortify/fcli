@@ -744,9 +744,33 @@ public class ActionSpelFunctions {
     }
     
     /**
+     * Record holding CI context information for document rendering.
+     */
+    @Reflectable
+    public static record CiContext(String ciSystem, String version, ObjectNode outputs) {}
+    
+    /**
      * Fluent builder for rendering documentation with automatic reference processing.
-     * Handles both fcliCmd:command: and actionRef:action-name#anchor references,
+     * Handles fcliCmd:command:, actionRef:product:action[#anchor], and ciOutputRef:product:output references,
      * converting them to either plain text or AsciiDoc format based on configuration.
+     * 
+     * <p>Reference syntax:</p>
+     * <ul>
+     *   <li><code>fcliCmd:command:</code> - References to fcli commands (e.g., "fcliCmd:fcli fod session login:")</li>
+     *   <li><code>actionRef:product:action[#anchor]</code> - References to fcli actions
+     *       <ul>
+     *         <li>product: generic, fod, ssc, or _ (current/generic context)</li>
+     *         <li>anchor: optional, auto-generated if omitted</li>
+     *         <li>Examples: "actionRef:_:ci", "actionRef:fod:setup-release#_setup_release"</li>
+     *       </ul>
+     *   </li>
+     *   <li><code>ciOutputRef:product:output</code> - References to CI integration output documents
+     *       <ul>
+     *         <li>product: fod, ssc, or _ (generic/product-agnostic)</li>
+     *         <li>Examples: "ciOutputRef:_:setup", "ciOutputRef:fod:ciDocs"</li>
+     *       </ul>
+     *   </li>
+     * </ul>
      * 
      * <p>Usage examples:</p>
      * <pre>
@@ -755,6 +779,12 @@ public class ActionSpelFunctions {
      * 
      * // AsciiDoc rendering with action links
      * #docRenderer().asciidoc().actionUrl("fod-actions.html").render(description)
+     * 
+     * // With product context for resolving '_' in actionRef
+     * #docRenderer().asciidoc().currentProduct("fod").render(description)
+     * 
+     * // With CI context for resolving ciOutputRef
+     * #docRenderer().asciidoc().ciContext(ciSystem, version, outputs).render(description)
      * 
      * // Custom manpage base URL
      * #docRenderer().asciidoc().manpageBaseUrl("/docs/cli").render(description)
@@ -766,6 +796,8 @@ public class ActionSpelFunctions {
         private boolean isAsciiDoc = false;
         private String actionUrl = null;
         private String manpageBaseUrl = "../manpage";
+        private String currentProduct = null;
+        private CiContext ciContext = null;
         
         @SpelFunction(cat=util, desc="Configure renderer for plain text output", returns="This renderer for method chaining")
         public DocRenderer text() {
@@ -791,10 +823,27 @@ public class ActionSpelFunctions {
             return this;
         }
         
+        @SpelFunction(cat=util, desc="Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references", returns="This renderer for method chaining")
+        public DocRenderer currentProduct(@SpelFunctionParam(name="product", desc="Current product identifier") String product) {
+            this.currentProduct = product;
+            return this;
+        }
+        
+        @SpelFunction(cat=util, desc="Set CI context (system, version, outputs) for resolving ciOutputRef references", returns="This renderer for method chaining")
+        public DocRenderer ciContext(
+                @SpelFunctionParam(name="ciSystem", desc="CI system identifier") String ciSystem,
+                @SpelFunctionParam(name="version", desc="CI version") String version,
+                @SpelFunctionParam(name="outputs", desc="Map of output definitions") ObjectNode outputs) {
+            this.ciContext = new CiContext(ciSystem, version, outputs);
+            return this;
+        }
+        
         @SpelFunction(cat=util, desc="""
-                Render text, processing all fcliCmd:command: and actionRef:action-name#anchor references.
+                Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor], and ciOutputRef:product:output references.
                 - fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
                 - actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)
+                - ciOutputRef references become CI output document links (AsciiDoc) or backtick-wrapped output names (plain text)
+                Use '_' for product to refer to current/generic context.
                 """, returns="Rendered text with all references processed")
         public String render(@SpelFunctionParam(name="text", desc="Text containing documentation references") String text) {
             if (text == null) return "";
@@ -802,8 +851,11 @@ public class ActionSpelFunctions {
             // Process fcliCmd:command: references
             text = processFcliCmdReferences(text);
             
-            // Process actionRef:action-name#anchor references
+            // Process actionRef:product:action[#anchor] references
             text = processActionReferences(text);
+            
+            // Process ciOutputRef:product:output references
+            text = processOutputReferences(text);
             
             return text;
         }
@@ -834,19 +886,112 @@ public class ActionSpelFunctions {
         }
         
         private String processActionReferences(String text) {
-            Pattern pattern = Pattern.compile("actionRef:([\\w_-]+)(#[\\w_-]+)");
+            // Pattern: actionRef:product:action[#anchor]
+            // product: generic, fod, ssc, or _ (current/generic)
+            // anchor is optional
+            Pattern pattern = Pattern.compile("actionRef:(generic|fod|ssc|_)?:([\\w_-]+)(#[\\w_-]+)?");
             Matcher matcher = pattern.matcher(text);
             StringBuffer result = new StringBuffer();
             
             while (matcher.find()) {
-                String actionName = matcher.group(1);
-                String anchor = matcher.group(2);
-                String replacement;
+                String product = matcher.group(1);
+                String actionName = matcher.group(2);
+                String anchor = matcher.group(3);
                 
+                // Resolve product context
+                String resolvedProduct;
+                if (product == null || product.equals("_")) {
+                    // Use current product if set, otherwise default to 'generic'
+                    resolvedProduct = (currentProduct != null) ? currentProduct : "generic";
+                } else {
+                    resolvedProduct = product;
+                }
+                
+                // Auto-generate anchor if not provided
+                if (anchor == null) {
+                    anchor = "#_" + actionName.replace("-", "_");
+                }
+                
+                String replacement;
                 if (isAsciiDoc && actionUrl != null) {
-                    replacement = String.format("link:%s%s[%s]", actionUrl, anchor, actionName);
+                    // Construct URL: product-actions.html#anchor
+                    String url = resolvedProduct + "-actions.html" + anchor;
+                    replacement = String.format("link:%s[%s]", url, actionName);
                 } else {
                     replacement = String.format("`%s`", actionName);
+                }
+                
+                matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+            }
+            matcher.appendTail(result);
+            return result.toString();
+        }
+        
+        private String processOutputReferences(String text) {
+            // Pattern: ciOutputRef:output-name (product-independent) or ciOutputRef:product:output-name
+            // For product-specific outputs, product can be: fod, ssc, or _ (current product)
+            Pattern pattern = Pattern.compile("ciOutputRef:(?:(fod|ssc|_):)?([\\w_-]+)");
+            Matcher matcher = pattern.matcher(text);
+            StringBuffer result = new StringBuffer();
+            
+            while (matcher.find()) {
+                String product = matcher.group(1);  // May be null for product-independent outputs
+                String outputKey = matcher.group(2);
+                
+                String replacement;
+                if (isAsciiDoc && ciContext != null) {
+                    try {
+                        var outputs = ciContext.outputs();
+                        var outputDef = outputs.get(outputKey);
+                        
+                        if (outputDef != null && !outputDef.isMissingNode()) {
+                            var filePatternNode = outputDef.get("filePattern");
+                            if (filePatternNode == null || filePatternNode.isMissingNode()) {
+                                replacement = String.format("`%s`", outputKey);
+                                matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+                                continue;
+                            }
+                            String filePattern = filePatternNode.asText();
+                            
+                            // Resolve product for _ placeholder
+                            String resolvedProduct = "_".equals(product) ? currentProduct : product;
+                            
+                            // Check if this is a product-specific output
+                            var productsNode = outputDef.get("products");
+                            boolean isProductSpecific = productsNode != null && !productsNode.isMissingNode() && productsNode.size() > 0;
+                            
+                            // Replace placeholders in file pattern
+                            String fileName = filePattern
+                                .replace("{ciSystem}", ciContext.ciSystem())
+                                .replace("{version}", ciContext.version());
+                            
+                            // Only add product to path if output is product-specific and product is specified
+                            if (isProductSpecific && resolvedProduct != null && !resolvedProduct.isEmpty()) {
+                                fileName = fileName.replace("{product}", resolvedProduct);
+                            }
+                            
+                            // Extract title from doc metadata for display name
+                            String displayName = outputKey;
+                            var docNode = outputDef.get("doc");
+                            if (docNode != null && !docNode.isMissingNode()) {
+                                var titleNode = docNode.get("title");
+                                if (titleNode != null && !titleNode.isMissingNode()) {
+                                    displayName = titleNode.asText();
+                                }
+                            }
+                            
+                            // Convert .adoc to .html and create link
+                            replacement = String.format("link:%s[%s]", fileName.replace(".adoc", ".html"), displayName);
+                        } else {
+                            // Fallback if output not found in context
+                            replacement = String.format("`%s`", outputKey);
+                        }
+                    } catch (Exception e) {
+                        // Fallback on any error
+                        replacement = String.format("`%s`", outputKey);
+                    }
+                } else {
+                    replacement = String.format("`%s`", outputKey);
                 }
                 
                 matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));

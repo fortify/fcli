@@ -234,9 +234,9 @@ formatters:
       package:
         - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
           desc: >- 
-            By default, when running a SAST scan, the fcli actionRef:package#_package action is used to (optionally) package the source code
-            to be scanned; see next entry for information on how to configure the default actionRef:package#_package action. If the standard
-            fcli actionRef:package#_package action doesn't meet your needs, for example if you want to perform a local translation using
+            By default, when running a SAST scan, the fcli actionRef:_:package action is used to (optionally) package the source code
+            to be scanned; see next entry for information on how to configure the default actionRef:_:package action. If the standard
+            fcli actionRef:_:package action doesn't meet your needs, for example if you want to perform a local translation using
             Fortify Static Code Analyzer, you can use `PACKAGE_ACTION` to use a custom action for packaging, optionally
             providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
             Note that any custom action must set the `global.package.output` action variable, pointing to the package or
@@ -263,14 +263,14 @@ formatters:
       session:
         - names: FOD_URL
           desc: >-  
-            Fortify on Demand URL, for example `https://ams.fortify.com`. This must be rendered by the CI/CD system
+            ${productNames.fod} URL, for example `https://ams.fortify.com`. This must be rendered by the CI/CD system
             as plain text, not as a masked secret/variable.
         - names: FOD_CLIENT_ID\nFOD_CLIENT_SECRET
           desc: >-
-            Required when authenticating with an API key: Fortify on Demand Client ID (API key) and Secret (API secret).
+            Required when authenticating with an API key: ${productNames.fod} Client ID (API key) and Secret (API secret).
         - names: FOD_TENANT\nFOD_USER\nFOD_PASSWORD
           desc: >-
-            Required when authenticating with user credentials: Fortify on Demand tenant, user and password. It is
+            Required when authenticating with user credentials: ${productNames.fod} tenant, user and password. It is
             recommended to use a Personal Access Token instead of an actual user password.
         - names: FOD_LOGIN_EXTRA_OPTS
           desc: >-
@@ -279,7 +279,7 @@ formatters:
       preScan:
         - names: FOD_RELEASE
           desc: >-
-            Fortify on Demand release to use with this action. This should be specified as `<app-name>:<release-name>`
+            ${productNames.fod} release to use with this action. This should be specified as `<app-name>:<release-name>`
             (for non-microservices applications) or `<app-name>:<microservice-name>:<release-name>` (for microservices 
             applications). Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
             Note that you'll need to explicitly configure `FOD_RELEASE` for microservices applications, as the default
@@ -288,7 +288,7 @@ formatters:
           desc: >-
             If `DO_SETUP` is set not set to `false`, the application and/or release will be created if they do not
             yet exist, and static scan settings will be configured if not configured already, using the
-            fcli-provided actionRef:setup-release#_setup_release action, or, if specified, the custom fcli action specified through
+            fcli-provided actionRef:_:setup-release action, or, if specified, the custom fcli action specified through
             `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS`
             environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
             release representing your default branch by passing the `--copy-from` option through
@@ -313,7 +313,7 @@ formatters:
         - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
           desc: >-
             If `DO_RELEASE_SUMMARY` is not set to `false`, a release summary will be generated using the
-            fcli-provided actionRef:release-summary#_release_summary action or, if specified, the custom fcli action specified through
+            fcli-provided actionRef:_:release-summary action or, if specified, the custom fcli action specified through
             `RELEASE_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
             `RELEASE_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
             unsigned custom actions to be used.
@@ -321,7 +321,7 @@ formatters:
           desc: >-
             If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
             are set), a policy check will be run after scan completion using the fcli-provided
-            actionRef:check-policy#_check_policy action or, if specified, the custom fcli action specified through
+            actionRef:_:check-policy action or, if specified, the custom fcli action specified through
             `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
             `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
             unsigned custom actions to be used.
@@ -329,7 +329,7 @@ formatters:
           desc: >-
             (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
             are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-            matching the current CI system like actionRef:github-pr-comment#_github_pr_comment or, if specified, the custom fcli action
+            matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
             specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
             the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
             custom actions to be used.
@@ -337,7 +337,7 @@ formatters:
           desc: >-
             If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
             data will be exported into a CI-specific format using an fcli-provided action matching the current
-            CI system like actionRef:github-sast-report#_github_sast_report or actionRef:gitlab-sast-report#_gitlab_sast_report, or, if specified, the custom fcli action
+            CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
             specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
             `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
             actions to be used.
@@ -345,7 +345,7 @@ formatters:
       session:
         - names: SSC_URL
           desc: >-
-              Software Security Center (SSC) URL, for example `https://ssc.customer.fortifyhosted.net/`. This must be 
+              ${productNames.ssc} URL, for example `https://ssc.customer.fortifyhosted.net/`. This must be 
               rendered by the CI/CD system as plain text, not as a masked secret/variable.
         - names: SSC_TOKEN
           desc: >-
@@ -369,7 +369,7 @@ formatters:
         - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
           desc: >-
             If `DO_SETUP` is set not set to `false`, the application and/or version will be created if they do not yet
-            exist using the fcli-provided actionRef:setup-appversion#_setup_appversion action, or, if specified, the custom fcli action specified
+            exist using the fcli-provided actionRef:_:setup-appversion action, or, if specified, the custom fcli action specified
             through `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS` 
             environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
             application version representing your default branch by passing the `--copy-from` option through
@@ -428,7 +428,7 @@ formatters:
         - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
           desc: >-
             If `DO_APPVERSION_SUMMARY` is not set to `false`, an application version summary will be generated using the
-            fcli-provided actionRef:appversion-summary#_appversion_summary action or, if specified, the custom fcli action specified through
+            fcli-provided actionRef:_:appversion-summary action or, if specified, the custom fcli action specified through
             `APPVERSION_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
             `APPVERSION_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
             unsigned custom actions to be used.
@@ -436,7 +436,7 @@ formatters:
           desc: >-
             If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
             are set), a policy check will be run after scan completion using the fcli-provided
-            actionRef:check-policy#_check_policy action or, if specified, the custom fcli action specified through
+            actionRef:_:check-policy action or, if specified, the custom fcli action specified through
             `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
             `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
             unsigned custom actions to be used.
@@ -444,7 +444,7 @@ formatters:
           desc: >-
             (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
             are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-            matching the current CI system like actionRef:github-pr-comment#_github_pr_comment or, if specified, the custom fcli action
+            matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
             specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
             the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
             custom actions to be used.
@@ -452,7 +452,7 @@ formatters:
           desc: >-
             If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
             data will be exported into a CI-specific format using an fcli-provided action matching the current
-            CI system like actionRef:github-sast-report#_github_sast_report or actionRef:gitlab-sast-report#_gitlab_sast_report, or, if specified, the custom fcli action
+            CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
             specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
             `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
             actions to be used.
@@ -460,7 +460,7 @@ formatters:
           desc: >-
             If `DO_DEBRICKED_EXPORT` is not set to `false` and a Debricked scan was completed, the Debricked vulnerability
             data will be exported into a CI-specific format using an fcli-provided action matching the current
-            CI system like actionRef:gitlab-debricked-report#_gitlab_debricked_report, or, if specified, the custom fcli action
+            CI system like actionRef:_:gitlab-debricked-report, or, if specified, the custom fcli action
             specified through `DEBRICKED_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
             `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
             actions to be used.
@@ -507,7 +507,7 @@ formatters:
                           - uses: actions/checkout@v4
                           - uses: fortify/github-action/setup@v3
                             env:
-                              FCLI_BOOTSTRAP_VERSION: v3.14.1  # Pin to specific version
+                              FCLI_BOOTSTRAP_VERSION: v3.5.0  # Pin to specific version for stability
                           - name: Run custom fcli commands
                             run: |
                               fcli fod session login
@@ -519,19 +519,29 @@ formatters:
             products: {fod, ssc}
             doc:
               title: fortify/github-action
-              description: Complete AST scanning integration for FoD and SSC
+              description: Run OpenText Application Security Testing (AST) scans in GitHub Actions workflows
               overview:
                 fod: |
-                  This GitHub Action provides seamless integration of Fortify on Demand Application Security Testing (AST) into your CI/CD workflows. The action leverages @fortify/setup to bootstrap fcli, then executes fcli-based CI workflows through the ${#docRenderer().asciidoc().render('fcliCmd:fcli action run:')} command.
+                  This GitHub Action provides seamless integration of ${fortifyProductName}
+                  for automated Application Security Testing (AST) into your CI/CD
+                  workflows. The action leverages the ciOutputRef:setup action to set up
+                  fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
+                  related tasks, providing a unified yet customizable experience across your AST scan workflows
+                  on GitHub and other CI systems.
                 ssc: |
-                  This GitHub Action provides seamless integration of Software Security Center Application Security Testing (AST) into your CI/CD workflows. The action leverages @fortify/setup to bootstrap fcli, then executes fcli-based CI workflows through the ${#docRenderer().asciidoc().render('fcliCmd:fcli action run:')} command.
+                  This GitHub Action provides seamless integration of ${fortifyProductName}
+                  for automated Application Security Testing (AST) into your CI/CD
+                  workflows. The action leverages the ciOutputRef:setup action to set up
+                  fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
+                  related tasks, providing a unified yet customizable experience across your AST scan workflows
+                  on GitHub and other CI systems.
               samples:
                 fod:
                   quickstart:
                     title: Quick Start Example
                     summary: Minimal configuration to get started with FoD SAST scanning.
                     snippet: |
-                      name: Fortify on Demand SAST Scan
+                      name: ${productNames.fod} SAST Scan
                       on:
                         push:
                           branches: [main]
@@ -548,13 +558,14 @@ formatters:
                                 FOD_URL: ${'$'}{{ vars.FOD_URL }}
                                 FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
                                 FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
-                                # FOD_RELEASE: MyApp:main  # Optional: defaults to repo:branch
+                                # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                                # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
                 ssc:
                   quickstart:
                     title: Quick Start Example
                     summary: Minimal configuration to get started with SSC SAST scanning.
                     snippet: |
-                      name: Software Security Center SAST Scan
+                      name: ${productNames.ssc} SAST Scan
                       on:
                         push:
                           branches: [main]
@@ -572,6 +583,15 @@ formatters:
                                 SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
                                 SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
                                 # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+  
+  # ============================================================================
+  # PRODUCT NAMES
+  # ============================================================================
+  # Full product names for documentation titles
+  
+  productNames:
+    ssc: OpenText Application Security (Fortify Software Security Center)
+    fod: OpenText Core Application Security (Fortify on Demand)
   
   # ============================================================================
   # SETUP COMPONENT ENV VAR DESCRIPTIONS
@@ -619,8 +639,8 @@ formatters:
   # ============================================================================
 
   ciSystemFullDoc: |
-    = `${docTitle}` +
-    ${fortifyProductName}
+    = `${docTitle}`
+    :subtitle: ${fortifyProductName}
     :fcli-version: ${#fcliBuildProperties().fcliVersion}
     :fortify-setup-version: ${setupVersion}
     :ci-action-version: ${ciVersion}
@@ -661,7 +681,7 @@ formatters:
     
     === Authentication & Connection
     
-    Configure credentials and connection details for ${product=='fod'?'Fortify on Demand':'Software Security Center'}.
+    Configure credentials and connection details for ${fortifyProductName}.
     
     [%autowidth]
     |===
@@ -729,7 +749,7 @@ formatters:
     
     == Configuration
     
-    Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both Fortify on Demand (FoD) and Software Security Center (SSC) integrations.
+    Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both ${productNames.fod} and ${productNames.ssc} integrations.
     
     === Setup & Bootstrap
     
@@ -807,7 +827,7 @@ formatters:
   
   asciiDocCell: |
     |${(envVar.realNode!=null?envVar.realNode:envVar).names.replaceAll('\\n', ' +\\\\n')}
-    |${#docRenderer().asciidoc().actionUrl(asciiDocActionUrl).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
+    |${#docRenderer().asciidoc().actionUrl(asciiDocActionUrl).currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
     
   asciiDocSection: |
     ==== ${sectionTitle}
@@ -907,6 +927,7 @@ steps:
   # Setup component env vars are now included directly in setupComponents definitions.
   #
   - var.set:
+      productNames: {fmt: productNames}
       ciSystems: {fmt: ciSystems}
       setupComponents: {fmt: setupComponents}
       fcliCiEnvVars: {fmt: fcliCiEnvVars}
@@ -925,6 +946,7 @@ steps:
       record.var-name: product
       do:
       - var.set:
+          fortifyProductName: ${productNames[product]}
           productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
           sessionEnvVars: ${productEnvVars.session}
           asciiDocActionUrl: "${product}-actions.html"
@@ -970,6 +992,7 @@ steps:
       record.var-name: product
       do:
       - var.set:
+          fortifyProductName: ${productNames[product]}
           productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
           asciiDocActionUrl: "${product}-actions.html"
           ciEnvVarSections: "${{productEnvVars.preScan, commonEnvVars.package, productEnvVars.scan, productEnvVars.postScan}}"
@@ -1068,7 +1091,7 @@ steps:
                     outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion)}"
                     fortifyProductName: ""
                     docTitle: ${outputDocMeta.title}
-                    docOverview: ${outputDocMeta.overview}
+                    docOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview)}
                 
                 # Build sample sections if samples defined
                 - var.rm: [sampleSections]
@@ -1111,11 +1134,11 @@ steps:
                     - var.set:
                         product: ${productEntry.key}
                         productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
-                        outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
-                        fortifyProductName: "${product=='fod'?'Fortify on Demand':'Software Security Center'}"
+                        fortifyProductName: ${productNames[product]}
                         asciiDocActionUrl: "${product}-actions.html"
+                        outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
                         docTitle: ${outputDocMeta.title}
-                        docOverview: ${outputDocMeta.overview[product]}
+                        docOverview: ${#docRenderer().asciidoc().actionUrl(asciiDocActionUrl).currentProduct(product).ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview[product])}
                     
                     # Build product-specific sample sections if samples defined
                     - var.rm: [sampleSections]
@@ -1279,7 +1302,7 @@ steps:
                     - var.set:
                         product: ${productEntry.key}
                         outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
-                        fortifyProductName: "${product=='fod'?'Fortify on Demand':'Software Security Center'}"
+                        fortifyProductName: ${productNames[product]}
                         docSections..: |
                           === link:${outputFile}[${outputDocMeta.title} - ${fortifyProductName}]
                           
