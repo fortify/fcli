@@ -31,6 +31,6 @@ public @interface SpelFunction {
     Class<?> returnType() default void.class;
     
     public static enum SpelFunctionCategory {
-        txt, date, workflow, fortify, fcli, util, ci
+        txt, date, workflow, fortify, fcli, util, ci, internal
     }
 }

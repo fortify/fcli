@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.runner;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.date;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.internal;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.txt;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
@@ -555,7 +556,7 @@ public class ActionSpelFunctions {
         return String.format("Copyright (c) %s Open Text", Year.now().getValue());
     }
     
-    @SpelFunction(cat=util, desc="""
+    @SpelFunction(cat=internal, desc="""
                 Returns basic information about the local git repository for the given source directory, or null if the
                 directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
                 Structure:
@@ -735,7 +736,7 @@ public class ActionSpelFunctions {
 
     }
     
-    @SpelFunction(cat=util, desc="""
+    @SpelFunction(cat=internal, desc="""
             Create a document renderer for processing documentation references (fcliCmd and actionRef).
             This is primarily for internal fcli use in documentation generation actions.
             """, returns="DocRenderer builder instance")
@@ -795,31 +796,31 @@ public class ActionSpelFunctions {
         private String currentProduct = null;
         private CiContext ciContext = null;
         
-        @SpelFunction(cat=util, desc="Configure renderer for plain text output", returns="This renderer for method chaining")
+        @SpelFunction(cat=internal, desc="Configure renderer for plain text output", returns="This renderer for method chaining")
         public DocRenderer text() {
             this.isAsciiDoc = false;
             return this;
         }
         
-        @SpelFunction(cat=util, desc="Configure renderer for AsciiDoc output", returns="This renderer for method chaining")
+        @SpelFunction(cat=internal, desc="Configure renderer for AsciiDoc output", returns="This renderer for method chaining")
         public DocRenderer asciidoc() {
             this.isAsciiDoc = true;
             return this;
         }
         
-        @SpelFunction(cat=util, desc="Set the base URL for manpage links (default: '../manpage')", returns="This renderer for method chaining")
+        @SpelFunction(cat=internal, desc="Set the base URL for manpage links (default: '../manpage')", returns="This renderer for method chaining")
         public DocRenderer manpageBaseUrl(@SpelFunctionParam(name="url", desc="Base URL for fcli command manpage links") String url) {
             this.manpageBaseUrl = url;
             return this;
         }
         
-        @SpelFunction(cat=util, desc="Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references", returns="This renderer for method chaining")
+        @SpelFunction(cat=internal, desc="Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references", returns="This renderer for method chaining")
         public DocRenderer currentProduct(@SpelFunctionParam(name="product", desc="Current product identifier") String product) {
             this.currentProduct = product;
             return this;
         }
         
-        @SpelFunction(cat=util, desc="Set CI context (system, version, outputs) for resolving ciOutputRef references", returns="This renderer for method chaining")
+        @SpelFunction(cat=internal, desc="Set CI context (system, version, outputs) for resolving ciOutputRef references", returns="This renderer for method chaining")
         public DocRenderer ciContext(
                 @SpelFunctionParam(name="ciSystem", desc="CI system identifier") String ciSystem,
                 @SpelFunctionParam(name="version", desc="CI version") String version,
@@ -828,7 +829,7 @@ public class ActionSpelFunctions {
             return this;
         }
         
-        @SpelFunction(cat=util, desc="""
+        @SpelFunction(cat=internal, desc="""
                 Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor], and ciOutputRef:product:output references.
                 - fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
                 - actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)

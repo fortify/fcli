@@ -53,8 +53,10 @@ import com.github.victools.jsonschema.module.jackson.JacksonOption;
 
 public class GenerateActionSchema {
     private static final String actionSpelFunctionSignatures = SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().stream()
+            .filter(d -> !"internal".equals(d.getCategory()))
             .map(d -> d.getSignature()).collect(Collectors.joining("\n"));
     private static final String actionSpelFunctionReturnTypes = SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().stream()
+            .filter(d -> !"internal".equals(d.getCategory()))
             .filter(d -> d.getReturns() != null && d.getReturns().getReturnTypeStructure() != null)
             .map(d -> String.format("%s:\n%s", d.getSignature(), d.getReturns().getReturnTypeStructure()))
             .collect(Collectors.joining("\n\n"));
