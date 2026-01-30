@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action/setup
-fcli_version: 0.20260130.113122-dev_doc.ci-updates
+fcli_version: 0.20260130.115806-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260130.113122-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.113122-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.115806-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action/setup</h1>
 <div class="details">
-<span id="revnumber">version 0.20260130.113122-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260130.115806-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -93,11 +93,13 @@ jobs:
 <col>
 <col>
 </colgroup>
-<tbody>
+<thead>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+<th class="tableblock halign-left valign-top">Environment Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
+</thead>
+<tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Fcli version to bootstrap (e.g., 'v3', 'v3.14', 'v3.14.1', or without 'v' prefix: '3.14.1'). When set to a full major.minor.patch version, GitHub Actions will use RUNNER_TOOL_CACHE for persistent caching across workflow runs. Partial versions (e.g., 'v3') or unset will use RUNNER_TEMP for job-specific temporary storage. Ignored if FCLI_BOOTSTRAP_URL is set.</p></td>
@@ -130,8 +132,8 @@ jobs:
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260130.113122-dev_doc.ci-updates<br>
-Last updated 2026-01-30 11:35:00 UTC
+Version 0.20260130.115806-dev_doc.ci-updates<br>
+Last updated 2026-01-30 12:01:48 UTC
 </div>
 </div>
 </body>

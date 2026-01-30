@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20260130.113122-dev_doc.ci-updates
+fcli_version: 0.20260130.115806-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260130.113122-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.113122-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.115806-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260130.113122-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260130.115806-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -57,9 +57,6 @@ fcli_version: 0.20260130.113122-dev_doc.ci-updates
 <ul class="sectlevel2">
 <li><a href="#_synopsis_4">Synopsis</a></li>
 <li><a href="#_description_4">Description</a></li>
-<li><a href="#_session">Session</a></li>
-<li><a href="#_authentication_connection">Authentication &amp; Connection</a></li>
-<li><a href="#_ci_integration">CI Integration</a></li>
 <li><a href="#_release_management">Release Management</a></li>
 <li><a href="#_package_configuration">Package Configuration</a></li>
 <li><a href="#_scan_execution">Scan Execution</a></li>
@@ -336,51 +333,6 @@ following activities:</p>
 <p>Configuration for this fcli action is done through environment variables; the
 sections below list the environment variables supported by this action.</p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_session"><a class="anchor" href="#_session"></a>Session</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_authentication_connection"><a class="anchor" href="#_authentication_connection"></a>Authentication &amp; Connection</h3>
-<div class="paragraph">
-<p>Configure credentials and connection details for OpenText Core Application Security (Fortify on Demand).</p>
-</div>
-<table class="tableblock frame-all grid-all fit-content">
-<colgroup>
-<col>
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">OpenText Core Application Security (Fortify on Demand) URL, for example <code><a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a></code>. This must be rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_CLIENT_ID
-FOD_CLIENT_SECRET</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with an API key: OpenText Core Application Security (Fortify on Demand) Client ID (API key) and Secret (API secret).</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_TENANT
-FOD_USER
-FOD_PASSWORD</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Required when authenticating with user credentials: OpenText Core Application Security (Fortify on Demand) tenant, user and password. It is recommended to use a Personal Access Token instead of an actual user password.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_LOGIN_EXTRA_OPTS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extra login options, for example for disabling SSL checks or changing connection time-outs; see  <a href="../manpage/fcli-fod-session-login.html"><code>fcli fod session login</code></a> documentation.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_ci_integration"><a class="anchor" href="#_ci_integration"></a>CI Integration</h3>
-
 </div>
 <div class="sect2">
 <h3 id="_release_management"><a class="anchor" href="#_release_management"></a>Release Management</h3>
@@ -1169,8 +1121,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260130.113122-dev_doc.ci-updates<br>
-Last updated 2026-01-30 11:34:14 UTC
+Version 0.20260130.115806-dev_doc.ci-updates<br>
+Last updated 2026-01-30 12:01:01 UTC
 </div>
 </div>
 </body>
