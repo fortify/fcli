@@ -119,17 +119,13 @@ steps:
                     paramTableRows..: "__${param.type} ${param.name}__ - ${param.description}"
         
         # Prepend internal use warning for internal category functions
-        - if: ${fn.category == 'internal'}
-          var.set:
-            fn.finalDescription: "**INTERNAL USE ONLY** - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.\n\n${fn.description}"
-        - if: ${fn.category != 'internal'}
-          var.set:
-            fn.finalDescription: ${fn.description}
+        - var.set:
+            fn.finalDescription: ${(fn.category!='internal'?'':"**INTERNAL USE ONLY**\n\n")}${fn.description}
                           
         - var.set:
            fn.paramTableRows: ${paramTableRows}
            fn.hideCategory: ${displayedCategories?.contains(fn.category)?:false}
-           spelFunctionDescriptionSections..:
+           ${fn.category=='internal'?'internal':'public'}SpelFunctionDescriptionSections..:
              fmt: spelFunctionDescriptionSection
              value: ${fn}
            displayedCategories..: ${fn.category}
@@ -301,7 +297,9 @@ formatters:
     
     The sections below describe the available SpEL functions.
     
-    ${#join("\n\n", spelFunctionDescriptionSections)}
+    ${#join("\n\n", publicSpelFunctionDescriptionSections)}
+    
+    ${#join("\n\n", internalSpelFunctionDescriptionSections)}
     
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
   formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!fcli-action-schema-url!!!',#fcliBuildProperties().fcliActionSchemaUrl)+'\n----\n']))} 
