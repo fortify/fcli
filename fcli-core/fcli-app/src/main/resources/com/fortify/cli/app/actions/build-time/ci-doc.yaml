@@ -1138,6 +1138,7 @@ steps:
                     outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion)}"
                     fortifyProductName: ""
                     docTitle: ${outputDocMeta.title}
+                    docOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview)}
                 
                 # Build sample sections if samples defined
                 - var.rm: [sampleSections]
