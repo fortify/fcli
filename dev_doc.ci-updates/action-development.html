@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260130.115806-dev_doc.ci-updates
+fcli_version: 0.20260130.131102-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260130.115806-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.115806-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.131102-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260130.115806-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260130.131102-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -152,6 +152,15 @@ fcli_version: 0.20260130.115806-dev_doc.ci-updates
 <li><a href="#_ssc_filterset"><code>ssc.filterSet</code></a></li>
 <li><a href="#_ssc_issuebrowserurl"><code>ssc.issueBrowserUrl</code></a></li>
 <li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
+<li><a href="#_internal">[internal]</a></li>
+<li><a href="#_docrenderer"><code>docRenderer</code></a></li>
+<li><a href="#_docrenderer_asciidoc"><code>docRenderer.asciidoc</code></a></li>
+<li><a href="#_docrenderer_cicontext"><code>docRenderer.ciContext</code></a></li>
+<li><a href="#_docrenderer_currentproduct"><code>docRenderer.currentProduct</code></a></li>
+<li><a href="#_docrenderer_manpagebaseurl"><code>docRenderer.manpageBaseUrl</code></a></li>
+<li><a href="#_docrenderer_render"><code>docRenderer.render</code></a></li>
+<li><a href="#_docrenderer_text"><code>docRenderer.text</code></a></li>
+<li><a href="#_localrepo"><code>localRepo</code></a></li>
 <li><a href="#_txt">[txt]</a></li>
 <li><a href="#_abbreviate"><code>abbreviate</code></a></li>
 <li><a href="#_fmt"><code>fmt</code></a></li>
@@ -169,16 +178,8 @@ fcli_version: 0.20260130.115806-dev_doc.ci-updates
 <li><a href="#_substringafter"><code>substringAfter</code></a></li>
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
-<li><a href="#_docrenderer"><code>docRenderer</code></a></li>
-<li><a href="#_docrenderer_asciidoc"><code>docRenderer.asciidoc</code></a></li>
-<li><a href="#_docrenderer_cicontext"><code>docRenderer.ciContext</code></a></li>
-<li><a href="#_docrenderer_currentproduct"><code>docRenderer.currentProduct</code></a></li>
-<li><a href="#_docrenderer_manpagebaseurl"><code>docRenderer.manpageBaseUrl</code></a></li>
-<li><a href="#_docrenderer_render"><code>docRenderer.render</code></a></li>
-<li><a href="#_docrenderer_text"><code>docRenderer.text</code></a></li>
 <li><a href="#_env"><code>env</code></a></li>
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
-<li><a href="#_localrepo"><code>localRepo</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
 <li><a href="#_uripart"><code>uriPart</code></a></li>
@@ -219,7 +220,7 @@ fcli_version: 0.20260130.115806-dev_doc.ci-updates
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260130.115806-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260130.131102-dev_doc.ci-updates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -341,7 +342,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260130.115806-dev_doc.ci-updates supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260130.131102-dev_doc.ci-updates supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4128,6 +4129,319 @@ default time zone id will be used.</p>
 </table>
 </div>
 <div class="sect2">
+<h3 id="_internal"><a class="anchor" href="#_internal"></a>[internal]</h3>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+Functions in this category are <strong>INTERNAL USE ONLY</strong> and should not be used in custom (runtime) actions. These functions may be removed, renamed, or change signature between fcli versions without notice.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer"><a class="anchor" href="#_docrenderer"></a><code>docRenderer</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DocRenderer builder instance</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Create a document renderer for processing documentation references (fcliCmd and actionRef).
+This is primarily for internal fcli use in documentation generation actions.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_asciidoc"><a class="anchor" href="#_docrenderer_asciidoc"></a><code>docRenderer.asciidoc</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.asciidoc()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Configure renderer for AsciiDoc output</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_cicontext"><a class="anchor" href="#_docrenderer_cicontext"></a><code>docRenderer.ciContext</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.ciContext(string ciSystem, string version, object outputs)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string ciSystem</em> - CI system identifier<br>
+<em>string version</em> - CI version<br>
+<em>object outputs</em> - Map of output definitions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Set CI context (system, version, outputs) for resolving ciOutputRef references</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_currentproduct"><a class="anchor" href="#_docrenderer_currentproduct"></a><code>docRenderer.currentProduct</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.currentProduct(string product)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string product</em> - Current product identifier</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_manpagebaseurl"><a class="anchor" href="#_docrenderer_manpagebaseurl"></a><code>docRenderer.manpageBaseUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.manpageBaseUrl(string url)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for fcli command manpage links</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Set the base URL for manpage links (default: '../manpage')</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_render"><a class="anchor" href="#_docrenderer_render"></a><code>docRenderer.render</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #docRenderer.render(string text)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text containing documentation references</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Rendered text with all references processed</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor], and ciOutputRef:product:output references.
+- fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
+- actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)
+- ciOutputRef references become CI output document links (AsciiDoc) or backtick-wrapped output names (plain text)
+Use '_' for product to refer to current/generic context.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_docrenderer_text"><a class="anchor" href="#_docrenderer_text"></a><code>docRenderer.text</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.text()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Configure renderer for plain text output</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_localrepo"><a class="anchor" href="#_localrepo"></a><code>localRepo</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #localRepo(string sourceDir)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sourceDir</em> - directory assumed to be inside a git working tree</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Git repository information or null if not a git work dir</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong> - This function is only meant to be used in the fcli build process, not for runtime (custom) actions. This function may be removed, renamed, or change signature between fcli versions.</p>
+</div>
+<div class="paragraph">
+<p>Returns basic information about the local git repository for the given source directory, or null if the
+directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
+Structure:
+{
+repository: { workDir, remoteUrl?, name: { short, full? } },
+branch: { full?, short? },
+commit: {
+    id: { full, short },
+    message: { short, full },
+    author: { name, email, when },
+    committer: { name, email, when }
+}
+}</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>Return Type Structure:</strong><br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-json" data-lang="json">{
+  "branch" : {
+    "full" : "string",
+    "short" : "string"
+  },
+  "commit" : {
+    "author" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "committer" : {
+      "email" : "string",
+      "name" : "string",
+      "when" : "string"
+    },
+    "id" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "message" : {
+      "full" : "string",
+      "short" : "string"
+    }
+  },
+  "repository" : {
+    "name" : {
+      "full" : "string",
+      "short" : "string"
+    },
+    "remoteUrl" : "string",
+    "workDir" : "string"
+  }
+}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_txt"><a class="anchor" href="#_txt"></a>[txt]</h3>
 
 </div>
@@ -4526,197 +4840,6 @@ values provided in the mapping object.</p>
 
 </div>
 <div class="sect2">
-<h3 id="_docrenderer"><a class="anchor" href="#_docrenderer"></a><code>docRenderer</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DocRenderer builder instance</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Create a document renderer for processing documentation references (fcliCmd and actionRef).
-This is primarily for internal fcli use in documentation generation actions.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_docrenderer_asciidoc"><a class="anchor" href="#_docrenderer_asciidoc"></a><code>docRenderer.asciidoc</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.asciidoc()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Configure renderer for AsciiDoc output</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_docrenderer_cicontext"><a class="anchor" href="#_docrenderer_cicontext"></a><code>docRenderer.ciContext</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.ciContext(string ciSystem, string version, object outputs)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string ciSystem</em> - CI system identifier<br>
-<em>string version</em> - CI version<br>
-<em>object outputs</em> - Map of output definitions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Set CI context (system, version, outputs) for resolving ciOutputRef references</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_docrenderer_currentproduct"><a class="anchor" href="#_docrenderer_currentproduct"></a><code>docRenderer.currentProduct</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.currentProduct(string product)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string product</em> - Current product identifier</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_docrenderer_manpagebaseurl"><a class="anchor" href="#_docrenderer_manpagebaseurl"></a><code>docRenderer.manpageBaseUrl</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.manpageBaseUrl(string url)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for fcli command manpage links</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Set the base URL for manpage links (default: '../manpage')</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_docrenderer_render"><a class="anchor" href="#_docrenderer_render"></a><code>docRenderer.render</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #docRenderer.render(string text)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text containing documentation references</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Rendered text with all references processed</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor], and ciOutputRef:product:output references.
-- fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
-- actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)
-- ciOutputRef references become CI output document links (AsciiDoc) or backtick-wrapped output names (plain text)
-Use '_' for product to refer to current/generic context.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_docrenderer_text"><a class="anchor" href="#_docrenderer_text"></a><code>docRenderer.text</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.text()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Configure renderer for plain text output</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -4759,89 +4882,6 @@ Use '_' for product to refer to current/generic context.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">JSON string representation of the given object</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_localrepo"><a class="anchor" href="#_localrepo"></a><code>localRepo</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #localRepo(string sourceDir)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sourceDir</em> - directory assumed to be inside a git working tree</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Git repository information or null if not a git work dir</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Returns basic information about the local git repository for the given source directory, or null if the
-directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
-Structure:
-{
-repository: { workDir, remoteUrl?, name: { short, full? } },
-branch: { full?, short? },
-commit: {
-    id: { full, short },
-    message: { short, full },
-    author: { name, email, when },
-    committer: { name, email, when }
-}
-}</p>
-</div></div></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>Return Type Structure:</strong><br></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-json" data-lang="json">{
-  "branch" : {
-    "full" : "string",
-    "short" : "string"
-  },
-  "commit" : {
-    "author" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "committer" : {
-      "email" : "string",
-      "name" : "string",
-      "when" : "string"
-    },
-    "id" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "message" : {
-      "full" : "string",
-      "short" : "string"
-    }
-  },
-  "repository" : {
-    "name" : {
-      "full" : "string",
-      "short" : "string"
-    },
-    "remoteUrl" : "string",
-    "workDir" : "string"
-  }
-}</code></pre>
-</div>
-</div></div></td>
 </tr>
 </tbody>
 </table>
@@ -5377,8 +5417,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260130.115806-dev_doc.ci-updates<br>
-Last updated 2026-01-30 12:00:54 UTC
+Version 0.20260130.131102-dev_doc.ci-updates<br>
+Last updated 2026-01-30 13:13:52 UTC
 </div>
 </div>
 </body>
