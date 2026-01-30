@@ -33,31 +33,58 @@ usage:
     
     ### 1. Updating Fcli Environment Variable Descriptions
     
-    Edit the `fcliCiEnvVars` formatter to add/update environment variables:
-    - `bootstrap`: Fcli-provided tool bootstrap environment variables (TOOL_DEFINITIONS, etc.)
-    - `common.package`: Shared packaging variables across products
-    - `fod.session/preScan/scan/postScan`: FoD-specific variables by category
-    - `ssc.session/preScan/scan/postScan`: SSC-specific variables by category
+    Edit the `fcliCiAction` formatter to add/update environment variables:
+    - `bootstrap.vars`: Fcli-provided tool bootstrap environment variables (TOOL_DEFINITIONS, etc.)
+    - `fod`: Array of FoD configuration sections (session, releaseManagement, package, scan, postScan)
+    - `ssc`: Array of SSC configuration sections (session, appVersionManagement, package, scan, postScan)
     
-    Each entry uses `names:` (variable name[s]) and `desc:` (description). Use
-    `fcliCmd:command:` syntax for command references (auto-linked in docs).
+    Each section has:
+    - `title`: Section title for documentation (required)
+    - `overview`: Section overview text (optional)
+    - `vars`: Array of environment variable definitions with `names:` and `desc:` (required)
+    - `fragment`: Optional fragment file identifier. Only 'session' has special meaning - sections
+                  with `fragment: session` are written to `session-{product}.txt/adoc` fragment files.
+                  All other sections (with any other fragment value or no fragment property) are written
+                  to `ci-core-{product}.txt/adoc` fragment files. The fragment property is primarily
+                  used to separate session-related configuration from all other configuration.
     
-    To reuse a variable definition from another location, use YAML anchors:
+    Use `fcliCmd:command:` syntax in descriptions for command references (auto-linked in docs).
+    
+    Example:
     ```yaml
     formatters:
-      yamlAnchors:  # First formatter - defines reusable anchors
-        toolDefinitionsVar: &toolDefinitionsVar
-          names: TOOL_DEFINITIONS
-          desc: >-
-            URL or file path to custom tool definitions YAML file...
-      
-      fcliCiEnvVars:
-        bootstrap:
-          - *toolDefinitionsVar  # Reference the anchor
-        common:
-          package:
-            - names: SOME_OTHER_VAR
-              desc: Some description
+      fcliCiAction:
+        fod:
+          - title: Authentication & Connection
+            overview: >-
+              Configure credentials and connection details for ${productNames.fod}.
+            fragment: session  # Included in session-fod.txt/adoc
+            vars:
+              - names: FOD_URL
+                desc: Fortify on Demand base URL
+              - names: FOD_CLIENT_ID\nFOD_CLIENT_SECRET
+                desc: FoD API credentials for authentication
+              ...
+          - title: Release Management
+            overview: >-
+              Configure application and release management behavior.
+            # No fragment property → included in ci-core-fod.txt/adoc
+            vars:
+              - names: FOD_RELEASE
+                desc: FoD application and release to use
+              - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
+                desc: Configure automatic setup of applications and releases
+              ...
+          ...
+        ssc:
+          - title: Authentication & Connection
+            fragment: session  # Included in session-ssc.txt/adoc
+            vars:
+              ...
+          - title: Application Version Management
+            # No fragment → included in ci-core-ssc.txt/adoc
+            vars:
+              ...
     ```
     
     ### 2. Adding/Updating CI Systems
@@ -69,8 +96,10 @@ usage:
     - `<version>`: Version identifier (e.g., 'v3.0.x')
     
     Required fields per version:
-    - `setupComponent`: Bootstrap tool used by the integration (key from setupComponents)
-    - `setupVersion`: Which version of that bootstrap tool
+    - `setup`: Setup/bootstrap configuration
+      - `component`: Bootstrap tool used by the integration (key from setupComponents)
+      - `version`: Which version of that bootstrap tool
+      - `overview`: Section overview text for setup documentation
     - `outputs`: Map of output documents to generate
     
     Output structure:
@@ -84,8 +113,11 @@ usage:
     ciSystems:
       github:
         v3.0.x: &github_v3_0_outputs
-          setupComponent: fortifySetup
-          setupVersion: v2.1.x
+          setup:
+            component: fortifySetup
+            version: v2.1.x
+            overview: >
+              These environment variables control tool installation and initialization.
           outputs:
             setup:
               filePattern: setup-action.adoc
@@ -100,7 +132,11 @@ usage:
         
         v3.1.x:
           <<: *github_v3_0_outputs  # Inherit all from v3.0.x
-          setupVersion: v2.2.x      # Override only setupVersion
+          setup:
+            component: fortifySetup
+            version: v2.2.x          # Override setup version
+            overview: >
+              Updated overview for v3.1.x if needed.
     ```
     
     ### 3. Adding/Updating Setup Component Versions
@@ -111,39 +147,40 @@ usage:
     - `name`: Human-readable name (e.g., '@fortify/setup')
     - `envVarDescriptions`: Array of env var definitions with `names:` and `desc:`
     
-    To inherit all env var descriptions from a previous version and extend them,
-    define anchors on individual variables and manually list them:
     ```yaml
     setupComponents:
       fortifySetup:
         v2.1.x:
           name: '@fortify/setup'
           envVarDescriptions:
-            - &fcli_bootstrap_version_var
-              names: FCLI_BOOTSTRAP_VERSION
+            - names: FCLI_BOOTSTRAP_VERSION
               desc: >-
                 Fcli version to bootstrap...
-            - &fcli_bootstrap_path_var
-              names: FCLI_BOOTSTRAP_PATH
+            - names: FCLI_BOOTSTRAP_PATH
               desc: >-
                 Path to a pre-installed fcli executable...
-            - &fcli_bootstrap_url_var
-              names: FCLI_BOOTSTRAP_URL
+            - names: FCLI_BOOTSTRAP_URL
               desc: >-
                 Custom URL for downloading fcli...
         
         v2.2.x:
           name: '@fortify/setup'
           envVarDescriptions:
-            - *fcli_bootstrap_version_var  # Reuse from v2.1.x
-            - *fcli_bootstrap_path_var     # Reuse from v2.1.x
-            - *fcli_bootstrap_url_var      # Reuse from v2.1.x
-            - names: NEW_VAR_IN_V2_2       # Add new variable
+            - names: FCLI_BOOTSTRAP_VERSION  # Must duplicate from v2.1.x
+              desc: >-
+                Fcli version to bootstrap...
+            - names: FCLI_BOOTSTRAP_PATH
+              desc: >-
+                Path to a pre-installed fcli executable...
+            - names: FCLI_BOOTSTRAP_URL
+              desc: >-
+                Custom URL for downloading fcli...
+            - names: NEW_VAR_IN_V2_2          # Then add new ones
               desc: New variable description
     ```
     
-    Note: YAML doesn't support array spreading/extension directly. For many variables,
-    consider using SpEL array concatenation in the steps section instead of anchors.
+    TODO: Consider adding explicit `inheritsFrom` property to allow inheriting all variables
+    from another version, with associated processing code to merge variable arrays.
     
     ### 4. Updating Generic Document Templates
     
@@ -199,271 +236,336 @@ cli.options:
 
 formatters:
   # ============================================================================
-  # FCLI CI ENVIRONMENT VARIABLE DESCRIPTIONS
+  # FCLI CI ACTION CONFIGURATION STRUCTURE
   # ============================================================================
   # ⚠️  UPDATE VARIABLE DESCRIPTIONS HERE ⚠️
   # 
-  # All fcli CI environment variable descriptions in one place, organized by:
-  #   - bootstrap: fcli's own environment variables
-  #   - common: Shared across products (packaging, etc.)
-  #   - fod: FoD-specific variables by category
-  #   - ssc: SSC-specific variables by category
+  # All fcli CI action configuration sections organized by product.
+  # Each section can have:
+  #   - title: Section title for documentation
+  #   - overview: Section overview text
+  #   - fragment: Optional fragment file name (defaults to main doc if not specified)
+  #   - vars: Array of environment variable definitions
   #
-  # Each product env var set contains categories:
-  #   session: Authentication and connection
-  #   preScan: Release/app version management
-  #   package: Package configuration (only in common)
-  #   scan: Scan execution
-  #   postScan: Post-scan actions (policy check, PR comments, exports)
-  # 
+  # The bootstrap section is special - it only has vars (no title/overview) as it's
+  # combined with setup env vars in output.
+  #
+  # Common package section is defined as YAML anchor to be reused in both FoD and SSC.
+  #
   # To add/update variables:
-  # 1. Add to appropriate product and category
+  # 1. Add to appropriate product section array
   # 2. Use `names:` for variable name(s), `desc:` for description
   # 3. Multiple names on separate lines indicate related variables (e.g., credentials)
   # 4. Use `fcliCmd:command:` syntax for command references (auto-linked in docs)
 
-  fcliCiEnvVars:
+  fcliCiAction:
     bootstrap:
-      - names: TOOL_DEFINITIONS
-        desc: >-
-          URL or file path to custom tool definitions YAML file. This fcli environment variable controls
-          where fcli retrieves tool version information for ScanCentral Client, Debricked CLI, and other
-          tools. Useful for air-gapped environments or when using custom tool repositories. When set,
-          fcli will use the specified tool definitions instead of downloading from the default GitHub location.
-    common:
-      package:
-        - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
-          desc: >- 
-            By default, when running a SAST scan, the fcli actionRef:_:package action is used to (optionally) package the source code
-            to be scanned; see next entry for information on how to configure the default actionRef:_:package action. If the standard
-            fcli actionRef:_:package action doesn't meet your needs, for example if you want to perform a local translation using
-            Fortify Static Code Analyzer, you can use `PACKAGE_ACTION` to use a custom action for packaging, optionally
-            providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
-            Note that any custom action must set the `global.package.output` action variable, pointing to the package or
-            MBS file to be scanned.
-        - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR\nTOOL_DEFINITIONS
+      vars:
+        - names: TOOL_DEFINITIONS
           desc: >-
-            These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
-            and the given package or MBS file (which must already exist) will be used. To pass additional options to the
-            `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\nBy default:\n
-            - If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
-            and used, skipping automatic installation. The path should point to the installation directory or binary.\n
-            - `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
-            already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
-            - If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
-            will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-            will be installed.\n
-            - Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.\n
-            - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.\n
-            - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
-            location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
-            - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
-            from being updated or ScanCentral Client from being installed.\n
+            URL or file path to custom tool definitions YAML file. This fcli environment variable controls
+            where fcli retrieves tool version information for ScanCentral Client, Debricked CLI, and other
+            tools. Useful for air-gapped environments or when using custom tool repositories. When set,
+            fcli will use the specified tool definitions instead of downloading from the default GitHub location.
     fod:
-      session:
-        - names: FOD_URL
-          desc: >-  
-            ${productNames.fod} URL, for example `https://ams.fortify.com`. This must be rendered by the CI/CD system
-            as plain text, not as a masked secret/variable.
-        - names: FOD_CLIENT_ID\nFOD_CLIENT_SECRET
-          desc: >-
-            Required when authenticating with an API key: ${productNames.fod} Client ID (API key) and Secret (API secret).
-        - names: FOD_TENANT\nFOD_USER\nFOD_PASSWORD
-          desc: >-
-            Required when authenticating with user credentials: ${productNames.fod} tenant, user and password. It is
-            recommended to use a Personal Access Token instead of an actual user password.
-        - names: FOD_LOGIN_EXTRA_OPTS
-          desc: >-
-            Extra login options, for example for disabling SSL checks or changing connection time-outs; see 
-            fcliCmd:fcli fod session login: documentation.
-      preScan:
-        - names: FOD_RELEASE
-          desc: >-
-            ${productNames.fod} release to use with this action. This should be specified as `<app-name>:<release-name>`
-            (for non-microservices applications) or `<app-name>:<microservice-name>:<release-name>` (for microservices 
-            applications). Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
-            Note that you'll need to explicitly configure `FOD_RELEASE` for microservices applications, as the default
-            value lacks a microservice name.
-        - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
-          desc: >-
-            If `DO_SETUP` is set not set to `false`, the application and/or release will be created if they do not
-            yet exist, and static scan settings will be configured if not configured already, using the
-            fcli-provided actionRef:_:setup-release action, or, if specified, the custom fcli action specified through
-            `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS`
-            environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
-            release representing your default branch by passing the `--copy-from` option through
-            `SETUP_EXTRA_OPTS`. To allow this action to create new applications, depending on FoD version,
-            you may (also) need to provide the `--app-owner <user id or name>` option through `SETUP_EXTRA_OPTS`.
-      scan:
-        - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
-          desc: >-
-            The fcli `ci` action currently only supports running a SAST scan, which is enabled by default.
-            The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to the
-            fcliCmd:fcli fod sast-scan start: command, for example to specify scan notes. Note that these environment
-            variables only control the submission of the scan request; see the information below for details
-            on waiting for the scan to complete.
-        - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
-          desc: >-
-            By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
-            `false` to just kick off any configured scans without waiting for completion. Note that doing so
-            will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
-            extra options to the fcliCmd:fcli fod sast-scan wait-for: command. Note that `DO_SAST_WAIT` is deprecated; 
-            please use `DO_WAIT` instead.
-      postScan:
-        - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
-          desc: >-
-            If `DO_RELEASE_SUMMARY` is not set to `false`, a release summary will be generated using the
-            fcli-provided actionRef:_:release-summary action or, if specified, the custom fcli action specified through
-            `RELEASE_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
-            `RELEASE_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
-            unsigned custom actions to be used.
-        - names: DO_CHECK_POLICY\nCHECK_POLICY_ACTION\nCHECK_POLICY_EXTRA_OPTS
-          desc: >-
-            If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
-            are set), a policy check will be run after scan completion using the fcli-provided
-            actionRef:_:check-policy action or, if specified, the custom fcli action specified through
-            `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
-            `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
-            unsigned custom actions to be used.
-        - names: DO_PR_COMMENT\nPR_COMMENT_ACTION\nPR_COMMENT_EXTRA_OPTS
-          desc: >-
-            (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
-            are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-            matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
-            specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
-            the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
-            custom actions to be used.
-        - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
-          desc: >-
-            If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
-            data will be exported into a CI-specific format using an fcli-provided action matching the current
-            CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
-            specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
-            `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
-            actions to be used.
+      - title: Authentication & Connection
+        fragment: session
+        overview: >-
+          Configure credentials and connection details for ${productNames.fod}.
+        vars:
+          - names: FOD_URL
+            desc: >-  
+              ${productNames.fod} URL, for example `https://ams.fortify.com`. This must be rendered by the CI/CD system
+              as plain text, not as a masked secret/variable.
+          - names: FOD_CLIENT_ID\nFOD_CLIENT_SECRET
+            desc: >-
+              Required when authenticating with an API key: ${productNames.fod} Client ID (API key) and Secret (API secret).
+          - names: FOD_TENANT\nFOD_USER\nFOD_PASSWORD
+            desc: >-
+              Required when authenticating with user credentials: ${productNames.fod} tenant, user and password. It is
+              recommended to use a Personal Access Token instead of an actual user password.
+          - names: FOD_LOGIN_EXTRA_OPTS
+            desc: >-
+              Extra login options, for example for disabling SSL checks or changing connection time-outs; see 
+              fcliCmd:fcli fod session login: documentation.
+      - title: Release Management
+        overview: >-
+          Configure ${productNames.fod} release settings, including automatic creation and setup of applications
+          and releases if they don't exist.
+        vars:
+          - names: FOD_RELEASE
+            desc: >-
+              ${productNames.fod} release to use with this action. This should be specified as `<app-name>:<release-name>`
+              (for non-microservices applications) or `<app-name>:<microservice-name>:<release-name>` (for microservices 
+              applications). Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
+              Note that you'll need to explicitly configure `FOD_RELEASE` for microservices applications, as the default
+              value lacks a microservice name.
+          - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
+            desc: >-
+              If `DO_SETUP` is set not set to `false`, the application and/or release will be created if they do not
+              yet exist, and static scan settings will be configured if not configured already, using the
+              fcli-provided actionRef:_:setup-release action, or, if specified, the custom fcli action specified through
+              `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS`
+              environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
+              release representing your default branch by passing the `--copy-from` option through
+              `SETUP_EXTRA_OPTS`. To allow this action to create new applications, depending on FoD version,
+              you may (also) need to provide the `--app-owner <user id or name>` option through `SETUP_EXTRA_OPTS`.
+      - title: Package Configuration
+        overview: >-
+          Configure source code packaging behavior for SAST scans. Control whether to use custom packaging
+          actions, specify pre-built packages, or customize ScanCentral Client usage.
+        vars:
+          - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
+            desc: >- 
+              By default, when running a SAST scan, the fcli actionRef:_:package action is used to (optionally) package the source code
+              to be scanned; see next entry for information on how to configure the default actionRef:_:package action. If the standard
+              fcli actionRef:_:package action doesn't meet your needs, for example if you want to perform a local translation using
+              Fortify Static Code Analyzer, you can use `PACKAGE_ACTION` to use a custom action for packaging, optionally
+              providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
+              Note that any custom action must set the `global.package.output` action variable, pointing to the package or
+              MBS file to be scanned.
+          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR\nTOOL_DEFINITIONS
+            desc: >-
+              These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
+              and the given package or MBS file (which must already exist) will be used. To pass additional options to the
+              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\nBy default:\n
+              - If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.\n
+              - `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
+              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
+              - If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
+              will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
+              will be installed.\n
+              - Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.\n
+              - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.\n
+              - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
+              location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
+              - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
+              from being updated or ScanCentral Client from being installed.\n
+      - title: Scan Execution
+        overview: >-
+          Configure SAST scan execution and waiting behavior for ${productNames.fod}.
+        vars:
+          - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action currently only supports running a SAST scan, which is enabled by default.
+              The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to the
+              fcliCmd:fcli fod sast-scan start: command, for example to specify scan notes. Note that these environment
+              variables only control the submission of the scan request; see the information below for details
+              on waiting for the scan to complete.
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+            desc: >-
+              By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
+              `false` to just kick off any configured scans without waiting for completion. Note that doing so
+              will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+              extra options to the fcliCmd:fcli fod sast-scan wait-for: command. Note that `DO_SAST_WAIT` is deprecated; 
+              please use `DO_WAIT` instead.
+      - title: Post-Scan Actions
+        overview: >-
+          Configure post-scan tasks including release summaries, policy checks, pull request comments, and
+          vulnerability data exports for ${productNames.fod}.
+        vars:
+          - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
+            desc: >-
+              If `DO_RELEASE_SUMMARY` is not set to `false`, a release summary will be generated using the
+              fcli-provided actionRef:_:release-summary action or, if specified, the custom fcli action specified through
+              `RELEASE_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
+              `RELEASE_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_CHECK_POLICY\nCHECK_POLICY_ACTION\nCHECK_POLICY_EXTRA_OPTS
+            desc: >-
+              If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
+              are set), a policy check will be run after scan completion using the fcli-provided
+              actionRef:_:check-policy action or, if specified, the custom fcli action specified through
+              `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
+              `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_PR_COMMENT\nPR_COMMENT_ACTION\nPR_COMMENT_EXTRA_OPTS
+            desc: >-
+              (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
+              are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
+              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
+              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
+              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
+              custom actions to be used.
+          - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
+            desc: >-
+              If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
+              data will be exported into a CI-specific format using an fcli-provided action matching the current
+              CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
+              specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+              `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+              actions to be used.
     ssc:
-      session:
-        - names: SSC_URL
-          desc: >-
-              ${productNames.ssc} URL, for example `https://ssc.customer.fortifyhosted.net/`. This must be 
-              rendered by the CI/CD system as plain text, not as a masked secret/variable.
-        - names: SSC_TOKEN
-          desc: >-
-              Required when authenticating with an SSC token (recommended). Most actions should work fine with a CIToken.
-        - names: SSC_USER\nSSC_PASSWORD
-          desc: >-
-              Required when authenticating with SSC user credentials.
-        - names: SC_SAST_TOKEN
-          desc: >-
-              ScanCentral SAST Client Authentication Token for authenticating with ScanCentral SAST Controller. This 
-              environment variable is required when running a ScanCentral SAST scan.
-        - names: SSC_LOGIN_EXTRA_OPTS
-          desc: >-
-              Extra SSC login options, for example for disabling SSL checks or changing connection time-outs; 
-              see fcliCmd:fcli ssc session login: documentation.
-      preScan:
-        - names: SSC_APPVERSION
-          desc: >-
-            Fortify SSC application version to use with this action. This should be specified as `<app-name>:<version-name>`. 
-            Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
-        - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
-          desc: >-
-            If `DO_SETUP` is set not set to `false`, the application and/or version will be created if they do not yet
-            exist using the fcli-provided actionRef:_:setup-appversion action, or, if specified, the custom fcli action specified
-            through `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS` 
-            environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
-            application version representing your default branch by passing the `--copy-from` option through
-            `SETUP_EXTRA_OPTS`.
-      scan:
-        - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
-          desc: >-
-            The fcli `ci` action by default runs a SAST scan, optionally in combination with other scan types.
-            The `DO_SAST_SCAN` environment variable can be set to `false` to disable the SAST scan.
-            The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
-            the fcliCmd:fcli sc-sast scan start: command, for example to request a scan completion email notification.
-            Note that these environment variables only control the submission of the scan request; see the
-            information below for details on waiting for the scan to complete. 
-        - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
-          desc: >-
-            The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
-            is enabled automatically if `DEBRICKED_ACCESS_TOKEN` is provided. The `DO_DEBRICKED_SCAN` environment
-            variable can be set to `false` to (temporarily) disable the Debricked scan. The `DEBRICKED_SCAN_EXTRA_OPTS`
-            environment variable can be used to provide additional options to the `debricked scan` command.\nBy default:\n
-            - If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
-            and used, skipping automatic installation. The path should point to the installation directory or binary.\n
-            - `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used; if not
-            already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
-            - If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, the most recently installed Debricked CLI version
-            will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-            will be installed.\n
-            - Tool definitions to identify available Debricked CLI versions will be downloaded from the default
-            location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
-            - Set `PREINSTALLED` to `true` to require that Debricked CLI is already installed, preventing tool definitions
-            from being updated or Debricked CLI from being installed.\n
-        - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
-          desc: >-
-            By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
-            `false` to just kick off any configured scans without waiting for completion. Note that doing so
-            will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
-            extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DEBRICKED_WAIT_EXTRA_OPTS`
-            environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command.
-            Note that `DO_SAST_WAIT` is deprecated; please use `DO_WAIT` instead.
-      postScan:
-        - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
-          desc: >-
-            Aviator URL and JWT token to use for Aviator operations (see below). The `AVIATOR_TOKEN`
-            environment variable should hold the actual token contents; prefixes like `file:` or `string:`
-            (like the `--token` option on the fcliCmd:fcli aviator session login: command) are not supported. The
-            `AVIATOR_LOGIN_EXTRA_OPTS` environment variable can be used to pass additional options to the
-            fcliCmd:fcli aviator session login: command.
-        - names: DO_AVIATOR_AUDIT\nAVIATOR_APP\nAVIATOR_AUDIT_EXTRA_OPTS\nAVIATOR_WAIT_EXTRA_OPTS
-          desc: >-
-            If `DO_AVIATOR_AUDIT` is not set to `false`, and Aviator URL and token have been configured,
-            scan results will be sent to Aviator for AI-driven auditing. The Aviator application name
-            can optionally be configured through `AVIATOR_APP`, which defaults to the SSC application name.
-            The `AVIATOR_AUDIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
-            fcliCmd:fcli aviator ssc audit: command, for example to adjust tag mappings. The `AVIATOR_WAIT_EXTRA_OPTS`
-            environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command,
-            which will be run to wait for SSC to process the audited results.
-        - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
-          desc: >-
-            If `DO_APPVERSION_SUMMARY` is not set to `false`, an application version summary will be generated using the
-            fcli-provided actionRef:_:appversion-summary action or, if specified, the custom fcli action specified through
-            `APPVERSION_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
-            `APPVERSION_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
-            unsigned custom actions to be used.
-        - names: DO_CHECK_POLICY\nCHECK_POLICY_ACTION\nCHECK_POLICY_EXTRA_OPTS
-          desc: >-
-            If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
-            are set), a policy check will be run after scan completion using the fcli-provided
-            actionRef:_:check-policy action or, if specified, the custom fcli action specified through
-            `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
-            `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
-            unsigned custom actions to be used.
-        - names: DO_PR_COMMENT\nPR_COMMENT_ACTION\nPR_COMMENT_EXTRA_OPTS
-          desc: >-
-            (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
-            are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
-            matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
-            specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
-            the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
-            custom actions to be used.
-        - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
-          desc: >-
-            If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
-            data will be exported into a CI-specific format using an fcli-provided action matching the current
-            CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
-            specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
-            `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
-            actions to be used.
-        - names: DO_DEBRICKED_EXPORT\nDEBRICKED_EXPORT_ACTION\nDEBRICKED_EXPORT_EXTRA_OPTS
-          desc: >-
-            If `DO_DEBRICKED_EXPORT` is not set to `false` and a Debricked scan was completed, the Debricked vulnerability
-            data will be exported into a CI-specific format using an fcli-provided action matching the current
-            CI system like actionRef:_:gitlab-debricked-report, or, if specified, the custom fcli action
-            specified through `DEBRICKED_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
-            `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
-            actions to be used.
+      - title: Authentication & Connection
+        fragment: session
+        overview: >-
+          Configure credentials and connection details for ${productNames.ssc}.
+        vars:
+          - names: SSC_URL
+            desc: >-
+                ${productNames.ssc} URL, for example `https://ssc.customer.fortifyhosted.net/`. This must be 
+                rendered by the CI/CD system as plain text, not as a masked secret/variable.
+          - names: SSC_TOKEN
+            desc: >-
+                Required when authenticating with an SSC token (recommended). Most actions should work fine with a CIToken.
+          - names: SSC_USER\nSSC_PASSWORD
+            desc: >-
+                Required when authenticating with SSC user credentials.
+          - names: SC_SAST_TOKEN
+            desc: >-
+                ScanCentral SAST Client Authentication Token for authenticating with ScanCentral SAST Controller. This 
+                environment variable is required when running a ScanCentral SAST scan.
+          - names: SSC_LOGIN_EXTRA_OPTS
+            desc: >-
+                Extra SSC login options, for example for disabling SSL checks or changing connection time-outs; 
+                see fcliCmd:fcli ssc session login: documentation.
+      - title: Application Version Management
+        overview: >-
+          Configure ${productNames.ssc} application version settings, including automatic creation and setup of
+          application versions if they don't exist.
+        vars:
+          - names: SSC_APPVERSION
+            desc: >-
+              Fortify SSC application version to use with this action. This should be specified as `<app-name>:<version-name>`. 
+              Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
+          - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
+            desc: >-
+              If `DO_SETUP` is set not set to `false`, the application and/or version will be created if they do not yet
+              exist using the fcli-provided actionRef:_:setup-appversion action, or, if specified, the custom fcli action specified
+              through `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS` 
+              environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
+              application version representing your default branch by passing the `--copy-from` option through
+              `SETUP_EXTRA_OPTS`.
+      - title: Package Configuration
+        overview: >-
+          Configure source code packaging behavior for SAST scans. Control whether to use custom packaging
+          actions, specify pre-built packages, or customize ScanCentral Client usage.
+        vars:
+          - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
+            desc: >- 
+              By default, when running a SAST scan, the fcli actionRef:_:package action is used to (optionally) package the source code
+              to be scanned; see next entry for information on how to configure the default actionRef:_:package action. If the standard
+              fcli actionRef:_:package action doesn't meet your needs, for example if you want to perform a local translation using
+              Fortify Static Code Analyzer, you can use `PACKAGE_ACTION` to use a custom action for packaging, optionally
+              providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
+              Note that any custom action must set the `global.package.output` action variable, pointing to the package or
+              MBS file to be scanned.
+          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR\nTOOL_DEFINITIONS
+            desc: >-
+              These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
+              and the given package or MBS file (which must already exist) will be used. To pass additional options to the
+              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\nBy default:\n
+              - If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.\n
+              - `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
+              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
+              - If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
+              will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
+              will be installed.\n
+              - Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.\n
+              - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.\n
+              - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
+              location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
+              - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
+              from being updated or ScanCentral Client from being installed.\n
+      - title: Scan Execution
+        overview: >-
+          Configure SAST and Debricked scan execution and waiting behavior for ${productNames.ssc}.
+        vars:
+          - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action by default runs a SAST scan, optionally in combination with other scan types.
+              The `DO_SAST_SCAN` environment variable can be set to `false` to disable the SAST scan.
+              The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
+              the fcliCmd:fcli sc-sast scan start: command, for example to request a scan completion email notification.
+              Note that these environment variables only control the submission of the scan request; see the
+              information below for details on waiting for the scan to complete. 
+          - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
+            desc: >-
+              The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
+              is enabled automatically if `DEBRICKED_ACCESS_TOKEN` is provided. The `DO_DEBRICKED_SCAN` environment
+              variable can be set to `false` to (temporarily) disable the Debricked scan. The `DEBRICKED_SCAN_EXTRA_OPTS`
+              environment variable can be used to provide additional options to the `debricked scan` command.\nBy default:\n
+              - If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.\n
+              - `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used; if not
+              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
+              - If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, the most recently installed Debricked CLI version
+              will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
+              will be installed.\n
+              - Tool definitions to identify available Debricked CLI versions will be downloaded from the default
+              location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
+              - Set `PREINSTALLED` to `true` to require that Debricked CLI is already installed, preventing tool definitions
+              from being updated or Debricked CLI from being installed.\n
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+            desc: >-
+              By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
+              `false` to just kick off any configured scans without waiting for completion. Note that doing so
+              will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+              extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DEBRICKED_WAIT_EXTRA_OPTS`
+              environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command.
+              Note that `DO_SAST_WAIT` is deprecated; please use `DO_WAIT` instead.
+      - title: Post-Scan Actions
+        overview: >-
+          Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,
+          pull request comments, and vulnerability data exports for ${productNames.ssc}.
+        vars:
+          - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
+            desc: >-
+              Aviator URL and JWT token to use for Aviator operations (see below). The `AVIATOR_TOKEN`
+              environment variable should hold the actual token contents; prefixes like `file:` or `string:`
+              (like the `--token` option on the fcliCmd:fcli aviator session login: command) are not supported. The
+              `AVIATOR_LOGIN_EXTRA_OPTS` environment variable can be used to pass additional options to the
+              fcliCmd:fcli aviator session login: command.
+          - names: DO_AVIATOR_AUDIT\nAVIATOR_APP\nAVIATOR_AUDIT_EXTRA_OPTS\nAVIATOR_WAIT_EXTRA_OPTS
+            desc: >-
+              If `DO_AVIATOR_AUDIT` is not set to `false`, and Aviator URL and token have been configured,
+              scan results will be sent to Aviator for AI-driven auditing. The Aviator application name
+              can optionally be configured through `AVIATOR_APP`, which defaults to the SSC application name.
+              The `AVIATOR_AUDIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+              fcliCmd:fcli aviator ssc audit: command, for example to adjust tag mappings. The `AVIATOR_WAIT_EXTRA_OPTS`
+              environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command,
+              which will be run to wait for SSC to process the audited results.
+          - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
+            desc: >-
+              If `DO_APPVERSION_SUMMARY` is not set to `false`, an application version summary will be generated using the
+              fcli-provided actionRef:_:appversion-summary action or, if specified, the custom fcli action specified through
+              `APPVERSION_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
+              `APPVERSION_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_CHECK_POLICY\nCHECK_POLICY_ACTION\nCHECK_POLICY_EXTRA_OPTS
+            desc: >-
+              If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
+              are set), a policy check will be run after scan completion using the fcli-provided
+              actionRef:_:check-policy action or, if specified, the custom fcli action specified through
+              `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
+              `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_PR_COMMENT\nPR_COMMENT_ACTION\nPR_COMMENT_EXTRA_OPTS
+            desc: >-
+              (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
+              are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
+              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
+              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
+              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
+              custom actions to be used.
+          - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
+            desc: >-
+              If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
+              data will be exported into a CI-specific format using an fcli-provided action matching the current
+              CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
+              specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+              `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+              actions to be used.
+          - names: DO_DEBRICKED_EXPORT\nDEBRICKED_EXPORT_ACTION\nDEBRICKED_EXPORT_EXTRA_OPTS
+            desc: >-
+              If `DO_DEBRICKED_EXPORT` is not set to `false` and a Debricked scan was completed, the Debricked vulnerability
+              data will be exported into a CI-specific format using an fcli-provided action matching the current
+              CI system like actionRef:_:gitlab-debricked-report, or, if specified, the custom fcli action
+              specified through `DEBRICKED_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+              `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+              actions to be used.
   
   # ============================================================================
   # CI SYSTEM DEFINITIONS
@@ -480,8 +582,11 @@ formatters:
   ciSystems:
     github:
       v3.0.x:
-        setupComponent: fortifySetup
-        setupVersion: v2.1.x
+        setup:
+          component: fortifySetup
+          version: v2.1.x
+          overview: |
+            These environment variables control tool installation and initialization.
         outputs:
           setup:
             filePattern: setup-action.adoc
@@ -489,7 +594,7 @@ formatters:
             products: {}
             doc:
               title: fortify/github-action/setup
-              description: Bootstrap fcli and Fortify tools for custom CI/CD workflows
+              description: Bootstrap fcli and Fortify tools for custom CI/CD workflows.
               overview: |
                 This GitHub Action provides a setup component that bootstraps fcli and other Fortify tools for use in custom CI/CD workflows. This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.
               samples:
@@ -551,9 +656,14 @@ formatters:
                       jobs:
                         fortify:
                           runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
                           steps:
-                            - uses: actions/checkout@v4
-                            - uses: fortify/github-action@v3
+                            - uses: actions/checkout@v4            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                            - uses: fortify/github-action@v3       # Run Fortify scans
                               env:
                                 FOD_URL: ${'$'}{{ vars.FOD_URL }}
                                 FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
@@ -575,9 +685,14 @@ formatters:
                       jobs:
                         fortify:
                           runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
                           steps:
-                            - uses: actions/checkout@v4
-                            - uses: fortify/github-action@v3
+                            - uses: actions/checkout@v4            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                            - uses: fortify/github-action@v3       # Run Fortify scans
                               env:
                                 SSC_URL: ${'$'}{{ vars.SSC_URL }}
                                 SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
@@ -659,7 +774,7 @@ formatters:
     
     === Setup & Bootstrap
     
-    These environment variables control tool installation and initialization before scanning begins.
+    ${setupOverview}
     
     [%autowidth]
     |===
@@ -667,47 +782,9 @@ formatters:
     ${#join("", bootstrapEnvVarCells)}${#join("", fcliEnvVarCells)}
     |===
     
-    === Authentication & Connection
+    ${#join("\n\n", sessionConfigSections)}
     
-    Configure credentials and connection details for ${fortifyProductName}.
-    
-    [%autowidth]
-    |===
-    |Environment Variable|Description
-    ${#join("", sessionEnvVarCells)}
-    |===
-    
-    === ${product=='fod'?'Release':'Application Version'} Management
-    
-    [%autowidth]
-    |===
-    |Environment Variable|Description
-    ${#join("", preScanEnvVarCells)}
-    |===
-    
-    === Package Configuration
-    
-    [%autowidth]
-    |===
-    |Environment Variable|Description
-    ${#join("", packageEnvVarCells)}
-    |===
-    
-    === Scan Execution
-    
-    [%autowidth]
-    |===
-    |Environment Variable|Description
-    ${#join("", scanEnvVarCells)}
-    |===
-    
-    === Post-Scan Actions
-    
-    [%autowidth]
-    |===
-    |Environment Variable|Description
-    ${#join("", postScanEnvVarCells)}
-    |===
+    ${#join("\n\n", mainConfigSections)}
   
   ciSystemSetupDoc: |
     = ${docTitle}
@@ -729,7 +806,7 @@ formatters:
     
     === Setup & Bootstrap
     
-    These environment variables control tool installation and initialization.
+    ${setupOverview}
     
     [%autowidth]
     |===
@@ -804,19 +881,28 @@ formatters:
   asciiDocCell: |
     |${(envVar.realNode!=null?envVar.realNode:envVar).names.replaceAll('\\n', ' +\\\\n')}
     |${#docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
+  
+  asciiDocConfigSection: |
+    === ${sectionDef.title}
     
-  asciiDocSection: |
-    ==== ${sectionTitle}
+    ${#docRenderer().asciidoc().currentProduct(product).render(sectionDef.overview)}
     
     [%autowidth]
     |===
-    |Environment Variable|Description 
-    
+    |Environment Variable|Description
     ${#join("", asciiDocCells)}
     |===
   
-  asciiDocMultiSectionTable: |
-    ${#join("\n\n", asciiDocSections)}
+  textConfigSection: |
+    ${sectionDef.title}
+    ${'='.repeat(sectionDef.title.length())}
+    
+    ${#docRenderer().text().render(sectionDef.overview)}
+    
+    ${textTable}
+    
+    * Any fcli action references in this table refer to actions in the `fcli ${module}` module; please see
+      `fcli ${module} action help <action-name>` for more information.
   
 
 steps:
@@ -833,8 +919,10 @@ steps:
   #   <version>: Version identifier (e.g., 'v3.0.x' for GitHub Action v3.0.x)
   #
   # Required fields per version:
-  #   setupComponent: Which bootstrap tool to use (key from setupComponents below)
-  #   setupVersion: Which version of that tool (key within setupComponents.<component>)
+  #   setup: Setup/bootstrap configuration
+  #     component: Which bootstrap tool to use (key from setupComponents below)
+  #     version: Which version of that tool (key within setupComponents.<component>)
+  #     overview: Section overview text for setup documentation
   #   outputs: Map of output types to generate for this version
   #
   # Output types structure:
@@ -850,8 +938,11 @@ steps:
   # Example for adding GitLab:
   #   ciSystemRegistry.gitlab:
   #     v1.0.x:
-  #       setupComponent: 'fortifySetup'
-  #       setupVersion: 'v2.1.x'
+  #       setup:
+  #         component: 'fortifySetup'
+  #         version: 'v2.1.x'
+  #         overview: |
+  #           GitLab CI integration for Fortify AST scanning.
   #       outputs:
   #         ciDocs:
   #           filePattern: 'fortify-gitlab-{product}.adoc'
@@ -893,140 +984,122 @@ steps:
   
   # LOAD ENVIRONMENT VARIABLE DESCRIPTIONS:
   # ========================================
-  # Load fcli CI environment variable definitions from fcliCiEnvVars formatter.
-  # This formatter contains all environment variable descriptions organized by product and category:
+  # Load fcli CI action configuration from fcliCiAction formatter.
+  # This formatter contains all configuration sections organized by product as arrays:
   #   - bootstrap: fcli's own environment variables (TOOL_DEFINITIONS, etc.)
-  #   - common: Shared across products (packaging, etc.)
-  #   - fod: FoD-specific variables by category (session, preScan, scan, postScan)
-  #   - ssc: SSC-specific variables by category (session, preScan, scan, postScan)
+  #   - fod: FoD-specific configuration sections array
+  #   - ssc: SSC-specific configuration sections array
+  #   - common.package: Shared package configuration (included via YAML anchor in fod/ssc)
   #
-  # Setup component env vars are now included directly in setupComponents definitions.
+  # Each section (except bootstrap) has:
+  #   - title: Section title for documentation
+  #   - overview: Section overview text
+  #   - vars: Array of environment variable definitions
+  #   - fragment: Optional fragment file identifier (defaults to main doc)
+  #
+  # Setup component env vars are included directly in setupComponents definitions.
   #
   - var.set:
       productNames: {fmt: productNames}
       ciSystems: {fmt: ciSystems}
       setupComponents: {fmt: setupComponents}
-      fcliCiEnvVars: {fmt: fcliCiEnvVars}
-      fodEnvVars: ${fcliCiEnvVars.fod}
-      sscEnvVars: ${fcliCiEnvVars.ssc}
-      commonEnvVars: ${fcliCiEnvVars.common}
-      fcliBootstrapEnvVars: ${fcliCiEnvVars.bootstrap}
+      fcliCiAction: {fmt: fcliCiAction}
+      fcliBootstrapEnvVars: ${fcliCiAction.bootstrap.vars}
   
   # ==========================================================================
-  # STEP 1: Generate Session Fragments (product-specific)
+  # STEP 1: Generate Text & AsciiDoc Section Arrays
   # ==========================================================================
-  # Generate session-{product}.txt/adoc for each product
-  # Contains authentication and connection env vars
+  # For each product (fod/ssc), iterate over configuration sections and build
+  # arrays of formatted text/AsciiDoc sections, grouped by fragment identifier.
+  # This creates arrays like sessionTextSections, sessionAsciiDocSections,
+  # defaultTextSections, defaultAsciiDocSections for each product.
+  
   - records.for-each:
       from: ${{'fod', 'ssc'}}
       record.var-name: product
       do:
       - var.set:
           fortifyProductName: ${productNames[product]}
-          productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
-          sessionEnvVars: ${productEnvVars.session}
-      
-      # Build cells for output
-      - var.rm: [asciiDocCells]
-      - records.for-each:
-          from: ${sessionEnvVars}
-          record.var-name: envVar
-          do:
-          - var.set:
-              asciiDocCells..: {fmt: asciiDocCell}
-      
-      # Generate text table
-      - with:
-          writers:
-            tableWriter:
-              to: var:textTable
-              type: table
-              style: border
-          do:
-          - records.for-each:
-              from: ${sessionEnvVars}
-              record.var-name: envVar
-              do:
-              - writer.append:
-                  tableWriter: {fmt: textCell}
-      
-      # Write session fragment files
-      - var.set:
           module: ${product}
-      - out.write:
-          "${cli.outputDir}/session-${product}.txt": {fmt: textTable}
-          "${cli.outputDir}/session-${product}.adoc": {fmt: asciiDocTable}
-  
-  # ==========================================================================
-  # STEP 2: Generate CI Core Fragments (product-specific)
-  # ==========================================================================
-  # Generate ci-core-{product}.txt/adoc with CI integration env vars
-  # Organized by workflow phase for AsciiDoc, flat for text
-  - records.for-each:
-      from: ${{'fod', 'ssc'}}
-      record.var-name: product
-      do:
-      - var.set:
-          fortifyProductName: ${productNames[product]}
-          productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
-          ciEnvVarSections: "${{productEnvVars.preScan, commonEnvVars.package, productEnvVars.scan, productEnvVars.postScan}}"
-          sectionTitles: "${{
-            (product=='fod'?'Release Configuration':'Application Version Configuration'),
-            'Packaging Configuration',
-            'Scan Configuration',
-            'Post-Scan Configuration'
-          }}"
       
-      # Generate text table (flat list of all env vars)
-      - with:
-          writers:
-            tableWriter:
-              to: var:textTable
-              type: table
-              style: border
+      # Iterate over all configuration sections for this product
+      - records.for-each:
+          from: ${fcliCiAction[product]}
+          record.var-name: sectionDef
           do:
-          - records.for-each:
-              from: ${ciEnvVarSections}
-              record.var-name: envVarList
+          # Determine fragment name (defaults to 'default' if not specified)
+          - var.set:
+              fragment: ${#ifBlank(sectionDef.fragment, 'default')}
+          
+          # Build text table for this section
+          - with:
+              writers:
+                tableWriter:
+                  to: var:textTable
+                  type: table
+                  style: border
               do:
               - records.for-each:
-                  from: ${envVarList}
+                  from: ${sectionDef.vars}
                   record.var-name: envVar
                   do:
                   - writer.append:
                       tableWriter: {fmt: textCell}
-      
-      # Generate AsciiDoc multi-section table
-      - var.rm: [asciiDocSections]
-      - records.for-each:
-          from: "${{0, 1, 2, 3}}"
-          record.var-name: sectionIdx
-          do:
+          
+          # Append formatted text section to appropriate array
           - var.set:
-              sectionTitle: ${sectionTitles[sectionIdx]}
+              "${product}_${fragment}TextSections..": {fmt: textConfigSection}
+          
+          # Build AsciiDoc cells for this section
           - var.rm: [asciiDocCells]
           - records.for-each:
-              from: ${ciEnvVarSections[sectionIdx]}
+              from: ${sectionDef.vars}
               record.var-name: envVar
               do:
               - var.set:
                   asciiDocCells..: {fmt: asciiDocCell}
+          
+          # Append formatted AsciiDoc section to appropriate array
           - var.set:
-              asciiDocSections..: {fmt: asciiDocSection}
-      
-      # Write core fragment files
+              "${product}_${fragment}AsciiDocSections..": {fmt: asciiDocConfigSection}
+  
+  # ==========================================================================
+  # STEP 2: Write Fragment Files
+  # ==========================================================================
+  # Write joined section arrays to fragment files (session-{product}.txt/adoc,
+  # ci-core-{product}.txt/adoc)
+  
+  - records.for-each:
+      from: ${{'fod', 'ssc'}}
+      record.var-name: product
+      do:
       - var.set:
           module: ${product}
+          sessionTextVar: ${product+'_sessionTextSections'}
+          sessionAsciiDocVar: ${product+'_sessionAsciiDocSections'}
+          defaultTextVar: ${product+'_defaultTextSections'}
+          defaultAsciiDocVar: ${product+'_defaultAsciiDocSections'}
+      
+      # Write session fragments (join with double newline)
+      - var.set:
+          doubleNewline: "
+
+"
       - out.write:
-          "${cli.outputDir}/ci-core-${product}.txt": {fmt: textTable}
-          "${cli.outputDir}/ci-core-${product}.adoc": {fmt: asciiDocMultiSectionTable}
+          "${cli.outputDir}/session-${product}.txt": "${#join(doubleNewline, #this[sessionTextVar]!=null?#this[sessionTextVar]:{})}"
+          "${cli.outputDir}/session-${product}.adoc": "${#join(doubleNewline, #this[sessionAsciiDocVar]!=null?#this[sessionAsciiDocVar]:{})}"
+      
+      # Write core/main fragments
+      - out.write:
+          "${cli.outputDir}/ci-core-${product}.txt": "${#join(doubleNewline, #this[defaultTextVar]!=null?#this[defaultTextVar]:{})}"
+          "${cli.outputDir}/ci-core-${product}.adoc": "${#join(doubleNewline, #this[defaultAsciiDocVar]!=null?#this[defaultAsciiDocVar]:{})}"
   
   # ==========================================================================
   # STEP 3: Generate Complete CI Integration Guides
   # ==========================================================================
-  # For each CI system, generate complete documentation including:
-  # - Setup documentation (product-independent)
-  # - Per-product complete CI integration guides
+  # For each CI system version, generate complete documentation including setup
+  # docs (product-independent) and per-product CI integration guides
+  
   - records.for-each:
       from: ${#properties(ciSystems)}
       record.var-name: ciSystemEntry
@@ -1043,8 +1116,9 @@ steps:
           - var.set:
               ciVersion: ${versionEntry.key}
               ciSystemDef: ${versionEntry.value}
-              setupDef: ${setupComponents[ciSystemDef.setupComponent][ciSystemDef.setupVersion]}
-              setupVersion: ${ciSystemDef.setupVersion}
+              setupDef: ${setupComponents[ciSystemDef.setup.component][ciSystemDef.setup.version]}
+              setupVersion: ${ciSystemDef.setup.version}
+              setupOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(ciSystemDef.setup.overview)}
       
           # Process each output type defined for this CI system version
           - records.for-each:
@@ -1056,16 +1130,13 @@ steps:
                   outputDef: ${outputEntry.value}
                   outputDocMeta: ${outputDef.doc}
               
-              # Determine if this output applies to specific products or is product-independent  
-              # Note: empty products may be represented as empty array [] or empty map {}
+              # Product-independent outputs (e.g., setup docs)
               - if: "${#properties(outputDef.products).size() == 0}"
                 steps:
-                # Product-independent output (e.g., setup docs)
                 - var.set:
                     outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion)}"
                     fortifyProductName: ""
                     docTitle: ${outputDocMeta.title}
-                    docOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview)}
                 
                 # Build sample sections if samples defined
                 - var.rm: [sampleSections]
@@ -1075,8 +1146,8 @@ steps:
                     record.var-name: sampleEntry
                     do:
                     - var.set:
-                        sampleKey: ${sampleEntry.key}
                         sampleDef: ${sampleEntry.value}
+                    - var.set:
                         sampleSections..: {fmt: sampleSection}
                 
                 # Build env var cells for setup documentation
@@ -1100,84 +1171,55 @@ steps:
               
               # Product-specific outputs
               - if: "${#properties(outputDef.products).size() > 0}"
-                steps:
-                - records.for-each:
-                    from: ${#properties(outputDef.products)}
-                    record.var-name: productEntry
-                    do:
-                    - var.set:
-                        product: ${productEntry.key}
-                        productEnvVars: "${product=='fod'?fodEnvVars:sscEnvVars}"
-                        fortifyProductName: ${productNames[product]}
-                        outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
-                        docTitle: ${outputDocMeta.title}
-                        docOverview: ${#docRenderer().asciidoc().currentProduct(product).ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview[product])}
-                    
-                    # Build product-specific sample sections if samples defined
-                    - var.rm: [sampleSections]
-                    - if: "${outputDocMeta.samples!=null && outputDocMeta.samples[product]!=null}"
-                      records.for-each:
-                        from: ${#properties(outputDocMeta.samples[product])}
-                        record.var-name: sampleEntry
-                        do:
-                        - var.set:
-                            sampleKey: ${sampleEntry.key}
-                            sampleDef: ${sampleEntry.value}
-                            sampleSections..: {fmt: sampleSection}
-                    
-                    # Build all env var cell arrays for complete documentation
-                    - var.rm: [bootstrapEnvVarCells, fcliEnvVarCells, sessionEnvVarCells, preScanEnvVarCells, packageEnvVarCells, scanEnvVarCells, postScanEnvVarCells]
-                    - records.for-each:
-                        from: ${setupDef.envVars}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            bootstrapEnvVarCells..: {fmt: asciiDocCell}
-                    - records.for-each:
-                        from: ${fcliBootstrapEnvVars}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            fcliEnvVarCells..: {fmt: asciiDocCell}
-                    - records.for-each:
-                        from: ${productEnvVars.session}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            sessionEnvVarCells..: {fmt: asciiDocCell}
-                    - records.for-each:
-                        from: ${productEnvVars.preScan}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            preScanEnvVarCells..: {fmt: asciiDocCell}
-                    - records.for-each:
-                        from: ${commonEnvVars.package}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            packageEnvVarCells..: {fmt: asciiDocCell}
-                    - records.for-each:
-                        from: ${productEnvVars.scan}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            scanEnvVarCells..: {fmt: asciiDocCell}
-                    - records.for-each:
-                        from: ${productEnvVars.postScan}
-                        record.var-name: envVar
-                        do:
-                        - var.set:
-                            postScanEnvVarCells..: {fmt: asciiDocCell}
-                    
-                    # Set module variable for text table formatter references
-                    - var.set:
-                        module: ${product}
-                    
-                    # Write product-specific output
-                    - out.write:
-                        "${cli.outputDir}/ci/${ciSystem}/${ciVersion}/${outputFile}": {fmt: "${outputDef.formatter}"}
-
+                records.for-each:
+                  from: ${#properties(outputDef.products)}
+                  record.var-name: productEntry
+                  do:
+                  - var.set:
+                      product: ${productEntry.key}
+                      fortifyProductName: ${productNames[product]}
+                      module: ${product}
+                      outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
+                      docTitle: ${outputDocMeta.title}
+                      docOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).currentProduct(product).render(outputDocMeta.overview[product])}
+                  
+                  # Build sample sections for this product
+                  - var.rm: [sampleSections]
+                  - if: "${outputDocMeta.samples!=null && outputDocMeta.samples[product]!=null}"
+                    records.for-each:
+                      from: ${#properties(outputDocMeta.samples[product])}
+                      record.var-name: sampleEntry
+                      do:
+                      - var.set:
+                          sampleDef: ${sampleEntry.value}
+                      - var.set:
+                          sampleSections..: {fmt: sampleSection}
+                  
+                  # Build env var cells
+                  - var.rm: [bootstrapEnvVarCells, fcliEnvVarCells]
+                  - records.for-each:
+                      from: ${setupDef.envVarDescriptions}
+                      record.var-name: envVar
+                      do:
+                      - var.set:
+                          bootstrapEnvVarCells..: {fmt: asciiDocCell}
+                  - records.for-each:
+                      from: ${fcliBootstrapEnvVars}
+                      record.var-name: envVar
+                      do:
+                      - var.set:
+                          fcliEnvVarCells..: {fmt: asciiDocCell}
+                  
+                  # Set section arrays for ciSystemFullDoc formatter
+                  - var.set:
+                      sessionConfigSections: ${#this[product+'_sessionAsciiDocSections']!=null?#this[product+'_sessionAsciiDocSections']:{}}
+                      mainConfigSections: ${#this[product+'_defaultAsciiDocSections']!=null?#this[product+'_defaultAsciiDocSections']:{}}
+                  
+                  
+                  # Write product-specific output
+                  - out.write:
+                      "${cli.outputDir}/ci/${ciSystem}/${ciVersion}/${outputFile}": {fmt: "${outputDef.formatter}"}
+  
   # ==========================================================================
   # STEP 4: Generate Landing Pages
   # ==========================================================================
