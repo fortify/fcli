@@ -811,6 +811,7 @@ formatters:
     [%autowidth]
     |===
     |Environment Variable|Description
+    
     ${#join("", bootstrapEnvVarCells)}${#join("", fcliEnvVarCells)}
     |===
   
@@ -1302,8 +1303,9 @@ steps:
                 steps:
                 - var.set:
                     outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion)}"
+                    outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
                     docSections..: |
-                      === link:${outputFile}[${outputDocMeta.title}]
+                      === link:${outputFileLink}[${outputDocMeta.title}]
                       
                       ${outputDocMeta.description}
               
@@ -1317,9 +1319,10 @@ steps:
                     - var.set:
                         product: ${productEntry.key}
                         outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
+                        outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
                         fortifyProductName: ${productNames[product]}
                         docSections..: |
-                          === link:${outputFile}[${outputDocMeta.title} - ${fortifyProductName}]
+                          === link:${outputFileLink}[${outputDocMeta.title} - ${fortifyProductName}]
                           
                           ${outputDocMeta.description}
           

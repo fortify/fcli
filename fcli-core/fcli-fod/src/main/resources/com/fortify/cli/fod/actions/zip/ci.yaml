@@ -15,12 +15,6 @@ usage:
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.
     
-    === Session
-    
-    ${#include('/session-fod'+(isAsciiDoc?'.adoc':'.txt'))}
-    
-    === CI Integration
-    
     ${#include('/ci-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
 
 config:

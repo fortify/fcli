@@ -16,12 +16,6 @@ usage:
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.
     
-    === Session
-    
-    ${#include('/session-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
-    
-    === CI Integration
-    
     ${#include('/ci-core-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
 
 config:
