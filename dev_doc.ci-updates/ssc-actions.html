@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20260129.181710-dev_doc.ci-updates
+fcli_version: 0.20260130.113122-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260129.181710-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.181710-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.113122-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260129.181710-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260130.113122-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -72,7 +72,12 @@ fcli_version: 0.20260129.181710-dev_doc.ci-updates
 <li><a href="#_synopsis_6">Synopsis</a></li>
 <li><a href="#_description_6">Description</a></li>
 <li><a href="#_session">Session</a></li>
+<li><a href="#_authentication_connection">Authentication &amp; Connection</a></li>
 <li><a href="#_ci_integration">CI Integration</a></li>
+<li><a href="#_application_version_management">Application Version Management</a></li>
+<li><a href="#_package_configuration">Package Configuration</a></li>
+<li><a href="#_scan_execution">Scan Execution</a></li>
+<li><a href="#_post_scan_actions">Post-Scan Actions</a></li>
 </ul>
 </li>
 <li><a href="#_debricked_scan">debricked-scan</a>
@@ -490,18 +495,23 @@ sections below list the environment variables supported by this action.</p>
 </div>
 <div class="sect2">
 <h3 id="_session"><a class="anchor" href="#_session"></a>Session</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_authentication_connection"><a class="anchor" href="#_authentication_connection"></a>Authentication &amp; Connection</h3>
+<div class="paragraph">
+<p>Configure credentials and connection details for OpenText Application Security (Fortify Software Security Center).</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
 <col>
 </colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Environment Variable</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_URL</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">OpenText Application Security (Fortify Software Security Center) URL, for example <code><a href="https://ssc.customer.fortifyhosted.net/" class="bare">https://ssc.customer.fortifyhosted.net/</a></code>. This must be  rendered by the CI/CD system as plain text, not as a masked secret/variable.</p></td>
@@ -528,20 +538,23 @@ SSC_PASSWORD</p></td>
 </div>
 <div class="sect2">
 <h3 id="_ci_integration"><a class="anchor" href="#_ci_integration"></a>CI Integration</h3>
-<div class="sect3">
-<h4 id="_application_version_configuration"><a class="anchor" href="#_application_version_configuration"></a>Application Version Configuration</h4>
+
+</div>
+<div class="sect2">
+<h3 id="_application_version_management"><a class="anchor" href="#_application_version_management"></a>Application Version Management</h3>
+<div class="paragraph">
+<p>Configure OpenText Application Security (Fortify Software Security Center) application version settings, including automatic creation and setup of application versions if they don&#8217;t exist.</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
 <col>
 </colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Environment Variable</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SSC_APPVERSION</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Fortify SSC application version to use with this action. This should be specified as <code>&lt;app-name&gt;:&lt;version-name&gt;</code>.  Default value is based on repository and branch name, for example <code>myOrg/myRepo:myBranch</code>.</p></td>
@@ -556,20 +569,21 @@ SETUP_EXTRA_OPTS</p></td>
 </tbody>
 </table>
 </div>
-<div class="sect3">
-<h4 id="_packaging_configuration"><a class="anchor" href="#_packaging_configuration"></a>Packaging Configuration</h4>
+<div class="sect2">
+<h3 id="_package_configuration"><a class="anchor" href="#_package_configuration"></a>Package Configuration</h3>
+<div class="paragraph">
+<p>Configure source code packaging behavior for SAST scans. Control whether to use custom packaging actions, specify pre-built packages, or customize ScanCentral Client usage.</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
 <col>
 </colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Environment Variable</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">PACKAGE_ACTION
 PACKAGE_ACTION_EXTRA_OPTS</p></td>
@@ -595,20 +609,21 @@ By default:
 </tbody>
 </table>
 </div>
-<div class="sect3">
-<h4 id="_scan_configuration"><a class="anchor" href="#_scan_configuration"></a>Scan Configuration</h4>
+<div class="sect2">
+<h3 id="_scan_execution"><a class="anchor" href="#_scan_execution"></a>Scan Execution</h3>
+<div class="paragraph">
+<p>Configure SAST and Debricked scan execution and waiting behavior for OpenText Application Security (Fortify Software Security Center).</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
 <col>
 </colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Environment Variable</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN
 SAST_SCAN_EXTRA_OPTS</p></td>
@@ -638,20 +653,21 @@ DEBRICKED_WAIT_EXTRA_OPTS</p></td>
 </tbody>
 </table>
 </div>
-<div class="sect3">
-<h4 id="_post_scan_configuration"><a class="anchor" href="#_post_scan_configuration"></a>Post-Scan Configuration</h4>
+<div class="sect2">
+<h3 id="_post_scan_actions"><a class="anchor" href="#_post_scan_actions"></a>Post-Scan Actions</h3>
+<div class="paragraph">
+<p>Configure post-scan tasks including Aviator auditing, application version summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Application Security (Fortify Software Security Center).</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
 <col>
 </colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Environment Variable</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">AVIATOR_URL
 AVIATOR_TOKEN
@@ -697,7 +713,6 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </tr>
 </tbody>
 </table>
-</div>
 </div>
 </div>
 </div>
@@ -1450,8 +1465,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260129.181710-dev_doc.ci-updates<br>
-Last updated 2026-01-29 18:20:17 UTC
+Version 0.20260130.113122-dev_doc.ci-updates<br>
+Last updated 2026-01-30 11:34:25 UTC
 </div>
 </div>
 </body>

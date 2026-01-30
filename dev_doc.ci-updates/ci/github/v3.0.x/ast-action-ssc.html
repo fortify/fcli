@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action
-fcli_version: 0.20260129.181710-dev_doc.ci-updates
+fcli_version: 0.20260130.113122-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,14 +21,14 @@ fcli_version: 0.20260129.181710-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260129.181710-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.113122-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Application Security (Fortify Software Security Center)</div>
 <div class="details">
-<span id="revnumber">version 0.20260129.181710-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260130.113122-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -80,9 +80,14 @@ on:
 jobs:
   fortify:
     runs-on: ubuntu-latest
+    # permissions:               # When overriding default permissions, following are required:
+    #   contents: read           # Required for checkout action
+    #   security-events: write   # Required for publishing security reports to GitHub Security tab
+    #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
     steps:
-      - uses: actions/checkout@v4
-      - uses: fortify/github-action@v3
+      - uses: actions/checkout@v4            # Check out source code
+      - uses: actions/setup-&lt;build-tool&gt;@vX  # Set up build tool(s) required to build your project
+      - uses: fortify/github-action@v3       # Run Fortify scans
         env:
           SSC_URL: ${{ vars.SSC_URL }}
           SSC_TOKEN: ${{ secrets.SSC_TOKEN }}
@@ -102,7 +107,7 @@ jobs:
 <div class="sect2">
 <h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
 <div class="paragraph">
-<p>These environment variables control tool installation and initialization before scanning begins.</p>
+<p>These environment variables control tool installation and initialization.</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -113,6 +118,26 @@ jobs:
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fcli version to bootstrap (e.g., 'v3', 'v3.14', 'v3.14.1', or without 'v' prefix: '3.14.1'). When set to a full major.minor.patch version, GitHub Actions will use RUNNER_TOOL_CACHE for persistent caching across workflow runs. Partial versions (e.g., 'v3') or unset will use RUNNER_TEMP for job-specific temporary storage. Ignored if FCLI_BOOTSTRAP_URL is set.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_PATH</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations to control which fcli version is used and skip the download/verification process.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for downloading the fcli archive. When set, this overrides FCLI_BOOTSTRAP_VERSION and the default GitHub release URL. Useful for air-gapped environments or internal mirrors. The URL should point to a platform-specific fcli archive (e.g., <code>fcli-linux.tgz</code>, <code>fcli-windows.zip</code>, <code>fcli-mac.tgz</code>).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_RSA_SHA256_URL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature URL (which is <code>FCLI_BOOTSTRAP_URL</code> + <code>.rsa_sha256</code>). Required when using a custom <code>FCLI_BOOTSTRAP_URL</code> with signature verification enabled.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERIFY_SIGNATURE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to <code>false</code> to skip verification (not recommended). By default, signature verification is enabled to ensure the downloaded fcli binary has not been tampered with.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
@@ -162,6 +187,9 @@ SSC_PASSWORD</p></td>
 </div>
 <div class="sect2">
 <h3 id="_application_version_management"><a class="anchor" href="#_application_version_management"></a>Application Version Management</h3>
+<div class="paragraph">
+<p>Configure OpenText Application Security (Fortify Software Security Center) application version settings, including automatic creation and setup of application versions if they don&#8217;t exist.</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -188,6 +216,9 @@ SETUP_EXTRA_OPTS</p></td>
 </div>
 <div class="sect2">
 <h3 id="_package_configuration"><a class="anchor" href="#_package_configuration"></a>Package Configuration</h3>
+<div class="paragraph">
+<p>Configure source code packaging behavior for SAST scans. Control whether to use custom packaging actions, specify pre-built packages, or customize ScanCentral Client usage.</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -225,6 +256,9 @@ By default:
 </div>
 <div class="sect2">
 <h3 id="_scan_execution"><a class="anchor" href="#_scan_execution"></a>Scan Execution</h3>
+<div class="paragraph">
+<p>Configure SAST and Debricked scan execution and waiting behavior for OpenText Application Security (Fortify Software Security Center).</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -266,6 +300,9 @@ DEBRICKED_WAIT_EXTRA_OPTS</p></td>
 </div>
 <div class="sect2">
 <h3 id="_post_scan_actions"><a class="anchor" href="#_post_scan_actions"></a>Post-Scan Actions</h3>
+<div class="paragraph">
+<p>Configure post-scan tasks including Aviator auditing, application version summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Application Security (Fortify Software Security Center).</p>
+</div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
 <col>
@@ -327,8 +364,8 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260129.181710-dev_doc.ci-updates<br>
-Last updated 2026-01-29 18:20:52 UTC
+Version 0.20260130.113122-dev_doc.ci-updates<br>
+Last updated 2026-01-30 11:35:00 UTC
 </div>
 </div>
 </body>
