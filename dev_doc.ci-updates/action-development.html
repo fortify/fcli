@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260130.135250-dev_doc.ci-updates
+fcli_version: 0.20260130.174139-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260130.135250-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.135250-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.174139-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260130.135250-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260130.174139-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -191,13 +191,13 @@ fcli_version: 0.20260130.135250-dev_doc.ci-updates
 <li><a href="#_skipblankenvreason"><code>skipBlankEnvReason</code></a></li>
 <li><a href="#_skipreasonif"><code>skipReasonIf</code></a></li>
 <li><a href="#_internal">[internal]</a></li>
-<li><a href="#_docrenderer"><code>docRenderer</code></a></li>
-<li><a href="#_docrenderer_asciidoc"><code>docRenderer.asciidoc</code></a></li>
-<li><a href="#_docrenderer_cicontext"><code>docRenderer.ciContext</code></a></li>
-<li><a href="#_docrenderer_currentproduct"><code>docRenderer.currentProduct</code></a></li>
-<li><a href="#_docrenderer_manpagebaseurl"><code>docRenderer.manpageBaseUrl</code></a></li>
-<li><a href="#_docrenderer_render"><code>docRenderer.render</code></a></li>
-<li><a href="#_docrenderer_text"><code>docRenderer.text</code></a></li>
+<li><a href="#_action_docrenderer"><code>action.docRenderer</code></a></li>
+<li><a href="#_action_docrenderer_asciidoc"><code>action.docRenderer.asciidoc</code></a></li>
+<li><a href="#_action_docrenderer_cicontext"><code>action.docRenderer.ciContext</code></a></li>
+<li><a href="#_action_docrenderer_currentproduct"><code>action.docRenderer.currentProduct</code></a></li>
+<li><a href="#_action_docrenderer_manpagebaseurl"><code>action.docRenderer.manpageBaseUrl</code></a></li>
+<li><a href="#_action_docrenderer_render"><code>action.docRenderer.render</code></a></li>
+<li><a href="#_action_docrenderer_text"><code>action.docRenderer.text</code></a></li>
 <li><a href="#_localrepo"><code>localRepo</code></a></li>
 </ul>
 </li>
@@ -220,7 +220,7 @@ fcli_version: 0.20260130.135250-dev_doc.ci-updates
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260130.135250-dev_doc.ci-updates</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260130.174139-dev_doc.ci-updates</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -342,7 +342,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260130.135250-dev_doc.ci-updates supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260130.174139-dev_doc.ci-updates supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -5115,7 +5115,7 @@ Functions in this category are <strong>INTERNAL USE ONLY</strong> and should not
 </div>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer"><a class="anchor" href="#_docrenderer"></a><code>docRenderer</code></h3>
+<h3 id="_action_docrenderer"><a class="anchor" href="#_action_docrenderer"></a><code>action.docRenderer</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5124,7 +5124,7 @@ Functions in this category are <strong>INTERNAL USE ONLY</strong> and should not
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -5135,7 +5135,8 @@ Functions in this category are <strong>INTERNAL USE ONLY</strong> and should not
 <p><strong>INTERNAL USE ONLY</strong></p>
 </div>
 <div class="paragraph">
-<p>Create a document renderer for processing documentation references (fcliCmd and actionRef).
+<p>Create a document renderer for processing documentation references and $eval{&#8230;&#8203;} expressions.
+Accepts optional vars parameter to provide variables for $eval{&#8230;&#8203;} resolution.
 This is primarily for internal fcli use in documentation generation actions.</p>
 </div></div></td>
 </tr>
@@ -5143,7 +5144,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_asciidoc"><a class="anchor" href="#_docrenderer_asciidoc"></a><code>docRenderer.asciidoc</code></h3>
+<h3 id="_action_docrenderer_asciidoc"><a class="anchor" href="#_action_docrenderer_asciidoc"></a><code>action.docRenderer.asciidoc</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5152,7 +5153,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.asciidoc()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.asciidoc()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -5170,7 +5171,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_cicontext"><a class="anchor" href="#_docrenderer_cicontext"></a><code>docRenderer.ciContext</code></h3>
+<h3 id="_action_docrenderer_cicontext"><a class="anchor" href="#_action_docrenderer_cicontext"></a><code>action.docRenderer.ciContext</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5179,7 +5180,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.ciContext(string ciSystem, string version, object outputs)</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.ciContext(string ciSystem, string version, object outputs)</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
@@ -5203,7 +5204,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_currentproduct"><a class="anchor" href="#_docrenderer_currentproduct"></a><code>docRenderer.currentProduct</code></h3>
+<h3 id="_action_docrenderer_currentproduct"><a class="anchor" href="#_action_docrenderer_currentproduct"></a><code>action.docRenderer.currentProduct</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5212,7 +5213,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.currentProduct(string product)</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.currentProduct(string product)</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
@@ -5234,7 +5235,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_manpagebaseurl"><a class="anchor" href="#_docrenderer_manpagebaseurl"></a><code>docRenderer.manpageBaseUrl</code></h3>
+<h3 id="_action_docrenderer_manpagebaseurl"><a class="anchor" href="#_action_docrenderer_manpagebaseurl"></a><code>action.docRenderer.manpageBaseUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5243,7 +5244,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.manpageBaseUrl(string url)</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.manpageBaseUrl(string url)</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
@@ -5265,7 +5266,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_render"><a class="anchor" href="#_docrenderer_render"></a><code>docRenderer.render</code></h3>
+<h3 id="_action_docrenderer_render"><a class="anchor" href="#_action_docrenderer_render"></a><code>action.docRenderer.render</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5274,7 +5275,7 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #docRenderer.render(string text)</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.docRenderer.render(string text)</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
@@ -5289,10 +5290,12 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 <p><strong>INTERNAL USE ONLY</strong></p>
 </div>
 <div class="paragraph">
-<p>Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor], and ciOutputRef:product:output references.
+<p>Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor],
+ciOutputRef:product:output, and $eval{&#8230;&#8203;} references.
 - fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
 - actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)
 - ciOutputRef references become CI output document links (AsciiDoc) or backtick-wrapped output names (plain text)
+- $eval{&#8230;&#8203;} expressions are evaluated using current action context
 Use '_' for product to refer to current/generic context.</p>
 </div></div></td>
 </tr>
@@ -5300,7 +5303,7 @@ Use '_' for product to refer to current/generic context.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_docrenderer_text"><a class="anchor" href="#_docrenderer_text"></a><code>docRenderer.text</code></h3>
+<h3 id="_action_docrenderer_text"><a class="anchor" href="#_action_docrenderer_text"></a><code>action.docRenderer.text</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5309,7 +5312,7 @@ Use '_' for product to refer to current/generic context.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #docRenderer.text()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.text()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -5417,8 +5420,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260130.135250-dev_doc.ci-updates<br>
-Last updated 2026-01-30 13:55:31 UTC
+Version 0.20260130.174139-dev_doc.ci-updates<br>
+Last updated 2026-01-30 17:44:35 UTC
 </div>
 </div>
 </body>
