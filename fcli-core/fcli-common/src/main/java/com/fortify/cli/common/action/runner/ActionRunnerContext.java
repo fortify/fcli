@@ -43,6 +43,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * This class holds action execution context
@@ -70,6 +71,8 @@ public class ActionRunnerContext implements AutoCloseable {
     /** Factory for creating the single {@link ISpelEvaluator} instance. By using a factory, we can
      *  check for illegal access to the {@link ISpelEvaluator} during configuration phase. */
     @Getter(AccessLevel.NONE) private final ActionConfigSpelEvaluatorFactory spelEvaluatorFactory = new ActionConfigSpelEvaluatorFactory(this);
+    /** Lazy-initialized action variables instance. Created on first access using context's spelEvaluator and parameterValues */
+    @Getter(lazy=true) @Accessors(fluent=false) private final ActionRunnerVars vars = new ActionRunnerVars(getSpelEvaluator(), parameterValues);
     
     public final ActionRunnerContext initialize() {
         config.getActionContextConfigurers().forEach(configurer->configurer.accept(this));

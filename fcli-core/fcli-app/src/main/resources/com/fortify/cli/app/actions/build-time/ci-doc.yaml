@@ -263,10 +263,10 @@ formatters:
       vars:
         - names: TOOL_DEFINITIONS
           desc: >-
-            URL or file path to custom tool definitions YAML file. This fcli environment variable controls
-            where fcli retrieves tool version information for ScanCentral Client, Debricked CLI, and other
-            tools. Useful for air-gapped environments or when using custom tool repositories. When set,
-            fcli will use the specified tool definitions instead of downloading from the default GitHub location.
+            Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs
+            defined in the link:https://github.com/fortify/tool-definitions/tree/main/v1[default Fortify tool definitions].
+            For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip
+            file to download these tools from an internal mirror.
     fod:
       - title: Authentication & Connection
         fragment: session
@@ -586,7 +586,9 @@ formatters:
           component: fortifySetup
           version: v2.1.x
           overview: |
-            These environment variables control tool installation and initialization.
+            The environment variables in this section allow you to customize bootstrapping behavior
+            of fcli and supporting tools like ScanCentral Client. Note that this GitHub Action requires
+            at least fcli v3.15.0 to function correctly.
         outputs:
           setup:
             filePattern: setup-action.adoc
@@ -596,7 +598,31 @@ formatters:
               title: fortify/github-action/setup
               description: Bootstrap fcli and Fortify tools for custom CI/CD workflows.
               overview: |
-                This GitHub Action provides a setup component that bootstraps fcli and other Fortify tools for use in custom CI/CD workflows. This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.
+                The `fortify/github-action/setup` action allows for setting up fcli and various other Fortify tools for use in custom CI/CD workflows.
+                This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.
+
+                The Fortify tools to be installed are specified through action inputs, whereas optional bootstrapping behavior for fcli and supporting
+                tools can be controlled through environment variables.
+
+                ## Migrating from fortify/github-action/setup@v2
+
+                The `fortify/github-action/setup@v3` action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
+                However, bootstrapping behavior for fcli has changed; please review the following table for details:
+
+                [cols="1,1,2", options="header"]
+                |===
+                |fortify/github-action/setup@v2
+                |fortify/github-action/setup@v3
+                |Recommended Action
+
+                |Undocumented `fcli: action_default` input to use internal, pinned fcli version
+                |Documented `fcli: bootstrapped` input to use bootstrapped fcli version
+                |Use `fcli: bootstrapped` to leverage bootstrapped fcli version based on `FCLI_BOOTSTRAP_*` environment variables, to avoid download of multiple fcli versions
+
+                |Uses `TOOL_DEFINITIONS` for fcli bootstrapping
+                |Uses dedicated `FCLI_BOOTSTRAP_*` environment variables for fcli bootstrapping
+                |If you used custom tool definitions with custom fcli download URLs, you'll need to configure `FCLI_BOOTSTRAP_URL` to point to the appropriate URL
+                |===
               samples:
                 quickstart:
                   title: Quick Start Example
@@ -611,13 +637,17 @@ formatters:
                         steps:
                           - uses: actions/checkout@v4
                           - uses: fortify/github-action/setup@v3
+                            with:
+                              fcli: bootstrapped               # Set up bootstrapped fcli version. May also specify specific version, but
+                                                               # then fcli may be downloaded twice (bootstrap version and requested version).
+
                             env:
-                              FCLI_BOOTSTRAP_VERSION: v3.5.0  # Pin to specific version for stability
+                              FCLI_BOOTSTRAP_VERSION: v3.15.0  # Defaults to latest v3.x.y, pin to specific version for stability
                           - name: Run custom fcli commands
                             run: |
-                              fcli fod session login
+                              fcli fod session login ...
                               # Your custom workflow here
-                              fcli fod session logout
+                              fcli fod session logout ...
           ciDocs:
             filePattern: ast-action-{product}.adoc
             formatter: ciSystemFullDoc
@@ -626,20 +656,44 @@ formatters:
               title: fortify/github-action
               description: Run OpenText Application Security Testing (AST) scans in GitHub Actions workflows
               overview:
-                fod: |
-                  This GitHub Action provides seamless integration of ${productNames.fod}
+                shared: |
+                  This GitHub Action provides seamless integration of $eval{fortifyProductName}
                   for automated Application Security Testing (AST) into your CI/CD
                   workflows. The action leverages the ciOutputRef:setup action to set up
                   fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
                   related tasks, providing a unified yet customizable experience across your AST scan workflows
                   on GitHub and other CI systems.
-                ssc: |
-                  This GitHub Action provides seamless integration of ${productNames.ssc}
-                  for automated Application Security Testing (AST) into your CI/CD
-                  workflows. The action leverages the ciOutputRef:setup action to set up
-                  fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
-                  related tasks, providing a unified yet customizable experience across your AST scan workflows
-                  on GitHub and other CI systems.
+                  
+                  ## Migrating from fortify/github-action@v2
+
+                  Migrating from v2.x.y to v3.x.y versions of the `fortify/github-action` should be fairly 
+                  straightforward, as most of the environment-based configuration remains the same. However,
+                  there are some important changes to be aware of:
+
+                  [cols="1,1,2", options="header"]
+                  |===
+                  |fortify/github-action@v2
+                  |fortify/github-action@v3
+                  |Recommended Action
+
+                  |Pinned to specific fcli release
+                  |Uses latest fcli v3.x.y release by default
+                  |Set `FCLI_BOOTSTRAP_VERSION` if you prefer stability over latest features
+
+                  |Uses action inputs to specify scan types (e.g., `sast-scan: true`)
+                  |Uses environment variables (e.g., `DO_SAST_SCAN`)
+                  |Update workflow to use environment variables for scan configuration
+
+                  |Supports deprecated `EXTRA_*_OPTS` variables
+                  |Only supports `*_EXTRA_OPTS` variables
+                  |Rename all `EXTRA_*_OPTS` to `*_EXTRA_OPTS` format
+
+                  |Uses custom scripts for AST scan workflow
+                  |Uses standardized fcli `ci` action
+                  |Review environment variables against this documentation; behavior should be similar but variable names may differ slightly
+                  |===
+                fod: $eval{outputDocMeta.overview.shared}
+                ssc: $eval{outputDocMeta.overview.shared}
               samples:
                 fod:
                   quickstart:
@@ -723,31 +777,27 @@ formatters:
         envVarDescriptions:
           - names: FCLI_BOOTSTRAP_VERSION
             desc: >-
-              Fcli version to bootstrap (e.g., 'v3', 'v3.14', 'v3.14.1', or without 'v' prefix: '3.14.1').
-              When set to a full major.minor.patch version, GitHub Actions will use RUNNER_TOOL_CACHE for
-              persistent caching across workflow runs. Partial versions (e.g., 'v3') or unset will use
-              RUNNER_TEMP for job-specific temporary storage. Ignored if FCLI_BOOTSTRAP_URL is set.
+              By default, the latest link:https://github.com/fortify/fcli/releases/v3[fcli v3.x.y release] is used for running the
+              fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability
+              over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this
+              environment variable to the desired version. Likewise, you can set this variable to an fcli
+              link:https://github.com/fortify/fcli/releases?q=prerelease%3Atrue[pre-release tag] like `dev_v3.x` to experiment
+              with upcoming changes provided by an fcli development version.
           - names: FCLI_BOOTSTRAP_PATH
             desc: >-
-              Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead
-              of downloading fcli. The specified fcli must be version 3.14.0 or later. This allows CI integrations
-              to control which fcli version is used and skip the download/verification process.
+              Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli.
           - names: FCLI_BOOTSTRAP_URL
             desc: >-
-              Custom URL for downloading the fcli archive. When set, this overrides FCLI_BOOTSTRAP_VERSION and
-              the default GitHub release URL. Useful for air-gapped environments or internal mirrors. The URL
-              should point to a platform-specific fcli archive (e.g., `fcli-linux.tgz`, `fcli-windows.zip`,
-              `fcli-mac.tgz`).
+              By default, fcli is downloaded from the official GitHub releases page. This environment variable allows you to specify a
+              custom URL, for example pointing to an internal mirror in air-gapped environments. In those cases, you'll likely also
+              want to set `TOOL_DEFINITIONS` to point to a custom tool definitions file to allow for downloading supporting tools
+              like ScanCentral Client from the internal mirror.
           - names: FCLI_BOOTSTRAP_RSA_SHA256_URL
             desc: >-
-              Custom URL for the fcli RSA SHA256 signature file. When set, this overrides the default signature
-              URL (which is `FCLI_BOOTSTRAP_URL` + `.rsa_sha256`). Required when using a custom `FCLI_BOOTSTRAP_URL`
-              with signature verification enabled.
+              Custom URL for the fcli RSA SHA256 signature file. Defaults to `<FCLI_BOOTSTRAP_URL>.rsa_sha256`.
           - names: FCLI_BOOTSTRAP_VERIFY_SIGNATURE
             desc: >-
-              Controls whether RSA SHA256 signature verification is performed when downloading fcli. Set to `false`
-              to skip verification (not recommended). By default, signature verification is enabled to ensure
-              the downloaded fcli binary has not been tampered with.
+              Set to `false` to skip verification (not recommended) of the fcli download.
 
   # ============================================================================
   # GENERIC DOCUMENT TEMPLATES (Stable structure)
@@ -869,7 +919,7 @@ formatters:
   
   textCell:
     Environment Variable: ${(envVar.realNode!=null?envVar.realNode:envVar).names}
-    Description: "${#docRenderer().text().render((envVar.realNode!=null?envVar.realNode:envVar).desc)}"
+    Description: "${#action.docRenderer().text().render((envVar.realNode!=null?envVar.realNode:envVar).desc)}"
   
   asciiDocTable: |
     [%autowidth]
@@ -881,12 +931,12 @@ formatters:
   
   asciiDocCell: |
     |${(envVar.realNode!=null?envVar.realNode:envVar).names.replaceAll('\\n', ' +\\\\n')}
-    |${#docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
+    |${#action.docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
   
   asciiDocConfigSection: |
     === ${sectionDef.title}
     
-    ${#docRenderer().asciidoc().currentProduct(product).render(sectionDef.overview)}
+    ${#action.docRenderer().asciidoc().currentProduct(product).render(sectionDef.overview)}
     
     [%autowidth]
     |===
@@ -898,7 +948,7 @@ formatters:
     ${sectionDef.title}
     ${'='.repeat(sectionDef.title.length())}
     
-    ${#docRenderer().text().render(sectionDef.overview)}
+    ${#action.docRenderer().text().render(sectionDef.overview)}
     
     ${textTable}
     
@@ -1119,7 +1169,7 @@ steps:
               ciSystemDef: ${versionEntry.value}
               setupDef: ${setupComponents[ciSystemDef.setup.component][ciSystemDef.setup.version]}
               setupVersion: ${ciSystemDef.setup.version}
-              setupOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(ciSystemDef.setup.overview)}
+              setupOverview: ${#action.docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(ciSystemDef.setup.overview)}
       
           # Process each output type defined for this CI system version
           - records.for-each:
@@ -1138,7 +1188,7 @@ steps:
                     outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion)}"
                     fortifyProductName: ""
                     docTitle: ${outputDocMeta.title}
-                    docOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview)}
+                    docOverview: ${#action.docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).render(outputDocMeta.overview)}
                 
                 # Build sample sections if samples defined
                 - var.rm: [sampleSections]
@@ -1183,7 +1233,7 @@ steps:
                       module: ${product}
                       outputFile: "${outputDef.filePattern.replaceAll('\\{ciSystem\\}', ciSystem).replaceAll('\\{version\\}', ciVersion).replaceAll('\\{product\\}', product)}"
                       docTitle: ${outputDocMeta.title}
-                      docOverview: ${#docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).currentProduct(product).render(outputDocMeta.overview[product])}
+                      docOverview: ${#action.docRenderer().asciidoc().ciContext(ciSystem, ciVersion, ciSystemDef.outputs).currentProduct(product).render(outputDocMeta.overview[product])}
                   
                   # Build sample sections for this product
                   - var.rm: [sampleSections]

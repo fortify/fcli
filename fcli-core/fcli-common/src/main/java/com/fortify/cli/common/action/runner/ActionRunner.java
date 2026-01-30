@@ -60,7 +60,7 @@ public class ActionRunner {
         var parameterValues = getParameterValues(args);
         try ( var ctx = createContext(progressWriter, parameterValues) ) {
             initializeCheckStatuses(ctx);
-            ActionRunnerVars vars = new ActionRunnerVars(ctx.getSpelEvaluator(), ctx.getParameterValues());
+            ActionRunnerVars vars = ctx.getVars();
             try {
                 new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
             } finally {
