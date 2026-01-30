@@ -192,6 +192,9 @@ public final class ActionRunnerContextSpelFunctions {
         public String render(@SpelFunctionParam(name="text", desc="Text containing documentation references") String text) {
             if (text == null) return "";
             
+            // Process $eval{...} expressions first so that generated content can contain other references
+            text = processEvalExpressions(text, 0);
+            
             // Process fcliCmd:command: references
             text = processFcliCmdReferences(text);
             
@@ -200,9 +203,6 @@ public final class ActionRunnerContextSpelFunctions {
             
             // Process ciOutputRef:product:output references
             text = processOutputReferences(text);
-            
-            // Process $eval{...} expressions (done last to allow evaluated content to contain other refs)
-            text = processEvalExpressions(text, 0);
             
             return text;
         }
