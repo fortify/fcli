@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action/setup
-fcli_version: 0.20260131.162113-dev_doc.ci-updates
+fcli_version: 0.20260131.193545-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260131.162113-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.162113-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.193545-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action/setup</h1>
 <div class="details">
-<span id="revnumber">version 0.20260131.162113-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260131.193545-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -168,27 +168,39 @@ at least fcli v3.15.0 to function correctly.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">By default, the latest <a href="https://github.com/fortify/fcli/releases/v3">fcli v3.x.y release</a> is used for running the fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this environment variable to the desired version. Likewise, you can set this variable to an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code> to experiment with upcoming changes provided by an fcli development version.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, the latest <a href="https://github.com/fortify/fcli/releases/v3">fcli v3.x.y release</a> is used for running the fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this environment variable to the desired version. Likewise, you can set this variable to an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code> to experiment with upcoming changes provided by an fcli development version.</p>
+</div></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_PATH</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli.</p>
+</div></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">By default, fcli is downloaded from the official GitHub releases page. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. In those cases, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, fcli is downloaded from the official GitHub releases page. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. In those cases, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p>
+</div></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_RSA_SHA256_URL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Custom URL for the fcli RSA SHA256 signature file. Defaults to <code>&lt;FCLI_BOOTSTRAP_URL&gt;.rsa_sha256</code>.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Custom URL for the fcli RSA SHA256 signature file. Defaults to <code>&lt;FCLI_BOOTSTRAP_URL&gt;.rsa_sha256</code>.</p>
+</div></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERIFY_SIGNATURE</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set to <code>false</code> to skip verification (not recommended) of the fcli download.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>false</code> to skip verification (not recommended) of the fcli download.</p>
+</div></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p>
+</div></div></td>
 </tr>
 </tbody>
 </table>
@@ -233,8 +245,8 @@ However, bootstrapping behavior for fcli has changed; please review the followin
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260131.162113-dev_doc.ci-updates<br>
-Last updated 2026-01-31 16:24:46 UTC
+Version 0.20260131.193545-dev_doc.ci-updates<br>
+Last updated 2026-01-31 19:39:24 UTC
 </div>
 </div>
 </body>
