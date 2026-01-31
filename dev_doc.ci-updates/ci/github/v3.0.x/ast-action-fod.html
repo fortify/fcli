@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action
-fcli_version: 0.20260130.180222-dev_doc.ci-updates
+fcli_version: 0.20260131.140127-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,14 +21,14 @@ fcli_version: 0.20260130.180222-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260130.180222-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.140127-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260130.180222-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260131.140127-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -59,7 +59,7 @@ fcli_version: 0.20260130.180222-dev_doc.ci-updates
 <div class="paragraph">
 <p>This GitHub Action provides seamless integration of OpenText Core Application Security (Fortify on Demand)
 for automated Application Security Testing (AST) into your CI/CD
-workflows. The action leverages the <a href="setup-action.html">fortify/github-action/setup</a> action to set up
+workflows. The action leverages the <code>setup</code> action to set up
 fcli, then executes the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action to run the requested scans and
 related tasks, providing a unified yet customizable experience across your AST scan workflows
 on GitHub and other CI systems.</p>
@@ -164,11 +164,13 @@ at least fcli v3.15.0 to function correctly.</p>
 <col>
 <col>
 </colgroup>
-<tbody>
+<thead>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+<th class="tableblock halign-left valign-top">Environment Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
+</thead>
+<tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">By default, the latest <a href="https://github.com/fortify/fcli/releases/v3">fcli v3.x.y release</a> is used for running the fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this environment variable to the desired version. Likewise, you can set this variable to an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code> to experiment with upcoming changes provided by an fcli development version.</p></td>
@@ -378,8 +380,8 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260130.180222-dev_doc.ci-updates<br>
-Last updated 2026-01-30 18:06:03 UTC
+Version 0.20260131.140127-dev_doc.ci-updates<br>
+Last updated 2026-01-31 14:05:08 UTC
 </div>
 </div>
 </body>
