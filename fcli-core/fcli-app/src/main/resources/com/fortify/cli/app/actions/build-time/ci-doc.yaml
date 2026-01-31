@@ -355,7 +355,7 @@ formatters:
               \n* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
               location; use `TOOL_DEFINITIONS` to use customized tool definitions.
               \n* Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
-              from being updated or ScanCentral Client from being installed.\n
+              from being updated or ScanCentral Client from being installed.\n\n
       - title: Scan Execution
         overview: >-
           Configure SAST scan execution and waiting behavior for ${productNames.fod}.
@@ -482,7 +482,7 @@ formatters:
               \n* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
               location; use `TOOL_DEFINITIONS` to use customized tool definitions.
               \n* Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
-              from being updated or ScanCentral Client from being installed.\n
+              from being updated or ScanCentral Client from being installed.\n\n
       - title: Scan Execution
         overview: >-
           Configure SAST and Debricked scan execution and waiting behavior for ${productNames.ssc}.
@@ -511,7 +511,7 @@ formatters:
               \n* Tool definitions to identify available Debricked CLI versions will be downloaded from the default
               location; use `TOOL_DEFINITIONS` to use customized tool definitions.
               \n* Set `PREINSTALLED` to `true` to require that Debricked CLI is already installed, preventing tool definitions
-              from being updated or Debricked CLI from being installed.\n
+              from being updated or Debricked CLI from being installed.\n\n
           - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
               By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
