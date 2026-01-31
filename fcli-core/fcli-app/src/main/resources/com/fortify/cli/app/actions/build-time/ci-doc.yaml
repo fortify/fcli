@@ -1271,7 +1271,7 @@ steps:
   - out.write:
       "${cli.outputDir}/ci/index.adoc": {fmt: ciRootIndexDoc}
   
-  # Generate per-CI-system landing pages
+  # Generate per-CI-system and per-version landing pages
   - records.for-each:
       from: ${#properties(ciSystems)}
       record.var-name: ciSystemEntry
@@ -1338,7 +1338,7 @@ steps:
               ciSystemIntegrationVersionDef: ${versionEntry.value}
           
           # Build doc sections for this version
-          - var.rm: [docSections]
+          - var.rm: [docListEntries]
           - records.for-each:
               from: ${#properties(ciSystemIntegrationVersionDef.outputs)}
               record.var-name: outputEntry
