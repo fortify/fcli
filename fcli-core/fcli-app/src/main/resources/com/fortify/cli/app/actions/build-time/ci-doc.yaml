@@ -626,26 +626,6 @@ formatters:
                   The Fortify tools to be installed are specified through action inputs, whereas optional bootstrapping behavior for fcli and supporting
                   tools can be controlled through environment variables.
 
-                  ## Migrating from fortify/github-action/setup@v2
-
-                  The `fortify/github-action/setup@v3` action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
-                  However, bootstrapping behavior for fcli has changed; please review the following table for details:
-
-                  [cols="1,1,2", options="header"]
-                  |===
-                  |fortify/github-action/setup@v2
-                  |fortify/github-action/setup@v3
-                  |Recommended Action
-
-                  |Undocumented `fcli: action_default` input to use internal, pinned fcli version
-                  |Documented `fcli: bootstrapped` input to use bootstrapped fcli version
-                  |Use `fcli: bootstrapped` to leverage bootstrapped fcli version based on `FCLI_BOOTSTRAP_*` environment variables, to avoid download of multiple fcli versions
-
-                  |Uses `TOOL_DEFINITIONS` for fcli bootstrapping
-                  |Uses dedicated `FCLI_BOOTSTRAP_*` environment variables for fcli bootstrapping
-                  |If you used custom tool definitions with custom fcli download URLs, you'll need to configure `FCLI_BOOTSTRAP_URL` to point to the appropriate URL
-                  |===
-
                   === Quick Start Example
 
                   Basic setup for custom workflows with fcli version pinning.
@@ -654,9 +634,45 @@ formatters:
 
                   == Configuration
 
-                  Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both ${productNames.fod} and ${productNames.ssc} integrations.
+                  Specifying the tools to be installed is done through action inputs, whereas bootstrapping behavior can be controlled through environment variables
+                  as shown in the following sections.
+
+                  === Action Inputs
+
+                  Action inputs allow you to specify which Fortify tool versions to install, and whether the corresponding binaries
+                  should be added to the system `PATH`. The following action inputs are supported:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description
+
+                  |`export-path`
+                  |Whether to add the installed tools to the system PATH variable. Allowed values: `true` (default) or `false`
+
+                  |`fcli`
+                  |The fcli version to install. Allowed values: `skip` (default value, do not install), `bootstrapped` (use the bootstrapped fcli version), `latest`, or specific version number. Supports semantic versioning, for example `23.1` will install the latest known `23.1.y` patch version. Version may be specified either with or without the `v` prefix, for example `v23.1` and `23.1` are semantically the same. Recommended value: `bootstrapped`.
+
+                  |`sc-client`
+                  |The ScanCentral Client version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number.
+
+                  |`fod-uploader`
+                  |The FoDUploader version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v5` will install the latest known `5.x.y` version. Version may be specified either with or without the `v` prefix, for example `v5.4.0` and `5.4.0` are semantically the same.
+
+                  |`vuln-exporter`
+                  |The FortifyVulnerabilityExporter version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v2` will install the latest known `2.x.y` version. Version may be specified either with or without the `v` prefix, for example `v2.0.4` and `2.0.4` are semantically the same.
+
+                  |`bugtracker-utility`
+                  |The FortifyBugTrackerUtility version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v4` will install the latest known `4.x` version. Version may be specified either with or without the `v` prefix, for example `v4.12` and `4.12` are semantically the same.
+
+                  |`debricked-cli`
+                  |The Debricked CLI version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v1` will install the latest known `1.x` version. Version may be specified either with or without the `v` prefix, for example `v1.7` and `1.7` are semantically the same.
+                  |===
 
                   $eval{bootstrapSection}
+
+                  == Migrating from fortify/github-action/setup@v2
+
+                  $eval{snippets.migrationSectionContents}
                 snippets:
                   generic:
                     quickstart: |
@@ -683,6 +699,24 @@ formatters:
                                 # Your custom workflow here
                                 fcli fod session logout ...
                       ----
+                    migrationSectionContents: |
+                      The `fortify/github-action/setup@v3` action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
+                      However, bootstrapping behavior for fcli has changed; please review the following table for details:
+
+                      [cols="1,1,2", options="header"]
+                      |===
+                      |fortify/github-action/setup@v2
+                      |fortify/github-action/setup@v3
+                      |Recommended Action
+
+                      |Undocumented `fcli: action_default` input to use internal, pinned fcli version
+                      |Documented `fcli: bootstrapped` input to use bootstrapped fcli version
+                      |Use `fcli: bootstrapped` to leverage bootstrapped fcli version based on `FCLI_BOOTSTRAP_*` environment variables, to avoid download of multiple fcli versions
+
+                      |Uses `tool-definitions` input for fcli bootstrapping
+                      |Uses `TOOL_DEFINITIONS` environment variable and dedicated `FCLI_BOOTSTRAP_*` environment variables for fcli bootstrapping
+                      |If you used custom tool definitions, you'll need to change from `tool-definitions` input to `TOOL_DEFINITIONS` environment variable. If your tool definitions included custom fcli download URLs, you'll need to configure `FCLI_BOOTSTRAP_URL` to point to the appropriate fcli download URL
+                      |===
             ast-action:
               filePattern: ast-action-$eval{product}.adoc
               products: ${{'fod', 'ssc'}}
@@ -698,35 +732,6 @@ formatters:
                   fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
                   related tasks, providing a unified yet customizable experience across your AST scan workflows
                   on GitHub and other CI systems.
-                  
-                  ## Migrating from fortify/github-action@v2
-
-                  Migrating from v2.x.y to v3.x.y versions of the `fortify/github-action` should be fairly 
-                  straightforward, as most of the environment-based configuration remains the same. However,
-                  there are some important changes to be aware of:
-
-                  [cols="1,1,2", options="header"]
-                  |===
-                  |fortify/github-action@v2
-                  |fortify/github-action@v3
-                  |Recommended Action
-
-                  |Pinned to specific fcli release
-                  |Uses latest fcli v3.x.y release by default
-                  |Set `FCLI_BOOTSTRAP_VERSION` if you prefer stability over latest features
-
-                  |Uses action inputs to specify scan types (e.g., `sast-scan: true`)
-                  |Uses environment variables (e.g., `DO_SAST_SCAN`)
-                  |Update workflow to use environment variables for scan configuration
-
-                  |Supports deprecated `EXTRA_*_OPTS` variables
-                  |Only supports `*_EXTRA_OPTS` variables
-                  |Rename all `EXTRA_*_OPTS` to `*_EXTRA_OPTS` format
-
-                  |Uses custom scripts for AST scan workflow
-                  |Uses standardized fcli `ci` action
-                  |Review environment variables against this documentation; behavior should be similar but variable names may differ slightly
-                  |===
 
                   === Quick Start Example
 
@@ -741,7 +746,39 @@ formatters:
                   $eval{bootstrapSection}
 
                   $eval{fcliCiActionSections}
+
+                  == Migrating from fortify/github-action@v2
+
+                  $eval{snippets.migrationSectionContents}
                 snippets:
+                  generic:
+                    migrationSectionContents: |
+                      Migrating from v2.x.y to v3.x.y versions of the `fortify/github-action` should be fairly 
+                      straightforward, as most of the environment-based configuration remains the same. However,
+                      there are some important changes to be aware of:
+
+                      [cols="1,1,2", options="header"]
+                      |===
+                      |fortify/github-action@v2
+                      |fortify/github-action@v3
+                      |Recommended Action
+
+                      |Pinned to specific fcli release
+                      |Uses latest fcli v3.x.y release by default
+                      |Set `FCLI_BOOTSTRAP_VERSION` if you prefer stability over latest features
+
+                      |Uses action inputs to specify scan types (e.g., `sast-scan: true`)
+                      |Uses environment variables (e.g., `DO_SAST_SCAN`)
+                      |Update workflow to use environment variables for scan configuration
+
+                      |Supports deprecated `EXTRA_*_OPTS` variables
+                      |Only supports `*_EXTRA_OPTS` variables
+                      |Rename all `EXTRA_*_OPTS` to `*_EXTRA_OPTS` format
+
+                      |Uses custom scripts for AST scan workflow
+                      |Uses standardized fcli `ci` action
+                      |Review environment variables against this documentation; behavior should be similar but variable names may differ slightly
+                      |===
                   fod:
                     quickstart: |
                       [source,yaml]
