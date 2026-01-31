@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action
-fcli_version: 0.20260131.151601-dev_doc.ci-updates
+fcli_version: 0.20260131.155950-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,20 +21,19 @@ fcli_version: 0.20260131.151601-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.151601-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.155950-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260131.151601-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260131.155950-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_overview">Overview</a></li>
-<li><a href="#_migrating_from_fortifygithub_actionv2">Migrating from fortify/github-action@v2</a>
+<li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
 <li><a href="#_quick_start_example">Quick Start Example</a></li>
 </ul>
@@ -49,6 +48,7 @@ fcli_version: 0.20260131.151601-dev_doc.ci-updates
 <li><a href="#_post_scan_actions">Post-Scan Actions</a></li>
 </ul>
 </li>
+<li><a href="#_migrating_from_fortifygithub_actionv2">Migrating from fortify/github-action@v2</a></li>
 </ul>
 </div>
 </div>
@@ -64,52 +64,6 @@ fcli, then executes the fcli <a href="https://fortify.github.io/fcli/latest_dev/
 related tasks, providing a unified yet customizable experience across your AST scan workflows
 on GitHub and other CI systems.</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_migrating_from_fortifygithub_actionv2"><a class="anchor" href="#_migrating_from_fortifygithub_actionv2"></a>Migrating from fortify/github-action@v2</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Migrating from v2.x.y to v3.x.y versions of the <code>fortify/github-action</code> should be fairly
-straightforward, as most of the environment-based configuration remains the same. However,
-there are some important changes to be aware of:</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">fortify/github-action@v2</th>
-<th class="tableblock halign-left valign-top">fortify/github-action@v3</th>
-<th class="tableblock halign-left valign-top">Recommended Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Pinned to specific fcli release</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses latest fcli v3.x.y release by default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set <code>FCLI_BOOTSTRAP_VERSION</code> if you prefer stability over latest features</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses action inputs to specify scan types (e.g., <code>sast-scan: true</code>)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses environment variables (e.g., <code>DO_SAST_SCAN</code>)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Update workflow to use environment variables for scan configuration</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Supports deprecated <code>EXTRA_*_OPTS</code> variables</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Only supports <code>*_EXTRA_OPTS</code> variables</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Rename all <code>EXTRA_*_OPTS</code> to <code>*_EXTRA_OPTS</code> format</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses custom scripts for AST scan workflow</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses standardized fcli <code>ci</code> action</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Review environment variables against this documentation; behavior should be similar but variable names may differ slightly</p></td>
-</tr>
-</tbody>
-</table>
 <div class="sect2">
 <h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
 <div class="paragraph">
@@ -377,11 +331,57 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_migrating_from_fortifygithub_actionv2"><a class="anchor" href="#_migrating_from_fortifygithub_actionv2"></a>Migrating from fortify/github-action@v2</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Migrating from v2.x.y to v3.x.y versions of the <code>fortify/github-action</code> should be fairly
+straightforward, as most of the environment-based configuration remains the same. However,
+there are some important changes to be aware of:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">fortify/github-action@v2</th>
+<th class="tableblock halign-left valign-top">fortify/github-action@v3</th>
+<th class="tableblock halign-left valign-top">Recommended Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pinned to specific fcli release</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses latest fcli v3.x.y release by default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set <code>FCLI_BOOTSTRAP_VERSION</code> if you prefer stability over latest features</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses action inputs to specify scan types (e.g., <code>sast-scan: true</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses environment variables (e.g., <code>DO_SAST_SCAN</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update workflow to use environment variables for scan configuration</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supports deprecated <code>EXTRA_*_OPTS</code> variables</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only supports <code>*_EXTRA_OPTS</code> variables</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Rename all <code>EXTRA_*_OPTS</code> to <code>*_EXTRA_OPTS</code> format</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses custom scripts for AST scan workflow</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses standardized fcli <code>ci</code> action</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Review environment variables against this documentation; behavior should be similar but variable names may differ slightly</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260131.151601-dev_doc.ci-updates<br>
-Last updated 2026-01-31 15:19:54 UTC
+Version 0.20260131.155950-dev_doc.ci-updates<br>
+Last updated 2026-01-31 16:03:23 UTC
 </div>
 </div>
 </body>

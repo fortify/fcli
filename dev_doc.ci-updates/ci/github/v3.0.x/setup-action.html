@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action/setup
-fcli_version: 0.20260131.151601-dev_doc.ci-updates
+fcli_version: 0.20260131.155950-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,28 +21,29 @@ fcli_version: 0.20260131.151601-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.151601-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.155950-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action/setup</h1>
 <div class="details">
-<span id="revnumber">version 0.20260131.151601-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260131.155950-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_overview">Overview</a></li>
-<li><a href="#_migrating_from_fortifygithub_actionsetupv2">Migrating from fortify/github-action/setup@v2</a>
+<li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
 <li><a href="#_quick_start_example">Quick Start Example</a></li>
 </ul>
 </li>
 <li><a href="#_configuration">Configuration</a>
 <ul class="sectlevel2">
+<li><a href="#_action_inputs">Action Inputs</a></li>
 <li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
 </ul>
 </li>
+<li><a href="#_migrating_from_fortifygithub_actionsetupv2">Migrating from fortify/github-action/setup@v2</a></li>
 </ul>
 </div>
 </div>
@@ -58,41 +59,6 @@ This allows you to implement fully customized AST scan workflows or other automa
 <p>The Fortify tools to be installed are specified through action inputs, whereas optional bootstrapping behavior for fcli and supporting
 tools can be controlled through environment variables.</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_migrating_from_fortifygithub_actionsetupv2"><a class="anchor" href="#_migrating_from_fortifygithub_actionsetupv2"></a>Migrating from fortify/github-action/setup@v2</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The <code>fortify/github-action/setup@v3</code> action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
-However, bootstrapping behavior for fcli has changed; please review the following table for details:</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">fortify/github-action/setup@v2</th>
-<th class="tableblock halign-left valign-top">fortify/github-action/setup@v3</th>
-<th class="tableblock halign-left valign-top">Recommended Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Undocumented <code>fcli: action_default</code> input to use internal, pinned fcli version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Documented <code>fcli: bootstrapped</code> input to use bootstrapped fcli version</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Use <code>fcli: bootstrapped</code> to leverage bootstrapped fcli version based on <code>FCLI_BOOTSTRAP_*</code> environment variables, to avoid download of multiple fcli versions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>TOOL_DEFINITIONS</code> for fcli bootstrapping</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Uses dedicated <code>FCLI_BOOTSTRAP_*</code> environment variables for fcli bootstrapping</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If you used custom tool definitions with custom fcli download URLs, you&#8217;ll need to configure <code>FCLI_BOOTSTRAP_URL</code> to point to the appropriate URL</p></td>
-</tr>
-</tbody>
-</table>
 <div class="sect2">
 <h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
 <div class="paragraph">
@@ -129,7 +95,57 @@ jobs:
 <h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Configuration is accomplished through environment variables set in your CI workflow file. This setup component applies to both OpenText Core Application Security (Fortify on Demand) and OpenText Application Security (Fortify Software Security Center) integrations.</p>
+<p>Specifying the tools to be installed is done through action inputs, whereas bootstrapping behavior can be controlled through environment variables
+as shown in the following sections.</p>
+</div>
+<div class="sect2">
+<h3 id="_action_inputs"><a class="anchor" href="#_action_inputs"></a>Action Inputs</h3>
+<div class="paragraph">
+<p>Action inputs allow you to specify which Fortify tool versions to install, and whether the corresponding binaries
+should be added to the system <code>PATH</code>. The following action inputs are supported:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Input</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>export-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to add the installed tools to the system PATH variable. Allowed values: <code>true</code> (default) or <code>false</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The fcli version to install. Allowed values: <code>skip</code> (default value, do not install), <code>bootstrapped</code> (use the bootstrapped fcli version), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>23.1</code> will install the latest known <code>23.1.y</code> patch version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v23.1</code> and <code>23.1</code> are semantically the same. Recommended value: <code>bootstrapped</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sc-client</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The ScanCentral Client version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fod-uploader</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The FoDUploader version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v5</code> will install the latest known <code>5.x.y</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v5.4.0</code> and <code>5.4.0</code> are semantically the same.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>vuln-exporter</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The FortifyVulnerabilityExporter version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v2</code> will install the latest known <code>2.x.y</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v2.0.4</code> and <code>2.0.4</code> are semantically the same.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>bugtracker-utility</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The FortifyBugTrackerUtility version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v4</code> will install the latest known <code>4.x</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v4.12</code> and <code>4.12</code> are semantically the same.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>debricked-cli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The Debricked CLI version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v1</code> will install the latest known <code>1.x</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v1.7</code> and <code>1.7</code> are semantically the same.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
 <h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
@@ -179,11 +195,46 @@ at least fcli v3.15.0 to function correctly.</p>
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_migrating_from_fortifygithub_actionsetupv2"><a class="anchor" href="#_migrating_from_fortifygithub_actionsetupv2"></a>Migrating from fortify/github-action/setup@v2</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>fortify/github-action/setup@v3</code> action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
+However, bootstrapping behavior for fcli has changed; please review the following table for details:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">fortify/github-action/setup@v2</th>
+<th class="tableblock halign-left valign-top">fortify/github-action/setup@v3</th>
+<th class="tableblock halign-left valign-top">Recommended Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Undocumented <code>fcli: action_default</code> input to use internal, pinned fcli version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Documented <code>fcli: bootstrapped</code> input to use bootstrapped fcli version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use <code>fcli: bootstrapped</code> to leverage bootstrapped fcli version based on <code>FCLI_BOOTSTRAP_*</code> environment variables, to avoid download of multiple fcli versions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>tool-definitions</code> input for fcli bootstrapping</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>TOOL_DEFINITIONS</code> environment variable and dedicated <code>FCLI_BOOTSTRAP_*</code> environment variables for fcli bootstrapping</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If you used custom tool definitions, you&#8217;ll need to change from <code>tool-definitions</code> input to <code>TOOL_DEFINITIONS</code> environment variable. If your tool definitions included custom fcli download URLs, you&#8217;ll need to configure <code>FCLI_BOOTSTRAP_URL</code> to point to the appropriate fcli download URL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260131.151601-dev_doc.ci-updates<br>
-Last updated 2026-01-31 15:19:54 UTC
+Version 0.20260131.155950-dev_doc.ci-updates<br>
+Last updated 2026-01-31 16:03:23 UTC
 </div>
 </div>
 </body>
