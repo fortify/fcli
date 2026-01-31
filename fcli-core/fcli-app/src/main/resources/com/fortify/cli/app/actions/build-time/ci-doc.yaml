@@ -875,7 +875,7 @@ formatters:
     
     == Available Documentation
     
-    ${#join("\n\n", docSections)}
+    ${#join("\n\n", docListEntries)}
 
   # ============================================================================
   # GENERIC DOCUMENT TEMPLATE
@@ -1249,14 +1249,23 @@ steps:
           ciSystemTitle: ${ciSystemDef.title}
           ciSystemVersions: ${ciSystemDef.versions}
       
+      # Build list of version links for this CI system
+      - var.rm: [versionLinks]
+      - records.for-each:
+          from: ${#properties(ciSystemVersions)}
+          record.var-name: versionEntry
+          do:
+          - var.set:
+              ciSystemIntegrationVersion: ${versionEntry.key}
+              versionLinks..: "* link:${ciSystemKey}/${ciSystemIntegrationVersion}/index.html[${ciSystemIntegrationVersion}]"
+      
       - var.set:
-          ciSystemVersionKeys: "${#properties(ciSystemVersions).![key]}"
           ciSystemSections..: |
             === link:${ciSystemKey}/index.html[${ciSystemTitle}]
             
             ${#ifBlank(ciSystemDef.description, '')}
             
-            Available versions: ${#join(', ',ciSystemVersionKeys)}
+            ${#join("\n", versionLinks)}
   
   # Write root CI index
   - out.write:
@@ -1283,20 +1292,37 @@ steps:
               ciSystemIntegrationVersion: ${versionEntry.key}
               ciSystemIntegrationVersionDef: ${versionEntry.value}
           
-          # Build list of output document titles for this version
-          - var.rm: [outputTitles]
+          # Build list of output documents for this version
+          - var.rm: [docListEntries]
           - records.for-each:
               from: ${#properties(ciSystemIntegrationVersionDef.outputs)}
               record.var-name: outputEntry
               do:
               - var.set:
-                  outputTitles..: ${outputEntry.value.doc.title}
+                  outputKey: ${outputEntry.key}
+                  outputDef: ${outputEntry.value}
+                  outputDocMeta: ${outputDef.doc}
+                  outputProducts: ${outputDef.products?:{'none'}}
+              
+              # Generate doc entry for each product (or once if product-independent)
+              - records.for-each:
+                  from: ${outputProducts}
+                  record.var-name: product
+                  do:
+                  - var.set:
+                      product: ${product=='none'?'':product}
+                      fortifyProductName: ${#isBlank(product)?'':productNames[product]}
+                      outputFile: ${#action.docRenderer().processEvalExpressions(outputDef.filePattern, 1)}
+                      outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
+                      docListEntries..: |
+                        * link:${ciSystemIntegrationVersion}/${outputFileLink}[${outputDocMeta.title}${#isBlank(fortifyProductName)?'':' - _'+fortifyProductName+'_'}] +
+                          ${outputDocMeta.description}
           
           - var.set:
               versionSections..: |
                 === link:${ciSystemIntegrationVersion}/index.html[${ciSystemIntegrationVersion}]
                 
-                ${#join(', ',outputTitles)}
+                ${#join("\n", docListEntries)}
       
       # Write CI system index
       - out.write:
@@ -1333,11 +1359,9 @@ steps:
                       fortifyProductName: ${#isBlank(product)?'':productNames[product]}
                       outputFile: ${#action.docRenderer().processEvalExpressions(outputDef.filePattern, 1)}
                       outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
-                      docSectionTitle: "${outputDocMeta.title}${#isBlank(fortifyProductName)?'':' - '+fortifyProductName}"
-                      docSections..: |
-                        === link:${outputFileLink}[${docSectionTitle}]
-                        
-                        ${outputDocMeta.description}
+                      docListEntries..: |
+                        * link:${outputFileLink}[${outputDocMeta.title}${#isBlank(fortifyProductName)?'':' - _'+fortifyProductName+'_'}] +
+                          ${outputDocMeta.description}
           
           # Write version index
           - out.write:
