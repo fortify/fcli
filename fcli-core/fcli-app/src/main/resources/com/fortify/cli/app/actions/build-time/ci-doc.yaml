@@ -342,19 +342,19 @@ formatters:
             desc: >-
               These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
               and the given package or MBS file (which must already exist) will be used. To pass additional options to the
-              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\nBy default:\n
-              - If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
-              and used, skipping automatic installation. The path should point to the installation directory or binary.\n
-              - `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
-              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
-              - If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
+              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\n\nBy default:
+              \n* If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.
+              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
+              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
+              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
               will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-              will be installed.\n
-              - Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.\n
-              - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.\n
-              - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
-              location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
-              - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
+              will be installed.
+              \n* Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.
+              \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
+              \n* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
+              location; use `TOOL_DEFINITIONS` to use customized tool definitions.
+              \n* Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
               from being updated or ScanCentral Client from being installed.\n
       - title: Scan Execution
         overview: >-
@@ -469,19 +469,19 @@ formatters:
             desc: >-
               These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
               and the given package or MBS file (which must already exist) will be used. To pass additional options to the
-              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\nBy default:\n
-              - If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
-              and used, skipping automatic installation. The path should point to the installation directory or binary.\n
-              - `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
-              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
-              - If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
+              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\n\nBy default:
+              \n\n* If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.
+              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
+              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
+              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
               will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-              will be installed.\n
-              - Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.\n
-              - Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.\n
-              - Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
-              location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
-              - Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
+              will be installed.
+              \n* Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.
+              \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
+              \n* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
+              location; use `TOOL_DEFINITIONS` to use customized tool definitions.
+              \n* Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
               from being updated or ScanCentral Client from being installed.\n
       - title: Scan Execution
         overview: >-
@@ -500,17 +500,17 @@ formatters:
               The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
               is enabled automatically if `DEBRICKED_ACCESS_TOKEN` is provided. The `DO_DEBRICKED_SCAN` environment
               variable can be set to `false` to (temporarily) disable the Debricked scan. The `DEBRICKED_SCAN_EXTRA_OPTS`
-              environment variable can be used to provide additional options to the `debricked scan` command.\nBy default:\n
-              - If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
-              and used, skipping automatic installation. The path should point to the installation directory or binary.\n
-              - `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used; if not
-              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.\n
-              - If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, the most recently installed Debricked CLI version
+              environment variable can be used to provide additional options to the `debricked scan` command.\n\nBy default:
+              \n\n* If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.
+              \n* `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used; if not
+              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
+              \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, the most recently installed Debricked CLI version
               will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-              will be installed.\n
-              - Tool definitions to identify available Debricked CLI versions will be downloaded from the default
-              location; use `TOOL_DEFINITIONS` to use customized tool definitions.\n
-              - Set `PREINSTALLED` to `true` to require that Debricked CLI is already installed, preventing tool definitions
+              will be installed.
+              \n* Tool definitions to identify available Debricked CLI versions will be downloaded from the default
+              location; use `TOOL_DEFINITIONS` to use customized tool definitions.
+              \n* Set `PREINSTALLED` to `true` to require that Debricked CLI is already installed, preventing tool definitions
               from being updated or Debricked CLI from being installed.\n
           - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
