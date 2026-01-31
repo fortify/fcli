@@ -836,7 +836,378 @@ formatters:
                               SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
                               # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
                     ----
-  
+    gitlab:
+      title: Fortify GitLab Components
+      description: Seamless integration of OpenText Fortify Application Security Testing into GitLab CI/CD pipelines
+      versions:
+        v2.0.x:
+          bootstrap:
+            component: fortifyGitLabFcli
+            version: v2.0.x
+            overview: |
+              The environment variables in this section allow you to customize bootstrapping behavior
+              of fcli and supporting tools like ScanCentral Client. These variables can be configured
+              on the `<job-name>-prepare` job as needed. Note that the GitLab components require at
+              least fcli v3.15.0 to function correctly.
+          common:
+            componentReference: |
+              The GitLab integration consists of two components:
+              
+              * link:https://gitlab.com/Fortify/components/fcli[Fortify fcli component] - Provides fcli installation
+                and setup functionality. This component allows for setting up fcli for use in custom CI/CD workflows.
+              * link:https://gitlab.com/Fortify/components/ast-scan[Fortify AST Scan component] - Provides complete
+                AST scanning workflow by including the fcli component and adding scan execution jobs.
+          outputs:
+            fcli-component:
+              filePattern: fcli-component.adoc
+              doc:
+                title: Fortify GitLab fcli Component
+                description: Bootstrap fcli  for custom CI/CD workflows in GitLab.
+                contents: |
+                  == Overview
+
+                  The link:https://gitlab.com/Fortify/components/fcli[Fortify fcli component] allows for setting up fcli
+                  for use in custom CI/CD workflows in GitLab. This allows you to implement fully customized AST scan 
+                  workflows or other automation workflows that interact with Fortify products.
+
+                  $eval{ciSystemIntegrationVersionDef.common.componentReference}
+
+                  The fcli component provides the following runnable jobs:
+
+                  * `<job-name>-prepare`: Download and install fcli
+                  * `<job-name>`: Run arbitrary fcli commands from the job `script` section
+
+                  In addition, several hidden jobs are defined (e.g., `.<job-name>-vars-shared`, `.<job-name>-vars`,
+                  `.<job-name>-vars-prepare`, `.fcli-install`) which may be used to implement advanced use cases but
+                  should not be directly customized.
+
+                  === Quick Start Example
+
+                  Basic setup for custom workflows with fcli version pinning.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  === Component Inputs
+
+                  The following component inputs can be specified when including the fcli component:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description|Default
+
+                  |`job-name`
+                  |Job name for the fcli script. This must be a valid file system path name and will be used to name the component-provided jobs.
+                  |`fcli`
+
+                  |`stage`
+                  |GitLab CI/CD stage in which to run the jobs provided by this component. This stage must be defined in your pipeline's `stages:` list.
+                  |_Required, no default_
+
+                  |`fcli-version`
+                  |Fcli version to install/use. Supports semantic versioning (e.g., `v3` for latest v3.x.y, `v3.15` for latest v3.15.y).
+                  |`v3`
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  === Advanced Customization
+
+                  ==== Customizing the `<job-name>` Job
+
+                  By default, `<job-name>` will just run `${FCLI} -V` to verify the fcli installation. You'll typically want to define
+                  a custom `script` section that runs fcli and other commands as needed. For Docker-based runners, you'll usually also
+                  want to define the image in which the `script` section is executed:
+
+                  [source,yaml]
+                  ----
+                  <job-name>:
+                    image: my-build-tools:v1     # Optional: specify Docker image
+                    script:
+                      - ${FCLI} fod session login ...
+                      - # Your custom fcli commands here
+                      - ${FCLI} fod session logout ...
+                  ----
+
+                  If needed, you can also customize the `needs`, `variables`, and/or `extends` instructions. If you override `needs`
+                  or `extends`, make sure to keep the original contents:
+
+                  [source,yaml]
+                  ----
+                  <job-name>:
+                    extends:
+                      - .<job-name>-vars       # Required: inherit fcli-related variables
+                      - .my-custom-vars        # Optional: inherit additional variables
+                    variables:
+                      MY_VAR: value            # Optional: define extra variables
+                    needs:
+                      - <job-name>-prepare     # Required: wait for fcli installation
+                      - some-other-job         # Optional: wait for other jobs
+                    script:
+                      - # Your commands here
+                  ----
+
+                  ==== Customizing the `<job-name>-prepare` Job
+
+                  The `<job-name>-prepare` job can be customized to perform additional preparation tasks beyond fcli installation.
+                  You can define additional script steps, optionally based on additional variables:
+
+                  [source,yaml]
+                  ----
+                  <job-name>-prepare:
+                    extends:
+                      - .<job-name>-vars-prepare  # Required: inherit fcli installation variables
+                      - .my-custom-vars           # Optional: inherit additional variables
+                    variables:
+                      MY_VAR: value               # Optional: define extra variables
+                    script:
+                      - !reference [ .fcli-install, script ]  # Required: install fcli
+                      - echo "Additional preparation steps"   # Optional: your custom steps
+                  ----
+
+                  Any artifacts that need to be shared with the main `<job-name>` job must be stored under the directory
+                  identified by the `${FORTIFY_DIR}` environment variable.
+
+                  You can also customize the Docker image used for the preparation job. By default, `alpine:latest` is used:
+
+                  [source,yaml]
+                  ----
+                  <job-name>-prepare:
+                    image: my.registry/alpine:latest  # Use custom registry or different image
+                  ----
+
+                  ==== Using Multiple Component Configurations
+
+                  You can include the fcli component multiple times with different configurations, as long as each `include`
+                  specifies a different `job-name`. This allows for using multiple fcli versions within a single pipeline.
+                  Each `include` must use the same component version to avoid conflicts.
+
+                  [source,yaml]
+                  ----
+                  include:
+                    - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+                      inputs:
+                        job-name: fcli-stable
+                        fcli-version: v3.15.0
+                        stage: test
+                    - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+                      inputs:
+                        job-name: fcli-dev
+                        fcli-version: dev_v3.x
+                        stage: test
+
+                  fcli-stable:
+                    script:
+                      - ${FCLI} -V
+
+                  fcli-dev:
+                    script:
+                      - ${FCLI} -V
+                  ----
+                snippets:
+                  generic:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+                          inputs:
+                            job-name: fcli
+                            fcli-version: v3       # Use latest fcli 3.x.y release
+                            stage: test
+
+                      stages: [test]
+
+                      fcli:
+                        image: my-build-tools:v1   # Optional: specify build environment
+                        script:
+                          - ${FCLI} -V             # Verify fcli installation
+                          - ${FCLI} fod session login ...
+                          - # Your custom fcli commands here
+                          - ${FCLI} fod session logout ...
+                      ----
+            ast-scan:
+              filePattern: ast-scan-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: Fortify GitLab AST Scan Component
+                description: Run OpenText Application Security Testing (AST) scans in GitLab CI/CD pipelines
+                contents: |
+                  == Overview
+
+                  The link:https://gitlab.com/Fortify/components/ast-scan[Fortify AST Scan component] provides seamless
+                  integration of $eval{fortifyProductName} for automated Application Security Testing (AST) into your
+                  GitLab CI/CD pipelines. The component leverages the ciOutputRef:fcli-component to set up fcli,
+                  then executes the fcli actionRef:generic:ci action to run the requested scans and related tasks,
+                  providing a unified yet customizable experience across your AST scan workflows on GitLab and other CI systems.
+
+                  $eval{ciSystemIntegrationVersionDef.common.componentReference}
+
+                  The ast-scan component provides the following runnable jobs:
+
+                  * Inherited from the link:https://gitlab.com/Fortify/components/fcli[fcli component]:
+                  ** `<job-name>-prepare`: Download and install fcli
+                  ** `<job-name>`: Run the Fortify AST scan
+                  * Provided by the ast-scan component:
+                  ** `<job-name>-publish-debug-output`: Optionally publish debugging output
+                  ** `<job-name>-publish-sast`: Publish SAST report to GitLab security dashboard
+
+                  In addition, several hidden jobs are defined by the component which may be used to implement advanced
+                  use cases but should not be directly customized.
+
+                  === Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  === Component Inputs
+
+                  The following component inputs can be specified when including the ast-scan component:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description|Default
+
+                  |`job-name`
+                  |Job name for the Fortify AST scan. This must be a valid file system path name and will be used to name the component-provided jobs.
+                  |`fortify-ast-scan`
+
+                  |`stage`
+                  |GitLab CI/CD stage in which to run the AST scan jobs. This stage must be defined in your pipeline's `stages:` list.
+                  |`test`
+
+                  |`fcli-version`
+                  |Fcli version to use for running the AST scan. Note that not all fcli versions may be compatible with this component, so avoid overriding unless necessary.
+                  |`v3`
+
+                  |`reports-access`
+                  |GitLab access level required for accessing scan reports. Allowed values: `all`, `developer`, `none`.
+                  |`developer`
+
+                  |`logs-access`
+                  |GitLab access level required for accessing debug logs. Allowed values: `all`, `developer`, `none`.
+                  |`developer`
+
+                  |`logs-expire-in`
+                  |GitLab `artifacts:expire_in` value for log artifacts. As logs may contain sensitive data, they should be cleaned up promptly.
+                  |`1 day`
+
+                  |`debug`
+                  |Whether to generate and collect debug logs. Note that these may contain sensitive data like access tokens or credentials.
+                  |`false`
+
+                  |`alpine-image`
+                  |Allows for overriding the default Alpine image used by various jobs, for example to use an image from a custom registry.
+                  |`alpine:latest`
+                  |===
+
+                  Configuration is accomplished through environment variables set on the main scan job (see following sections).
+                  Unlike GitHub Actions which use action inputs for some configuration, the GitLab components use environment
+                  variables exclusively for scan configuration, following GitLab CI/CD conventions.
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  === Best Practices
+
+                  For enterprise use, if you want to run Fortify scans across many different repositories, it is highly
+                  recommended to have those repositories use the Fortify-provided components through some intermediate custom
+                  template(s) or component(s), with those intermediate templates/components providing (partial) configuration
+                  of the Fortify AST Scan component. Some examples:
+
+                  * Pin specific Fortify component, fcli, and other tool versions rather than using a semantic version like
+                    `@v2` or `latest`, to ensure stability, allow for controlled upgrades to newer Fortify component & tool
+                    versions, and ensure that all pipelines use the same Fortify component and tool versions
+                  * Pre-configure `SSC_URL`, `FOD_URL`, and/or `FOD_TENANT`
+                  * Implement an alternative application version/release naming convention, with the intermediate component
+                    passing the custom name to the Fortify component through the `FOD_RELEASE` or `SSC_APPVERSION` variables
+                  * Load credentials from a vault and automatically pass these to the Fortify component through the appropriate variables
+
+                  This approach provides better consistency across different repositories, potentially reduces duplication
+                  across pipelines in those repositories, and allows for easily applying changes that will be automatically
+                  picked up by each pipeline.
+
+                  === Advanced Customization
+
+                  ==== Customizing the `<job-name>` Job
+
+                  The main `<job-name>` job can be customized to specify the Docker image providing build tools, additional
+                  environment variables, and other job properties:
+
+                  [source,yaml]
+                  ----
+                  <job-name>:
+                    image: golang:latest          # Required: Docker image with build tools
+                    extends:
+                      - .<job-name>-vars-ci       # Required: inherit component variables
+                      - .my-custom-vars           # Optional: inherit additional variables
+                    variables:
+                      FOD_URL: https://ams.fortify.com
+                      FOD_CLIENT_ID: ${FOD_CLIENT_ID}     # From GitLab CI/CD variables
+                      FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}
+                      # Additional scan configuration...
+                  ----
+
+                  If you override `needs` or `extends`, make sure to keep the original contents to ensure the component
+                  functions correctly.
+
+                  ==== Customizing Report Publication
+
+                  The component automatically publishes SAST reports to GitLab's security dashboard through the
+                  `<job-name>-publish-sast` job. You can customize the access level for these reports through the
+                  `reports-access` component input.
+
+                  Debug output publication is controlled by the `debug` component input. When enabled, the
+                  `<job-name>-publish-debug-output` job will collect and publish logs, package files, and FPR files
+                  as GitLab artifacts.
+                snippets:
+                  fod:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/ast-scan/linux@2
+                          inputs:
+                            job-name: fortify-ast-scan
+                            stage: test
+                            fcli-version: v3
+
+                      stages: [test]
+
+                      fortify-ast-scan:
+                        image: maven:3-openjdk-17   # Docker image with build tools
+                        variables:
+                          FOD_URL: ${FOD_URL}                         # From GitLab CI/CD variables
+                          FOD_CLIENT_ID: ${FOD_CLIENT_ID}             # From GitLab CI/CD variables
+                          FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}     # From GitLab CI/CD variables
+                          # FOD_RELEASE: MyApp:main                   # Optional: defaults to repo:branch
+                      ----
+                  ssc:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/ast-scan/linux@2
+                          inputs:
+                            job-name: fortify-ast-scan
+                            stage: test
+                            fcli-version: v3
+
+                      stages: [test]
+
+                      fortify-ast-scan:
+                        image: maven:3-openjdk-17   # Docker image with build tools
+                        variables:
+                          SSC_URL: ${SSC_URL}                   # From GitLab CI/CD variables
+                          SSC_TOKEN: ${SSC_TOKEN}               # From GitLab CI/CD variables
+                          SC_SAST_TOKEN: ${SC_SAST_TOKEN}       # From GitLab CI/CD variables
+                          # SSC_APPVERSION: MyApp:main          # Optional: defaults to repo:branch
+                      ----
   # ============================================================================
   # PRODUCT NAMES
   # ============================================================================
@@ -882,6 +1253,41 @@ formatters:
           - names: FCLI_BOOTSTRAP_VERIFY_SIGNATURE
             desc: >-
               Set to `false` to skip verification (not recommended) of the fcli download.
+    fortifyGitLabFcli:
+      v2.0.x:
+        title: 'Fortify GitLab fcli component'
+        envVarDescriptions:
+          - names: FCLI_VERSION
+            desc: >-
+              Fcli version to install. This component input specifies the fcli version to download and install.
+              Defaults to `v3` to use the latest fcli v3.x.y release, allowing you to automatically benefit from
+              the latest features and fixes. If you prefer stability over automatic updates, you can pin to a
+              specific minor or patch release like `v3.15` or `v3.15.0`. The component also supports semantic
+              versioning, for example `v3.15` will install the latest known `v3.15.y` patch version. Version
+              may be specified either with or without the `v` prefix. To experiment with upcoming changes, you
+              can also specify an fcli link:https://github.com/fortify/fcli/releases?q=prerelease%3Atrue[pre-release tag]
+              like `dev_v3.x`.
+          - names: FCLI_TGZ_URL
+            desc: >-
+              By default, fcli is downloaded from the official GitHub releases page at `https://github.com/fortify/fcli/releases/download/${FCLI_VERSION}/fcli-linux.tgz`.
+              This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in
+              air-gapped environments. The URL can use the `${FCLI_VERSION}` variable to reference the value of the
+              `fcli-version` component input. In air-gapped environments, you'll likely also want to set `TOOL_DEFINITIONS`
+              to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client
+              from the internal mirror.
+          - names: FCLI_RSA_SHA256_URL
+            desc: >-
+              URL for the fcli RSA SHA256 signature file. Defaults to `${FCLI_BASE_URL}/fcli-linux.tgz.rsa_sha256` where
+              `FCLI_BASE_URL` is `https://github.com/fortify/fcli/releases/download/${FCLI_VERSION}`. Set to blank to skip
+              signature verification (not recommended).
+          - names: FCLI
+            desc: >-
+              Path to a pre-installed fcli executable. When set on the `<job-name>-prepare` job, fcli bootstrapping will
+              skip downloading and installing fcli, and will use this binary instead. This may be useful for environments
+              without internet access, if a self-hosted shell-based runner already has fcli pre-installed, or if the
+              Docker image in which `<job-name>` is being run already provides the fcli executable. Note that the
+              `<job-name>-prepare` and main `<job-name>` jobs usually run inside different images, so the prepare
+              job doesn't explicitly check or fail if the given fcli executable is not accessible from the prepare job.
 
   # ============================================================================
   # LANDING PAGE TEMPLATES
