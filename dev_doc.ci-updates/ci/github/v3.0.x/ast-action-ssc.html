@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action
-fcli_version: 0.20260131.140127-dev_doc.ci-updates
+fcli_version: 0.20260131.144335-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,14 +21,14 @@ fcli_version: 0.20260131.140127-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.140127-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.144335-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Application Security (Fortify Software Security Center)</div>
 <div class="details">
-<span id="revnumber">version 0.20260131.140127-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260131.144335-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -114,33 +114,6 @@ there are some important changes to be aware of:</p>
 <h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
 <div class="paragraph">
 <p>Minimal configuration for running OpenText Fortify AST scans.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">name: OpenText Application Security (Fortify Software Security Center) Scan
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  fortify:
-    runs-on: ubuntu-latest
-    # permissions:               # When overriding default permissions, following are required:
-    #   contents: read           # Required for checkout action
-    #   security-events: write   # Required for publishing security reports to GitHub Security tab
-    #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
-    steps:
-      - uses: actions/checkout@v4            # Check out source code
-      - uses: actions/setup-&lt;build-tool&gt;@vX  # Set up build tool(s) required to build your project
-      - uses: fortify/github-action@v3       # Run Fortify scans
-        env:
-          SSC_URL: ${{ vars.SSC_URL }}
-          SSC_TOKEN: ${{ secrets.SSC_TOKEN }}
-          SC_SAST_TOKEN: ${{ secrets.SC_SAST_TOKEN }}
-          # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch</code></pre>
-</div>
 </div>
 </div>
 </div>
@@ -415,8 +388,8 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260131.140127-dev_doc.ci-updates<br>
-Last updated 2026-01-31 14:05:08 UTC
+Version 0.20260131.144335-dev_doc.ci-updates<br>
+Last updated 2026-01-31 14:47:14 UTC
 </div>
 </div>
 </body>
