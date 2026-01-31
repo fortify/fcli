@@ -105,14 +105,7 @@ public class SpelFunctionsStandard {
             @SpelFunctionParam(name="delimiter", desc="the delimiter to be used between each element") String delimiter,
             @SpelFunctionParam(name="input", desc="the elements to join", type = "array") Object source)
     {
-        switch (delimiter) {
-        case "\\n":
-            delimiter = "\n";
-            break;
-        case "\\t":
-            delimiter = "\t";
-            break;
-        }
+        delimiter = delimiter.replace("\\n", "\n").replace("\\t", "\t");
         Stream<?> stream = null;
         if (source instanceof Collection) {
             stream = ((Collection<?>) source).stream();

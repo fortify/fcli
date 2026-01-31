@@ -21,21 +21,21 @@ usage:
     
     ==== Session
     
-    ${#include('/session-fod'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-action-session-fod'+(isAsciiDoc?'.adoc':'.txt'))}
     
     ==== CI Integration
     
-    ${#include('/ci-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-action-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
     
     === Fortify Software Security Center
     
     ==== Session
     
-    ${#include('/session-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-action-session-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
     
     ==== CI Integration
         
-    ${#include('/ci-core-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-action-core-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
     
 config:
   output: immediate

@@ -207,7 +207,7 @@ public final class ActionRunnerContextSpelFunctions {
             return text;
         }
         
-        private String processEvalExpressions(String text, int depth) {
+        public String processEvalExpressions(String text, int depth) {
             if (depth >= MAX_EVAL_DEPTH) {
                 throw new FcliSimpleException("Maximum evaluation depth (" + MAX_EVAL_DEPTH + ") exceeded for $eval{...} expressions. Check for circular references.");
             }

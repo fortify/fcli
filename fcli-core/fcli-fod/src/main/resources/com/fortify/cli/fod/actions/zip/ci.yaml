@@ -15,7 +15,7 @@ usage:
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.
     
-    ${#include('/ci-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-action-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
 
 config:
   output: immediate
