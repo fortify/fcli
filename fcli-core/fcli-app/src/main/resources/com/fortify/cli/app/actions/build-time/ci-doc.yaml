@@ -728,7 +728,7 @@ formatters:
 
                   This GitHub Action provides seamless integration of $eval{fortifyProductName}
                   for automated Application Security Testing (AST) into your CI/CD
-                  workflows. The action leverages the ciOutputRef:setup action to set up
+                  workflows. The action leverages the ciOutputRef:setup-action action to set up
                   fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
                   related tasks, providing a unified yet customizable experience across your AST scan workflows
                   on GitHub and other CI systems.
@@ -1038,7 +1038,7 @@ formatters:
 
                   The link:https://gitlab.com/Fortify/components/ast-scan[Fortify AST Scan component] provides seamless
                   integration of $eval{fortifyProductName} for automated Application Security Testing (AST) into your
-                  GitLab CI/CD pipelines. The component leverages the ciOutputRef:fcli-component to set up fcli,
+                  GitLab CI/CD pipelines. The component leverages the ciOutputRef:fcli-component component to set up fcli,
                   then executes the fcli actionRef:generic:ci action to run the requested scans and related tasks,
                   providing a unified yet customizable experience across your AST scan workflows on GitLab and other CI systems.
 
@@ -1361,7 +1361,7 @@ formatters:
   
   asciiDocCell: |
     |${(envVar.realNode!=null?envVar.realNode:envVar).names.replaceAll('\\n', ' +\\\\n')}
-    |${#action.docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
+    a|${#action.docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
   
   asciiDocConfigSection: |
     === ${sectionDef.title}
