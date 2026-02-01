@@ -49,28 +49,12 @@ steps:
           ci.type:     ${ci.detected.type}
           ci.env:      ${ci.detected.env}
       
-      # Set CI system name and ID based on detected type
-      - if: ${ci.type=='github'}
-        var.set:
-          global.ci.name: GitHub
-          global.ci.id:   github
-      - if: ${ci.type=='gitlab'}
-        var.set:
-          global.ci.name: GitLab
-          global.ci.id:   gitlab
-      - if: ${ci.type=='ado'}
-        var.set:
-          global.ci.name: Azure DevOps
-          global.ci.id:   ado
-      - if: ${ci.type=='bitbucket'}
-        var.set:
-          global.ci.name: Bitbucket
-          global.ci.id:   bitbucket
-      
       # For recognized CI systems (github, gitlab, ado, bitbucket), extract properties from detected environment
       # Using conditional navigation operator ?. to safely access properties even if ci.env is null
       - if: ${ci.type=='github'||ci.type=='gitlab'||ci.type=='ado'||ci.type=='bitbucket'}
         var.set:
+          global.ci.name:                ${ci.env?.ciName}
+          global.ci.id:                  ${ci.env?.ciId}
           global.ci.qualifiedRepoName:   ${ci.env?.ciRepository?.name?.full}
           global.ci.sourceBranch:        ${ci.env?.ciBranch?.short}
           global.ci.commitSHA:           ${ci.env?.ciCommit?.id?.full}

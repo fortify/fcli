@@ -48,10 +48,14 @@ public record AdoEnvironment(
     String project,
     String repositoryId,
     Integer buildId,
-    String prTerminology
+    String prTerminology,
+    String ciName,
+    String ciId
 ) {
     // CI system type identifier
     public static final String TYPE = "ado";
+    public static final String NAME = "Azure DevOps";
+    public static final String ID = "ado";
     public static final String PR_TERMINOLOGY = "Pull Request";
     
     // Environment variable names
@@ -137,6 +141,8 @@ public record AdoEnvironment(
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
             .prTerminology(PR_TERMINOLOGY)
+            .ciName(NAME)
+            .ciId(ID)
             .build();
     }
     
