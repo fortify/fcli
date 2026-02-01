@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20260131.202948-dev_doc.ci-updates
+fcli_version: 0.20260201.153758-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,19 +21,20 @@ fcli_version: 0.20260131.202948-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260131.202948-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.153758-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20260131.202948-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260201.153758-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_introduction">Introduction</a></li>
 <li><a href="#_migration_from_v2_x">Migration from v2.x</a></li>
+<li><a href="#_fcli_based_ci_integrations">Fcli-based CI Integrations</a></li>
 <li><a href="#_release_assets">Release Assets</a></li>
 <li><a href="#_installation">Installation</a>
 <ul class="sectlevel2">
@@ -111,6 +112,9 @@ fcli_version: 0.20260131.202948-dev_doc.ci-updates
 </li>
 <li>
 <p><a href="#_installation">Both plain Java and native platform binaries for Windows&#44; Linux and Mac available</a></p>
+</li>
+<li>
+<p><a href="#_fcli_based_ci_integrations">Fcli-based CI integrations</a> for a unified yet customizable experience across GitHub, GitLab, Azure DevOps, and other CI/CD systems</p>
 </li>
 <li>
 <p><a href="#_command_structure">Modular command structure</a>, making it easy to focus on particular tasks</p>
@@ -227,6 +231,58 @@ fcli_version: 0.20260131.202948-dev_doc.ci-updates
 <div class="paragraph">
 <p>Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
 custom fcli actions. Please see the <a href="../migration-v2.x-v3.x.html">migration guide</a> for details.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_based_ci_integrations"><a class="anchor" href="#_fcli_based_ci_integrations"></a>Fcli-based CI Integrations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Fcli provides seamless integration of OpenText Fortify Application Security Testing into various CI/CD platforms through the standardized <code>fcli action run ci</code> command. These integrations leverage the fcli <code>ci</code> action to provide a consistent, powerful approach to security testing across different CI systems.</p>
+</div>
+<div class="paragraph">
+<p>Key benefits of fcli-based CI integrations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Unified approach</strong>: Same fcli <code>ci</code> action works across all CI platforms with platform-specific optimizations</p>
+</li>
+<li>
+<p><strong>Comprehensive functionality</strong>: Supports both FoD and SSC backends with full SAST &amp; SCA scanning capabilities</p>
+</li>
+<li>
+<p><strong>Flexible configuration</strong>: Environment variable-based configuration with sensible defaults</p>
+</li>
+<li>
+<p><strong>Production-ready</strong>: Built-in features for application version/release management, vulnerability exports, and more</p>
+</li>
+<li>
+<p><strong>Easy to use</strong>: Simple setup with minimal configuration required to get started</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For a complete overview of all available CI integrations and their versions, see the <a href="ci/index.html">CI Integrations</a> landing page.</p>
+</div>
+<div class="paragraph">
+<p>Currently supported CI/CD platforms:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="ci/github/v3.0.x/index.html"><strong>Fortify GitHub Actions</strong></a>: Seamless integration for GitHub Actions workflows</p>
+</li>
+<li>
+<p><a href="ci/gitlab/v2.0.x/index.html"><strong>Fortify GitLab Components</strong></a>: Native GitLab CI/CD pipeline components</p>
+</li>
+<li>
+<p><a href="ci/ado/script/index.html"><strong>Fortify Azure DevOps</strong></a>: Script-based integration for Azure DevOps pipelines</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Each integration provides platform-specific documentation including setup instructions, configuration reference, and usage examples for both FoD and SSC backends.</p>
 </div>
 </div>
 </div>
@@ -1572,8 +1628,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260131.202948-dev_doc.ci-updates<br>
-Last updated 2026-01-31 20:32:40 UTC
+Version 0.20260201.153758-dev_doc.ci-updates<br>
+Last updated 2026-02-01 15:40:59 UTC
 </div>
 </div>
 </body>
