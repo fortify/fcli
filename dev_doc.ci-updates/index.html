@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20260201.153758-dev_doc.ci-updates
+fcli_version: 0.20260201.162713-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260201.153758-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.153758-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.162713-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20260201.153758-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260201.162713-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -38,11 +38,16 @@ fcli_version: 0.20260201.153758-dev_doc.ci-updates
 <li><a href="#_release_assets">Release Assets</a></li>
 <li><a href="#_installation">Installation</a>
 <ul class="sectlevel2">
-<li><a href="#_managed_installation">Managed Installation</a></li>
-<li><a href="#_manual_installation">Manual Installation</a></li>
+<li><a href="#_recommended_using_fortifysetup">Recommended: Using @fortify/setup</a></li>
+<li><a href="#_alternative_direct_binary_installation">Alternative: Direct Binary Installation</a></li>
 </ul>
 </li>
-<li><a href="#_upgrade">Upgrade</a></li>
+<li><a href="#_upgrade">Upgrade</a>
+<ul class="sectlevel2">
+<li><a href="#_recommended_using_fortifysetup_2">Recommended: Using @fortify/setup</a></li>
+<li><a href="#_alternative_direct_binary_upgrade">Alternative: Direct Binary Upgrade</a></li>
+</ul>
+</li>
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
 <ul class="sectlevel2">
@@ -349,11 +354,130 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="sect1">
 <h2 id="_installation"><a class="anchor" href="#_installation"></a>Installation</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_recommended_using_fortifysetup"><a class="anchor" href="#_recommended_using_fortifysetup"></a>Recommended: Using @fortify/setup</h3>
 <div class="paragraph">
-<p>The instructions in this section are only applicable if you wish to install the native or Java binaries onto your local system. We also provide Docker images for fcli; see <a href="https://hub.docker.com/repository/docker/fortifydocker/fcli/general">fortifydocker/fcli</a> for information on how to run fcli using these Docker images.</p>
+<p>If you have <code>npx</code> available on the system where you want to install fcli and possibly other Fortify tools, <strong>@fortify/setup</strong> is the recommended approach for installing fcli in both CI/CD pipelines and local development environments. This lightweight npm package automatically bootstraps fcli, verifies its integrity using RSA signatures, and provides cross-platform support with minimal dependencies.</p>
 </div>
 <div class="paragraph">
-<p>To install the fcli executables on your local system, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page as described in the previous section, and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
+<p><strong>Benefits:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Automatic download and verification of fcli from GitHub releases or custom URLs</p>
+</li>
+<li>
+<p>Multi-platform support (Linux, macOS, Windows)</p>
+</li>
+<li>
+<p>Flexible configuration via environment variables or config file</p>
+</li>
+<li>
+<p>Can use pre-installed fcli (3.14.0+) to skip downloads</p>
+</li>
+<li>
+<p>Consistent experience across different environments</p>
+</li>
+<li>
+<p>Full documentation: <a href="https://github.com/fortify/fortify-setup-js/blob/main/USAGE.md">fortify-setup-js USAGE.md</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Quick Start (Linux/Mac):</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash"># Initialize fcli with auto-detected version
+npx @fortify/setup env init --tools=fcli:auto
+
+# Set environment variables
+source &lt;(npx @fortify/setup env shell)
+
+# Verify installation
+fcli --version</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Quick Start (Windows PowerShell):</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-powershell" data-lang="powershell"># Initialize fcli with auto-detected version
+npx @fortify/setup env init --tools=fcli:auto
+
+# Set environment variables
+npx @fortify/setup env powershell | Invoke-Expression
+
+# Verify installation
+fcli --version</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the <code>npx @fortify/setup env init</code> also allows for specifying additional/other Fortify tools in the <code>--tools</code> option, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash"># Initialize fcli with auto-detected version, and specific ScanCentral Client version
+npx @fortify/setup env init --tools=fcli:auto,sc-client:25.2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Configuration Examples:</strong></p>
+</div>
+<div class="paragraph">
+<p>To customize fcli bootstrapping behavior, you can use the <code>npx @fortify/setup bootstrap-config</code> command as shown in the following examples. Configuration needs to be applied before running the <code>npx @fortify/setup env</code> commands.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The following examples use command-line options to store configuration in a config file (<code>~/.config/fortify/setup/config.json</code> on Linux/Mac or <code>%USERPROFILE%\.config\fortify\setup\config.json</code> on Windows). This option-based approach is designed for manual/local installation where configuration persists across multiple commands and can be reused. For CI/CD integrations, use environment variables instead as documented in the <a href="ci/index.html">CI Integrations</a> guides to avoid multiple pipelines from interfering with each other due to sharing the same configuration file.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash"># Pin to specific fcli version
+npx @fortify/setup bootstrap-config --fcli-version=v3.14.1
+
+# Use pre-installed fcli (skip download)
+npx @fortify/setup bootstrap-config --fcli-path=/path/to/fcli
+
+# Use custom download URL (internal mirror)
+npx @fortify/setup bootstrap-config --fcli-url=https://my-mirror.com/fcli-linux.tgz
+
+# View current configuration
+npx @fortify/setup bootstrap-config</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Version Pinning (Recommended for CI/CD):</strong></p>
+</div>
+<div class="paragraph">
+<p>Pin @fortify/setup to at least a major version to avoid breaking changes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash"># Pin to major version (gets bug fixes and features)
+npx @fortify/setup@2 env init --tools=fcli:auto</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_alternative_direct_binary_installation"><a class="anchor" href="#_alternative_direct_binary_installation"></a>Alternative: Direct Binary Installation</h3>
+<div class="paragraph">
+<p>If you prefer direct control over fcli installation, or if you cannot use @fortify/setup in your environment, you can install fcli manually or using the built-in managed installation approach. We also provide Docker images for fcli; see <a href="https://hub.docker.com/repository/docker/fortifydocker/fcli/general">fortifydocker/fcli</a> for information on how to run fcli using these Docker images.</p>
+</div>
+<div class="sect3">
+<h4 id="_download_and_verification"><a class="anchor" href="#_download_and_verification"></a>Download and Verification</h4>
+<div class="paragraph">
+<p>To install the fcli executables on your local system, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
 </div>
 <div class="paragraph">
 <p>As a best practice, you should verify the integrity of the downloaded file. Release assets include <code>*.sha256</code> and <code>*.rsa_sha256</code> for this purpose, with the latter being preferred for better security. For example, after downloading both <code>fcli-linux.tgz</code> and <code>fcli-linux.tgz.rsa_sha256</code>, you can verify integrity by running the following OpenSSL command:</p>
@@ -382,8 +506,9 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="paragraph">
 <p>Once downloaded, verified and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
 </div>
-<div class="sect2">
-<h3 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h3>
+</div>
+<div class="sect3">
+<h4 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h4>
 <div class="paragraph">
 <p>Managed installation is only available on internet-connected systems, or if your company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:</p>
 </div>
@@ -482,8 +607,8 @@ found, please try with the Java version as it may be an issue specific to the na
 </ul>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h3>
+<div class="sect3">
+<h4 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h4>
 <div class="ulist">
 <ul>
 <li>
@@ -504,9 +629,37 @@ found, please try with the Java version as it may be an issue specific to the na
 </div>
 </div>
 </div>
+</div>
 <div class="sect1">
 <h2 id="_upgrade"><a class="anchor" href="#_upgrade"></a>Upgrade</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_recommended_using_fortifysetup_2"><a class="anchor" href="#_recommended_using_fortifysetup_2"></a>Recommended: Using @fortify/setup</h3>
+<div class="paragraph">
+<p>If you installed fcli using @fortify/setup, upgrading is straightforward.</p>
+</div>
+<div class="paragraph">
+<p><strong>Linux/Mac:</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">npx @fortify/setup env init --tools=fcli:v3     # Or 'latest', or specific version
+source &lt;(npx @fortify/setup env shell)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Windows PowerShell:</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-powershell" data-lang="powershell"># Upgrade to latest v3.x version
+npx @fortify/setup env init --tools=fcli:v3     # Or 'latest', or specific version
+npx @fortify/setup env powershell | Invoke-Expression</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_alternative_direct_binary_upgrade"><a class="anchor" href="#_alternative_direct_binary_upgrade"></a>Alternative: Direct Binary Upgrade</h3>
 <div class="paragraph">
 <p>If you prefer a manual installation/upgrade, you can download the latest fcli version for your platform from the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page and follow the <a href="#_manual_installation">Manual Installation</a> instructions above, adjusting any manually created wrapper scripts to point to the new installation.</p>
 </div>
@@ -568,6 +721,7 @@ found, please try with the Java version as it may be an issue specific to the na
 <p>Re-source the <code>fcli_completion</code> script if applicable on your platform</p>
 </li>
 </ul>
+</div>
 </div>
 </div>
 </div>
@@ -1628,8 +1782,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260201.153758-dev_doc.ci-updates<br>
-Last updated 2026-02-01 15:40:59 UTC
+Version 0.20260201.162713-dev_doc.ci-updates<br>
+Last updated 2026-02-01 16:30:17 UTC
 </div>
 </div>
 </body>
