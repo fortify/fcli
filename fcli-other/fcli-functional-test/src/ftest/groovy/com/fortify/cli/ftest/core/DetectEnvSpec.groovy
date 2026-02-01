@@ -46,6 +46,9 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("commitSHA: abc123def456abc123def456abc123def456abc1") }
                 it.any { it.contains("sourceDir: /workspace") }
                 it.any { it.contains("jobSummaryFile: /tmp/summary.md") }
+                // Verify non-PR properties
+                it.any { it.contains("prActive: false") }
+                it.any { it.contains("prNotActiveSkipReason: Not a Pull Request") }
             }
     }
     
@@ -71,6 +74,9 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("sourceBranch: develop") }
                 it.any { it.contains("commitSHA: fedcba0987654321fedcba0987654321fedcba09") }
                 it.any { it.contains("sourceDir: /builds/project") }
+                // Verify non-PR properties (uses "Merge Request" terminology for GitLab)
+                it.any { it.contains("prActive: false") }
+                it.any { it.contains("prNotActiveSkipReason: Not a Merge Request") }
             }
     }
     
@@ -152,6 +158,11 @@ class DetectEnvSpec extends FcliBaseSpec {
             verifyAll(allOutput) {
                 it.any { it.contains("Detected GitHub") || it.contains("name: GitHub") }
                 it.any { it.contains("sourceBranch: feature-branch") }
+                // Verify PR detection properties
+                it.any { it.contains("prActive: true") }
+                it.any { it.contains("prId: 123") }
+                it.any { it.contains("prTarget: main") }
+                it.any { it.contains("prTerminology: Pull Request") }
             }
     }
     
@@ -174,6 +185,11 @@ class DetectEnvSpec extends FcliBaseSpec {
             verifyAll(allOutput) {
                 it.any { it.contains("Detected GitLab") || it.contains("name: GitLab") }
                 it.any { it.contains("sourceBranch: feature-x") }
+                // Verify PR detection properties (Merge Request for GitLab)
+                it.any { it.contains("prActive: true") }
+                it.any { it.contains("prId: 42") }
+                it.any { it.contains("prTarget: main") }
+                it.any { it.contains("prTerminology: Merge Request") }
             }
     }
     
@@ -199,6 +215,56 @@ class DetectEnvSpec extends FcliBaseSpec {
             def allOutput = result.stdout + result.stderr
             verifyAll(allOutput) {
                 it.any { it.contains("sourceDir: /custom/source/path") }
+            }
+    }
+    
+    def "detect-env-ado-pr"() {
+        def env = [
+            "Build.Repository.Name": "MyRepo",
+            "Build.SourceBranch": "refs/pull/456/merge",
+            "Build.SourceVersion": "1234567890abcdef1234567890abcdef12345678",
+            "Build.SourcesDirectory": "/home/vsts/work/1/s",
+            "System.TeamFoundationCollectionUri": "https://dev.azure.com/myorg/",
+            "System.TeamProject": "MyProject",
+            "System.PullRequest.PullRequestId": "456",
+            "System.PullRequest.SourceBranch": "refs/heads/feature-y",
+            "System.PullRequest.TargetBranch": "refs/heads/main"
+        ]
+        when:
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
+        then:
+            def allOutput = result.stdout + result.stderr
+            verifyAll(allOutput) {
+                it.any { it.contains("Detected Azure DevOps") || it.contains("name: Azure DevOps") }
+                // Verify PR detection properties
+                it.any { it.contains("prActive: true") }
+                it.any { it.contains("prId: 456") }
+                it.any { it.contains("prTarget: main") }
+                it.any { it.contains("prTerminology: Pull Request") }
+            }
+    }
+    
+    def "detect-env-bitbucket-pr"() {
+        def env = [
+            "BITBUCKET_WORKSPACE": "acme",
+            "BITBUCKET_REPO_SLUG": "awesome-repo",
+            "BITBUCKET_COMMIT": "aabbccddeeff00112233445566778899aabbccdd",
+            "BITBUCKET_CLONE_DIR": "/opt/build/source",
+            "BITBUCKET_PR_ID": "789",
+            "BITBUCKET_BRANCH": "feature-z",
+            "BITBUCKET_PR_DESTINATION_BRANCH": "develop"
+        ]
+        when:
+            def result = Fcli.run("action run detect-env", ciEnv(env), {it.expectZeroExitCode()})
+        then:
+            def allOutput = result.stdout + result.stderr
+            verifyAll(allOutput) {
+                it.any { it.contains("Detected Bitbucket") || it.contains("name: Bitbucket") }
+                // Verify PR detection properties
+                it.any { it.contains("prActive: true") }
+                it.any { it.contains("prId: 789") }
+                it.any { it.contains("prTarget: develop") }
+                it.any { it.contains("prTerminology: Pull Request") }
             }
     }
 
