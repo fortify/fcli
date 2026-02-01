@@ -144,10 +144,17 @@ steps:
           global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
           global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
           global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+      # Set defaults for PR-related properties if not already set by CI-specific sections
+      - if: ${global.ci.prActive==null}
+        var.set:
+          global.ci.prActive: false
+      - if: ${#isBlank(global.ci.prTerminology)}
+        var.set:
+          global.ci.prTerminology: "Pull Request"
       # Set PR-related skip reason if not active
       - if: "${global.ci.prActive!=true}"
         var.set:
-          global.ci.prNotActiveSkipReason: "Not a ${global.ci.prTerminology?:'pull/merge request'}"
+          global.ci.prNotActiveSkipReason: "Not a ${global.ci.prTerminology}"
       - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
       - records.for-each:
           from: ${#properties(global.ci)}
