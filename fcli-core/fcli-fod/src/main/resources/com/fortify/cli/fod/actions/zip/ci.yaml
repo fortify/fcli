@@ -125,8 +125,7 @@ steps:
           - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
           - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)}
           - ${postScan.skipReason}                             # Skip if no scans were run
-          # TODO Check whether current run is for a PR
-          # TODO Skip if prCommentAction is null or doesn't exist
+          - ${global.ci.prNotActiveSkipReason}                 # Skip if not a pull/merge request
           
       SAST_EXPORT:
         cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}"

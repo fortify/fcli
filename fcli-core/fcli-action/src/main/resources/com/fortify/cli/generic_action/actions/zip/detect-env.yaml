@@ -30,6 +30,10 @@ steps:
           global.ci.commitSHA:             # Commit SHA for current commit
           global.ci.sourceDir:             # Directory containing source files to be scanned
           global.ci.jobSummaryFile:        ${#env('JOB_SUMMARY_FILE')} # Job summary file path; can be overridden by CI-specific value
+          global.ci.prActive:              # Whether running in pull/merge request context
+          global.ci.prId:                  # Pull/merge request numeric identifier (null if not active)
+          global.ci.prTarget:              # Pull/merge request target branch (null if not active)
+          global.ci.prTerminology:         # Pull/merge request terminology for this CI system
           # The following are set by default at the end, but may be overridden by individual CI configurations
           global.fod.prCommentAction:   # FoD PR comment action
           global.ssc.prCommentAction:   # SSC PR comment action
@@ -54,6 +58,10 @@ steps:
           global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
           global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
           global.ci.jobSummaryFile:      ${#ifBlank(global.ci.jobSummaryFile,ci.env.jobSummaryFile)}
+          global.ci.prActive:            ${ci.env.pullRequest.active}
+          global.ci.prId:                ${ci.env.pullRequest.id}
+          global.ci.prTarget:            ${ci.env.pullRequest.target}
+          global.ci.prTerminology:       "Pull Request"
           
       # GitLab
       - if: ${ci.type=='gitlab'}
@@ -64,6 +72,10 @@ steps:
           global.ci.sourceBranch:        ${ci.env.ciBranch.short}
           global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
           global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
+          global.ci.prActive:            ${ci.env.pullRequest.active}
+          global.ci.prId:                ${ci.env.pullRequest.id}
+          global.ci.prTarget:            ${ci.env.pullRequest.target}
+          global.ci.prTerminology:       "Merge Request"
           
       # Azure DevOps
       - if: ${ci.type=='ado'}
@@ -74,6 +86,10 @@ steps:
           global.ci.sourceBranch:        ${ci.env.ciBranch.short}
           global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
           global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
+          global.ci.prActive:            ${ci.env.pullRequest.active}
+          global.ci.prId:                ${ci.env.pullRequest.id}
+          global.ci.prTarget:            ${ci.env.pullRequest.target}
+          global.ci.prTerminology:       "Pull Request"
           
       # Bitbucket
       - if: ${ci.type=='bitbucket'}
@@ -84,6 +100,10 @@ steps:
           global.ci.sourceBranch:        ${ci.env.ciBranch.short}
           global.ci.commitSHA:           ${ci.env.ciCommit.id.full}
           global.ci.sourceDir:           ${ci.env.ciRepository.workDir}
+          global.ci.prActive:            ${ci.env.pullRequest.active}
+          global.ci.prId:                ${ci.env.pullRequest.id}
+          global.ci.prTarget:            ${ci.env.pullRequest.target}
+          global.ci.prTerminology:       "Pull Request"
           
       # Jenkins
       - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
@@ -124,6 +144,10 @@ steps:
           global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
           global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
           global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+      # Set PR-related skip reason if not active
+      - if: "${global.ci.prActive!=true}"
+        var.set:
+          global.ci.prNotActiveSkipReason: "Not a ${global.ci.prTerminology?:'pull/merge request'}"
       - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
       - records.for-each:
           from: ${#properties(global.ci)}

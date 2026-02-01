@@ -216,7 +216,7 @@ steps:
                 - ${postScan.skipReason}                             # Skip if no scans were run
                 - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
                 - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'ssc', global.ci.ssc_prCommentAction)}
-                # TODO Check whether current run is for a PR
+                - ${global.ci.prNotActiveSkipReason}                 # Skip if not a pull/merge request
                 
             SAST_EXPORT:
               cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} "--av=${global.ci.av}" "--source-dir=${global.ci.sourceDir}"
