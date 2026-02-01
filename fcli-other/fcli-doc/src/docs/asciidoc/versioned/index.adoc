@@ -8,6 +8,7 @@ Some of the fcli highlights:
 
 * Interact with many different Fortify products with just a single command-line utility
 * link:#_installation[Both plain Java and native platform binaries for Windows&#44; Linux and Mac available]
+* link:#_fcli_based_ci_integrations[Fcli-based CI integrations] for a unified yet customizable experience across GitHub, GitLab, Azure DevOps, and other CI/CD systems
 * link:#_command_structure[Modular command structure], making it easy to focus on particular tasks
 * link:#_o_output[Rich output formats]; save command output in JSON, CSV, XML or plain-text formats
 * link:#_session_management[Session-based]; no need to pass URL’s and credentials on every individual fcli invocation
@@ -45,6 +46,28 @@ Hidden commands are not listed in fcli help output and not included in the link:
 
 Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
 custom fcli actions. Please see the link:../migration-v2.x-v3.x.html[migration guide] for details.
+
+== Fcli-based CI Integrations
+
+Fcli provides seamless integration of OpenText Fortify Application Security Testing into various CI/CD platforms through the standardized `fcli action run ci` command. These integrations leverage the fcli `ci` action to provide a consistent, powerful approach to security testing across different CI systems.
+
+Key benefits of fcli-based CI integrations:
+
+* *Unified approach*: Same fcli `ci` action works across all CI platforms with platform-specific optimizations
+* *Comprehensive functionality*: Supports both FoD and SSC backends with full SAST & SCA scanning capabilities
+* *Flexible configuration*: Environment variable-based configuration with sensible defaults
+* *Production-ready*: Built-in features for application version/release management, vulnerability exports, and more
+* *Easy to use*: Simple setup with minimal configuration required to get started
+
+For a complete overview of all available CI integrations and their versions, see the link:ci/index.html[CI Integrations] landing page.
+
+Currently supported CI/CD platforms:
+
+* link:ci/github/v3.0.x/index.html[*Fortify GitHub Actions*]: Seamless integration for GitHub Actions workflows
+* link:ci/gitlab/v2.0.x/index.html[*Fortify GitLab Components*]: Native GitLab CI/CD pipeline components
+* link:ci/ado/script/index.html[*Fortify Azure DevOps*]: Script-based integration for Azure DevOps pipelines
+
+Each integration provides platform-specific documentation including setup instructions, configuration reference, and usage examples for both FoD and SSC backends.
 
 == Release Assets
 

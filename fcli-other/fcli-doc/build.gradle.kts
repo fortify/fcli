@@ -74,8 +74,9 @@ val generateActionSchema = tasks.register<JavaExec>("generateActionSchema") {
 }
 
 // CI documentation integration - extract ci-docs.zip from fcli-app module
+// Note: ci-docs.zip is an intermediate build artifact in fcli-app's build directory
 val appRef = project.findProperty("fcliAppRef") as String
-val ciDocsZipFile = file("${rootProject.layout.buildDirectory.get()}/dist/release-assets/ci-docs.zip")
+val ciDocsZipFile = project(appRef).layout.buildDirectory.file("ci-docs.zip").get().asFile
 
 val extractCiDocs = tasks.register<Copy>("extractCiDocs") {
     group = "documentation"
@@ -237,9 +238,24 @@ val asciiDoctorVersionedJekyll = registerAsciidoctorTaskHtml(
 val asciiDoctorStaticJekyll = registerAsciidoctorTaskHtml(
     "asciiDoctorStaticJekyll", generateActionSchema, ghPagesStaticOutDir, true, staticAsciiDocSrcDir.asFile)
 
-// CI docs Jekyll conversion - versioned (not static), changes with each fcli version
+// CI docs conversions - versioned (not static), changes with each fcli version
 // Published alongside other versioned docs like action-development.html
 // Note: ci-doc.yaml action generates ci/ subdirectory structure, so we output to versioned root
+
+// HTML output (for docs-html.zip)
+val asciiDoctorCiDocsHtml = registerAsciidoctorTaskHtml(
+    "asciiDoctorCiDocsHtml",
+    extractCiDocs,
+    htmlOutDir,
+    false,
+    ciDocsExtractDir.get().asFile
+).apply {
+    configure {
+        mustRunAfter(asciiDoctorVersionedHtml)
+    }
+}
+
+// Jekyll output (for gh-pages)
 val asciiDoctorCiDocsJekyll = registerAsciidoctorTaskHtml(
     "asciiDoctorCiDocsJekyll",
     extractCiDocs,
@@ -260,7 +276,16 @@ fun registerDocsZip(name: String, dep: TaskProvider<*>, archive: String, fromDir
         outputs.file(dest.resolve(archive))
     }
 
-val distDocsVersionedHtml = registerDocsZip("distDocsVersionedHtml", asciiDoctorVersionedHtml, "docs-html.zip", htmlOutDir)
+val distDocsVersionedHtml = tasks.register<Zip>("distDocsVersionedHtml") {
+    group = "distribution"
+    description = "Package distDocsVersionedHtml output"
+    dependsOn(asciiDoctorVersionedHtml, asciiDoctorCiDocsHtml)
+    archiveFileName.set("docs-html.zip")
+    val dest = (rootProject.extra["releaseAssetsDir"] as? String)?.let { file(it) } ?: file(rootProject.extra["distDir"] as String)
+    destinationDirectory.set(dest)
+    from(htmlOutDir)
+    outputs.file(dest.resolve("docs-html.zip"))
+}
 val distDocsManpage = registerDocsZip("distDocsManpage", generateManpageOutput, "docs-manpage.zip", manpageOutDir)
 // CI docs are included in the versioned output directory by asciiDoctorCiDocsJekyll, so both tasks must run before packaging
 val distDocsVersionedJekyll = tasks.register<Zip>("distDocsVersionedJekyll") {

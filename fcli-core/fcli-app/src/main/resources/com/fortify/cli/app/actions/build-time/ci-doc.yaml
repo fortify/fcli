@@ -1208,6 +1208,141 @@ formatters:
                           SC_SAST_TOKEN: ${SC_SAST_TOKEN}       # From GitLab CI/CD variables
                           # SSC_APPVERSION: MyApp:main          # Optional: defaults to repo:branch
                       ----
+    ado:
+      title: Fortify Azure DevOps
+      description: Script-based integration of OpenText Fortify Application Security Testing into Azure DevOps pipelines
+      versions:
+        script:
+          versionTitle: Script-based integration
+          bootstrap:
+            component: fortifySetup
+            version: v2.1.x
+            overview: |
+              Azure DevOps integration uses a script-based approach leveraging the `@fortify/setup` npm package to bootstrap fcli
+              and supporting tools like ScanCentral Client. The environment variables in this section are provided by
+              `@fortify/setup` $eval{bootstrapComponentVersion} (configured via `FORTIFY_SETUP_VERSION=$eval{bootstrapComponentVersion}`).
+              If you configure a different `@fortify/setup` version, please refer to the
+              link:https://www.npmjs.com/package/@fortify/setup/v/$eval{bootstrapComponentVersion}[@fortify/setup documentation] for
+              that version's supported variables.
+          outputs:
+            ast-workflow:
+              filePattern: ast-workflow-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: Fortify Azure DevOps Integration
+                description: Script-based AST scanning workflow for Azure DevOps pipelines
+                contents: |
+                  == Overview
+
+                  This guide demonstrates how to integrate $eval{fortifyProductName} Application Security Testing (AST)
+                  into your Azure DevOps pipelines using a script-based approach. Unlike GitHub Actions or GitLab Components,
+                  Azure DevOps integration leverages the `@fortify/setup` npm package to bootstrap fcli, which then executes
+                  the fcli actionRef:generic:ci action to run scans and related tasks.
+
+                  This approach provides a unified yet customizable experience across your AST scan workflows, allowing you to
+                  implement the same scanning logic across different CI/CD platforms.
+
+                  === Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans in Azure DevOps.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  Configuration is accomplished through environment variables set in your Azure DevOps pipeline YAML file.
+                  Secrets and variables should be configured in Azure DevOps Library or pipeline variables. The following
+                  sections document all available configuration options organized by their purpose.
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  == Additional Resources
+
+                  * link:https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema[Azure Pipelines YAML schema reference]
+                  * link:https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables[Define variables in Azure Pipelines]
+                  * link:https://www.npmjs.com/package/@fortify/setup[@fortify/setup npm package documentation]
+                snippets:
+                  generic:
+                    migrationNote: |
+                      The Azure DevOps integration uses the same environment variables as other Fortify CI integrations,
+                      making it easy to standardize your security scanning across platforms. The primary difference is
+                      the bootstrap mechanism - Azure DevOps uses `@fortify/setup` via `npx` instead of platform-specific
+                      actions or components.
+                  fod:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      trigger:
+                        branches:
+                          include:
+                            - main
+                      pr:
+                        branches:
+                          include:
+                            - main
+                      
+                      jobs:
+                        - job: fortify
+                          pool:
+                            vmImage: 'ubuntu-latest'
+                          steps:
+                            - checkout: self                       # Check out source code
+                            - task: # ... setup build tool(s)      # Set up build tool(s) required to build your project
+                            - task: Bash@3
+                              displayName: 'Run Fortify AST scan'
+                              inputs:
+                                targetType: 'inline'
+                                script: |
+                                  # Bootstrap fcli and Fortify tools
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
+                                  fcli action run ci  # Or any other fcli-based custom workflow
+                              env:
+                                FOD_URL: $(FOD_URL)
+                                FOD_CLIENT_ID: $(FOD_CLIENT_ID)
+                                FOD_CLIENT_SECRET: $(FOD_CLIENT_SECRET)
+                                # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                                # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                                FORTIFY_SETUP_VERSION: v2.1      # Or v2 for latest features, v2.1.1 for stability
+                      ----
+                  ssc:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      trigger:
+                        branches:
+                          include:
+                            - main
+                      pr:
+                        branches:
+                          include:
+                            - main
+                      
+                      jobs:
+                        - job: fortify
+                          pool:
+                            vmImage: 'ubuntu-latest'
+                          steps:
+                            - checkout: self                       # Check out source code
+                            - task: # ... setup build tool(s)      # Set up build tool(s) required to build your project
+                            - task: Bash@3
+                              displayName: 'Run Fortify AST scan'
+                              inputs:
+                                targetType: 'inline'
+                                script: |
+                                  # Bootstrap fcli and Fortify tools
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
+                                  fcli action run ci  # Or any other fcli-based custom workflow
+                              env:
+                                SSC_URL: $(SSC_URL)
+                                SSC_TOKEN: $(SSC_TOKEN)
+                                SC_SAST_TOKEN: $(SC_SAST_TOKEN)
+                                # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                                FORTIFY_SETUP_VERSION: v2.1   # Or v2 for latest features, v2.1.1 for stability
+                      ----
   # ============================================================================
   # PRODUCT NAMES
   # ============================================================================
@@ -1700,7 +1835,9 @@ steps:
           do:
           - var.set:
               ciSystemIntegrationVersion: ${versionEntry.key}
-              versionLinks..: "* link:${ciSystemKey}/${ciSystemIntegrationVersion}/index.html[${ciSystemIntegrationVersion}]"
+              ciSystemIntegrationVersionDef: ${versionEntry.value}
+              versionTitle: ${ciSystemIntegrationVersionDef.versionTitle?:ciSystemIntegrationVersion}
+              versionLinks..: "* link:${ciSystemKey}/${ciSystemIntegrationVersion}/index.html[${versionTitle}]"
       
       - var.set:
           ciSystemSections..: |
@@ -1734,6 +1871,7 @@ steps:
           - var.set:
               ciSystemIntegrationVersion: ${versionEntry.key}
               ciSystemIntegrationVersionDef: ${versionEntry.value}
+              versionTitle: ${ciSystemIntegrationVersionDef.versionTitle?:ciSystemIntegrationVersion}
           
           # Build list of output documents for this version
           - var.rm: [docListEntries]
@@ -1757,13 +1895,14 @@ steps:
                       fortifyProductName: ${#isBlank(product)?'':productNames[product]}
                       outputFile: ${#action.docRenderer().processEvalExpressions(outputDef.filePattern, 1)}
                       outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
+                      renderedDescription: ${#action.docRenderer().processEvalExpressions(outputDocMeta.description, 1)}
                       docListEntries..: |
                         * link:${ciSystemIntegrationVersion}/${outputFileLink}[${outputDocMeta.title}${#isBlank(fortifyProductName)?'':' - _'+fortifyProductName+'_'}] +
-                          ${outputDocMeta.description}
+                          ${renderedDescription}
           
           - var.set:
               versionSections..: |
-                === link:${ciSystemIntegrationVersion}/index.html[${ciSystemIntegrationVersion}]
+                === link:${ciSystemIntegrationVersion}/index.html[${versionTitle}]
                 
                 ${#join("\n", docListEntries)}
       
@@ -1802,9 +1941,10 @@ steps:
                       fortifyProductName: ${#isBlank(product)?'':productNames[product]}
                       outputFile: ${#action.docRenderer().processEvalExpressions(outputDef.filePattern, 1)}
                       outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
+                      renderedDescription: ${#action.docRenderer().processEvalExpressions(outputDocMeta.description, 1)}
                       docListEntries..: |
                         * link:${outputFileLink}[${outputDocMeta.title}${#isBlank(fortifyProductName)?'':' - _'+fortifyProductName+'_'}] +
-                          ${outputDocMeta.description}
+                          ${renderedDescription}
           
           # Write version index
           - out.write:

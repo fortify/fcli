@@ -71,10 +71,11 @@ val buildTimeActionCiDoc = tasks.register<JavaExec>("buildTimeAction_ci_doc") {
 }
 
 // Package CI-specific documentation (excluding fragments that go in jar) for fcli-doc consumption
+// This is an intermediate build artifact stored in fcli-app build directory
 val packageCiDocs = tasks.register<Zip>("packageCiDocs") {
-    group = "distribution"
-    description = "Package CI-specific versioned documentation for GitHub Pages publishing"
-    dependsOn(buildTimeActionCiDoc, "createDistDir")
+    group = "documentation"
+    description = "Package CI-specific versioned documentation for fcli-doc consumption (intermediate artifact)"
+    dependsOn(buildTimeActionCiDoc)
     from(layout.buildDirectory.dir("generated-action-output-resources")) {
         // Include CI-specific versioned documentation with new directory structure
         include("ci/**/*.adoc")
@@ -83,8 +84,8 @@ val packageCiDocs = tasks.register<Zip>("packageCiDocs") {
         exclude("ci-core-*.txt", "ci-core-*.adoc")
     }
     archiveFileName.set("ci-docs.zip")
-    destinationDirectory.set(rootProject.layout.buildDirectory.dir("dist/release-assets"))
-    outputs.file(rootProject.layout.buildDirectory.file("dist/release-assets/ci-docs.zip"))
+    destinationDirectory.set(layout.buildDirectory)
+    outputs.file(layout.buildDirectory.file("ci-docs.zip"))
 }
 
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
