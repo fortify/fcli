@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260126.155559-dev_v3.x
+fcli_version: 0.20260201.125823-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260126.155559-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260126.155559-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.125823-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260126.155559-dev_v3.x</span>
+<span id="revnumber">version 0.20260201.125823-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -212,7 +212,7 @@ fcli_version: 0.20260126.155559-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260126.155559-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260201.125823-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -334,7 +334,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260126.155559-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260201.125823-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -2629,6 +2629,8 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
       "short" : "string"
     }
   },
+  "ciId" : "string",
+  "ciName" : "string",
   "ciRepository" : {
     "name" : {
       "full" : "string",
@@ -2638,6 +2640,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
     "workDir" : "string"
   },
   "organization" : "string",
+  "prTerminology" : "string",
   "project" : "string",
   "pullRequest" : {
     "active" : "boolean",
@@ -2814,6 +2817,8 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
       "short" : "string"
     }
   },
+  "ciId" : "string",
+  "ciName" : "string",
   "ciRepository" : {
     "name" : {
       "full" : "string",
@@ -2823,6 +2828,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
     "workDir" : "string"
   },
   "pipelineUuid" : "string",
+  "prTerminology" : "string",
   "pullRequest" : {
     "active" : "boolean",
     "id" : "number",
@@ -3067,6 +3073,8 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
       "short" : "string"
     }
   },
+  "ciId" : "string",
+  "ciName" : "string",
   "ciRepository" : {
     "name" : {
       "full" : "string",
@@ -3076,6 +3084,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
     "workDir" : "string"
   },
   "jobSummaryFile" : "string",
+  "prTerminology" : "string",
   "pullRequest" : {
     "active" : "boolean",
     "id" : "number",
@@ -3220,6 +3229,8 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
       "short" : "string"
     }
   },
+  "ciId" : "string",
+  "ciName" : "string",
   "ciRepository" : {
     "name" : {
       "full" : "string",
@@ -3229,6 +3240,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
     "workDir" : "string"
   },
   "pipelineId" : "number",
+  "prTerminology" : "string",
   "projectId" : "number",
   "pullRequest" : {
     "active" : "boolean",
@@ -5179,8 +5191,8 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260126.155559-dev_v3.x<br>
-Last updated 2026-01-26 15:58:43 UTC
+Version 0.20260201.125823-dev_v3.x<br>
+Last updated 2026-02-01 13:01:02 UTC
 </div>
 </div>
 </body>
