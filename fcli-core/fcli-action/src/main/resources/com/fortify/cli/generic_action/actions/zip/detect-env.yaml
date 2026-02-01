@@ -49,9 +49,9 @@ steps:
           ci.type:     ${ci.detected.type}
           ci.env:      ${ci.detected.env}
       
-      # For recognized CI systems (github, gitlab, ado, bitbucket), extract properties from detected environment
-      # Using conditional navigation operator ?. to safely access properties even if ci.env is null
-      - if: ${ci.type=='github'||ci.type=='gitlab'||ci.type=='ado'||ci.type=='bitbucket'}
+      # For recognized CI systems (not unknown), extract properties from detected environment
+      # Using conditional navigation operator ?. to safely access properties even if ci.env is empty
+      - if: ${ci.type!='unknown'}
         var.set:
           global.ci.name:                ${ci.env?.ciName}
           global.ci.id:                  ${ci.env?.ciId}
