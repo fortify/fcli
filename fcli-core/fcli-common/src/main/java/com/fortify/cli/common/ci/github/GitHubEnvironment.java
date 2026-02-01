@@ -46,13 +46,15 @@ public record GitHubEnvironment(
     CiCommit ciCommit,
     CiPullRequest pullRequest,
     // GitHub-specific properties
-    String jobSummaryFile
+    String jobSummaryFile,
+    String prTerminology
     
 ) {
     private static final Pattern PR_NUMBER_PATTERN = Pattern.compile("refs/pull/(\\d+)/");
     
     // CI system type identifier
     public static final String TYPE = "github";
+    public static final String PR_TERMINOLOGY = "Pull Request";
     
     // Environment variable names
     public static final String ENV_REPOSITORY = "GITHUB_REPOSITORY";
@@ -121,6 +123,7 @@ public record GitHubEnvironment(
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
+            .prTerminology(PR_TERMINOLOGY)
             .build();
     }
     

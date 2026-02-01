@@ -45,10 +45,12 @@ public record GitLabEnvironment(
     CiPullRequest pullRequest,
     // GitLab-specific properties
     int projectId,
-    Integer pipelineId
+    Integer pipelineId,
+    String prTerminology
 ) {
     // CI system type identifier
     public static final String TYPE = "gitlab";
+    public static final String PR_TERMINOLOGY = "Merge Request";
     
     // Environment variable names
     public static final String ENV_GITLAB_CI = "GITLAB_CI";
@@ -128,6 +130,7 @@ public record GitLabEnvironment(
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
+            .prTerminology(PR_TERMINOLOGY)
             .build();
     }
     

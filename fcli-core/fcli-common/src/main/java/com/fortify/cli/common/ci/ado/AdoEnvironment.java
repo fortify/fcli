@@ -47,10 +47,12 @@ public record AdoEnvironment(
     String organization,
     String project,
     String repositoryId,
-    Integer buildId
+    Integer buildId,
+    String prTerminology
 ) {
     // CI system type identifier
     public static final String TYPE = "ado";
+    public static final String PR_TERMINOLOGY = "Pull Request";
     
     // Environment variable names
     public static final String ENV_ORGANIZATION_URL = "System.TeamFoundationCollectionUri";
@@ -134,6 +136,7 @@ public record AdoEnvironment(
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
             .pullRequest(pullRequest)
+            .prTerminology(PR_TERMINOLOGY)
             .build();
     }
     
