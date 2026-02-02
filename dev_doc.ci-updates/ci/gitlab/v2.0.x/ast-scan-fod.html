@@ -1,6 +1,6 @@
 ---
 title: Fortify GitLab AST Scan Component
-fcli_version: 0.20260202.134152-dev_doc.ci-updates
+fcli_version: 0.20260202.155141-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,14 +21,14 @@ fcli_version: 0.20260202.134152-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260202.134152-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260202.155141-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fortify GitLab AST Scan Component</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260202.134152-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260202.155141-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -225,8 +225,31 @@ variables exclusively for scan configuration, following GitLab CI/CD conventions
 <div class="paragraph">
 <p>The environment variables in this section allow you to customize bootstrapping behavior
 of fcli and supporting tools like ScanCentral Client. These variables can be configured
-on the <code>&lt;job-name&gt;-prepare</code> job as needed. Note that the GitLab components require at
-least fcli v3.15.0 to function correctly.</p>
+on the <code>&lt;job-name&gt;-prepare</code> job as needed.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This GitLab Component requires a recent fcli v3.x.y version to function properly.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Environment variables listed in the subsequent sections are for fcli 0.20260202.155141-dev_doc.ci-updates; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+</td>
+</tr>
+</table>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -569,8 +592,8 @@ as GitLab artifacts.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260202.134152-dev_doc.ci-updates<br>
-Last updated 2026-02-02 13:45:29 UTC
+Version 0.20260202.155141-dev_doc.ci-updates<br>
+Last updated 2026-02-02 15:55:20 UTC
 </div>
 </div>
 </body>
