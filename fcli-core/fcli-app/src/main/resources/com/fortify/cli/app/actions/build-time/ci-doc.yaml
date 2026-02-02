@@ -465,8 +465,7 @@ formatters:
             version: v2.1.x
             overview: |
               The environment variables in this section allow you to customize bootstrapping behavior
-              of fcli and supporting tools like ScanCentral Client. Note that this GitHub Action requires
-              at least fcli v3.15.0 to function correctly.
+              of fcli and supporting tools like ScanCentral Client. 
           outputs:
             setup-action:
               filePattern: setup-action.adoc
@@ -601,6 +600,10 @@ formatters:
 
                   $eval{bootstrapSection}
 
+                  NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                  NOTE: Environment variables listed in the following sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+
                   $eval{fcliCiActionSections}
 
                   == Migrating from fortify/github-action@v2
@@ -704,8 +707,7 @@ formatters:
             overview: |
               The environment variables in this section allow you to customize bootstrapping behavior
               of fcli and supporting tools like ScanCentral Client. These variables can be configured
-              on the `<job-name>-prepare` job as needed. Note that the GitLab components require at
-              least fcli v3.15.0 to function correctly.
+              on the `<job-name>-prepare` job as needed.
           common:
             componentReference: |
               The GitLab integration consists of two components:
@@ -968,6 +970,10 @@ formatters:
 
                   $eval{bootstrapSection}
 
+                  NOTE: This GitHub Component requires a recent fcli v3.x.y version to function correctly.
+
+                  NOTE: Environment variables listed in the following sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+
                   $eval{fcliCiActionSections}
 
                   === Best Practices
@@ -1116,6 +1122,8 @@ formatters:
                   sections document all available configuration options organized by their purpose.
 
                   $eval{bootstrapSection}
+
+                  NOTE: Environment variables listed in the following sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
 
                   $eval{fcliCiActionSections}
 
@@ -1512,6 +1520,7 @@ steps:
   # Setup component env vars are included directly in setupComponents definitions.
   #
   - var.set:
+      fcliVersion: ${#fcliBuildProperties().fcliVersion}
       productNames: {fmt: productNames}
       ciSystems: {fmt: ciSystems}
       bootstrapComponents: {fmt: bootstrapComponents}
