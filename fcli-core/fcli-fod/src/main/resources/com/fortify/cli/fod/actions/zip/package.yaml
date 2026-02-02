@@ -25,15 +25,19 @@ cli.options:
   scClientVersion:
     names: --sc-client-version, -v
     description: |
-      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
-      specified.
+      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_HOME or SC_CLIENT_VERSION environment variables.
+      Allowed values:
+      - An explicit version number (e.g. 25.2 or 25.2.0)
+      - Path to a specific ScanCentral Client installation
+      - `latest` to use the latest available ScanCentral Client version
+      - `auto` (default) to use a pre-installed version if available, otherwise installs latest
     required: true
-    default: ${#env('SC_CLIENT_VERSION')?:'auto'}
+    default: ${#ifBlank(#env('SC_CLIENT_HOME'),#ifBlank(#env('SC_CLIENT_VERSION'),'auto'))}
   sourceDir:
     names: --source-dir, -d
     description: |
       Specify the source directory to be packaged. Defaults to the value of the SOURCE_DIR environment variable, or current working directory if not specified.
-    default: ${#env('SOURCE_DIR')?:'.'}
+    default: ${#ifBlank(#env('SOURCE_DIR'),'.')}
     required: true
   toolDefinitions:
     names: --tool-definitions

@@ -25,12 +25,14 @@ cli.options:
   scClientVersion:
     names: --sc-client-version, -v
     description: |
-      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable. If not
-      specified, fcli will automatically detect the appropriate ScanCentral Client version by querying available sensors in SSC for the application
-      version specified through --appversion, or globally if --appversion is not specified. Note that automatic detection requires an active SSC
-      session. Use 'auto' to explicitly request automatic detection, or specify an explicit version to skip detection.
+      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_HOME or SC_CLIENT_VERSION environment variables.
+      Allowed values:
+      - An explicit version number (e.g. 25.2 or 25.2.0)
+      - Path to a specific ScanCentral Client installation
+      - `latest` to use the latest available ScanCentral Client version
+      - `auto` (default) to enable automatic detection based on available sensor versions
     required: false
-    default: ${#env('SC_CLIENT_VERSION')}
+    default: ${#ifBlank(#env('SC_CLIENT_HOME'),#ifBlank(#env('SC_CLIENT_VERSION'),'auto'))}
   appversion:
     names: --appversion, --av
     description: |
@@ -67,7 +69,7 @@ steps:
       global.package.output: ${#resolveAgainstCurrentWorkDir(#ifBlank(cli.usePackage,cli.output))}
   - if: ${#isBlank(cli.usePackage)}
     steps:
-      - if: ${#isBlank(cli.scClientVersion) || cli.scClientVersion=='auto'}
+      - if: "${(#ifBlank(cli.scClientVersion,'auto')=='auto')}"
         run.fcli:
           DETECT_SC_CLIENT_VERSION:
             cmd: fcli sc-sast sensor list ${#opt("--av", cli.appversion)} "--latest-only=true"
@@ -86,10 +88,7 @@ steps:
                   DETECT_SC_CLIENT_VERSION.dependencySkipReason:  # Clear to allow downstream steps
                   DETECT_SC_CLIENT_VERSION.exitCode: 0            # Don't contribute to final exit code
       - var.set:
-          effectiveScClientVersion: ${#ifBlank(cli.scClientVersion,'auto')}
-      - if: "${effectiveScClientVersion=='auto' && #isNotBlank(detectedScClientVersion)}"
-        var.set:
-          effectiveScClientVersion: ${detectedScClientVersion}
+          effectiveScClientVersion: ${#ifBlank(detectedScClientVersion, cli.scClientVersion)}
       - run.fcli:
           SETUP_TOOLS: fcli tool env init "--tools=sc-client:${effectiveScClientVersion}" ${#opt("--tool-definitions", cli.toolDefinitions)}
           RUN_SC_CLIENT: fcli tool sc-client run --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}

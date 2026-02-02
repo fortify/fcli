@@ -42,11 +42,6 @@ Some commands and options are either hidden or marked as `PREVIEW` or `LEGACY`; 
 
 Hidden commands are not listed in fcli help output and not included in the link:#_manual_pages[Manual Pages]. If needed, you can view the list of hidden commands using the `+fcli util all-commands list -q hidden+` command.
 
-== Migration from v2.x
-
-Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
-custom fcli actions. Please see the link:../migration-v2.x-v3.x.html[migration guide] for details.
-
 == Fcli-based CI Integrations
 
 Fcli provides seamless integration of OpenText Fortify Application Security Testing into various CI/CD platforms through the standardized `fcli action run ci` command. These integrations leverage the fcli `ci` action to provide a consistent, powerful approach to security testing across different CI systems.
@@ -63,6 +58,9 @@ For a complete overview of all available CI integrations and their versions, see
 
 Currently supported CI/CD platforms:
 
+// This list should include all available CI integrations, pointing to the latest version of each.
+// When adding new CI systems or versions, ensure this list is updated accordingly.
+// See fcli-core/fcli-app/src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml for CI system definitions.
 * link:ci/github/v3.0.x/index.html[*Fortify GitHub Actions*]: Seamless integration for GitHub Actions workflows
 * link:ci/gitlab/v2.0.x/index.html[*Fortify GitLab Components*]: Native GitLab CI/CD pipeline components
 * link:ci/ado/script/index.html[*Fortify Azure DevOps*]: Script-based integration for Azure DevOps pipelines
@@ -92,7 +90,7 @@ Please note that when publishing a new release, it may take up to 30-60 minutes 
 
 == Installation
 
-=== Recommended: Using @fortify/setup
+=== Using @fortify/setup
 
 If you have `npx` available on the system where you want to install fcli and possibly other Fortify tools, *@fortify/setup* is the recommended approach for installing fcli in both CI/CD pipelines and local development environments. This lightweight npm package automatically bootstraps fcli, verifies its integrity using RSA signatures, and provides cross-platform support with minimal dependencies.
 
@@ -171,9 +169,9 @@ Pin @fortify/setup to at least a major version to avoid breaking changes:
 npx @fortify/setup@2 env init --tools=fcli:auto
 ----
 
-=== Alternative: Direct Binary Installation
+=== Manual Installation
 
-If you prefer direct control over fcli installation, or if you cannot use @fortify/setup in your environment, you can install fcli manually or using the built-in managed installation approach. We also provide Docker images for fcli; see https://hub.docker.com/repository/docker/fortifydocker/fcli/general[fortifydocker/fcli] for information on how to run fcli using these Docker images.
+If you prefer direct control over fcli installation, or if you cannot use `@fortify/setup` in your environment, you can install fcli manually or using the built-in managed installation approach. We also provide Docker images for fcli; see https://hub.docker.com/repository/docker/fortifydocker/fcli/general[fortifydocker/fcli] for information on how to run fcli using these Docker images.
 
 ==== Download and Verification
 
@@ -248,7 +246,7 @@ The steps below describe how to perform a managed fcli installation. The syntax 
 
 == Upgrade
 
-=== Recommended: Using @fortify/setup
+=== Using @fortify/setup
 
 If you installed fcli using @fortify/setup, upgrading is straightforward.
 
@@ -269,7 +267,7 @@ npx @fortify/setup env init --tools=fcli:v3     # Or 'latest', or specific versi
 npx @fortify/setup env powershell | Invoke-Expression
 ----
 
-=== Alternative: Direct Binary Upgrade
+=== Manual Upgrade
 
 If you prefer a manual installation/upgrade, you can download the latest fcli version for your platform from the fcli https://github.com/fortify/fcli/releases[Releases] page and follow the link:#_manual_installation[Manual Installation] instructions above, adjusting any manually created wrapper scripts to point to the new installation.
 
@@ -294,6 +292,11 @@ Upgrade steps:
 ** Install latest 2.x.y version, removing all previous 2.x.y installations but keeping any 1.x.y installations: +
    `fcli tool fcli install -v 2 --uninstall 2`
 * Re-source the `fcli_completion` script if applicable on your platform
+
+== Migration from v2.x
+
+Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
+custom fcli actions. Please see the link:../migration-v2.x-v3.x.html[migration guide] for details.
 
 == Command Structure
 

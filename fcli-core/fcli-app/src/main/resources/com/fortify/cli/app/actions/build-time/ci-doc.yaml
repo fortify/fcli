@@ -13,209 +13,29 @@ usage:
       the fcli `ci` action, like Fortify GitHub Actions, GitLab CI, Azure DevOps, and
       others as these get implemented. 
       
-    The action supports generating documentation for multiple Fortify CI integration 
-    versions, and for each CI integration/version pair, we can generate multiple 
-    CI-specific and Fortify product-specific documents, for example:
-    - `ci/github/v3.0.x/setup-action.adoc`
-    - `ci/github/v3.0.x/ast-action-fod.adoc`
-    - `ci/github/v3.0.x/ast-action-ssc.adoc`
-    - `ci/<ci-system>/<version>/<ci-specific-doc>[-ssc|-fod].adoc`
-    
     ## CUSTOMIZATION GUIDE
     
-    The formatters section is organized by likelihood of needing changes:
-    1. Fcli environment variable descriptions (edit frequently)
-    2. CI integration definitions (edit frequently)
-    3. Bootstrap component env var descriptions (edit occasionally)
-    4. Landing page templates (structure rarely changes)
-    5. Generic document templates (structure rarely changes)
-    6. Base table/cell formatters (low-level plumbing, rarely changed)
+    The formatters section contains the following main sections that may need updates:
     
-    ### 1. Updating Fcli Environment Variable Descriptions
+    1. **`fcliCiAction`**: Fcli environment variable descriptions for FoD and SSC (edit frequently)
+       - Add/update environment variable descriptions for the fcli `ci` action
+       - Organized by product (fod, ssc) and configuration section
     
-    Edit the `fcliCiAction` formatter to add/update environment variables:
-    - `bootstrap.vars`: Fcli-provided tool bootstrap environment variables (TOOL_DEFINITIONS, etc.)
-    - `fod`: Array of FoD configuration sections (session, releaseManagement, package, scan, postScan)
-    - `ssc`: Array of SSC configuration sections (session, appVersionManagement, package, scan, postScan)
+    2. **`ciSystems`**: CI integration definitions for specific CI systems and versions (edit frequently)
+       - Add new CI systems or versions
+       - Define bootstrap configuration and output documents
     
-    Each section has:
-    - `title`: Section title for documentation (required)
-    - `overview`: Section overview text (optional)
-    - `vars`: Array of environment variable definitions with `names:` and `desc:` (required)
-    - `fragment`: Optional fragment file identifier. Only 'session' has special meaning - sections
-                  with `fragment: session` are written to `ci-action-session-{product}.txt/adoc` fragment files.
-                  All other sections (with any other fragment value or no fragment property) are written
-                  to `ci-action-core-{product}.txt/adoc` fragment files. The fragment property is primarily
-                  used to separate session-related configuration from all other configuration.
+    3. **`bootstrapComponents`**: Bootstrap component environment variable descriptions (edit occasionally)
+       - Add new bootstrap tool versions and their environment variables
     
-    Use `fcliCmd:command:` syntax in descriptions for command references (auto-linked in docs).
+    4. **Landing page templates**: `ciRootIndexDoc`, `ciSystemIndexDoc`, `ciVersionIndexDoc` (structure rarely changes)
+       - Generate index.adoc files at three levels: ci/, ci/{ciSystem}/, ci/{ciSystem}/{version}/
     
-    Example:
-    ```yaml
-    formatters:
-      fcliCiAction:
-        fod:
-          - title: Authentication & Connection
-            overview: >-
-              Configure credentials and connection details for ${productNames.fod}.
-            fragment: session  # Included in ci-action-session-fod.txt/adoc
-            vars:
-              - names: FOD_URL
-                desc: Fortify on Demand base URL
-              - names: FOD_CLIENT_ID\nFOD_CLIENT_SECRET
-                desc: FoD API credentials for authentication
-              ...
-          - title: Release Management
-            overview: >-
-              Configure application and release management behavior.
-            # No fragment property → included in ci-action-core-fod.txt/adoc
-            vars:
-              - names: FOD_RELEASE
-                desc: FoD application and release to use
-              - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
-                desc: Configure automatic setup of applications and releases
-              ...
-          ...
-        ssc:
-          - title: Authentication & Connection
-            fragment: session  # Included in session-ssc.txt/adoc
-            vars:
-              ...
-          - title: Application Version Management
-            # No fragment → included in ci-core-ssc.txt/adoc
-            vars:
-              ...
-    ```
+    5. **Generic document templates**: `ciSystemDoc` (structure rarely changes)
+       - AsciiDoc template for CI-system/version/product-specific documents
     
-    ### 2. Adding/Updating CI Systems
-    
-    Edit the `ciSystems` formatter to add new CI systems or versions:
-    
-    Structure: `ciSystems.<ciSystem>.<version>`
-    - `<ciSystem>`: Name used in output paths (e.g., 'github' → ci/github/...)
-    - `<version>`: Version identifier (e.g., 'v3.0.x')
-    
-    Required fields per version:
-    - `bootstrap`: Setup/bootstrap configuration
-      - `component`: Bootstrap tool used by the integration (key from bootstrapComponents)
-      - `version`: Which version of that bootstrap tool
-      - `overview`: Section overview text for bootstrap documentation
-    - `outputs`: Map of output documents to generate
-    - Custom properties (optional): Add arbitrary properties to store reusable content
-    
-    Variables available in `bootstrap.overview` via `$eval{...}`:
-    - `ciSystemKey` - CI system identifier
-    - `ciSystemIntegrationVersion` - Version identifier  
-    - `ciSystemIntegrationVersionDef` - Full version definition (access custom properties)
-    - `bootstrapComponentTitle` - Bootstrap component title
-    - `productNames` - Map of product names (fod, ssc)
-    
-    Output structure:
-    - `filePattern`: Filename with {ciSystem}, {version}, {product} placeholders
-    - `products`: Empty {} for product-independent, or {fod, ssc} for product-specific
-    - `doc`: Document metadata (title, description, contents, snippets)
-    
-    Variables available in `doc.contents` via `$eval{...}`:
-    - All bootstrap variables listed above, plus:
-    - `product` - Current product identifier (empty for product-independent)
-    - `fortifyProductName` - Full product name
-    - `outputDef` - Full output definition (access custom properties)
-    - `snippets` - Combined snippets (generic + product-specific)
-    - `bootstrapSection` - Rendered bootstrap section (AsciiDoc)
-    - `fcliCiActionSections` - Rendered fcli CI action sections (AsciiDoc)
-    
-    To reuse outputs from another version, use YAML anchors:
-    ```yaml
-    ciSystems:
-      github:
-        v3.0.x: &github_v3_0_outputs
-          bootstrap:
-            component: fortifySetup
-            version: v2.1.x
-            overview: Bootstrap fcli version $eval{ciSystemIntegrationVersion}
-          common:  # Custom property for reusable content
-            migrationNote: "Review environment variables against this documentation"
-          outputs:
-            setup:
-              filePattern: setup-action.adoc
-              products: {}
-              doc:
-                title: fortify/github-action/setup
-                contents: |
-                  == Overview
-                  $eval{ciSystemIntegrationVersionDef.common.migrationNote}
-                  $eval{bootstrapSection}
-        
-        v3.1.x:
-          <<: *github_v3_0_outputs  # Inherit all from v3.0.x
-          bootstrap:
-            component: fortifySetup
-            version: v2.2.x          # Override bootstrap version
-    ```
-    
-    ### 3. Adding/Updating Bootstrap Component Versions
-    
-    Edit the `bootstrapComponents` formatter to add new bootstrap tool versions:
-    
-    Structure: `bootstrapComponents.<component>.<version>`
-    - `name`: Human-readable name (e.g., '@fortify/setup')
-    - `envVarDescriptions`: Array of env var definitions with `names:` and `desc:`
-    
-    ```yaml
-    bootstrapComponents:
-      fortifySetup:
-        v2.1.x:
-          name: '@fortify/setup'
-          envVarDescriptions:
-            - names: FCLI_BOOTSTRAP_VERSION
-              desc: >-
-                Fcli version to bootstrap...
-            - names: FCLI_BOOTSTRAP_PATH
-              desc: >-
-                Path to a pre-installed fcli executable...
-            - names: FCLI_BOOTSTRAP_URL
-              desc: >-
-                Custom URL for downloading fcli...
-        
-        v2.2.x:
-          name: '@fortify/setup'
-          envVarDescriptions:
-            - names: FCLI_BOOTSTRAP_VERSION  # Must duplicate from v2.1.x
-              desc: >-
-                Fcli version to bootstrap...
-            - names: FCLI_BOOTSTRAP_PATH
-              desc: >-
-                Path to a pre-installed fcli executable...
-            - names: FCLI_BOOTSTRAP_URL
-              desc: >-
-                Custom URL for downloading fcli...
-            - names: NEW_VAR_IN_V2_2          # Then add new ones
-              desc: New variable description
-    ```
-    
-    TODO: Consider adding explicit `inheritsFrom` property to allow inheriting all variables
-    from another version, with associated processing code to merge variable arrays. Or, can
-    we somehow use $eval{...} syntax here?
-    
-    ### 4. Updating Landing Page Templates
-    
-    Formatters: `ciRootIndexDoc`, `ciSystemIndexDoc`, `ciVersionIndexDoc`
-    
-    These generate index.adoc files at three levels:
-    - `ci/index.adoc`: List all CI systems
-    - `ci/{ciSystem}/index.adoc`: List all versions for a CI system
-    - `ci/{ciSystem}/{version}/index.adoc`: List all documents for a version
-    
-    ### 5. Generic Document Templates
-
-    Formatters: `ciSystemDoc`
-
-    AsciiDoc template for CI-system/version/product-specific documents.
-
-    ### 6. Low-level Formatters
-    
-    Low-level formatting for generic AsciiDoc document output, environment variable tables, ... 
-    Rarely need changes.
+    6. **Low-level formatters**: Various table/cell formatters (rarely need changes)
+       - Low-level formatting for AsciiDoc document output, environment variable tables, etc.
     
     ### Running the Action
     
@@ -262,16 +82,15 @@ formatters:
   #   - vars: Array of environment variable definitions
   #
   # The bootstrap section is special - it only has vars (no title/overview) as it's
-  # combined with setup env vars in output.
-  #
-  # Common package section is defined as YAML anchor to be reused in both FoD and SSC.
+  # combined with bootstrap env vars in output.
   #
   # To add/update variables:
   # 1. Add to appropriate product section array
   # 2. Use `names:` for variable name(s), `desc:` for description
-  # 3. Multiple names on separate lines indicate related variables (e.g., credentials)
+  # 3. Multiple names on separated by `\n` indicate related variables (e.g., credentials)
   # 4. Use `fcliCmd:command:` syntax for command references (auto-linked in docs)
-
+  # 5. Use `actionRef:_:action-name` syntax for fcli action references in current (fod/ssc) module
+  # 6. Use `actionRef:module:action-name` syntax for fcli action references in other modules
   fcliCiAction:
     bootstrap:
       vars:
@@ -281,6 +100,11 @@ formatters:
             defined in the link:https://github.com/fortify/tool-definitions/tree/main/v1[default Fortify tool definitions].
             For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip
             file to download these tools from an internal mirror.
+        - names: PREINSTALLED
+          desc: >-
+            Set to `true` to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli 
+            `ci` action are already installed, preventing tool definitions from being updated or tools from being automatically installed.
+            This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.
     fod:
       - title: Authentication & Connection
         fragment: session
@@ -338,24 +162,21 @@ formatters:
               providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
               Note that any custom action must set the `global.package.output` action variable, pointing to the package or
               MBS file to be scanned.
-          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR\nTOOL_DEFINITIONS
+          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR
             desc: >-
               These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
               and the given package or MBS file (which must already exist) will be used. To pass additional options to the
               `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\n\nBy default:
               \n* If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
               and used, skipping automatic installation. The path should point to the installation directory or binary.
-              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
-              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
-              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
-              will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-              will be installed.
+              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used. Allowed values:
+              \n  * An explicit version number (e.g. `25.2` or `25.2.0`)
+              \n  * Path to a specific ScanCentral Client installation
+              \n  * `latest` to use the latest available ScanCentral Client version
+              \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
+              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, defaults to `auto` behavior.
               \n* Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.
               \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
-              \n* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
-              location; use `TOOL_DEFINITIONS` to use customized tool definitions.
-              \n* Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
-              from being updated or ScanCentral Client from being installed.\n\n
       - title: Scan Execution
         overview: >-
           Configure SAST scan execution and waiting behavior for ${productNames.fod}.
@@ -375,9 +196,11 @@ formatters:
               extra options to the fcliCmd:fcli fod sast-scan wait-for: command. Note that `DO_SAST_WAIT` is deprecated; 
               please use `DO_WAIT` instead.
       - title: Post-Scan Actions
-        overview: >-
+        overview: >
           Configure post-scan tasks including release summaries, policy checks, pull request comments, and
           vulnerability data exports for ${productNames.fod}.
+
+          NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.
         vars:
           - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
             desc: >-
@@ -436,7 +259,7 @@ formatters:
                 see fcliCmd:fcli ssc session login: documentation.
       - title: Application Version Management
         overview: >-
-          Configure ${productNames.ssc} application version settings, including automatic creation and setup of
+          Configure ${productNames.ssc} application version settings, including automatic creation of
           application versions if they don't exist.
         vars:
           - names: SSC_APPVERSION
@@ -465,24 +288,21 @@ formatters:
               providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
               Note that any custom action must set the `global.package.output` action variable, pointing to the package or
               MBS file to be scanned.
-          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR\nTOOL_DEFINITIONS
+          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR
             desc: >-
               These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
               and the given package or MBS file (which must already exist) will be used. To pass additional options to the
               `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\n\nBy default:
               \n\n* If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
               and used, skipping automatic installation. The path should point to the installation directory or binary.
-              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used; if not
-              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
-              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, the most recently installed ScanCentral Client version
-              will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-              will be installed.
+              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used. Allowed values:
+              \n  * An explicit version number (e.g. `25.2` or `25.2.0`)
+              \n  * Path to a specific ScanCentral Client installation
+              \n  * `latest` to use the latest available ScanCentral Client version
+              \n  * `auto` (default for SSC) to enable automatic detection based on available sensor versions
+              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, defaults to `auto` behavior (sensor-based detection).
               \n* Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.
               \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
-              \n* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default
-              location; use `TOOL_DEFINITIONS` to use customized tool definitions.
-              \n* Set `PREINSTALLED` to `true` to require that ScanCentral Client is already installed, preventing tool definitions
-              from being updated or ScanCentral Client from being installed.\n\n
       - title: Scan Execution
         overview: >-
           Configure SAST and Debricked scan execution and waiting behavior for ${productNames.ssc}.
@@ -503,15 +323,12 @@ formatters:
               environment variable can be used to provide additional options to the `debricked scan` command.\n\nBy default:
               \n\n* If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
               and used, skipping automatic installation. The path should point to the installation directory or binary.
-              \n* `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used; if not
-              already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
-              \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, the most recently installed Debricked CLI version
-              will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version
-              will be installed.
-              \n* Tool definitions to identify available Debricked CLI versions will be downloaded from the default
-              location; use `TOOL_DEFINITIONS` to use customized tool definitions.
-              \n* Set `PREINSTALLED` to `true` to require that Debricked CLI is already installed, preventing tool definitions
-              from being updated or Debricked CLI from being installed.\n\n
+              \n* `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used. Allowed values:
+              \n  * An explicit version number (e.g. `2.6` or `2.6.7`)
+              \n  * Path to a specific Debricked CLI installation
+              \n  * `latest` to use the latest available Debricked CLI version
+              \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
+              \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, defaults to `auto` behavior.
           - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
             desc: >-
               By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
@@ -521,9 +338,11 @@ formatters:
               environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command.
               Note that `DO_SAST_WAIT` is deprecated; please use `DO_WAIT` instead.
       - title: Post-Scan Actions
-        overview: >-
+        overview: >
           Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,
           pull request comments, and vulnerability data exports for ${productNames.ssc}.
+
+          NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.
         vars:
           - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
             desc: >-
@@ -586,17 +405,54 @@ formatters:
   # ============================================================================
   # ⚠️  ADD NEW CI SYSTEMS OR UPDATE EXISTING ONES HERE ⚠️
   # 
-  # Define CI systems with their versions, outputs, and documentation.
-  # Structure: ciSystems.<ciSystem>
-  #   <ciSystem>: CI system identifier (e.g., 'github', 'gitlab')
+  # Structure: ciSystems.<ciSystem>.<version>
+  #   <ciSystem>: CI system identifier used in output paths (e.g., 'github' → ci/github/...)
   #     title: Human-readable title for documentation
-  #     description: (optional) Description of this CI integration
+  #     (optional) description: Description of this CI integration
   #     versions: Map of version definitions
   #       <version>: Version identifier (e.g., 'v3.0.x')
-  # Each version must explicitly define all properties (use YAML anchors to reuse content).
-  # 
-  # Samples are formatted as code blocks to avoid SpEL interpretation issues.
-  # Use ${'$'} to escape $ characters in CI syntax (e.g., GitHub Actions variables).
+  #         versionTitle: Optional display title for version (defaults to version identifier)
+  #         bootstrap: Setup/bootstrap configuration
+  #           component: Bootstrap tool used (key from bootstrapComponents)
+  #           version: Which version of that bootstrap tool
+  #           overview: Bootstrap section overview text (supports $eval{...})
+  #         outputs: Map of output documents to generate
+  #           <outputId>: Output identifier (e.g., 'setup-action', 'ast-action')
+  #             filePattern: Filename template (e.g., 'setup-action.adoc', 'ast-action-$eval{product}.adoc')
+  #             products: Omit for product-independent docs, or specify {fod, ssc} for product-specific
+  #             doc: Document metadata
+  #               title: Document title
+  #               description: Optional document description (supports $eval{...})
+  #               contents: AsciiDoc document contents (supports $eval{...})
+  #               snippets: Optional code samples/document snippets
+  #                 generic: Optional product-independent snippets (key-value map)
+  #                 fod: Optional FoD-specific snippets (key-value map)
+  #                 ssc: Optional SSC-specific snippets (key-value map)
+  #         (optional) Custom properties: Arbitrary properties for reusable content
+  #
+  # Variables available via $eval{...} in bootstrap.overview and most properties under `outputs`:
+  #     - ciSystemKey: CI system identifier
+  #     - ciSystemDef: Full CI system definition (access custom properties)
+  #     - ciSystemIntegrationVersion: Version identifier
+  #     - ciSystemIntegrationVersionDef: Full version definition (access custom properties)
+  #     - bootstrapComponentTitle: Bootstrap component display name
+  #     - outputDef: Full output definition (access custom properties; not in bootstrap.overview)
+  #     - product: Current product identifier (empty string for product-independent; not in bootstrap.overview)
+  #     - fortifyProductName: Full product name (empty for product-independent; not in bootstrap.overview)
+  #     - productNames: Map of all product names {fod, ssc}
+  #     - snippets: Combined snippets (generic merged with product-specific)
+  #     - bootstrapSection: Rendered bootstrap section (AsciiDoc)
+  #     - fcliCiActionSections: Rendered fcli CI action sections (AsciiDoc)
+  #
+  # Tips:
+  #   - Access custom properties: $eval{ciSystemIntegrationVersionDef.customProperty}
+  #   - Reuse definitions: Use YAML anchors (&anchor and <<: *anchor)
+  #   - Escape CI syntax: Use ${'$'} for $ in CI variables (e.g., GitHub Actions)
+  #
+  # IMPORTANT: When adding or updating CI systems:
+  # - When adding NEW VERSIONS: Update links in fcli-other/fcli-doc/src/docs/asciidoc/versioned/index.adoc
+  #   to point to the latest version of each CI system integration.
+  # - When adding NEW CI SYSTEMS: Add new links in fcli-other/fcli-doc/src/docs/asciidoc/versioned/index.adoc.
 
   ciSystems:
     github:
@@ -731,7 +587,7 @@ formatters:
                   workflows. The action leverages the ciOutputRef:setup-action action to set up
                   fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
                   related tasks, providing a unified yet customizable experience across your AST scan workflows
-                  on GitHub and other CI systems.
+                  on GitHub and other CI systems. 
 
                   === Quick Start Example
 
@@ -840,6 +696,7 @@ formatters:
       title: Fortify GitLab Components
       description: Seamless integration of OpenText Fortify Application Security Testing into GitLab CI/CD pipelines
       versions:
+        # IMPORTANT: For v3.0.x and later, add GITLAB_TOKEN requirement to documentation
         v2.0.x:
           bootstrap:
             component: fortifyGitLabFcli
@@ -1224,6 +1081,10 @@ formatters:
               If you configure a different `@fortify/setup` version, please refer to the
               link:https://www.npmjs.com/package/@fortify/setup/v/$eval{bootstrapComponentVersion}[@fortify/setup documentation] for
               that version's supported variables.
+
+              NOTE: `@fortify/setup` is automatically configured through the `FCLI_BOOTSTRAP_*` environment variables documented in 
+                    this section. For simplicity and to avoid pipelines from interfering with each other, it is recommended to not
+                    use the `@fortify/setup bootstrap-config` command in CI pipelines.
           outputs:
             ast-workflow:
               filePattern: ast-workflow-$eval{product}.adoc
@@ -1521,6 +1382,29 @@ formatters:
     ${#join("", bootstrapEnvVarCells)}${#join("", fcliEnvVarCells)}
     |===
   
+  asciiDocFragmentBootstrapSection: |
+    === Bootstrap & Setup
+
+    The fcli `ci` action uses the following environment variables to control bootstrapping behavior for supporting tools.
+
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+
+    ${#join("", fcliEnvVarCells)}
+    |===
+  
+  textFragmentBootstrapSection: |
+    Bootstrap & Setup
+    =================
+
+    The fcli `ci` action uses the following environment variables to control bootstrapping behavior for supporting tools.
+
+    ${textBootstrapTable}
+    
+    * Any fcli action references in this table refer to actions in the `fcli ${product}` module; please see
+      `fcli ${product} action help <action-name>` for more information.
+  
   textConfigSection: |
     ${sectionDef.title}
     ${'='.repeat(sectionDef.title.length())}
@@ -1700,9 +1584,43 @@ steps:
   # ==========================================================================
   # STEP 2: Write Fragment Files
   # ==========================================================================
-  # Write fragment files (session-{product}.txt/adoc,
+  # Write fragment files (bootstrap, session-{product}.txt/adoc,
   # ci-core-{product}.txt/adoc)
   
+  # Build bootstrap section fragments (product-independent)
+  - var.rm: [fcliEnvVarCells]
+  - records.for-each:
+      from: ${fcliBootstrapEnvVars}
+      record.var-name: envVar
+      do:
+      - var.set:
+          fcliEnvVarCells..: {fmt: asciiDocCell}
+  - var.set:
+      fragmentBootstrapAsciiDoc: {fmt: asciiDocFragmentBootstrapSection}
+  
+  # Build bootstrap section for fragments (Text)
+  - with:
+      writers:
+        tableWriter:
+          to: var:textBootstrapTable
+          type: table
+          style: border
+      do:
+      - records.for-each:
+          from: ${fcliBootstrapEnvVars}
+          record.var-name: envVar
+          do:
+          - writer.append:
+              tableWriter: {fmt: textCell}
+  - var.set:
+      fragmentBootstrapText: {fmt: textFragmentBootstrapSection}
+  
+  # Write bootstrap fragment files (product-independent)
+  - out.write:
+      "${cli.outputDir}/ci-action-bootstrap.txt": ${fragmentBootstrapText}
+      "${cli.outputDir}/ci-action-bootstrap.adoc": ${fragmentBootstrapAsciiDoc}
+  
+  # Write product-specific fragment files
   - records.for-each:
       from: ${{'fod', 'ssc'}}
       record.var-name: product

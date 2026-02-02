@@ -16,6 +16,8 @@ usage:
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.
     
+    ${#include('/ci-action-bootstrap'+(isAsciiDoc?'.adoc':'.txt'))}
+    
     ${#include('/ci-action-core-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
 
 config:
