@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20260201.162713-dev_doc.ci-updates
+fcli_version: 0.20260202.134152-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260201.162713-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.162713-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260202.134152-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260201.162713-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260202.134152-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -57,6 +57,7 @@ fcli_version: 0.20260201.162713-dev_doc.ci-updates
 <ul class="sectlevel2">
 <li><a href="#_synopsis_4">Synopsis</a></li>
 <li><a href="#_description_4">Description</a></li>
+<li><a href="#_bootstrap_setup">Bootstrap &amp; Setup</a></li>
 <li><a href="#_release_management">Release Management</a></li>
 <li><a href="#_package_configuration">Package Configuration</a></li>
 <li><a href="#_scan_execution">Scan Execution</a></li>
@@ -335,6 +336,38 @@ sections below list the environment variables supported by this action.</p>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_bootstrap_setup"><a class="anchor" href="#_bootstrap_setup"></a>Bootstrap &amp; Setup</h3>
+<div class="paragraph">
+<p>The fcli <code>ci</code> action uses the following environment variables to control bootstrapping behavior for supporting tools.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Environment Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PREINSTALLED</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>true</code> to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli  <code>ci</code> action are already installed, preventing tool definitions from being updated or tools from being automatically installed. This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_release_management"><a class="anchor" href="#_release_management"></a>Release Management</h3>
 <div class="paragraph">
 <p>Configure OpenText Core Application Security (Fortify on Demand) release settings, including automatic creation and setup of applications and releases if they don&#8217;t exist.</p>
@@ -396,20 +429,21 @@ PACKAGE_ACTION_EXTRA_OPTS</p></td>
 PACKAGE_EXTRA_OPTS
 SC_CLIENT_VERSION
 SC_CLIENT_HOME
-SOURCE_DIR
-TOOL_DEFINITIONS</p></td>
+SOURCE_DIR</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
 <p>These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.</p>
 </div>
 <div class="paragraph">
 <p>By default:
 * If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.
-* <code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.
-* If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, the most recently installed ScanCentral Client version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.
+* <code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used. Allowed values:
+  * An explicit version number (e.g. <code>25.2</code> or <code>25.2.0</code>)
+  * Path to a specific ScanCentral Client installation
+  * <code>latest</code> to use the latest available ScanCentral Client version
+  * <code>auto</code> (default) to use a pre-installed version if available, otherwise installs latest
+* If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, defaults to <code>auto</code> behavior.
 * Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.
-* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
-* Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.
-* Set <code>PREINSTALLED</code> to <code>true</code> to require that ScanCentral Client is already installed, preventing tool definitions from being updated or ScanCentral Client from being installed.</p>
+* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -451,7 +485,8 @@ SAST_WAIT_EXTRA_OPTS</p></td>
 <div class="sect2">
 <h3 id="_post_scan_actions"><a class="anchor" href="#_post_scan_actions"></a>Post-Scan Actions</h3>
 <div class="paragraph">
-<p>Configure post-scan tasks including release summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Core Application Security (Fortify on Demand).</p>
+<p>Configure post-scan tasks including release summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Core Application Security (Fortify on Demand).
+NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -830,8 +865,24 @@ only ScanCentral logs, not fcli logs.</p>
 </dd>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
-<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable, or 'auto' if not
-specified.</p>
+<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_HOME or SC_CLIENT_VERSION environment variables.
+Allowed values:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>An explicit version number (e.g. 25.2 or 25.2.0)</p>
+</li>
+<li>
+<p>Path to a specific ScanCentral Client installation</p>
+</li>
+<li>
+<p><code>latest</code> to use the latest available ScanCentral Client version</p>
+</li>
+<li>
+<p><code>auto</code> (default) to use a pre-installed version if available, otherwise installs latest</p>
+</li>
+</ul>
+</div>
 </dd>
 <dt class="hdlist1">--source-dir, -d</dt>
 <dd>
@@ -1145,8 +1196,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260201.162713-dev_doc.ci-updates<br>
-Last updated 2026-02-01 16:30:06 UTC
+Version 0.20260202.134152-dev_doc.ci-updates<br>
+Last updated 2026-02-02 13:44:44 UTC
 </div>
 </div>
 </body>

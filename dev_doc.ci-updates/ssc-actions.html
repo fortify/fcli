@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20260201.162713-dev_doc.ci-updates
+fcli_version: 0.20260202.134152-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,13 +21,13 @@ fcli_version: 0.20260201.162713-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.162713-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260202.134152-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260201.162713-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260202.134152-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -71,6 +71,7 @@ fcli_version: 0.20260201.162713-dev_doc.ci-updates
 <ul class="sectlevel2">
 <li><a href="#_synopsis_6">Synopsis</a></li>
 <li><a href="#_description_6">Description</a></li>
+<li><a href="#_bootstrap_setup">Bootstrap &amp; Setup</a></li>
 <li><a href="#_application_version_management">Application Version Management</a></li>
 <li><a href="#_package_configuration">Package Configuration</a></li>
 <li><a href="#_scan_execution">Scan Execution</a></li>
@@ -491,9 +492,41 @@ sections below list the environment variables supported by this action.</p>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_bootstrap_setup"><a class="anchor" href="#_bootstrap_setup"></a>Bootstrap &amp; Setup</h3>
+<div class="paragraph">
+<p>The fcli <code>ci</code> action uses the following environment variables to control bootstrapping behavior for supporting tools.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Environment Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PREINSTALLED</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>true</code> to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli  <code>ci</code> action are already installed, preventing tool definitions from being updated or tools from being automatically installed. This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_application_version_management"><a class="anchor" href="#_application_version_management"></a>Application Version Management</h3>
 <div class="paragraph">
-<p>Configure OpenText Application Security (Fortify Software Security Center) application version settings, including automatic creation and setup of application versions if they don&#8217;t exist.</p>
+<p>Configure OpenText Application Security (Fortify Software Security Center) application version settings, including automatic creation of application versions if they don&#8217;t exist.</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -552,8 +585,7 @@ PACKAGE_ACTION_EXTRA_OPTS</p></td>
 PACKAGE_EXTRA_OPTS
 SC_CLIENT_VERSION
 SC_CLIENT_HOME
-SOURCE_DIR
-TOOL_DEFINITIONS</p></td>
+SOURCE_DIR</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
 <p>These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>.</p>
 </div>
@@ -566,22 +598,28 @@ TOOL_DEFINITIONS</p></td>
 <p>If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.</p>
 </li>
 <li>
-<p><code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.</p>
+<p><code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used. Allowed values:</p>
 </li>
 <li>
-<p>If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, the most recently installed ScanCentral Client version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.</p>
+<p>An explicit version number (e.g. <code>25.2</code> or <code>25.2.0</code>)</p>
+</li>
+<li>
+<p>Path to a specific ScanCentral Client installation</p>
+</li>
+<li>
+<p><code>latest</code> to use the latest available ScanCentral Client version</p>
+</li>
+<li>
+<p><code>auto</code> (default for SSC) to enable automatic detection based on available sensor versions</p>
+</li>
+<li>
+<p>If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, defaults to <code>auto</code> behavior (sensor-based detection).</p>
 </li>
 <li>
 <p>Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory.</p>
 </li>
 <li>
 <p>Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.</p>
-</li>
-<li>
-<p>Tool definitions to identify available ScanCentral Client versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.</p>
-</li>
-<li>
-<p>Set <code>PREINSTALLED</code> to <code>true</code> to require that ScanCentral Client is already installed, preventing tool definitions from being updated or ScanCentral Client from being installed.</p>
 </li>
 </ul>
 </div></div></td>
@@ -629,16 +667,22 @@ DEBRICKED_HOME</p></td>
 <p>If <code>DEBRICKED_HOME</code> is specified, the pre-installed Debricked CLI at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary.</p>
 </li>
 <li>
-<p><code>DEBRICKED_VERSION</code> may be specified to request a specific Debricked CLI version to be used; if not already installed (through fcli or on system PATH), the requested version will be automatically downloaded and installed.</p>
+<p><code>DEBRICKED_VERSION</code> may be specified to request a specific Debricked CLI version to be used. Allowed values:</p>
 </li>
 <li>
-<p>If neither <code>DEBRICKED_VERSION</code> nor <code>DEBRICKED_HOME</code> are set, the most recently installed Debricked CLI version will be used (either previously installed through fcli or on system PATH) if found, otherwise latest available version will be installed.</p>
+<p>An explicit version number (e.g. <code>2.6</code> or <code>2.6.7</code>)</p>
 </li>
 <li>
-<p>Tool definitions to identify available Debricked CLI versions will be downloaded from the default location; use <code>TOOL_DEFINITIONS</code> to use customized tool definitions.</p>
+<p>Path to a specific Debricked CLI installation</p>
 </li>
 <li>
-<p>Set <code>PREINSTALLED</code> to <code>true</code> to require that Debricked CLI is already installed, preventing tool definitions from being updated or Debricked CLI from being installed.</p>
+<p><code>latest</code> to use the latest available Debricked CLI version</p>
+</li>
+<li>
+<p><code>auto</code> (default) to use a pre-installed version if available, otherwise installs latest</p>
+</li>
+<li>
+<p>If neither <code>DEBRICKED_VERSION</code> nor <code>DEBRICKED_HOME</code> are set, defaults to <code>auto</code> behavior.</p>
 </li>
 </ul>
 </div></div></td>
@@ -658,7 +702,8 @@ DEBRICKED_WAIT_EXTRA_OPTS</p></td>
 <div class="sect2">
 <h3 id="_post_scan_actions"><a class="anchor" href="#_post_scan_actions"></a>Post-Scan Actions</h3>
 <div class="paragraph">
-<p>Configure post-scan tasks including Aviator auditing, application version summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Application Security (Fortify Software Security Center).</p>
+<p>Configure post-scan tasks including Aviator auditing, application version summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Application Security (Fortify Software Security Center).
+NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -776,7 +821,24 @@ DEBRICKED_EXPORT_EXTRA_OPTS</p></td>
 </dd>
 <dt class="hdlist1">--cli-version, -v</dt>
 <dd>
-<p>Specify the Debricked CLI tool version to be installed that shall be used for scanning. Defaults to 'auto' if not specified.</p>
+<p>Specify the Debricked CLI tool version to be used for scanning. Defaults to the value of the DEBRICKED_HOME or DEBRICKED_VERSION environment variables.
+Allowed values:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>An explicit version number (e.g. 2.6 or 2.6.7)</p>
+</li>
+<li>
+<p>Path to a specific Debricked CLI installation</p>
+</li>
+<li>
+<p><code>latest</code> to use the latest available Debricked CLI version</p>
+</li>
+<li>
+<p><code>auto</code> (default) to use a pre-installed version if available, otherwise installs latest</p>
+</li>
+</ul>
+</div>
 </dd>
 <dt class="hdlist1">--tool-definitions</dt>
 <dd>
@@ -1217,10 +1279,24 @@ only ScanCentral logs, not fcli logs.</p>
 </dd>
 <dt class="hdlist1">--sc-client-version, -v</dt>
 <dd>
-<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_VERSION environment variable. If not
-specified, fcli will automatically detect the appropriate ScanCentral Client version by querying available sensors in SSC for the application
-version specified through --appversion, or globally if --appversion is not specified. Note that automatic detection requires an active SSC
-session. Use 'auto' to explicitly request automatic detection, or specify an explicit version to skip detection.</p>
+<p>Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_HOME or SC_CLIENT_VERSION environment variables.
+Allowed values:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>An explicit version number (e.g. 25.2 or 25.2.0)</p>
+</li>
+<li>
+<p>Path to a specific ScanCentral Client installation</p>
+</li>
+<li>
+<p><code>latest</code> to use the latest available ScanCentral Client version</p>
+</li>
+<li>
+<p><code>auto</code> (default) to enable automatic detection based on available sensor versions</p>
+</li>
+</ul>
+</div>
 </dd>
 <dt class="hdlist1">--appversion, --av</dt>
 <dd>
@@ -1481,8 +1557,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260201.162713-dev_doc.ci-updates<br>
-Last updated 2026-02-01 16:30:17 UTC
+Version 0.20260202.134152-dev_doc.ci-updates<br>
+Last updated 2026-02-02 13:44:55 UTC
 </div>
 </div>
 </body>

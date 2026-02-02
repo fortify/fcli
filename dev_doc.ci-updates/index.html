@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20260201.162713-dev_doc.ci-updates
+fcli_version: 0.20260202.134152-dev_doc.ci-updates
 ---
 
 <!DOCTYPE html>
@@ -21,33 +21,33 @@ fcli_version: 0.20260201.162713-dev_doc.ci-updates
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260201.162713-dev_doc.ci-updates" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260202.134152-dev_doc.ci-updates" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20260201.162713-dev_doc.ci-updates</span>
+<span id="revnumber">version 0.20260202.134152-dev_doc.ci-updates</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_introduction">Introduction</a></li>
-<li><a href="#_migration_from_v2_x">Migration from v2.x</a></li>
 <li><a href="#_fcli_based_ci_integrations">Fcli-based CI Integrations</a></li>
 <li><a href="#_release_assets">Release Assets</a></li>
 <li><a href="#_installation">Installation</a>
 <ul class="sectlevel2">
-<li><a href="#_recommended_using_fortifysetup">Recommended: Using @fortify/setup</a></li>
-<li><a href="#_alternative_direct_binary_installation">Alternative: Direct Binary Installation</a></li>
+<li><a href="#_using_fortifysetup">Using @fortify/setup</a></li>
+<li><a href="#_manual_installation">Manual Installation</a></li>
 </ul>
 </li>
 <li><a href="#_upgrade">Upgrade</a>
 <ul class="sectlevel2">
-<li><a href="#_recommended_using_fortifysetup_2">Recommended: Using @fortify/setup</a></li>
-<li><a href="#_alternative_direct_binary_upgrade">Alternative: Direct Binary Upgrade</a></li>
+<li><a href="#_using_fortifysetup_2">Using @fortify/setup</a></li>
+<li><a href="#_manual_upgrade">Manual Upgrade</a></li>
 </ul>
 </li>
+<li><a href="#_migration_from_v2_x">Migration from v2.x</a></li>
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
 <ul class="sectlevel2">
@@ -231,15 +231,6 @@ fcli_version: 0.20260201.162713-dev_doc.ci-updates
 </div>
 </div>
 <div class="sect1">
-<h2 id="_migration_from_v2_x"><a class="anchor" href="#_migration_from_v2_x"></a>Migration from v2.x</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
-custom fcli actions. Please see the <a href="../migration-v2.x-v3.x.html">migration guide</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_fcli_based_ci_integrations"><a class="anchor" href="#_fcli_based_ci_integrations"></a>Fcli-based CI Integrations</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -355,7 +346,7 @@ found, please try with the Java version as it may be an issue specific to the na
 <h2 id="_installation"><a class="anchor" href="#_installation"></a>Installation</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_recommended_using_fortifysetup"><a class="anchor" href="#_recommended_using_fortifysetup"></a>Recommended: Using @fortify/setup</h3>
+<h3 id="_using_fortifysetup"><a class="anchor" href="#_using_fortifysetup"></a>Using @fortify/setup</h3>
 <div class="paragraph">
 <p>If you have <code>npx</code> available on the system where you want to install fcli and possibly other Fortify tools, <strong>@fortify/setup</strong> is the recommended approach for installing fcli in both CI/CD pipelines and local development environments. This lightweight npm package automatically bootstraps fcli, verifies its integrity using RSA signatures, and provides cross-platform support with minimal dependencies.</p>
 </div>
@@ -470,9 +461,9 @@ npx @fortify/setup@2 env init --tools=fcli:auto</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_alternative_direct_binary_installation"><a class="anchor" href="#_alternative_direct_binary_installation"></a>Alternative: Direct Binary Installation</h3>
+<h3 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h3>
 <div class="paragraph">
-<p>If you prefer direct control over fcli installation, or if you cannot use @fortify/setup in your environment, you can install fcli manually or using the built-in managed installation approach. We also provide Docker images for fcli; see <a href="https://hub.docker.com/repository/docker/fortifydocker/fcli/general">fortifydocker/fcli</a> for information on how to run fcli using these Docker images.</p>
+<p>If you prefer direct control over fcli installation, or if you cannot use <code>@fortify/setup</code> in your environment, you can install fcli manually or using the built-in managed installation approach. We also provide Docker images for fcli; see <a href="https://hub.docker.com/repository/docker/fortifydocker/fcli/general">fortifydocker/fcli</a> for information on how to run fcli using these Docker images.</p>
 </div>
 <div class="sect3">
 <h4 id="_download_and_verification"><a class="anchor" href="#_download_and_verification"></a>Download and Verification</h4>
@@ -608,7 +599,7 @@ npx @fortify/setup@2 env init --tools=fcli:auto</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h4>
+<h4 id="_manual_installation_2"><a class="anchor" href="#_manual_installation_2"></a>Manual Installation</h4>
 <div class="ulist">
 <ul>
 <li>
@@ -634,7 +625,7 @@ npx @fortify/setup@2 env init --tools=fcli:auto</code></pre>
 <h2 id="_upgrade"><a class="anchor" href="#_upgrade"></a>Upgrade</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_recommended_using_fortifysetup_2"><a class="anchor" href="#_recommended_using_fortifysetup_2"></a>Recommended: Using @fortify/setup</h3>
+<h3 id="_using_fortifysetup_2"><a class="anchor" href="#_using_fortifysetup_2"></a>Using @fortify/setup</h3>
 <div class="paragraph">
 <p>If you installed fcli using @fortify/setup, upgrading is straightforward.</p>
 </div>
@@ -659,7 +650,7 @@ npx @fortify/setup env powershell | Invoke-Expression</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_alternative_direct_binary_upgrade"><a class="anchor" href="#_alternative_direct_binary_upgrade"></a>Alternative: Direct Binary Upgrade</h3>
+<h3 id="_manual_upgrade"><a class="anchor" href="#_manual_upgrade"></a>Manual Upgrade</h3>
 <div class="paragraph">
 <p>If you prefer a manual installation/upgrade, you can download the latest fcli version for your platform from the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page and follow the <a href="#_manual_installation">Manual Installation</a> instructions above, adjusting any manually created wrapper scripts to point to the new installation.</p>
 </div>
@@ -722,6 +713,15 @@ npx @fortify/setup env powershell | Invoke-Expression</code></pre>
 </li>
 </ul>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_migration_from_v2_x"><a class="anchor" href="#_migration_from_v2_x"></a>Migration from v2.x</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
+custom fcli actions. Please see the <a href="../migration-v2.x-v3.x.html">migration guide</a> for details.</p>
 </div>
 </div>
 </div>
@@ -1782,8 +1782,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260201.162713-dev_doc.ci-updates<br>
-Last updated 2026-02-01 16:30:17 UTC
+Version 0.20260202.134152-dev_doc.ci-updates<br>
+Last updated 2026-02-02 13:44:55 UTC
 </div>
 </div>
 </body>
