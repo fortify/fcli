@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand.GenericOptionsArgGroup;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand.LogLevel;
+import com.fortify.cli.common.log.CiLogHelper;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMessageType;
 import com.fortify.cli.common.log.LogMessageTypeConverter;
@@ -79,14 +80,26 @@ public final class FortifyCLIDynamicInitializer {
     public void initializeLogging(GenericOptionsArgGroup genericOptions) {
         LogMaskHelper.INSTANCE.setLogMaskLevel(genericOptions.getLogMaskLevel());
         registerDefaultLogMaskPatterns();
-        boolean isDebugEnabled = genericOptions.isDebug();
-        File logFile = genericOptions.getLogFile();
+        
+        // Determine debug mode: command-line flag takes precedence, then environment
+        boolean isDebugEnabled = genericOptions.isDebug() || CiLogHelper.isDebugEnabledFromEnv();
+        
+        // Determine log file: command-line option, then environment variables, then default
+        File logFile = CiLogHelper.resolveLogFile(genericOptions.getLogFile());
+        
+        // Determine log level: command-line option takes precedence, then environment
         LogLevel logLevel = genericOptions.getLogLevel();
+        if (logLevel == null) {
+            logLevel = CiLogHelper.getLogLevelFromEnv();
+        }
+        
         if ( logLevel==null && isDebugEnabled ) {
-            // If no log level is specified and --debug is specified, set log level to TRACE
+            // If no log level is specified and debug is enabled, set log level to TRACE
             logLevel = LogLevel.TRACE;
         }
+        
         DebugHelper.setDebugEnabled(isDebugEnabled);
+        
         if ( logLevel!=LogLevel.NONE && (logFile!=null || logLevel!=null) ) {
             // Configure logging if logLevel is not set to NONE, and logFile and/or logLevel 
             // have been specified
