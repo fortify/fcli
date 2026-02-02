@@ -465,7 +465,9 @@ formatters:
             version: v2.1.x
             overview: |
               The environment variables in this section allow you to customize bootstrapping behavior
-              of fcli and supporting tools like ScanCentral Client. 
+              of fcli and supporting tools like ScanCentral Client.
+
+              $eval{snippets.bootstrapNotes?:''}
           outputs:
             setup-action:
               filePattern: setup-action.adoc
@@ -530,6 +532,8 @@ formatters:
                   $eval{snippets.migrationSectionContents}
                 snippets:
                   generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
                     quickstart: |
                       [source,yaml]
                       ----
@@ -600,10 +604,6 @@ formatters:
 
                   $eval{bootstrapSection}
 
-                  NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
-
-                  NOTE: Environment variables listed in the following sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
-
                   $eval{fcliCiActionSections}
 
                   == Migrating from fortify/github-action@v2
@@ -611,6 +611,10 @@ formatters:
                   $eval{snippets.migrationSectionContents}
                 snippets:
                   generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version. 
                     migrationSectionContents: |
                       Migrating from v2.x.y to v3.x.y versions of the `fortify/github-action` should be fairly 
                       straightforward, as most of the environment-based configuration remains the same. However,
@@ -708,6 +712,8 @@ formatters:
               The environment variables in this section allow you to customize bootstrapping behavior
               of fcli and supporting tools like ScanCentral Client. These variables can be configured
               on the `<job-name>-prepare` job as needed.
+
+              $eval{snippets.bootstrapNotes?:''}
           common:
             componentReference: |
               The GitLab integration consists of two components:
@@ -866,6 +872,8 @@ formatters:
                   ----
                 snippets:
                   generic:
+                    bootstrapNotes: |
+                      NOTE: This GitLab Component requires a recent fcli v3.x.y version to function properly.
                     quickstart: |
                       [source,yaml]
                       ----
@@ -970,10 +978,6 @@ formatters:
 
                   $eval{bootstrapSection}
 
-                  NOTE: This GitHub Component requires a recent fcli v3.x.y version to function correctly.
-
-                  NOTE: Environment variables listed in the following sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
-
                   $eval{fcliCiActionSections}
 
                   === Best Practices
@@ -1029,6 +1033,29 @@ formatters:
                   `<job-name>-publish-debug-output` job will collect and publish logs, package files, and FPR files
                   as GitLab artifacts.
                 snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitLab Component requires a recent fcli v3.x.y version to function properly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version. 
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/ast-scan/linux@2
+                          inputs:
+                            job-name: fortify-ast-scan
+                            stage: test
+                            fcli-version: v3
+
+                      stages: [test]
+
+                      fortify-ast-scan:
+                        image: maven:3-openjdk-17   # Docker image with build tools
+                        variables:
+                          # FOD_URL, FOD_CLIENT_ID, FOD_CLIENT_SECRET must be set for FoD scans
+                          # SSC_URL, SSC_TOKEN, SC_SAST_TOKEN must be set for SSC scans
+                      ----
                   fod:
                     quickstart: |
                       [source,yaml]
@@ -1088,9 +1115,7 @@ formatters:
               link:https://www.npmjs.com/package/@fortify/setup/v/$eval{bootstrapComponentVersion}[@fortify/setup documentation] for
               that version's supported variables.
 
-              NOTE: `@fortify/setup` is automatically configured through the `FCLI_BOOTSTRAP_*` environment variables documented in 
-                    this section. For simplicity and to avoid pipelines from interfering with each other, it is recommended to not
-                    use the `@fortify/setup bootstrap-config` command in CI pipelines.
+              $eval{snippets.bootstrapNotes?:''}
           outputs:
             ast-workflow:
               filePattern: ast-workflow-$eval{product}.adoc
@@ -1123,8 +1148,6 @@ formatters:
 
                   $eval{bootstrapSection}
 
-                  NOTE: Environment variables listed in the following sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
-
                   $eval{fcliCiActionSections}
 
                   == Additional Resources
@@ -1134,6 +1157,12 @@ formatters:
                   * link:https://www.npmjs.com/package/@fortify/setup[@fortify/setup npm package documentation]
                 snippets:
                   generic:
+                    bootstrapNotes: |
+                      NOTE: `@fortify/setup` is automatically configured through the `FCLI_BOOTSTRAP_*` environment variables documented in this section. For simplicity and to avoid pipelines from interfering with each other, it is recommended to not use the `@fortify/setup bootstrap-config` command in CI pipelines.
+
+                      NOTE: This integration requires `@fortify/setup` v2.1.1 or later, which in turn requires at least fcli v3.14.3 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
                     migrationNote: |
                       The Azure DevOps integration uses the same environment variables as other Fortify CI integrations,
                       making it easy to standardize your security scanning across platforms. The primary difference is
