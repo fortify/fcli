@@ -8,11 +8,11 @@
     <div class="dropdown-content"> 
       <span>-- Releases --</span>
 	  {% for version in site.data.versions.release %}
-      <a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+      <a class="version-link" href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
       {% endfor %}
       <span>-- Development --</span> 
 	  {% for version in site.data.versions.dev %}
-      <a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+      <a class="version-link" href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
       {% endfor %}
     </div></div>
   </div>
