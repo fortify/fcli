@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action
-fcli_version: 0.20260203.084801-dev_v3.x
+fcli_version: 0.20260203.100329-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -21,14 +21,14 @@ fcli_version: 0.20260203.084801-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260203.084801-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260203.100329-dev_v3.x" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260203.084801-dev_v3.x</span>
+<span id="revnumber">version 0.20260203.100329-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -40,6 +40,7 @@ fcli_version: 0.20260203.084801-dev_v3.x
 </li>
 <li><a href="#_configuration">Configuration</a>
 <ul class="sectlevel2">
+<li><a href="#_action_inputs">Action Inputs</a></li>
 <li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
 <li><a href="#_authentication_connection">Authentication &amp; Connection</a></li>
 <li><a href="#_release_management">Release Management</a></li>
@@ -104,7 +105,39 @@ jobs:
 <h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Configuration is accomplished through environment variables set in your CI workflow file. The following sections document all available configuration options organized by their purpose.</p>
+<p>Configuration is accomplished through action inputs and environment variables set in your CI workflow file. The following sections document all available configuration options organized by their purpose.</p>
+</div>
+<div class="sect2">
+<h3 id="_action_inputs"><a class="anchor" href="#_action_inputs"></a>Action Inputs</h3>
+<div class="paragraph">
+<p>The following action inputs are available to control debug logging behavior:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Input</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>debug</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to generate and collect debug logs; note that these may contain sensitive data like access tokens or credentials. Automatically enabled when workflow is re-run with "Enable debug logging" checked. Allowed values: <code>true</code> or <code>false</code> (default).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>debug-artifact-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name for the debug artifacts archive. Default value: <code>fortify-debug-logs</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>debug-retention-days</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of days to retain debug artifacts. Default value: <code>1</code> (one day, due to potential sensitive data in logs).</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
 <h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
@@ -131,7 +164,7 @@ This GitHub Action requires at least fcli v3.15.0 to function correctly.
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260203.084801-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260203.100329-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -439,6 +472,11 @@ there are some important changes to be aware of:</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Update workflow to use environment variables for scan configuration</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>DO_PACKAGE_DEBUG</code> environment variable to enable packaging debug logging and artifact upload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>debug</code> action input to enable full debug logging (fcli, packaging, &#8230;&#8203;) and artifact upload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change <code>DO_PACKAGE_DEBUG: true</code> to action input <code>debug: true</code>, or enable via GitHub&#8217;s "Re-run jobs" → "Enable debug logging" UI</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Supports deprecated <code>EXTRA_*_OPTS</code> variables</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Only supports <code>*_EXTRA_OPTS</code> variables</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Rename all <code>EXTRA_*_OPTS</code> to <code>*_EXTRA_OPTS</code> format</p></td>
@@ -455,8 +493,8 @@ there are some important changes to be aware of:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260203.084801-dev_v3.x<br>
-Last updated 2026-02-03 08:51:38 UTC
+Version 0.20260203.100329-dev_v3.x<br>
+Last updated 2026-02-03 10:06:59 UTC
 </div>
 </div>
 </body>
