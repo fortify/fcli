@@ -1,0 +1,350 @@
+---
+title: Fortify GitLab fcli Component
+fcli_version: 0.20260203.084801-dev_v3.x
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortify GitLab fcli Component</title>
+
+{% include asciidoc-head.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+</style>
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260203.084801-dev_v3.x" %}
+
+
+<div id="header">
+<h1>Fortify GitLab fcli Component</h1>
+<div class="details">
+<span id="revnumber">version 0.20260203.084801-dev_v3.x</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_overview">Overview</a>
+<ul class="sectlevel2">
+<li><a href="#_quick_start_example">Quick Start Example</a></li>
+</ul>
+</li>
+<li><a href="#_configuration">Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#_component_inputs">Component Inputs</a></li>
+<li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
+<li><a href="#_advanced_customization">Advanced Customization</a>
+<ul class="sectlevel3">
+<li><a href="#_customizing_the_job_name_job">Customizing the <code>&lt;job-name&gt;</code> Job</a></li>
+<li><a href="#_customizing_the_job_name_prepare_job">Customizing the <code>&lt;job-name&gt;-prepare</code> Job</a></li>
+<li><a href="#_using_multiple_component_configurations">Using Multiple Component Configurations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <a href="https://gitlab.com/Fortify/components/fcli">Fortify fcli component</a> allows for setting up fcli
+for use in custom CI/CD workflows in GitLab. This allows you to implement fully customized AST scan
+workflows or other automation workflows that interact with Fortify products.</p>
+</div>
+<div class="paragraph">
+<p>The GitLab integration consists of two components:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://gitlab.com/Fortify/components/fcli">Fortify fcli component</a> - Provides fcli installation
+and setup functionality. This component allows for setting up fcli for use in custom CI/CD workflows.</p>
+</li>
+<li>
+<p><a href="https://gitlab.com/Fortify/components/ast-scan">Fortify AST Scan component</a> - Provides complete
+AST scanning workflow by including the fcli component and adding scan execution jobs.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The fcli component provides the following runnable jobs:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>&lt;job-name&gt;-prepare</code>: Download and install fcli</p>
+</li>
+<li>
+<p><code>&lt;job-name&gt;</code>: Run arbitrary fcli commands from the job <code>script</code> section</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In addition, several hidden jobs are defined (e.g., <code>.&lt;job-name&gt;-vars-shared</code>, <code>.&lt;job-name&gt;-vars</code>,
+<code>.&lt;job-name&gt;-vars-prepare</code>, <code>.fcli-install</code>) which may be used to implement advanced use cases but
+should not be directly customized.</p>
+</div>
+<div class="sect2">
+<h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
+<div class="paragraph">
+<p>Basic setup for custom workflows with fcli version pinning.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">include:
+  - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+    inputs:
+      job-name: fcli
+      fcli-version: v3       # Use latest fcli 3.x.y release
+      stage: test
+
+stages: [test]
+
+fcli:
+  image: my-build-tools:v1   # Optional: specify build environment
+  script:
+    -  -V             # Verify fcli installation
+    -  fod session login ...
+    - # Your custom fcli commands here
+    -  fod session logout ...</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_component_inputs"><a class="anchor" href="#_component_inputs"></a>Component Inputs</h3>
+<div class="paragraph">
+<p>The following component inputs can be specified when including the fcli component:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Input</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>job-name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Job name for the fcli script. This must be a valid file system path name and will be used to name the component-provided jobs.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>stage</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GitLab CI/CD stage in which to run the jobs provided by this component. This stage must be defined in your pipeline&#8217;s <code>stages:</code> list.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>Required, no default</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli-version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fcli version to install/use. Supports semantic versioning (e.g., <code>v3</code> for latest v3.x.y, <code>v3.15</code> for latest v3.15.y).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>v3</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
+<div class="paragraph">
+<p>The environment variables in this section allow you to customize bootstrapping behavior
+of fcli and supporting tools like ScanCentral Client. These variables can be configured
+on the <code>&lt;job-name&gt;-prepare</code> job as needed.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This GitLab Component requires a recent fcli v3.x.y version to function properly.
+</td>
+</tr>
+</table>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Environment Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_VERSION</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Fcli version to install. This component input specifies the fcli version to download and install. Defaults to <code>v3</code> to use the latest fcli v3.x.y release, allowing you to automatically benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like <code>v3.15</code> or <code>v3.15.0</code>. The component also supports semantic versioning, for example <code>v3.15</code> will install the latest known <code>v3.15.y</code> patch version. Version may be specified either with or without the <code>v</code> prefix. To experiment with upcoming changes, you can also specify an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_TGZ_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, fcli is downloaded from the official GitHub releases page at <code><a href="https://github.com/fortify/fcli/releases/download//fcli-linux.tgz" class="bare">https://github.com/fortify/fcli/releases/download//fcli-linux.tgz</a></code>. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. The URL can use the <code>` variable to reference the value of the `fcli-version</code> component input. In air-gapped environments, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_RSA_SHA256_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>URL for the fcli RSA SHA256 signature file. Defaults to <code>/fcli-linux.tgz.rsa_sha256</code> where <code>FCLI_BASE_URL</code> is <code><a href="https://github.com/fortify/fcli/releases/download/" class="bare">https://github.com/fortify/fcli/releases/download/</a></code>. Set to blank to skip signature verification (not recommended).</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Path to a pre-installed fcli executable. When set on the <code>&lt;job-name&gt;-prepare</code> job, fcli bootstrapping will skip downloading and installing fcli, and will use this binary instead. This may be useful for environments without internet access, if a self-hosted shell-based runner already has fcli pre-installed, or if the Docker image in which <code>&lt;job-name&gt;</code> is being run already provides the fcli executable. Note that the <code>&lt;job-name&gt;-prepare</code> and main <code>&lt;job-name&gt;</code> jobs usually run inside different images, so the prepare job doesn&#8217;t explicitly check or fail if the given fcli executable is not accessible from the prepare job.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PREINSTALLED</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>true</code> to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli  <code>ci</code> action are already installed, preventing tool definitions from being updated or tools from being automatically installed. This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_advanced_customization"><a class="anchor" href="#_advanced_customization"></a>Advanced Customization</h3>
+<div class="sect3">
+<h4 id="_customizing_the_job_name_job"><a class="anchor" href="#_customizing_the_job_name_job"></a>Customizing the <code>&lt;job-name&gt;</code> Job</h4>
+<div class="paragraph">
+<p>By default, <code>&lt;job-name&gt;</code> will just run ` -V` to verify the fcli installation. You&#8217;ll typically want to define
+a custom <code>script</code> section that runs fcli and other commands as needed. For Docker-based runners, you&#8217;ll usually also
+want to define the image in which the <code>script</code> section is executed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">&lt;job-name&gt;:
+  image: my-build-tools:v1     # Optional: specify Docker image
+  script:
+    -  fod session login ...
+    - # Your custom fcli commands here
+    -  fod session logout ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If needed, you can also customize the <code>needs</code>, <code>variables</code>, and/or <code>extends</code> instructions. If you override <code>needs</code>
+or <code>extends</code>, make sure to keep the original contents:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">&lt;job-name&gt;:
+  extends:
+    - .&lt;job-name&gt;-vars       # Required: inherit fcli-related variables
+    - .my-custom-vars        # Optional: inherit additional variables
+  variables:
+    MY_VAR: value            # Optional: define extra variables
+  needs:
+    - &lt;job-name&gt;-prepare     # Required: wait for fcli installation
+    - some-other-job         # Optional: wait for other jobs
+  script:
+    - # Your commands here</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_customizing_the_job_name_prepare_job"><a class="anchor" href="#_customizing_the_job_name_prepare_job"></a>Customizing the <code>&lt;job-name&gt;-prepare</code> Job</h4>
+<div class="paragraph">
+<p>The <code>&lt;job-name&gt;-prepare</code> job can be customized to perform additional preparation tasks beyond fcli installation.
+You can define additional script steps, optionally based on additional variables:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">&lt;job-name&gt;-prepare:
+  extends:
+    - .&lt;job-name&gt;-vars-prepare  # Required: inherit fcli installation variables
+    - .my-custom-vars           # Optional: inherit additional variables
+  variables:
+    MY_VAR: value               # Optional: define extra variables
+  script:
+    - !reference [ .fcli-install, script ]  # Required: install fcli
+    - echo "Additional preparation steps"   # Optional: your custom steps</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Any artifacts that need to be shared with the main <code>&lt;job-name&gt;</code> job must be stored under the directory
+identified by the `` environment variable.</p>
+</div>
+<div class="paragraph">
+<p>You can also customize the Docker image used for the preparation job. By default, <code>alpine:latest</code> is used:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">&lt;job-name&gt;-prepare:
+  image: my.registry/alpine:latest  # Use custom registry or different image</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_using_multiple_component_configurations"><a class="anchor" href="#_using_multiple_component_configurations"></a>Using Multiple Component Configurations</h4>
+<div class="paragraph">
+<p>You can include the fcli component multiple times with different configurations, as long as each <code>include</code>
+specifies a different <code>job-name</code>. This allows for using multiple fcli versions within a single pipeline.
+Each <code>include</code> must use the same component version to avoid conflicts.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">include:
+  - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+    inputs:
+      job-name: fcli-stable
+      fcli-version: v3.15.0
+      stage: test
+  - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+    inputs:
+      job-name: fcli-dev
+      fcli-version: dev_v3.x
+      stage: test
+
+fcli-stable:
+  script:
+    -  -V
+
+fcli-dev:
+  script:
+    -  -V</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.20260203.084801-dev_v3.x<br>
+Last updated 2026-02-03 08:51:38 UTC
+</div>
+</div>
+</body>
+</html>
