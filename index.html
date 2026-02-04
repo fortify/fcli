@@ -68,15 +68,14 @@ fcli_version: 0.20260204.150135-dev_v3.x
 
 <p style="margin-left: 20px; color: #666;">Always points to the newest v3.x release. <strong>Bookmark this link</strong> to stay up-to-date with the latest documentation.</p>
 
-<details style="margin-top: 20px;">
-<summary style="cursor: pointer; font-weight: bold; color: #0066cc; list-style: none; padding-left: 0;">
+<details style="margin-top: 10px;">
+<summary style="display: block; list-style: none; cursor: pointer; font-weight: bold; color: #0066cc;">
 ▶ View all v3.x releases
 </summary>
-<ul style="margin-top: 10px;">
+<ul style="margin-top: 5px; margin-left: 1.5em;">
 {% for version in site.data.versions.release %}
 {% if version contains 'v3' %}
-   <li style="display: inline;"><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>{% if version == site.data.versions.release[0] %}<span style="color: #28a745; font-weight: bold;"> (current)</span>{% endif %}</li>
-   {% unless forloop.last %}{% if version contains 'v3' %}<br>{% endif %}{% endunless %}
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>{% if version == site.data.versions.release[0] %}<span style="color: #28a745; font-weight: bold; white-space: nowrap;"> (current)</span>{% endif %}</li>
 {% endif %}
 {% endfor %}
 </ul>
