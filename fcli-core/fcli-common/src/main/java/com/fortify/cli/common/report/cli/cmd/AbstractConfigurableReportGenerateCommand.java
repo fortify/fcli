@@ -22,7 +22,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.report.collector.IReportResultsCollector;
+import com.fortify.cli.common.report.collector.IReportContext;
 import com.fortify.cli.common.report.config.IReportSourceConfig;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
 import com.fortify.cli.common.report.writer.IReportWriter;
@@ -40,7 +40,7 @@ import picocli.CommandLine.Mixin;
  *      allow sub-classes to update the configuration, for example based on CLI
  *      options</li>
  *  <li>Creates a results collector by calling 
- *      {@link #createResultsCollector(IReportSourceSupplierConfig, IReportWriter, IProgressWriterI18n)}</li>
+ *      {@link #createReportContext(IReportSourceSupplierConfig, IReportWriter, IProgressWriterI18n)}</li>
  *  <li>Iterates over all sources defined in the configuration<li>
  *  <li>For each source, instantiates a new generator and runs it</li>
  * </ol> 
@@ -50,7 +50,7 @@ import picocli.CommandLine.Mixin;
  * @param <C> Configuration type
  * @param <R> Results collector type
  */
-public abstract class AbstractConfigurableReportGenerateCommand<C extends IReportSourceSupplierConfig<R>, R extends IReportResultsCollector> extends AbstractReportGenerateCommand {
+public abstract class AbstractConfigurableReportGenerateCommand<C extends IReportSourceSupplierConfig<R>, R extends IReportContext> extends AbstractReportGenerateCommand {
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     /**
@@ -63,21 +63,23 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
             C config = getReportConfig();
             Path configFilePath = getConfigFile().toPath();
             reportWriter.copyTextFile(configFilePath, "report-config.yaml");
-            try ( var resultsCollector = createResultsCollector(config, reportWriter, progressWriter) ) {
+            try ( var reportContext = createReportContext(config, reportWriter, progressWriter) ) {
                 var sourceConfigs = config.getSourceConfigs();
                 if ( sourceConfigs==null || sourceConfigs.isEmpty() ) {
                     throw new FcliSimpleException("Configuration file "+configFilePath.toString()+" doesn't define any sources");
                 }
-                sourceConfigs.forEach(c->runGenerator(c, resultsCollector));
+                sourceConfigs.forEach(c->runGenerator(c, reportContext));
             }
         }
     }
 
     /**
      * Run the given generator in a try-with-resources block.
+     * Note: A new generator instance is created for each source configuration,
+     * ensuring proper isolation of source-specific state and REST clients.
      */
-    private final void runGenerator(IReportSourceConfig<R> c, R resultsCollector) {
-        try ( var generator = c.generator(resultsCollector) ) {
+    private final void runGenerator(IReportSourceConfig<R> c, R reportContext) {
+        try ( var generator = c.generator(reportContext) ) {
             generator.run();
         }
     }
@@ -131,5 +133,5 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
      * This method must be implemented by subclasses to create a
      * report-specific results processor.
      */
-    protected abstract R createResultsCollector(C config, IReportWriter reportWriter, IProgressWriterI18n progressWriter);
+    protected abstract R createReportContext(C config, IReportWriter reportWriter, IProgressWriterI18n progressWriter);
 }

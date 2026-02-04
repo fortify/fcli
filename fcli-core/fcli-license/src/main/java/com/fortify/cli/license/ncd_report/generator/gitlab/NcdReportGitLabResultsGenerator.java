@@ -21,22 +21,19 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.ci.gitlab.GitLabRestHelper;
+import com.fortify.cli.common.ci.gitlab.GitLabUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.github.GitHubPagingHelper;
-import com.fortify.cli.common.rest.gitlab.GitLabPagingHelper;
+import com.fortify.cli.common.util.Break;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryBranchCommitCollector;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryProcessor;
-import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 import com.fortify.cli.license.ncd_report.config.NcdReportCombinedRepoSelectorConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportGitLabGroupConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportGitLabSourceConfig;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportBranchCommitDescriptor;
-import com.fortify.cli.license.ncd_report.generator.AbstractNcdReportUnirestResultsGenerator;
-
-import kong.unirest.GetRequest;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import com.fortify.cli.license.ncd_report.generator.AbstractNcdReportResultsGenerator;
 
 /**
  * This class is responsible for loading repository, branch, commit and author
@@ -45,14 +42,22 @@ import kong.unirest.UnirestInstance;
  * @author rsenden
  *
  */
-public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestResultsGenerator<NcdReportGitLabSourceConfig> {
+public class NcdReportGitLabResultsGenerator extends AbstractNcdReportResultsGenerator<NcdReportGitLabSourceConfig> {
+    /**
+     * REST helper for GitLab API operations. A new instance is created for each
+     * source configuration, ensuring proper isolation of API credentials and
+     * configuration (base URL, token, etc.).
+     */
+    private final GitLabRestHelper restHelper;
+    
     /**
      * Constructor to configure this instance with the given 
      * {@link NcdReportGitLabSourceConfig} and
-     * {@link NcdReportResultsCollector}.
+     * {@link NcdReportContext}.
      */
-    public NcdReportGitLabResultsGenerator(NcdReportGitLabSourceConfig sourceConfig, NcdReportResultsCollector resultsCollector) {        
-        super(sourceConfig, resultsCollector);
+    public NcdReportGitLabResultsGenerator(NcdReportGitLabSourceConfig sourceConfig, NcdReportContext reportContext) {        
+        super(sourceConfig, reportContext);
+        this.restHelper = createRestHelper(sourceConfig, reportContext);
     }
 
     /**
@@ -72,7 +77,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
      * given {@link NcdReportGitLabGroupConfig}, optionally including 
      * repositories from sub-groups as well, and passes the descriptor
      * for each repository to the {@link INcdReportRepositoryProcessor} provided 
-     * by our {@link NcdReportResultsCollector}. The {@link INcdReportRepositoryProcessor}
+     * by our {@link NcdReportContext}. The {@link INcdReportRepositoryProcessor}
      * will in turn call our {@link #generateCommitData(NcdReportGitLabRepositoryDescriptor, INcdReportRepositoryBranchCommitCollector)}
      * method to generate commit data for every repository that is not excluded from
      * the report.
@@ -81,15 +86,16 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
         String groupId = groupConfig.getId();
         try {
             boolean includeSubgroups = groupConfig.getIncludeSubgroups().orElse(sourceConfig().getIncludeSubgroups().orElse(true));
-            resultsCollector().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.gitlab-repositories", groupId);
-            HttpRequest<?> req = unirest().get("/api/v4/groups/{id}/projects?per_page=100")
-                    .routeParam("id", groupId)
-                    .queryString("include_subgroups", includeSubgroups);
-            GitLabPagingHelper.pagedRequest(req, ArrayNode.class)
-                .ifSuccess(r->r.getBody().forEach(project->
-                    resultsCollector().repositoryProcessor().processRepository(new NcdReportCombinedRepoSelectorConfig(sourceConfig(), groupConfig), getRepoDescriptor(project), this::generateCommitData)));
+            reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.gitlab-repositories", groupId);
+            restHelper.processGroupProjects(groupId, includeSubgroups, project -> {
+                reportContext().repositoryProcessor().processRepository(
+                    new NcdReportCombinedRepoSelectorConfig(sourceConfig(), groupConfig),
+                    getRepoDescriptor(project),
+                    this::generateCommitData);
+                return Break.FALSE;
+            });
         } catch ( Exception e ) {
-            resultsCollector().logger().error(String.format("Error processing group: %s (%s)", groupId, sourceConfig().getBaseUrl()), e);
+            reportContext().logger().error(String.format("Error processing group: %s (%s)", groupId, sourceConfig().getBaseUrl()), e);
         }
     }
     
@@ -117,8 +123,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
         NcdReportGitLabCommitDescriptor mostRecentCommitDescriptor = null;
         NcdReportGitLabBranchDescriptor mostRecentBranchDescriptor = null;
         for ( var branchDescriptor : branchDescriptors ) {
-            var currentCommitResponse = getCommitsRequest(repoDescriptor, branchDescriptor, 1)
-                .asObject(ArrayNode.class).getBody();
+            var currentCommitResponse = getLatestCommit(repoDescriptor, branchDescriptor);
             if ( currentCommitResponse.size()>0 ) {
                 var currentCommitDescriptor = JsonHelper.treeToValue(currentCommitResponse.get(0), NcdReportGitLabCommitDescriptor.class);
                 if ( mostRecentCommitDescriptor==null || currentCommitDescriptor.getDate().isAfter(mostRecentCommitDescriptor.getDate()) ) {
@@ -138,20 +143,19 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
      * @return true if any commits were found, false otherwise  
      */
     private boolean generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitLabRepositoryDescriptor repoDescriptor, List<NcdReportGitLabBranchDescriptor> branchDescriptors) {
-        String since = resultsCollector().reportConfig().getCommitOffsetDateTime()
+        String since = reportContext().reportConfig().getCommitOffsetDateTime()
                 .format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
-            resultsCollector().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
-            HttpRequest<?> req = getCommitsRequest(repoDescriptor, branchDescriptor, 100)
-                    .queryString("since", since);
-            
-            List<ArrayNode> bodies = GitHubPagingHelper.pagedRequest(req, ArrayNode.class).getBodies();
-            for ( ArrayNode body : bodies ) {
-                for ( JsonNode commit : body ) {
-                    commitsFound = true;
-                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
-                }
+            reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
+            List<Boolean> foundFlag = new ArrayList<>();
+            restHelper.processCommits(repoDescriptor.getId(), branchDescriptor.getName(), since, commit -> {
+                foundFlag.add(true);
+                addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                return Break.FALSE;
+            });
+            if (!foundFlag.isEmpty()) {
+                commitsFound = true;
             }
         }
         return commitsFound;
@@ -171,29 +175,20 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
      * repository descriptor.
      */
     private List<NcdReportGitLabBranchDescriptor> getBranchDescriptors(NcdReportGitLabRepositoryDescriptor repoDescriptor) {
-        List<NcdReportGitLabBranchDescriptor> result = new ArrayList<>(); 
-        GitHubPagingHelper.pagedRequest(getBranchesRequest(repoDescriptor), ArrayNode.class)
-            .ifSuccess(r->r.getBody().forEach(b->result.add(JsonHelper.treeToValue(b, NcdReportGitLabBranchDescriptor.class))));
+        List<NcdReportGitLabBranchDescriptor> result = new ArrayList<>();
+        restHelper.processBranches(repoDescriptor.getId(), 
+            branch -> {
+                result.add(JsonHelper.treeToValue(branch, NcdReportGitLabBranchDescriptor.class));
+                return Break.FALSE;
+            });
         return result;
     }
     
     /**
-     * Get the base request for loading commit data for the repository 
-     * and branch described by the given descriptors.
+     * Get a single commit (most recent) for a branch.
      */
-    private GetRequest getCommitsRequest(NcdReportGitLabRepositoryDescriptor repoDescriptor, NcdReportGitLabBranchDescriptor branchDescriptor, int perPage) {
-        return unirest().get("/api/v4/projects/{projectId}/repository/commits?ref_name={branchName}")
-                .routeParam("projectId", repoDescriptor.getId())
-                .routeParam("branchName", branchDescriptor.getName())
-                .queryString("per_page", perPage);
-    }
-    
-    /**
-     * Get the base request for loading branch data for the repository
-     * described by the given repository descriptor.
-     */
-    private GetRequest getBranchesRequest(NcdReportGitLabRepositoryDescriptor descriptor) {
-        return unirest().get(descriptor.getBranchesUrl());
+    private ArrayNode getLatestCommit(NcdReportGitLabRepositoryDescriptor repoDescriptor, NcdReportGitLabBranchDescriptor branchDescriptor) {
+        return restHelper.getLatestCommit(repoDescriptor.getId(), branchDescriptor.getName());
     }
     
     /**
@@ -205,24 +200,27 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
     }
 
     /**
-     * Optionally configure an Authorization header to the configuration
-     * of the given {@link UnirestInstance}, based on the optional
-     * tokenExpression provided in the source configuration. 
+     * Create and configure GitLabRestHelper with UnirestContext, URL config, and auth token.
      */
-    @Override
-    protected void configure(UnirestInstance unirest) {
-        String tokenExpression = sourceConfig().getTokenExpression();
-        if ( StringUtils.isNotBlank(tokenExpression) ) {
-            // TODO Doesn't really make sense to use this method with null input object
-            //      We should have a corresponding method in SpelHelper that doesn't take
-            //      any input
-            String token = JsonHelper.evaluateSpelExpression(null, tokenExpression, String.class);
-            if ( StringUtils.isBlank(token) ) {
-                throw new FcliSimpleException("No token found from expression: "+tokenExpression);
-            } else {
-                unirest.config().setDefaultHeader("PRIVATE-TOKEN", token);
-            }
+    private static GitLabRestHelper createRestHelper(NcdReportGitLabSourceConfig sourceConfig, NcdReportContext reportContext) {
+        var supplierBuilder = GitLabUnirestInstanceSupplier.builder(reportContext.unirestContext());
+        
+        // Configure URL config (includes URL, timeouts, SSL verification)
+        if (sourceConfig.hasUrlConfig()) {
+            supplierBuilder.urlConfig(sourceConfig);
         }
+        
+        // Configure token if provided
+        String tokenExpression = sourceConfig.getTokenExpression();
+        if (StringUtils.isNotBlank(tokenExpression)) {
+            String token = JsonHelper.evaluateSpelExpression(null, tokenExpression, String.class);
+            if (StringUtils.isBlank(token)) {
+                throw new FcliSimpleException("No token found from expression: " + tokenExpression);
+            }
+            supplierBuilder.token(token);
+        }
+        
+        return new GitLabRestHelper(supplierBuilder.build());
     }
     
     /**

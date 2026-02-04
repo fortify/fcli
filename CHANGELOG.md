@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.3](https://github.com/fortify/fcli/compare/v3.14.2...v3.14.3) (2026-01-21)
+
+
+### Bug Fixes
+
+* Only mask values that are not blank and longer than 4 characters (as short values are not considered secure/sensitive and are more likely to interfere with regular output), to avoid unexpected masking in log & console output (fixes [#904](https://github.com/fortify/fcli/issues/904)) ([fac5538](https://github.com/fortify/fcli/commit/fac55389e8e64cb69a65fc6a9351d4ace88e0bc8))
+
 ## [3.14.2](https://github.com/fortify/fcli/compare/v3.14.1...v3.14.2) (2025-12-24)
 
 

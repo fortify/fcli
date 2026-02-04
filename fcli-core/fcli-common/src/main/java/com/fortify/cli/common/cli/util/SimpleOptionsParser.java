@@ -114,8 +114,9 @@ public final class SimpleOptionsParser {
                 } else if ( argElts.length==2 ) {
                     result.put(arg, argElts[1]);
                 } else {
-                    var nextArg = argsDeque.peek(); 
-                    var value = nextArg==null || descriptorsByOptionNames.containsKey(nextArg) 
+                    var nextArg = argsDeque.peek();
+                    var isNextArgAnOption = nextArg==null || isOptionName(nextArg, descriptorsByOptionNames);
+                    var value = isNextArgAnOption
                             ? (optionDescriptor.isBool() ? "true" : null)
                             : argsDeque.pop();
                     result.put(arg, value);
@@ -123,6 +124,11 @@ public final class SimpleOptionsParser {
             }
         }
         return result;
+    }
+    
+    private boolean isOptionName(String arg, Map<String, IOptionDescriptor> descriptorsByOptionNames) {
+        var optionName = arg.split("=", 2)[0];
+        return descriptorsByOptionNames.containsKey(optionName);
     }
     
     private final Map<String, IOptionDescriptor> _createOptionDescriptorsByOptionNamesMap() {

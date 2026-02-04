@@ -43,7 +43,7 @@ class SCSastScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>1
-                it[0].replace(' ', '').equals("HostnameStatePoolnameIpaddressScaversionLastseenSensorstarttime")
+                it[0].replace(' ', '').equals("HostnameStatePoolnameIpaddressScaversionCompatibleclientversionLastseenSensorstarttime")
             }
     }
     

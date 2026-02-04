@@ -28,8 +28,12 @@ steps:
           global.ci.qualifiedRepoName:     # Fully qualified repository name
           global.ci.sourceBranch:          # The current branch being processed/scanned 
           global.ci.commitSHA:             # Commit SHA for current commit
-          global.ci.sourceDir:             # Directory containing source files to be scanned
+          global.ci.sourceDir:             "." # Directory containing source files to be scanned (default to current dir)
           global.ci.jobSummaryFile:        ${#env('JOB_SUMMARY_FILE')} # Job summary file path; can be overridden by CI-specific value
+          global.ci.prActive:              false # Whether running in pull/merge request context (default to false)
+          global.ci.prId:                  # Pull/merge request numeric identifier (null if not active)
+          global.ci.prTarget:              # Pull/merge request target branch (null if not active)
+          global.ci.prTerminology:         "Pull Request" # Pull/merge request terminology for this CI system (default)
           # The following are set by default at the end, but may be overridden by individual CI configurations
           global.fod.prCommentAction:   # FoD PR comment action
           global.ssc.prCommentAction:   # SSC PR comment action
@@ -39,48 +43,46 @@ steps:
           global.ssc.dastExportAction:  # SSC DAST export action
           global.fod.scaExportAction:   # FoD SCA (composition analysis) export action
           global.ssc.scaExportAction:   # SSC SCA (composition analysis) export action
+      # Initialize helper
+      - var.set:
+          ci.detected: ${#_ci.detect()}
+          ci.type:     ${ci.detected.type}
+          ci.env:      ${ci.detected.env}
       
-      # GitHub
-      - if: ${#isNotBlank(#env('GITHUB_REPOSITORY'))}
+      # For recognized CI systems (not unknown), extract properties from detected environment
+      # Using conditional navigation operator ?. to safely access properties even if ci.env is empty
+      - if: ${ci.type!='unknown'}
         var.set:
-          global.ci.name:                GitHub
-          global.ci.id:                  github
-          global.ci.qualifiedRepoName:   ${#env('GITHUB_REPOSITORY')}
-          global.ci.sourceBranch:        ${#env('GITHUB_HEAD_REF')?:#env('GITHUB_REF_NAME')}
-          global.ci.commitSHA:           ${#env('GITHUB_SHA')}
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('GITHUB_WORKSPACE')?:'.'}
-          global.ci.jobSummaryFile:      ${#ifBlank(global.ci.jobSummaryFile,#env('GITHUB_STEP_SUMMARY'))}
-          
-      # GitLab
-      - if: ${#env('GITLAB_CI')=='true'}
+          global.ci.name:                ${ci.env?.ciName}
+          global.ci.id:                  ${ci.env?.ciId}
+          global.ci.qualifiedRepoName:   ${ci.env?.ciRepository?.name?.full}
+          global.ci.sourceBranch:        ${ci.env?.ciBranch?.short}
+          global.ci.commitSHA:           ${ci.env?.ciCommit?.id?.full}
+          global.ci.sourceDir:           ${ci.env?.ciRepository?.workDir?:global.ci.sourceDir}
+          global.ci.prActive:            ${ci.env?.pullRequest?.active?:false}
+          global.ci.prId:                ${ci.env?.pullRequest?.id}
+          global.ci.prTarget:            ${ci.env?.pullRequest?.target}
+          global.ci.prTerminology:       ${ci.env?.prTerminology?:global.ci.prTerminology}
+      
+      # GitHub-specific properties
+      - if: ${ci.type=='github'}
         var.set:
-          global.ci.name:                GitLab
-          global.ci.id:                  gitlab
-          global.ci.qualifiedRepoName:   ${#env('CI_REPOSITORY_URL')?.replaceAll('[^:]+://[^/]+/','')?.replaceAll('\.git$', '')}
-          global.ci.sourceBranch:        ${#env('CI_COMMIT_BRANCH')?:#env('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME')}
-          global.ci.commitSHA:           ${#env('CI_COMMIT_SHA')}
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('CI_PROJECT_DIR')?:'.'}
-          
-      # Azure DevOps
-      - if: ${#isNotBlank(#env('Build.Repository.Name'))}
-        var.set:
-          global.ci.name:                Azure DevOps
-          global.ci.id:                  ado
-          global.ci.qualifiedRepoName:   ${#env('Build.Repository.Name')}
-          global.ci.sourceBranch:        ${(#env('Build.SourceBranch')?:'').matches('refs/pull/.*')?((#env('System.PullRequest.SourceBranch')?:#env('System.PullRequest.SourceBranchName')?:'').replaceAll('^refs/heads/','')):((#env('Build.SourceBranchName')?:#env('Build.SourceBranch')?:'').replaceAll('^refs/heads/','')) }
-          global.ci.commitSHA:           ${#env('Build.SourceVersion')}
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('Build.SourcesDirectory')?:#env('System.DefaultWorkingDirectory')?:'.'}
+          global.ci.jobSummaryFile: ${#ifBlank(global.ci.jobSummaryFile,ci.env?.jobSummaryFile)}
           
       # Jenkins
       - if: ${#isNotBlank(#env('JENKINS_HOME'))||#isNotBlank(#env('JENKINS_URL'))}
         var.set:
           global.ci.name:                Jenkins
           global.ci.id:                  jenkins
-          global.ci.sourceDir:           ${#env('SOURCE_DIR')?:#env('WORKSPACE')?:'.'}
-          
+          global.ci.sourceDir:           ${#env('WORKSPACE')}
+      
+      # Override sourceDir with SOURCE_DIR if specified (custom user variable)
+      - if: ${#isNotBlank(#env('SOURCE_DIR'))}
+        var.set:
+          global.ci.sourceDir: ${#env('SOURCE_DIR')}
       # Generic local repository detection
       - var.set:
-          global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,#env('SOURCE_DIR')?:'.')}
+          global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,'.')}
       - var.set:
           global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}
       
@@ -89,9 +91,9 @@ steps:
         var.set:
           global.ci.name:              local Git repository
           global.ci.id:                local-git
-          global.ci.qualifiedRepoName: ${global.ci.localRepo?.repository?.name?.full?:global.ci.localRepo?.repository?.name?.short}
-          global.ci.sourceBranch:      ${global.ci.localRepo?.branch?.short}
-          global.ci.commitSHA:         ${global.ci.localRepo?.commit?.id?.full}
+          global.ci.qualifiedRepoName: ${global.ci.localRepo.repository?.name?.full?:global.ci.localRepo.repository?.name?.short}
+          global.ci.sourceBranch:      ${global.ci.localRepo.branch?.short}
+          global.ci.commitSHA:         ${global.ci.localRepo.commit?.id?.full}
     
       # Additional generic variables based on the output of the CI-specific sections above
       - var.set:
@@ -106,6 +108,10 @@ steps:
           global.ci.ssc_dastExportAction:  ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'dast-report'))}
           global.ci.fod_scaExportAction:   ${#actionOrNull('fod',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
           global.ci.ssc_scaExportAction:   ${#actionOrNull('ssc',#joinOrNull('-', global.ci.id, 'debricked-report'))}  # TODO 'debricked' or more generic 'sca' or 'composition (analysis)'
+      # Set PR-related skip reason if not active
+      - if: "${global.ci.prActive!=true}"
+        var.set:
+          global.ci.prNotActiveSkipReason: "Not a ${global.ci.prTerminology}"
       - log.info: "${global.ci.name!=null ? 'Detected '+global.ci.name : 'No CI system detected'}"
       - records.for-each:
           from: ${#properties(global.ci)}

@@ -13,7 +13,7 @@
 package com.fortify.cli.license.ncd_report.config;
 
 import com.fortify.cli.common.report.config.IReportSourceConfig;
-import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.license.ncd_report.collector.NcdReportContext;
 
 /**
  * Interface to be implemented by source-specific configuration classes
@@ -23,5 +23,5 @@ import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
  * @author rsenden
  *
  */
-public interface INcdReportSourceConfig extends IReportSourceConfig<NcdReportResultsCollector>, INcdReportRepoSelectorConfig {
+public interface INcdReportSourceConfig extends IReportSourceConfig<NcdReportContext>, INcdReportRepoSelectorConfig {
 }

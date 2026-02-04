@@ -16,14 +16,28 @@ usage:
     
     Configuration for this fcli action is done through environment variables; the
     sections below list the environment variables supported by this action.
+    
+    ${#include('/ci-action-bootstrap'+(isAsciiDoc?'.adoc':'.txt'))}
         
     === Fortify on Demand
     
-    ${#include('/ci-envvars-fod.all'+(isAsciiDoc?'.adoc':'.txt'))}
+    ==== Session
+    
+    ${#include('/ci-action-session-fod'+(isAsciiDoc?'.adoc':'.txt'))}
+    
+    ==== CI Integration
+    
+    ${#include('/ci-action-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
     
     === Fortify Software Security Center
+    
+    ==== Session
+    
+    ${#include('/ci-action-session-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
+    
+    ==== CI Integration
         
-    ${#include('/ci-envvars-ssc.all'+(isAsciiDoc?'.adoc':'.txt'))}
+    ${#include('/ci-action-core-ssc'+(isAsciiDoc?'.adoc':'.txt'))}
     
 config:
   output: immediate

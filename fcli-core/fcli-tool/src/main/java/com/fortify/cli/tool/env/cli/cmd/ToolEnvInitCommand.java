@@ -21,91 +21,140 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.exception.FcliCommandExecutionException;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.json.producer.IObjectNodeProducer;
+import com.fortify.cli.common.json.producer.StreamingObjectNodeProducer;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.OutputHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
-import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvInitMixin.ToolSetupSpec;
 
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-// TODO Replace all fcli invocations (at least those for data retrieval; maybe consider keeping
-//      register and install commands) with direct API calls (partially or all done; need to check)
 @Command(name = "init")
-public class ToolEnvInitCommand extends AbstractRunnableCommand {
-    // Platform-aware success marker: checkmark on Unix/Linux, [OK] on Windows
-    private static final String SUCCESS_MARKER = PlatformHelper.isWindows() ? "[OK]" : "✓";
+public class ToolEnvInitCommand extends AbstractOutputCommand implements IActionCommandResultSupplier {
+    @Getter @Mixin
+    private OutputHelperMixins.TableNoQuery outputHelper;
     
     @Mixin @Getter
     private ToolEnvInitMixin toolsMixin;
     
-    // Consumer to handle fcli command failures by printing error output
-    private final Consumer<OutputHelper.Result> onFail = result -> {
-        if (result.getErr() != null && !result.getErr().isEmpty()) {
-            System.err.println(result.getErr());
-        } else if (result.getOut() != null && !result.getOut().isEmpty()) {
-            System.err.println(result.getOut());
-        }
-        throw new FcliCommandExecutionException(result);
-    };
+    @Mixin
+    private ProgressWriterFactoryMixin progressWriterFactory;
     
-    // Record to hold setup result information
-    private record ToolSetupResult(String toolName, String status, String version, String binDir) {}
+    // Class to hold setup result information
+    @Reflectable
+    @Data
+    @Builder
+    private static class ToolSetupResult {
+        private final String name;
+        private final String version;
+        private final String binDir;
+        private final String installDir;
+        private final String __action__;
+    }
     
-    // Record to hold registration result
-    private record RegistrationResult(boolean success, String version, String installDir) {}
+    // Class to hold registration result
+    @Reflectable
+    @Data
+    @Builder
+    private static class RegistrationResult {
+        private final String version;
+        private final String binDir;
+        private final String installDir;
+        private final boolean success;
+    }
     
-    // Record to hold install result
-    private record InstallResult(String action, String installDir) {}
+    // Class to hold install result
+    @Reflectable
+    @Data
+    @Builder
+    private static class InstallResult {
+        private final String binDir;
+        private final String installDir;
+        private final String action;
+    }
     
     @Override
-    public Integer call() {
+    public boolean isSingular() {
+        return false;
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "INITIALIZED";
+    }
+    
+    @Override
+    protected IObjectNodeProducer getObjectNodeProducer() {
         toolsMixin.validateOptions();
         
         List<ToolSetupSpec> specs = toolsMixin.getToolSetupSpecs();
-        List<ToolSetupResult> results = new ArrayList<>();
         
-        // Update tool definitions if not in preinstalled mode and not all tools have explicit paths
-        if (!toolsMixin.isPreinstalledMode() && !toolsMixin.allToolsHavePaths()) {
-            updateToolDefinitions();
-        }
-        
-        for (ToolSetupSpec spec : specs) {
-            results.add(setupTool(spec));
-        }
-        
-        // Print detailed summary
-        printSummary(results);
-        return 0;
+        return StreamingObjectNodeProducer.builder()
+                .streamSupplier(() -> setupTools(specs).stream()
+                    .map(result -> JsonHelper.getObjectMapper().<ObjectNode>valueToTree(result)))
+                .build();
     }
     
-    private void updateToolDefinitions() {
+    private List<ToolSetupResult> setupTools(List<ToolSetupSpec> specs) {
+        List<ToolSetupResult> results = new ArrayList<>();
+        
+        try (var progressWriter = progressWriterFactory.create()) {
+            // Update tool definitions if not in preinstalled mode and not all tools have explicit paths
+            if (!toolsMixin.isPreinstalledMode() && !toolsMixin.allToolsHavePaths()) {
+                updateToolDefinitions(progressWriter);
+            }
+            
+            for (ToolSetupSpec spec : specs) {
+                results.add(setupTool(spec, progressWriter));
+            }
+        }
+        
+        return results;
+    }
+    
+    private void updateToolDefinitions(IProgressWriterI18n progressWriter) {
+        // Note: ToolDefinitionsHelper.updateToolDefinitions doesn't support progress writer yet
         ToolDefinitionsHelper.updateToolDefinitions(toolsMixin.getToolDefinitions(), false, null);
     }
     
-    private ToolSetupResult setupTool(ToolSetupSpec spec) {
+    private ToolSetupResult setupTool(ToolSetupSpec spec, IProgressWriterI18n progressWriter) {
         Tool tool = spec.tool();
         String toolName = tool.getToolName();
         String requestedVersion = spec.getEffectiveVersion();
         String versionInfo = spec.hasPath() ? " at " + spec.getEffectivePath() : (requestedVersion != null ? " version '" + requestedVersion + "'" : "");
         
-        System.out.println("Setting up " + toolName + versionInfo + "...");
+        progressWriter.writeProgress("Setting up " + toolName + versionInfo + "...");
         
         // Try to register first
         RegistrationResult regResult = tryRegisterTool(spec);
-        if (regResult.success()) {
-            System.out.println(SUCCESS_MARKER + " " + toolName + " registered successfully");
-            String displayVersion = spec.hasPath() ? "preinstalled" : regResult.version();
-            return new ToolSetupResult(toolName, "registered", displayVersion, regResult.installDir());
+        if (regResult.isSuccess()) {
+            progressWriter.writeProgress("Tool " + toolName + " registered successfully");
+            String displayVersion = spec.hasPath() ? "preinstalled" : regResult.getVersion();
+            return ToolSetupResult.builder()
+                    .name(toolName)
+                    .version(displayVersion)
+                    .binDir(regResult.getBinDir())
+                    .installDir(regResult.getInstallDir())
+                    .__action__("REGISTERED")
+                    .build();
         }
         
         // If registration failed and a path was specified, fail immediately
@@ -115,9 +164,15 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         
         // If registration failed and not in preinstalled mode, try to install
         if (!toolsMixin.isPreinstalledMode()) {
-            InstallResult installResult = installTool(spec);
-            System.out.println(SUCCESS_MARKER + " " + toolName + " " + installResult.action() + " successfully");
-            return new ToolSetupResult(toolName, installResult.action(), spec.getEffectiveVersion(), installResult.installDir());
+            InstallResult installResult = installTool(spec, progressWriter);
+            progressWriter.writeProgress("Tool " + toolName + " " + installResult.getAction() + " successfully");
+            return ToolSetupResult.builder()
+                    .name(toolName)
+                    .version(spec.getEffectiveVersion())
+                    .binDir(installResult.getBinDir())
+                    .installDir(installResult.getInstallDir())
+                    .__action__(installResult.getAction())
+                    .build();
         } else {
             throw new FcliSimpleException("Tool " + toolName + " version '" + requestedVersion + "' not found and preinstalled mode prevents installation");
         }
@@ -143,22 +198,30 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         }
         
         AtomicReference<String> versionRef = new AtomicReference<>();
+        AtomicReference<String> binDirRef = new AtomicReference<>();
         AtomicReference<String> installDirRef = new AtomicReference<>();
+        AtomicReference<String> binaryNameRef = new AtomicReference<>();
         Consumer<ObjectNode> recordConsumer = record -> {
             versionRef.set(extractTextField(record, "version", null));
-            installDirRef.set(extractTextField(record, "installDir", "binDir"));
+            binDirRef.set(extractTextField(record, "binDir", null));
+            installDirRef.set(extractTextField(record, "installDir", null));
+            binaryNameRef.set(spec.tool().getDefaultBinaryName());
         };
         
         var result = executeFcliCommandWithRecordConsumer(cmd, recordConsumer, true);
         if (result != null && result.getExitCode() == 0) {
-            return new RegistrationResult(true, versionRef.get(), installDirRef.get());
+            return RegistrationResult.builder()
+                    .version(versionRef.get())
+                    .binDir(binDirRef.get())
+                    .installDir(installDirRef.get())
+                    .success(true)
+                    .build();
         }
         
         // Registration failed
-        if (!toolsMixin.isPreinstalledMode()) {
-            System.out.println("Tool " + toolName + " version '" + spec.getEffectiveVersion() + "' not found, will proceed with installation");
-        }
-        return new RegistrationResult(false, null, null);
+        return RegistrationResult.builder()
+                .success(false)
+                .build();
     }
     
     /**
@@ -174,9 +237,8 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             return FcliCommandExecutorFactory.builder()
                     .cmd(cmd)
                     .stdoutOutputType(OutputType.suppress)
-                    .stderrOutputType(OutputType.collect)
+                    .stderrOutputType(suppressErrors ? OutputType.suppress : OutputType.show)
                     .recordConsumer(recordConsumer)
-                    .onFail(suppressErrors ? null : onFail)
                     .build()
                     .create()
                     .execute();
@@ -210,8 +272,10 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         return null;
     }
     
-    private InstallResult installTool(ToolSetupSpec spec) {
+    private InstallResult installTool(ToolSetupSpec spec, IProgressWriterI18n progressWriter) {
         String toolName = spec.toolName();
+        progressWriter.writeProgress("Tool " + toolName + " version '" + spec.getEffectiveVersion() + "' not found, proceeding with installation");
+        
         // Convert 'auto' to 'latest' for installation
         String version = spec.getEffectiveVersion();
         if ("auto".equals(version)) {
@@ -245,19 +309,27 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
         
         // JRE handling for sc-client is now done automatically by the install command
         
-        AtomicReference<String> actionRef = new AtomicReference<>("installed");
+        AtomicReference<String> actionRef = new AtomicReference<>("INSTALLED");
+        AtomicReference<String> binDirRef = new AtomicReference<>();
         AtomicReference<String> installDirRef = new AtomicReference<>();
+        AtomicReference<String> binaryNameRef = new AtomicReference<>();
         Consumer<ObjectNode> recordConsumer = record -> {
             String action = extractTextField(record, "__action__", null);
             if (action != null) {
-                actionRef.set(action.equals("SKIPPED_EXISTING") ? "skipped_existing" : "installed");
+                actionRef.set(action);
             }
+            binDirRef.set(extractTextField(record, "binDir", null));
             installDirRef.set(extractTextField(record, "installDir", null));
+            binaryNameRef.set(spec.tool().getDefaultBinaryName());
         };
         
         try {
             executeFcliCommandWithRecordConsumer(cmd, recordConsumer, false);
-            return new InstallResult(actionRef.get(), installDirRef.get());
+            return InstallResult.builder()
+                    .binDir(binDirRef.get())
+                    .installDir(installDirRef.get())
+                    .action(actionRef.get())
+                    .build();
         } catch (FcliCommandExecutionException e) {
             System.err.println("Installation for " + toolName + " failed:");
             throw new FcliSimpleException("Installation of " + toolName + " failed");
@@ -278,14 +350,4 @@ public class ToolEnvInitCommand extends AbstractRunnableCommand {
             return null;
         }
     }
-    
-    private void printSummary(List<ToolSetupResult> results) {
-        System.out.println();
-        System.out.println("Fortify tools setup complete. " + results.size() + " tool(s) processed.");
-        
-        for (ToolSetupResult result : results) {
-            System.out.println("  " + SUCCESS_MARKER + " " + result.toolName + ": " + result.version + " (" + result.status + ") at " + result.binDir);
-        }
-    }
-
 }

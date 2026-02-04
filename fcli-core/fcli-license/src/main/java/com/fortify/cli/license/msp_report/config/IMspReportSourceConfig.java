@@ -13,7 +13,7 @@
 package com.fortify.cli.license.msp_report.config;
 
 import com.fortify.cli.common.report.config.IReportSourceConfig;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.license.msp_report.collector.MspReportContext;
 
 /**
  * Interface to be implemented by source-specific configuration classes
@@ -23,5 +23,5 @@ import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
  * @author rsenden
  *
  */
-public interface IMspReportSourceConfig extends IReportSourceConfig<MspReportResultsCollector> {
+public interface IMspReportSourceConfig extends IReportSourceConfig<MspReportContext> {
 }

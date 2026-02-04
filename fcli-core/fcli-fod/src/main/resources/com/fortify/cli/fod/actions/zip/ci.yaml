@@ -13,9 +13,11 @@ usage:
     * Perform post-scan activities, like checking policy outcome, exporting results, ...
     
     Configuration for this fcli action is done through environment variables; the
-    table below lists the environment variables supported by this action.
-                
-    ${#include('/ci-envvars-fod.ci'+(isAsciiDoc?'.adoc':'.txt'))}
+    sections below list the environment variables supported by this action.
+    
+    ${#include('/ci-action-bootstrap'+(isAsciiDoc?'.adoc':'.txt'))}
+    
+    ${#include('/ci-action-core-fod'+(isAsciiDoc?'.adoc':'.txt'))}
 
 config:
   output: immediate
@@ -87,7 +89,7 @@ steps:
           - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
           
       PACKAGE_ACTION: 
-        cmd: ${#actionCmd('PACKAGE_ACTION', 'fod', 'package')} "--source-dir=${global.ci.sourceDir}"
+        cmd: ${#actionCmd('PACKAGE_ACTION', 'fod', 'package')} "--source-dir=${global.ci.sourceDir}" "--rel=${global.ci.rel}"
         skip.if-reason:
           - ${sast.skipReason} # Skip if SAST scan is skipped
           
@@ -125,8 +127,7 @@ steps:
           - ${#actionCmdSkipFromEnvReason('PR_COMMENT', true)} # Skip unless DO_PR_COMMENT==true or PR_COMMENT_ACTION/EXTRA_OPTS defined
           - ${#actionCmdSkipNoActionReason('PR_COMMENT', 'fod', global.ci.fod_prCommentAction)}
           - ${postScan.skipReason}                             # Skip if no scans were run
-          # TODO Check whether current run is for a PR
-          # TODO Skip if prCommentAction is null or doesn't exist
+          - ${global.ci.prNotActiveSkipReason}                 # Skip if not a pull/merge request
           
       SAST_EXPORT:
         cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}"

@@ -13,9 +13,11 @@
 package com.fortify.cli.common.rest.paging;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.util.Break;
 
 import kong.unirest.Header;
 import kong.unirest.HttpRequest;
@@ -78,6 +80,40 @@ public class PagingHelper {
         HttpResponse<JsonNode> response = currentRequest.asObject(JsonNode.class);
         consumer.accept(response);
         currentRequest = nextPageRequestProducer.getNextPageRequest(initialRequest, response);
+        }
+    }
+    
+    /**
+     * Process pages with Break support, allowing early termination across page boundaries.
+     * 
+     * @param unirest UnirestInstance for making requests
+     * @param initialRequest Initial request to start pagination
+     * @param nextPageUrlProducer Producer for generating next page URLs
+     * @param processor Function that returns Break.TRUE to stop, Break.FALSE to continue
+     */
+    public static final void processPagesWithBreak(UnirestInstance unirest, HttpRequest<?> initialRequest, INextPageUrlProducer nextPageUrlProducer, Function<HttpResponse<JsonNode>, Break> processor) {
+        var nextPageRequestProducer = asNextPageRequestProducer(unirest, nextPageUrlProducer);
+        if ( nextPageRequestProducer==null ) {
+            throw new FcliTechnicalException("Cannot process pages without a valid NextPageRequestProducer");
+        }
+        processPagesWithBreak(initialRequest, nextPageRequestProducer, processor);
+    }
+    
+    /**
+     * Process pages with Break support, allowing early termination across page boundaries.
+     * 
+     * @param initialRequest Initial request to start pagination
+     * @param nextPageRequestProducer Producer for generating next page requests
+     * @param processor Function that returns Break.TRUE to stop, Break.FALSE to continue
+     */
+    public static final void processPagesWithBreak(HttpRequest<?> initialRequest, INextPageRequestProducer nextPageRequestProducer, Function<HttpResponse<JsonNode>, Break> processor) {
+        var currentRequest = initialRequest;
+        while ( currentRequest!=null ) {
+            HttpResponse<JsonNode> response = currentRequest.asObject(JsonNode.class);
+            if ( processor.apply(response).doBreak() ) {
+                break;
+            }
+            currentRequest = nextPageRequestProducer.getNextPageRequest(initialRequest, response);
         }
     }
     

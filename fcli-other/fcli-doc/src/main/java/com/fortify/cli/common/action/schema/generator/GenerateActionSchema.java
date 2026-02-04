@@ -53,7 +53,13 @@ import com.github.victools.jsonschema.module.jackson.JacksonOption;
 
 public class GenerateActionSchema {
     private static final String actionSpelFunctionSignatures = SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().stream()
+            .filter(d -> !"internal".equals(d.getCategory()))
             .map(d -> d.getSignature()).collect(Collectors.joining("\n"));
+    private static final String actionSpelFunctionReturnTypes = SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().stream()
+            .filter(d -> !"internal".equals(d.getCategory()))
+            .filter(d -> d.getReturns() != null && d.getReturns().getReturnTypeStructure() != null)
+            .map(d -> String.format("%s:\n%s", d.getSignature(), d.getReturns().getReturnTypeStructure()))
+            .collect(Collectors.joining("\n\n"));
     public static void main(String[] args) throws Exception {
         if (args.length != 3) {
             throw new IllegalArgumentException(
@@ -197,8 +203,8 @@ public class GenerateActionSchema {
                         Spring template expression, like 'Hello ${name}'.
                         See https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html \
                         for expression language reference. Expressions may invoke the following fcli-provided \
-                        functions: \n%s\nSee fcli custom action development documentation for more information.
-                        """, actionSpelFunctionSignatures)).putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        functions: \n%s\n\nReturn type structures for functions that return complex objects:\n%s\n\nSee fcli custom action development documentation for more information.
+                        """, actionSpelFunctionSignatures, actionSpelFunctionReturnTypes)).putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN)).add(context.getKeyword(SchemaKeyword.TAG_TYPE_INTEGER))
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING)).add(context.getKeyword(SchemaKeyword.TAG_TYPE_NUMBER))
                 .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NULL));

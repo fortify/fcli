@@ -13,14 +13,17 @@ config:
 cli.options:
   report-file:
     names: --report-file, -r
-    description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json"
+    description: "Optional report output file name (or 'stdout' / 'stderr'). Defaults to bb-fortify-report.json if --publish not specified"
     required: false
-    default: bb-fortify-report.json
   annotations-file:
     names: --annotations-file, -a
-    description: "Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json"
+    description: "Optional annotations output file name (or 'stdout' / 'stderr'). Defaults to bb-fortify-annotations.json if --publish not specified"
     required: false
-    default: bb-fortify-annotations.json
+  publish:
+    names: --publish
+    description: "Publish report and annotations to Bitbucket Code Insights"
+    required: false
+    type: boolean
   appversion:
     names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
@@ -74,7 +77,7 @@ steps:
   - with:
       writers:
         annotations:
-          to: ${cli['annotations-file']}
+          to: var:annotationsContents
           type: json
       do:
         - rest.call:
@@ -95,13 +98,27 @@ steps:
                   - writer.append:
                       annotations: {fmt: annotation}
   - var.set:
-      report: {fmt: report}
-  - out.write:
-      ${cli['report-file']}: ${report}
-  - if: ${cli['annotations-file']!='stdout' && cli['report-file']!='stdout'}
-    log.info: |
-        Report written to ${cli['report-file']}
-        Annotations written to ${cli['annotations-file']}
+      reportContents: {fmt: report}
+      reportFile: "${cli['report-file']!=null ? cli['report-file'] : cli.publish==true ? null : 'bb-fortify-report.json'}"
+      annotationsFile: "${cli['annotations-file']!=null ? cli['annotations-file'] : cli.publish==true ? null : 'bb-fortify-annotations.json'}"
+  - if: ${reportFile!=null}
+    steps:
+      - out.write:
+          ${reportFile}: ${reportContents}
+      - if: ${reportFile!='stdout'}
+        log.info: Report written to ${reportFile}
+  - if: ${annotationsFile!=null}
+    steps:
+      - out.write:
+          ${annotationsFile}: ${annotationsContents}
+      - if: ${annotationsFile!='stdout'}
+        log.info: Annotations written to ${annotationsFile}
+  - if: ${cli.publish==true}
+    steps:
+      - var.set:
+          bitbucketReportUpload: ${#bitbucket.uploadReport('fortify-sast', reportContents)}
+          bitbucketAnnotationsUpload: ${#bitbucket.addReportAnnotations('fortify-sast', annotationsContents)}
+      - log.info: Report and annotations published to Bitbucket Code Insights
 
 formatters:
   report:

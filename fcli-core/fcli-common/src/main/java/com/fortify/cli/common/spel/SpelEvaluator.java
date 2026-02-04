@@ -157,6 +157,8 @@ public enum SpelEvaluator implements ISpelEvaluator {
     private static final DefaultFormattingConversionService createJsonConversionService() {
         DefaultFormattingConversionService  conversionService = new DefaultFormattingConversionService();
         conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
+        conversionService.addConverter(new JsonNodeToStringConverter());
+        conversionService.addConverter(new JsonNodeWrapperToStringConverter());
         conversionService.addConverter(new ListToArrayNodeConverter());
         conversionService.addConverter(new ObjectToJsonNodeConverter());
         DateTimeFormatterRegistrar dateTimeRegistrar = new DateTimeFormatterRegistrar();
@@ -170,6 +172,28 @@ public enum SpelEvaluator implements ISpelEvaluator {
         @Override
         public JsonNode convert(Object source) {
             return JsonHelper.getObjectMapper().valueToTree(source);
+        }
+    }
+    
+    private static final class JsonNodeToStringConverter implements Converter<JsonNode, String> {
+        @Override
+        public String convert(JsonNode source) {
+            try {
+                return JsonHelper.getObjectMapper().writeValueAsString(source);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to convert JsonNode to String", e);
+            }
+        }
+    }
+    
+    private static final class JsonNodeWrapperToStringConverter implements Converter<JsonNodeWrapper<?>, String> {
+        @Override
+        public String convert(JsonNodeWrapper<?> source) {
+            try {
+                return JsonHelper.getObjectMapper().writeValueAsString(source.getRealNode());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to convert JsonNodeWrapper to String", e);
+            }
         }
     }
     

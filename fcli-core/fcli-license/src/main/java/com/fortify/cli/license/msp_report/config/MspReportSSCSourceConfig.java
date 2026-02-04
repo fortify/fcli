@@ -15,7 +15,7 @@ package com.fortify.cli.license.msp_report.config;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.license.msp_report.collector.MspReportContext;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCResultsGenerator;
 
 import kong.unirest.Config;
@@ -48,7 +48,7 @@ public class MspReportSSCSourceConfig implements IMspReportSourceConfig, IUrlCon
     }
     
     @Override
-    public IReportResultsGenerator generator(MspReportResultsCollector resultsCollector) {
-        return new MspReportSSCResultsGenerator(this, resultsCollector);
+    public IReportResultsGenerator generator(MspReportContext reportContext) {
+        return new MspReportSSCResultsGenerator(this, reportContext);
     }
 }

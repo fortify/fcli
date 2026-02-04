@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Package source code
+  description: |
+    This action can be used to package source code using ScanCentral Client. It will 
+    take care of installing the specified ScanCentral Client version, followed by
+    executing the 'scancentral package' command using the specified ScanCentral 
+    Client version. To enable debug logging on the scancentral command, use the
+    fcli --debug option, optionally combined with --log-level=NONE to collect
+    only ScanCentral logs, not fcli logs.
+
+config:
+  output: immediate
+  run.fcli.status.log.default: true    # By default, we log all exit statuses
+  
+cli.options:
+  usePackage:
+    names: --use-package
+    description: |
+      Use an existing package file instead of trying to package the given source code directory. If specified, this ignores all other options.
+    required: false
+    default: ${#env('USE_PACKAGE')}
+  scClientVersion:
+    names: --sc-client-version, -v
+    description: |
+      Specify the ScanCentral Client version to be used for packaging. Defaults to the value of the SC_CLIENT_HOME or SC_CLIENT_VERSION environment variables.
+      Allowed values:
+      - An explicit version number (e.g. 25.2 or 25.2.0)
+      - Path to a specific ScanCentral Client installation
+      - `latest` to use the latest available ScanCentral Client version
+      - `auto` (default) to enable automatic detection based on available sensor versions
+    required: false
+    default: ${#ifBlank(#env('SC_CLIENT_HOME'),#ifBlank(#env('SC_CLIENT_VERSION'),'auto'))}
+  appversion:
+    names: --appversion, --av
+    description: |
+      SSC application version (name or id) for which to detect the appropriate ScanCentral Client version. If not specified, detection will use
+      sensors from all pools. This option is only used when --sc-client-version is not specified or set to 'auto'.
+    required: false
+  sourceDir:
+    names: --source-dir, -d
+    description: |
+      Specify the source directory to be packaged. Defaults to the value of the SOURCE_DIR environment variable, or current working directory if not specified.
+    default: ${#ifBlank(#env('SOURCE_DIR'),'.')}
+    required: true
+  toolDefinitions:
+    names: --tool-definitions
+    description: |
+      Custom tool definitions to use for identifying available ScanCentral Client versions and download URLs.
+    required: false
+  extraOpts:
+    names: --extra-opts
+    description: |
+      Extra options to be passed to the 'scancentral package' command. Defaults to the options specified in the EXTRA_PACKAGE_OPTS environment variable, or no extra options if not specified. 
+    required: false
+    default: ${#extraOpts('PACKAGE')}
+  output:
+    names: --output, -o
+    description: |
+      Name of the zip file in which packaged source code should be stored. Defaults to package.zip in the current working directory.
+    required: true
+    default: package.zip
+  
+      
+steps:
+  - var.set:
+      global.package.output: ${#resolveAgainstCurrentWorkDir(#ifBlank(cli.usePackage,cli.output))}
+  - if: ${#isBlank(cli.usePackage)}
+    steps:
+      - if: "${(#ifBlank(cli.scClientVersion,'auto')=='auto')}"
+        run.fcli:
+          DETECT_SC_CLIENT_VERSION:
+            cmd: fcli sc-sast sensor list ${#opt("--av", cli.appversion)} "--latest-only=true"
+            records.for-each:
+              record.var-name: versionRecord
+              do:
+                - var.set:
+                    detectedScClientVersion: ${versionRecord.compatibleClientVersion}
+            on.success:
+              - log.info: 'Detected compatible ScanCentral SAST client version: ${detectedScClientVersion}'
+            on.fail:
+              - log.warn: 'Warning: Unable to detect compatible ScanCentral SAST client version, attempting with default version'
+              - var.set:
+                  DETECT_SC_CLIENT_VERSION.status: 'WARNING'
+                  DETECT_SC_CLIENT_VERSION.statusReason: 'Unable to detect compatible ScanCentral SAST client version'
+                  DETECT_SC_CLIENT_VERSION.dependencySkipReason:  # Clear to allow downstream steps
+                  DETECT_SC_CLIENT_VERSION.exitCode: 0            # Don't contribute to final exit code
+      - var.set:
+          effectiveScClientVersion: ${#ifBlank(detectedScClientVersion, cli.scClientVersion)}
+      - run.fcli:
+          SETUP_TOOLS: fcli tool env init "--tools=sc-client:${effectiveScClientVersion}" ${#opt("--tool-definitions", cli.toolDefinitions)}
+          RUN_SC_CLIENT: fcli tool sc-client run --workdir ${cli.sourceDir} --logdir . -- package -o "${global.package.output}" ${cli.extraOpts}
+      

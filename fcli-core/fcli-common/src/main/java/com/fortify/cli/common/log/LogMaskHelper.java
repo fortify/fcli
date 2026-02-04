@@ -101,7 +101,7 @@ public final class LogMaskHelper {
      * See {@link MultiPatternReplacer#registerValue(String, String)} for details.
      */
     public final LogMaskHelper registerValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement, LogMessageType... logMessageTypes) {
-        if ( isMaskingNeeded(sensitivityLevel) ) {
+        if ( isMaskingNeeded(sensitivityLevel, valueToMask) ) {
             var encodedValue = URLEncoder.encode(valueToMask, StandardCharsets.UTF_8);
             for ( var logMessageType : getLogMessageTypesOrDefault(logMessageTypes) ) {
                 getMultiPatternReplacer(logMessageType)
@@ -121,7 +121,7 @@ public final class LogMaskHelper {
      * This is specifically for user-provided data and CLI options that should be masked in console output.
      */
     public final LogMaskHelper registerStdioValue(LogSensitivityLevel sensitivityLevel, String valueToMask, String replacement) {
-        if ( isMaskingNeeded(sensitivityLevel) ) {
+        if ( isMaskingNeeded(sensitivityLevel, valueToMask) ) {
             stdioPatternReplacer.registerValue(valueToMask, replacement);
         }
         return this;
@@ -134,7 +134,7 @@ public final class LogMaskHelper {
      * for details.
      */
     public final LogMaskHelper registerPattern(LogSensitivityLevel sensitivityLevel, String patternString, String replacement, LogMessageType... logMessageTypes) {
-        if ( isMaskingNeeded(sensitivityLevel) ) {
+        if ( isMaskingNeededForSensitivityLevel(sensitivityLevel) ) {
             for ( var logMessageType : getLogMessageTypesOrDefault(logMessageTypes) ) {
                 getMultiPatternReplacer(logMessageType).registerPattern(patternString, replacement);
             }
@@ -160,9 +160,20 @@ public final class LogMaskHelper {
     
     /**
      * @return true if masking is needed based on comparing the given {@link LogSensitivityLevel}
+     * against the configured {@link LogMaskLevel}, and given value is not blank/too short,
+     * false otherwise.
+     */
+    private final boolean isMaskingNeeded(LogSensitivityLevel sensitivityLevel, String valueToMask) {
+        return isMaskingNeededForSensitivityLevel(sensitivityLevel)
+                && StringUtils.isNotBlank(valueToMask)
+                && valueToMask.length()>4; // Avoid masking very short values, as these are not considered secure anyway
+    }
+    
+    /**
+     * @return true if masking is needed based on comparing the given {@link LogSensitivityLevel}
      * against the configured {@link LogMaskLevel}, false otherwise.
      */
-    private final boolean isMaskingNeeded(LogSensitivityLevel sensitivityLevel) {
+    private final boolean isMaskingNeededForSensitivityLevel(LogSensitivityLevel sensitivityLevel) {
         return logMaskLevel.getSensitivityLevels().contains(sensitivityLevel);
     }
 

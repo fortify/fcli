@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.runner;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.date;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fcli;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.internal;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.txt;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util;
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
@@ -56,6 +57,14 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.schema.ActionSchemaDescriptorFactory;
+import com.fortify.cli.common.ci.CiBranch;
+import com.fortify.cli.common.ci.CiCommit;
+import com.fortify.cli.common.ci.CiCommitId;
+import com.fortify.cli.common.ci.CiCommitMessage;
+import com.fortify.cli.common.ci.CiPerson;
+import com.fortify.cli.common.ci.CiRepository;
+import com.fortify.cli.common.ci.CiRepositoryName;
+import com.fortify.cli.common.ci.LocalRepoInfo;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
@@ -431,7 +440,15 @@ public class ActionSpelFunctions {
         return String.join(" ", output);
     }
     
-    public static final String opt(String name, String value) {
+    @SpelFunction(cat=workflow, desc = """
+            Returns a formatted option string in the form `"name=value"` if the value is not blank, \
+            or an empty string if the value is blank. This is useful for conditionally including \
+            command-line options based on whether environment variables or other values are set.
+            """,
+            returns="Formatted option string `\"name=value\"` if value is not blank, empty string otherwise")
+    public static final String opt(
+            @SpelFunctionParam(name="name", desc="the option name") String name, 
+            @SpelFunctionParam(name="value", desc="the option value; if blank, function returns empty string") String value) {
         if ( StringUtils.isBlank(value) ) { return ""; }
         return String.format("\"%s=%s\"", name, value);
     }
@@ -456,7 +473,14 @@ public class ActionSpelFunctions {
         var mapper = JsonHelper.getObjectMapper();
         var result = mapper.createArrayNode();
         o.properties()
-                .forEach(p -> result.add(mapper.createObjectNode().put("key", p.getKey()).set("value", p.getValue())));
+                .forEach(p -> {
+                    var entry = mapper.createObjectNode()
+                            .put("key", p.getKey());
+                    // Unwrap JsonNodeWrapper if present to avoid property access issues
+                    var value = p.getValue();
+                    entry.set("value", value);
+                    result.add(entry);
+                });
         return result;
     }
 
@@ -531,7 +555,7 @@ public class ActionSpelFunctions {
         return String.format("Copyright (c) %s Open Text", Year.now().getValue());
     }
     
-    @SpelFunction(cat=util, desc="""
+    @SpelFunction(cat=internal, desc="""
                 Returns basic information about the local git repository for the given source directory, or null if the
                 directory is not inside a git working tree. Only constant-time lookups are performed (HEAD commit only).
                 Structure:
@@ -545,7 +569,8 @@ public class ActionSpelFunctions {
                     committer: { name, email, when }
                 }
                 }
-                """, returns="Git repository information or null if not a git work dir")
+                """, returns="Git repository information or null if not a git work dir",
+                returnType=LocalRepoInfo.class)
         public static final ObjectNode localRepo(
                 @SpelFunctionParam(name="sourceDir", desc="directory assumed to be inside a git working tree") String sourceDir) {
             if (StringUtils.isBlank(sourceDir)) { return null; }
@@ -555,52 +580,82 @@ public class ActionSpelFunctions {
             if (builder.getGitDir()==null) { return null; }
             try (Repository repo = builder.build()) {
                 var mapper = JsonHelper.getObjectMapper();
-                var root = mapper.createObjectNode();
-                var repoNode = root.putObject("repository");
-                repoNode.put("workDir", repo.getWorkTree().getAbsolutePath());
+                
+                // Repository information
                 var remote = ActionSpelFunctionsJGitHelper.selectRemote(repo);
                 var remoteUrl = remote==null?null:repo.getConfig().getString("remote", remote, "url");
-                if (StringUtils.isNotBlank(remoteUrl)) { repoNode.put("remoteUrl", remoteUrl); }
-                var nameNode = repoNode.putObject("name");
                 var names = ActionSpelFunctionsJGitHelper.deriveRepoNames(dir.getName(), remoteUrl);
-                nameNode.put("short", names[0]);
-                if (names[1]!=null) { nameNode.put("full", names[1]); }
-                var branchNode = root.putObject("branch");
+                var repository = CiRepository.builder()
+                    .workDir(repo.getWorkTree().getAbsolutePath())
+                    .remoteUrl(StringUtils.isBlank(remoteUrl) ? null : remoteUrl)
+                    .name(CiRepositoryName.builder()
+                        .short_(names[0])
+                        .full(names[1])
+                        .build())
+                    .build();
+                
+                // Branch information
+                CiBranch branch = null;
                 try {
                     String fullBranch = repo.getFullBranch();
-                    if (fullBranch!=null) {
-                        branchNode.put("full", fullBranch);
-                        branchNode.put("short", Repository.shortenRefName(fullBranch));
+                    if (fullBranch != null) {
+                        branch = CiBranch.builder()
+                            .full(fullBranch)
+                            .short_(Repository.shortenRefName(fullBranch))
+                            .build();
                     }
                 } catch (Exception e) { }
+                
+                // Commit information
+                CiCommit commit = null;
                 var headId = repo.resolve("HEAD");
-                if (headId!=null) {
+                if (headId != null) {
                     try (var walk = new RevWalk(repo)) {
-                        RevCommit commit = walk.parseCommit(headId);
-                        var commitNode = root.putObject("commit");
-                        var idNode = commitNode.putObject("id");
-                        idNode.put("full", commit.getId().getName());
-                        try { var abbrev = repo.newObjectReader().abbreviate(commit.getId(), 8); idNode.put("short", abbrev.name()); }
-                        catch (Exception ex) { idNode.put("short", commit.getId().getName().substring(0,8)); }
-                        var msgNode = commitNode.putObject("message");
-                        msgNode.put("short", commit.getShortMessage());
-                        msgNode.put("full", commit.getFullMessage());
-                        var authorIdent = commit.getAuthorIdent();
-                        if (authorIdent!=null) {
-                            var authorNode = commitNode.putObject("author");
-                            authorNode.put("name", authorIdent.getName());
-                            authorNode.put("email", authorIdent.getEmailAddress());
-                            authorNode.put("when", authorIdent.getWhenAsInstant().toString());
+                        RevCommit gitCommit = walk.parseCommit(headId);
+                        String shortId;
+                        try {
+                            var abbrev = repo.newObjectReader().abbreviate(gitCommit.getId(), 8);
+                            shortId = abbrev.name();
+                        } catch (Exception ex) {
+                            shortId = gitCommit.getId().getName().substring(0, 8);
                         }
-                        var committerIdent = commit.getCommitterIdent();
-                        if (committerIdent!=null) {
-                            var committerNode = commitNode.putObject("committer");
-                            committerNode.put("name", committerIdent.getName());
-                            committerNode.put("email", committerIdent.getEmailAddress());
-                            committerNode.put("when", committerIdent.getWhenAsInstant().toString());
-                        }
+                        
+                        var authorIdent = gitCommit.getAuthorIdent();
+                        var committerIdent = gitCommit.getCommitterIdent();
+                        
+                        commit = CiCommit.builder()
+                            .id(CiCommitId.builder()
+                                .full(gitCommit.getId().getName())
+                                .short_(shortId)
+                                .build())
+                            .message(CiCommitMessage.builder()
+                                .short_(gitCommit.getShortMessage())
+                                .full(gitCommit.getFullMessage())
+                                .build())
+                            .author(authorIdent != null ? CiPerson.builder()
+                                .name(authorIdent.getName())
+                                .email(authorIdent.getEmailAddress())
+                                .when(authorIdent.getWhenAsInstant().toString())
+                                .build() : null)
+                            .committer(committerIdent != null ? CiPerson.builder()
+                                .name(committerIdent.getName())
+                                .email(committerIdent.getEmailAddress())
+                                .when(committerIdent.getWhenAsInstant().toString())
+                                .build() : null)
+                            .build();
                     } catch (Exception e) { }
                 }
+                
+                // Build root object
+                var root = mapper.createObjectNode();
+                root.set("repository", mapper.valueToTree(repository));
+                if (branch != null) {
+                    root.set("branch", mapper.valueToTree(branch));
+                }
+                if (commit != null) {
+                    root.set("commit", mapper.valueToTree(commit));
+                }
+                
                 return root;
             } catch (Exception e) { return null; }
         }
@@ -679,6 +734,8 @@ public class ActionSpelFunctions {
             }
 
     }
+    
+
     
     private static final class ActionSpelFunctionsHelper {
         private static final String envOrDefault(String prefix, String suffix, String defaultValue) {

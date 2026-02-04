@@ -13,9 +13,13 @@ config:
 cli.options:
   file:
     names: --file, -f
-    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json"
+    description: "Optional output file name (or 'stdout' / 'stderr'). Defaults to gl-fortify-sast.json if --publish not specified"
     required: false
-    default: gl-fortify-sast.json
+  publish:
+    names: --publish
+    description: "Publish report to GitLab Security Dashboard"
+    required: false
+    type: boolean
   appversion:
     names: --appversion, --av
     description: "Required application version id or <appName>:<versionName>"
@@ -69,10 +73,20 @@ steps:
           do:
             - var.set:
                 vulnerabilities..: {fmt: vulnerabilities}
-  - out.write:
-      ${cli.file}: {fmt: gitlab-sast-report}
-  - if: ${!{'stdout','stderr'}.contains(cli.file)}
-    log.info: Output written to ${cli.file}
+  - var.set:
+      reportContents: {fmt: gitlab-sast-report}
+      reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gl-fortify-sast.json'}"
+  - if: ${reportFile!=null}
+    steps:
+      - out.write:
+          ${reportFile}: ${reportContents}
+      - if: ${!{'stdout','stderr'}.contains(reportFile)}
+        log.info: Output written to ${reportFile}
+  - if: ${cli.publish==true}
+    steps:
+      - var.set:
+          gitlabUpload: ${#gitlab.uploadSecurityReport('sast', reportContents)}
+      - log.info: Report published to GitLab Security Dashboard
 
 
 formatters:

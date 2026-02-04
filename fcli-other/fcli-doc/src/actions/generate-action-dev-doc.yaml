@@ -117,11 +117,15 @@ steps:
               do:
                  - var.set:
                     paramTableRows..: "__${param.type} ${param.name}__ - ${param.description}"
+        
+        # Prepend internal use warning for internal category functions
+        - var.set:
+            fn.finalDescription: ${(fn.category!='internal'?'':"**INTERNAL USE ONLY**\n\n")}${fn.description}
                           
         - var.set:
            fn.paramTableRows: ${paramTableRows}
            fn.hideCategory: ${displayedCategories?.contains(fn.category)?:false}
-           spelFunctionDescriptionSections..:
+           ${fn.category=='internal'?'internal':'public'}SpelFunctionDescriptionSections..:
              fmt: spelFunctionDescriptionSection
              value: ${fn}
            displayedCategories..: ${fn.category}
@@ -293,7 +297,9 @@ formatters:
     
     The sections below describe the available SpEL functions.
     
-    ${#join("\n\n", spelFunctionDescriptionSections)}
+    ${#join("\n\n", publicSpelFunctionDescriptionSections)}
+    
+    ${#join("\n\n", internalSpelFunctionDescriptionSections)}
     
   formattedDescription: ${description.replaceAll('"(\{[a-zA-Z]+\})','\\$1').replaceAll('(.)\n(?!\n)','$1 +\\n')}
   formattedSampleSnippets: ${sampleSnippets.size()==0?'':('*Sample snippet'+(sampleSnippets.size()==1?'':'s')+'*\n\n'+#join('\n', sampleSnippets?.!['[source,yaml]\n----\n'+#this.replace('!!!fcli-action-schema-url!!!',#fcliBuildProperties().fcliActionSchemaUrl)+'\n----\n']))} 
@@ -331,6 +337,7 @@ formatters:
     ${propertyTable}
   spelFunctionDescriptionSection: |
     ${hideCategory?'':'=== ['+category+']'}
+    ${hideCategory || category != 'internal' ? '' : '\nWARNING: Functions in this category are **INTERNAL USE ONLY** and should not be used in custom (runtime) actions. These functions may be removed, renamed, or change signature between fcli versions without notice.\n'}
     === `${name?:'-'}`
     [%noheader,%autowidth.stretch,cols="1,~"]
     |===
@@ -342,6 +349,9 @@ formatters:
     |**Returns**
     |${returns != null ? returns.description : ''}
     
-    ${#isBlank(description)?'':('2+a|'+description)}
+    ${#isBlank(finalDescription)?'':('2+a|'+finalDescription)}
+
+    ${returns.returnTypeStructure != null ? ('2+a|*Return Type Structure:* +\n\n' + '[source,json]\n----\n' + returns.returnTypeStructure + '\n----\n') : ''}
+    
     |===
     

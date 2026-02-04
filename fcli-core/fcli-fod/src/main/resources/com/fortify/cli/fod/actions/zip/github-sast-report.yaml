@@ -27,9 +27,13 @@ config:
 cli.options:
   file:
     names: --file, -f
-    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif"
+    description: "Optional output file name (or 'stdout' / 'stderr'). Defaults to gh-fortify-sast.sarif if --publish not specified"
     required: false
-    default: gh-fortify-sast.sarif
+  publish:
+    names: --publish
+    description: "Publish report to GitHub Code Scanning (requires GITHUB_TOKEN environment variable with 'security-events: write' permission)"
+    required: false
+    type: boolean
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
@@ -74,10 +78,20 @@ steps:
                 rules..: {fmt: rules, if: "${ruleCache==null || ruleCache[issue.checkId]==null}"}
                 ruleCache.${issue.checkId}: true
                 results..: {fmt: results}
-  - out.write:
-      ${cli.file}: {fmt: github-sast-report}
-  - if: ${!{'stdout','stderr'}.contains(cli.file)}
-    log.info: Output written to ${cli.file}
+  - var.set:
+      reportContents: {fmt: github-sast-report}
+      reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gh-fortify-sast.sarif'}"
+  - if: ${reportFile!=null}
+    steps:
+      - out.write:
+          ${reportFile}: ${reportContents}
+      - if: ${!{'stdout','stderr'}.contains(reportFile)}
+        log.info: Output written to ${reportFile}
+  - if: ${cli.publish==true}
+    steps:
+      - var.set:
+          githubUpload: ${#github.uploadSarif(reportContents)}
+      - log.info: Report published to GitHub Code Scanning
 
 formatters:
   github-sast-report:

@@ -28,8 +28,9 @@ public @interface SpelFunction {
     SpelFunctionCategory cat();
     String desc() default "";
     String returns();
+    Class<?> returnType() default void.class;
     
     public static enum SpelFunctionCategory {
-        txt, date, workflow, fortify, fcli, util
+        txt, date, workflow, fortify, fcli, util, ci, internal
     }
 }

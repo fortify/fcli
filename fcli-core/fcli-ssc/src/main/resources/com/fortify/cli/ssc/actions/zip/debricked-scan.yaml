@@ -48,11 +48,15 @@ cli.options:
     mask: {sensitivity: high}
   dcliVersion:
     names: --cli-version, -v
-    description: >
-      Specify the Debricked CLI tool version to be installed that shall be used for scanning.
-      Defaults to 'auto' if not specified.
+    description: |
+      Specify the Debricked CLI tool version to be used for scanning. Defaults to the value of the DEBRICKED_HOME or DEBRICKED_VERSION environment variables.
+      Allowed values:
+      - An explicit version number (e.g. 2.6 or 2.6.7)
+      - Path to a specific Debricked CLI installation
+      - `latest` to use the latest available Debricked CLI version
+      - `auto` (default) to use a pre-installed version if available, otherwise installs latest
     required: false
-    default: auto
+    default: ${#ifBlank(#env('DEBRICKED_HOME'),#ifBlank(#env('DEBRICKED_VERSION'),'auto'))}
   toolDefinitions:
     names: --tool-definitions
     description: >-

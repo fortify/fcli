@@ -10,11 +10,51 @@ Release documentation can be accessed through the drop-down menu on the top-righ
 
 Note that in general, maintenance is performed on the latest release version only; older versions may not receive bug fixes or compatibility updates to support the latest Fortify product releases. Fcli upgrades between minor and patch releases should be straightforward as new releases are mostly backward-compatible with older versions within the same major version range. If you are still on an older major release like v1.x or v2.x, it is highly recommended to upgrade to fcli v3.x to avoid potential compatibility issues with new Fortify product releases, and to benefit from new features and bug fixes.
 
+==== Latest Stable (Recommended)
+
+++++
+<strong style="font-size: 1.1em;">📌 <a href="{{ site.baseurl }}/v3">v3 → Latest v3.x</a></strong>
+
+<p style="margin-left: 20px; color: #666;">Always points to the newest v3.x release. <strong>Bookmark this link</strong> to stay up-to-date with the latest documentation.</p>
+
+<details style="margin-top: 10px;">
+<summary style="cursor: pointer; font-weight: bold; color: #0066cc; margin-bottom: 5px;">
+View all v3.x releases
+</summary>
+<ul style="margin-top: 5px; margin-left: 1.5em;">
+{% for version in site.data.versions.release %}
+{% if version contains 'v3' %}
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>{% if version == site.data.versions.release[0] %} <span style="color: #28a745; font-weight: bold; display: inline; white-space: nowrap;">(current)</span>{% endif %}</li>
+{% endif %}
+{% endfor %}
+</ul>
+</details>
+++++
+
+==== Legacy Versions
+
+These older major versions are no longer actively maintained. *Upgrade to v3.x recommended.*
+
 ++++
 <ul>
+<li><strong><a href="{{ site.baseurl }}/v2">v2 → Latest v2.x</a></strong> (Legacy)
+<ul>
 {% for version in site.data.versions.release %}
+{% if version contains 'v2' %}
    <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
+{% endif %}
 {% endfor %}
+</ul>
+</li>
+<li><strong><a href="{{ site.baseurl }}/v1">v1 → Latest v1.x</a></strong> (Legacy)
+<ul>
+{% for version in site.data.versions.release %}
+{% if version contains 'v1' %}
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
+{% endif %}
+{% endfor %}
+</ul>
+</li>
 </ul>
 ++++
 

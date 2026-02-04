@@ -157,6 +157,16 @@ public class ToolEnvInitMixin {
             throw new FcliSimpleException("Unknown tool: " + toolName);
         }
         String argument = parts.length > 1 ? parts[1].trim() : null;
+        
+        // Translate fcli:self and fcli:bootstrapped to fcli:<self-path>
+        if (tool == Tool.FCLI && ("self".equals(argument) || "bootstrapped".equals(argument))) {
+            if (StringUtils.isBlank(self)) {
+                String specName = "self".equals(argument) ? "fcli:self" : "fcli:bootstrapped";
+                throw new FcliSimpleException(specName + " requires --self option to be specified");
+            }
+            argument = self;
+        }
+        
         return new ToolSetupSpec(tool, argument);
     }
     

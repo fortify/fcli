@@ -49,4 +49,19 @@ public final class JavaHelper {
     public static final <T> boolean is(Object obj, Class<T> type) {
         return obj!=null && type.isAssignableFrom(obj.getClass());
     }
+    
+    /**
+     * Returns a stable identity string for the given object, consisting of
+     * the simple class name and the object's identity hash code in hexadecimal
+     * format, separated by '@' (e.g., "ClassName@1a2b3c4d"). This format is
+     * similar to the default Object.toString() output and is useful for creating
+     * unique cache keys or stable identifiers that bypass any overridden
+     * toString() implementation.
+     * 
+     * @param obj The object to create an identity string for
+     * @return Identity string in format "SimpleClassName@hexIdentityHash"
+     */
+    public static final String identity(Object obj) {
+        return obj.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(obj));
+    }
 }

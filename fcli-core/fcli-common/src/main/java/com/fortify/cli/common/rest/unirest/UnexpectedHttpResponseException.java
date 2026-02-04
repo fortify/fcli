@@ -39,28 +39,46 @@ public final class UnexpectedHttpResponseException extends UnirestException {
     @Getter private final int status;
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
-        super(getMessage(failureResponse), getCause(failureResponse));
+        super(getMessage(failureResponse, null, null), getCause(failureResponse));
         this.status = failureResponse.getStatus();
     }
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
-        super(getMessage(failureResponse, requestSummary), getCause(failureResponse));
+        super(getMessage(failureResponse, requestSummary, null), getCause(failureResponse));
+        this.status = failureResponse.getStatus();
+    }
+    
+    public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary, String guidance) {
+        super(getMessage(failureResponse, requestSummary, guidance), getCause(failureResponse));
         this.status = failureResponse.getStatus();
     }
 
-    private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
-        var httpMethod = requestSummary.getHttpMethod().name();
-        var url = requestSummary.getUrl();
-        return StringHelper.indent(String.format("\nRequest: %s %s: %s", httpMethod, url, getMessage(failureResponse)), "  ");
-    }
-
-    private static final String getMessage(HttpResponse<?> failureResponse) {
+    private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary, String guidance) {
         var reason = getFailureReason(failureResponse);
         var body = failureResponse.getParsingError()
                 .map(UnirestParsingException::getOriginalBody)
                 .map(UnexpectedHttpResponseException::formatBody)
                 .orElse(formatBody(failureResponse.getBody()));
-        return String.format("\nReason: %s\nBody: %s", reason, body);
+        var message = String.format("\nReason: %s\nBody: %s", reason, body);
+        message = addRequestSummary(message, requestSummary);
+        return addGuidance(message, guidance);
+    }
+    
+    private static final String addRequestSummary(String message, HttpRequestSummary requestSummary) {
+        if (requestSummary == null) {
+            return message;
+        }
+        return String.format("\nRequest: %s %s: %s", 
+            requestSummary.getHttpMethod().name(), 
+            requestSummary.getUrl(), 
+            StringHelper.indent(message, "  "));
+    }
+    
+    private static final String addGuidance(String message, String guidance) {
+        if (StringUtils.isBlank(guidance)) {
+            return message;
+        }
+        return String.format("%s\n  Guidance: %s", message, guidance);
     }
     
     private static final String getFailureReason(HttpResponse<?> failureResponse) {

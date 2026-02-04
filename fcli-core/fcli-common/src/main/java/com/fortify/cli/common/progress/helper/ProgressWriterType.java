@@ -13,13 +13,9 @@
 package com.fortify.cli.common.progress.helper;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.ConsoleHelper;
@@ -35,8 +31,6 @@ public enum ProgressWriterType {
     stderr(SimpleStdErrProgressWriter::new),
     single_line(SingleLineProgressWriter::new), 
     ansi(AnsiProgressWriter::new);
-    
-    private static final Logger LOG = LoggerFactory.getLogger(ProgressWriterType.class);
     
     @Override
     public String toString() {
@@ -64,8 +58,6 @@ public enum ProgressWriterType {
         protected final PrintStream stderr;
         protected final PrintStream originalStdout;
         protected final PrintStream originalStderr;
-        private final List<String> warnings = new ArrayList<>();
-        private final List<String> info = new ArrayList<>();
 
         protected AbstractProgressWriter() {
             this.originalStdout = System.out;
@@ -81,39 +73,25 @@ public enum ProgressWriterType {
             System.setOut(originalStdout);
             System.setErr(originalStderr);
             clearProgress();
-            warnings.forEach(originalStderr::println);
-            info.forEach(originalStdout::println);
         }
         
         @Override
         public final void writeWarning(String message, Object... args) {
-            var msg = format(message, args);
-            LOG.warn(msg);
-            writeWarning(msg);
-        }
-
-        protected void writeWarning(String message) {
-            warnings.add(message);
+            clearProgress();
+            originalStderr.println(format(message, args));
         }
         
         @Override
         public final void writeProgress(String message, Object... args) {
-            var msg = format(message, args);
-            LOG.info(msg);
-            writeProgress(msg);
+            writeProgress(format(message, args));
         }
         
         protected abstract void writeProgress(String message);
         
         @Override
         public final void writeInfo(String message, Object... args) {
-            var msg = format(message, args);
-            LOG.info(msg);
-            writeInfo(msg);
-        }
-
-        protected void writeInfo(String message) {
-            info.add(message);
+            clearProgress();
+            originalStdout.println(format(message, args));
         }
         
         private final String format(String message, Object... args) {

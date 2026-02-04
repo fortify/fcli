@@ -8,6 +8,7 @@ Some of the fcli highlights:
 
 * Interact with many different Fortify products with just a single command-line utility
 * link:#_installation[Both plain Java and native platform binaries for Windows&#44; Linux and Mac available]
+* link:#_fcli_based_ci_integrations[Fcli-based CI integrations] for a unified yet customizable experience across GitHub, GitLab, Azure DevOps, and other CI/CD systems
 * link:#_command_structure[Modular command structure], making it easy to focus on particular tasks
 * link:#_o_output[Rich output formats]; save command output in JSON, CSV, XML or plain-text formats
 * link:#_session_management[Session-based]; no need to pass URL’s and credentials on every individual fcli invocation
@@ -41,10 +42,30 @@ Some commands and options are either hidden or marked as `PREVIEW` or `LEGACY`; 
 
 Hidden commands are not listed in fcli help output and not included in the link:#_manual_pages[Manual Pages]. If needed, you can view the list of hidden commands using the `+fcli util all-commands list -q hidden+` command.
 
-== Migration from v2.x
+== Fcli-based CI Integrations
 
-Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
-custom fcli actions. Please see the link:../migration-v2.x-v3.x.html[migration guide] for details.
+Fcli provides seamless integration of OpenText Fortify Application Security Testing into various CI/CD platforms through the standardized `fcli action run ci` command. These integrations leverage the fcli `ci` action to provide a consistent, powerful approach to security testing across different CI systems.
+
+Key benefits of fcli-based CI integrations:
+
+* *Unified approach*: Same fcli `ci` action works across all CI platforms with platform-specific optimizations
+* *Comprehensive functionality*: Supports both FoD and SSC backends with full SAST & SCA scanning capabilities
+* *Flexible configuration*: Environment variable-based configuration with sensible defaults
+* *Production-ready*: Built-in features for application version/release management, vulnerability exports, and more
+* *Easy to use*: Simple setup with minimal configuration required to get started
+
+For a complete overview of all available CI integrations and their versions, see the link:ci/index.html[CI Integrations] landing page.
+
+Currently supported CI/CD platforms:
+
+// This list should include all available CI integrations, pointing to the latest version of each.
+// When adding new CI systems or versions, ensure this list is updated accordingly.
+// See fcli-core/fcli-app/src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml for CI system definitions.
+* link:ci/github/v3.0.x/index.html[*Fortify GitHub Actions*]: Seamless integration for GitHub Actions workflows
+* link:ci/gitlab/v2.0.x/index.html[*Fortify GitLab Components*]: Native GitLab CI/CD pipeline components
+* link:ci/ado/script/index.html[*Fortify Azure DevOps*]: Script-based integration for Azure DevOps pipelines
+
+Each integration provides platform-specific documentation including setup instructions, configuration reference, and usage examples for both FoD and SSC backends.
 
 == Release Assets
 
@@ -69,9 +90,92 @@ Please note that when publishing a new release, it may take up to 30-60 minutes 
 
 == Installation
 
-The instructions in this section are only applicable if you wish to install the native or Java binaries onto your local system. We also provide Docker images for fcli; see https://hub.docker.com/repository/docker/fortifydocker/fcli/general[fortifydocker/fcli] for information on how to run fcli using these Docker images.
+=== Using @fortify/setup
 
-To install the fcli executables on your local system, start by visiting the fcli https://github.com/fortify/fcli/releases[Releases] page as described in the previous section, and downloading the `fcli.jar` file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the `fcli.jar` file can be used as-is. 
+If you have `npx` available on the system where you want to install fcli and possibly other Fortify tools, *@fortify/setup* is the recommended approach for installing fcli in both CI/CD pipelines and local development environments. This lightweight npm package automatically bootstraps fcli, verifies its integrity using RSA signatures, and provides cross-platform support with minimal dependencies.
+
+*Benefits:*
+
+* Automatic download and verification of fcli from GitHub releases or custom URLs
+* Multi-platform support (Linux, macOS, Windows)
+* Flexible configuration via environment variables or config file
+* Can use pre-installed fcli (3.14.0+) to skip downloads
+* Consistent experience across different environments
+* Full documentation: https://github.com/fortify/fortify-setup-js/blob/main/USAGE.md[fortify-setup-js USAGE.md]
+
+*Quick Start (Linux/Mac):*
+
+[source,bash]
+----
+# Initialize fcli with auto-detected version
+npx @fortify/setup env init --tools=fcli:auto
+
+# Set environment variables
+source <(npx @fortify/setup env shell)
+
+# Verify installation
+fcli --version
+----
+
+*Quick Start (Windows PowerShell):*
+
+[source,powershell]
+----
+# Initialize fcli with auto-detected version
+npx @fortify/setup env init --tools=fcli:auto
+
+# Set environment variables
+npx @fortify/setup env powershell | Invoke-Expression
+
+# Verify installation
+fcli --version
+----
+
+Note that the `npx @fortify/setup env init` also allows for specifying additional/other Fortify tools in the `--tools` option, for example:
+[source,bash]
+----
+# Initialize fcli with auto-detected version, and specific ScanCentral Client version
+npx @fortify/setup env init --tools=fcli:auto,sc-client:25.2
+----
+
+*Configuration Examples:*
+
+To customize fcli bootstrapping behavior, you can use the `npx @fortify/setup bootstrap-config` command as shown in the following examples. Configuration needs to be applied before running the `npx @fortify/setup env` commands.
+
+NOTE: The following examples use command-line options to store configuration in a config file (`~/.config/fortify/setup/config.json` on Linux/Mac or `%USERPROFILE%\.config\fortify\setup\config.json` on Windows). This option-based approach is designed for manual/local installation where configuration persists across multiple commands and can be reused. For CI/CD integrations, use environment variables instead as documented in the link:ci/index.html[CI Integrations] guides to avoid multiple pipelines from interfering with each other due to sharing the same configuration file.
+
+[source,bash]
+----
+# Pin to specific fcli version
+npx @fortify/setup bootstrap-config --fcli-version=v3.14.1
+
+# Use pre-installed fcli (skip download)
+npx @fortify/setup bootstrap-config --fcli-path=/path/to/fcli
+
+# Use custom download URL (internal mirror)
+npx @fortify/setup bootstrap-config --fcli-url=https://my-mirror.com/fcli-linux.tgz
+
+# View current configuration
+npx @fortify/setup bootstrap-config
+----
+
+*Version Pinning (Recommended for CI/CD):*
+
+Pin @fortify/setup to at least a major version to avoid breaking changes:
+
+[source,bash]
+----
+# Pin to major version (gets bug fixes and features)
+npx @fortify/setup@2 env init --tools=fcli:auto
+----
+
+=== Manual Installation
+
+If you prefer direct control over fcli installation, or if you cannot use `@fortify/setup` in your environment, you can install fcli manually or using the built-in managed installation approach. We also provide Docker images for fcli; see https://hub.docker.com/repository/docker/fortifydocker/fcli/general[fortifydocker/fcli] for information on how to run fcli using these Docker images.
+
+==== Download and Verification
+
+To install the fcli executables on your local system, start by visiting the fcli https://github.com/fortify/fcli/releases[Releases] page and downloading the `fcli.jar` file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the `fcli.jar` file can be used as-is.
 
 As a best practice, you should verify the integrity of the downloaded file. Release assets include `+*.sha256+` and `+*.rsa_sha256+` for this purpose, with the latter being preferred for better security. For example, after downloading both `+fcli-linux.tgz+` and `+fcli-linux.tgz.rsa_sha256+`, you can verify integrity by running the following OpenSSL command:
 
@@ -95,7 +199,7 @@ If your shell doesn't support `+<(...)+` syntax, you'll need to save the link:ht
 
 Once downloaded, verified and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.
 
-=== Managed Installation
+==== Managed Installation
 
 Managed installation is only available on internet-connected systems, or if your company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:
 
@@ -132,7 +236,7 @@ The steps below describe how to perform a managed fcli installation. The syntax 
 * Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `+<tab>+` key to get suggestions for fcli command and option names. You may want to add this to your shell startup script like `.bashrc`, such that fcli auto-completion is readily available in every shell. +
 `+source <user.home>/fortify/tools/bin/fcli_completion+` +
 
-=== Manual Installation
+==== Manual Installation
 
 * Copy the `fcli.jar` file or the extracted native binaries to a directory of your choosing.
 * If using `fcli.jar`, create a simple wrapper script/batch file that invokes `java -jar /path/to/fcli.jar`, passing all the script arguments to this Java command.
@@ -141,6 +245,29 @@ The steps below describe how to perform a managed fcli installation. The syntax 
 `+source <extraction-dir>/fcli_completion+`
 
 == Upgrade
+
+=== Using @fortify/setup
+
+If you installed fcli using @fortify/setup, upgrading is straightforward.
+
+*Linux/Mac:*
+
+[source,bash]
+----
+npx @fortify/setup env init --tools=fcli:v3     # Or 'latest', or specific version
+source <(npx @fortify/setup env shell)
+----
+
+*Windows PowerShell:*
+
+[source,powershell]
+----
+# Upgrade to latest v3.x version
+npx @fortify/setup env init --tools=fcli:v3     # Or 'latest', or specific version
+npx @fortify/setup env powershell | Invoke-Expression
+----
+
+=== Manual Upgrade
 
 If you prefer a manual installation/upgrade, you can download the latest fcli version for your platform from the fcli https://github.com/fortify/fcli/releases[Releases] page and follow the link:#_manual_installation[Manual Installation] instructions above, adjusting any manually created wrapper scripts to point to the new installation.
 
@@ -165,6 +292,11 @@ Upgrade steps:
 ** Install latest 2.x.y version, removing all previous 2.x.y installations but keeping any 1.x.y installations: +
    `fcli tool fcli install -v 2 --uninstall 2`
 * Re-source the `fcli_completion` script if applicable on your platform
+
+== Migration from v2.x
+
+Upgrading from fcli v2.x to fcli v3.x may require you to update your workflows and, if applicable, updating any
+custom fcli actions. Please see the link:../migration-v2.x-v3.x.html[migration guide] for details.
 
 == Command Structure
 

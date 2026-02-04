@@ -33,7 +33,7 @@ import lombok.RequiredArgsConstructor;
  * single repository. Various data from these descriptors is stored in instance 
  * variables for later processing.</p>
  * 
- * <p>The {@link NcdReportResultsCollector} uses this class for collecting and 
+ * <p>The {@link NcdReportContext} uses this class for collecting and 
  * processing commit data as follows:</p>
  * <ul>
  *  <li>Creating a new instance of this class for every individual repository being processed</li>

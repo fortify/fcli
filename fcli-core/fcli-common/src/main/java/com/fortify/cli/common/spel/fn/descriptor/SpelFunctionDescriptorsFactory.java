@@ -24,11 +24,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.ArrayListWithAsJsonMethod;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctions;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.ReflectionHelper;
 
@@ -43,12 +45,18 @@ public final class SpelFunctionDescriptorsFactory {
     }
     
     public static final ArrayListWithAsJsonMethod<SpelFunctionDescriptor> getActionSpelFunctionsDescriptors() {
+        // FoD & SSC classes are only available at runtime, so we need to specify them by name
         return getSpelFunctionsDescriptors(
                 "com.fortify.cli.common.spel.fn.SpelFunctionsStandard",
                 "com.fortify.cli.common.action.runner.ActionSpelFunctions",
                 "com.fortify.cli.common.action.runner.ActionRunnerContextSpelFunctions",
                 "com.fortify.cli.fod.action.helper.FoDActionSpelFunctions",
-                "com.fortify.cli.ssc.action.helper.SSCActionSpelFunctions"
+                "com.fortify.cli.ssc.action.helper.SSCActionSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionAdoSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionGitHubSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions",
+                "com.fortify.cli.common.action.helper.ci.ActionBitbucketSpelFunctions"
         );
     }
     
@@ -67,6 +75,7 @@ public final class SpelFunctionDescriptorsFactory {
     private static final ArrayListWithAsJsonMethod<SpelFunctionDescriptor> collectSpelFunctions(Collection<Class<?>> spelFunctionClazzes) {
         return spelFunctionClazzes.stream()
             .flatMap(c->createFunctionDescriptorsStream(c))
+            .flatMap(d->createNestedFunctionDescriptorsStream(d))
             .sorted((a, b) -> a.getCategoryAndName().compareTo(b.getCategoryAndName()))
             .collect(Collectors.toCollection(ArrayListWithAsJsonMethod::new));
     }
@@ -75,6 +84,67 @@ public final class SpelFunctionDescriptorsFactory {
         return Stream.of(spelFunctionClazz.getDeclaredMethods())
                 .filter(m->!Modifier.isPrivate(m.getModifiers()))
                 .map(m->createSpelFunctionDescriptor(spelFunctionClazz, m));
+    }
+    
+    /**
+     * For each descriptor, check if its return type is annotated with @SpelFunctions.
+     * If so, generate additional descriptors for all public methods of that return type,
+     * using the original function name as the prefix.
+     */
+    private static final Stream<SpelFunctionDescriptor> createNestedFunctionDescriptorsStream(SpelFunctionDescriptor parentDescriptor) {
+        // First yield the parent descriptor itself
+        Stream<SpelFunctionDescriptor> parentStream = Stream.of(parentDescriptor);
+        
+        // Check if return type has @SpelFunctions annotation
+        Class<?> returnType = parentDescriptor.getClazz();
+        try {
+            // Try to resolve the actual return type from the method
+            Method method = Stream.of(returnType.getDeclaredMethods())
+                .filter(m -> m.getName().equals(parentDescriptor.getName().replaceAll(".*\\.", "")))
+                .filter(m -> !Modifier.isPrivate(m.getModifiers()))
+                .findFirst()
+                .orElse(null);
+            
+            if (method != null) {
+                Class<?> actualReturnType = method.getReturnType();
+                if (actualReturnType.isAnnotationPresent(SpelFunctions.class)) {
+                    // Process all public methods of the return type
+                    String prefix = parentDescriptor.getName() + ".";
+                    Stream<SpelFunctionDescriptor> nestedStream = Stream.of(actualReturnType.getDeclaredMethods())
+                        .filter(m -> Modifier.isPublic(m.getModifiers()))
+                        .filter(m -> m.isAnnotationPresent(SpelFunction.class))
+                        .map(m -> createNestedSpelFunctionDescriptor(actualReturnType, m, prefix));
+                    
+                    return Stream.concat(parentStream, nestedStream);
+                }
+            }
+        } catch (Exception e) {
+            // If we can't process nested functions, just return the parent
+        }
+        
+        return parentStream;
+    }
+    
+    /**
+     * Create a descriptor for a method from a class annotated with @SpelFunctions,
+     * using the provided prefix instead of the class-level @SpelFunctionPrefix.
+     */
+    private static final SpelFunctionDescriptor createNestedSpelFunctionDescriptor(Class<?> spelFunctionClazz, Method spelFunctionMethod, String prefix) {
+        var category = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::cat, ()->com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.util).name();
+        var name = prefix + spelFunctionMethod.getName();
+        var desc = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::desc, ()->"");
+        var params = createParamDescriptors(spelFunctionMethod);
+        var returns = createReturnDescriptor(spelFunctionMethod);
+        var signature = createSignature(name, params, returns);
+        return SpelFunctionDescriptor.builder()
+                .clazz(spelFunctionClazz)
+                .category(category)
+                .name(name)
+                .description(desc)
+                .params(params)
+                .returns(returns)
+                .signature(signature)
+                .build();
     }
     
     private static final SpelFunctionDescriptor createSpelFunctionDescriptor(Class<?> spelFunctionClazz, Method spelFunctionMethod) {
@@ -109,9 +179,14 @@ public final class SpelFunctionDescriptorsFactory {
     private static final SpelFunctionReturnDescriptor createReturnDescriptor(Method spelFunctionMethod) {
         var type = getJsonType(spelFunctionMethod.getReturnType());
         var desc = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::returns, ()->"N/A");
+        var returnType = ReflectionHelper.getAnnotationValue(spelFunctionMethod, SpelFunction.class, SpelFunction::returnType, ()->void.class);
+        var returnTypeClassName = (returnType != null && returnType != void.class) ? returnType.getName() : null;
+        var returnTypeStructure = (returnType != null && returnType != void.class) ? buildReturnTypeStructure(returnType) : null;
         return SpelFunctionReturnDescriptor.builder()
                 .type(type)
                 .description(desc)
+                .returnType(returnTypeClassName)
+                .returnTypeStructure(returnTypeStructure)
                 .build();
     }
     
@@ -136,6 +211,81 @@ public final class SpelFunctionDescriptorsFactory {
     
     private static final <T> T getParamAnnotationValue(Parameter parameter, Function<SpelFunctionParam,T> valueRetriever, Supplier<T> defaultValueSupplier) {
         return ReflectionHelper.getAnnotationValue(parameter, SpelFunctionParam.class, valueRetriever, defaultValueSupplier);
+    }
+
+    private static final String buildReturnTypeStructure(Class<?> clazz) {
+        if (clazz == null || clazz == void.class || !clazz.isRecord()) {
+            return null;
+        }
+        
+        var mapper = com.fortify.cli.common.json.JsonHelper.getObjectMapper();
+        var structure = buildReturnTypeStructureNode(clazz, mapper);
+        
+        if (structure == null || structure.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(structure);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    private static final ObjectNode buildReturnTypeStructureNode(Class<?> clazz, com.fasterxml.jackson.databind.ObjectMapper mapper) {
+        if (clazz == null || clazz == void.class || !clazz.isRecord()) {
+            return null;
+        }
+        
+        var structure = mapper.createObjectNode();
+        
+        // Sort components by name for deterministic output
+        Stream.of(clazz.getRecordComponents())
+            .sorted((a, b) -> a.getName().compareTo(b.getName()))
+            .forEach(component -> {
+            var componentType = component.getType();
+            // Check for @JsonProperty annotation on the accessor method
+            var componentName = component.getName();
+            try {
+                var accessor = component.getAccessor();
+                var jsonProperty = accessor.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class);
+                if (jsonProperty != null && !jsonProperty.value().isEmpty()) {
+                    componentName = jsonProperty.value();
+                }
+            } catch (Exception e) {
+                // If we can't get the annotation, just use the component name
+            }
+            
+            if (componentType.isRecord()) {
+                // Recursively build structure for nested records
+                var nestedStructure = buildReturnTypeStructureNode(componentType, mapper);
+                if (nestedStructure != null) {
+                    structure.set(componentName, nestedStructure);
+                }
+            } else if (String.class.isAssignableFrom(componentType)) {
+                structure.put(componentName, "string");
+            } else if (Boolean.class.isAssignableFrom(componentType) || boolean.class.isAssignableFrom(componentType)) {
+                structure.put(componentName, "boolean");
+            } else if (Number.class.isAssignableFrom(componentType) || componentType.isPrimitive()) {
+                structure.put(componentName, "number");
+            } else if (componentType.isEnum()) {
+                structure.put(componentName, "enum");
+            } else if (Map.class.isAssignableFrom(componentType)) {
+                structure.put(componentName, "map");
+            } else if (Collection.class.isAssignableFrom(componentType) || componentType.isArray()) {
+                structure.put(componentName, "array");
+            } else {
+                // For other complex types, recursively try to build structure
+                var nestedStructure = buildReturnTypeStructureNode(componentType, mapper);
+                if (nestedStructure != null) {
+                    structure.set(componentName, nestedStructure);
+                } else {
+                    structure.put(componentName, "object");
+                }
+            }
+        });
+        
+        return structure.isEmpty() ? null : structure;
     }
 
     // TODO Remove duplication with ActionSchemaHelper::getJsonType
@@ -195,7 +345,8 @@ public final class SpelFunctionDescriptorsFactory {
     public static final class SpelFunctionReturnDescriptor {
         private final String type;
         private final String description;
-
+        private final String returnType;
+        private final String returnTypeStructure;
     }
     
     public static void main(String[] args) {

@@ -1,0 +1,1999 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: Generate CI documentation
+  description: |
+    This action generates the following documents:
+    - AsciiDoc & text fragments that list fcli 'ci' action environment variables and
+      their descriptions. These fragments get included in the usage descriptions of
+      the various ci.yaml actions, to be rendered through the `fcli * action help ci`
+      and `fcli * action asciidoc` commands.
+    - CI-system-specific AsciiDoc documentation for CI integrations that are based on
+      the fcli `ci` action, like Fortify GitHub Actions, GitLab CI, Azure DevOps, and
+      others as these get implemented. 
+      
+    ## CUSTOMIZATION GUIDE
+    
+    The formatters section contains the following main sections that may need updates:
+    
+    1. **`fcliCiAction`**: Fcli environment variable descriptions for FoD and SSC (edit frequently)
+       - Add/update environment variable descriptions for the fcli `ci` action
+       - Organized by product (fod, ssc) and configuration section
+    
+    2. **`ciSystems`**: CI integration definitions for specific CI systems and versions (edit frequently)
+       - Add new CI systems or versions
+       - Define bootstrap configuration and output documents
+    
+    3. **`bootstrapComponents`**: Bootstrap component environment variable descriptions (edit occasionally)
+       - Add new bootstrap tool versions and their environment variables
+    
+    4. **Landing page templates**: `ciRootIndexDoc`, `ciSystemIndexDoc`, `ciVersionIndexDoc` (structure rarely changes)
+       - Generate index.adoc files at three levels: ci/, ci/{ciSystem}/, ci/{ciSystem}/{version}/
+    
+    5. **Generic document templates**: `ciSystemDoc` (structure rarely changes)
+       - AsciiDoc template for CI-system/version/product-specific documents
+    
+    6. **Low-level formatters**: Various table/cell formatters (rarely need changes)
+       - Low-level formatting for AsciiDoc document output, environment variable tables, etc.
+    
+    ### Running the Action
+    
+    After making changes:
+    ```bash
+    ./gradlew :fcli-core:fcli-app:buildTimeAction_ci_doc
+    ```
+    
+    Output locations: 
+      - Fragments: `fcli-core/fcli-app/build/generated-action-output-resources/`
+      - CI docs: `fcli-core/fcli-app/build/generated-action-output-resources/ci/<system>/<version>/`
+
+config:
+  output: immediate
+  mcp: exclude
+  
+cli.options:
+  outputDir:
+    names: "-d"
+    description: Required output directory
+
+# ==============================================================================
+# FORMATTERS SECTION
+# ==============================================================================
+# Organized by likelihood of needing changes (most to least frequent):
+# 1. Fcli environment variable descriptions (EDIT DESCRIPTIONS HERE - edit frequently)
+# 2. CI-system-specific docs (ADD NEW CI SYSTEMS HERE - edit frequently)
+# 3. Bootstrap component env var descriptions (EDIT DESCRIPTIONS HERE - edit occasionally)
+# 4. Landing page templates (structure rarely changes)
+# 5. Generic document templates (structure rarely changes)
+# 6. Base table/cell formatters (low-level plumbing, rarely changed)
+
+formatters:
+# ============================================================================
+  # PRODUCT NAMES
+  # ============================================================================
+  # Full & short product names for documentation titles
+  
+  productNames:
+    ssc: OpenText Application Security (Fortify Software Security Center)
+    fod: OpenText Core Application Security (Fortify on Demand)
+  productShortNames:
+    ssc: SSC
+    fod: FoD
+
+  # ============================================================================
+  # FCLI CI ACTION CONFIGURATION STRUCTURE
+  # ============================================================================
+  # ⚠️  UPDATE VARIABLE DESCRIPTIONS HERE ⚠️
+  # 
+  # All fcli CI action configuration sections organized by product.
+  # Each section can have:
+  #   - title: Section title for documentation
+  #   - overview: Section overview text
+  #   - fragment: Optional fragment file name (defaults to main doc if not specified)
+  #   - vars: Array of environment variable definitions
+  #
+  # The bootstrap section is special - it only has vars (no title/overview) as it's
+  # combined with bootstrap env vars in output.
+  #
+  # To add/update variables:
+  # 1. Add to appropriate product section array
+  # 2. Use `names:` for variable name(s), `desc:` for description
+  # 3. Multiple names on separated by `\n` indicate related variables (e.g., credentials)
+  # 4. Use `fcliCmd:command:` syntax for command references (auto-linked in docs)
+  # 5. Use `actionRef:_:action-name` syntax for fcli action references in current (fod/ssc) module
+  # 6. Use `actionRef:module:action-name` syntax for fcli action references in other modules
+  fcliCiAction:
+    bootstrap:
+      vars:
+        - names: TOOL_DEFINITIONS
+          desc: >-
+            Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs
+            defined in the link:https://github.com/fortify/tool-definitions/tree/main/v1[default Fortify tool definitions].
+            For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip
+            file to download these tools from an internal mirror.
+        - names: PREINSTALLED
+          desc: >-
+            Set to `true` to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli 
+            `ci` action are already installed, preventing tool definitions from being updated or tools from being automatically installed.
+            This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.
+    fod:
+      - title: Authentication & Connection
+        fragment: session
+        overview: >-
+          Configure credentials and connection details for ${productNames.fod}.
+        vars:
+          - names: FOD_URL
+            desc: >-  
+              ${productNames.fod} URL, for example `https://ams.fortify.com`. This must be rendered by the CI/CD system
+              as plain text, not as a masked secret/variable.
+          - names: FOD_CLIENT_ID\nFOD_CLIENT_SECRET
+            desc: >-
+              Required when authenticating with an API key: ${productNames.fod} Client ID (API key) and Secret (API secret).
+          - names: FOD_TENANT\nFOD_USER\nFOD_PASSWORD
+            desc: >-
+              Required when authenticating with user credentials: ${productNames.fod} tenant, user and password. It is
+              recommended to use a Personal Access Token instead of an actual user password.
+          - names: FOD_LOGIN_EXTRA_OPTS
+            desc: >-
+              Extra login options, for example for disabling SSL checks or changing connection time-outs; see 
+              fcliCmd:fcli fod session login: documentation.
+      - title: Release Management
+        overview: >-
+          Configure ${productNames.fod} release settings, including automatic creation and setup of applications
+          and releases if they don't exist.
+        vars:
+          - names: FOD_RELEASE
+            desc: >-
+              ${productNames.fod} release to use with this action. This should be specified as `<app-name>:<release-name>`
+              (for non-microservices applications) or `<app-name>:<microservice-name>:<release-name>` (for microservices 
+              applications). Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
+              Note that you'll need to explicitly configure `FOD_RELEASE` for microservices applications, as the default
+              value lacks a microservice name.
+          - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
+            desc: >-
+              If `DO_SETUP` is set not set to `false`, the application and/or release will be created if they do not
+              yet exist, and static scan settings will be configured if not configured already, using the
+              fcli-provided actionRef:_:setup-release action, or, if specified, the custom fcli action specified through
+              `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS`
+              environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
+              release representing your default branch by passing the `--copy-from` option through
+              `SETUP_EXTRA_OPTS`. To allow this action to create new applications, depending on FoD version,
+              you may (also) need to provide the `--app-owner <user id or name>` option through `SETUP_EXTRA_OPTS`.
+      - title: Package Configuration
+        overview: >-
+          Configure source code packaging behavior for SAST scans. Control whether to use custom packaging
+          actions, specify pre-built packages, or customize ScanCentral Client usage.
+        vars:
+          - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
+            desc: >- 
+              By default, when running a SAST scan, the fcli actionRef:_:package action is used to (optionally) package the source code
+              to be scanned; see next entry for information on how to configure the default actionRef:_:package action. If the standard
+              fcli actionRef:_:package action doesn't meet your needs, for example if you want to perform a local translation using
+              Fortify Static Code Analyzer, you can use `PACKAGE_ACTION` to use a custom action for packaging, optionally
+              providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
+              Note that any custom action must set the `global.package.output` action variable, pointing to the package or
+              MBS file to be scanned.
+          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR
+            desc: >-
+              These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped and the given package or MBS
+              file (which must already exist) will be used. To pass additional options to the `scancentral package` command
+              like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`. Note that the `-oss` option will be automatically added if Software Composition Analysis in enabled
+              in FoD SAST scan settings.\n\nBy default:
+              \n* If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.
+              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used. Allowed values:
+              \n  * An explicit version number (e.g. `25.2` or `25.2.0`)
+              \n  * Path to a specific ScanCentral Client installation
+              \n  * `latest` to use the latest available ScanCentral Client version
+              \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
+              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, defaults to `auto` behavior.
+              \n* Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.
+              \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
+      - title: Scan Execution
+        overview: >-
+          Configure SAST scan execution and waiting behavior for ${productNames.fod}.
+        vars:
+          - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action currently only supports running a SAST scan, which is enabled by default.
+              The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to the
+              fcliCmd:fcli fod sast-scan start: command, for example to specify scan notes. Note that these environment
+              variables only control the submission of the scan request; see the information below for details
+              on waiting for the scan to complete.
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS
+            desc: >-
+              By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
+              `false` to just kick off any configured scans without waiting for completion. Note that doing so
+              will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+              extra options to the fcliCmd:fcli fod sast-scan wait-for: command. Note that `DO_SAST_WAIT` is deprecated; 
+              please use `DO_WAIT` instead.
+      - title: Post-Scan Actions
+        overview: >
+          Configure post-scan tasks including release summaries, policy checks, pull request comments, and
+          vulnerability data exports for ${productNames.fod}.
+
+          NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.
+        vars:
+          - names: DO_RELEASE_SUMMARY\nRELEASE_SUMMARY_ACTION\nRELEASE_SUMMARY_EXTRA_OPTS
+            desc: >-
+              If `DO_RELEASE_SUMMARY` is not set to `false`, a release summary will be generated using the
+              fcli-provided actionRef:_:release-summary action or, if specified, the custom fcli action specified through
+              `RELEASE_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
+              `RELEASE_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_CHECK_POLICY\nCHECK_POLICY_ACTION\nCHECK_POLICY_EXTRA_OPTS
+            desc: >-
+              If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
+              are set), a policy check will be run after scan completion using the fcli-provided
+              actionRef:_:check-policy action or, if specified, the custom fcli action specified through
+              `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
+              `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_PR_COMMENT\nPR_COMMENT_ACTION\nPR_COMMENT_EXTRA_OPTS
+            desc: >-
+              (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
+              are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
+              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
+              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
+              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
+              custom actions to be used.
+          - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
+            desc: >-
+              If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
+              data will be exported into a CI-specific format using an fcli-provided action matching the current
+              CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
+              specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+              `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+              actions to be used.
+    ssc:
+      - title: Authentication & Connection
+        fragment: session
+        overview: >-
+          Configure credentials and connection details for ${productNames.ssc}.
+        vars:
+          - names: SSC_URL
+            desc: >-
+                ${productNames.ssc} URL, for example `https://ssc.customer.fortifyhosted.net/`. This must be 
+                rendered by the CI/CD system as plain text, not as a masked secret/variable.
+          - names: SSC_TOKEN
+            desc: >-
+                Required when authenticating with an SSC token (recommended). Most actions should work fine with a CIToken.
+          - names: SSC_USER\nSSC_PASSWORD
+            desc: >-
+                Required when authenticating with SSC user credentials.
+          - names: SC_SAST_TOKEN
+            desc: >-
+                ScanCentral SAST Client Authentication Token for authenticating with ScanCentral SAST Controller. This 
+                environment variable is required when running a ScanCentral SAST scan.
+          - names: SSC_LOGIN_EXTRA_OPTS
+            desc: >-
+                Extra SSC login options, for example for disabling SSL checks or changing connection time-outs; 
+                see fcliCmd:fcli ssc session login: documentation.
+      - title: Application Version Management
+        overview: >-
+          Configure ${productNames.ssc} application version settings, including automatic creation of
+          application versions if they don't exist.
+        vars:
+          - names: SSC_APPVERSION
+            desc: >-
+              Fortify SSC application version to use with this action. This should be specified as `<app-name>:<version-name>`. 
+              Default value is based on repository and branch name, for example `myOrg/myRepo:myBranch`.
+          - names: DO_SETUP\nSETUP_ACTION\nSETUP_EXTRA_OPTS
+            desc: >-
+              If `DO_SETUP` is set not set to `false`, the application and/or version will be created if they do not yet
+              exist using the fcli-provided actionRef:_:setup-appversion action, or, if specified, the custom fcli action specified
+              through `SETUP_ACTION`. Extra options for the fcli action can be passed through the `SETUP_EXTRA_OPTS` 
+              environment variable.\n\nDepending on your Git workflow, it is recommended to copy state from the
+              application version representing your default branch by passing the `--copy-from` option through
+              `SETUP_EXTRA_OPTS`.
+      - title: Package Configuration
+        overview: >-
+          Configure source code packaging behavior for SAST scans. Control whether to use custom packaging
+          actions, specify pre-built packages, or customize ScanCentral Client usage.
+        vars:
+          - names: PACKAGE_ACTION\nPACKAGE_ACTION_EXTRA_OPTS
+            desc: >- 
+              By default, when running a SAST scan, the fcli actionRef:_:package action is used to (optionally) package the source code
+              to be scanned; see next entry for information on how to configure the default actionRef:_:package action. If the standard
+              fcli actionRef:_:package action doesn't meet your needs, for example if you want to perform a local translation using
+              Fortify Static Code Analyzer, you can use `PACKAGE_ACTION` to use a custom action for packaging, optionally
+              providing extra options to this custom action through the `PACKAGE_ACTION_EXTRA_OPTS` environment variable.
+              Note that any custom action must set the `global.package.output` action variable, pointing to the package or
+              MBS file to be scanned.
+          - names: USE_PACKAGE\nPACKAGE_EXTRA_OPTS\nSC_CLIENT_VERSION\nSC_CLIENT_HOME\nSOURCE_DIR
+            desc: >-
+              These environment variables define packaging behavior. If `USE_PACKAGE` is specified, packaging will be skipped
+              and the given package or MBS file (which must already exist) will be used. To pass additional options to the
+              `scancentral package` command like `-bt` or `-bf`, use `PACKAGE_EXTRA_OPTS`.\n\nBy default:
+              \n\n* If `SC_CLIENT_HOME` is specified, the pre-installed ScanCentral Client at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.
+              \n* `SC_CLIENT_VERSION` may be specified to request a specific ScanCentral Client version to be used. Allowed values:
+              \n  * An explicit version number (e.g. `25.2` or `25.2.0`)
+              \n  * Path to a specific ScanCentral Client installation
+              \n  * `latest` to use the latest available ScanCentral Client version
+              \n  * `auto` (default for SSC) to enable automatic detection based on available sensor versions
+              \n* If neither `SC_CLIENT_VERSION` nor `SC_CLIENT_HOME` are set, defaults to `auto` behavior (sensor-based detection).
+              \n* Current working directory will be packaged; use `SOURCE_DIR` to package a different directory.
+              \n* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.
+      - title: Scan Execution
+        overview: >-
+          Configure SAST and Debricked scan execution and waiting behavior for ${productNames.ssc}.
+        vars:
+          - names: DO_SAST_SCAN\nSAST_SCAN_EXTRA_OPTS
+            desc: >-
+              The fcli `ci` action by default runs a SAST scan, optionally in combination with other scan types.
+              The `DO_SAST_SCAN` environment variable can be set to `false` to disable the SAST scan.
+              The `SAST_SCAN_EXTRA_OPTS` environment variable can be used to provide additional options to
+              the fcliCmd:fcli sc-sast scan start: command, for example to request a scan completion email notification.
+              Note that these environment variables only control the submission of the scan request; see the
+              information below for details on waiting for the scan to complete. 
+          - names: DO_DEBRICKED_SCAN\nDEBRICKED_SCAN_EXTRA_OPTS\nDEBRICKED_ACCESS_TOKEN\nDEBRICKED_VERSION\nDEBRICKED_HOME
+            desc: >-
+              The fcli `ci` action supports running a Debricked Software Composition Analysis (SCA) scan, which
+              is enabled automatically if `DEBRICKED_ACCESS_TOKEN` is provided. The `DO_DEBRICKED_SCAN` environment
+              variable can be set to `false` to (temporarily) disable the Debricked scan. The `DEBRICKED_SCAN_EXTRA_OPTS`
+              environment variable can be used to provide additional options to the `debricked scan` command.\n\nBy default:
+              \n\n* If `DEBRICKED_HOME` is specified, the pre-installed Debricked CLI at that location will be registered
+              and used, skipping automatic installation. The path should point to the installation directory or binary.
+              \n* `DEBRICKED_VERSION` may be specified to request a specific Debricked CLI version to be used. Allowed values:
+              \n  * An explicit version number (e.g. `2.6` or `2.6.7`)
+              \n  * Path to a specific Debricked CLI installation
+              \n  * `latest` to use the latest available Debricked CLI version
+              \n  * `auto` (default) to use a pre-installed version if available, otherwise installs latest
+              \n* If neither `DEBRICKED_VERSION` nor `DEBRICKED_HOME` are set, defaults to `auto` behavior.
+          - names: DO_WAIT\nDO_SAST_WAIT\nSAST_WAIT_EXTRA_OPTS\nDEBRICKED_WAIT_EXTRA_OPTS
+            desc: >-
+              By default, the fcli `ci` action will wait for all started scans to complete; set `DO_WAIT` to
+              `false` to just kick off any configured scans without waiting for completion. Note that doing so
+              will skip any post-scan tasks. The `SAST_WAIT_EXTRA_OPTS` environment variable can be used to pass
+              extra options to the fcliCmd:fcli sc-sast scan wait-for: command, and similarly, the `DEBRICKED_WAIT_EXTRA_OPTS`
+              environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command.
+              Note that `DO_SAST_WAIT` is deprecated; please use `DO_WAIT` instead.
+      - title: Post-Scan Actions
+        overview: >
+          Configure post-scan tasks including Aviator auditing, application version summaries, policy checks,
+          pull request comments, and vulnerability data exports for ${productNames.ssc}.
+
+          NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.
+        vars:
+          - names: AVIATOR_URL\nAVIATOR_TOKEN\nAVIATOR_LOGIN_EXTRA_OPTS
+            desc: >-
+              Aviator URL and JWT token to use for Aviator operations (see below). The `AVIATOR_TOKEN`
+              environment variable should hold the actual token contents; prefixes like `file:` or `string:`
+              (like the `--token` option on the fcliCmd:fcli aviator session login: command) are not supported. The
+              `AVIATOR_LOGIN_EXTRA_OPTS` environment variable can be used to pass additional options to the
+              fcliCmd:fcli aviator session login: command.
+          - names: DO_AVIATOR_AUDIT\nAVIATOR_APP\nAVIATOR_AUDIT_EXTRA_OPTS\nAVIATOR_WAIT_EXTRA_OPTS
+            desc: >-
+              If `DO_AVIATOR_AUDIT` is not set to `false`, and Aviator URL and token have been configured,
+              scan results will be sent to Aviator for AI-driven auditing. The Aviator application name
+              can optionally be configured through `AVIATOR_APP`, which defaults to the SSC application name.
+              The `AVIATOR_AUDIT_EXTRA_OPTS` environment variable can be used to pass extra options to the
+              fcliCmd:fcli aviator ssc audit: command, for example to adjust tag mappings. The `AVIATOR_WAIT_EXTRA_OPTS`
+              environment variable can be used to pass extra options to the fcliCmd:fcli ssc artifact wait-for: command,
+              which will be run to wait for SSC to process the audited results.
+          - names: DO_APPVERSION_SUMMARY\nAPPVERSION_SUMMARY_ACTION\nAPPVERSION_SUMMARY_EXTRA_OPTS
+            desc: >-
+              If `DO_APPVERSION_SUMMARY` is not set to `false`, an application version summary will be generated using the
+              fcli-provided actionRef:_:appversion-summary action or, if specified, the custom fcli action specified through
+              `APPVERSION_SUMMARY_ACTION`. Extra options for the fcli action can be specified through the
+              `APPVERSION_SUMMARY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_CHECK_POLICY\nCHECK_POLICY_ACTION\nCHECK_POLICY_EXTRA_OPTS
+            desc: >-
+              If `DO_CHECK_POLICY` is set to true (implied if any of the other two `CHECK_POLICY_*` variables
+              are set), a policy check will be run after scan completion using the fcli-provided
+              actionRef:_:check-policy action or, if specified, the custom fcli action specified through
+              `CHECK_POLICY_ACTION`. Extra options for a custom fcli action can be passed through the
+              `CHECK_POLICY_EXTRA_OPTS` environment variable, which may include fcli options to allow
+              unsigned custom actions to be used.
+          - names: DO_PR_COMMENT\nPR_COMMENT_ACTION\nPR_COMMENT_EXTRA_OPTS
+            desc: >-
+              (PREVIEW) If `DO_PR_COMMENT` is set to true (implied if any of the other two `PR_COMMENT_*` variables
+              are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action
+              matching the current CI system like actionRef:_:github-pr-comment or, if specified, the custom fcli action
+              specified through `PR_COMMENT_ACTION`. Extra options for the fcli action can be specified through
+              the `PR_COMMENT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned
+              custom actions to be used.
+          - names: DO_SAST_EXPORT\nSAST_EXPORT_ACTION\nSAST_EXPORT_EXTRA_OPTS
+            desc: >-
+              If `DO_SAST_EXPORT` is not set to `false` and a SAST scan was completed, the SAST vulnerability
+              data will be exported into a CI-specific format using an fcli-provided action matching the current
+              CI system like actionRef:_:github-sast-report or actionRef:_:gitlab-sast-report, or, if specified, the custom fcli action
+              specified through `SAST_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+              `SAST_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+              actions to be used.
+          - names: DO_DEBRICKED_EXPORT\nDEBRICKED_EXPORT_ACTION\nDEBRICKED_EXPORT_EXTRA_OPTS
+            desc: >-
+              If `DO_DEBRICKED_EXPORT` is not set to `false` and a Debricked scan was completed, the Debricked vulnerability
+              data will be exported into a CI-specific format using an fcli-provided action matching the current
+              CI system like actionRef:_:gitlab-debricked-report, or, if specified, the custom fcli action
+              specified through `DEBRICKED_EXPORT_ACTION`. Extra options for the fcli action can be specified through the
+              `DEBRICKED_EXPORT_EXTRA_OPTS` environment variable, which may include fcli options to allow unsigned custom
+              actions to be used.
+  
+  # ============================================================================
+  # CI SYSTEM DEFINITIONS
+  # ============================================================================
+  # ⚠️  ADD NEW CI SYSTEMS OR UPDATE EXISTING ONES HERE ⚠️
+  # 
+  # Structure: ciSystems.<ciSystem>.<version>
+  #   <ciSystem>: CI system identifier used in output paths (e.g., 'github' → ci/github/...)
+  #     title: Human-readable title for documentation
+  #     (optional) description: Description of this CI integration
+  #     versions: Map of version definitions
+  #       <version>: Version identifier (e.g., 'v3.0.x')
+  #         versionTitle: Optional display title for version (defaults to version identifier)
+  #         bootstrap: Setup/bootstrap configuration
+  #           component: Bootstrap tool used (key from bootstrapComponents)
+  #           version: Which version of that bootstrap tool
+  #           overview: Bootstrap section overview text (supports $eval{...})
+  #         outputs: Map of output documents to generate
+  #           <outputId>: Output identifier (e.g., 'setup-action', 'ast-action')
+  #             filePattern: Filename template (e.g., 'setup-action.adoc', 'ast-action-$eval{product}.adoc')
+  #             products: Omit for product-independent docs, or specify {fod, ssc} for product-specific
+  #             doc: Document metadata
+  #               title: Document title
+  #               description: Optional document description (supports $eval{...})
+  #               contents: AsciiDoc document contents (supports $eval{...})
+  #               snippets: Optional code samples/document snippets
+  #                 generic: Optional product-independent snippets (key-value map)
+  #                 fod: Optional FoD-specific snippets (key-value map)
+  #                 ssc: Optional SSC-specific snippets (key-value map)
+  #         (optional) Custom properties: Arbitrary properties for reusable content
+  #
+  # Variables available via $eval{...} in bootstrap.overview and most properties under `outputs`:
+  #     - ciSystemKey: CI system identifier
+  #     - ciSystemDef: Full CI system definition (access custom properties)
+  #     - ciSystemIntegrationVersion: Version identifier
+  #     - ciSystemIntegrationVersionDef: Full version definition (access custom properties)
+  #     - bootstrapComponentTitle: Bootstrap component display name
+  #     - outputDef: Full output definition (access custom properties; not in bootstrap.overview)
+  #     - product: Current product identifier (empty string for product-independent; not in bootstrap.overview)
+  #     - fortifyProductName: Full product name (empty for product-independent; not in bootstrap.overview)
+  #     - productNames: Map of all product names {fod, ssc}
+  #     - snippets: Combined snippets (generic merged with product-specific)
+  #     - bootstrapSection: Rendered bootstrap section (AsciiDoc)
+  #     - fcliCiActionSections: Rendered fcli CI action sections (AsciiDoc)
+  #
+  # Tips:
+  #   - Access custom properties: $eval{ciSystemIntegrationVersionDef.customProperty}
+  #   - Reuse definitions: Use YAML anchors (&anchor and <<: *anchor)
+  #   - Escape CI syntax: Use ${'$'} for $ in CI variables (e.g., GitHub Actions)
+  #
+  # IMPORTANT: When adding or updating CI systems:
+  # - When adding NEW VERSIONS: Update links in fcli-other/fcli-doc/src/docs/asciidoc/versioned/index.adoc
+  #   to point to the latest version of each CI system integration.
+  # - When adding NEW CI SYSTEMS: Add new links in fcli-other/fcli-doc/src/docs/asciidoc/versioned/index.adoc.
+
+  ciSystems:
+    github:
+      title: Fortify GitHub Actions
+      description: Seamless integration of OpenText Fortify Application Security Testing into GitHub Actions workflows
+      versions:
+        v3.0.x:
+          resources:
+            - title: Marketplace Listing
+              url: https://github.com/marketplace/actions/fortify-ast-scan
+            - title: Action Repository
+              url: https://www.github.com/fortify/github-action
+            - title: Starter workflow
+              url: https://github.com/actions/starter-workflows/blob/main/code-scanning/fortify.yml
+          bootstrap:
+            component: fortifySetup
+            version: v2.1.x
+            overview: |
+              The environment variables in this section allow you to customize bootstrapping behavior
+              of fcli and supporting tools like ScanCentral Client.
+
+              $eval{snippets.bootstrapNotes?:''}
+          outputs:
+            setup-action:
+              filePattern: setup-action.adoc
+              doc:
+                title: fortify/github-action/setup
+                description: Bootstrap fcli and Fortify tools for custom CI/CD workflows.
+                contents: |
+                  == Overview
+
+                  The `fortify/github-action/setup` action allows for setting up fcli and various other Fortify tools for use in custom CI/CD workflows.
+                  This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.
+
+                  The Fortify tools to be installed are specified through action inputs, whereas optional bootstrapping behavior for fcli and supporting
+                  tools can be controlled through environment variables.
+
+                  === Quick Start Example
+
+                  Basic setup for custom workflows with fcli version pinning.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  Specifying the tools to be installed is done through action inputs, whereas bootstrapping behavior can be controlled through environment variables
+                  as shown in the following sections.
+
+                  === Action Inputs
+
+                  Action inputs allow you to specify which Fortify tool versions to install, and whether the corresponding binaries
+                  should be added to the system `PATH`. The following action inputs are supported:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description
+
+                  |`export-path`
+                  |Whether to add the installed tools to the system PATH variable. Allowed values: `true` (default) or `false`
+
+                  |`fcli`
+                  |The fcli version to install. Allowed values: `skip` (default value, do not install), `bootstrapped` (use the bootstrapped fcli version), `latest`, or specific version number. Supports semantic versioning, for example `23.1` will install the latest known `23.1.y` patch version. Version may be specified either with or without the `v` prefix, for example `v23.1` and `23.1` are semantically the same. Recommended value: `bootstrapped`.
+
+                  |`sc-client`
+                  |The ScanCentral Client version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number.
+
+                  |`fod-uploader`
+                  |The FoDUploader version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v5` will install the latest known `5.x.y` version. Version may be specified either with or without the `v` prefix, for example `v5.4.0` and `5.4.0` are semantically the same.
+
+                  |`vuln-exporter`
+                  |The FortifyVulnerabilityExporter version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v2` will install the latest known `2.x.y` version. Version may be specified either with or without the `v` prefix, for example `v2.0.4` and `2.0.4` are semantically the same.
+
+                  |`bugtracker-utility`
+                  |The FortifyBugTrackerUtility version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v4` will install the latest known `4.x` version. Version may be specified either with or without the `v` prefix, for example `v4.12` and `4.12` are semantically the same.
+
+                  |`debricked-cli`
+                  |The Debricked CLI version to install. Allowed values: `skip` (default value, do not install), `latest`, or specific version number. Supports semantic versioning, for example `v1` will install the latest known `1.x` version. Version may be specified either with or without the `v` prefix, for example `v1.7` and `1.7` are semantically the same.
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  == Migrating from fortify/github-action/setup@v2
+
+                  $eval{snippets.migrationSectionContents}
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: Custom Fortify Workflow
+                      on: [push]
+                      
+                      jobs:
+                        custom-scan:
+                          runs-on: ubuntu-latest
+                          steps:
+                            - uses: actions/checkout@v4
+                            - uses: fortify/github-action/setup@v3
+                              with:
+                                fcli: bootstrapped               # Set up bootstrapped fcli version. May also specify specific version, but
+                                                                 # then fcli may be downloaded twice (bootstrap version and requested version).
+
+                              env:
+                                FCLI_BOOTSTRAP_VERSION: v3.15.0  # Defaults to latest v3.x.y, pin to specific version for stability
+                            - name: Run custom fcli commands
+                              run: |
+                                fcli fod session login ...
+                                # Your custom workflow here
+                                fcli fod session logout ...
+                      ----
+                    migrationSectionContents: |
+                      The `fortify/github-action/setup@v3` action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
+                      However, bootstrapping behavior for fcli has changed; please review the following table for details:
+
+                      [cols="1,1,2", options="header"]
+                      |===
+                      |fortify/github-action/setup@v2
+                      |fortify/github-action/setup@v3
+                      |Recommended Action
+
+                      |Undocumented `fcli: action_default` input to use internal, pinned fcli version
+                      |Documented `fcli: bootstrapped` input to use bootstrapped fcli version
+                      |Use `fcli: bootstrapped` to leverage bootstrapped fcli version based on `FCLI_BOOTSTRAP_*` environment variables, to avoid download of multiple fcli versions
+
+                      |Uses `tool-definitions` input for fcli bootstrapping
+                      |Uses `TOOL_DEFINITIONS` environment variable and dedicated `FCLI_BOOTSTRAP_*` environment variables for fcli bootstrapping
+                      |If you used custom tool definitions, you'll need to change from `tool-definitions` input to `TOOL_DEFINITIONS` environment variable. If your tool definitions included custom fcli download URLs, you'll need to configure `FCLI_BOOTSTRAP_URL` to point to the appropriate fcli download URL
+                      |===
+            ast-action:
+              filePattern: ast-action-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: fortify/github-action
+                description: Run OpenText Application Security Testing (AST) scans in GitHub Actions workflows
+                contents: |
+                  == Overview
+
+                  This GitHub Action provides seamless integration of $eval{fortifyProductName}
+                  for automated Application Security Testing (AST) into your CI/CD
+                  workflows. The action leverages the ciOutputRef:setup-action action to set up
+                  fcli, then executes the fcli actionRef:generic:ci action to run the requested scans and 
+                  related tasks, providing a unified yet customizable experience across your AST scan workflows
+                  on GitHub and other CI systems. 
+
+                  === Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  Configuration is accomplished through action inputs and environment variables set in your CI workflow file. The following sections document all available configuration options organized by their purpose.
+
+                  === Action Inputs
+
+                  The following action inputs are available to control debug logging behavior:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description
+
+                  |`debug`
+                  |Whether to generate and collect debug logs; note that these may contain sensitive data like access tokens or credentials. Automatically enabled when workflow is re-run with "Enable debug logging" checked. Allowed values: `true` or `false` (default).
+
+                  |`debug-artifact-name`
+                  |Name for the debug artifacts archive. Default value: `fortify-debug-logs`.
+
+                  |`debug-retention-days`
+                  |Number of days to retain debug artifacts. Default value: `1` (one day, due to potential sensitive data in logs).
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  == Migrating from fortify/github-action@v2
+
+                  $eval{snippets.migrationSectionContents}
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitHub Action requires at least fcli v3.15.0 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version. 
+                    migrationSectionContents: |
+                      Migrating from v2.x.y to v3.x.y versions of the `fortify/github-action` should be fairly 
+                      straightforward, as most of the environment-based configuration remains the same. However,
+                      there are some important changes to be aware of:
+
+                      [cols="1,1,2", options="header"]
+                      |===
+                      |fortify/github-action@v2
+                      |fortify/github-action@v3
+                      |Recommended Action
+
+                      |Pinned to specific fcli release
+                      |Uses latest fcli v3.x.y release by default
+                      |Set `FCLI_BOOTSTRAP_VERSION` if you prefer stability over latest features
+
+                      |Uses action inputs to specify scan types (e.g., `sast-scan: true`)
+                      |Uses environment variables (e.g., `DO_SAST_SCAN`)
+                      |Update workflow to use environment variables for scan configuration
+
+                      |Uses `DO_PACKAGE_DEBUG` environment variable to enable packaging debug logging and artifact upload
+                      |Uses `debug` action input to enable full debug logging (fcli, packaging, ...) and artifact upload
+                      |Change `DO_PACKAGE_DEBUG: true` to action input `debug: true`, or enable via GitHub's "Re-run jobs" → "Enable debug logging" UI
+
+                      |Supports deprecated `EXTRA_*_OPTS` variables
+                      |Only supports `*_EXTRA_OPTS` variables
+                      |Rename all `EXTRA_*_OPTS` to `*_EXTRA_OPTS` format
+
+                      |Uses custom scripts for AST scan workflow
+                      |Uses standardized fcli `ci` action
+                      |Review environment variables against this documentation; behavior should be similar but variable names may differ slightly
+                      |===
+                  fod:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      name: ${productNames.fod} Scan
+                      on:
+                        push:
+                          branches: [main]
+                        pull_request:
+                          branches: [main]
+                      
+                      jobs:
+                        fortify:
+                          runs-on: ubuntu-latest
+                          # permissions:               # When overriding default permissions, following are required:
+                          #   contents: read           # Required for checkout action
+                          #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                          #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
+                          steps:
+                            - uses: actions/checkout@v4            # Check out source code
+                            - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                            - uses: fortify/github-action@v3       # Run Fortify scans
+                              env:
+                                FOD_URL: ${'$'}{{ vars.FOD_URL }}
+                                FOD_CLIENT_ID: ${'$'}{{ secrets.FOD_CLIENT_ID }}
+                                FOD_CLIENT_SECRET: ${'$'}{{ secrets.FOD_CLIENT_SECRET }}
+                                # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                                # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                      ----
+                ssc:
+                  quickstart: |
+                    [source,yaml]
+                    ----
+                    name: ${productNames.ssc} Scan
+                    on:
+                      push:
+                        branches: [main]
+                      pull_request:
+                        branches: [main]
+                    
+                    jobs:
+                      fortify:
+                        runs-on: ubuntu-latest
+                        # permissions:               # When overriding default permissions, following are required:
+                        #   contents: read           # Required for checkout action
+                        #   security-events: write   # Required for publishing security reports to GitHub Security tab
+                        #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
+                        steps:
+                          - uses: actions/checkout@v4            # Check out source code
+                          - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
+                          - uses: fortify/github-action@v3       # Run Fortify scans
+                            env:
+                              SSC_URL: ${'$'}{{ vars.SSC_URL }}
+                              SSC_TOKEN: ${'$'}{{ secrets.SSC_TOKEN }}
+                              SC_SAST_TOKEN: ${'$'}{{ secrets.SC_SAST_TOKEN }}
+                              # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                    ----
+    gitlab:
+      title: Fortify GitLab Components
+      description: Seamless integration of OpenText Fortify Application Security Testing into GitLab CI/CD pipelines
+      versions:
+        # IMPORTANT: For v3.0.x and later, add GITLAB_TOKEN requirement to documentation (assuming fcli-based report publishing)
+        v2.0.x:
+          bootstrap:
+            component: fortifyGitLabFcli
+            version: v2.0.x
+            overview: |
+              The environment variables in this section allow you to customize bootstrapping behavior
+              of fcli and supporting tools like ScanCentral Client. These variables can be configured
+              on the `<job-name>-prepare` job as needed.
+
+              $eval{snippets.bootstrapNotes?:''}
+          common:
+            componentReference: |
+              The GitLab integration consists of two components:
+              
+              * link:https://gitlab.com/Fortify/components/fcli[Fortify fcli component] - Provides fcli installation
+                and setup functionality. This component allows for setting up fcli for use in custom CI/CD workflows.
+              * link:https://gitlab.com/Fortify/components/ast-scan[Fortify AST Scan component] - Provides complete
+                AST scanning workflow by including the fcli component and adding scan execution jobs.
+          outputs:
+            fcli-component:
+              filePattern: fcli-component.adoc
+              doc:
+                title: Fortify/components/fcli
+                description: Bootstrap fcli  for custom CI/CD workflows in GitLab.
+                contents: |
+                  == Overview
+
+                  The link:https://gitlab.com/Fortify/components/fcli[Fortify fcli component] allows for setting up fcli
+                  for use in custom CI/CD workflows in GitLab. This allows you to implement fully customized AST scan 
+                  workflows or other automation workflows that interact with Fortify products.
+
+                  $eval{ciSystemIntegrationVersionDef.common.componentReference}
+
+                  The fcli component provides the following runnable jobs:
+
+                  * `<job-name>-prepare`: Download and install fcli
+                  * `<job-name>`: Run arbitrary fcli commands from the job `script` section
+
+                  In addition, several hidden jobs are defined (e.g., `.<job-name>-vars-shared`, `.<job-name>-vars`,
+                  `.<job-name>-vars-prepare`, `.fcli-install`) which may be used to implement advanced use cases but
+                  should not be directly customized.
+
+                  === Quick Start Example
+
+                  Basic setup for custom workflows with fcli version pinning.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  === Component Inputs
+
+                  The following component inputs can be specified when including the fcli component:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description|Default
+
+                  |`job-name`
+                  |Job name for the fcli script. This must be a valid file system path name and will be used to name the component-provided jobs.
+                  |`fcli`
+
+                  |`stage`
+                  |GitLab CI/CD stage in which to run the jobs provided by this component. This stage must be defined in your pipeline's `stages:` list.
+                  |_Required, no default_
+
+                  |`fcli-version`
+                  |Fcli version to install/use. Supports semantic versioning (e.g., `v3` for latest v3.x.y, `v3.15` for latest v3.15.y).
+                  |`v3`
+                  |===
+
+                  $eval{bootstrapSection}
+
+                  === Advanced Customization
+
+                  ==== Customizing the `<job-name>` Job
+
+                  By default, `<job-name>` will just run `${FCLI} -V` to verify the fcli installation. You'll typically want to define
+                  a custom `script` section that runs fcli and other commands as needed. For Docker-based runners, you'll usually also
+                  want to define the image in which the `script` section is executed:
+
+                  [source,yaml]
+                  ----
+                  <job-name>:
+                    image: my-build-tools:v1     # Optional: specify Docker image
+                    script:
+                      - ${FCLI} fod session login ...
+                      - # Your custom fcli commands here
+                      - ${FCLI} fod session logout ...
+                  ----
+
+                  If needed, you can also customize the `needs`, `variables`, and/or `extends` instructions. If you override `needs`
+                  or `extends`, make sure to keep the original contents:
+
+                  [source,yaml]
+                  ----
+                  <job-name>:
+                    extends:
+                      - .<job-name>-vars       # Required: inherit fcli-related variables
+                      - .my-custom-vars        # Optional: inherit additional variables
+                    variables:
+                      MY_VAR: value            # Optional: define extra variables
+                    needs:
+                      - <job-name>-prepare     # Required: wait for fcli installation
+                      - some-other-job         # Optional: wait for other jobs
+                    script:
+                      - # Your commands here
+                  ----
+
+                  ==== Customizing the `<job-name>-prepare` Job
+
+                  The `<job-name>-prepare` job can be customized to perform additional preparation tasks beyond fcli installation.
+                  You can define additional script steps, optionally based on additional variables:
+
+                  [source,yaml]
+                  ----
+                  <job-name>-prepare:
+                    extends:
+                      - .<job-name>-vars-prepare  # Required: inherit fcli installation variables
+                      - .my-custom-vars           # Optional: inherit additional variables
+                    variables:
+                      MY_VAR: value               # Optional: define extra variables
+                    script:
+                      - !reference [ .fcli-install, script ]  # Required: install fcli
+                      - echo "Additional preparation steps"   # Optional: your custom steps
+                  ----
+
+                  Any artifacts that need to be shared with the main `<job-name>` job must be stored under the directory
+                  identified by the `${FORTIFY_DIR}` environment variable.
+
+                  You can also customize the Docker image used for the preparation job. By default, `alpine:latest` is used:
+
+                  [source,yaml]
+                  ----
+                  <job-name>-prepare:
+                    image: my.registry/alpine:latest  # Use custom registry or different image
+                  ----
+
+                  ==== Using Multiple Component Configurations
+
+                  You can include the fcli component multiple times with different configurations, as long as each `include`
+                  specifies a different `job-name`. This allows for using multiple fcli versions within a single pipeline.
+                  Each `include` must use the same component version to avoid conflicts.
+
+                  [source,yaml]
+                  ----
+                  include:
+                    - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+                      inputs:
+                        job-name: fcli-stable
+                        fcli-version: v3.15.0
+                        stage: test
+                    - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+                      inputs:
+                        job-name: fcli-dev
+                        fcli-version: dev_v3.x
+                        stage: test
+
+                  fcli-stable:
+                    script:
+                      - ${FCLI} -V
+
+                  fcli-dev:
+                    script:
+                      - ${FCLI} -V
+                  ----
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitLab Component requires a recent fcli v3.x.y version to function properly.
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/fcli/linux@2
+                          inputs:
+                            job-name: fcli
+                            fcli-version: v3       # Use latest fcli 3.x.y release
+                            stage: test
+
+                      stages: [test]
+
+                      fcli:
+                        image: my-build-tools:v1   # Optional: specify build environment
+                        script:
+                          - ${FCLI} -V             # Verify fcli installation
+                          - ${FCLI} fod session login ...
+                          - # Your custom fcli commands here
+                          - ${FCLI} fod session logout ...
+                      ----
+            ast-scan:
+              filePattern: ast-scan-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: Fortify/components/ast-scan
+                description: Run OpenText Application Security Testing (AST) scans in GitLab CI/CD pipelines
+                contents: |
+                  == Overview
+
+                  The link:https://gitlab.com/Fortify/components/ast-scan[Fortify AST Scan component] provides seamless
+                  integration of $eval{fortifyProductName} for automated Application Security Testing (AST) into your
+                  GitLab CI/CD pipelines. The component leverages the ciOutputRef:fcli-component component to set up fcli,
+                  then executes the fcli actionRef:generic:ci action to run the requested scans and related tasks,
+                  providing a unified yet customizable experience across your AST scan workflows on GitLab and other CI systems.
+
+                  $eval{ciSystemIntegrationVersionDef.common.componentReference}
+
+                  The ast-scan component provides the following runnable jobs:
+
+                  * Inherited from the link:https://gitlab.com/Fortify/components/fcli[fcli component]:
+                  ** `<job-name>-prepare`: Download and install fcli
+                  ** `<job-name>`: Run the Fortify AST scan
+                  * Provided by the ast-scan component:
+                  ** `<job-name>-publish-debug-output`: Optionally publish debugging output
+                  ** `<job-name>-publish-sast`: Publish SAST report to GitLab security dashboard
+
+                  In addition, several hidden jobs are defined by the component which may be used to implement advanced
+                  use cases but should not be directly customized.
+
+                  === Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  === Component Inputs
+
+                  The following component inputs can be specified when including the ast-scan component:
+
+                  [%autowidth]
+                  |===
+                  |Input|Description|Default
+
+                  |`job-name`
+                  |Job name for the Fortify AST scan. This must be a valid file system path name and will be used to name the component-provided jobs.
+                  |`fortify-ast-scan`
+
+                  |`stage`
+                  |GitLab CI/CD stage in which to run the AST scan jobs. This stage must be defined in your pipeline's `stages:` list.
+                  |`test`
+
+                  |`fcli-version`
+                  |Fcli version to use for running the AST scan. Note that not all fcli versions may be compatible with this component, so avoid overriding unless necessary.
+                  |`v3`
+
+                  |`reports-access`
+                  |GitLab access level required for accessing scan reports. Allowed values: `all`, `developer`, `none`.
+                  |`developer`
+
+                  |`logs-access`
+                  |GitLab access level required for accessing debug logs. Allowed values: `all`, `developer`, `none`.
+                  |`developer`
+
+                  |`logs-expire-in`
+                  |GitLab `artifacts:expire_in` value for log artifacts. As logs may contain sensitive data, they should be cleaned up promptly.
+                  |`1 day`
+
+                  |`debug`
+                  |Whether to generate and collect debug logs. Note that these may contain sensitive data like access tokens or credentials.
+                  |`false`
+
+                  |`alpine-image`
+                  |Allows for overriding the default Alpine image used by various jobs, for example to use an image from a custom registry.
+                  |`alpine:latest`
+                  |===
+
+                  Configuration is accomplished through environment variables set on the main scan job (see following sections).
+                  Unlike GitHub Actions which use action inputs for some configuration, the GitLab components use environment
+                  variables exclusively for scan configuration, following GitLab CI/CD conventions.
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  === Best Practices
+
+                  For enterprise use, if you want to run Fortify scans across many different repositories, it is highly
+                  recommended to have those repositories use the Fortify-provided components through some intermediate custom
+                  template(s) or component(s), with those intermediate templates/components providing (partial) configuration
+                  of the Fortify AST Scan component. Some examples:
+
+                  * Pin specific Fortify component, fcli, and other tool versions rather than using a semantic version like
+                    `@v2` or `latest`, to ensure stability, allow for controlled upgrades to newer Fortify component & tool
+                    versions, and ensure that all pipelines use the same Fortify component and tool versions
+                  * Pre-configure `SSC_URL`, `FOD_URL`, and/or `FOD_TENANT`
+                  * Implement an alternative application version/release naming convention, with the intermediate component
+                    passing the custom name to the Fortify component through the `FOD_RELEASE` or `SSC_APPVERSION` variables
+                  * Load credentials from a vault and automatically pass these to the Fortify component through the appropriate variables
+
+                  This approach provides better consistency across different repositories, potentially reduces duplication
+                  across pipelines in those repositories, and allows for easily applying changes that will be automatically
+                  picked up by each pipeline.
+
+                  === Advanced Customization
+
+                  ==== Customizing the `<job-name>` Job
+
+                  The main `<job-name>` job can be customized to specify the Docker image providing build tools, additional
+                  environment variables, and other job properties:
+
+                  [source,yaml]
+                  ----
+                  <job-name>:
+                    image: golang:latest          # Required: Docker image with build tools
+                    extends:
+                      - .<job-name>-vars-ci       # Required: inherit component variables
+                      - .my-custom-vars           # Optional: inherit additional variables
+                    variables:
+                      FOD_URL: https://ams.fortify.com
+                      FOD_CLIENT_ID: ${FOD_CLIENT_ID}     # From GitLab CI/CD variables
+                      FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}
+                      # Additional scan configuration...
+                  ----
+
+                  If you override `needs` or `extends`, make sure to keep the original contents to ensure the component
+                  functions correctly.
+
+                  ==== Customizing Report Publication
+
+                  The component automatically publishes SAST reports to GitLab's security dashboard through the
+                  `<job-name>-publish-sast` job. You can customize the access level for these reports through the
+                  `reports-access` component input.
+
+                  Debug output publication is controlled by the `debug` component input. When enabled, the
+                  `<job-name>-publish-debug-output` job will collect and publish logs, package files, and FPR files
+                  as GitLab artifacts.
+
+                  $eval{resourcesSection}
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: This GitLab Component requires a recent fcli v3.x.y version to function properly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version. 
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/ast-scan/linux@2
+                          inputs:
+                            job-name: fortify-ast-scan
+                            stage: test
+                            fcli-version: v3
+
+                      stages: [test]
+
+                      fortify-ast-scan:
+                        image: maven:3-openjdk-17   # Docker image with build tools
+                        variables:
+                          # FOD_URL, FOD_CLIENT_ID, FOD_CLIENT_SECRET must be set for FoD scans
+                          # SSC_URL, SSC_TOKEN, SC_SAST_TOKEN must be set for SSC scans
+                      ----
+                  fod:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/ast-scan/linux@2
+                          inputs:
+                            job-name: fortify-ast-scan
+                            stage: test
+                            fcli-version: v3
+
+                      stages: [test]
+
+                      fortify-ast-scan:
+                        image: maven:3-openjdk-17   # Docker image with build tools
+                        variables:
+                          FOD_URL: ${FOD_URL}                         # From GitLab CI/CD variables
+                          FOD_CLIENT_ID: ${FOD_CLIENT_ID}             # From GitLab CI/CD variables
+                          FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}     # From GitLab CI/CD variables
+                          # FOD_RELEASE: MyApp:main                   # Optional: defaults to repo:branch
+                      ----
+                  ssc:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      include:
+                        - component: $CI_SERVER_FQDN/Fortify/components/ast-scan/linux@2
+                          inputs:
+                            job-name: fortify-ast-scan
+                            stage: test
+                            fcli-version: v3
+
+                      stages: [test]
+
+                      fortify-ast-scan:
+                        image: maven:3-openjdk-17   # Docker image with build tools
+                        variables:
+                          SSC_URL: ${SSC_URL}                   # From GitLab CI/CD variables
+                          SSC_TOKEN: ${SSC_TOKEN}               # From GitLab CI/CD variables
+                          SC_SAST_TOKEN: ${SC_SAST_TOKEN}       # From GitLab CI/CD variables
+                          # SSC_APPVERSION: MyApp:main          # Optional: defaults to repo:branch
+                      ----
+    ado:
+      title: Fortify Azure DevOps
+      description: Script-based integration of OpenText Fortify Application Security Testing into Azure DevOps pipelines
+      versions:
+        script:
+          versionTitle: Script-based integration
+          bootstrap:
+            component: fortifySetup
+            version: v2.1.x
+            overview: |
+              Azure DevOps integration uses a script-based approach leveraging the `@fortify/setup` npm package to bootstrap fcli
+              and supporting tools like ScanCentral Client. The environment variables in this section are provided by
+              `@fortify/setup` $eval{bootstrapComponentVersion} (configured via `FORTIFY_SETUP_VERSION=$eval{bootstrapComponentVersion}`).
+              If you configure a different `@fortify/setup` version, please refer to the
+              link:https://www.npmjs.com/package/@fortify/setup/v/$eval{bootstrapComponentVersion}[@fortify/setup documentation] for
+              that version's supported variables.
+
+              $eval{snippets.bootstrapNotes?:''}
+          outputs:
+            ast-workflow:
+              filePattern: ast-workflow-$eval{product}.adoc
+              products: ${{'fod', 'ssc'}}
+              doc:
+                title: ast-workflow-script
+                description: Script-based AST scanning workflow for Azure DevOps pipelines
+                contents: |
+                  == Overview
+
+                  This guide demonstrates how to integrate $eval{fortifyProductName} Application Security Testing (AST)
+                  into your Azure DevOps pipelines using a script-based approach. Unlike GitHub Actions or GitLab Components,
+                  Azure DevOps integration leverages the `@fortify/setup` npm package to bootstrap fcli, which then executes
+                  the fcli actionRef:generic:ci action to run scans and related tasks.
+
+                  This approach provides a unified yet customizable experience across your AST scan workflows, allowing you to
+                  implement the same scanning logic across different CI/CD platforms.
+
+                  === Quick Start Example
+
+                  Minimal configuration for running OpenText Fortify AST scans in Azure DevOps.
+
+                  $eval{snippets.quickstart}
+
+                  == Configuration
+
+                  Configuration is accomplished through environment variables set in your Azure DevOps pipeline YAML file.
+                  Secrets and variables should be configured in Azure DevOps Library or pipeline variables. The following
+                  sections document all available configuration options organized by their purpose.
+
+                  $eval{bootstrapSection}
+
+                  $eval{fcliCiActionSections}
+
+                  == Additional Resources
+
+                  * link:https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema[Azure Pipelines YAML schema reference]
+                  * link:https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables[Define variables in Azure Pipelines]
+                  * link:https://www.npmjs.com/package/@fortify/setup[@fortify/setup npm package documentation]
+                snippets:
+                  generic:
+                    bootstrapNotes: |
+                      NOTE: `@fortify/setup` is automatically configured through the `FCLI_BOOTSTRAP_*` environment variables documented in this section. For simplicity and to avoid pipelines from interfering with each other, it is recommended to not use the `@fortify/setup bootstrap-config` command in CI pipelines.
+
+                      NOTE: This integration requires `@fortify/setup` v2.1.1 or later, which in turn requires at least fcli v3.14.3 to function correctly.
+
+                      NOTE: Environment variables listed in the subsequent sections are for fcli ${fcliVersion}; if your bootstrap settings install another fcli version, please refer to to the fcli actionRef:generic:ci action documentation for that version.
+                    migrationNote: |
+                      The Azure DevOps integration uses the same environment variables as other Fortify CI integrations,
+                      making it easy to standardize your security scanning across platforms. The primary difference is
+                      the bootstrap mechanism - Azure DevOps uses `@fortify/setup` via `npx` instead of platform-specific
+                      actions or components.
+                  fod:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      trigger:
+                        branches:
+                          include:
+                            - main
+                      pr:
+                        branches:
+                          include:
+                            - main
+                      
+                      jobs:
+                        - job: fortify
+                          pool:
+                            vmImage: 'ubuntu-latest'
+                          steps:
+                            - checkout: self                       # Check out source code
+                            - task: # ... setup build tool(s)      # Set up build tool(s) required to build your project
+                            - task: Bash@3
+                              displayName: 'Run Fortify AST scan'
+                              inputs:
+                                targetType: 'inline'
+                                script: |
+                                  # Bootstrap fcli and Fortify tools
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
+                                  fcli action run ci  # Or any other fcli-based custom workflow
+                              env:
+                                FOD_URL: $(FOD_URL)
+                                FOD_CLIENT_ID: $(FOD_CLIENT_ID)
+                                FOD_CLIENT_SECRET: $(FOD_CLIENT_SECRET)
+                                # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+                                # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+                                FORTIFY_SETUP_VERSION: v2.1      # Or v2 for latest features, v2.1.1 for stability
+                      ----
+                  ssc:
+                    quickstart: |
+                      [source,yaml]
+                      ----
+                      trigger:
+                        branches:
+                          include:
+                            - main
+                      pr:
+                        branches:
+                          include:
+                            - main
+                      
+                      jobs:
+                        - job: fortify
+                          pool:
+                            vmImage: 'ubuntu-latest'
+                          steps:
+                            - checkout: self                       # Check out source code
+                            - task: # ... setup build tool(s)      # Set up build tool(s) required to build your project
+                            - task: Bash@3
+                              displayName: 'Run Fortify AST scan'
+                              inputs:
+                                targetType: 'inline'
+                                script: |
+                                  # Bootstrap fcli and Fortify tools
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+                                  npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
+                                  fcli action run ci  # Or any other fcli-based custom workflow
+                              env:
+                                SSC_URL: $(SSC_URL)
+                                SSC_TOKEN: $(SSC_TOKEN)
+                                SC_SAST_TOKEN: $(SC_SAST_TOKEN)
+                                # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch
+                                FORTIFY_SETUP_VERSION: v2.1   # Or v2 for latest features, v2.1.1 for stability
+                      ----
+  
+  # ============================================================================
+  # BOOTSTRAP COMPONENT ENV VAR DESCRIPTIONS
+  # ============================================================================
+  # ⚠️  UPDATE TOOL BOOTSTRAP VARIABLE DESCRIPTIONS HERE ⚠️
+  # 
+  # These formatters define environment variables for bootstrap components.
+  # Referenced from bootstrapComponents variable definitions via {fmt: formatter_name}
+
+  bootstrapComponents:
+    fortifySetup:
+      v2.1.x:
+        title: '@fortify/setup'
+        envVarDescriptions:
+          - names: FCLI_BOOTSTRAP_VERSION
+            desc: >-
+              By default, the latest link:https://github.com/fortify/fcli/releases/v3[fcli v3.x.y release] is used for running the
+              fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability
+              over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this
+              environment variable to the desired version. Likewise, you can set this variable to an fcli
+              link:https://github.com/fortify/fcli/releases?q=prerelease%3Atrue[pre-release tag] like `dev_v3.x` to experiment
+              with upcoming changes provided by an fcli development version.
+          - names: FCLI_BOOTSTRAP_PATH
+            desc: >-
+              Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli.
+          - names: FCLI_BOOTSTRAP_URL
+            desc: >-
+              By default, fcli is downloaded from the official GitHub releases page. This environment variable allows you to specify a
+              custom URL, for example pointing to an internal mirror in air-gapped environments. In those cases, you'll likely also
+              want to set `TOOL_DEFINITIONS` to point to a custom tool definitions file to allow for downloading supporting tools
+              like ScanCentral Client from the internal mirror.
+          - names: FCLI_BOOTSTRAP_RSA_SHA256_URL
+            desc: >-
+              Custom URL for the fcli RSA SHA256 signature file. Defaults to `<FCLI_BOOTSTRAP_URL>.rsa_sha256`.
+          - names: FCLI_BOOTSTRAP_VERIFY_SIGNATURE
+            desc: >-
+              Set to `false` to skip verification (not recommended) of the fcli download.
+    fortifyGitLabFcli:
+      v2.0.x:
+        title: 'Fortify GitLab fcli component'
+        envVarDescriptions:
+          - names: FCLI_VERSION
+            desc: >-
+              Fcli version to install. This component input specifies the fcli version to download and install.
+              Defaults to `v3` to use the latest fcli v3.x.y release, allowing you to automatically benefit from
+              the latest features and fixes. If you prefer stability over automatic updates, you can pin to a
+              specific minor or patch release like `v3.15` or `v3.15.0`. The component also supports semantic
+              versioning, for example `v3.15` will install the latest known `v3.15.y` patch version. Version
+              may be specified either with or without the `v` prefix. To experiment with upcoming changes, you
+              can also specify an fcli link:https://github.com/fortify/fcli/releases?q=prerelease%3Atrue[pre-release tag]
+              like `dev_v3.x`.
+          - names: FCLI_TGZ_URL
+            desc: >-
+              By default, fcli is downloaded from the official GitHub releases page at `https://github.com/fortify/fcli/releases/download/${FCLI_VERSION}/fcli-linux.tgz`.
+              This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in
+              air-gapped environments. The URL can use the `${FCLI_VERSION}` variable to reference the value of the
+              `fcli-version` component input. In air-gapped environments, you'll likely also want to set `TOOL_DEFINITIONS`
+              to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client
+              from the internal mirror.
+          - names: FCLI_RSA_SHA256_URL
+            desc: >-
+              URL for the fcli RSA SHA256 signature file. Defaults to `${FCLI_BASE_URL}/fcli-linux.tgz.rsa_sha256` where
+              `FCLI_BASE_URL` is `https://github.com/fortify/fcli/releases/download/${FCLI_VERSION}`. Set to blank to skip
+              signature verification (not recommended).
+          - names: FCLI
+            desc: >-
+              Path to a pre-installed fcli executable. When set on the `<job-name>-prepare` job, fcli bootstrapping will
+              skip downloading and installing fcli, and will use this binary instead. This may be useful for environments
+              without internet access, if a self-hosted shell-based runner already has fcli pre-installed, or if the
+              Docker image in which `<job-name>` is being run already provides the fcli executable. Note that the
+              `<job-name>-prepare` and main `<job-name>` jobs usually run inside different images, so the prepare
+              job doesn't explicitly check or fail if the given fcli executable is not accessible from the prepare job.
+
+  # ============================================================================
+  # LANDING PAGE TEMPLATES
+  # ============================================================================
+  
+  ciRootIndexDoc: |
+    = CI Integrations
+    :toc: left
+    :toclevels: 2
+    
+    ${#join("\n\n", ciSystemSections)}
+  
+  ciSystemIndexDoc: |
+    = ${ciSystemTitle} Integration
+    :toc: left
+    :toclevels: 2
+    
+    ${#join("\n\n", versionSections)}
+  
+  ciVersionIndexDoc: |
+    = ${ciSystemTitle} Integration ${ciSystemIntegrationVersion}
+    :toc: left
+    :toclevels: 2
+    
+    ${#join("\n\n", productSections)}
+
+  # ============================================================================
+  # GENERIC DOCUMENT TEMPLATE
+  # ============================================================================
+
+  ciSystemDoc: |
+    = ${docTitle}
+    ${#isBlank(docSubtitle)?'':(':subtitle: '+docSubtitle+'\n')}${#isBlank(tabSubtitle)?'':(':tabsubtitle: '+tabSubtitle+'\n')}:fcli-version: ${#fcliBuildProperties().fcliVersion}
+    :bootstrap-component-title: ${bootstrapComponentTitle}
+    :bootstrap-component-version: ${bootstrapComponentVersion}
+    :ci-system: ${ciSystemKey}
+    :ci-system-integration-version: ${ciSystemIntegrationVersion}
+    :generation-date: ${#formatDateTime('yyyy-MM-dd')}
+    :toc: left
+    :toclevels: 3
+    
+    ${docContents}
+  
+  # ============================================================================
+  # BASE TABLE & CELL FORMATTERS (Low-level plumbing)
+  # ============================================================================
+  
+  textTable: |
+    ${textTable}
+    
+    * Any fcli action references in this table refer to actions in the `fcli ${product}` module; please see
+      `fcli ${product} action help <action-name>` for more information.
+  
+  textCell:
+    Environment Variable: ${(envVar.realNode!=null?envVar.realNode:envVar).names}
+    Description: "${#action.docRenderer().text().render((envVar.realNode!=null?envVar.realNode:envVar).desc)}"
+  
+  asciiDocTable: |
+    [%autowidth]
+    |===
+    |Environment Variable|Description 
+    
+    ${#join("", asciiDocCells)}
+    |===
+  
+  asciiDocCell: |
+    |${(envVar.realNode!=null?envVar.realNode:envVar).names.replaceAll('\\n', ' +\\\\n')}
+    a|${#action.docRenderer().asciidoc().currentProduct(product).render((envVar.realNode!=null?envVar.realNode:envVar).desc.replaceAll('\\n', ' +\\\\n'))}
+  
+  asciiDocConfigSection: |
+    === ${sectionDef.title}
+    
+    ${#action.docRenderer().asciidoc().currentProduct(product).render(sectionDef.overview)}
+    
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+    ${#join("", asciiDocCells)}
+    |===
+  
+  asciiDocBootstrapSection: |
+    === Setup & Bootstrap
+
+    ${bootstrapOverview}
+
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+
+    ${#join("", bootstrapEnvVarCells)}${#join("", fcliEnvVarCells)}
+    |===
+    
+  asciiDocFragmentBootstrapSection: |
+    === Bootstrap & Setup
+
+    The fcli `ci` action uses the following environment variables to control bootstrapping behavior for supporting tools.
+
+    [%autowidth]
+    |===
+    |Environment Variable|Description
+
+    ${#join("", fcliEnvVarCells)}
+    |===
+  
+  textFragmentBootstrapSection: |
+    Bootstrap & Setup
+    =================
+
+    The fcli `ci` action uses the following environment variables to control bootstrapping behavior for supporting tools.
+
+    ${textBootstrapTable}
+    
+    * Any fcli action references in this table refer to actions in the `fcli ${product}` module; please see
+      `fcli ${product} action help <action-name>` for more information.
+  
+  textConfigSection: |
+    ${sectionDef.title}
+    ${'='.repeat(sectionDef.title.length())}
+    
+    ${#action.docRenderer().text().render(sectionDef.overview)}
+    
+    ${textTable}
+    
+    * Any fcli action references in this table refer to actions in the `fcli ${product}` module; please see
+      `fcli ${product} action help <action-name>` for more information.
+
+  asciiDocResourceEntry: |
+    * ${resource.title}: link:${#action.docRenderer().processEvalExpressions(resource.url, 1)}[${#action.docRenderer().processEvalExpressions(resource.url, 1)}]
+  
+  asciiDocResourcesSection: |
+    ${#isEmpty(outputResources)?'':'== Resources\n\n'+#join("", outputResources)}
+
+steps:
+  # ==========================================================================
+  # INITIALIZATION: Define all CI systems, components, and their outputs
+  # ==========================================================================
+  
+  # CI SYSTEM REGISTRY STRUCTURE:
+  # ==============================
+  # Define all CI systems, their versions, and what documentation outputs to generate.
+  #
+  # Structure: ciSystemRegistry.<ciSystem>.<version>
+  #   <ciSystem>: Name used in output paths (e.g., 'github' → ci/github/...)
+  #   <version>: Version identifier (e.g., 'v3.0.x' for GitHub Action v3.0.x)
+  #
+  # Required fields per version:
+  #   setup: Setup/bootstrap configuration
+  #     component: Which bootstrap tool to use (key from setupComponents below)
+  #     version: Which version of that tool (key within setupComponents.<component>)
+  #     overview: Section overview text for setup documentation
+  #   outputs: Map of output types to generate for this version
+  #
+  # Output types structure:
+  #   <outputKey>: Arbitrary name (e.g., 'setup', 'ciDocs')
+  #     filePattern: Output filename with {ciSystem}, {version}, {product} placeholders
+  #     formatter: Name of formatter to use (e.g., 'ciSystemFullDoc', 'ciSystemSetupDoc')
+  #     products: Empty {} for product-independent, or set like {'fod', 'ssc'} for product-specific
+  #
+  # To add a new CI system:
+  #   1. Add ciSystemRegistry.<newSystem> entry following this structure
+  #   2. Add corresponding metadata in ciSystemDocs formatter
+  #
+  # Example for adding GitLab:
+  #   ciSystemRegistry.gitlab:
+  #     v1.0.x:
+  #       setup:
+  #         component: 'fortifySetup'
+  #         version: 'v2.1.x'
+  #         overview: |
+  #           GitLab CI integration for Fortify AST scanning.
+  #       outputs:
+  #         ciDocs:
+  #           filePattern: 'fortify-gitlab-{product}.adoc'
+  #           formatter: 'ciSystemFullDoc'
+  #           products: {'fod', 'ssc'}
+  #
+  
+  # BOOTSTRAP TOOL DEFINITIONS:
+  # ============================
+  # Define setup/bootstrap components and their versions with metadata.
+  # These are referenced by ciSystemRegistry to determine which bootstrap
+  # tool version should be documented for each CI system version.
+  #
+  # Structure: setupComponents.<component>.<version>
+  #   <component>: Bootstrap tool identifier (e.g., 'fortifySetup' for @fortify/setup)
+  #   <version>: Version identifier (e.g., 'v2.1.x')
+  #
+  # Fields per version:
+  #   name: Human-readable name for documentation (e.g., '@fortify/setup')
+  #   notes: Optional version-specific notes inserted into documentation
+  #
+  # Environment variable descriptions for each component/version are defined
+  # separately in the setupComponentsEnvVars formatter.
+  #
+  # To add a new bootstrap tool version:
+  #   1. Add version entry here under appropriate component
+  #   2. Add corresponding env var descriptions in setupComponentsEnvVars
+  #   3. Update ciSystemRegistry entries to reference new version if needed
+  #
+  # Example for adding v2.2.x:
+  #   In setupComponents formatter, add:
+  #     fortifySetup:
+  #       v2.2.x:
+  #         name: '@fortify/setup'
+  #         envVarDescriptions:
+  #           - names: TOOL_REPO_URL
+  #             desc: Custom tool repository URL
+  #
+  
+  # LOAD ENVIRONMENT VARIABLE DESCRIPTIONS:
+  # ========================================
+  # Load fcli CI action configuration from fcliCiAction formatter.
+  # This formatter contains all configuration sections organized by product as arrays:
+  #   - bootstrap: fcli's own environment variables (TOOL_DEFINITIONS, etc.)
+  #   - fod: FoD-specific configuration sections array
+  #   - ssc: SSC-specific configuration sections array
+  #   - common.package: Shared package configuration (included via YAML anchor in fod/ssc)
+  #
+  # Each section (except bootstrap) has:
+  #   - title: Section title for documentation
+  #   - overview: Section overview text
+  #   - vars: Array of environment variable definitions
+  #   - fragment: Optional fragment file identifier (defaults to main doc)
+  #
+  # Setup component env vars are included directly in setupComponents definitions.
+  #
+  - var.set:
+      fcliVersion: ${#fcliBuildProperties().fcliVersion}
+      productNames: {fmt: productNames}
+      productShortNames: {fmt: productShortNames}
+      ciSystems: {fmt: ciSystems}
+      bootstrapComponents: {fmt: bootstrapComponents}
+      fcliCiAction: {fmt: fcliCiAction}
+      fcliBootstrapEnvVars: ${fcliCiAction.bootstrap.vars}
+  
+  # ==========================================================================
+  # STEP 1: Generate Text & AsciiDoc Section Arrays
+  # ==========================================================================
+  # For each product (fod/ssc), iterate over configuration sections and build
+  # arrays of formatted text/AsciiDoc sections, grouped by fragment identifier.
+  # This creates arrays like sessionTextSections, sessionAsciiDocSections,
+  # defaultTextSections, defaultAsciiDocSections for each product.
+  
+  - records.for-each:
+      from: ${{'fod', 'ssc'}}
+      record.var-name: product
+      do:
+      - var.set:
+          fortifyProductName: ${productNames[product]}
+      
+      # Iterate over all configuration sections for this product
+      - records.for-each:
+          from: ${fcliCiAction[product]}
+          record.var-name: sectionDef
+          do:
+          # Determine fragment name (defaults to 'default' if not specified)
+          - var.set:
+              fragment: ${#ifBlank(sectionDef.fragment, 'default')}
+          
+          # Build text table for this section
+          - with:
+              writers:
+                tableWriter:
+                  to: var:textTable
+                  type: table
+                  style: border
+              do:
+              - records.for-each:
+                  from: ${sectionDef.vars}
+                  record.var-name: envVar
+                  do:
+                  - writer.append:
+                      tableWriter: {fmt: textCell}
+          
+          # Append formatted text section to appropriate array
+          - var.set:
+              "fcliCiAction_${product}_${fragment}TextSectionsArray..": {fmt: textConfigSection}
+          
+          # Build AsciiDoc cells for this section
+          - var.rm: [asciiDocCells]
+          - records.for-each:
+              from: ${sectionDef.vars}
+              record.var-name: envVar
+              do:
+              - var.set:
+                  asciiDocCells..: {fmt: asciiDocCell}
+          
+          # Append formatted AsciiDoc section to appropriate array
+          - var.set:
+              "fcliCiAction_${product}_${fragment}AsciiDocSectionsArray..": {fmt: asciiDocConfigSection}
+  
+      # Join section arrays into strings in product-specific variables for reference by later steps
+      - var.set:
+          fcliCiAction_${product}_sessionTextSections: ${#join('\n\n',#this['fcliCiAction_'+product+'_sessionTextSectionsArray'])}
+          fcliCiAction_${product}_sessionAsciiDocSections: ${#join('\n\n',#this['fcliCiAction_'+product+'_sessionAsciiDocSectionsArray'])}
+          fcliCiAction_${product}_defaultTextSections: ${#join('\n\n',#this['fcliCiAction_'+product+'_defaultTextSectionsArray'])}
+          fcliCiAction_${product}_defaultAsciiDocSections: ${#join('\n\n',#this['fcliCiAction_'+product+'_defaultAsciiDocSectionsArray'])}
+          
+  # ==========================================================================
+  # STEP 2: Write Fragment Files
+  # ==========================================================================
+  # Write fragment files (bootstrap, session-{product}.txt/adoc,
+  # ci-core-{product}.txt/adoc)
+  
+  # Build bootstrap section fragments (product-independent)
+  - var.rm: [fcliEnvVarCells]
+  - records.for-each:
+      from: ${fcliBootstrapEnvVars}
+      record.var-name: envVar
+      do:
+      - var.set:
+          fcliEnvVarCells..: {fmt: asciiDocCell}
+  - var.set:
+      fragmentBootstrapAsciiDoc: {fmt: asciiDocFragmentBootstrapSection}
+  
+  # Build bootstrap section for fragments (Text)
+  - with:
+      writers:
+        tableWriter:
+          to: var:textBootstrapTable
+          type: table
+          style: border
+      do:
+      - records.for-each:
+          from: ${fcliBootstrapEnvVars}
+          record.var-name: envVar
+          do:
+          - writer.append:
+              tableWriter: {fmt: textCell}
+  - var.set:
+      fragmentBootstrapText: {fmt: textFragmentBootstrapSection}
+  
+  # Write bootstrap fragment files (product-independent)
+  - out.write:
+      "${cli.outputDir}/ci-action-bootstrap.txt": ${fragmentBootstrapText}
+      "${cli.outputDir}/ci-action-bootstrap.adoc": ${fragmentBootstrapAsciiDoc}
+  
+  # Write product-specific fragment files
+  - records.for-each:
+      from: ${{'fod', 'ssc'}}
+      record.var-name: product
+      do:
+      # Write fragment files for current product
+      - out.write:
+          "${cli.outputDir}/ci-action-session-${product}.txt": ${#this['fcliCiAction_'+product+'_sessionTextSections']}
+          "${cli.outputDir}/ci-action-session-${product}.adoc": ${#this['fcliCiAction_'+product+'_sessionAsciiDocSections']}
+          "${cli.outputDir}/ci-action-core-${product}.txt": ${#this['fcliCiAction_'+product+'_defaultTextSections']}
+          "${cli.outputDir}/ci-action-core-${product}.adoc": ${#this['fcliCiAction_'+product+'_defaultAsciiDocSections']}
+  
+  # ==========================================================================
+  # STEP 3: Generate Complete CI Integration Guides
+  # ==========================================================================
+  # For each CI system version, generate complete documentation outputs
+  
+  - records.for-each:
+      from: ${#properties(ciSystems)}
+      record.var-name: ciSystemEntry
+      do:
+      - var.set:
+          ciSystemKey: ${ciSystemEntry.key}
+          ciSystemDef: ${ciSystemEntry.value}
+          ciSystemVersions: ${ciSystemDef.versions}
+      
+      # Process each version of this CI system
+      - records.for-each:
+          from: ${#properties(ciSystemVersions)}
+          record.var-name: ciSystemVersionEntry
+          do:
+          - var.set: # Load version-specific CI system data
+              ciSystemIntegrationVersion: ${ciSystemVersionEntry.key}
+              ciSystemIntegrationVersionDef: ${ciSystemVersionEntry.value}
+          - var.set: # Load basic bootstrap component data
+              bootstrapComponentKey: ${ciSystemIntegrationVersionDef.bootstrap.component}
+              bootstrapComponentVersion: ${ciSystemIntegrationVersionDef.bootstrap.version}
+              bootstrapComponentVersionDef: ${bootstrapComponents[bootstrapComponentKey][bootstrapComponentVersion]}
+              bootstrapComponentTitle: ${bootstrapComponentVersionDef.title}
+              bootstrapOverviewUnrendered: ${ciSystemIntegrationVersionDef.bootstrap.overview}
+
+          # Process each output type defined for this CI system version
+          - records.for-each:
+              from: ${#properties(ciSystemIntegrationVersionDef.outputs)}
+              record.var-name: outputEntry
+              do:
+              - var.set: # Load output definition and documentation metadata
+                  outputKey: ${outputEntry.key}
+                  outputDef: ${outputEntry.value}
+                  outputFilePattern: ${outputDef.filePattern}
+                  outputProducts: ${outputDef.products?:{'none'}}
+                  outputDocDef: ${outputDef.doc}
+                  docTitle: ${outputDocDef.title}
+                  docDescription: ${outputDocDef.description}
+                  docContentsUnrendered: ${outputDocDef.contents}
+                  docSnippetsDef: ${outputDocDef.snippets}
+                  
+              # Process each product (including product-independent)
+              - records.for-each:
+                  from: ${outputProducts}
+                  record.var-name: product
+                  do:
+                  - var.set: # Set product-specific variables
+                      product: ${product=='none'?'':product}  # Normalize 'none' to empty string
+                      fortifyProductName: ${#isBlank(product)?'':productNames[product]}
+                      docSubtitle: ${fortifyProductName}
+                      tabSubtitle: ${#isBlank(product)?'':productShortNames[product]}
+                      outputFile: ${#action.docRenderer().processEvalExpressions(outputFilePattern, 1)}
+                      
+                  # Build snippets, combining generic and product-specific snippets
+                  - var.set:
+                      snippets: ${docSnippetsDef.generic?:{:}}
+                  - if: ${!#isBlank(product)}
+                    var.set:
+                      snippets: ${snippets.getRealNode().setAll(docSnippetsDef[product]?:{:})}
+                  
+                  #  Build bootstrap section
+                  - var.rm: [bootstrapEnvVarCells, fcliEnvVarCells]
+                  - records.for-each:
+                      from: ${bootstrapComponentVersionDef.envVarDescriptions}
+                      record.var-name: envVar
+                      do:
+                      - var.set:
+                          bootstrapEnvVarCells..: {fmt: asciiDocCell}
+                  - records.for-each:
+                      from: ${fcliBootstrapEnvVars}
+                      record.var-name: envVar
+                      do:
+                      - var.set:
+                          fcliEnvVarCells..: {fmt: asciiDocCell}
+                  - var.set:
+                      bootstrapOverview: ${#action.docRenderer().asciidoc().ciContext(ciSystemKey, ciSystemIntegrationVersion, ciSystemIntegrationVersionDef.outputs).render(bootstrapOverviewUnrendered)}
+                      bootstrapSection: {fmt: asciiDocBootstrapSection}
+
+                  # Set fcliCiActionSections for current product
+                  - var.set:
+                      fcliCiActionSections: ${#this['fcliCiAction_'+product+'_sessionAsciiDocSections']+'\n\n'+#this['fcliCiAction_'+product+'_defaultAsciiDocSections']}
+
+                  # Build resources section
+                  - var.rm: [outputResources]
+                  - if: ${ciSystemIntegrationVersionDef.resources != null}
+                    records.for-each:
+                      from: ${ciSystemIntegrationVersionDef.resources}
+                      record.var-name: resource
+                      do:
+                      - if: ${resource['if']==null}
+                        var.set:
+                          resourceIfCondition: true
+                      - if: ${resource['if']!=null}
+                        var.set:
+                          resourceIfCondition: ${#action.docRenderer().processEvalExpressions(resource['if'], 1)}
+                      - if: ${resourceIfCondition == true || resourceIfCondition == 'true'}
+                        var.set:
+                          outputResources..: {fmt: asciiDocResourceEntry}
+                  - var.set:
+                      resourcesSection: {fmt: asciiDocResourcesSection}
+
+                  # Render document contents with CI context
+                  - var.set:
+                      docContents: ${#action.docRenderer().asciidoc().ciContext(ciSystemKey, ciSystemIntegrationVersion, ciSystemIntegrationVersionDef.outputs).render(docContentsUnrendered)}
+
+                  # Write output file
+                  - out.write:
+                      "${cli.outputDir}/ci/${ciSystemKey}/${ciSystemIntegrationVersion}/${outputFile}": {fmt: "ciSystemDoc"}
+
+  # ==========================================================================
+  # STEP 4: Generate Landing Pages
+  # ==========================================================================
+  # Generate index.adoc files at three levels:
+  # - ci/index.adoc: List all CI systems
+  # - ci/{ciSystem}/index.adoc: List all versions for a CI system
+  # - ci/{ciSystem}/{version}/index.adoc: List all documents for a version
+  
+  # Build data for root CI index (ci/index.adoc)
+  - var.rm: [ciSystemSections]
+  - records.for-each:
+      from: ${#properties(ciSystems)}
+      record.var-name: ciSystemEntry
+      do:
+      - var.set:
+          ciSystemKey: ${ciSystemEntry.key}
+          ciSystemDef: ${ciSystemEntry.value}
+          ciSystemTitle: ${ciSystemDef.title}
+          ciSystemVersions: ${ciSystemDef.versions}
+      
+      # Build list of version links for this CI system
+      - var.rm: [versionLinks]
+      - records.for-each:
+          from: ${#properties(ciSystemVersions)}
+          record.var-name: versionEntry
+          do:
+          - var.set:
+              ciSystemIntegrationVersion: ${versionEntry.key}
+              ciSystemIntegrationVersionDef: ${versionEntry.value}
+              versionTitle: ${ciSystemIntegrationVersionDef.versionTitle?:ciSystemIntegrationVersion}
+              versionLinks..: "* link:${ciSystemKey}/${ciSystemIntegrationVersion}/index.html[${versionTitle}]"
+      
+      - var.set:
+          ciSystemSections..: |
+            == link:${ciSystemKey}/index.html[${ciSystemTitle}]
+            
+            ${#ifBlank(ciSystemDef.description, '')}
+            
+            ${#join("\n", versionLinks)}
+  
+  # Write root CI index
+  - out.write:
+      "${cli.outputDir}/ci/index.adoc": {fmt: ciRootIndexDoc}
+  
+  # Generate per-CI-system and per-version landing pages
+  - records.for-each:
+      from: ${#properties(ciSystems)}
+      record.var-name: ciSystemEntry
+      do:
+      - var.set:
+          ciSystemKey: ${ciSystemEntry.key}
+          ciSystemDef: ${ciSystemEntry.value}
+          ciSystemTitle: ${ciSystemDef.title}
+          ciSystemVersions: ${ciSystemDef.versions}
+      
+      # Build version sections for this CI system
+      - var.rm: [versionSections]
+      - records.for-each:
+          from: ${#properties(ciSystemVersions)}
+          record.var-name: versionEntry
+          do:
+          - var.set:
+              ciSystemIntegrationVersion: ${versionEntry.key}
+              ciSystemIntegrationVersionDef: ${versionEntry.value}
+              versionTitle: ${ciSystemIntegrationVersionDef.versionTitle?:ciSystemIntegrationVersion}
+          
+          # Build product-grouped sections for this version
+          - var.rm: [productSections]
+          - records.for-each:
+              from: ${#properties(productNames)}
+              record.var-name: productEntry
+              do:
+              - var.set:
+                  product: ${productEntry.key}
+                  fortifyProductName: ${productEntry.value}
+              
+              # Collect all outputs for this product
+              - var.rm: [docListEntries]
+              - records.for-each:
+                  from: ${#properties(ciSystemIntegrationVersionDef.outputs)}
+                  record.var-name: outputEntry
+                  do:
+                  - var.set:
+                      outputKey: ${outputEntry.key}
+                      outputDef: ${outputEntry.value}
+                      outputDocMeta: ${outputDef.doc}
+                      outputProducts: ${outputDef.products?:{}}
+                  
+                  # Include output if no products specified or if product matches
+                  - if: ${#isEmpty(outputProducts) || outputProducts.contains(product)}
+                    steps:
+                    - var.set:
+                        outputFile: ${#action.docRenderer().processEvalExpressions(outputDef.filePattern, 1)}
+                        outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
+                        renderedDescription: ${#action.docRenderer().processEvalExpressions(outputDocMeta.description, 1)}
+                        docListEntries..: |
+                          * link:${ciSystemIntegrationVersion}/${outputFileLink}[${outputDocMeta.title}] +
+                            ${renderedDescription}
+              
+              # Add product section if there are any entries
+              - if: ${!#isEmpty(docListEntries)}
+                steps:
+                - var.set:
+                    productSections..: |
+                      === ${fortifyProductName}
+                      
+                      ${#join("\n", docListEntries)}
+          
+          - var.set:
+              versionSections..: |
+                == link:${ciSystemIntegrationVersion}/index.html[${versionTitle}]
+                
+                ${#join("\n\n", productSections)}
+      
+      # Write CI system index
+      - out.write:
+          "${cli.outputDir}/ci/${ciSystemKey}/index.adoc": {fmt: ciSystemIndexDoc}
+      
+      # Generate per-version landing pages
+      - records.for-each:
+          from: ${#properties(ciSystemVersions)}
+          record.var-name: versionEntry
+          do:
+          - var.set:
+              ciSystemIntegrationVersion: ${versionEntry.key}
+              ciSystemIntegrationVersionDef: ${versionEntry.value}
+          
+          # Build product-grouped sections for this version
+          - var.rm: [productSections]
+          - records.for-each:
+              from: ${#properties(productNames)}
+              record.var-name: productEntry
+              do:
+              - var.set:
+                  product: ${productEntry.key}
+                  fortifyProductName: ${productEntry.value}
+              
+              # Collect all outputs for this product
+              - var.rm: [docListEntries]
+              - records.for-each:
+                  from: ${#properties(ciSystemIntegrationVersionDef.outputs)}
+                  record.var-name: outputEntry
+                  do:
+                  - var.set:
+                      outputKey: ${outputEntry.key}
+                      outputDef: ${outputEntry.value}
+                      outputDocMeta: ${outputDef.doc}
+                      outputProducts: ${outputDef.products?:{}}
+                  
+                  # Include output if no products specified or if product matches
+                  - if: ${#isEmpty(outputProducts) || outputProducts.contains(product)}
+                    steps:
+                    - var.set:
+                        outputFile: ${#action.docRenderer().processEvalExpressions(outputDef.filePattern, 1)}
+                        outputFileLink: "${outputFile.replaceAll('\\.adoc$', '.html')}"
+                        renderedDescription: ${#action.docRenderer().processEvalExpressions(outputDocMeta.description, 1)}
+                        docListEntries..: |
+                          * link:${outputFileLink}[${outputDocMeta.title}] +
+                            ${renderedDescription}
+              
+              # Add product section if there are any entries
+              - if: ${!#isEmpty(docListEntries)}
+                steps:
+                - var.set:
+                    productSections..: |
+                      == ${fortifyProductName}
+                      
+                      ${#join("\n", docListEntries)}
+          
+          # Write version index
+          - out.write:
+              "${cli.outputDir}/ci/${ciSystemKey}/${ciSystemIntegrationVersion}/index.adoc": {fmt: ciVersionIndexDoc}

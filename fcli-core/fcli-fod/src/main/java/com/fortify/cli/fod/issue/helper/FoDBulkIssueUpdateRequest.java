@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
@@ -43,6 +44,7 @@ public class FoDBulkIssueUpdateRequest {
     private String severity;
     private String comment;
     private ArrayList<String> vulnerabilityIds;
+    private JsonNode attributes;
 
     @JsonIgnore
     public final FoDBulkIssueUpdateRequest validate(Consumer<List<String>> validationMessageConsumer) {
@@ -58,7 +60,7 @@ public class FoDBulkIssueUpdateRequest {
     public final FoDBulkIssueUpdateRequest validate() {
         return validate(messages->{throw new FcliSimpleException("Unable to update issues:\n\t"+String.join("\n\t", messages)); });
     }
-    
+
     @JsonIgnore
     private final void validateRequired(List<String> messages, Object obj, String message) {
         if ( obj==null || (obj instanceof String && StringUtils.isBlank((String)obj)) ) {

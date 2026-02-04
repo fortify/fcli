@@ -49,8 +49,47 @@ val generateMCPReflectConfig = tasks.register<JavaExec>("generateMCPReflectConfi
 
 application { mainClass.set(project.property("fcliMainClassName") as String) }
 
+// Build-time action to generate CI documentation fragments and full guides
+val buildTimeActionCiDoc = tasks.register<JavaExec>("buildTimeAction_ci_doc") {
+    group = "build resources"
+    description = "Generate CI documentation fragments (for jar) and full guides (for ci-docs.zip)"
+    systemProperty("fcli.terminal.width", "80") // Set text table width to 80 characters
+    val outputDirProvider = layout.buildDirectory.dir("generated-action-output-resources")
+    val ciDocLog = layout.buildDirectory.file("ci-doc.log")
+    val inputYaml = project.layout.projectDirectory.file("src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml")
+    inputs.file(inputYaml)
+    inputs.property("projectVersion", project.version)
+    outputs.dir(outputDirProvider)
+    doFirst { outputDirProvider.get().asFile.mkdirs() }
+    // Use dependency classpath excluding this project's own output to avoid circular dependency
+    val runtimeCp = configurations.runtimeClasspath.get()
+    classpath = runtimeCp.filter { !it.path.contains("/build/classes/") } + files(configurations.annotationProcessor.get())
+    mainClass.set("com.fortify.cli.common.action.cli.cmd.RunBuildTimeFcliAction")
+    doFirst {
+        args = listOf(ciDocLog.get().asFile.absolutePath, inputYaml.asFile.absolutePath, "-d", outputDirProvider.get().asFile.absolutePath)
+    }
+}
+
+// Package CI-specific documentation (excluding fragments that go in jar) for fcli-doc consumption
+// This is an intermediate build artifact stored in fcli-app build directory
+val packageCiDocs = tasks.register<Zip>("packageCiDocs") {
+    group = "documentation"
+    description = "Package CI-specific versioned documentation for fcli-doc consumption (intermediate artifact)"
+    dependsOn(buildTimeActionCiDoc)
+    from(layout.buildDirectory.dir("generated-action-output-resources")) {
+        // Include CI-specific versioned documentation with new directory structure
+        include("ci/**/*.adoc")
+        // Exclude fragments that are packaged in fcli.jar as resources
+        exclude("session-*.txt", "session-*.adoc")
+        exclude("ci-core-*.txt", "ci-core-*.adoc")
+    }
+    archiveFileName.set("ci-docs.zip")
+    destinationDirectory.set(layout.buildDirectory)
+    outputs.file(layout.buildDirectory.file("ci-docs.zip"))
+}
+
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    dependsOn(generatePicocliReflectConfig, generateMCPReflectConfig)
+    dependsOn(generatePicocliReflectConfig, generateMCPReflectConfig, buildTimeActionCiDoc)
     mergeServiceFiles()
     archiveBaseName.set("fcli")
     archiveClassifier.set("")
@@ -83,8 +122,8 @@ tasks.register("distThirdPartyReleaseAsset") {
 
 tasks.register<Copy>("dist") {
     group = "distribution"
-    description = "Copy application shadow jar to release assets directory"
-    dependsOn("shadowJar", "createDistDir")
+    description = "Copy application shadow jar and CI docs to release assets directory"
+    dependsOn("shadowJar", "packageCiDocs", "createDistDir")
     from(layout.buildDirectory.dir("libs")) { include("fcli.jar") }
     into(rootProject.layout.buildDirectory.dir("dist/release-assets"))
     inputs.file(layout.buildDirectory.file("libs/fcli.jar"))

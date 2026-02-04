@@ -13,6 +13,7 @@
 package com.fortify.cli.fod._common.util;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -442,6 +443,37 @@ public class FoDEnums {
         }
     }
 
+    public interface IFoDEnumValueSupplier<V> {
+        V getValue();
+
+        static <E extends Enum<E> & IFoDEnumValueSupplier<V>, V> Optional<V> resolveEnumValue(String input, E[] values) {
+            if (input == null) return Optional.empty();
+            String trimmed = input.trim();
+            if (trimmed.isEmpty()) return Optional.empty();
+            // First try matching enum constant name (case-insensitive)
+            for (E t : values) {
+                if (t.name().equalsIgnoreCase(trimmed)) {
+                    return Optional.ofNullable(t.getValue());
+                }
+            }
+            // Then try matching the display value exactly (case-sensitive)
+            for (E t : values) {
+                V val = t.getValue();
+                if (val != null && val.equals(trimmed)) {
+                    return Optional.of(val);
+                }
+            }
+            // Then try case-insensitive match on display value
+            for (E t : values) {
+                V val = t.getValue();
+                if (val != null && val.toString().equalsIgnoreCase(trimmed)) {
+                    return Optional.of(val);
+                }
+            }
+            return Optional.empty();
+        }
+    }
+
     public enum ApiSchemeType {
         @JsonProperty("http")
         HTTP,
@@ -456,7 +488,9 @@ public class FoDEnums {
         Application(1),
         Vulnerability(2),
         Microservice(3),
-        Release(4);
+        Release(4),
+        Issue(5),
+        Scan(6);
 
         private final int _val;
 
@@ -470,8 +504,6 @@ public class FoDEnums {
 
         public String toString() {
             switch (this._val) {
-                case 0:
-                    return "All";
                 case 1:
                     return "Application";
                 case 2:
@@ -479,8 +511,13 @@ public class FoDEnums {
                 case 3:
                     return "Microservice";
                 case 4:
-                default:
                     return "Release";
+                case 5:
+                    return "Issue";
+                case 6:
+                    return "Scan";
+                default:
+                    return "All";
             }
         }
 
@@ -493,7 +530,7 @@ public class FoDEnums {
                 case 2:
                     return Vulnerability;
                 case 3:
-                    return Microservice;    
+                    return Microservice;
                 case 4:
                 default:
                     return Release;
@@ -535,7 +572,7 @@ public class FoDEnums {
         }
     }
 
-    public enum DeveloperStatusType {
+    public enum DeveloperStatusType implements IFoDEnumValueSupplier<String> {
         // no internal integer id representation
         Open("Open"),
         InRemediation("In Remediation"),
@@ -552,9 +589,19 @@ public class FoDEnums {
         public String getValue() {
             return this.value;
         }
+
+        /**
+         * Resolve an input string which may be either the enum constant name (e.g. "InRemediation")
+         * or the user-facing value (e.g. "In Remediation") to the canonical user-facing value.
+         * Comparison for the enum name is case-insensitive. If no match is found an empty
+         * Optional is returned.
+         */
+        public static java.util.Optional<String> resolveValue(String input) {
+            return IFoDEnumValueSupplier.resolveEnumValue(input, values());
+        }
     }
 
-    public enum AuditorStatusType {
+    public enum AuditorStatusType implements IFoDEnumValueSupplier<String> {
         // no internal integer id representation
         PendingReview("Pending Review"),
         RemediationRequired("Remediation Required"),
@@ -564,7 +611,7 @@ public class FoDEnums {
         //Suspicious("Suspicious"),
         //ProposedNotAnIssue("Proposed Not an Issue"),
         RiskAccepted("Risk Accepted"),
-        NotAnIssue("Not an Issues");
+        NotAnIssue("Not an Issue");
 
         public final String value;
 
@@ -574,6 +621,15 @@ public class FoDEnums {
 
         public String getValue() {
             return this.value;
+        }
+
+        /**
+         * Resolve an input string which may be either the enum constant name (e.g. "PendingReview")
+         * or the user-facing value (e.g. "Pending Review") to the canonical user-facing value.
+         * Comparison for the enum name is case-insensitive. Returns an empty Optional when no match.
+         */
+        public static java.util.Optional<String> resolveValue(String input) {
+            return IFoDEnumValueSupplier.resolveEnumValue(input, values());
         }
     }
 

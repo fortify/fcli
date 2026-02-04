@@ -19,6 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -135,10 +137,10 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
     
     private final String addLinks(String contents) {
         if ( manpageDir==null ) { return contents; }
-        // TODO Do we want to automatically insert fcli links (which could potentially lead to bugs as seen with 
-        //      https://github.com/fortify/fcli/issues/622), or should we allow Markdown syntax in action descriptions?
-        //      We could either add support for new markdownDescription properties, or allow Markdown in existing
-        //      description properties and clean this up in the 'action help' command.
+        // First, process fcliCmd: references to create proper links
+        contents = processFcliCmdReferences(contents);
+        
+        // Then handle automatic link insertion for backwards compatibility
         var manPages = listDir(manpageDir).stream().filter(s->s.matches("fcli-.*\\.adoc"))
             .map(s->s.replaceAll("\\.adoc", ""))
             .sorted((a,b)->Integer.compare(b.length(), a.length())) // In case of overlapping names, we need to replace longest matching name first
@@ -159,6 +161,35 @@ public abstract class AbstractActionAsciidocCommand extends AbstractRunnableComm
             }
         }
         return contents;
+    }
+    
+    private final String processFcliCmdReferences(String contents) {
+        // Convert fcliCmd:fcli xxx yyy zzz: to link:manpage/fcli-xxx-yyy-zzz.html[`fcli xxx yyy zzz`]
+        // The command between colons can have spaces and dashes, e.g., "fcli fod sast-scan start"
+        // We need to convert spaces to dashes for the manpage link but preserve the original for display
+        Pattern pattern = Pattern.compile("fcliCmd:([^:]+):");
+        Matcher matcher = pattern.matcher(contents);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            String commandText = matcher.group(1);
+            String manpageName = commandText.replace(" ", "-");
+            String replacement = "link:manpage/" + manpageName + ".html[`" + commandText + "`]";
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+        
+        // Also fix any manpage links that already exist but have spaces in the URL part
+        // This handles cases where fcliCmd syntax was already processed in YAML but spaces weren't replaced
+        Pattern manpagePattern = Pattern.compile("link:\\.\\./(manpage/[^.]+)\\.html\\[");
+        Matcher manpageMatcher = manpagePattern.matcher(result.toString());
+        StringBuffer finalResult = new StringBuffer();
+        while (manpageMatcher.find()) {
+            String urlPart = manpageMatcher.group(1);
+            String fixedUrlPart = urlPart.replace(" ", "-");
+            manpageMatcher.appendReplacement(finalResult, Matcher.quoteReplacement("link:../" + fixedUrlPart + ".html["));
+        }
+        manpageMatcher.appendTail(finalResult);
+        return finalResult.toString();
     }
 
     private Set<String> listDir(Path dir) {

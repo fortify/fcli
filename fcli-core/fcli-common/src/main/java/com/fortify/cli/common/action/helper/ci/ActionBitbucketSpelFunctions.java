@@ -1,0 +1,143 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.common.action.helper.ci;
+
+import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.ci.bitbucket.BitbucketEnvironment;
+import com.fortify.cli.common.ci.bitbucket.BitbucketRestHelper;
+import com.fortify.cli.common.ci.bitbucket.BitbucketUnirestInstanceSupplier;
+import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Bitbucket-specific helper exposed to actions through {@code #ci.bitbucket()}.
+ * Provides shortcuts for Bitbucket Code Insights report workflows including
+ * uploading reports and annotations without requiring YAML authors to deal
+ * with REST plumbing.
+ */
+@Reflectable
+@RequiredArgsConstructor
+@SpelFunctionPrefix("bitbucket.")
+public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
+    private final ActionRunnerContext ctx;
+    private final BitbucketEnvironment env;
+    private BitbucketRestHelper restHelper;
+
+    public ActionBitbucketSpelFunctions(ActionRunnerContext ctx) {
+        this.ctx = ctx;
+        this.env = BitbucketEnvironment.detect();
+    }
+
+    @SpelFunction(cat=ci, desc="Returns Bitbucket Pipelines environment data as ObjectNode (auto-detected for the current step)",
+            returns="Environment data or `null` if not running in Bitbucket Pipelines",
+            returnType=BitbucketEnvironment.class)
+    @Override
+    public ObjectNode getEnv() {
+        return env != null ? JsonHelper.getObjectMapper().valueToTree(env) : null;
+    }
+
+    @SpelFunction(cat=ci, desc="Returns CI system type identifier",
+            returns="\"bitbucket\"")
+    @Override
+    public String getType() {
+        return BitbucketEnvironment.TYPE;
+    }
+
+    @SpelFunction(cat=ci, desc="Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data",
+            returns="Response from Bitbucket API")
+    public ObjectNode uploadReport(
+            @SpelFunctionParam(name="reportId", desc="Code Insights report key (for example test-001)") String reportId,
+            @SpelFunctionParam(name="reportContent", desc="JSON payload that follows Bitbucket's Code Insights report schema") String reportContent) {
+        requireEnv("uploadReport");
+        var owner = requireWorkspace("uploadReport");
+        var slug = requireRepositorySlug("uploadReport");
+        var commit = requireCommitSha("uploadReport");
+        var id = requireValue("reportId", reportId);
+        return getRestHelper().upsertCommitReport(owner, slug, commit, id, reportContent);
+    }
+
+    @SpelFunction(cat=ci, desc="Appends annotations to an existing Bitbucket Code Insights report for the detected commit",
+            returns="Response from Bitbucket API")
+    public ObjectNode addReportAnnotations(
+            @SpelFunctionParam(name="reportId", desc="Code Insights report key to associate the annotations with") String reportId,
+            @SpelFunctionParam(name="annotationsContent", desc="JSON array of annotation objects that match Bitbucket's schema") String annotationsContent) {
+        requireEnv("addReportAnnotations");
+        var owner = requireWorkspace("addReportAnnotations");
+        var slug = requireRepositorySlug("addReportAnnotations");
+        var commit = requireCommitSha("addReportAnnotations");
+        var id = requireValue("reportId", reportId);
+        return getRestHelper().addReportAnnotations(owner, slug, commit, id, annotationsContent);
+    }
+
+    private BitbucketRestHelper getRestHelper() {
+        if (restHelper == null) {
+            var supplier = BitbucketUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
+            restHelper = new BitbucketRestHelper(supplier);
+        }
+        return restHelper;
+    }
+
+    private void requireEnv(String operation) {
+        if (env == null) {
+            throw new FcliSimpleException("Operation '" + operation + "' requires Bitbucket Pipelines environment. " +
+                "Ensure BITBUCKET_REPO_SLUG and related variables are set, or check ${#ci.bitbucket().env != null} before calling.");
+        }
+    }
+
+    private String requireWorkspace(String operation) {
+        var workspace = env.workspace();
+        if (StringUtils.isBlank(workspace)) {
+            throw new FcliSimpleException(
+                "Operation '" + operation + "' requires BITBUCKET_WORKSPACE or BITBUCKET_REPO_OWNER to be available in the environment.");
+        }
+        return workspace;
+    }
+
+    private String requireRepositorySlug(String operation) {
+        var slug = env.repositorySlug();
+        if (StringUtils.isBlank(slug)) {
+            throw new FcliSimpleException(
+                "Operation '" + operation + "' requires BITBUCKET_REPO_SLUG to be available in the environment.");
+        }
+        return slug;
+    }
+
+    private String requireCommitSha(String operation) {
+        var commit = env.ciCommit() != null && env.ciCommit().id() != null
+            ? env.ciCommit().id().full()
+            : null;
+        if (StringUtils.isBlank(commit)) {
+            throw new FcliSimpleException(
+                "Operation '" + operation + "' requires BITBUCKET_COMMIT to be available in the environment.");
+        }
+        return commit;
+    }
+
+    private static String requireValue(String name, String value) {
+        if (StringUtils.isBlank(value)) {
+            throw new FcliSimpleException(name + " must be provided");
+        }
+        return value;
+    }
+}

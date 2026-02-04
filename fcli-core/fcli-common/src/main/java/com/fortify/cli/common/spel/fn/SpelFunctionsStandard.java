@@ -105,14 +105,7 @@ public class SpelFunctionsStandard {
             @SpelFunctionParam(name="delimiter", desc="the delimiter to be used between each element") String delimiter,
             @SpelFunctionParam(name="input", desc="the elements to join", type = "array") Object source)
     {
-        switch (delimiter) {
-        case "\\n":
-            delimiter = "\n";
-            break;
-        case "\\t":
-            delimiter = "\t";
-            break;
-        }
+        delimiter = delimiter.replace("\\n", "\n").replace("\\t", "\t");
         Stream<?> stream = null;
         if (source instanceof Collection) {
             stream = ((Collection<?>) source).stream();
@@ -286,6 +279,23 @@ public class SpelFunctionsStandard {
             @SpelFunctionParam(name="input", desc="the encrypted string to decrypt") String s)
     {
         return EncryptionHelper.decrypt(s);
+    }
+
+    @SpelFunction(cat=util, returns="JSON string representation of the given object")
+    public static final String jsonStringify(
+            @SpelFunctionParam(name="input", desc="the object to convert to JSON string") Object o,
+            @SpelFunctionParam(name="pretty", desc="whether to pretty-print the JSON", optional=true) Boolean pretty)
+    {
+        try {
+            var mapper = JsonHelper.getObjectMapper();
+            if (Boolean.TRUE.equals(pretty)) {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+            } else {
+                return mapper.writeValueAsString(o);
+            }
+        } catch (Exception e) {
+            throw new FcliTechnicalException("Error converting object to JSON string", e);
+        }
     }
     
     private static final String toString(Object o) {

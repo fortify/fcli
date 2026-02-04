@@ -263,7 +263,7 @@ public class Fcli {
         private List<String> buildEnvArray(Map<String,String> additionalEnv) {
             def envMap = new LinkedHashMap<String,String>(System.getenv())
             if (additionalEnv) {
-                envMap.putAll(additionalEnv)
+                additionalEnv.each { k, v -> envMap.put(k, v == null ? "" : v.toString()) }
             }
             return envMap.collect { k, v -> "${k}=${v}" as String }
         }
@@ -294,7 +294,7 @@ public class Fcli {
                 env.each { k, v ->
                     String propName = "fcli.env.${k}"
                     savedProps[propName] = System.getProperty(propName)
-                    System.setProperty(propName, v)
+                    System.setProperty(propName, v == null ? "" : v.toString())
                 }
             }
             

@@ -47,6 +47,11 @@ public class SSCAppVersionResolverMixin {
     public static class OptionalOption extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--appversion", "--av"}, required = false, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
+        
+        @Override
+        public String getAppVersionId(UnirestInstance unirest) {
+            return StringUtils.isBlank(appVersionNameOrId) ? null : super.getAppVersionId(unirest);
+        }
     }
     
     public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {

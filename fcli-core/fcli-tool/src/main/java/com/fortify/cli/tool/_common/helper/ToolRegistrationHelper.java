@@ -280,8 +280,9 @@ public class ToolRegistrationHelper {
             
             // If specific version requested, look for matching installation
             if (!"any".equals(requestedVersion)) {
-                try {
-                    var requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
+                var optionalVersionDescriptor = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+                if (optionalVersionDescriptor.isPresent()) {
+                    var requestedVersionDescriptor = optionalVersionDescriptor.get();
                     var installation = ToolInstallationDescriptor.load(toolName, requestedVersionDescriptor);
                     if (installation != null && installation.getBinPath() != null) {
                         File binDir = installation.getBinPath().toFile();
@@ -291,8 +292,6 @@ public class ToolRegistrationHelper {
                             return toolBinary;
                         }
                     }
-                } catch (IllegalArgumentException e) {
-                    // Requested version not in definitions, will search paths
                 }
             } else {
                 // No version requested, try to find most recently registered installation
@@ -373,17 +372,17 @@ public class ToolRegistrationHelper {
         
         private void validateVersionMatch(ToolDefinitionVersionDescriptor versionDescriptor, String requestedVersion) {
             var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-            try {
-                var requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
-                if (!versionDescriptor.getVersion().equals(requestedVersionDescriptor.getVersion())) {
-                    throw new FcliSimpleException(
-                        String.format("Detected %s version %s does not match requested version %s (resolves to %s)", 
-                            toolName, versionDescriptor.getVersion(), requestedVersion, requestedVersionDescriptor.getVersion()));
-                }
-            } catch (IllegalArgumentException e) {
+            var optionalRequestedVersion = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+            if (optionalRequestedVersion.isEmpty()) {
                 throw new FcliSimpleException(
                     String.format("Requested version %s not found in tool definitions. Detected version is %s", 
                         requestedVersion, versionDescriptor.getVersion()));
+            }
+            var requestedVersionDescriptor = optionalRequestedVersion.get();
+            if (!versionDescriptor.getVersion().equals(requestedVersionDescriptor.getVersion())) {
+                throw new FcliSimpleException(
+                    String.format("Detected %s version %s does not match requested version %s (resolves to %s)", 
+                        toolName, versionDescriptor.getVersion(), requestedVersion, requestedVersionDescriptor.getVersion()));
             }
         }
         
@@ -401,13 +400,12 @@ public class ToolRegistrationHelper {
         
         private File findMatchingCandidate(List<File> candidates, String requestedVersion) {
             var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-            ToolDefinitionVersionDescriptor requestedVersionDescriptor;
-            try {
-                requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
-            } catch (IllegalArgumentException e) {
+            var optionalVersionDescriptor = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+            if (optionalVersionDescriptor.isEmpty()) {
                 throw new FcliSimpleException(
                     String.format("Requested version %s not found in tool definitions", requestedVersion));
             }
+            var requestedVersionDescriptor = optionalVersionDescriptor.get();
             
             for (File candidate : candidates) {
                 if (!candidate.canExecute() && !candidate.getName().endsWith(".jar")) {
@@ -450,16 +448,15 @@ public class ToolRegistrationHelper {
             String normalizedVersion = toolDefinition.normalizeVersionFormat(detectedVersion);
             
             // Try to find matching version in tool definitions using normalized version
-            try {
-                return toolDefinition.getVersion(normalizedVersion);
-            } catch (IllegalArgumentException e) {
-                // Version not found in definitions, create synthetic descriptor with normalized version
-                ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
-                syntheticDescriptor.setVersion(normalizedVersion);
-                syntheticDescriptor.setStable(true);
-                syntheticDescriptor.setAliases(new String[0]);
-                return syntheticDescriptor;
-            }
+            return toolDefinition.getOptionalVersion(normalizedVersion)
+                .orElseGet(() -> {
+                    // Version not found in definitions, create synthetic descriptor with normalized version
+                    ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
+                    syntheticDescriptor.setVersion(normalizedVersion);
+                    syntheticDescriptor.setStable(true);
+                    syntheticDescriptor.setAliases(new String[0]);
+                    return syntheticDescriptor;
+                });
         }
     }
     
