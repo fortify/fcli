@@ -6,9 +6,26 @@
   <div id="navbar-version">
     <span class="version-label">Version:&nbsp;</span><div class="dropdown">{{ include.currentVersion}} <i class="arrow down"></i>
     <div class="dropdown-content"> 
-      <span>-- Releases --</span>
+      <span>-- Latest (Recommended) --</span>
+      <a class="version-link" href="{{ site.baseurl }}/v3" style="font-weight: bold;">v3 → Latest v3.x</a>
+      <span>-- All v3.x Releases --</span>
 	  {% for version in site.data.versions.release %}
+      {% if version contains 'v3' %}
       <a class="version-link" href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+      {% endif %}
+      {% endfor %}
+      <span>-- Legacy Versions --</span>
+      <a class="version-link" href="{{ site.baseurl }}/v2" style="font-weight: bold;">v2 → Latest v2.x</a>
+      {% for version in site.data.versions.release %}
+      {% if version contains 'v2' %}
+      <a class="version-link" href="{{ site.baseurl }}/{{ version }}" style="padding-left: 30px;">{{ version }}</a>
+      {% endif %}
+      {% endfor %}
+      <a class="version-link" href="{{ site.baseurl }}/v1" style="font-weight: bold;">v1 → Latest v1.x</a>
+      {% for version in site.data.versions.release %}
+      {% if version contains 'v1' %}
+      <a class="version-link" href="{{ site.baseurl }}/{{ version }}" style="padding-left: 30px;">{{ version }}</a>
+      {% endif %}
       {% endfor %}
       <span>-- Development --</span> 
 	  {% for version in site.data.versions.dev %}
