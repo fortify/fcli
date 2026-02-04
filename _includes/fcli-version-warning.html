@@ -17,9 +17,15 @@
 {% if version_dir and (version_dir contains 'v' or version_dir contains 'dev_') %}
   {% assign current_version = version_dir %}
   
-  {% comment %} Normalize versions for comparison (remove 'v' prefix from both) {% endcomment %}
+  {% comment %} Check if this is a symbolic link (major-only like "v3" or major.minor like "v3.14") {% endcomment %}
   {% assign current_clean = current_version | remove: 'v' %}
   {% assign current_parts = current_clean | split: '.' %}
+  {% assign is_symlink = false %}
+  {% if current_parts.size < 3 and current_version contains 'v' and current_version != 'dev_v3.x' %}
+    {% assign is_symlink = true %}
+  {% endif %}
+  
+  {% comment %} Normalize versions for comparison (remove 'v' prefix from both) {% endcomment %}
   {% assign current_major = current_parts[0] %}
   
   {% assign latest_clean = latest_release | remove: 'v' %}
@@ -28,11 +34,16 @@
   
   {% comment %} Determine version type and appropriate message {% endcomment %}
   {% assign is_dev = false %}
+  {% assign is_old_major_symlink = false %}
   {% assign is_old_major = false %}
   {% assign is_old_minor = false %}
   
   {% if current_version contains 'dev_' %}
     {% assign is_dev = true %}
+  {% elsif is_symlink and current_major == latest_major %}
+    {% comment %} Symlink to latest major (e.g., v3/ when latest is v3.14.3) - no banner {% endcomment %}
+  {% elsif is_symlink and current_major != latest_major %}
+    {% assign is_old_major_symlink = true %}
   {% elsif current_major != latest_major %}
     {% assign is_old_major = true %}
   {% elsif current_clean != latest_clean %}
@@ -40,27 +51,20 @@
   {% endif %}
   
   {% comment %} Show banner for non-latest versions {% endcomment %}
-  {% if is_dev or is_old_major or is_old_minor %}
+  {% if is_dev or is_old_major_symlink or is_old_major or is_old_minor %}
 <div id="fcli-version-warning" style="position: fixed; top: 70px; left: 0; right: 0; background-color: {% if is_dev %}#d1ecf1{% else %}#fff3cd{% endif %}; border-bottom: 2px solid {% if is_dev %}#17a2b8{% else %}#ffc107{% endif %}; color: {% if is_dev %}#0c5460{% else %}#856404{% endif %}; padding: 12px 20px; z-index: 1999; text-align: center; font-size: 14px; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
   <div>
     {% comment %} Extract page path (everything after version directory) {% endcomment %}
     {% assign page_path = page.url | remove_first: '/' | remove_first: version_dir %}
     
     {% if is_dev %}
-      <strong>⚠️ Development Version</strong> — 
-      You are viewing documentation for a development version (<code>{{ current_version }}</code>).
-      This version may be unstable or incomplete.
-      <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold; margin-left: 8px;">View stable version (v{{ latest_major }}.x)</a>
+      <strong>⚠️ Development Version</strong> — You are viewing documentation for a development version (<code>{{ current_version }}</code>). This version may be unstable or incomplete. — <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">View stable version (v{{ latest_major }}.x)</a>
+    {% elsif is_old_major_symlink %}
+      <strong>⚠️ Older Major Version</strong> — You are viewing documentation for version {{ current_version }} (latest v{{ current_major }}.x). — <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">View latest version (v{{ latest_major }}.x)</a>
     {% elsif is_old_major %}
-      <strong>⚠️ Older Major Version</strong> — 
-      You are viewing documentation for version {{ current_version }}. 
-      <span style="white-space: nowrap;"><a href="{{ site.baseurl }}/v{{ current_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ current_major }}.x</a></span>
-      <span style="margin: 0 8px;">•</span>
-      <span style="white-space: nowrap;"><a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ latest_major }}.x (recommended)</a></span>
+      <strong>⚠️ Older Major Version</strong> — You are viewing documentation for version {{ current_version }}. — <a href="{{ site.baseurl }}/v{{ current_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ current_major }}.x</a> — <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ latest_major }}.x (recommended)</a>
     {% elsif is_old_minor %}
-      <strong>⚠️ Older Version</strong> — 
-      You are viewing documentation for version {{ current_version }}.
-      <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold; margin-left: 8px;">View latest version ({{ latest_release }})</a>
+      <strong>⚠️ Older Version</strong> — You are viewing documentation for version {{ current_version }}. — <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">View latest version ({{ latest_release }})</a>
     {% endif %}
     <button onclick="this.parentElement.parentElement.remove()" style="float: right; background: none; border: none; color: {% if is_dev %}#0c5460{% else %}#856404{% endif %}; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 8px;" aria-label="Dismiss">×</button>
   </div>
