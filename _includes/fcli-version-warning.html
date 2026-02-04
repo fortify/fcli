@@ -27,7 +27,7 @@
     {% endif %}
   {% endif %}
   
-  {% comment %} Extract major version number (e.g., "3" from "v3.14.3" or "3.14.3") {% endcomment %}
+  {% comment %} Normalize versions for comparison (remove 'v' prefix from both) {% endcomment %}
   {% assign current_clean = current_version | remove: 'v' %}
   {% assign current_parts = current_clean | split: '.' %}
   {% assign current_major = current_parts[0] %}
@@ -45,7 +45,7 @@
     {% assign is_dev = true %}
   {% elsif current_major != latest_major %}
     {% assign is_old_major = true %}
-  {% elsif current_version != latest_release %}
+  {% elsif current_clean != latest_clean %}
     {% assign is_old_minor = true %}
   {% endif %}
   
