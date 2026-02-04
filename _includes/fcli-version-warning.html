@@ -4,28 +4,18 @@
   - Uses Jekyll/Liquid for immediate rendering (no JavaScript flash)
   - Compares current version with latest from _data/versions/release.yml
   - Shows appropriate message for dev, old major, old minor versions
+  - Extracts version from URL path (e.g., /v3.9.1/index.html -> "v3.9.1")
 {% endcomment %}
 
-{% assign current_version_raw = page.fcli_version %}
 {% assign latest_release = site.data.versions.release[0] %}
 
-{% if current_version_raw %}
-  {% comment %} Extract version number from various formats:
-    - "3.7.0" -> "3.7.0"
-    - "v3.7.0" -> "3.7.0"
-    - "fcli version 3.5.0, built on 2025-05-19 13 14 08" -> "3.5.0"
-    - "dev_v3.x" -> "dev_v3.x"
-  {% endcomment %}
-  {% assign current_version = current_version_raw %}
-  
-  {% comment %} If it contains "version", extract just the version number {% endcomment %}
-  {% if current_version_raw contains "version" %}
-    {% assign version_parts = current_version_raw | split: "version " %}
-    {% if version_parts.size > 1 %}
-      {% assign after_version = version_parts[1] | split: "," | first | split: " " | first %}
-      {% assign current_version = after_version | strip %}
-    {% endif %}
-  {% endif %}
+{% comment %} Extract version directory from URL path (e.g., /v3.9.1/manpage/fcli.html -> v3.9.1) {% endcomment %}
+{% assign url_parts = page.url | split: '/' %}
+{% assign version_dir = url_parts[1] %}
+
+{% comment %} Only process if URL contains a version directory (starts with v or dev_) {% endcomment %}
+{% if version_dir and (version_dir contains 'v' or version_dir contains 'dev_') %}
+  {% assign current_version = version_dir %}
   
   {% comment %} Normalize versions for comparison (remove 'v' prefix from both) {% endcomment %}
   {% assign current_clean = current_version | remove: 'v' %}
@@ -53,9 +43,7 @@
   {% if is_dev or is_old_major or is_old_minor %}
 <div id="fcli-version-warning" style="position: fixed; top: 70px; left: 0; right: 0; background-color: {% if is_dev %}#d1ecf1{% else %}#fff3cd{% endif %}; border-bottom: 2px solid {% if is_dev %}#17a2b8{% else %}#ffc107{% endif %}; color: {% if is_dev %}#0c5460{% else %}#856404{% endif %}; padding: 12px 20px; z-index: 1999; text-align: center; font-size: 14px; line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
   <div>
-    {% comment %} Extract directory name from page.url for reliable path construction {% endcomment %}
-    {% assign url_parts = page.url | split: '/' %}
-    {% assign version_dir = url_parts[1] %}
+    {% comment %} Extract page path (everything after version directory) {% endcomment %}
     {% assign page_path = page.url | remove_first: '/' | remove_first: version_dir %}
     
     {% if is_dev %}
@@ -65,10 +53,10 @@
       <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold; margin-left: 8px;">View stable version (v{{ latest_major }}.x)</a>
     {% elsif is_old_major %}
       <strong>⚠️ Older Major Version</strong> — 
-      You are viewing documentation for version {{ current_version }}.
-      <a href="{{ site.baseurl }}/v{{ current_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold; margin-left: 8px;">Latest v{{ current_major }}.x</a>
+      You are viewing documentation for version {{ current_version }}. 
+      <span style="white-space: nowrap;"><a href="{{ site.baseurl }}/v{{ current_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ current_major }}.x</a></span>
       <span style="margin: 0 8px;">•</span>
-      <a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ latest_major }}.x (recommended)</a>
+      <span style="white-space: nowrap;"><a href="{{ site.baseurl }}/v{{ latest_major }}{{ page_path }}" style="color: #004085; text-decoration: underline; font-weight: bold;">Latest v{{ latest_major }}.x (recommended)</a></span>
     {% elsif is_old_minor %}
       <strong>⚠️ Older Version</strong> — 
       You are viewing documentation for version {{ current_version }}.
