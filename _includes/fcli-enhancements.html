@@ -1,0 +1,18 @@
+<!-- FCLI Documentation Enhancements - Master Include -->
+<!-- This file coordinates all enhancement features for FCLI documentation -->
+<!-- Individual features can be enabled/disabled via page front matter or site config -->
+
+{% comment %}
+  Configuration via front matter or _config.yml:
+  - fcli_enable_version_warning: Show banner on older versions (default: true)
+{% endcomment %}
+
+{% assign enable_version_warning = page.fcli_enable_version_warning | default: site.fcli_enable_version_warning | default: true %}
+
+<!-- Version Navigation Script -->
+<script defer src="{{ site.baseurl }}/js/version-nav.js"></script>
+
+<!-- Version Warning Banner -->
+{% if enable_version_warning %}
+  {% include fcli-version-warning.html %}
+{% endif %}

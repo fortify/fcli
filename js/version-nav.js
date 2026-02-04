@@ -28,7 +28,10 @@
   function checkPageExists(url, timeout) {
     return new Promise((resolve) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log('[Version Nav] Timeout checking:', url);
+      }, timeout);
       
       fetch(url, { 
         method: 'HEAD',
@@ -36,10 +39,12 @@
       })
         .then(response => {
           clearTimeout(timeoutId);
+          console.log('[Version Nav] HEAD request result:', url, '→', response.status);
           resolve(response.ok);
         })
-        .catch(() => {
+        .catch((error) => {
           clearTimeout(timeoutId);
+          console.log('[Version Nav] HEAD request failed:', url, '→', error.message);
           resolve(false);
         });
     });
@@ -51,21 +56,31 @@
     
     const baseurl = '/fcli';
     const currentPagePath = getCurrentPagePath();
+    console.log('[Version Nav] Current page path:', currentPagePath);
+    console.log('[Version Nav] Target version:', targetVersion);
+    
     const targetUrl = `${baseurl}/${targetVersion}/${currentPagePath}`;
     const fallbackUrl = `${baseurl}/${targetVersion}/index.html`;
     
+    console.log('[Version Nav] Target URL:', targetUrl);
+    console.log('[Version Nav] Fallback URL:', fallbackUrl);
+    
     // If already on index.html, just navigate to target version index
     if (currentPagePath === 'index.html' || currentPagePath === '') {
+      console.log('[Version Nav] On index, navigating to:', fallbackUrl);
       window.location.href = fallbackUrl;
       return;
     }
     
     // Check if the target page exists
+    console.log('[Version Nav] Checking if page exists...');
     const exists = await checkPageExists(targetUrl, 500);
     
     if (exists) {
+      console.log('[Version Nav] Page exists, navigating to:', targetUrl);
       window.location.href = targetUrl;
     } else {
+      console.log('[Version Nav] Page does not exist, navigating to:', fallbackUrl);
       window.location.href = fallbackUrl;
     }
   }
@@ -74,8 +89,11 @@
   function initVersionNavigation() {
     const dropdownContent = document.querySelector('.dropdown-content');
     if (!dropdownContent) {
+      console.log('[Version Nav] No dropdown-content found');
       return;
     }
+    
+    console.log('[Version Nav] Initialized on dropdown-content');
     
     dropdownContent.addEventListener('click', function(event) {
       const link = event.target.closest('a.version-link');
@@ -83,12 +101,16 @@
         return;
       }
       
-      // Extract version from href
+      console.log('[Version Nav] Version link clicked:', link.href);
+      
+      // Extract version from href - match the last path segment
       const href = link.getAttribute('href');
-      const versionMatch = href.match(/\/fcli\/(v[^\/]+|dev_[^\/]+)$/);
+      const versionMatch = href.match(/\/(v[^\/]+|dev_[^\/]+)\/?$/);
       if (versionMatch) {
         const targetVersion = versionMatch[1];
         navigateToVersion(event, targetVersion);
+      } else {
+        console.log('[Version Nav] Could not extract version from href:', href);
       }
     });
   }
