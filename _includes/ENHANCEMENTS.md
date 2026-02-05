@@ -69,6 +69,34 @@ fcli_enable_version_warning: false
 - Viewing `v3.13.0` (when latest is v3.14.3) → Shows "Older Version" with link to v3
 - Viewing `dev_v3.x` → Shows "Development Version" with link to v3
 
+### ✅ Code Copy Buttons (`/js/code-copy.js`)
+
+**Status:** Implemented
+
+Adds copy-to-clipboard buttons to all code blocks (literal and listing blocks), similar to Stack Overflow and other modern documentation sites.
+
+**Features:**
+- **Hover-to-reveal** - Copy button appears on hover over code block
+- **Visual feedback** - Shows "Copied!" confirmation for 2 seconds
+- **Dark theme support** - Styling adapts to light/dark themes
+- **Browser compatibility** - Uses modern Clipboard API with fallback for older browsers
+- **Accessible** - Proper ARIA labels and keyboard support
+- **Non-intrusive** - Positioned in top-right corner, doesn't interfere with code
+
+**Implementation:**
+- CSS styles in `/css/dark-theme.css` (`.copy-button` class)
+- JavaScript in `/js/code-copy.js` (adds buttons dynamically)
+- Automatically targets `.listingblock` and `.literalblock` elements
+- Loaded via `asciidoc-head.html` include
+
+**Styling:**
+```css
+- Hidden by default (opacity: 0)
+- Visible on hover (opacity: 1)
+- Green background when copied
+- Adapts to current theme colors
+```
+
 ## Configuration
 
 ### Site-Wide Configuration

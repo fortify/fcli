@@ -316,3 +316,51 @@ table tbody td {
 [data-theme="dark"] .dropdown-content span {
   color: var(--navbar-text);
 }
+/* Copy button styles for code blocks */
+.listingblock,
+.literalblock {
+  position: relative;
+}
+
+.copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 12px;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  z-index: 10;
+}
+
+.listingblock:hover .copy-button,
+.literalblock:hover .copy-button {
+  opacity: 1;
+}
+
+.copy-button:hover {
+  background-color: var(--link-color);
+  color: #ffffff;
+  border-color: var(--link-color);
+}
+
+.copy-button.copied {
+  background-color: #28a745;
+  color: #ffffff;
+  border-color: #28a745;
+}
+
+[data-theme="dark"] .copy-button {
+  background-color: #3e3e42;
+  border-color: #555555;
+}
+
+[data-theme="dark"] .copy-button:hover {
+  background-color: var(--link-color);
+  border-color: var(--link-color);
+}
