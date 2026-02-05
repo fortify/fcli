@@ -18,11 +18,118 @@ fcli_version:
   #toc.toc2 {
     padding-bottom: 100px;
   }
+  
+  /* Theme toggle button */
+  #theme-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.3s ease;
+    z-index: 3000;
+  }
+  
+  #theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 1);
+  }
+  
+  #theme-toggle .light-icon {
+    display: none;
+  }
+  
+  #theme-toggle .dark-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .light-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .dark-icon {
+    display: none;
+  }
 </style>
+<script>
+(function() {
+  'use strict';
+  const STORAGE_KEY = 'fcli-theme';
+  const DARK_THEME = 'dark';
+  const LIGHT_THEME = 'light';
+
+  function applyTheme(theme) {
+    if (theme === DARK_THEME) {
+      document.documentElement.setAttribute('data-theme', DARK_THEME);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem(STORAGE_KEY, theme);
+  }
+
+  function getCurrentTheme() {
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme) {
+      return storedTheme;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return DARK_THEME;
+    }
+    return LIGHT_THEME;
+  }
+
+  function toggleTheme() {
+    const currentTheme = getCurrentTheme();
+    const newTheme = currentTheme === DARK_THEME ? LIGHT_THEME : DARK_THEME;
+    applyTheme(newTheme);
+  }
+
+  function initTheme() {
+    const theme = getCurrentTheme();
+    applyTheme(theme);
+  }
+
+  function setupToggleButton() {
+    const toggleButton = document.getElementById('theme-toggle');
+    if (toggleButton) {
+      toggleButton.addEventListener('click', toggleTheme);
+    }
+  }
+
+  function listenForSystemThemeChanges() {
+    if (window.matchMedia) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      darkModeQuery.addEventListener('change', function(e) {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          applyTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+        }
+      });
+    }
+  }
+
+  initTheme();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setupToggleButton();
+      listenForSystemThemeChanges();
+    });
+  } else {
+    setupToggleButton();
+    listenForSystemThemeChanges();
+  }
+})();
+</script>
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260204.154142-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260205.122332-dev_v3.x" %}
 
 
 <div id="header">
@@ -162,7 +269,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-02-04 15:44:25 UTC
+Last updated 2026-02-05 12:26:18 UTC
 </div>
 </div>
 </body>
