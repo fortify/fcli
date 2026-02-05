@@ -56,6 +56,55 @@ fcli_version:
   [data-theme="dark"] #theme-toggle .dark-icon {
     display: none;
   }
+  
+  /* Copy button styles */
+  .listingblock,
+  .literalblock {
+    position: relative;
+  }
+  
+  .copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    z-index: 10;
+  }
+  
+  .listingblock:hover .copy-button,
+  .literalblock:hover .copy-button {
+    opacity: 1;
+  }
+  
+  .copy-button:hover {
+    background-color: var(--link-color);
+    color: #ffffff;
+    border-color: var(--link-color);
+  }
+  
+  .copy-button.copied {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+  }
+  
+  [data-theme="dark"] .copy-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+  }
+  
+  [data-theme="dark"] .copy-button:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+  }
 </style>
 <script>
 (function() {
@@ -119,17 +168,84 @@ fcli_version:
     document.addEventListener('DOMContentLoaded', function() {
       setupToggleButton();
       listenForSystemThemeChanges();
+      addCopyButtons();
     });
   } else {
     setupToggleButton();
     listenForSystemThemeChanges();
+    addCopyButtons();
+  }
+
+  function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('.listingblock > .content > pre, .literalblock > .content > pre');
+    
+    codeBlocks.forEach(function(codeBlock) {
+      const container = codeBlock.closest('.listingblock, .literalblock');
+      if (!container || container.querySelector('.copy-button')) {
+        return;
+      }
+      
+      const button = document.createElement('button');
+      button.className = 'copy-button';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      
+      button.addEventListener('click', function() {
+        const code = codeBlock.textContent;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(function() {
+            showCopySuccess(button);
+          }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            fallbackCopy(code, button);
+          });
+        } else {
+          fallbackCopy(code, button);
+        }
+      });
+      
+      container.style.position = 'relative';
+      container.insertBefore(button, container.firstChild);
+    });
+  }
+  
+  function showCopySuccess(button) {
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(function() {
+      button.textContent = originalText;
+      button.classList.remove('copied');
+    }, 2000);
+  }
+  
+  function fallbackCopy(text, button) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      showCopySuccess(button);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+    
+    document.body.removeChild(textArea);
   }
 })();
 </script>
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260205.122332-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260205.124004-dev_v3.x" %}
 
 
 <div id="header">
@@ -245,7 +361,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-02-05 12:26:20 UTC
+Last updated 2026-02-05 12:42:39 UTC
 </div>
 </div>
 </body>
