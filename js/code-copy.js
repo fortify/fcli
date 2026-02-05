@@ -13,8 +13,9 @@
     const codeBlocks = document.querySelectorAll('.listingblock > .content > pre, .literalblock > .content > pre');
     
     codeBlocks.forEach(function(codeBlock) {
-      const container = codeBlock.closest('.listingblock, .literalblock');
-      if (!container || container.querySelector('.copy-button')) {
+      // Get the .content container, not the outer block
+      const contentContainer = codeBlock.parentElement;
+      if (!contentContainer || contentContainer.querySelector('.copy-button')) {
         return; // Skip if no container or button already exists
       }
       
@@ -22,8 +23,10 @@
       button.className = 'copy-button';
       button.textContent = 'Copy';
       button.setAttribute('aria-label', 'Copy code to clipboard');
+      button.setAttribute('type', 'button');
       
-      button.addEventListener('click', function() {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
         const code = codeBlock.textContent;
         
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -40,9 +43,9 @@
         }
       });
       
-      // Ensure container has relative positioning
-      container.style.position = 'relative';
-      container.insertBefore(button, container.firstChild);
+      // Insert button into the .content container (which has position: relative)
+      contentContainer.style.position = 'relative';
+      contentContainer.insertBefore(button, contentContainer.firstChild);
     });
   }
   

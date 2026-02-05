@@ -316,51 +316,67 @@ table tbody td {
 [data-theme="dark"] .dropdown-content span {
   color: var(--navbar-text);
 }
+}
+
 /* Copy button styles for code blocks */
-.listingblock,
-.literalblock {
-  position: relative;
+/* Ensure containers have proper positioning */
+.listingblock > .content,
+.literalblock > .content {
+  position: relative !important;
 }
 
 .copy-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 6px 12px;
-  background-color: var(--code-bg);
-  border: 1px solid var(--code-border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--text-color);
-  opacity: 0;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
-  z-index: 10;
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  padding: 6px 12px !important;
+  background-color: var(--code-bg) !important;
+  border: 1px solid var(--code-border) !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-family: "Open Sans", "DejaVu Sans", sans-serif !important;
+  color: var(--text-color) !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease, background-color 0.2s ease !important;
+  z-index: 10 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+  font-weight: normal !important;
+  display: block !important;
 }
 
 .listingblock:hover .copy-button,
 .literalblock:hover .copy-button {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .copy-button:hover {
-  background-color: var(--link-color);
-  color: #ffffff;
-  border-color: var(--link-color);
+  background-color: var(--link-color) !important;
+  color: #ffffff !important;
+  border-color: var(--link-color) !important;
+}
+
+.copy-button:focus {
+  outline: 2px solid var(--link-color) !important;
+  outline-offset: 2px !important;
 }
 
 .copy-button.copied {
-  background-color: #28a745;
-  color: #ffffff;
-  border-color: #28a745;
+  background-color: #28a745 !important;
+  color: #ffffff !important;
+  border-color: #28a745 !important;
+  opacity: 1 !important;
 }
 
 [data-theme="dark"] .copy-button {
-  background-color: #3e3e42;
-  border-color: #555555;
+  background-color: #3e3e42 !important;
+  border-color: #555555 !important;
 }
 
 [data-theme="dark"] .copy-button:hover {
-  background-color: var(--link-color);
-  border-color: var(--link-color);
+  background-color: var(--link-color) !important;
+  border-color: var(--link-color) !important;
+  color: #ffffff !important;
 }
