@@ -1,6 +1,6 @@
 ---
 title: fortify/github-action
-fcli_version: 0.20260206.174842-dev_v3.x
+fcli_version: 0.20260209.135327-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,14 +245,14 @@ fcli_version: 0.20260206.174842-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260206.174842-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260209.135327-dev_v3.x" %}
 
 
 <div id="header">
 <h1>fortify/github-action</h1>
 <div class="subtitle">OpenText Application Security (Fortify Software Security Center)</div>
 <div class="details">
-<span id="revnumber">version 0.20260206.174842-dev_v3.x</span>
+<span id="revnumber">version 0.20260209.135327-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -297,7 +297,7 @@ on GitHub and other CI systems.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">name: OpenText Core Application Security (Fortify on Demand) Scan
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">name: OpenText Application Security (Fortify Software Security Center) Scan
 on:
   push:
     branches: [main]
@@ -316,11 +316,10 @@ jobs:
       - uses: actions/setup-&lt;build-tool&gt;@vX  # Set up build tool(s) required to build your project
       - uses: fortify/github-action@v3       # Run Fortify scans
         env:
-          FOD_URL: ${{ vars.FOD_URL }}
-          FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
-          FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
-          # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
-          # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest</code></pre>
+          SSC_URL: ${{ vars.SSC_URL }}
+          SSC_TOKEN: ${{ secrets.SSC_TOKEN }}
+          SC_SAST_TOKEN: ${{ secrets.SC_SAST_TOKEN }}
+          # SSC_APPVERSION: MyApp:main  # Optional: defaults to repo:branch</code></pre>
 </div>
 </div>
 </div>
@@ -389,7 +388,7 @@ This GitHub Action requires at least fcli v3.15.0 to function correctly.
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260206.174842-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260209.135327-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -824,8 +823,8 @@ there are some important changes to be aware of:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260206.174842-dev_v3.x<br>
-Last updated 2026-02-06 17:52:39 UTC
+Version 0.20260209.135327-dev_v3.x<br>
+Last updated 2026-02-09 13:57:07 UTC
 </div>
 </div>
 </body>

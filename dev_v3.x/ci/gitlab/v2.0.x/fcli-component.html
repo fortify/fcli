@@ -1,6 +1,6 @@
 ---
 title: Fortify/components/fcli
-fcli_version: 0.20260206.174842-dev_v3.x
+fcli_version: 0.20260209.135327-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260206.174842-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260206.174842-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260209.135327-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify/components/fcli</h1>
 <div class="details">
-<span id="revnumber">version 0.20260206.174842-dev_v3.x</span>
+<span id="revnumber">version 0.20260209.135327-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -417,21 +417,15 @@ This GitLab Component requires a recent fcli v3.x.y version to function properly
 <td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_VERSION</p></td>
-<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>Fcli version to install. This component input specifies the fcli version to download and install. Defaults to <code>v3</code> to use the latest fcli v3.x.y release, allowing you to automatically benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like <code>v3.15</code> or <code>v3.15.0</code>. The component also supports semantic versioning, for example <code>v3.15</code> will install the latest known <code>v3.15.y</code> patch version. Version may be specified either with or without the <code>v</code> prefix. To experiment with upcoming changes, you can also specify an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code>.</p>
-</div></div></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_TGZ_URL</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>By default, fcli is downloaded from the official GitHub releases page at <code><a href="https://github.com/fortify/fcli/releases/download//fcli-linux.tgz" class="bare">https://github.com/fortify/fcli/releases/download//fcli-linux.tgz</a></code>. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. The URL can use the <code>` variable to reference the value of the `fcli-version</code> component input. In air-gapped environments, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p>
+<p>By default, fcli is downloaded from the official GitHub releases page at <code><a href="https://github.com/fortify/fcli/releases/download//fcli-linux.tgz" class="bare">https://github.com/fortify/fcli/releases/download//fcli-linux.tgz</a></code>, where <code>FCLI_VERSION</code> is set based on the <code>fcli-version</code> component input. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. The URL can use the <code>` variable to reference the value of the `fcli-version</code> component input. In air-gapped environments, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p>
 </div></div></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_RSA_SHA256_URL</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>URL for the fcli RSA SHA256 signature file. Defaults to <code>/fcli-linux.tgz.rsa_sha256</code> where <code>FCLI_BASE_URL</code> is <code><a href="https://github.com/fortify/fcli/releases/download/" class="bare">https://github.com/fortify/fcli/releases/download/</a></code>. Set to blank to skip signature verification (not recommended).</p>
+<p>URL for the fcli RSA SHA256 signature file. Defaults to <code>/fcli-linux.tgz.rsa_sha256</code> where <code>FCLI_BASE_URL</code> is <code><a href="https://github.com/fortify/fcli/releases/download/" class="bare">https://github.com/fortify/fcli/releases/download/</a></code>, and <code>FCLI_VERSION</code> is set based on the <code>fcli-version</code> component input. Set to blank to skip signature verification (not recommended).</p>
 </div></div></td>
 </tr>
 <tr>
@@ -564,8 +558,8 @@ fcli-dev:
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260206.174842-dev_v3.x<br>
-Last updated 2026-02-06 17:52:39 UTC
+Version 0.20260209.135327-dev_v3.x<br>
+Last updated 2026-02-09 13:57:07 UTC
 </div>
 </div>
 </body>
