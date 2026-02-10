@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20260210.114925-dev_v3.x
+fcli_version: 0.20260210.121120-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260210.114925-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.114925-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.121120-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260210.114925-dev_v3.x</span>
+<span id="revnumber">version 0.20260210.121120-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1180,7 +1180,7 @@ previous scan for this PR.</p>
 <h2 id="_github_sast_report"><a class="anchor" href="#_github_sast_report"></a>github-sast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitHub Code Scanning report listing SSC SAST vulnerabilities.</p>
+<p>Integrate SSC SAST results with GitHub Code Scanning.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
@@ -1191,7 +1191,13 @@ previous scan for this PR.</p>
 <div class="sect2">
 <h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitHub, see
+<p>This action generates and optionally publishes SSC SAST vulnerabilities to GitHub.
+With the --publish option, results are automatically uploaded as either SARIF reports
+(for GitHub Advanced Security) or Check Runs (for free-tier repositories). The optional
+--type option allows you to specify which format to use.</p>
+</div>
+<div class="paragraph">
+<p>For manual SARIF file uploads, see
 <a href="https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github" class="bare">https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github</a></p>
 </div>
 </div>
@@ -1815,8 +1821,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260210.114925-dev_v3.x<br>
-Last updated 2026-02-10 11:52:18 UTC
+Version 0.20260210.121120-dev_v3.x<br>
+Last updated 2026-02-10 12:14:22 UTC
 </div>
 </div>
 </body>
