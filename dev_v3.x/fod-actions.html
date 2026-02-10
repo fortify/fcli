@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20260210.121120-dev_v3.x
+fcli_version: 0.20260210.142214-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260210.121120-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.121120-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.142214-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260210.121120-dev_v3.x</span>
+<span id="revnumber">version 0.20260210.142214-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -442,7 +442,7 @@ For information on how to create or update findings into AWS Security Hub, see
 <h2 id="_bitbucket_sast_report"><a class="anchor" href="#_bitbucket_sast_report"></a>bitbucket-sast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a BitBucket Code Insights report listing FoD SAST vulnerabilities.</p>
+<p>Integrate FoD SAST results with BitBucket Code Insights.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_2"><a class="anchor" href="#_synopsis_2"></a>Synopsis</h3>
@@ -453,7 +453,11 @@ For information on how to create or update findings into AWS Security Hub, see
 <div class="sect2">
 <h3 id="_description_2"><a class="anchor" href="#_description_2"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into BitBucket, see
+<p>This action generates and optionally publishes FoD SAST vulnerabilities to BitBucket.
+With the --publish option, results are automatically uploaded to BitBucket pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://support.atlassian.com/bitbucket-cloud/docs/code-insights/" class="bare">https://support.atlassian.com/bitbucket-cloud/docs/code-insights/</a></p>
 </div>
 </div>
@@ -483,7 +487,7 @@ For information on how to create or update findings into AWS Security Hub, see
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -905,7 +909,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -916,7 +920,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_codequality_report"><a class="anchor" href="#_gitlab_codequality_report"></a>gitlab-codequality-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab Code Quality report listing FoD SAST vulnerabilities.</p>
+<p>Integrate FoD SAST results with GitLab Code Quality.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_7"><a class="anchor" href="#_synopsis_7"></a>Synopsis</h3>
@@ -927,7 +931,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_7"><a class="anchor" href="#_description_7"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes FoD SAST vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality</a></p>
 </div>
 </div>
@@ -953,7 +961,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -964,7 +972,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_dast_report"><a class="anchor" href="#_gitlab_dast_report"></a>gitlab-dast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab DAST report listing FoD DAST vulnerabilities.</p>
+<p>Integrate FoD DAST results with GitLab.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_8"><a class="anchor" href="#_synopsis_8"></a>Synopsis</h3>
@@ -975,7 +983,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_8"><a class="anchor" href="#_description_8"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes FoD DAST vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast</a></p>
 </div>
 </div>
@@ -1004,7 +1016,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_debricked_report"><a class="anchor" href="#_gitlab_debricked_report"></a>gitlab-debricked-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab Dependency Scanning report listing FoD SCA (Debricked) vulnerabilities.</p>
+<p>Integrate FoD SCA (Debricked) results with GitLab Dependency Scanning.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_9"><a class="anchor" href="#_synopsis_9"></a>Synopsis</h3>
@@ -1015,7 +1027,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_9"><a class="anchor" href="#_description_9"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes FoD SCA (Debricked) vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
 </div>
 </div>
@@ -1044,7 +1060,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_sast_report"><a class="anchor" href="#_gitlab_sast_report"></a>gitlab-sast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab SAST report listing FoD SAST vulnerabilities.</p>
+<p>Integrate FoD SAST results with GitLab.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
@@ -1055,7 +1071,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes FoD SAST vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast</a></p>
 </div>
 </div>
@@ -1081,7 +1101,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1241,7 +1261,7 @@ reports. For more information about SARIF, please see
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1464,8 +1484,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260210.121120-dev_v3.x<br>
-Last updated 2026-02-10 12:14:12 UTC
+Version 0.20260210.142214-dev_v3.x<br>
+Last updated 2026-02-10 14:25:14 UTC
 </div>
 </div>
 </body>

@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>
-fcli_version: 0.20260210.121120-dev_v3.x
+fcli_version: 0.20260210.142214-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260210.121120-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.121120-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.142214-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260210.121120-dev_v3.x</span>
+<span id="revnumber">version 0.20260210.142214-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -513,7 +513,7 @@ For information on how to create or update findings into AWS Security Hub, see
 <h2 id="_bitbucket_sast_report"><a class="anchor" href="#_bitbucket_sast_report"></a>bitbucket-sast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a BitBucket Code Insights report listing SSC SAST vulnerabilities.</p>
+<p>Integrate SSC SAST results with BitBucket Code Insights.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_3"><a class="anchor" href="#_synopsis_3"></a>Synopsis</h3>
@@ -524,7 +524,11 @@ For information on how to create or update findings into AWS Security Hub, see
 <div class="sect2">
 <h3 id="_description_3"><a class="anchor" href="#_description_3"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into BitBucket, see
+<p>This action generates and optionally publishes SSC SAST vulnerabilities to BitBucket.
+With the --publish option, results are automatically uploaded to BitBucket pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://support.atlassian.com/bitbucket-cloud/docs/code-insights/" class="bare">https://support.atlassian.com/bitbucket-cloud/docs/code-insights/</a></p>
 </div>
 </div>
@@ -562,7 +566,7 @@ For information on how to create or update findings into AWS Security Hub, see
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1239,7 +1243,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1250,7 +1254,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_codequality_report"><a class="anchor" href="#_gitlab_codequality_report"></a>gitlab-codequality-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab Code Quality report listing SSC SAST vulnerabilities.</p>
+<p>Integrate SSC SAST results with GitLab Code Quality.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_10"><a class="anchor" href="#_synopsis_10"></a>Synopsis</h3>
@@ -1261,7 +1265,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_10"><a class="anchor" href="#_description_10"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes SSC SAST vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportscodequality</a></p>
 </div>
 </div>
@@ -1295,7 +1303,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1306,7 +1314,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_dast_report"><a class="anchor" href="#_gitlab_dast_report"></a>gitlab-dast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab DAST report listing SSC DAST vulnerabilities.</p>
+<p>Integrate SSC DAST results with GitLab.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_11"><a class="anchor" href="#_synopsis_11"></a>Synopsis</h3>
@@ -1317,7 +1325,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_11"><a class="anchor" href="#_description_11"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes SSC DAST vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast</a></p>
 </div>
 </div>
@@ -1354,7 +1366,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_debricked_report"><a class="anchor" href="#_gitlab_debricked_report"></a>gitlab-debricked-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab Dependency Scanning report listing SSC Debricked vulnerabilities.</p>
+<p>Integrate SSC Debricked results with GitLab Dependency Scanning.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_12"><a class="anchor" href="#_synopsis_12"></a>Synopsis</h3>
@@ -1365,7 +1377,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_12"><a class="anchor" href="#_description_12"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes SSC Debricked vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
 </div>
 </div>
@@ -1402,7 +1418,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_sast_report"><a class="anchor" href="#_gitlab_sast_report"></a>gitlab-sast-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab SAST report listing SSC SAST vulnerabilities.</p>
+<p>Integrate SSC SAST results with GitLab.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_13"><a class="anchor" href="#_synopsis_13"></a>Synopsis</h3>
@@ -1413,7 +1429,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_13"><a class="anchor" href="#_description_13"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes SSC SAST vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast</a></p>
 </div>
 </div>
@@ -1447,7 +1467,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1458,7 +1478,7 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <h2 id="_gitlab_sonatype_report"><a class="anchor" href="#_gitlab_sonatype_report"></a>gitlab-sonatype-report</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Generate a GitLab Dependency Scanning report listing SSC Sonatype vulnerabilities.</p>
+<p>Integrate SSC Sonatype results with GitLab Dependency Scanning.</p>
 </div>
 <div class="sect2">
 <h3 id="_synopsis_14"><a class="anchor" href="#_synopsis_14"></a>Synopsis</h3>
@@ -1469,7 +1489,11 @@ With the --publish option, results are automatically uploaded as either SARIF re
 <div class="sect2">
 <h3 id="_description_14"><a class="anchor" href="#_description_14"></a>Description</h3>
 <div class="paragraph">
-<p>For information on how to import this report into GitLab, see
+<p>This action generates and optionally publishes SSC Sonatype vulnerabilities to GitLab.
+With the --publish option, results are automatically uploaded to GitLab pipelines.</p>
+</div>
+<div class="paragraph">
+<p>For manual report uploads, see
 <a href="https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning" class="bare">https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning</a></p>
 </div>
 </div>
@@ -1627,7 +1651,7 @@ reports. For more information about SARIF, please see
 </dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
+<p>Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)</p>
 </dd>
 </dl>
 </div>
@@ -1821,8 +1845,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260210.121120-dev_v3.x<br>
-Last updated 2026-02-10 12:14:22 UTC
+Version 0.20260210.142214-dev_v3.x<br>
+Last updated 2026-02-10 14:25:23 UTC
 </div>
 </div>
 </body>
