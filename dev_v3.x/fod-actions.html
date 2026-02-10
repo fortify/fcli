@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20260209.202946-dev_v3.x
+fcli_version: 0.20260210.114925-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260209.202946-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260209.202946-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260210.114925-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260209.202946-dev_v3.x</span>
+<span id="revnumber">version 0.20260210.114925-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -425,9 +425,13 @@ For information on how to create or update findings into AWS Security Hub, see
 <dd>
 <p>Required AWS account id. Default value: AWS_ACCOUNT_ID environment variable.</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -473,9 +477,13 @@ For information on how to create or update findings into AWS Security Hub, see
 <dd>
 <p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -873,13 +881,25 @@ previous scan for this PR.</p>
 <dd>
 <p>Publish report to GitHub Code Scanning (requires GITHUB_TOKEN environment variable with 'security-events: write' permission)</p>
 </dd>
+<dt class="hdlist1">--type</dt>
+<dd>
+<p>Report type to generate/publish: 'sarif' (GHAS Code Scanning) or 'check-run' (free-tier Check Run). If not specified, tries SARIF first, falls back to Check Run if GHAS unavailable. For best performance, specify the report type that matches your repository&#8217;s GitHub plan (GHAS vs free tier).</p>
+</dd>
+<dt class="hdlist1">--dryrun</dt>
+<dd>
+<p>Set to true to load and format all data but output to stdout instead of publishing</p>
+</dd>
 <dt class="hdlist1">--release, --rel</dt>
 <dd>
 <p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -921,9 +941,13 @@ previous scan for this PR.</p>
 <dd>
 <p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -1045,9 +1069,13 @@ previous scan for this PR.</p>
 <dd>
 <p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -1201,9 +1229,13 @@ reports. For more information about SARIF, please see
 <dd>
 <p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -1410,9 +1442,13 @@ appropriate option values and setup commands to run.</p>
 <dd>
 <p>Required release id or &lt;appName&gt;:[&lt;microserviceName&gt;:]&lt;releaseName&gt;</p>
 </dd>
+<dt class="hdlist1">--workspace-dir</dt>
+<dd>
+<p>Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports</p>
+</dd>
 <dt class="hdlist1">--source-dir</dt>
 <dd>
-<p>(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths</p>
+<p>(DEPRECATED: use --workspace-dir) Alias for --workspace-dir</p>
 </dd>
 </dl>
 </div>
@@ -1422,8 +1458,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260209.202946-dev_v3.x<br>
-Last updated 2026-02-09 20:32:57 UTC
+Version 0.20260210.114925-dev_v3.x<br>
+Last updated 2026-02-10 11:52:08 UTC
 </div>
 </div>
 </body>
