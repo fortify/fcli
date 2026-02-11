@@ -23,7 +23,7 @@ import lombok.Builder;
  * <p>Structure matches the output of {@code localRepo()} SpEL function:
  * <pre>
  * {
- *   "workDir": "/path/to/repo",
+ *   "workspaceDir": "/path/to/repo",
  *   "remoteUrl": "https://github.com/owner/repo.git",
  *   "name": {
  *     "short": "repo",
@@ -32,7 +32,7 @@ import lombok.Builder;
  * }
  * </pre>
  * 
- * @param workDir Working directory path containing source code
+ * @param workspaceDir Workspace directory path (repository root) containing source code
  * @param remoteUrl Git remote URL (may be null if not available)
  * @param name Repository name information (short and full)
  * 
@@ -41,7 +41,7 @@ import lombok.Builder;
 @Reflectable
 @Builder
 public record CiRepository(
-    String workDir,
+    String workspaceDir,
     String remoteUrl,
     CiRepositoryName name
 ) {}

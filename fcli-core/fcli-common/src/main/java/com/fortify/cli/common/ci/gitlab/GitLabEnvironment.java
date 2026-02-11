@@ -44,8 +44,8 @@ public record GitLabEnvironment(
     CiCommit ciCommit,
     CiPullRequest pullRequest,
     // GitLab-specific properties
-    int projectId,
-    Integer pipelineId,
+    String projectId,
+    String pipelineId,
     String prTerminology,
     String ciName,
     String ciId
@@ -92,7 +92,7 @@ public record GitLabEnvironment(
         
         // Build standardized structures
         var ciRepository = CiRepository.builder()
-            .workDir(EnvHelper.envOrDefault(ENV_PROJECT_DIR, "."))
+            .workspaceDir(EnvHelper.envOrDefault(ENV_PROJECT_DIR, "."))
             .remoteUrl(EnvHelper.env(ENV_REPOSITORY_URL))
             .name(CiRepositoryName.builder()
                 .short_(projectName)
@@ -124,12 +124,14 @@ public record GitLabEnvironment(
             .build();
         
         var pullRequest = isMr
-            ? CiPullRequest.active(parseIntOrNull(EnvHelper.env(ENV_MR_IID)), targetBranch)
+            ? CiPullRequest.active(EnvHelper.env(ENV_MR_IID), targetBranch)
             : CiPullRequest.inactive();
         
+        var pipelineIdValue = EnvHelper.env(ENV_PIPELINE_ID);
+        
         return GitLabEnvironment.builder()
-            .projectId(StringUtils.isNotBlank(projectIdStr) ? Integer.parseInt(projectIdStr) : 0)
-            .pipelineId(parseIntOrNull(EnvHelper.env(ENV_PIPELINE_ID)))
+            .projectId(projectIdStr)
+            .pipelineId(StringUtils.isNotBlank(pipelineIdValue) ? pipelineIdValue : null)
             .ciRepository(ciRepository)
             .ciBranch(ciBranch)
             .ciCommit(ciCommit)
@@ -184,9 +186,5 @@ public record GitLabEnvironment(
      */
     public String getBranchForVersioning() {
         return ciBranch != null ? ciBranch.short_() : null;
-    }
-    
-    private static Integer parseIntOrNull(String value) {
-        return StringUtils.isBlank(value) ? null : Integer.parseInt(value);
     }
 }

@@ -101,6 +101,9 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
             installJre(installer);
         }
         
+        // Save the descriptor with updated JRE information
+        descriptor.save(getTool().getToolName(), installer.getVersionDescriptor());
+        
         installer.installGlobalBinScript(BinScriptType.bash, "scancentral", "bin/scancentral");
         installer.installGlobalBinScript(BinScriptType.bat, "scancentral.bat", "bin/scancentral.bat");
         installer.installGlobalBinScript(BinScriptType.bash, "pwtool", "bin/pwtool");
@@ -119,7 +122,7 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     }
     
     private void installJre(ToolInstaller scClientInstaller) throws IOException {
-        var platform = StringUtils.isNotBlank(jrePlatform) ? jrePlatform : PlatformHelper.getPlatform();
+        var platform = StringUtils.isNotBlank(jrePlatform) ? jrePlatform : PlatformHelper.getPlatform(true);
         new SCClientJREInstaller(scClientInstaller).installJre(platform);
     }
     

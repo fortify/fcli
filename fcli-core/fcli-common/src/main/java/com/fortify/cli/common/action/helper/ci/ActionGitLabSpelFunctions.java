@@ -14,6 +14,8 @@ package com.fortify.cli.common.action.helper.ci;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
@@ -96,7 +98,9 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
             @SpelFunctionParam(name="reportContent", desc="security report in GitLab schema format") String reportContent) {
         requireEnv("uploadSecurityReport");
         return getRestHelper().uploadSecurityReport(
-            env.projectId(), env.pipelineId(), reportType, reportContent);
+            requireProjectId("uploadSecurityReport"), 
+            requirePipelineId("uploadSecurityReport"), 
+            reportType, reportContent);
     }
     
     // === Code Quality Report (Free Tier) ===
@@ -118,7 +122,10 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
         if (!env.pullRequest().active()) {
             throw new FcliSimpleException("Not running in merge request context. CI_MERGE_REQUEST_IID is not set.");
         }
-        return getRestHelper().uploadCodeQualityReport(env.projectId(), env.pullRequest().id(), reportContent);
+        return getRestHelper().uploadCodeQualityReport(
+            requireProjectId("uploadCodeQualityReport"), 
+            env.pullRequest().id(), 
+            reportContent);
     }
     
     // === Merge Request Comments (Auto-Detect Context) ===
@@ -138,7 +145,9 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
             throw new FcliSimpleException("Not running in merge request context. CI_MERGE_REQUEST_IID is not set.");
         }
         return getRestHelper().createMergeRequestNote(
-            env.projectId(), env.pullRequest().id(), body);
+            requireProjectId("addMrComment"), 
+            env.pullRequest().id(), 
+            body);
     }
     
     // === REST Helper Access ===
@@ -158,5 +167,23 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
                 "Set GITLAB_CI=true and related environment variables, or check " +
                 "${#ci.gitlab().env != null} before calling.");
         }
+    }
+    
+    private String requireProjectId(String operation) {
+        var projectId = env.projectId();
+        if (StringUtils.isBlank(projectId)) {
+            throw new FcliSimpleException(
+                "Operation '" + operation + "' requires CI_PROJECT_ID to be available in the environment.");
+        }
+        return projectId;
+    }
+    
+    private String requirePipelineId(String operation) {
+        var pipelineId = env.pipelineId();
+        if (StringUtils.isBlank(pipelineId)) {
+            throw new FcliSimpleException(
+                "Operation '" + operation + "' requires CI_PIPELINE_ID to be available in the environment.");
+        }
+        return pipelineId;
     }
 }

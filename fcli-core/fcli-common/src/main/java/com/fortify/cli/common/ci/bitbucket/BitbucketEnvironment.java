@@ -95,7 +95,7 @@ public record BitbucketEnvironment(
             EnvHelper.env(ENV_GIT_SSH_ORIGIN));
 
         var ciRepository = CiRepository.builder()
-            .workDir(workDir)
+            .workspaceDir(workDir)
             .remoteUrl(remoteUrl)
             .name(CiRepositoryName.builder()
                 .short_(repoSlug)
@@ -103,7 +103,7 @@ public record BitbucketEnvironment(
                 .build())
             .build();
 
-        var prId = parseIntOrNull(EnvHelper.env(ENV_PR_ID));
+        var prId = EnvHelper.env(ENV_PR_ID);
         var ciBranch = CiBranch.builder()
             .full(buildFullRef(branch, tag, prId))
             .short_(StringUtils.isNotBlank(branch) ? branch : tag)
@@ -119,7 +119,7 @@ public record BitbucketEnvironment(
             .committer(null)
             .build();
 
-        var pullRequest = prId != null
+        var pullRequest = StringUtils.isNotBlank(prId)
             ? CiPullRequest.active(prId, EnvHelper.env(ENV_PR_DEST_BRANCH))
             : CiPullRequest.inactive();
 
@@ -185,12 +185,8 @@ public record BitbucketEnvironment(
         return commitSha.length() >= 7 ? commitSha.substring(0, 7) : commitSha;
     }
 
-    private static Integer parseIntOrNull(String value) {
-        return StringUtils.isBlank(value) ? null : Integer.parseInt(value);
-    }
-
-    private static String buildFullRef(String branch, String tag, Integer prId) {
-        if (prId != null) {
+    private static String buildFullRef(String branch, String tag, String prId) {
+        if (StringUtils.isNotBlank(prId)) {
             return "refs/pull-requests/" + prId + "/merge";
         }
         if (StringUtils.isNotBlank(branch)) {

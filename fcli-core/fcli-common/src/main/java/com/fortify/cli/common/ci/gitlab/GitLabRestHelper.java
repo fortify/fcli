@@ -51,12 +51,12 @@ public class GitLabRestHelper {
      * @param reportContent Report content (JSON format matching schema)
      * @return Response from GitLab API
      */
-    public ObjectNode uploadSecurityReport(int projectId, int pipelineId, 
+    public ObjectNode uploadSecurityReport(String projectId, String pipelineId, 
                                             String reportType, String reportContent) {
         return getUnirest()
             .post("/projects/{id}/pipelines/{pipeline_id}/security_report_summary")
-            .routeParam("id", String.valueOf(projectId))
-            .routeParam("pipeline_id", String.valueOf(pipelineId))
+            .routeParam("id", projectId)
+            .routeParam("pipeline_id", pipelineId)
             .queryString("report_type", reportType)
             .header("Content-Type", "application/json")
             .body(reportContent)
@@ -86,7 +86,7 @@ public class GitLabRestHelper {
      * @param reportContent Code quality report content (JSON array format)
      * @return Response from GitLab API
      */
-    public ObjectNode uploadCodeQualityReport(int projectId, int mergeRequestIid, String reportContent) {
+    public ObjectNode uploadCodeQualityReport(String projectId, String mergeRequestIid, String reportContent) {
         // Validate format
         try {
             var report = JsonHelper.getObjectMapper().readTree(reportContent);
@@ -99,8 +99,8 @@ public class GitLabRestHelper {
         
         return getUnirest()
             .post("/projects/{id}/merge_requests/{merge_request_iid}/code_quality_reports")
-            .routeParam("id", String.valueOf(projectId))
-            .routeParam("merge_request_iid", String.valueOf(mergeRequestIid))
+            .routeParam("id", projectId)
+            .routeParam("merge_request_iid", mergeRequestIid)
             .header("Content-Type", "application/json")
             .body(reportContent)
             .asObject(ObjectNode.class)
@@ -117,11 +117,11 @@ public class GitLabRestHelper {
      * @param body Comment body (Markdown supported)
      * @return Created note object
      */
-    public ObjectNode createMergeRequestNote(int projectId, int mergeRequestIid, String body) {
+    public ObjectNode createMergeRequestNote(String projectId, String mergeRequestIid, String body) {
         return getUnirest()
             .post("/projects/{id}/merge_requests/{merge_request_iid}/notes")
-            .routeParam("id", String.valueOf(projectId))
-            .routeParam("merge_request_iid", String.valueOf(mergeRequestIid))
+            .routeParam("id", projectId)
+            .routeParam("merge_request_iid", mergeRequestIid)
             .body(JsonHelper.getObjectMapper().createObjectNode().put("body", body))
             .asObject(ObjectNode.class)
             .getBody();

@@ -130,7 +130,7 @@ steps:
           - ${global.ci.prNotActiveSkipReason}                 # Skip if not a pull/merge request
           
       SAST_EXPORT:
-        cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} "--rel=${global.ci.rel}" "--source-dir=${global.ci.sourceDir}"
+        cmd: ${#actionCmd('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)} "--rel=${global.ci.rel}" "--workspace-dir=${global.ci.workspaceDir}" "--source-dir=${global.ci.sourceDir}"
         skip.if-reason:
           - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false
           - ${#actionCmdSkipNoActionReason('SAST_EXPORT', 'fod', global.ci.fod_sastExportAction)}
@@ -167,7 +167,7 @@ formatters:
     Step: ${ciEntry.key}
     Status: ${ciEntry.value.status}
     Reason: ${ciEntry.value.statusReason?:''}
-        
+    
   summary: |
   
     # Fcli CI Pipeline Summary

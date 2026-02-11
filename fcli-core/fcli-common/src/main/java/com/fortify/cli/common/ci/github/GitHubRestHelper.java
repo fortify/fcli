@@ -214,12 +214,12 @@ public class GitHubRestHelper {
      * @return Created comment object
      */
     public ObjectNode createPullRequestComment(String owner, String repo, 
-                                                int pullNumber, String body) {
+                                                String pullNumber, String body) {
         return getUnirest()
             .post("/repos/{owner}/{repo}/issues/{issue_number}/comments")
             .routeParam("owner", owner)
             .routeParam("repo", repo)
-            .routeParam("issue_number", String.valueOf(pullNumber))
+            .routeParam("issue_number", pullNumber)
             .body(JsonHelper.getObjectMapper().createObjectNode().put("body", body))
             .asObject(ObjectNode.class)
             .getBody();
@@ -237,7 +237,7 @@ public class GitHubRestHelper {
      * @param body Comment body (Markdown supported)
      * @return Created review comment object
      */
-    public ObjectNode createReviewComment(String owner, String repo, int pullNumber,
+    public ObjectNode createReviewComment(String owner, String repo, String pullNumber,
                                            String commitId, String path, int line, String body) {
         var requestBody = JsonHelper.getObjectMapper().createObjectNode()
             .put("body", body)
@@ -249,7 +249,7 @@ public class GitHubRestHelper {
             .post("/repos/{owner}/{repo}/pulls/{pull_number}/comments")
             .routeParam("owner", owner)
             .routeParam("repo", repo)
-            .routeParam("pull_number", String.valueOf(pullNumber))
+            .routeParam("pull_number", pullNumber)
             .body(requestBody)
             .asObject(ObjectNode.class)
             .getBody();

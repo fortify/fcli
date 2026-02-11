@@ -221,7 +221,7 @@ steps:
                 - ${global.ci.prNotActiveSkipReason}                 # Skip if not a pull/merge request
                 
             SAST_EXPORT:
-              cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} "--av=${global.ci.av}" "--source-dir=${global.ci.sourceDir}"
+              cmd: ${#actionCmd('SAST_EXPORT', 'ssc', global.ci.ssc_sastExportAction)} "--av=${global.ci.av}" "--workspace-dir=${global.ci.workspaceDir}" "--source-dir=${global.ci.sourceDir}"
               skip.if-reason:
                 - ${SAST_WAIT.dependencySkipReason}                    # Skip if SAST_WAIT was skipped or failed
                 - ${#actionCmdSkipFromEnvReason('SAST_EXPORT', false)} # Skip if DO_SAST_EXPORT==false

@@ -55,10 +55,10 @@ public class AdoEnvironmentTest {
         assertEquals("https://dev.azure.com/myorg/", env.organization());
         assertEquals("MyProject", env.project());
         assertEquals("11111111-2222-3333-4444-555555555555", env.repositoryId());
-        assertEquals(101, env.buildId());
+        assertEquals("101", env.buildId());
         
         assertNotNull(env.ciRepository());
-        assertEquals("/home/vsts/work/1/s", env.ciRepository().workDir());
+        assertEquals("/home/vsts/work/1/s", env.ciRepository().workspaceDir());
         assertEquals("MyRepo", env.ciRepository().name().short_());
         assertEquals("MyRepo", env.ciRepository().name().full());
         
@@ -102,10 +102,10 @@ public class AdoEnvironmentTest {
         
         assertNotNull(env.pullRequest());
         assertEquals(true, env.pullRequest().active());
-        assertEquals(123, env.pullRequest().id());
+        assertEquals("123", env.pullRequest().id());
         assertEquals("develop", env.pullRequest().target());
         assertEquals("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", env.repositoryId());
-        assertEquals(202, env.buildId());
+        assertEquals("202", env.buildId());
     }
     
     @Test
@@ -191,7 +191,7 @@ public class AdoEnvironmentTest {
         var env = AdoEnvironment.detect();
         
         assertNotNull(env);
-        assertEquals("/default/work", env.ciRepository().workDir());
+        assertEquals("/default/work", env.ciRepository().workspaceDir());
     }
     
     @Test
@@ -203,6 +203,6 @@ public class AdoEnvironmentTest {
         var env = AdoEnvironment.detect();
         
         assertNotNull(env);
-        assertEquals(".", env.ciRepository().workDir());
+        assertEquals(".", env.ciRepository().workspaceDir());
     }
 }

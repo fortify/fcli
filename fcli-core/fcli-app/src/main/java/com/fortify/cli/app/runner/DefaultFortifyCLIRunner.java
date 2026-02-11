@@ -119,6 +119,13 @@ public final class DefaultFortifyCLIRunner {
         }
         
         @Override
+        public String descriptionHeading(Object... params) {
+            // Suppress description heading to avoid extra blank lines when description
+            // is empty (description is shown at top before synopsis)
+            return "";
+        }
+        
+        @Override
         public String footer(Object... params) {
             int width = commandSpec().usageMessage().width();
             String dockerNotice = FcliDockerHelper.getDockerHelpNotice(width);

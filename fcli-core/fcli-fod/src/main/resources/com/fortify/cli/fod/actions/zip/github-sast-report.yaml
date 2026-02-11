@@ -16,9 +16,14 @@
 
 author: Fortify
 usage:
-  header: Generate a GitHub Code Scanning report listing FoD SAST vulnerabilities. 
+  header: Integrate FoD SAST results with GitHub Code Scanning. 
   description: |
-    For information on how to import this report into GitHub, see  
+    This action generates and optionally publishes FoD SAST vulnerabilities to GitHub. 
+    With the --publish option, results are automatically uploaded as either SARIF reports 
+    (for GitHub Advanced Security) or Check Runs (for free-tier repositories). The optional 
+    --type option allows you to specify which format to use.
+    
+    For manual SARIF file uploads, see  
     https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
 
 config:
@@ -34,18 +39,34 @@ cli.options:
     description: "Publish report to GitHub Code Scanning (requires GITHUB_TOKEN environment variable with 'security-events: write' permission)"
     required: false
     type: boolean
+  type:
+    names: --type
+    description: "Report type to generate/publish: 'sarif' (GHAS Code Scanning) or 'check-run' (free-tier Check Run). If not specified, tries SARIF first, falls back to Check Run if GHAS unavailable. For best performance, specify the report type that matches your repository's GitHub plan (GHAS vs free tier)."
+    required: false
+  dryrun:
+    names: --dryrun
+    description: "Set to true to load and format all data but output to stdout instead of publishing"
+    type: boolean
+    required: false
+    default: false
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  workspaceDir:
+    names: --workspace-dir
+    required: false
+    description: "Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports"
   sourceDir:
     names: --source-dir
     required: false
-    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
+    description: "Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)"
 
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
-      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+      issueSourceFileResolver: ${#issueSourceFileResolver({workspaceDir:cli.workspaceDir,sourceDir:cli.sourceDir})}
+      doOutputSarif: ${cli.type==null || cli.type=='sarif'}
+      doOutputCheckRun: ${cli.type==null || cli.type=='check-run'}
   - log.progress: Loading static scan summary
   - rest.call:
       staticScanSummary:
@@ -74,12 +95,21 @@ steps:
             traces:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/traces 
           do:
-            - var.set:
+            - if: ${doOutputSarif}
+              var.set:
                 rules..: {fmt: rules, if: "${ruleCache==null || ruleCache[issue.checkId]==null}"}
                 ruleCache.${issue.checkId}: true
                 results..: {fmt: results}
-  - var.set:
+            - if: ${doOutputCheckRun}
+              var.set:
+                checkRunAnnotations..: {fmt: checkRunAnnotation}
+  - if: ${doOutputSarif}
+    var.set:
       reportContents: {fmt: github-sast-report}
+  - if: ${doOutputCheckRun}
+    var.set:
+      checkRunSummary: {fmt: checkRunSummary}
+  - var.set:
       reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gh-fortify-sast.sarif'}"
   - if: ${reportFile!=null}
     steps:
@@ -89,9 +119,41 @@ steps:
         log.info: Output written to ${reportFile}
   - if: ${cli.publish==true}
     steps:
-      - var.set:
-          githubUpload: ${#github.uploadSarif(reportContents)}
-      - log.info: Report published to GitHub Code Scanning
+      - if: ${cli.dryrun}
+        steps:
+          - if: ${doOutputSarif}
+            steps:
+              - log.info: |
+                  
+                  ===== SARIF contents =====
+                  ${reportContents}
+          - if: ${doOutputCheckRun}
+            steps:
+              - log.info: |
+                  
+                  ===== Check Run Summary =====
+                  ${checkRunSummary}
+                  
+                  ===== Check Run Annotations (${checkRunAnnotations?.getRealNode()?.size()?:0} total) =====
+                  ${checkRunAnnotations}
+      - if: ${!cli.dryrun && doOutputSarif}
+        steps:
+          - var.set:
+              uploadResult: ${#github.tryUploadSarif(reportContents)}
+          - if: ${uploadResult.success}
+            log.info: Report published to GitHub Code Scanning
+          - if: ${!uploadResult.success && uploadResult.reason=='ghas_unavailable' && cli.type==null}
+            steps:
+              - var.set:
+                  checkRun: ${#github.createCheckRunWithAnnotations('Fortify SAST Scan', 'completed', 'neutral', 'Fortify Security Scan Results', checkRunSummary, checkRunAnnotations)}
+              - log.info: Published as GitHub Check Run (free tier - GHAS not available)
+          - if: ${!uploadResult.success && uploadResult.reason!='ghas_unavailable'}
+            throw: 'Failed to publish report: ${uploadResult.message}'
+      - if: ${!cli.dryrun && cli.type=='check-run'}
+        steps:
+          - var.set:
+              checkRun: ${#github.createCheckRunWithAnnotations('Fortify SAST Scan', 'completed', 'neutral', 'Fortify Security Scan Results', checkRunSummary, checkRunAnnotations)}
+          - log.info: Published as GitHub Check Run
 
 formatters:
   github-sast-report:
@@ -181,4 +243,37 @@ formatters:
                 }] 
             }} 
         }
+        
+  # Check Run formatters for free-tier GitHub reporting
+  checkRunSummary: |
+    ## Fortify SAST Scan Results
+    
+    **Application:** ${rel.applicationName}  
+    **Release:** ${rel.releaseName}  
+    **Total Issues:** ${issues?.getRealNode()?.size()?:0}
+    
+    ### Issues by Severity
+    
+    | Severity | Count |
+    |----------|-------|
+    | Critical | ${issues?.^[severityString=='Critical']?.getRealNode()?.size()?:0} |
+    | High | ${issues?.^[severityString=='High']?.getRealNode()?.size()?:0} |
+    | Medium | ${issues?.^[severityString=='Medium']?.getRealNode()?.size()?:0} |
+    | Low | ${issues?.^[severityString=='Low']?.getRealNode()?.size()?:0} |
+    
+    See annotations below for detailed findings at specific file locations.
+    
+  checkRunAnnotation:
+    if: ${issueSourceFileResolver.exists(issue.primaryLocationFull, issue.lineNumber==0?1:issue.lineNumber)}
+    path: ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
+    start_line: ${issue.lineNumber==0?1:issue.lineNumber}
+    end_line: ${issue.lineNumber==0?1:issue.lineNumber}
+    annotation_level: ${(issue.severityString matches "(Critical|High)") ? "warning":"notice"}
+    title: ${issue.category}
+    message: |
+      **${issue.category}** (Severity: ${issue.severityString})
+      
+      ${#cleanIssueDescription(issue.details?.summary)}
+      
+      [View in FoD](${#fod.issueBrowserUrl(issue)})
       

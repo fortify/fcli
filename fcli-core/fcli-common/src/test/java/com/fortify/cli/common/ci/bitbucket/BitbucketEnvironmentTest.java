@@ -50,7 +50,7 @@ class BitbucketEnvironmentTest {
         assertEquals("refs/heads/main", env.ciBranch().full());
         assertEquals("1234567", env.ciCommit().id().short_());
         assertEquals(false, env.pullRequest().active());
-        assertEquals("/opt/build", env.ciRepository().workDir());
+        assertEquals("/opt/build", env.ciRepository().workspaceDir());
         assertEquals("https://bitbucket.org/acme/awesome-repo.git", env.ciRepository().remoteUrl());
     }
 
@@ -67,7 +67,7 @@ class BitbucketEnvironmentTest {
         assertNotNull(env);
         assertEquals("refs/pull-requests/42/merge", env.ciBranch().full());
         assertEquals(true, env.pullRequest().active());
-        assertEquals(42, env.pullRequest().id());
+        assertEquals("42", env.pullRequest().id());
         assertEquals("main", env.pullRequest().target());
     }
 

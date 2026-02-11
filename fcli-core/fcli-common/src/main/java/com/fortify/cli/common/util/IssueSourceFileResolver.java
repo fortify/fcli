@@ -15,7 +15,6 @@ package com.fortify.cli.common.util;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,17 +42,26 @@ import lombok.SneakyThrows;
  * against an actual repository path.</p>
  * 
  * <p>To work around these issues, this class attempts to map Fortify-provided issue source file 
- * paths against local file system paths relative to a given source code directory, basically 
- * finding the longest matching path suffix.</p>
+ * paths against local file system paths relative to a given workspace/repository root directory, 
+ * using partial path matching to find the longest matching suffix. The {@link #workspacePath} should 
+ * be set to the workspace/repository root directory for proper resolution.</p>
+ * 
+ * <p><strong>Example:</strong> If the workspace is {@code /home/runner/workspace} containing 
+ * {@code sources/my-pkg/sub-path/test.js}, and Fortify scanned only {@code sources/my-pkg}, 
+ * Fortify will report {@code sub-path/test.js}. This resolver will match it against the indexed 
+ * {@code sources/my-pkg/sub-path/test.js} and return the full workspace-relative path.</p>
  *  
  * @author Ruud Senden
  */
 // TODO Also see TODO comments in IssueSourceFileResolverTest
-// TODO How to handle absolute paths? Always return as-is (or null if not existing and OnNoMatch.NULL)? Or try to resolve against sourcePath?
+// TODO How to handle absolute paths? Always return as-is (or null if not existing and OnNoMatch.NULL)? Or try to resolve against workspacePath?
 // TODO How to handle drive letters (with either absolute or relative path)?
 @Builder @Reflectable
 public class IssueSourceFileResolver {
     private static final Logger LOG = LoggerFactory.getLogger(IssueSourceFileResolver.class);
+    /** Workspace/repository root directory path for indexing and resolving file paths */
+    @Getter private final Path workspacePath;
+    /** Optional source directory that was scanned - used for prioritizing matches when multiple files have the same name */
     @Getter private final Path sourcePath;
     @Builder.Default private final OnNoMatch onNoMatch = OnNoMatch.ORIGINAL;
     @Builder.Default private final FileSeparator separatorOnReturn = FileSeparator.LINUX;
@@ -103,9 +111,35 @@ public class IssueSourceFileResolver {
         return FileUtils.pathToString(resolve(Path.of(issuePath)), separatorOnReturn.getSeparatorChar());
     }
     
+    /**
+     * Check if the given issue path can be resolved to an existing file at the specified line number.
+     * This is useful for validating issue locations before creating annotations or reports.
+     * 
+     * @param issuePath The Fortify-reported source file path
+     * @param lineNumber The line number to validate (1-based)
+     * @return true if workspacePath is null (no validation possible), or if the resolved file exists 
+     *         as a regular file and the line number is valid (>0)
+     */
+    public final boolean exists(String issuePath, int lineNumber) {
+        if ( workspacePath == null ) {
+            return true; // No validation possible without source path
+        }
+        if ( lineNumber <= 0 ) {
+            return false; // Invalid line number
+        }
+        var resolvedPath = resolve(Path.of(issuePath));
+        if ( resolvedPath == null ) {
+            return false;
+        }
+        var fullPath = workspacePath.resolve(resolvedPath);
+        return Files.exists(fullPath) && Files.isRegularFile(fullPath);
+        // Note: We don't validate the actual line count as it would require reading the entire file,
+        // which could be expensive for large codebases. GitHub will handle non-existent lines gracefully.
+    }
+    
     private final SourceFileIndex createIndexIfNull(SourceFileIndex index) {
         if ( index==null ) {
-            index = new SourceFileIndex(sourcePath);
+            index = new SourceFileIndex(workspacePath, sourcePath);
         }
         return index;
     }
@@ -122,14 +156,38 @@ public class IssueSourceFileResolver {
     }
     
     private static final class SourceFileIndex {
-        /** Full relative paths, like src/main/java/com/fortify/X.java */
-        private final Map<String,Path> fullRelativePathsIndex;
-        /** Full and partial relative paths, like src/main/java/com/fortify/X.java, com/fortify/X.java, X.java */ 
-        private final Map<String,Path> fullAndPartialRelativePathsIndex;
+        /** Full relative paths only, like src/main/java/com/fortify/X.java.
+         * Values are lists to handle multiple files with the same name (e.g., index.js in multiple directories) */
+        private final Map<String,java.util.List<Path>> fullRelativePathsIndex;
+        /** Full and partial relative paths, like src/main/java/com/fortify/X.java, com/fortify/X.java, X.java.
+         * Values are lists to handle multiple files with the same name (e.g., index.js in multiple directories) */ 
+        private final Map<String,java.util.List<Path>> fullAndPartialRelativePathsIndex;
+        /** Optional source path (relative to workspace) for prioritizing matches */
+        private final Path sourcePathRelative;
         
-        private SourceFileIndex(Path sourcePath) {
-            this.fullRelativePathsIndex = createFullRelativePathsIndex(sourcePath);
-            this.fullAndPartialRelativePathsIndex = createFullAndPartialRelativePathsIndex(fullRelativePathsIndex.values());
+        private SourceFileIndex(Path workspacePath, Path sourcePath) {
+            this.sourcePathRelative = computeSourcePathRelative(workspacePath, sourcePath);
+            var fullPaths = createFullRelativePathsIndex(workspacePath);
+            this.fullRelativePathsIndex = fullPaths;
+            this.fullAndPartialRelativePathsIndex = createFullAndPartialRelativePathsIndex(fullPaths.values());
+        }
+        
+        private static Path computeSourcePathRelative(Path workspacePath, Path sourcePath) {
+            if ( workspacePath==null || sourcePath==null ) { return null; }
+            
+            var normalizedWorkspace = workspacePath.normalize().toAbsolutePath();
+            var absoluteSource = sourcePath.isAbsolute() 
+                ? sourcePath.normalize() 
+                : normalizedWorkspace.resolve(sourcePath).normalize();
+            
+            if ( absoluteSource.startsWith(normalizedWorkspace) ) {
+                return normalizedWorkspace.relativize(absoluteSource);
+            } else {
+                if ( LOG.isWarnEnabled() ) {
+                    LOG.warn("sourceDir {} is not under workspaceDir {}, will not prioritize matches", absoluteSource, normalizedWorkspace);
+                }
+                return null;
+            }
         }
         
         /**
@@ -141,52 +199,91 @@ public class IssueSourceFileResolver {
          * <p>If no match is found in {@link #fullAndPartialRelativePathsIndex}, this method will then attempt to match any of 
          * the sub-paths in the given path against {@link #fullRelativePathsIndex}, which, given a source path
          * <code>src/main/java/com/fortify/X.java</code>, will match an input path like 
-         * <code>any/leading/dir/src/main/java/com/fortify/X.java</code>, but not <code>any/leading/dir/com/fortify/X.java</code>.</p> 
+         * <code>any/leading/dir/src/main/java/com/fortify/X.java</code>, but not <code>any/leading/dir/com/fortify/X.java</code>.</p>
+         * 
+         * <p>When multiple files match (e.g., both <code>src/index.js</code> and <code>src/node_modules/pkg/index.js</code>),
+         * this method prioritizes matches under {@link #sourcePath} if provided, then selects the shortest path.</p>
          */
         protected final Path resolve(Path path) {
             if ( path==null ) { return null; }
             var normalizedPath = path.normalize();
-            var result = fullAndPartialRelativePathsIndex.get(pathToString(normalizedPath));
-            return result!=null ? result : resolveSubPathFromFullRelativePathsIndex(path);
+            var candidates = fullAndPartialRelativePathsIndex.get(pathToString(normalizedPath));
+            return candidates!=null ? selectBestCandidate(candidates) : resolveByStrippingLeadingDirs(normalizedPath);
         }
 
-        private Path resolveSubPathFromFullRelativePathsIndex(Path normalizedPath) {
-            var result = fullRelativePathsIndex.get(pathToString(normalizedPath));
-            if ( result==null ) {
-                var nameCount = normalizedPath.getNameCount();
-                if ( nameCount > 1 ) {
-                    return resolveSubPathFromFullRelativePathsIndex(normalizedPath.subpath(1, nameCount));
+        /**
+         * Select the best candidate from a list of matching paths.
+         * Priority: 1) paths under sourcePath, 2) shortest path (fewest components)
+         */
+        private Path selectBestCandidate(java.util.List<Path> candidates) {
+            if ( candidates==null || candidates.isEmpty() ) { return null; }
+            if ( candidates.size()==1 ) { return candidates.get(0); }
+            
+            // Try to prefer paths under sourcePath if provided
+            if ( sourcePathRelative!=null ) {
+                var inSourceDir = candidates.stream()
+                    .filter(p -> p.startsWith(sourcePathRelative))
+                    .toList();
+                if ( !inSourceDir.isEmpty() ) {
+                    candidates = inSourceDir;
+                    if ( LOG.isDebugEnabled() && candidates.size() > 1 ) {
+                        LOG.debug("Multiple matches found under sourceDir {}: {}", sourcePathRelative, candidates);
+                    }
                 }
             }
+            
+            // Among remaining candidates, prefer shortest path
+            var result = candidates.stream()
+                .min(java.util.Comparator.comparingInt(Path::getNameCount))
+                .orElse(candidates.get(0));
+            
+            if ( LOG.isDebugEnabled() && candidates.size() > 1 ) {
+                LOG.debug("Selected {} from candidates: {}", result, candidates);
+            }
+            
             return result;
+        }
+
+        private Path resolveByStrippingLeadingDirs(Path normalizedPath) {
+            var nameCount = normalizedPath.getNameCount();
+            if ( nameCount <= 1 ) { return null; }
+            
+            var subPath = normalizedPath.subpath(1, nameCount);
+            var candidates = fullRelativePathsIndex.get(pathToString(subPath));
+            return candidates!=null ? selectBestCandidate(candidates) : resolveByStrippingLeadingDirs(subPath);
         }
 
         @SneakyThrows
-        private static final Map<String, Path> createFullRelativePathsIndex(Path sourcePath) {
-            var result = new HashMap<String, Path>();
-            if ( sourcePath!=null && Files.isDirectory(sourcePath) ) {
-                var normalizedSourcePath = sourcePath.normalize();
-                try (Stream<Path> stream = Files.walk(normalizedSourcePath)) {
+        private static final Map<String, java.util.List<Path>> createFullRelativePathsIndex(Path workspacePath) {
+            var result = new HashMap<String, java.util.List<Path>>();
+            if ( workspacePath!=null && Files.isDirectory(workspacePath) ) {
+                var normalizedWorkspacePath = workspacePath.normalize();
+                try (Stream<Path> stream = Files.walk(normalizedWorkspacePath)) {
                     stream.filter(Files::isRegularFile)
-                        .forEach(p->addPathToFullRelativePathsIndex(result, normalizedSourcePath.relativize(p.normalize())));
+                        .forEach(p->{
+                            var fullRelativePath = normalizedWorkspacePath.relativize(p.normalize());
+                            if ( LOG.isTraceEnabled() ) { LOG.trace("Adding source path {} to index", fullRelativePath); }
+                            var key = pathToString(fullRelativePath);
+                            result.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(fullRelativePath);
+                        });
                 }
             }
             return result;
         }
-
-        private static final void addPathToFullRelativePathsIndex(Map<String, Path> result, Path fullRelativePath) {
-            if ( LOG.isTraceEnabled() ) { LOG.trace("Adding source path {} to index", fullRelativePath); }
-            result.put(pathToString(fullRelativePath), fullRelativePath);
-        }
         
-        private static final Map<String, Path> createFullAndPartialRelativePathsIndex(Collection<Path> fullRelativePaths) {
-            var result = new HashMap<String, Path>();
-            fullRelativePaths.forEach(p->addPathToFullAndPartialRelativePathsIndex(result, p, p));
+        private static final Map<String, java.util.List<Path>> createFullAndPartialRelativePathsIndex(java.util.Collection<java.util.List<Path>> fullRelativePaths) {
+            var result = new HashMap<String, java.util.List<Path>>();
+            fullRelativePaths.forEach(paths -> 
+                paths.forEach(fullRelativePath -> 
+                    addPathToFullAndPartialRelativePathsIndex(result, fullRelativePath, fullRelativePath)
+                )
+            );
             return result;
         }
         
-        private static final void addPathToFullAndPartialRelativePathsIndex(Map<String, Path> index, Path fullRelativePath, Path partialRelativePath) {
-            index.put(pathToString(partialRelativePath), fullRelativePath);
+        private static final void addPathToFullAndPartialRelativePathsIndex(Map<String, java.util.List<Path>> index, Path fullRelativePath, Path partialRelativePath) {
+            var key = pathToString(partialRelativePath);
+            index.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(fullRelativePath);
             var nameCount = partialRelativePath.getNameCount(); 
             if ( nameCount > 1 ) {
                 addPathToFullAndPartialRelativePathsIndex(index, fullRelativePath, partialRelativePath.subpath(1, nameCount));

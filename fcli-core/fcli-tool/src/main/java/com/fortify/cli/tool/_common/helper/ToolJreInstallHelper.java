@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.tool._common.helper;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.commons.lang3.StringUtils;
@@ -61,11 +62,16 @@ public class ToolJreInstallHelper {
         );
         
         if (detectionResult != null) {
-            return JreInstallResult.builder()
-                .jreSource(JreSource.ENV_VAR)
-                .jrePath(detectionResult.getJavaHome())
-                .jreEnvVarName(detectionResult.getEnvVarName())
-                .build();
+            // Validate that Java actually exists at the detected path
+            Path detectedJrePath = Path.of(detectionResult.getJavaHome());
+            if (isJavaExecutablePresent(detectedJrePath)) {
+                return JreInstallResult.builder()
+                    .jreSource(JreSource.ENV_VAR)
+                    .jrePath(detectionResult.getJavaHome())
+                    .jreEnvVarName(detectionResult.getEnvVarName())
+                    .build();
+            }
+            // If detected path is invalid, fall through to install embedded JRE
         }
         
         // 4. No JRE found - use embedded JRE unless explicitly skipped with --no-with-jre
@@ -102,6 +108,19 @@ public class ToolJreInstallHelper {
                 detectedVersion != null ? detectedVersion : "unknown"
             ));
         }
+    }
+    
+    /**
+     * Checks if a Java executable exists at the given JRE path.
+     */
+    private static boolean isJavaExecutablePresent(Path jrePath) {
+        if (jrePath == null || !Files.exists(jrePath)) {
+            return false;
+        }
+        var javaExecutable = jrePath.resolve("bin").resolve(
+            com.fortify.cli.common.util.PlatformHelper.isWindows() ? "java.exe" : "java"
+        );
+        return Files.exists(javaExecutable) && Files.isRegularFile(javaExecutable);
     }
     
     /**

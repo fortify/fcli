@@ -94,7 +94,7 @@ public record GitHubEnvironment(
         
         // Build standardized structures
         var ciRepository = CiRepository.builder()
-            .workDir(EnvHelper.envOrDefault(ENV_WORKSPACE, "."))
+            .workspaceDir(EnvHelper.envOrDefault(ENV_WORKSPACE, "."))
             .remoteUrl(null)  // Could be constructed from server URL, but typically not needed
             .name(CiRepositoryName.builder()
                 .short_(repo)
@@ -118,7 +118,7 @@ public record GitHubEnvironment(
             .build();
         
         var pullRequest = isPr 
-            ? CiPullRequest.active(prInfo, targetBranch)
+            ? CiPullRequest.active(prInfo != null ? prInfo.toString() : null, targetBranch)
             : CiPullRequest.inactive();
         
         return GitHubEnvironment.builder()

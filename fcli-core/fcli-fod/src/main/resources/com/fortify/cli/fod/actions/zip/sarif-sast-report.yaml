@@ -35,15 +35,19 @@ cli.options:
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  workspaceDir:
+    names: --workspace-dir
+    required: false
+    description: "Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports"
   sourceDir:
     names: --source-dir
     required: false
-    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
+    description: "Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)"
 
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
-      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+      issueSourceFileResolver: ${#issueSourceFileResolver({workspaceDir:cli.workspaceDir,sourceDir:cli.sourceDir})}
   - log.progress: Loading static scan summary
   - rest.call:
       staticScanSummary:

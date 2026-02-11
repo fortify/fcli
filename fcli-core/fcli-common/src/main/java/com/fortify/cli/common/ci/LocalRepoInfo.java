@@ -24,7 +24,7 @@ import lombok.Builder;
  * <pre>
  * {
  *   "repository": {
- *     "workDir": "/path/to/repo",
+ *     "workspaceDir": "/path/to/repo",
  *     "remoteUrl": "https://github.com/owner/repo.git",
  *     "name": {
  *       "short": "repo",

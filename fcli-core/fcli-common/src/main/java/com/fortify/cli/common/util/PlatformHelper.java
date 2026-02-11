@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.util;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 
 /**
@@ -24,7 +26,11 @@ public final class PlatformHelper {
     private PlatformHelper() {}
     
     public static String getOSString() {
-        return normalizeOs(System.getProperty("os.name", "unknown"));
+        return getOSString(false);
+    }
+    
+    public static String getOSString(boolean detectMusl) {
+        return normalizeOs(System.getProperty("os.name", "unknown"), detectMusl);
     }
     
     public static String getArchString() {
@@ -32,7 +38,11 @@ public final class PlatformHelper {
     }
     
     public static String getPlatform() {
-        return String.format("%s/%s", getOSString(), getArchString());
+        return getPlatform(false);
+    }
+    
+    public static String getPlatform(boolean detectMusl) {
+        return String.format("%s/%s", getOSString(detectMusl), getArchString());
     }
     
     public static boolean isWindows() {
@@ -46,8 +56,43 @@ public final class PlatformHelper {
     public static boolean isMac() {
         return "darwin".equals(getOSString());
     }
+
+    /**
+     * Detects if the current Linux system uses musl libc (e.g., Alpine Linux) instead of glibc.
+     * This is important for selecting compatible JRE distributions, as glibc-based JREs
+     * will not work on musl-based systems.
+     * 
+     * Detection strategy:
+     * 1. Check for Alpine-specific release file (most common musl distribution)
+     * 2. Check for musl dynamic linker in standard locations (/lib, /usr/lib)
+     * 
+     * This approach is more reliable than executing external commands (ldd, sh) which
+     * may not be available in minimal Docker images.
+     * 
+     * @return true if running on a musl-based Linux system, false otherwise
+     */
+    public static final boolean isMusl() {
+        try {
+            // Check for Alpine-specific release file (most common musl distribution)
+            if (Files.exists(Path.of("/etc/alpine-release"))) {
+                return true;
+            }
+            
+            // Check for musl dynamic linker in /lib and /usr/lib
+            // Common patterns: /lib/ld-musl-x86_64.so.1, /lib/ld-musl-aarch64.so.1, etc.
+            return java.util.stream.Stream.of("/lib", "/usr/lib")
+                    .map(Path::of)
+                    .filter(Files::exists)
+                    .anyMatch(dir -> FileUtils.processMatchingFileStream(dir, "ld-musl-*", 1,
+                            stream -> stream.findFirst().isPresent()));
+            
+        } catch (Exception e) {
+            // If detection fails, assume glibc (more common)
+        }
+        return false;
+    }
     
-    private static String normalizeOs(String value) {
+    private static String normalizeOs(String value, boolean detectMusl) {
         value = normalize(value);
         if (value.startsWith("aix")) {
             return "linux";
@@ -62,7 +107,7 @@ public final class PlatformHelper {
             }
         }
         if (value.startsWith("linux")) {
-            return "linux";
+            return detectMusl && isMusl() ? "linux-musl" : "linux";
         }
         if (value.startsWith("mac") || value.startsWith("osx") || value.contains("darwin")) {
             return "darwin";
