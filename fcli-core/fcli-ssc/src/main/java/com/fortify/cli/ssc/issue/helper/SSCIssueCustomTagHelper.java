@@ -21,7 +21,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagValueType;
 
@@ -56,6 +59,51 @@ public class SSCIssueCustomTagHelper {
                     return createAuditValue(tagName, tagValue, tagInfo);
                 })
                 .collect(Collectors.toList());
+    }
+    
+    public void populateCustomTagUpdates(Map<String,String> customTags, ArrayNode customTagsArray) {
+        if (customTags == null || customTags.isEmpty()) {
+            return;
+        }
+        
+        Map<String, CustomTagInfo> tagInfoMap = getCustomTagInfoMap();
+        
+        customTags.forEach((tagName, tagValue) -> {
+            CustomTagInfo tagInfo = tagInfoMap.get(tagName.toLowerCase());
+            if (tagInfo == null) {
+                throw new FcliSimpleException("Custom tag '" + tagName + "' is not available for this application version");
+            }
+            
+            String displayValue = tagValue == null || tagValue.isBlank() ? "<unset>" : tagValue;
+            String valueGuid = getValueGuidForTag(tagValue, tagInfo);
+            
+            ObjectNode tagNode = JsonHelper.getObjectMapper().createObjectNode();
+            tagNode.put("customTagName", tagInfo.getName());
+            tagNode.put("customTagGuid", tagInfo.getGuid());
+            tagNode.put("value", displayValue);
+            if (valueGuid != null) {
+                tagNode.put("valueGuid", valueGuid);
+            }
+            customTagsArray.add(tagNode);
+        });
+    }
+    
+    private String getValueGuidForTag(String value, CustomTagInfo tagInfo) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        
+        if (tagInfo.getValueType() == SSCCustomTagValueType.LIST) {
+            if (tagInfo.getValueList() != null) {
+                for (ValueListItem item : tagInfo.getValueList()) {
+                    if (value.equalsIgnoreCase(item.getLookupValue())) {
+                        return String.valueOf(item.getLookupIndex());
+                    }
+                }
+            }
+        }
+        
+        return null;
     }
     
     private SSCIssueCustomTagAuditValue createAuditValue(String tagName, String value, CustomTagInfo tagInfo) {

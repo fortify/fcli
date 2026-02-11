@@ -15,7 +15,6 @@ package com.fortify.cli.ssc.issue.cli.cmd;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -57,8 +56,11 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
     @Option(names = {"--assign-user"})
     private String assignUser;
     
+    private UnirestInstance unirestInstance;
+    
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        this.unirestInstance = unirest;
         validateInput();
         String appVersionId = appVersionResolver.getAppVersionId(unirest);
         List<SSCIssueIdentifier> issues = fetchIssueRevisionsFromSSC(unirest, appVersionId, issueIds);
@@ -95,16 +97,43 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
     }
 
     private JsonNode buildResults() {
-        ArrayNode results = JsonHelper.getObjectMapper().createArrayNode();
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
+
+        String updatesSummary = buildUpdateDetails();
+
+        ArrayNode issueIdsArray = result.putArray("issueIds");
         for (String vulnId : issueIds) {
-            ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
-            result.put("id", vulnId);
-            result.put("update", buildUpdateDetails());
-            result.put("action", "UPDATED");
-            addOptionalFields(result);
-            results.add(result);
+            issueIdsArray.add(vulnId);
         }
-        return results;
+
+        result.put("updatesString", updatesSummary);
+
+        // Add customTagUpdates array if custom tags exist
+        if (hasCustomTags()) {
+            ArrayNode customTagsArray = result.putArray("customTagUpdates");
+            String appVersionId = appVersionResolver.getAppVersionId(unirestInstance);
+            var customTagHelper = new SSCIssueCustomTagHelper(unirestInstance, appVersionId);
+            customTagHelper.populateCustomTagUpdates(customTags, customTagsArray);
+        }
+
+        // Add newComment at top level (renamed from comment)
+        if (StringUtils.isNotBlank(comment)) {
+            result.put("newComment", comment);
+        }
+
+        // Add assignedUser at top level
+        if (StringUtils.isNotBlank(assignUser)) {
+            result.put("assignedUser", assignUser);
+        }
+
+        // Add suppressed at top level
+        if (suppress != null) {
+            result.put("suppressed", suppress);
+        }
+
+        ArrayNode resultsArray = JsonHelper.getObjectMapper().createArrayNode();
+        resultsArray.add(result);
+        return resultsArray;
     }
 
     private String buildUpdateDetails() {
@@ -122,31 +151,15 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
         if (StringUtils.isNotBlank(comment)) {
             appendDetail(details, "Comment: " + comment);
         }
-        return details.toString();
+        String result = details.toString();
+        return result.isEmpty() ? "No updates" : result;
     }
-
+    
     private void appendDetail(StringBuilder sb, String detail) {
         if (sb.length() > 0) {
             sb.append("\n");
         }
         sb.append(detail);
-    }
-
-    private void addOptionalFields(ObjectNode result) {
-        if (hasCustomTags()) {
-            result.put("customTags", customTags.entrySet().stream()
-                    .map(e -> e.getKey() + "=" + e.getValue())
-                    .collect(Collectors.joining(", ")));
-        }
-        if (suppress != null) {
-            result.put("suppressed", suppress);
-        }
-        if (StringUtils.isNotBlank(assignUser)) {
-            result.put("assignedToUser", assignUser);
-        }
-        if (StringUtils.isNotBlank(comment)) {
-            result.put("comment", comment);
-        }
     }
     
     private void executeAssignUserRequest(UnirestInstance unirest, String appVersionId, 
