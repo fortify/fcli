@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260212.170712-dev_v3.x
+fcli_version: 0.20260212.231304-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260212.170712-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260212.170712-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260212.231304-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260212.170712-dev_v3.x</span>
+<span id="revnumber">version 0.20260212.231304-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -399,11 +399,7 @@ fcli_version: 0.20260212.170712-dev_v3.x
 <li><a href="#_substringafter"><code>substringAfter</code></a></li>
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
-<li><a href="#_ado_getresthelper"><code>ado.getRestHelper</code></a></li>
-<li><a href="#_bitbucket_getresthelper"><code>bitbucket.getRestHelper</code></a></li>
 <li><a href="#_env"><code>env</code></a></li>
-<li><a href="#_github_getresthelper"><code>github.getRestHelper</code></a></li>
-<li><a href="#_gitlab_getresthelper"><code>gitlab.getRestHelper</code></a></li>
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
@@ -454,7 +450,7 @@ fcli_version: 0.20260212.170712-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260212.170712-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260212.231304-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -576,7 +572,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260212.170712-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260212.231304-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4916,44 +4912,6 @@ values provided in the mapping object.</p>
 
 </div>
 <div class="sect2">
-<h3 id="_ado_getresthelper"><a class="anchor" href="#_ado_getresthelper"></a><code>ado.getRestHelper</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.getRestHelper()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_getresthelper"><a class="anchor" href="#_bitbucket_getresthelper"></a><code>bitbucket.getRestHelper</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.getRestHelper()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
 <h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -4972,44 +4930,6 @@ values provided in the mapping object.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The value of the given environment variable, or <code>null</code> if the environment variable is not set or its value is blank</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_getresthelper"><a class="anchor" href="#_github_getresthelper"></a><code>github.getRestHelper</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.getRestHelper()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_getresthelper"><a class="anchor" href="#_gitlab_getresthelper"></a><code>gitlab.getRestHelper</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.getRestHelper()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
 </tr>
 </tbody>
 </table>
@@ -5885,8 +5805,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260212.170712-dev_v3.x<br>
-Last updated 2026-02-12 17:09:54 UTC
+Version 0.20260212.231304-dev_v3.x<br>
+Last updated 2026-02-12 23:16:06 UTC
 </div>
 </div>
 </body>
