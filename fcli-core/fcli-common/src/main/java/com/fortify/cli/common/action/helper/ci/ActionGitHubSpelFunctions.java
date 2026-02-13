@@ -23,6 +23,7 @@ import com.fortify.cli.common.ci.github.GitHubRestHelper;
 import com.fortify.cli.common.ci.github.GitHubUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
@@ -100,6 +101,50 @@ public class ActionGitHubSpelFunctions implements IActionSpelFunctions {
         var ref = env.ciBranch().full();
         var sha = env.ciCommit().id().full();
         return getRestHelper().uploadSarif(owner, repo, ref, sarifContent, sha);
+    }
+    
+    /**
+     * Try to upload SARIF report, returning a result object instead of throwing exceptions.
+     * Useful for implementing fallback logic in actions when GHAS is not available.
+     * 
+     * Returns object with structure:
+     * - success=true: {success: true, data: <API response>}
+     * - GHAS unavailable: {success: false, reason: "ghas_unavailable", message: <error>}
+     * - Other errors: {success: false, reason: "other", message: <error>}
+     * 
+     * @param sarifContent SARIF report content as string
+     * @return Result object with success status and details
+     */
+    @SpelFunction(cat=ci, desc="Tries to upload SARIF, returning {success, reason, message} for fallback logic; does not throw on GHAS unavailable",
+            returns="Result object: {success: true, data: ...} or {success: false, reason: 'ghas_unavailable'|'other', message: ...}")
+    public ObjectNode tryUploadSarif(
+            @SpelFunctionParam(name="sarifContent", desc="SARIF report content as string") String sarifContent) {
+        requireEnv("tryUploadSarif");
+        var mapper = JsonHelper.getObjectMapper();
+        try {
+            var repoName = env.ciRepository().name();
+            var owner = repoName.full().contains("/") ? repoName.full().split("/")[0] : "";
+            var repo = repoName.short_();
+            var ref = env.ciBranch().full();
+            var sha = env.ciCommit().id().full();
+            var response = getRestHelper().uploadSarif(owner, repo, ref, sarifContent, sha);
+            return mapper.createObjectNode()
+                .put("success", true)
+                .set("data", response);
+        } catch (UnexpectedHttpResponseException e) {
+            var status = e.getStatus();
+            var isGhasUnavailable = (status == 403 || status == 404) && 
+                                   e.getMessage().contains("code-scanning");
+            return mapper.createObjectNode()
+                .put("success", false)
+                .put("reason", isGhasUnavailable ? "ghas_unavailable" : "other")
+                .put("message", e.getMessage());
+        } catch (Exception e) {
+            return mapper.createObjectNode()
+                .put("success", false)
+                .put("reason", "other")
+                .put("message", e.getMessage());
+        }
     }
     
     // === Check Runs (Free Tier Alternative with file/line details) ===

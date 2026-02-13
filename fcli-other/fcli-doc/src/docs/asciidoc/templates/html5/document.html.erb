@@ -91,13 +91,206 @@ end
 {% include fcli-enhancements.html %}
 <% else %>
 <style>
+/* Dark Theme Variables */
+:root {
+  --bg-color: #ffffff;
+  --content-bg: #ffffff;
+  --text-color: rgba(0, 0, 0, 0.8);
+  --heading-color: rgba(0, 0, 0, 0.8);
+  --link-color: #2156a5;
+  --link-hover-color: #1d4b8f;
+  --code-bg: #f5f5f5;
+  --code-border: #cccccc;
+  --table-border: #dedede;
+  --table-stripe-bg: #f9f9f9;
+  --banner-bg: #0079ef;
+  --banner-logo-bg: #00abf3;
+  --navbar-bg: #dddddf;
+  --navbar-text: rgba(0, 0, 0, 0.8);
+  --sidebar-bg: #f3f3f3;
+  --border-color: #cccccc;
+  --toc-border: #efefed;
+}
+
+[data-theme="dark"] {
+  --bg-color: #1e1e1e;
+  --content-bg: #252526;
+  --text-color: #d4d4d4;
+  --heading-color: #e8e8e8;
+  --link-color: #4fc3f7;
+  --link-hover-color: #81d4fa;
+  --code-bg: rgba(110, 118, 129, 0.4);
+  --code-text: rgb(230, 237, 243);
+  --code-inline-bg: rgba(110, 118, 129, 0.4);
+  --code-inline-text: rgb(230, 237, 243);
+  --code-border: #3e3e42;
+  --table-border: #3e3e42;
+  --table-stripe-bg: #2a2a2b;
+  --banner-bg: #005fb8;
+  --banner-logo-bg: #0078d4;
+  --navbar-bg: #2d2d30;
+  --navbar-text: #cccccc;
+  --sidebar-bg: #252526;
+  --border-color: #3e3e42;
+  --toc-border: #3e3e42;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+#content {
+  background-color: var(--content-bg);
+}
+
+h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
+  color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .subtitle {
+  color: var(--heading-color) !important;
+}
+
+.paragraph p, p {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .paragraph p,
+[data-theme="dark"] p,
+[data-theme="dark"] .sectionbody p {
+  color: var(--text-color) !important;
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:hover {
+  color: var(--link-hover-color);
+}
+
+.listingblock > .content > pre,
+.literalblock > .content > pre,
+pre {
+  background-color: var(--code-inline-bg) !important;
+  border-color: var(--code-border);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+[data-theme="dark"] .listingblock > .content > pre,
+[data-theme="dark"] .literalblock > .content > pre,
+[data-theme="dark"] pre {
+  background-color: var(--code-inline-bg) !important;
+  color: var(--code-text);
+}
+
+[data-theme="dark"] .listingblock,
+[data-theme="dark"] .literalblock {
+  background-color: var(--code-inline-bg) !important;
+}
+
+[data-theme="dark"] .listingblock > .content,
+[data-theme="dark"] .literalblock > .content {
+  background-color: var(--code-inline-bg) !important;
+}
+
+[data-theme="dark"] code {
+  background-color: var(--code-inline-bg) !important;
+  color: var(--code-inline-text) !important;
+}
+
+table thead, table tfoot {
+  background-color: var(--code-bg);
+}
+
+[data-theme="dark"] table thead,
+[data-theme="dark"] table tfoot {
+  background-color: #2d2d2e !important;
+}
+
+[data-theme="dark"] table thead th,
+[data-theme="dark"] table tfoot th {
+  color: var(--text-color) !important;
+  font-weight: bold;
+}
+
+table tbody tr:nth-of-type(even) {
+  background-color: var(--table-stripe-bg);
+}
+
+[data-theme="dark"] table tbody tr:nth-of-type(odd) {
+  background-color: #2d2d2e !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] table tbody tr:nth-of-type(even) {
+  background-color: var(--table-stripe-bg) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] table tbody tr:first-child {
+  background-color: #2d2d2e !important;
+}
+
+[data-theme="dark"] table tbody tr:first-child td {
+  color: var(--text-color) !important;
+  font-weight: bold;
+}
+
+table.tableblock {
+  border-color: var(--table-border);
+}
+
+table thead th, table tfoot th, table tbody td {
+  border-color: var(--table-border);
+}
+
+#toc.toc2 {
+  background-color: var(--sidebar-bg);
+  border-color: var(--toc-border);
+}
+
+.sidebarblock > .content {
+  background-color: var(--sidebar-bg);
+  border-color: var(--border-color);
+}
+
+#navbar-version, #revnumber, .details {
+  color: var(--navbar-text);
+}
+
+[data-theme="dark"] .admonitionblock td.content,
+[data-theme="dark"] .admonitionblock td.icon {
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #555555;
+  border-radius: 6px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #777777;
+}
+
 #banner {
   position: fixed;
   top: 0;
   left: 0;
   line-height: 19px;
   height: 50px;
-  background-color: #0079ef;
+  background-color: var(--banner-bg);
   width: 100%;
   z-index: 2000;
 }
@@ -107,13 +300,14 @@ end
   left: 0;
   line-height: 19px;
   height: 20px;
-  background-color: #dddddf;
+  background-color: var(--navbar-bg);
+  color: var(--navbar-text);
   width: 100%;
   z-index: 2000;
 }
 #navbar-version {
   position: absolute;
-  right: 5px;
+  right: 60px;
 }
 #banner .logo {
   position: absolute;
@@ -121,7 +315,7 @@ end
   top: 0;
   height: 100%;
   display: inline-block;
-  background-color: #00abf3;
+  background-color: var(--banner-logo-bg);
 }
 #banner h2 {
   color: white !important;
@@ -164,7 +358,230 @@ h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
   #toc.toc2 {
     padding-bottom: 100px;
   }
+  
+  /* Theme toggle button */
+  #theme-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.3s ease;
+    z-index: 3000;
+  }
+  
+  #theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 1);
+  }
+  
+  #theme-toggle .light-icon {
+    display: none;
+  }
+  
+  #theme-toggle .dark-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .light-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .dark-icon {
+    display: none;
+  }
+  
+  /* Copy button styles */
+  .listingblock,
+  .literalblock {
+    position: relative;
+  }
+  
+  .copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    z-index: 10;
+  }
+  
+  .listingblock:hover .copy-button,
+  .literalblock:hover .copy-button {
+    opacity: 1;
+  }
+  
+  .copy-button:hover {
+    background-color: var(--link-color);
+    color: #ffffff;
+    border-color: var(--link-color);
+  }
+  
+  .copy-button.copied {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+  }
+  
+  [data-theme="dark"] .copy-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+  }
+  
+  [data-theme="dark"] .copy-button:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+  }
 </style>
+<script>
+(function() {
+  'use strict';
+  const STORAGE_KEY = 'fcli-theme';
+  const DARK_THEME = 'dark';
+  const LIGHT_THEME = 'light';
+
+  function applyTheme(theme) {
+    if (theme === DARK_THEME) {
+      document.documentElement.setAttribute('data-theme', DARK_THEME);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem(STORAGE_KEY, theme);
+  }
+
+  function getCurrentTheme() {
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme) {
+      return storedTheme;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return DARK_THEME;
+    }
+    return LIGHT_THEME;
+  }
+
+  function toggleTheme() {
+    const currentTheme = getCurrentTheme();
+    const newTheme = currentTheme === DARK_THEME ? LIGHT_THEME : DARK_THEME;
+    applyTheme(newTheme);
+  }
+
+  function initTheme() {
+    const theme = getCurrentTheme();
+    applyTheme(theme);
+  }
+
+  function setupToggleButton() {
+    const toggleButton = document.getElementById('theme-toggle');
+    if (toggleButton) {
+      toggleButton.addEventListener('click', toggleTheme);
+    }
+  }
+
+  function listenForSystemThemeChanges() {
+    if (window.matchMedia) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      darkModeQuery.addEventListener('change', function(e) {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          applyTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+        }
+      });
+    }
+  }
+
+  initTheme();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setupToggleButton();
+      listenForSystemThemeChanges();
+      addCopyButtons();
+    });
+  } else {
+    setupToggleButton();
+    listenForSystemThemeChanges();
+    addCopyButtons();
+  }
+
+  function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('.listingblock > .content > pre, .literalblock > .content > pre');
+    
+    codeBlocks.forEach(function(codeBlock) {
+      const container = codeBlock.closest('.listingblock, .literalblock');
+      if (!container || container.querySelector('.copy-button')) {
+        return;
+      }
+      
+      const button = document.createElement('button');
+      button.className = 'copy-button';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      
+      button.addEventListener('click', function() {
+        const code = codeBlock.textContent;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(function() {
+            showCopySuccess(button);
+          }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            fallbackCopy(code, button);
+          });
+        } else {
+          fallbackCopy(code, button);
+        }
+      });
+      
+      container.style.position = 'relative';
+      container.insertBefore(button, container.firstChild);
+    });
+  }
+  
+  function showCopySuccess(button) {
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(function() {
+      button.textContent = originalText;
+      button.classList.remove('copied');
+    }, 2000);
+  }
+  
+  function fallbackCopy(text, button) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      showCopySuccess(button);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+    
+    document.body.removeChild(textArea);
+  }
+})();
+</script>
 </head>
 <body<%= @id && %( id="#{@id}") %> class="<%= [(attr :doctype),((attr? 'toc-class') && (attr? :toc) && (attr? 'toc-placement', 'auto') ? %(#{attr 'toc-class'} toc-#{attr 'toc-position', 'left'}) : nil)].compact * ' ' %>"<%= (attr? 'max-width') ? %( style="max-width: #{attr 'max-width'};") : nil %>><%
 unless noheader %>
@@ -176,6 +593,10 @@ unless noheader %>
     			data:image/svg+xml;
     			data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIxLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA2MTIgNjEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA2MTIgNjEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6IzAwQUJGMzt9Cgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9Cjwvc3R5bGU+CjxyZWN0IHg9IjAiIGNsYXNzPSJzdDAiIHdpZHRoPSI2MTIiIGhlaWdodD0iNjEyIi8+CjxnPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTQ5MSwxMjFjMCwwLTE5Mi41LDAtMjQ3LjgsMGMtMTEuMSwwLTIyLjEsMS4zLTMyLjksNC4yYy0xNi44LDQuNi0zMS45LDEyLjQtNDUuNCwyMy41CgkJCWMtOS41LDcuOS0xNy42LDE3LTI0LjQsMjcuNGMtNy4yLDExLjEtMTIuNCwyMy0xNS43LDM1LjhjLTIuNywxMC41LTMuNywyMS4yLTMuNywzMi4xYzAsNzAuMiwwLDE0MC4zLDAsMjEwLjVoMFY0OTFoODEuOHYwCgkJCWM1NiwwLDExMiwwLDE2OCwwYzguOSwwLDE3LjctMSwyNi40LTMuMWMxMy44LTMuMiwyNi43LTguNiwzOC42LTE2LjRjMTQuMi05LjIsMjUuOS0yMC45LDM1LjItMzVjMTMuNS0yMC41LDE5LjktNDMuMiwxOS45LTY3LjcKCQkJYzAtMzkuNCwwLTc4LjcsMC0xMTguMWMwLDAsMCwwLDAsMGMwLTMxLjEsMC02Mi4xLDAtOTMuMmgwVjEyMXogTTQzNy42LDE4NS40YzAsNjEuNywwLDEyMy4zLTAuMSwxODVjMCwxMS4yLTIuNiwyMS44LTgsMzEuNgoJCQljLTksMTYuNC0yMi41LDI3LjQtNDAuNCwzMi45Yy02LjIsMS45LTEyLjcsMi43LTE5LjMsMi43Yy0zMS4zLDAtMTk1LjYsMC0xOTUuNiwwdi0xMWgwYzAtNjEuOC0wLjEtMTIzLjcsMC0xODUuNQoJCQljMC0xNi4xLDUuNS0zMC40LDE1LjgtNDIuN2M4LjgtMTAuNCwxOS44LTE3LjYsMzIuOS0yMS40YzUuOC0xLjcsMTEuNy0yLjYsMTcuOC0yLjZjNjAsMCwxOTYuNywwLDE5Ni43LDBMNDM3LjYsMTg1LjR6Ii8+Cgk8L2c+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjYwLjYsMjQyLjhoMTYyLjV2LTUzLjZIMjUxdjAuMWMtMi43LDAtNS40LDAtOC4xLDBjLTE4LjUsMC0zMi45LDguMi00My4xLDIzLjVjLTUuNiw4LjQtOC4xLDE3LjktOC4xLDI4CgkJYzAsMTYuOSwwLDMzLjksMCw1MC44aDB2MTMyLjdoNTMuNnYtOTAuOGgxNDQuNFYyODBoLTE0NGMtMC40LTAuMy0wLjUtMC44LTAuNS0xLjdjMC4xLTUuNywwLTExLjQsMC0xNy4xCgkJQzI0NS4yLDI1MS4xLDI1MS4yLDI0NC4xLDI2MC42LDI0Mi44eiIvPgo8L2c+Cjwvc3ZnPgo="/>
   <h2><%= attr(:bannertitle, 'Fortify') %></h2>
+  <button id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light theme">
+    <span class="light-icon">☀️</span>
+    <span class="dark-icon">🌙</span>
+  </button>
 </div>
 <div id="navbar"><% if attr? :docversion %><div id="navbar-version">Version: <%= attr :docversion %></div><% end %>
 </div></div>

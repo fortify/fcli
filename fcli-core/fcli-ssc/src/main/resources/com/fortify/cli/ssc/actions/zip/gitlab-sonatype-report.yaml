@@ -2,9 +2,12 @@
 
 author: Fortify
 usage:
-  header: Generate a GitLab Dependency Scanning report listing SSC Sonatype vulnerabilities. 
+  header: Integrate SSC Sonatype results with GitLab Dependency Scanning. 
   description: |
-    For information on how to import this report into GitLab, see 
+    This action generates and optionally publishes SSC Sonatype vulnerabilities to GitLab. 
+    With the --publish option, results are automatically uploaded to GitLab pipelines.
+    
+    For manual report uploads, see 
     https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdependency_scanning
 
 config:

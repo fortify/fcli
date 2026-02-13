@@ -38,7 +38,7 @@ import lombok.Builder;
 @Builder
 public record CiPullRequest(
     boolean active,
-    Integer id,
+    String id,
     String target
 ) {
     /**
@@ -55,7 +55,7 @@ public record CiPullRequest(
     /**
      * Create an active pull request instance.
      */
-    public static CiPullRequest active(Integer id, String target) {
+    public static CiPullRequest active(String id, String target) {
         return CiPullRequest.builder()
             .active(true)
             .id(id)

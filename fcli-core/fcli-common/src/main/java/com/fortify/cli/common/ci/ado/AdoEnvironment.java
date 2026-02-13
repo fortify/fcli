@@ -47,7 +47,7 @@ public record AdoEnvironment(
     String organization,
     String project,
     String repositoryId,
-    Integer buildId,
+    String buildId,
     String prTerminology,
     String ciName,
     String ciId
@@ -91,7 +91,7 @@ public record AdoEnvironment(
         var targetBranch = branchInfo[1];
         var sha = EnvHelper.env(ENV_SOURCE_VERSION);
         var repositoryId = EnvHelper.env(ENV_REPOSITORY_ID);
-        var buildId = parseIntOrNull(EnvHelper.env(ENV_BUILD_ID));
+        var buildId = EnvHelper.env(ENV_BUILD_ID);
         
         // Build standardized structures
         // Extract simple repo name from full path if present
@@ -103,7 +103,7 @@ public record AdoEnvironment(
         }
         
         var ciRepository = CiRepository.builder()
-            .workDir(EnvHelper.envOrDefault(ENV_SOURCES_DIRECTORY,
+            .workspaceDir(EnvHelper.envOrDefault(ENV_SOURCES_DIRECTORY,
                 EnvHelper.envOrDefault(ENV_DEFAULT_WORKING_DIRECTORY, ".")))
             .remoteUrl(null)  // Not readily available in environment
             .name(CiRepositoryName.builder()
@@ -128,7 +128,7 @@ public record AdoEnvironment(
             .build();
         
         var pullRequest = isPr
-            ? CiPullRequest.active(parseIntOrNull(EnvHelper.env(ENV_PR_ID)), targetBranch)
+            ? CiPullRequest.active(EnvHelper.env(ENV_PR_ID), targetBranch)
             : CiPullRequest.inactive();
         
         return AdoEnvironment.builder()
@@ -189,9 +189,5 @@ public record AdoEnvironment(
      */
     public String getBranchForVersioning() {
         return ciBranch != null ? ciBranch.short_() : null;
-    }
-    
-    private static Integer parseIntOrNull(String value) {
-        return StringUtils.isBlank(value) ? null : Integer.parseInt(value);
     }
 }

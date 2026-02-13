@@ -30,21 +30,21 @@ import lombok.SneakyThrows;
  * @author Ruud Senden
  */
 public class IssueSourceFileResolverTest {
-    private static final Path sampleSourcePath = createSampleRepo();
+    private static final Path sampleWorkspacePath = createSampleRepo();
     private static final IssueSourceFileResolver originalOnNoMatchResolver = IssueSourceFileResolver.builder()
-            .sourcePath(sampleSourcePath)
+            .workspacePath(sampleWorkspacePath)
             .onNoMatch(OnNoMatch.ORIGINAL)
             .build();
     private static final IssueSourceFileResolver nullOnNoMatchResolver = IssueSourceFileResolver.builder()
-            .sourcePath(sampleSourcePath)
+            .workspacePath(sampleWorkspacePath)
             .onNoMatch(OnNoMatch.NULL)
             .build();
     private static final IssueSourceFileResolver originalResolver = IssueSourceFileResolver.builder()
-            .sourcePath(null)
+            .workspacePath(null)
             .onNoMatch(OnNoMatch.ORIGINAL)
             .build();
     private static final IssueSourceFileResolver nullResolver = IssueSourceFileResolver.builder()
-            .sourcePath(null)
+            .workspacePath(null)
             .onNoMatch(OnNoMatch.NULL)
             .build();
     

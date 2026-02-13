@@ -182,9 +182,9 @@ public class ActionAdoSpelFunctions implements IActionSpelFunctions {
         return repositoryId;
     }
 
-    private int requireBuildId(String operation) {
+    private String requireBuildId(String operation) {
         var buildId = env.buildId();
-        if (buildId == null) {
+        if (StringUtils.isBlank(buildId)) {
             throw new FcliSimpleException(
                 "Operation '" + operation + "' requires Build.BuildId to be available in the environment or passed explicitly.");
         }

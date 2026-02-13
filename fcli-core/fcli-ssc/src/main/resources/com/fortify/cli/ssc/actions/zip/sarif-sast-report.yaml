@@ -44,16 +44,20 @@ cli.options:
     description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see `--socket-timeout` option on `fcli ssc session login` command). Default value: 100"
     required: false
     default: "100"
+  workspaceDir:
+    names: --workspace-dir
+    required: false
+    description: "Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports"
   sourceDir:
     names: --source-dir
     required: false
-    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
+    description: "Source directory that was scanned - used for prioritizing path matches when multiple files have the same name (e.g., index.js in src/ vs node_modules/)"
   
 steps:
   - var.set:
       av: ${#ssc.appVersion(cli.appversion)}
       fs: ${#ssc.filterSet(av, cli.filterset)}
-      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+      issueSourceFileResolver: ${#issueSourceFileResolver({workspaceDir:cli.workspaceDir,sourceDir:cli.sourceDir})}
   - log.progress: Loading latest static scan
   - rest.call:
       artifacts:

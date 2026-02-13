@@ -23,11 +23,15 @@ steps:
       # Set default ci values. Where possible, steps below should override these
       # variables with CI-specific values
       - var.set:
+          fcliBuildProps:                  ${#fcliBuildProperties()}
+          global.ci.fcliVersion:           ${fcliBuildProps.fcliVersion} # Fcli version
+          global.ci.fcliBuildInfo:         ${fcliBuildProps.fcliBuildInfo} # Fcli build information
           global.ci.name:                  # Name of current CI system
           global.ci.id:                    # Id of current CI system, used to look up <id>-* actions 
           global.ci.qualifiedRepoName:     # Fully qualified repository name
           global.ci.sourceBranch:          # The current branch being processed/scanned 
           global.ci.commitSHA:             # Commit SHA for current commit
+          global.ci.workspaceDir:          "." # Workspace/repository root directory (default to current dir)
           global.ci.sourceDir:             "." # Directory containing source files to be scanned (default to current dir)
           global.ci.jobSummaryFile:        ${#env('JOB_SUMMARY_FILE')} # Job summary file path; can be overridden by CI-specific value
           global.ci.prActive:              false # Whether running in pull/merge request context (default to false)
@@ -58,7 +62,8 @@ steps:
           global.ci.qualifiedRepoName:   ${ci.env?.ciRepository?.name?.full}
           global.ci.sourceBranch:        ${ci.env?.ciBranch?.short}
           global.ci.commitSHA:           ${ci.env?.ciCommit?.id?.full}
-          global.ci.sourceDir:           ${ci.env?.ciRepository?.workDir?:global.ci.sourceDir}
+          global.ci.workspaceDir:        ${ci.env?.ciRepository?.workspaceDir?:global.ci.workspaceDir}
+          global.ci.sourceDir:           ${ci.env?.ciRepository?.workspaceDir?:global.ci.sourceDir}
           global.ci.prActive:            ${ci.env?.pullRequest?.active?:false}
           global.ci.prId:                ${ci.env?.pullRequest?.id}
           global.ci.prTarget:            ${ci.env?.pullRequest?.target}
@@ -74,14 +79,17 @@ steps:
         var.set:
           global.ci.name:                Jenkins
           global.ci.id:                  jenkins
+          global.ci.workspaceDir:        ${#env('WORKSPACE')}
           global.ci.sourceDir:           ${#env('WORKSPACE')}
       
       # Override sourceDir with SOURCE_DIR if specified (custom user variable)
+      # NOTE: workspaceDir is NOT overridden by SOURCE_DIR, as it should always be the workspace root
       - if: ${#isNotBlank(#env('SOURCE_DIR'))}
         var.set:
           global.ci.sourceDir: ${#env('SOURCE_DIR')}
-      # Generic local repository detection
+      # Generic local repository detection and fallbacks
       - var.set:
+          global.ci.workspaceDir: ${#ifBlank(global.ci.workspaceDir,'.')}
           global.ci.sourceDir: ${#ifBlank(global.ci.sourceDir,'.')}
       - var.set:
           global.ci.localRepo: ${#localRepo(global.ci.sourceDir)}

@@ -89,6 +89,7 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
         }
         // Set SCANCENTRAL_JAVA_HOME if we detected a Java home
         if ( detectedJavaHome!=null ) {
+            System.out.println("SCANCENTRAL_JAVA_HOME: "+detectedJavaHome);
             pb.environment().put("SCANCENTRAL_JAVA_HOME", detectedJavaHome);
         }
     }

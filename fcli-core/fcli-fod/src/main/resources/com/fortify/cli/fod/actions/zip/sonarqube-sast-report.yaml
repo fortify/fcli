@@ -24,15 +24,19 @@ cli.options:
   release:
     names: --release, --rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  workspaceDir:
+    names: --workspace-dir
+    required: false
+    description: "Workspace/repository root directory for resolving Fortify source file paths to workspace-relative paths in reports"
   sourceDir:
     names: --source-dir
     required: false
-    description: "(PREVIEW) Optional local repository directory to convert Fortify-reported source file paths to actual repository file paths"
-  
+    description: "(DEPRECATED: use --workspace-dir) Alias for --workspace-dir"
+
 steps:
   - var.set:
       rel: ${#fod.release(cli.release)}
-      issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
+      issueSourceFileResolver: ${#issueSourceFileResolver({workspaceDir:cli.workspaceDir?:cli.sourceDir})}
   - log.progress: Processing issue data
   - rest.call:
       issues:

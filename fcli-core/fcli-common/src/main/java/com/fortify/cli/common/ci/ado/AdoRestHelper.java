@@ -90,7 +90,7 @@ public class AdoRestHelper {
      * @param testRunner Test runner type (JUnit, NUnit, XUnit, VSTest, CTest)
      * @return Response from Azure DevOps API
      */
-    public ObjectNode publishTestResults(String project, int buildId,
+    public ObjectNode publishTestResults(String project, String buildId,
                                           String testResults, String testRunner) {
         var body = JsonHelper.getObjectMapper().createObjectNode()
             .put("testRunner", testRunner)
@@ -118,7 +118,7 @@ public class AdoRestHelper {
      * @return Created thread object
      */
     public ObjectNode createPullRequestThread(String project, String repositoryId,
-                                               int pullRequestId, String comment) {
+                                               String pullRequestId, String comment) {
         var body = JsonHelper.getObjectMapper().createObjectNode();
         var commentsArray = body.putArray("comments");
         commentsArray.addObject().put("content", comment);
@@ -127,7 +127,7 @@ public class AdoRestHelper {
             .post("/{project}/_apis/git/repositories/{repositoryId}/pullRequests/{pullRequestId}/threads")
             .routeParam("project", project)
             .routeParam("repositoryId", repositoryId)
-            .routeParam("pullRequestId", String.valueOf(pullRequestId))
+            .routeParam("pullRequestId", pullRequestId)
             .queryString("api-version", "7.0")
             .body(body)
             .asObject(ObjectNode.class)

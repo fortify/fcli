@@ -51,7 +51,7 @@ public class GitHubEnvironmentTest {
         assertEquals("/tmp/summary.md", env.jobSummaryFile());
         
         assertNotNull(env.ciRepository());
-        assertEquals("/workspace", env.ciRepository().workDir());
+        assertEquals("/workspace", env.ciRepository().workspaceDir());
         assertEquals("repo", env.ciRepository().name().short_());
         assertEquals("owner/repo", env.ciRepository().name().full());
         
@@ -88,7 +88,7 @@ public class GitHubEnvironmentTest {
         
         assertNotNull(env.pullRequest());
         assertEquals(true, env.pullRequest().active());
-        assertEquals(123, env.pullRequest().id());
+        assertEquals("123", env.pullRequest().id());
         assertEquals("main", env.pullRequest().target());
     }
     

@@ -51,11 +51,11 @@ public class GitLabEnvironmentTest {
         var env = GitLabEnvironment.detect();
         
         assertNotNull(env);
-        assertEquals(12345, env.projectId());
-        assertEquals(9876, env.pipelineId());
+        assertEquals("12345", env.projectId());
+        assertEquals("9876", env.pipelineId());
         
         assertNotNull(env.ciRepository());
-        assertEquals("/builds/project", env.ciRepository().workDir());
+        assertEquals("/builds/project", env.ciRepository().workspaceDir());
         assertEquals("https://gitlab.example.com/group/myproject.git", env.ciRepository().remoteUrl());
         assertEquals("myproject", env.ciRepository().name().short_());
         assertEquals("group/myproject", env.ciRepository().name().full());
@@ -96,7 +96,7 @@ public class GitLabEnvironmentTest {
         
         assertNotNull(env.pullRequest());
         assertEquals(true, env.pullRequest().active());
-        assertEquals(42, env.pullRequest().id());
+        assertEquals("42", env.pullRequest().id());
         assertEquals("main", env.pullRequest().target());
     }
     
