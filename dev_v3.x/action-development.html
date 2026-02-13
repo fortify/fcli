@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260212.231304-dev_v3.x
+fcli_version: 0.20260213.005301-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260212.231304-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260212.231304-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260213.005301-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260212.231304-dev_v3.x</span>
+<span id="revnumber">version 0.20260213.005301-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -322,33 +322,19 @@ fcli_version: 0.20260212.231304-dev_v3.x
 <li><a href="#_spel_functions">SpEL Functions</a></li>
 <li><a href="#_ci">[ci]</a></li>
 <li><a href="#_ci_detect"><code>_ci.detect</code></a></li>
-<li><a href="#_ado_getenv"><code>ado.getEnv</code></a></li>
-<li><a href="#_ado_gettype"><code>ado.getType</code></a></li>
+<li><a href="#_ado_env"><code>ado.env</code></a></li>
+<li><a href="#_ado_type"><code>ado.type</code></a></li>
 <li><a href="#_ado_project"><code>ado.project</code></a></li>
-<li><a href="#_ado_project_addprthread"><code>ado.project.addPrThread</code></a></li>
-<li><a href="#_ado_project_publishtestresults"><code>ado.project.publishTestResults</code></a></li>
-<li><a href="#_ado_repository"><code>ado.repository</code></a></li>
-<li><a href="#_ado_repository_uploadsarif"><code>ado.repository.uploadSarif</code></a></li>
-<li><a href="#_bitbucket_getenv"><code>bitbucket.getEnv</code></a></li>
-<li><a href="#_bitbucket_gettype"><code>bitbucket.getType</code></a></li>
-<li><a href="#_bitbucket_repository"><code>bitbucket.repository</code></a></li>
-<li><a href="#_bitbucket_repository_addreportannotations"><code>bitbucket.repository.addReportAnnotations</code></a></li>
-<li><a href="#_bitbucket_repository_uploadreport"><code>bitbucket.repository.uploadReport</code></a></li>
-<li><a href="#_github_getenv"><code>github.getEnv</code></a></li>
-<li><a href="#_github_gettype"><code>github.getType</code></a></li>
+<li><a href="#_ado_repo"><code>ado.repo</code></a></li>
+<li><a href="#_bitbucket_env"><code>bitbucket.env</code></a></li>
+<li><a href="#_bitbucket_type"><code>bitbucket.type</code></a></li>
+<li><a href="#_bitbucket_repo"><code>bitbucket.repo</code></a></li>
+<li><a href="#_github_env"><code>github.env</code></a></li>
+<li><a href="#_github_type"><code>github.type</code></a></li>
 <li><a href="#_github_repo"><code>github.repo</code></a></li>
-<li><a href="#_github_repo_addprcomment"><code>github.repo.addPrComment</code></a></li>
-<li><a href="#_github_repo_addreviewcomment"><code>github.repo.addReviewComment</code></a></li>
-<li><a href="#_github_repo_createcheckrun"><code>github.repo.createCheckRun</code></a></li>
-<li><a href="#_github_repo_createcheckrunwithannotations"><code>github.repo.createCheckRunWithAnnotations</code></a></li>
-<li><a href="#_github_repo_tryuploadsarif"><code>github.repo.tryUploadSarif</code></a></li>
-<li><a href="#_github_repo_uploadsarif"><code>github.repo.uploadSarif</code></a></li>
-<li><a href="#_gitlab_getenv"><code>gitlab.getEnv</code></a></li>
-<li><a href="#_gitlab_gettype"><code>gitlab.getType</code></a></li>
+<li><a href="#_gitlab_env"><code>gitlab.env</code></a></li>
+<li><a href="#_gitlab_type"><code>gitlab.type</code></a></li>
 <li><a href="#_gitlab_project"><code>gitlab.project</code></a></li>
-<li><a href="#_gitlab_project_addmrcomment"><code>gitlab.project.addMrComment</code></a></li>
-<li><a href="#_gitlab_project_uploadcodequalityreport"><code>gitlab.project.uploadCodeQualityReport</code></a></li>
-<li><a href="#_gitlab_project_uploadsecurityreport"><code>gitlab.project.uploadSecurityReport</code></a></li>
 <li><a href="#_date">[date]</a></li>
 <li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
 <li><a href="#_date_2"><code>date</code></a></li>
@@ -359,8 +345,6 @@ fcli_version: 0.20260212.231304-dev_v3.x
 <li><a href="#_now"><code>now</code></a></li>
 <li><a href="#_fcli">[fcli]</a></li>
 <li><a href="#_action_fmt"><code>action.fmt</code></a></li>
-<li><a href="#_actionschema"><code>actionSchema</code></a></li>
-<li><a href="#_actionspelfunctions"><code>actionSpelFunctions</code></a></li>
 <li><a href="#_copyright"><code>copyright</code></a></li>
 <li><a href="#_decrypt"><code>decrypt</code></a></li>
 <li><a href="#_encrypt"><code>encrypt</code></a></li>
@@ -422,12 +406,8 @@ fcli_version: 0.20260212.231304-dev_v3.x
 <li><a href="#_skipreasonif"><code>skipReasonIf</code></a></li>
 <li><a href="#_internal">[internal]</a></li>
 <li><a href="#_action_docrenderer"><code>action.docRenderer</code></a></li>
-<li><a href="#_action_docrenderer_asciidoc"><code>action.docRenderer.asciidoc</code></a></li>
-<li><a href="#_action_docrenderer_cicontext"><code>action.docRenderer.ciContext</code></a></li>
-<li><a href="#_action_docrenderer_currentproduct"><code>action.docRenderer.currentProduct</code></a></li>
-<li><a href="#_action_docrenderer_manpagebaseurl"><code>action.docRenderer.manpageBaseUrl</code></a></li>
-<li><a href="#_action_docrenderer_render"><code>action.docRenderer.render</code></a></li>
-<li><a href="#_action_docrenderer_text"><code>action.docRenderer.text</code></a></li>
+<li><a href="#_actionschema"><code>actionSchema</code></a></li>
+<li><a href="#_actionspelfunctions"><code>actionSpelFunctions</code></a></li>
 <li><a href="#_localrepo"><code>localRepo</code></a></li>
 </ul>
 </li>
@@ -450,7 +430,7 @@ fcli_version: 0.20260212.231304-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260212.231304-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260213.005301-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -572,7 +552,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260212.231304-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260213.005301-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -2787,7 +2767,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_ado_getenv"><a class="anchor" href="#_ado_getenv"></a><code>ado.getEnv</code></h3>
+<h3 id="_ado_env"><a class="anchor" href="#_ado_env"></a><code>ado.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2796,7 +2776,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.getEnv()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.env</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -2866,7 +2846,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_ado_gettype"><a class="anchor" href="#_ado_gettype"></a><code>ado.getType</code></h3>
+<h3 id="_ado_type"><a class="anchor" href="#_ado_type"></a><code>ado.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2875,7 +2855,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ado.getType()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #ado.type</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -2912,9 +2892,26 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+<div class="sect3">
+<h4 id="_available_methods"><a class="anchor" href="#_available_methods"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_addprthread"><a class="anchor" href="#_addprthread"></a><code>addPrThread</code></h5>
+<div class="paragraph">
+<p><strong><code>string comment</code></strong><br>
+Adds a comment thread to the current pull request; auto-detects project, repository, and PR context &#8594; Created thread object</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_publishtestresults"><a class="anchor" href="#_publishtestresults"></a><code>publishTestResults</code></h5>
+<div class="paragraph">
+<p><strong><code>string testRunner</code>, <code>string testResults</code></strong><br>
+Publishes test results (free tier); auto-detects project and build ID from the current pipeline run &#8594; Response from Azure DevOps API</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_ado_project_addprthread"><a class="anchor" href="#_ado_project_addprthread"></a><code>ado.project.addPrThread</code></h3>
+<h3 id="_ado_repo"><a class="anchor" href="#_ado_repo"></a><code>ado.repo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2923,64 +2920,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.project.addPrThread(string comment)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string comment</em> - comment text</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Created thread object</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a comment thread to the current pull request; auto-detects project, repository, and PR context</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_ado_project_publishtestresults"><a class="anchor" href="#_ado_project_publishtestresults"></a><code>ado.project.publishTestResults</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.project.publishTestResults(string testRunner, string testResults)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string testRunner</em> - test runner type (JUnit, NUnit, XUnit, VSTest, CTest)<br>
-<em>string testResults</em> - test results in XML format (JUnit, NUnit, XUnit, etc.)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Azure DevOps API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Publishes test results (free tier); auto-detects project and build ID from the current pipeline run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_ado_repository"><a class="anchor" href="#_ado_repository"></a><code>ado.repository</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.repository()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.repo()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -2993,9 +2933,19 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+<div class="sect3">
+<h4 id="_available_methods_2"><a class="anchor" href="#_available_methods_2"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_uploadsarif"><a class="anchor" href="#_uploadsarif"></a><code>uploadSarif</code></h5>
+<div class="paragraph">
+<p><strong><code>string sarifContent</code></strong><br>
+Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run &#8594; Response from Azure DevOps API</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_ado_repository_uploadsarif"><a class="anchor" href="#_ado_repository_uploadsarif"></a><code>ado.repository.uploadSarif</code></h3>
+<h3 id="_bitbucket_env"><a class="anchor" href="#_bitbucket_env"></a><code>bitbucket.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3004,35 +2954,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.repository.uploadSarif(string sarifContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Azure DevOps API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_getenv"><a class="anchor" href="#_bitbucket_getenv"></a><code>bitbucket.getEnv</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.getEnv()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.env</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3103,7 +3025,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_bitbucket_gettype"><a class="anchor" href="#_bitbucket_gettype"></a><code>bitbucket.getType</code></h3>
+<h3 id="_bitbucket_type"><a class="anchor" href="#_bitbucket_type"></a><code>bitbucket.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3112,7 +3034,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bitbucket.getType()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #bitbucket.type</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3127,7 +3049,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_bitbucket_repository"><a class="anchor" href="#_bitbucket_repository"></a><code>bitbucket.repository</code></h3>
+<h3 id="_bitbucket_repo"><a class="anchor" href="#_bitbucket_repo"></a><code>bitbucket.repo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3136,7 +3058,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.repository()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.repo()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3149,9 +3071,26 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+<div class="sect3">
+<h4 id="_available_methods_3"><a class="anchor" href="#_available_methods_3"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_addreportannotations"><a class="anchor" href="#_addreportannotations"></a><code>addReportAnnotations</code></h5>
+<div class="paragraph">
+<p><strong><code>string reportId</code>, <code>string annotationsContent</code></strong><br>
+Appends annotations to an existing Bitbucket Code Insights report for the detected commit &#8594; Response from Bitbucket API</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_uploadreport"><a class="anchor" href="#_uploadreport"></a><code>uploadReport</code></h5>
+<div class="paragraph">
+<p><strong><code>string reportId</code>, <code>string reportContent</code></strong><br>
+Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data &#8594; Response from Bitbucket API</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_bitbucket_repository_addreportannotations"><a class="anchor" href="#_bitbucket_repository_addreportannotations"></a><code>bitbucket.repository.addReportAnnotations</code></h3>
+<h3 id="_github_env"><a class="anchor" href="#_github_env"></a><code>github.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3160,65 +3099,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.repository.addReportAnnotations(string reportId, string annotationsContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportId</em> - Code Insights report key to associate the annotations with<br>
-<em>string annotationsContent</em> - JSON array of annotation objects that match Bitbucket&#8217;s schema</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Bitbucket API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Appends annotations to an existing Bitbucket Code Insights report for the detected commit</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_repository_uploadreport"><a class="anchor" href="#_bitbucket_repository_uploadreport"></a><code>bitbucket.repository.uploadReport</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.repository.uploadReport(string reportId, string reportContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportId</em> - Code Insights report key (for example test-001)<br>
-<em>string reportContent</em> - JSON payload that follows Bitbucket&#8217;s Code Insights report schema</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Bitbucket API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_getenv"><a class="anchor" href="#_github_getenv"></a><code>github.getEnv</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.getEnv()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.env</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3285,7 +3166,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_github_gettype"><a class="anchor" href="#_github_gettype"></a><code>github.getType</code></h3>
+<h3 id="_github_type"><a class="anchor" href="#_github_type"></a><code>github.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3294,7 +3175,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #github.getType()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #github.type</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3331,9 +3212,54 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+<div class="sect3">
+<h4 id="_available_methods_4"><a class="anchor" href="#_available_methods_4"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_addprcomment"><a class="anchor" href="#_addprcomment"></a><code>addPrComment</code></h5>
+<div class="paragraph">
+<p><strong><code>string body</code></strong><br>
+Adds a comment to the current pull request detected from the workflow run &#8594; Created comment object</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_addreviewcomment"><a class="anchor" href="#_addreviewcomment"></a><code>addReviewComment</code></h5>
+<div class="paragraph">
+<p><strong><code>string path</code>, <code>object line</code>, <code>string body</code></strong><br>
+Adds a review comment on a specific file and line in the pull request detected from the workflow run &#8594; Created review comment object</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_createcheckrun"><a class="anchor" href="#_createcheckrun"></a><code>createCheckRun</code></h5>
+<div class="paragraph">
+<p><strong><code>string name</code>, <code>string status</code>, <code>string conclusion</code>, <code>string title</code>, <code>string summary</code></strong><br>
+Creates check run (free tier, for summary only) using repository and commit detected from the current run &#8594; Response from GitHub API</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_createcheckrunwithannotations"><a class="anchor" href="#_createcheckrunwithannotations"></a><code>createCheckRunWithAnnotations</code></h5>
+<div class="paragraph">
+<p><strong><code>string name</code>, <code>string status</code>, <code>string conclusion</code>, <code>string title</code>, <code>string summary</code>, <code>object annotations</code></strong><br>
+Creates check run with file/line annotations (free tier, shows vulnerabilities at source locations, auto-paginates) using the detected repository/commit &#8594; Response from GitHub API</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_tryuploadsarif"><a class="anchor" href="#_tryuploadsarif"></a><code>tryUploadSarif</code></h5>
+<div class="paragraph">
+<p><strong><code>string sarifContent</code></strong><br>
+Tries to upload SARIF, returning {success, reason, message} for fallback logic; does not throw on GHAS unavailable &#8594; Result object: {success: true, data: &#8230;&#8203;} or {success: false, reason: 'ghas_unavailable'|'other', message: &#8230;&#8203;}</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_uploadsarif_2"><a class="anchor" href="#_uploadsarif_2"></a><code>uploadSarif</code></h5>
+<div class="paragraph">
+<p><strong><code>string sarifContent</code></strong><br>
+Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run &#8594; Response from GitHub API</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_github_repo_addprcomment"><a class="anchor" href="#_github_repo_addprcomment"></a><code>github.repo.addPrComment</code></h3>
+<h3 id="_gitlab_env"><a class="anchor" href="#_gitlab_env"></a><code>gitlab.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3342,181 +3268,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo.addPrComment(string body)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string body</em> - comment body (Markdown supported)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Created comment object</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a comment to the current pull request detected from the workflow run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_repo_addreviewcomment"><a class="anchor" href="#_github_repo_addreviewcomment"></a><code>github.repo.addReviewComment</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo.addReviewComment(string path, object line, string body)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - file path relative to repository root<br>
-<em>object line</em> - line number<br>
-<em>string body</em> - comment body (Markdown supported)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Created review comment object</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a review comment on a specific file and line in the pull request detected from the workflow run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_repo_createcheckrun"><a class="anchor" href="#_github_repo_createcheckrun"></a><code>github.repo.createCheckRun</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo.createCheckRun(string name, string status, string conclusion, string title, string summary)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - check run name<br>
-<em>string status</em> - status: queued, in_progress, completed<br>
-<em>string conclusion</em> - conclusion: success, failure, neutral, cancelled, skipped, timed_out, action_required<br>
-<em>string title</em> - summary title<br>
-<em>string summary</em> - summary text in Markdown (max 65535 chars)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Creates check run (free tier, for summary only) using repository and commit detected from the current run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_repo_createcheckrunwithannotations"><a class="anchor" href="#_github_repo_createcheckrunwithannotations"></a><code>github.repo.createCheckRunWithAnnotations</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo.createCheckRunWithAnnotations(string name, string status, string conclusion, string title, string summary, object annotations)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string name</em> - check run name<br>
-<em>string status</em> - status: queued, in_progress, completed<br>
-<em>string conclusion</em> - conclusion: success, failure, neutral, etc.<br>
-<em>string title</em> - summary title<br>
-<em>string summary</em> - summary text in Markdown<br>
-<em>object annotations</em> - array of annotation objects with path, line, level, message (auto-paginated)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Creates check run with file/line annotations (free tier, shows vulnerabilities at source locations, auto-paginates) using the detected repository/commit</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_repo_tryuploadsarif"><a class="anchor" href="#_github_repo_tryuploadsarif"></a><code>github.repo.tryUploadSarif</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo.tryUploadSarif(string sarifContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content as string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Result object: {success: true, data: &#8230;&#8203;} or {success: false, reason: 'ghas_unavailable'</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_github_repo_uploadsarif"><a class="anchor" href="#_github_repo_uploadsarif"></a><code>github.repo.uploadSarif</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo.uploadSarif(string sarifContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content as string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_getenv"><a class="anchor" href="#_gitlab_getenv"></a><code>gitlab.getEnv</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.getEnv()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.env</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3584,7 +3336,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_gitlab_gettype"><a class="anchor" href="#_gitlab_gettype"></a><code>gitlab.getType</code></h3>
+<h3 id="_gitlab_type"><a class="anchor" href="#_gitlab_type"></a><code>gitlab.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3593,7 +3345,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #gitlab.getType()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #gitlab.type</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
@@ -3630,91 +3382,30 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+<div class="sect3">
+<h4 id="_available_methods_5"><a class="anchor" href="#_available_methods_5"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_addmrcomment"><a class="anchor" href="#_addmrcomment"></a><code>addMrComment</code></h5>
+<div class="paragraph">
+<p><strong><code>string body</code></strong><br>
+Adds a comment to the merge request detected from the current pipeline run &#8594; Created note object</p>
 </div>
-<div class="sect2">
-<h3 id="_gitlab_project_addmrcomment"><a class="anchor" href="#_gitlab_project_addmrcomment"></a><code>gitlab.project.addMrComment</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project.addMrComment(string body)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string body</em> - comment body (Markdown supported)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Created note object</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a comment to the merge request detected from the current pipeline run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
 </div>
-<div class="sect2">
-<h3 id="_gitlab_project_uploadcodequalityreport"><a class="anchor" href="#_gitlab_project_uploadcodequalityreport"></a><code>gitlab.project.uploadCodeQualityReport</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project.uploadCodeQualityReport(string reportContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportContent</em> - code quality report as JSON array</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitLab API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Uploads code quality report to the detected merge request (free tier, all GitLab tiers)</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+<div class="sect4">
+<h5 id="_uploadcodequalityreport"><a class="anchor" href="#_uploadcodequalityreport"></a><code>uploadCodeQualityReport</code></h5>
+<div class="paragraph">
+<p><strong><code>string reportContent</code></strong><br>
+Uploads code quality report to the detected merge request (free tier, all GitLab tiers) &#8594; Response from GitLab API</p>
 </div>
-<div class="sect2">
-<h3 id="_gitlab_project_uploadsecurityreport"><a class="anchor" href="#_gitlab_project_uploadsecurityreport"></a><code>gitlab.project.uploadSecurityReport</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project.uploadSecurityReport(string reportType, string reportContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportType</em> - report type: sast, dast, dependency_scanning, container_scanning, etc.<br>
-<em>string reportContent</em> - security report in GitLab schema format</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitLab API</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using project/pipeline detected from the current run</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+</div>
+<div class="sect4">
+<h5 id="_uploadsecurityreport"><a class="anchor" href="#_uploadsecurityreport"></a><code>uploadSecurityReport</code></h5>
+<div class="paragraph">
+<p><strong><code>string reportType</code>, <code>string reportContent</code></strong><br>
+Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using project/pipeline detected from the current run &#8594; Response from GitLab API</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_date"><a class="anchor" href="#_date"></a>[date]</h3>
@@ -3953,44 +3644,6 @@ default time zone id will be used.</p>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Formats the input value using the specified formatter as declared through the <code>formatters</code> YAML instruction</p>
 </div></div></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_actionschema"><a class="anchor" href="#_actionschema"></a><code>actionSchema</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #actionSchema()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An object describing the fcli action YAML schema</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_actionspelfunctions"><a class="anchor" href="#_actionspelfunctions"></a><code>actionSpelFunctions</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #actionSpelFunctions()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An array listing all available SpEL functions</p></td>
 </tr>
 </tbody>
 </table>
@@ -4306,43 +3959,46 @@ default time zone id will be used.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Issue source file resolver</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Issue source file resolver with resolve() and exists() methods</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Instantiates an issue source file resolver, allowing source file paths as reported by Fortify to be resolved against a locally cloned source code repository.</p>
+<p>Creates an issue source file resolver that maps Fortify-reported paths to workspace-relative paths. Fortify may add or strip leading directories during scanning; this resolver uses longest-suffix matching to find the correct file in the workspace.</p>
 </div>
 <div class="paragraph">
-<p>In some cases, there is a mismatch between source file paths as reported by SSC or FoD and actual repository source file paths, with Fortify either inserting or stripping leading directories. When third-party systems like GitHub or GitLab ingest fcli-generated reports, such mismatches may prevent third-party systems from properly rendering source code snippets or links.</p>
+<p>Configuration properties:
+* <code>workspaceDir</code> - Repository root directory (required for path resolution)
+* <code>sourceDir</code> - Directory that was scanned (optional; used to prioritize matches when multiple files share the same name)</p>
 </div>
 <div class="paragraph">
-<p>The issue source file resolver can be initialized like this:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code>- var.set:
-    issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}</code></pre>
-</div>
+<p>Example: <code>${#issueSourceFileResolver({workspaceDir:"/workspace", sourceDir:"/workspace/src"})}</code></p>
 </div>
 <div class="paragraph">
-<p>Once initialized, Fortify-reported issue file paths can be matched and relativized against the given <code>sourceDir</code> through either:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>SSC: <code>${issueSourceFileResolver.resolve(issue.fullFileName)}</code></p>
-</li>
-<li>
-<p>FoD: `${issueSourceFileResolver.resolve(issue.primaryLocationFull)}</p>
-</li>
-</ul>
+<p>For backward compatibility, if only <code>sourceDir</code> is provided, it will be used as <code>workspaceDir</code>.</p>
 </div>
 <div class="paragraph">
-<p>Of course, the same approach can be used to resolve other Fortify-reported source file paths, for example in trace node entries. See the various fcli built-in <code>*-report</code> actions in SSC and FoD modules for examples.</p>
+<p>See available methods via SpEL function documentation of the returned IssueSourceFileResolver object.</p>
 </div></div></td>
 </tr>
 </tbody>
 </table>
+<div class="sect3">
+<h4 id="_available_methods_6"><a class="anchor" href="#_available_methods_6"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_exists"><a class="anchor" href="#_exists"></a><code>exists</code></h5>
+<div class="paragraph">
+<p><strong><code>string issuePath</code>, <code>object lineNumber</code></strong><br>
+Validates that resolved path exists as a regular file with valid line number (&gt;0) &#8594; true if workspacePath is null (no validation), or if resolved file exists and lineNumber &gt; 0</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_resolve"><a class="anchor" href="#_resolve"></a><code>resolve</code></h5>
+<div class="paragraph">
+<p><strong><code>string issuePath</code></strong><br>
+Resolves Fortify-reported issue path to workspace-relative path string using configured file separator &#8594; Workspace-relative path string, or null/original based on onNoMatch setting</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_normalizeandmergetracenodes"><a class="anchor" href="#_normalizeandmergetracenodes"></a><code>normalizeAndMergeTraceNodes</code></h3>
@@ -5527,168 +5183,61 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_action_docrenderer_asciidoc"><a class="anchor" href="#_action_docrenderer_asciidoc"></a><code>action.docRenderer.asciidoc</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.asciidoc()</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>INTERNAL USE ONLY</strong></p>
-</div>
+<div class="sect3">
+<h4 id="_available_methods_7"><a class="anchor" href="#_available_methods_7"></a>Available methods</h4>
+<div class="sect4">
+<h5 id="_asciidoc"><a class="anchor" href="#_asciidoc"></a><code>asciidoc</code></h5>
 <div class="paragraph">
-<p>Configure renderer for AsciiDoc output</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+<p><strong>No parameters</strong><br>
+Configure renderer for AsciiDoc output &#8594; This renderer for method chaining</p>
 </div>
-<div class="sect2">
-<h3 id="_action_docrenderer_cicontext"><a class="anchor" href="#_action_docrenderer_cicontext"></a><code>action.docRenderer.ciContext</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.ciContext(string ciSystem, string version, object outputs)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string ciSystem</em> - CI system identifier<br>
-<em>string version</em> - CI version<br>
-<em>object outputs</em> - Map of output definitions</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
+<div class="sect4">
+<h5 id="_cicontext"><a class="anchor" href="#_cicontext"></a><code>ciContext</code></h5>
 <div class="paragraph">
-<p>Set CI context (system, version, outputs) for resolving ciOutputRef references</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+<p><strong><code>string ciSystem</code>, <code>string version</code>, <code>object outputs</code></strong><br>
+Set CI context (system, version, outputs) for resolving ciOutputRef references &#8594; This renderer for method chaining</p>
 </div>
-<div class="sect2">
-<h3 id="_action_docrenderer_currentproduct"><a class="anchor" href="#_action_docrenderer_currentproduct"></a><code>action.docRenderer.currentProduct</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.currentProduct(string product)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string product</em> - Current product identifier</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
+<div class="sect4">
+<h5 id="_currentproduct"><a class="anchor" href="#_currentproduct"></a><code>currentProduct</code></h5>
 <div class="paragraph">
-<p>Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+<p><strong><code>string product</code></strong><br>
+Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references &#8594; This renderer for method chaining</p>
 </div>
-<div class="sect2">
-<h3 id="_action_docrenderer_manpagebaseurl"><a class="anchor" href="#_action_docrenderer_manpagebaseurl"></a><code>action.docRenderer.manpageBaseUrl</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.manpageBaseUrl(string url)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for fcli command manpage links</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
+<div class="sect4">
+<h5 id="_manpagebaseurl"><a class="anchor" href="#_manpagebaseurl"></a><code>manpageBaseUrl</code></h5>
 <div class="paragraph">
-<p>Set the base URL for manpage links (default: '../manpage')</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+<p><strong><code>string url</code></strong><br>
+Set the base URL for manpage links (default: '../manpage') &#8594; This renderer for method chaining</p>
 </div>
-<div class="sect2">
-<h3 id="_action_docrenderer_render"><a class="anchor" href="#_action_docrenderer_render"></a><code>action.docRenderer.render</code></h3>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.docRenderer.render(string text)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text containing documentation references</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Rendered text with all references processed</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
+<div class="sect4">
+<h5 id="_render"><a class="anchor" href="#_render"></a><code>render</code></h5>
 <div class="paragraph">
-<p>Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor],
+<p><strong><code>string text</code></strong><br>
+Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor],
 ciOutputRef:product:output, and $eval{&#8230;&#8203;} references.
 - fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
 - actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)
 - ciOutputRef references become CI output document links (AsciiDoc) or backtick-wrapped output names (plain text)
 - $eval{&#8230;&#8203;} expressions are evaluated using current action context
-Use '_' for product to refer to current/generic context.</p>
-</div></div></td>
-</tr>
-</tbody>
-</table>
+Use '_' for product to refer to current/generic context.
+ &#8594; Rendered text with all references processed</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_text"><a class="anchor" href="#_text"></a><code>text</code></h5>
+<div class="paragraph">
+<p><strong>No parameters</strong><br>
+Configure renderer for plain text output &#8594; This renderer for method chaining</p>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_action_docrenderer_text"><a class="anchor" href="#_action_docrenderer_text"></a><code>action.docRenderer.text</code></h3>
+<h3 id="_actionschema"><a class="anchor" href="#_actionschema"></a><code>actionSchema</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5697,18 +5246,39 @@ Use '_' for product to refer to current/generic context.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer.text()</code></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #actionSchema()</code></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An object describing the fcli action YAML schema</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p><strong>INTERNAL USE ONLY</strong></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="paragraph">
-<p>Configure renderer for plain text output</p>
+<div class="sect2">
+<h3 id="_actionspelfunctions"><a class="anchor" href="#_actionspelfunctions"></a><code>actionSpelFunctions</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #actionSpelFunctions()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An array listing all available SpEL functions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
 </div></div></td>
 </tr>
 </tbody>
@@ -5805,8 +5375,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260212.231304-dev_v3.x<br>
-Last updated 2026-02-12 23:16:06 UTC
+Version 0.20260213.005301-dev_v3.x<br>
+Last updated 2026-02-13 00:55:48 UTC
 </div>
 </div>
 </body>
