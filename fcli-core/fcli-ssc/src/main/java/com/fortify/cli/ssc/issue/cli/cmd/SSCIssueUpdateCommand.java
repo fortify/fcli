@@ -34,13 +34,12 @@ import com.fortify.cli.ssc.issue.helper.SSCIssueIdentifier;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
-@Slf4j
+//@Slf4j
 public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
@@ -108,7 +107,6 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
 
         result.put("updatesString", updatesSummary);
 
-        // Add customTagUpdates array if custom tags exist
         if (hasCustomTags()) {
             ArrayNode customTagsArray = result.putArray("customTagUpdates");
             String appVersionId = appVersionResolver.getAppVersionId(unirestInstance);
@@ -116,17 +114,14 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
             customTagHelper.populateCustomTagUpdates(customTags, customTagsArray);
         }
 
-        // Add newComment at top level (renamed from comment)
         if (StringUtils.isNotBlank(comment)) {
             result.put("newComment", comment);
         }
 
-        // Add assignedUser at top level
         if (StringUtils.isNotBlank(assignUser)) {
             result.put("assignedUser", assignUser);
         }
 
-        // Add suppressed at top level
         if (suppress != null) {
             result.put("suppressed", suppress);
         }
@@ -175,7 +170,6 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
         requestBody.put("user", user);
         
         String url = SSCUrls.PROJECT_VERSION_ISSUES_ACTION_ASSIGN_USER(appVersionId);
-        log.debug("Assign user request: URL={}, user={}", url, user);
         
         try {
             JsonNode response = unirest.post(url)
@@ -206,7 +200,6 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
         }
         
         String url = SSCUrls.PROJECT_VERSION_ISSUES_ACTION_AUDIT(appVersionId);
-        log.debug("Audit request: URL={}", url);
         
         try {
             JsonNode response = unirest.post(url)
@@ -246,7 +239,6 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
     
     private List<SSCIssueIdentifier> fetchIssueRevisionsFromSSC(UnirestInstance unirest, String appVersionId, List<String> issueIds) {
         String idsParam = String.join(",", issueIds);
-        log.debug("Fetching issues with ids: {}", idsParam);
         
         try {
             JsonNode response = unirest.get("/api/v1/projectVersions/{appVersionId}/issues")
