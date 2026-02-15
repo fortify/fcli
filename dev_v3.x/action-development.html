@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260213.161524-dev_v3.x
+fcli_version: 0.20260215.131013-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260213.161524-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260213.161524-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260215.131013-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260213.161524-dev_v3.x</span>
+<span id="revnumber">version 0.20260215.131013-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -384,6 +384,13 @@ fcli_version: 0.20260213.161524-dev_v3.x
 <li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
 <li><a href="#_env"><code>env</code></a></li>
+<li><a href="#_fs_exists"><code>fs.exists</code></a></li>
+<li><a href="#_fs_isdirectory"><code>fs.isDirectory</code></a></li>
+<li><a href="#_fs_isfile"><code>fs.isFile</code></a></li>
+<li><a href="#_fs_isreadable"><code>fs.isReadable</code></a></li>
+<li><a href="#_fs_isreadablefile"><code>fs.isReadableFile</code></a></li>
+<li><a href="#_fs_iswritable"><code>fs.isWritable</code></a></li>
+<li><a href="#_fs_iswritabledir"><code>fs.isWritableDir</code></a></li>
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
@@ -430,7 +437,7 @@ fcli_version: 0.20260213.161524-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260213.161524-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260215.131013-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -552,7 +559,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260213.161524-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260215.131013-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -4584,6 +4591,202 @@ values provided in the mapping object.</p>
 </table>
 </div>
 <div class="sect2">
+<h3 id="_fs_exists"><a class="anchor" href="#_fs_exists"></a><code>fs.exists</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.exists(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the file or directory path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if the file or directory exists, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether a file or directory exists at the given path.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isdirectory"><a class="anchor" href="#_fs_isdirectory"></a><code>fs.isDirectory</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.isDirectory(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if path exists and is a directory, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether the given path points to an existing directory.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isfile"><a class="anchor" href="#_fs_isfile"></a><code>fs.isFile</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.isFile(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if path is a regular file, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether the given path points to a regular file (may or may not exist).</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isreadable"><a class="anchor" href="#_fs_isreadable"></a><code>fs.isReadable</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.isReadable(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if path exists and is readable, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether the given file or directory is readable.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isreadablefile"><a class="anchor" href="#_fs_isreadablefile"></a><code>fs.isReadableFile</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.isReadableFile(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the file path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if path exists, is a regular file, and is readable, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether the given path points to an existing, readable regular file.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fs_iswritable"><a class="anchor" href="#_fs_iswritable"></a><code>fs.isWritable</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.isWritable(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if path exists and is writable, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether the given file or directory is writable.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fs_iswritabledir"><a class="anchor" href="#_fs_iswritabledir"></a><code>fs.isWritableDir</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #fs.isWritableDir(string path)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - the directory path to check</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>true</code> if path exists, is a directory, and is writable, <code>false</code> otherwise</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Checks whether the given path points to an existing, writable directory.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_jsonstringify"><a class="anchor" href="#_jsonstringify"></a><code>jsonStringify</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -5368,8 +5571,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260213.161524-dev_v3.x<br>
-Last updated 2026-02-13 16:18:22 UTC
+Version 0.20260215.131013-dev_v3.x<br>
+Last updated 2026-02-15 13:13:07 UTC
 </div>
 </div>
 </body>
