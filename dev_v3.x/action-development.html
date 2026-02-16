@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260216.213820-dev_v3.x
+fcli_version: 0.20260216.215626-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260216.213820-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.213820-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.215626-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260216.213820-dev_v3.x</span>
+<span id="revnumber">version 0.20260216.215626-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -445,7 +445,7 @@ fcli_version: 0.20260216.213820-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.213820-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.215626-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -567,7 +567,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260216.213820-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260216.215626-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -1513,7 +1513,7 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] on.fail</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -1614,7 +1614,7 @@ HIDE: Hide the check from output<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -1849,7 +1849,7 @@ options: --option, -o<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2020,7 +2020,7 @@ full value will be masked.<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2099,7 +2099,7 @@ full value will be masked.<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2221,7 +2221,7 @@ full value will be masked.<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2367,7 +2367,7 @@ false: Don&#8217;t output an informational message showing exit status</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2437,7 +2437,7 @@ false: Don&#8217;t output an informational message showing exit status</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2560,7 +2560,7 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2651,7 +2651,7 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2719,7 +2719,7 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2809,7 +2809,7 @@ header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -6090,8 +6090,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260216.213820-dev_v3.x<br>
-Last updated 2026-02-16 21:41:19 UTC
+Version 0.20260216.215626-dev_v3.x<br>
+Last updated 2026-02-16 21:59:05 UTC
 </div>
 </div>
 </body>
