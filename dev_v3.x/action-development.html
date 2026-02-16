@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260216.112001-dev_v3.x
+fcli_version: 0.20260216.133454-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260216.112001-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.112001-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.133454-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260216.112001-dev_v3.x</span>
+<span id="revnumber">version 0.20260216.133454-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -321,101 +321,29 @@ fcli_version: 0.20260216.112001-dev_v3.x
 <li><a href="#_expression_syntax">Expression Syntax</a></li>
 <li><a href="#_spel_functions">SpEL Functions</a></li>
 <li><a href="#_ci">[ci]</a></li>
-<li><a href="#_ci_detect"><code>_ci.detect</code></a></li>
-<li><a href="#_ado_env"><code>ado.env</code></a></li>
-<li><a href="#_ado_type"><code>ado.type</code></a></li>
 <li><a href="#_ado_project"><code>ado.project</code></a></li>
 <li><a href="#_ado_repo"><code>ado.repo</code></a></li>
-<li><a href="#_bitbucket_env"><code>bitbucket.env</code></a></li>
-<li><a href="#_bitbucket_type"><code>bitbucket.type</code></a></li>
 <li><a href="#_bitbucket_repo"><code>bitbucket.repo</code></a></li>
-<li><a href="#_github_env"><code>github.env</code></a></li>
-<li><a href="#_github_type"><code>github.type</code></a></li>
 <li><a href="#_github_repo"><code>github.repo</code></a></li>
-<li><a href="#_gitlab_env"><code>gitlab.env</code></a></li>
-<li><a href="#_gitlab_type"><code>gitlab.type</code></a></li>
 <li><a href="#_gitlab_project"><code>gitlab.project</code></a></li>
+<li><a href="#_gitlab_project_addmrcomment"><code>gitlab.project().addMrComment</code></a></li>
+<li><a href="#_gitlab_project_uploadcodequalityreport"><code>gitlab.project().uploadCodeQualityReport</code></a></li>
+<li><a href="#_gitlab_project_uploadsecurityreport"><code>gitlab.project().uploadSecurityReport</code></a></li>
 <li><a href="#_date">[date]</a></li>
-<li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
-<li><a href="#_date_2"><code>date</code></a></li>
-<li><a href="#_formatdatetime"><code>formatDateTime</code></a></li>
-<li><a href="#_formatdatetimeasutc"><code>formatDateTimeAsUTC</code></a></li>
-<li><a href="#_formatdatetimewithzoneid"><code>formatDateTimeWithZoneId</code></a></li>
-<li><a href="#_formatdatetimewithzoneidasutc"><code>formatDateTimewithZoneIdAsUTC</code></a></li>
-<li><a href="#_now"><code>now</code></a></li>
 <li><a href="#_fcli">[fcli]</a></li>
-<li><a href="#_action_fmt"><code>action.fmt</code></a></li>
-<li><a href="#_copyright"><code>copyright</code></a></li>
-<li><a href="#_decrypt"><code>decrypt</code></a></li>
-<li><a href="#_encrypt"><code>encrypt</code></a></li>
-<li><a href="#_fclibuildproperties"><code>fcliBuildProperties</code></a></li>
-<li><a href="#_isdebugenabled"><code>isDebugEnabled</code></a></li>
-<li><a href="#_var"><code>var</code></a></li>
 <li><a href="#_fortify">[fortify]</a></li>
-<li><a href="#_cleanissuedescription"><code>cleanIssueDescription</code></a></li>
-<li><a href="#_cleanruledescription"><code>cleanRuleDescription</code></a></li>
-<li><a href="#_fod_appbrowserurl"><code>fod.appBrowserUrl</code></a></li>
-<li><a href="#_fod_issuebrowserurl"><code>fod.issueBrowserUrl</code></a></li>
-<li><a href="#_fod_release"><code>fod.release</code></a></li>
-<li><a href="#_fod_releasebrowserurl"><code>fod.releaseBrowserUrl</code></a></li>
 <li><a href="#_issuesourcefileresolver"><code>issueSourceFileResolver</code></a></li>
-<li><a href="#_normalizeandmergetracenodes"><code>normalizeAndMergeTraceNodes</code></a></li>
-<li><a href="#_normalizetracenodes"><code>normalizeTraceNodes</code></a></li>
-<li><a href="#_ssc_appversion"><code>ssc.appVersion</code></a></li>
-<li><a href="#_ssc_appversionbrowserurl"><code>ssc.appversionBrowserUrl</code></a></li>
-<li><a href="#_ssc_filterset"><code>ssc.filterSet</code></a></li>
-<li><a href="#_ssc_issuebrowserurl"><code>ssc.issueBrowserUrl</code></a></li>
-<li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
 <li><a href="#_txt">[txt]</a></li>
-<li><a href="#_abbreviate"><code>abbreviate</code></a></li>
-<li><a href="#_fmt"><code>fmt</code></a></li>
-<li><a href="#_htmltosinglelinetext"><code>htmlToSingleLineText</code></a></li>
-<li><a href="#_htmltotext"><code>htmlToText</code></a></li>
-<li><a href="#_ifblank"><code>ifBlank</code></a></li>
-<li><a href="#_isblank"><code>isBlank</code></a></li>
-<li><a href="#_isnotblank"><code>isNotBlank</code></a></li>
-<li><a href="#_join"><code>join</code></a></li>
-<li><a href="#_joinornull"><code>joinOrNull</code></a></li>
-<li><a href="#_numberedlist"><code>numberedList</code></a></li>
-<li><a href="#_regexquote"><code>regexQuote</code></a></li>
-<li><a href="#_repeat"><code>repeat</code></a></li>
-<li><a href="#_replaceallfromregexmap"><code>replaceAllFromRegExMap</code></a></li>
-<li><a href="#_substringafter"><code>substringAfter</code></a></li>
-<li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
-<li><a href="#_env"><code>env</code></a></li>
-<li><a href="#_fs_exists"><code>fs.exists</code></a></li>
-<li><a href="#_fs_isdirectory"><code>fs.isDirectory</code></a></li>
-<li><a href="#_fs_isfile"><code>fs.isFile</code></a></li>
-<li><a href="#_fs_isreadable"><code>fs.isReadable</code></a></li>
-<li><a href="#_fs_isreadablefile"><code>fs.isReadableFile</code></a></li>
-<li><a href="#_fs_iswritable"><code>fs.isWritable</code></a></li>
-<li><a href="#_fs_iswritabledir"><code>fs.isWritableDir</code></a></li>
-<li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
-<li><a href="#_properties"><code>properties</code></a></li>
-<li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
-<li><a href="#_uripart"><code>uriPart</code></a></li>
-<li><a href="#_uuid"><code>uuid</code></a></li>
 <li><a href="#_workflow">[workflow]</a></li>
-<li><a href="#_action_copyparametersfromgroup"><code>action.copyParametersFromGroup</code></a></li>
-<li><a href="#_action_runid"><code>action.runID</code></a></li>
-<li><a href="#_actioncmd"><code>actionCmd</code></a></li>
-<li><a href="#_actioncmdskipfromenvreason"><code>actionCmdSkipFromEnvReason</code></a></li>
-<li><a href="#_actioncmdskipnoactionreason"><code>actionCmdSkipNoActionReason</code></a></li>
-<li><a href="#_actionornull"><code>actionOrNull</code></a></li>
-<li><a href="#_check"><code>check</code></a></li>
-<li><a href="#_extraopts"><code>extraOpts</code></a></li>
-<li><a href="#_fclicmd"><code>fcliCmd</code></a></li>
-<li><a href="#_fclicmdskipfromenvreason"><code>fcliCmdSkipFromEnvReason</code></a></li>
-<li><a href="#_opt"><code>opt</code></a></li>
-<li><a href="#_optsfromenv"><code>optsFromEnv</code></a></li>
-<li><a href="#_skipblankenvreason"><code>skipBlankEnvReason</code></a></li>
-<li><a href="#_skipreasonif"><code>skipReasonIf</code></a></li>
 <li><a href="#_internal">[internal]</a></li>
 <li><a href="#_action_docrenderer"><code>action.docRenderer</code></a></li>
-<li><a href="#_actionschema"><code>actionSchema</code></a></li>
-<li><a href="#_actionspelfunctions"><code>actionSpelFunctions</code></a></li>
-<li><a href="#_localrepo"><code>localRepo</code></a></li>
+<li><a href="#_action_docrenderer_asciidoc"><code>action.docRenderer().asciidoc</code></a></li>
+<li><a href="#_action_docrenderer_cicontext"><code>action.docRenderer().ciContext</code></a></li>
+<li><a href="#_action_docrenderer_currentproduct"><code>action.docRenderer().currentProduct</code></a></li>
+<li><a href="#_action_docrenderer_manpagebaseurl"><code>action.docRenderer().manpageBaseUrl</code></a></li>
+<li><a href="#_action_docrenderer_render"><code>action.docRenderer().render</code></a></li>
+<li><a href="#_action_docrenderer_text"><code>action.docRenderer().text</code></a></li>
 </ul>
 </li>
 </ul>
@@ -437,7 +365,7 @@ fcli_version: 0.20260216.112001-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.112001-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.133454-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -559,7 +487,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260216.112001-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260216.133454-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -2741,10 +2669,6 @@ for example:</p>
 </div>
 <div class="sect2">
 <h3 id="_ci"><a class="anchor" href="#_ci"></a>[ci]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_ci_detect"><a class="anchor" href="#_ci_detect"></a><code>_ci.detect</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2772,9 +2696,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ado_env"><a class="anchor" href="#_ado_env"></a><code>ado.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2855,9 +2776,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ado_type"><a class="anchor" href="#_ado_type"></a><code>ado.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2903,23 +2821,57 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods"><a class="anchor" href="#_available_methods"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_addprthread"><a class="anchor" href="#_addprthread"></a><code>addPrThread</code></h5>
-<div class="paragraph">
-<p><strong><code>string comment</code></strong><br>
-Adds a comment thread to the current pull request; auto-detects project, repository, and PR context &#8594; Created thread object</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_publishtestresults"><a class="anchor" href="#_publishtestresults"></a><code>publishTestResults</code></h5>
-<div class="paragraph">
-<p><strong><code>string testRunner</code>, <code>string testResults</code></strong><br>
-Publishes test results (free tier); auto-detects project and build ID from the current pipeline run &#8594; Response from Azure DevOps API</p>
-</div>
-</div>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.project().addPrThread(string comment)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string comment</em> - comment text</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created thread object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a comment thread to the current pull request; auto-detects project, repository, and PR context</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.project().publishTestResults(string testRunner, string testResults)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string testRunner</em> - test runner type (JUnit, NUnit, XUnit, VSTest, CTest)<br>
+<em>string testResults</em> - test results in XML format (JUnit, NUnit, XUnit, etc.)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Azure DevOps API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Publishes test results (free tier); auto-detects project and build ID from the current pipeline run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
 <h3 id="_ado_repo"><a class="anchor" href="#_ado_repo"></a><code>ado.repo</code></h3>
@@ -2944,19 +2896,31 @@ Publishes test results (free tier); auto-detects project and build ID from the c
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods_2"><a class="anchor" href="#_available_methods_2"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_uploadsarif"><a class="anchor" href="#_uploadsarif"></a><code>uploadSarif</code></h5>
-<div class="paragraph">
-<p><strong><code>string sarifContent</code></strong><br>
-Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run &#8594; Response from Azure DevOps API</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_env"><a class="anchor" href="#_bitbucket_env"></a><code>bitbucket.env</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #ado.repo().uploadSarif(string sarifContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Azure DevOps API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3038,9 +3002,6 @@ Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/pr
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_bitbucket_type"><a class="anchor" href="#_bitbucket_type"></a><code>bitbucket.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3086,26 +3047,58 @@ Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/pr
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods_3"><a class="anchor" href="#_available_methods_3"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_addreportannotations"><a class="anchor" href="#_addreportannotations"></a><code>addReportAnnotations</code></h5>
-<div class="paragraph">
-<p><strong><code>string reportId</code>, <code>string annotationsContent</code></strong><br>
-Appends annotations to an existing Bitbucket Code Insights report for the detected commit &#8594; Response from Bitbucket API</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_uploadreport"><a class="anchor" href="#_uploadreport"></a><code>uploadReport</code></h5>
-<div class="paragraph">
-<p><strong><code>string reportId</code>, <code>string reportContent</code></strong><br>
-Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data &#8594; Response from Bitbucket API</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_github_env"><a class="anchor" href="#_github_env"></a><code>github.env</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.repo().addReportAnnotations(string reportId, string annotationsContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportId</em> - Code Insights report key to associate the annotations with<br>
+<em>string annotationsContent</em> - JSON array of annotation objects that match Bitbucket&#8217;s schema</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Bitbucket API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Appends annotations to an existing Bitbucket Code Insights report for the detected commit</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #bitbucket.repo().uploadReport(string reportId, string reportContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportId</em> - Code Insights report key (for example test-001)<br>
+<em>string reportContent</em> - JSON payload that follows Bitbucket&#8217;s Code Insights report schema</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from Bitbucket API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3183,9 +3176,6 @@ Creates or updates a Bitbucket Code Insights report for the current commit using
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_github_type"><a class="anchor" href="#_github_type"></a><code>github.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3231,47 +3221,128 @@ Creates or updates a Bitbucket Code Insights report for the current commit using
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods_4"><a class="anchor" href="#_available_methods_4"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_addprcomment"><a class="anchor" href="#_addprcomment"></a><code>addPrComment</code></h5>
-<div class="paragraph">
-<p><strong><code>string body</code></strong><br>
-Adds a comment to the current pull request detected from the workflow run &#8594; Created comment object</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_addreviewcomment"><a class="anchor" href="#_addreviewcomment"></a><code>addReviewComment</code></h5>
-<div class="paragraph">
-<p><strong><code>string path</code>, <code>object line</code>, <code>string body</code></strong><br>
-Adds a review comment on a specific file and line in the pull request detected from the workflow run &#8594; Created review comment object</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_createcheckrun"><a class="anchor" href="#_createcheckrun"></a><code>createCheckRun</code></h5>
-<div class="paragraph">
-<p><strong><code>object body</code></strong><br>
-Creates check run with optional annotations (free tier, auto-paginates &gt;50 annotations). Accepts body object per GitHub REST API spec (<a href="https://docs.github.com/en/rest/checks/runs" class="bare">https://docs.github.com/en/rest/checks/runs</a>). Automatically adds head_sha from detected commit if not present. &#8594; Response from GitHub API</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_tryuploadsarif"><a class="anchor" href="#_tryuploadsarif"></a><code>tryUploadSarif</code></h5>
-<div class="paragraph">
-<p><strong><code>string sarifContent</code></strong><br>
-Tries to upload SARIF, returning {success, reason, message} for fallback logic; does not throw on GHAS unavailable &#8594; Result object: {success: true, data: &#8230;&#8203;} or {success: false, reason: 'ghas_unavailable'|'other', message: &#8230;&#8203;}</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_uploadsarif_2"><a class="anchor" href="#_uploadsarif_2"></a><code>uploadSarif</code></h5>
-<div class="paragraph">
-<p><strong><code>string sarifContent</code></strong><br>
-Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run &#8594; Response from GitHub API</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_env"><a class="anchor" href="#_gitlab_env"></a><code>gitlab.env</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().addPrComment(string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string body</em> - comment body (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created comment object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a comment to the current pull request detected from the workflow run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().addReviewComment(string path, object line, string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string path</em> - file path relative to repository root<br>
+<em>object line</em> - line number<br>
+<em>string body</em> - comment body (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created review comment object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a review comment on a specific file and line in the pull request detected from the workflow run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().createCheckRun(object body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object body</em> - check run body object: {name, head_sha (optional), status, conclusion (optional), started_at (optional), completed_at (optional), output: {title, summary, annotations (optional)}}</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Creates check run with optional annotations (free tier, auto-paginates &gt;50 annotations). Accepts body object per GitHub REST API spec (<a href="https://docs.github.com/en/rest/checks/runs" class="bare">https://docs.github.com/en/rest/checks/runs</a>). Automatically adds head_sha from detected commit if not present.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().tryUploadSarif(string sarifContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content as string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Result object: {success: true, data: &#8230;&#8203;} or {success: false, reason: 'ghas_unavailable'</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().uploadSarif(string sarifContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content as string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitHub API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3350,9 +3421,6 @@ Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repositor
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_type"><a class="anchor" href="#_gitlab_type"></a><code>gitlab.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3398,37 +3466,94 @@ Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repositor
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods_5"><a class="anchor" href="#_available_methods_5"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_addmrcomment"><a class="anchor" href="#_addmrcomment"></a><code>addMrComment</code></h5>
-<div class="paragraph">
-<p><strong><code>string body</code></strong><br>
-Adds a comment to the merge request detected from the current pipeline run &#8594; Created note object</p>
 </div>
+<div class="sect2">
+<h3 id="_gitlab_project_addmrcomment"><a class="anchor" href="#_gitlab_project_addmrcomment"></a><code>gitlab.project().addMrComment</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project().addMrComment(string body)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string body</em> - comment body (Markdown supported)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Created note object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Adds a comment to the merge request detected from the current pipeline run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="sect4">
-<h5 id="_uploadcodequalityreport"><a class="anchor" href="#_uploadcodequalityreport"></a><code>uploadCodeQualityReport</code></h5>
-<div class="paragraph">
-<p><strong><code>string reportContent</code></strong><br>
-Uploads code quality report to the detected merge request (free tier, all GitLab tiers) &#8594; Response from GitLab API</p>
+<div class="sect2">
+<h3 id="_gitlab_project_uploadcodequalityreport"><a class="anchor" href="#_gitlab_project_uploadcodequalityreport"></a><code>gitlab.project().uploadCodeQualityReport</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project().uploadCodeQualityReport(string reportContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportContent</em> - code quality report as JSON array</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitLab API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads code quality report to the detected merge request (free tier, all GitLab tiers)</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
-</div>
-<div class="sect4">
-<h5 id="_uploadsecurityreport"><a class="anchor" href="#_uploadsecurityreport"></a><code>uploadSecurityReport</code></h5>
-<div class="paragraph">
-<p><strong><code>string reportType</code>, <code>string reportContent</code></strong><br>
-Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using project/pipeline detected from the current run &#8594; Response from GitLab API</p>
-</div>
-</div>
-</div>
+<div class="sect2">
+<h3 id="_gitlab_project_uploadsecurityreport"><a class="anchor" href="#_gitlab_project_uploadsecurityreport"></a><code>gitlab.project().uploadSecurityReport</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #gitlab.project().uploadSecurityReport(string reportType, string reportContent)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string reportType</em> - report type: sast, dast, dependency_scanning, container_scanning, etc.<br>
+<em>string reportContent</em> - security report in GitLab schema format</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Response from GitLab API</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using project/pipeline detected from the current run</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
 <h3 id="_date"><a class="anchor" href="#_date"></a>[date]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_currentdatetime"><a class="anchor" href="#_currentdatetime"></a><code>currentDateTime</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3445,9 +3570,6 @@ Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using p
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_date_2"><a class="anchor" href="#_date_2"></a><code>date</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3473,9 +3595,6 @@ Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using p
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_formatdatetime"><a class="anchor" href="#_formatdatetime"></a><code>formatDateTime</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3506,9 +3625,6 @@ default time zone will be assumed.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_formatdatetimeasutc"><a class="anchor" href="#_formatdatetimeasutc"></a><code>formatDateTimeAsUTC</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3539,9 +3655,6 @@ default time zone will be assumed.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_formatdatetimewithzoneid"><a class="anchor" href="#_formatdatetimewithzoneid"></a><code>formatDateTimeWithZoneId</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3573,9 +3686,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_formatdatetimewithzoneidasutc"><a class="anchor" href="#_formatdatetimewithzoneidasutc"></a><code>formatDateTimewithZoneIdAsUTC</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3607,9 +3717,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_now"><a class="anchor" href="#_now"></a><code>now</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3633,10 +3740,6 @@ default time zone id will be used.</p>
 </div>
 <div class="sect2">
 <h3 id="_fcli"><a class="anchor" href="#_fcli"></a>[fcli]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_action_fmt"><a class="anchor" href="#_action_fmt"></a><code>action.fmt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3663,9 +3766,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_copyright"><a class="anchor" href="#_copyright"></a><code>copyright</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3682,9 +3782,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_decrypt"><a class="anchor" href="#_decrypt"></a><code>decrypt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3710,9 +3807,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_encrypt"><a class="anchor" href="#_encrypt"></a><code>encrypt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3738,9 +3832,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fclibuildproperties"><a class="anchor" href="#_fclibuildproperties"></a><code>fcliBuildProperties</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3757,9 +3848,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_isdebugenabled"><a class="anchor" href="#_isdebugenabled"></a><code>isDebugEnabled</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3776,9 +3864,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_var"><a class="anchor" href="#_var"></a><code>var</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3807,10 +3892,6 @@ default time zone id will be used.</p>
 </div>
 <div class="sect2">
 <h3 id="_fortify"><a class="anchor" href="#_fortify"></a>[fortify]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_cleanissuedescription"><a class="anchor" href="#_cleanissuedescription"></a><code>cleanIssueDescription</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3836,9 +3917,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_cleanruledescription"><a class="anchor" href="#_cleanruledescription"></a><code>cleanRuleDescription</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3864,9 +3942,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fod_appbrowserurl"><a class="anchor" href="#_fod_appbrowserurl"></a><code>fod.appBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3887,9 +3962,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fod_issuebrowserurl"><a class="anchor" href="#_fod_issuebrowserurl"></a><code>fod.issueBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3910,9 +3982,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fod_release"><a class="anchor" href="#_fod_release"></a><code>fod.release</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3933,9 +4002,6 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fod_releasebrowserurl"><a class="anchor" href="#_fod_releasebrowserurl"></a><code>fod.releaseBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3998,26 +4064,57 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods_6"><a class="anchor" href="#_available_methods_6"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_exists"><a class="anchor" href="#_exists"></a><code>exists</code></h5>
-<div class="paragraph">
-<p><strong><code>string issuePath</code>, <code>object lineNumber</code></strong><br>
-Validates that resolved path exists as a regular file with valid line number (&gt;0) &#8594; true if workspacePath is null (no validation), or if resolved file exists and lineNumber &gt; 0</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_resolve"><a class="anchor" href="#_resolve"></a><code>resolve</code></h5>
-<div class="paragraph">
-<p><strong><code>string issuePath</code></strong><br>
-Resolves Fortify-reported issue path to workspace-relative path string using configured file separator &#8594; Workspace-relative path string, or null/original based on onNoMatch setting</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_normalizeandmergetracenodes"><a class="anchor" href="#_normalizeandmergetracenodes"></a><code>normalizeAndMergeTraceNodes</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>boolean #issueSourceFileResolver().exists(string issuePath, object lineNumber)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string issuePath</em> - Fortify-reported source file path<br>
+<em>object lineNumber</em> - Line number to validate (1-based)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true if workspacePath is null (no validation), or if resolved file exists and lineNumber &gt; 0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Validates that resolved path exists as a regular file with valid line number (&gt;0)</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #issueSourceFileResolver().resolve(string issuePath)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string issuePath</em> - Fortify-reported source file path</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workspace-relative path string, or null/original based on onNoMatch setting</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Resolves Fortify-reported issue path to workspace-relative path string using configured file separator</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4038,9 +4135,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_normalizetracenodes"><a class="anchor" href="#_normalizetracenodes"></a><code>normalizeTraceNodes</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4061,9 +4155,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ssc_appversion"><a class="anchor" href="#_ssc_appversion"></a><code>ssc.appVersion</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4084,9 +4175,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ssc_appversionbrowserurl"><a class="anchor" href="#_ssc_appversionbrowserurl"></a><code>ssc.appversionBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4108,9 +4196,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ssc_filterset"><a class="anchor" href="#_ssc_filterset"></a><code>ssc.filterSet</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4132,9 +4217,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ssc_issuebrowserurl"><a class="anchor" href="#_ssc_issuebrowserurl"></a><code>ssc.issueBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4156,9 +4238,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ssc_ruledescriptionsprocessor"><a class="anchor" href="#_ssc_ruledescriptionsprocessor"></a><code>ssc.ruleDescriptionsProcessor</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4187,10 +4266,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </div>
 <div class="sect2">
 <h3 id="_txt"><a class="anchor" href="#_txt"></a>[txt]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_abbreviate"><a class="anchor" href="#_abbreviate"></a><code>abbreviate</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4212,9 +4287,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fmt"><a class="anchor" href="#_fmt"></a><code>fmt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4241,9 +4313,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_htmltosinglelinetext"><a class="anchor" href="#_htmltosinglelinetext"></a><code>htmlToSingleLineText</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4269,9 +4338,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_htmltotext"><a class="anchor" href="#_htmltotext"></a><code>htmlToText</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4297,9 +4363,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_ifblank"><a class="anchor" href="#_ifblank"></a><code>ifBlank</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4321,9 +4384,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_isblank"><a class="anchor" href="#_isblank"></a><code>isBlank</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4344,9 +4404,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_isnotblank"><a class="anchor" href="#_isnotblank"></a><code>isNotBlank</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4367,9 +4424,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_join"><a class="anchor" href="#_join"></a><code>join</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4391,9 +4445,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_joinornull"><a class="anchor" href="#_joinornull"></a><code>joinOrNull</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4415,9 +4466,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_numberedlist"><a class="anchor" href="#_numberedlist"></a><code>numberedList</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4443,9 +4491,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_regexquote"><a class="anchor" href="#_regexquote"></a><code>regexQuote</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4471,9 +4516,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_repeat"><a class="anchor" href="#_repeat"></a><code>repeat</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4500,9 +4542,6 @@ Resolves Fortify-reported issue path to workspace-relative path string using con
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_replaceallfromregexmap"><a class="anchor" href="#_replaceallfromregexmap"></a><code>replaceAllFromRegExMap</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4530,9 +4569,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_substringafter"><a class="anchor" href="#_substringafter"></a><code>substringAfter</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4554,9 +4590,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_substringbefore"><a class="anchor" href="#_substringbefore"></a><code>substringBefore</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4581,10 +4614,6 @@ values provided in the mapping object.</p>
 </div>
 <div class="sect2">
 <h3 id="_util"><a class="anchor" href="#_util"></a>[util]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4605,9 +4634,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_exists"><a class="anchor" href="#_fs_exists"></a><code>fs.exists</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4633,9 +4659,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_isdirectory"><a class="anchor" href="#_fs_isdirectory"></a><code>fs.isDirectory</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4661,9 +4684,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_isfile"><a class="anchor" href="#_fs_isfile"></a><code>fs.isFile</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4689,9 +4709,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_isreadable"><a class="anchor" href="#_fs_isreadable"></a><code>fs.isReadable</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4717,9 +4734,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_isreadablefile"><a class="anchor" href="#_fs_isreadablefile"></a><code>fs.isReadableFile</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4745,9 +4759,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_iswritable"><a class="anchor" href="#_fs_iswritable"></a><code>fs.isWritable</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4773,9 +4784,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fs_iswritabledir"><a class="anchor" href="#_fs_iswritabledir"></a><code>fs.isWritableDir</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4801,9 +4809,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_jsonstringify"><a class="anchor" href="#_jsonstringify"></a><code>jsonStringify</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4825,9 +4830,6 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_properties"><a class="anchor" href="#_properties"></a><code>properties</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4854,9 +4856,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_resolveagainstcurrentworkdir"><a class="anchor" href="#_resolveagainstcurrentworkdir"></a><code>resolveAgainstCurrentWorkDir</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4882,9 +4881,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4911,9 +4907,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_uuid"><a class="anchor" href="#_uuid"></a><code>uuid</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4933,10 +4926,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </div>
 <div class="sect2">
 <h3 id="_workflow"><a class="anchor" href="#_workflow"></a>[workflow]</h3>
-
-</div>
-<div class="sect2">
-<h3 id="_action_copyparametersfromgroup"><a class="anchor" href="#_action_copyparametersfromgroup"></a><code>action.copyParametersFromGroup</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4957,9 +4946,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_action_runid"><a class="anchor" href="#_action_runid"></a><code>action.runID</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4981,9 +4967,6 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_actioncmd"><a class="anchor" href="#_actioncmd"></a><code>actionCmd</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5042,9 +5025,6 @@ where:</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_actioncmdskipfromenvreason"><a class="anchor" href="#_actioncmdskipfromenvreason"></a><code>actionCmdSkipFromEnvReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5071,9 +5051,6 @@ where:</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_actioncmdskipnoactionreason"><a class="anchor" href="#_actioncmdskipnoactionreason"></a><code>actionCmdSkipNoActionReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5102,9 +5079,6 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_actionornull"><a class="anchor" href="#_actionornull"></a><code>actionOrNull</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5126,9 +5100,6 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_check"><a class="anchor" href="#_check"></a><code>check</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5155,9 +5126,6 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_extraopts"><a class="anchor" href="#_extraopts"></a><code>extraOpts</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5178,9 +5146,6 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fclicmd"><a class="anchor" href="#_fclicmd"></a><code>fcliCmd</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5208,9 +5173,6 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_fclicmdskipfromenvreason"><a class="anchor" href="#_fclicmdskipfromenvreason"></a><code>fcliCmdSkipFromEnvReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5237,9 +5199,6 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_opt"><a class="anchor" href="#_opt"></a><code>opt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5266,9 +5225,6 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_optsfromenv"><a class="anchor" href="#_optsfromenv"></a><code>optsFromEnv</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5294,9 +5250,6 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_skipblankenvreason"><a class="anchor" href="#_skipblankenvreason"></a><code>skipBlankEnvReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5322,9 +5275,6 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_skipreasonif"><a class="anchor" href="#_skipreasonif"></a><code>skipReasonIf</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5395,61 +5345,192 @@ This is primarily for internal fcli use in documentation generation actions.</p>
 </tr>
 </tbody>
 </table>
-<div class="sect3">
-<h4 id="_available_methods_7"><a class="anchor" href="#_available_methods_7"></a>Available methods</h4>
-<div class="sect4">
-<h5 id="_asciidoc"><a class="anchor" href="#_asciidoc"></a><code>asciidoc</code></h5>
+</div>
+<div class="sect2">
+<h3 id="_action_docrenderer_asciidoc"><a class="anchor" href="#_action_docrenderer_asciidoc"></a><code>action.docRenderer().asciidoc</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer().asciidoc()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
+</div>
 <div class="paragraph">
-<p><strong>No parameters</strong><br>
-Configure renderer for AsciiDoc output &#8594; This renderer for method chaining</p>
+<p>Configure renderer for AsciiDoc output</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="sect2">
+<h3 id="_action_docrenderer_cicontext"><a class="anchor" href="#_action_docrenderer_cicontext"></a><code>action.docRenderer().ciContext</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer().ciContext(string ciSystem, string version, object outputs)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string ciSystem</em> - CI system identifier<br>
+<em>string version</em> - CI version<br>
+<em>object outputs</em> - Map of output definitions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
-<div class="sect4">
-<h5 id="_cicontext"><a class="anchor" href="#_cicontext"></a><code>ciContext</code></h5>
 <div class="paragraph">
-<p><strong><code>string ciSystem</code>, <code>string version</code>, <code>object outputs</code></strong><br>
-Set CI context (system, version, outputs) for resolving ciOutputRef references &#8594; This renderer for method chaining</p>
+<p>Set CI context (system, version, outputs) for resolving ciOutputRef references</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="sect2">
+<h3 id="_action_docrenderer_currentproduct"><a class="anchor" href="#_action_docrenderer_currentproduct"></a><code>action.docRenderer().currentProduct</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer().currentProduct(string product)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string product</em> - Current product identifier</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
-<div class="sect4">
-<h5 id="_currentproduct"><a class="anchor" href="#_currentproduct"></a><code>currentProduct</code></h5>
 <div class="paragraph">
-<p><strong><code>string product</code></strong><br>
-Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references &#8594; This renderer for method chaining</p>
+<p>Set the current product context (e.g., 'fod', 'ssc') for resolving '_' in references</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="sect2">
+<h3 id="_action_docrenderer_manpagebaseurl"><a class="anchor" href="#_action_docrenderer_manpagebaseurl"></a><code>action.docRenderer().manpageBaseUrl</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer().manpageBaseUrl(string url)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string url</em> - Base URL for fcli command manpage links</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
-<div class="sect4">
-<h5 id="_manpagebaseurl"><a class="anchor" href="#_manpagebaseurl"></a><code>manpageBaseUrl</code></h5>
 <div class="paragraph">
-<p><strong><code>string url</code></strong><br>
-Set the base URL for manpage links (default: '../manpage') &#8594; This renderer for method chaining</p>
+<p>Set the base URL for manpage links (default: '../manpage')</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="sect2">
+<h3 id="_action_docrenderer_render"><a class="anchor" href="#_action_docrenderer_render"></a><code>action.docRenderer().render</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.docRenderer().render(string text)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text containing documentation references</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Rendered text with all references processed</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
 </div>
-<div class="sect4">
-<h5 id="_render"><a class="anchor" href="#_render"></a><code>render</code></h5>
 <div class="paragraph">
-<p><strong><code>string text</code></strong><br>
-Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor],
+<p>Render text, processing all fcliCmd:command:, actionRef:product:action[#anchor],
 ciOutputRef:product:output, and $eval{&#8230;&#8203;} references.
 - fcliCmd references become command links (AsciiDoc) or backtick-wrapped text (plain text)
 - actionRef references become action links (AsciiDoc) or backtick-wrapped action names (plain text)
 - ciOutputRef references become CI output document links (AsciiDoc) or backtick-wrapped output names (plain text)
 - $eval{&#8230;&#8203;} expressions are evaluated using current action context
-Use '_' for product to refer to current/generic context.
- &#8594; Rendered text with all references processed</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_text"><a class="anchor" href="#_text"></a><code>text</code></h5>
-<div class="paragraph">
-<p><strong>No parameters</strong><br>
-Configure renderer for plain text output &#8594; This renderer for method chaining</p>
-</div>
-</div>
-</div>
+Use '_' for product to refer to current/generic context.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="sect2">
-<h3 id="_actionschema"><a class="anchor" href="#_actionschema"></a><code>actionSchema</code></h3>
+<h3 id="_action_docrenderer_text"><a class="anchor" href="#_action_docrenderer_text"></a><code>action.docRenderer().text</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #action.docRenderer().text()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This renderer for method chaining</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
+</div>
+<div class="paragraph">
+<p>Configure renderer for plain text output</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5471,9 +5552,6 @@ Configure renderer for plain text output &#8594; This renderer for method chaini
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_actionspelfunctions"><a class="anchor" href="#_actionspelfunctions"></a><code>actionSpelFunctions</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5495,9 +5573,6 @@ Configure renderer for plain text output &#8594; This renderer for method chaini
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_localrepo"><a class="anchor" href="#_localrepo"></a><code>localRepo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5591,8 +5666,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260216.112001-dev_v3.x<br>
-Last updated 2026-02-16 11:22:49 UTC
+Version 0.20260216.133454-dev_v3.x<br>
+Last updated 2026-02-16 13:37:38 UTC
 </div>
 </div>
 </body>
