@@ -75,6 +75,13 @@
           },
           "description" : "Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of one or more checks was FAIL. This instructions takes a map, with keys defining the check name, and values defining the check definition. Current check status can be accessed through ${checkStatus.checkName}, for example allowing to conditionally execute additional checks based on earlier check outcome. Note that if the same check name (map key) is used in different 'check' steps, they will be treated as separate checks, and ${checkStatus.checkName} will contain the status of the last executed check for the given check name.\n"
         },
+        "do" : {
+          "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n\nNote: The 'steps' property name is deprecated; use 'do' instead. For backward compatibility, 'steps' is still accepted.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
         "exit" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Terminate action execution and return the given exit code.\n"
@@ -98,6 +105,20 @@
         "log.warn" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
+        },
+        "on.fail" : {
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.success" : {
+          "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
         },
         "out.write" : {
           "$ref" : "#/$defs/LinkedHashMap(TemplateExpression,TemplateExpressionWithFormatter)",
@@ -125,6 +146,20 @@
               "if" : {
                 "$ref" : "#/$defs/TemplateExpression",
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+              },
+              "on.fail" : {
+                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
+              },
+              "on.success" : {
+                "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
               },
               "record.var-name" : {
                 "type" : "string",
@@ -159,13 +194,6 @@
           },
           "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n\nThe following action variables may also be set by this fcli step, but these are considered preview functionality and may be removed or renamed at any time. For now, these are meant to be used only by built-in fcli actions; custom actions using these action variables may fail to run on other fcli 3.x versions.\n\nx.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration\nx.skipReason: Reason why execution was skipped; will be null if x.skipped==true (deprecated; see x.statusReason)\nx.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)\nx.statusReason: Reason why execution failed or was skipped; will be null if step was executed successfully\nx.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation\nx.success: Set to true if fcli invocation was successful, false if failed\nx.failed: Set to true if fcli invocation failed, false if successfull\n\n"
         },
-        "steps" : {
-          "description" : "Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.\n",
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/$defs/ActionStep"
-          }
-        },
         "throw" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Throw an exception, thereby terminating action execution.\n"
@@ -196,6 +224,20 @@
                 "$ref" : "#/$defs/TemplateExpression",
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
+              "on.fail" : {
+                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
+              },
+              "on.success" : {
+                "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/ActionStep"
+                }
+              },
               "sessions" : {
                 "description" : "This instruction allows for setting up one or more sessions before running the steps specified in the do-block, and logging out of those sessions once the steps in the do-block have completed wither successfully or with failure.\n\nNote that for now, these sessions can only be referenced by explicitly specifying the --session option on 'run.fcli' instructions. The 'rest.call' instructions and any SpEL functions that are dependent on an fcli session will use the session that was specified through the --session option on the 'fcli * action run' command; they will ignore sessions created through the 'with:session' instruction.\n",
                 "type" : "array",
@@ -213,6 +255,20 @@
                     "logout" : {
                       "$ref" : "#/$defs/TemplateExpression",
                       "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
+                    },
+                    "on.fail" : {
+                      "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+                      "type" : "array",
+                      "items" : {
+                        "$ref" : "#/$defs/ActionStep"
+                      }
+                    },
+                    "on.success" : {
+                      "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+                      "type" : "array",
+                      "items" : {
+                        "$ref" : "#/$defs/ActionStep"
+                      }
                     }
                   },
                   "required" : [ "login", "logout" ],
@@ -266,6 +322,20 @@
           "enum" : [ "FAIL", "PASS", "SKIP", "HIDE" ],
           "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
         },
+        "on.fail" : {
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.success" : {
+          "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
         "pass.if" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that evaluates to 'true' or 'false'.\n\nFor 'passIf', the outcome of the check will be 'PASS' if the given expression evaluates to 'true', or 'FAIL' is the given expression evaluates to 'false'.\n\nFor 'failIf', the outcome of the check will be 'FAIL' if the given expression evaluates to 'true', or 'PASS' is the given expression evaluates to 'false'.\n"
@@ -310,14 +380,14 @@
           "description" : "Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure. Steps can reference a variable named after the identifier for this REST call, for example 'x_exception', to access the Java Exception object that represents the failure that occurred.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
           }
         },
         "on.success" : {
-          "description" : "Optional list: Steps to be executed on each successfull REST response. For simple requests, these steps will be executed once. For paged requests, these steps will be executed after every individual page has been received. Steps can reference the [requestName] and [requestName]_raw variables to access processed and raw response data respectively. Any steps define in 'on.success' will be executed before processing individual response records through the 'records.for-each' instruction.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -351,6 +421,20 @@
             "if" : {
               "$ref" : "#/$defs/TemplateExpression",
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+            },
+            "on.fail" : {
+              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "on.success" : {
+              "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
             },
             "record.var-name" : {
               "type" : "string",
@@ -393,6 +477,20 @@
         "if" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "on.fail" : {
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.success" : {
+          "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
         }
       },
       "required" : [ "baseUrl" ],
@@ -423,18 +521,6 @@
           "type" : "string",
           "enum" : [ "show", "collect", "suppress" ]
         },
-        "on.success" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/$defs/ActionStep"
-          }
-        },
-        "on.fail" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/$defs/ActionStep"
-          }
-        },
         "status.check" : {
           "type" : "boolean"
         },
@@ -462,6 +548,20 @@
               "$ref" : "#/$defs/TemplateExpression",
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
+            "on.fail" : {
+              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
+            "on.success" : {
+              "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ActionStep"
+              }
+            },
             "record.var-name" : {
               "type" : "string",
               "description" : "Required string: Variable name to assign to each individual record being processed, allowing the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined in the 'do' block through the specified variable name.\n"
@@ -480,6 +580,20 @@
         "if" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
+        },
+        "on.fail" : {
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.success" : {
+          "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
         },
         "style" : {
           "$ref" : "#/$defs/TemplateExpression",
@@ -516,7 +630,7 @@
     },
     "TemplateExpression" : {
       "format" : "spelTemplateExpression",
-      "description" : "Spring template expression, like 'Hello ${name}'.\nSee https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html for expression language reference. Expressions may invoke the following fcli-provided functions: \nobject #_ci.detect()\nobject #ado.env\nstring #ado.type\nobject #ado.project()\nobject #ado.project().addPrThread(string comment)\nobject #ado.project().publishTestResults(string testRunner, string testResults)\nobject #ado.repo()\nobject #ado.repo().uploadSarif(string sarifContent)\nobject #bitbucket.env\nstring #bitbucket.type\nobject #bitbucket.repo()\nobject #bitbucket.repo().addReportAnnotations(string reportId, string annotationsContent)\nobject #bitbucket.repo().uploadReport(string reportId, string reportContent)\nobject #github.env\nstring #github.type\nobject #github.repo()\nobject #github.repo().addPrComment(string body)\nobject #github.repo().addReviewComment(string path, object line, string body)\nobject #github.repo().createCheckRun(object body)\nobject #github.repo().tryUploadSarif(string sarifContent)\nobject #github.repo().uploadSarif(string sarifContent)\nobject #gitlab.env\nstring #gitlab.type\nobject #gitlab.project()\nobject #gitlab.project().addMrComment(string body)\nobject #gitlab.project().uploadCodeQualityReport(string reportContent)\nobject #gitlab.project().uploadSecurityReport(string reportType, string reportContent)\nstring #currentDateTime()\nobject #date(string input)\nstring #formatDateTime(string fmt[, string input])\nstring #formatDateTimeAsUTC(string fmt, string input)\nstring #formatDateTimeWithZoneId(string fmt, string input, object tz)\nstring #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)\nobject #now([string period])\nobject #action.fmt(string formatterName, object input)\nstring #copyright()\nstring #decrypt(string input)\nstring #encrypt(string input)\nobject #fcliBuildProperties()\nboolean #isDebugEnabled()\nobject #var(string name)\nstring #cleanIssueDescription(string issueDescription)\nstring #cleanRuleDescription(string ruleDescription)\nstring #fod.appBrowserUrl(object rel)\nstring #fod.issueBrowserUrl(object issue)\nobject #fod.release(string nameOrId)\nstring #fod.releaseBrowserUrl(object rel)\nobject #issueSourceFileResolver(map config)\nboolean #issueSourceFileResolver().exists(string issuePath, object lineNumber)\nstring #issueSourceFileResolver().resolve(string issuePath)\nobject #normalizeAndMergeTraceNodes(object input)\nobject #normalizeTraceNodes(object input)\nobject #ssc.appVersion(string nameOrId)\nstring #ssc.appversionBrowserUrl(object av, object fs)\nobject #ssc.filterSet(object av, string titleOrId)\nstring #ssc.issueBrowserUrl(object issue, object fs)\nobject #ssc.ruleDescriptionsProcessor(string avId)\nstring #abbreviate(string input, object maxLength)\nstring #fmt(string fmt, array args)\nstring #htmlToSingleLineText(string html)\nstring #htmlToText(string html)\nstring #ifBlank(string input, string default)\nboolean #isBlank(string input)\nboolean #isNotBlank(string input)\nstring #join(string delimiter, array input)\nstring #joinOrNull(string delimiter, array input)\nstring #numberedList(array input)\nstring #regexQuote(string input)\nstring #repeat(string input, object count)\nstring #replaceAllFromRegExMap(string input, map<string,string> replacements)\nstring #substringAfter(string input, string separator)\nstring #substringBefore(string input, string separator)\nstring #env(string name)\nboolean #fs.exists(string path)\nboolean #fs.isDirectory(string path)\nboolean #fs.isFile(string path)\nboolean #fs.isReadable(string path)\nboolean #fs.isReadableFile(string path)\nboolean #fs.isWritable(string path)\nboolean #fs.isWritableDir(string path)\nstring #jsonStringify(object input[, boolean pretty])\nobject #properties(object input)\nstring #resolveAgainstCurrentWorkDir(string path)\nstring #uriPart(string uri, string part)\nstring #uuid()\nstring #action.copyParametersFromGroup(string group)\nstring #action.runID()\nstring #actionCmd(string envPrefix, string moduleName, string actionName)\nstring #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)\nstring #actionOrNull(string moduleName, string actionName)\nboolean #check(boolean throwError, string msg)\nstring #extraOpts(string envPrefix)\nstring #fcliCmd(string envPrefix, string cmd)\nstring #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #opt(string name, string value)\nstring #optsFromEnv(string input)\nstring #skipBlankEnvReason(string arg0)\nstring #skipReasonIf(boolean skip, string reason)\n\nReturn type structures for functions that return complex objects:\nobject #ado.env:\n{\n  \"buildId\" : \"string\",\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"organization\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"project\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryId\" : \"string\"\n}\n\nobject #bitbucket.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineUuid\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryFullName\" : \"string\",\n  \"repositoryOwner\" : \"string\",\n  \"repositorySlug\" : \"string\",\n  \"workspace\" : \"string\"\n}\n\nobject #github.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"jobSummaryFile\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nobject #gitlab.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineId\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"projectId\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nSee fcli custom action development documentation for more information.\n",
+      "description" : "Spring template expression, like 'Hello ${name}'.\nSee https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html for expression language reference. Expressions may invoke the following fcli-provided functions: \nobject #_ci.detect()\nobject #ado.env\nstring #ado.type\nobject #ado.project()\nobject #ado.project().addPrThread(string comment)\nobject #ado.project().publishTestResults(string testRunner, string testResults)\nobject #ado.repo()\nobject #ado.repo().uploadSarif(string sarifContent)\nobject #bitbucket.env\nstring #bitbucket.type\nobject #bitbucket.repo()\nobject #bitbucket.repo().addReportAnnotations(string reportId, string annotationsContent)\nobject #bitbucket.repo().uploadReport(string reportId, string reportContent)\nobject #github.env\nstring #github.type\nobject #github.repo()\nobject #github.repo().addPrComment(string body)\nobject #github.repo().addReviewComment(string path, object line, string body)\nobject #github.repo().createCheckRun(object body)\nobject #github.repo().uploadSarif(string sarifContent)\nobject #gitlab.env\nstring #gitlab.type\nobject #gitlab.project()\nobject #gitlab.project().addMrComment(string body)\nobject #gitlab.project().uploadCodeQualityReport(string reportContent)\nobject #gitlab.project().uploadSecurityReport(string reportType, string reportContent)\nstring #currentDateTime()\nobject #date(string input)\nstring #formatDateTime(string fmt[, string input])\nstring #formatDateTimeAsUTC(string fmt, string input)\nstring #formatDateTimeWithZoneId(string fmt, string input, object tz)\nstring #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)\nobject #now([string period])\nobject #action.fmt(string formatterName, object input)\nstring #copyright()\nstring #decrypt(string input)\nstring #encrypt(string input)\nobject #fcliBuildProperties()\nboolean #isDebugEnabled()\nobject #var(string name)\nstring #cleanIssueDescription(string issueDescription)\nstring #cleanRuleDescription(string ruleDescription)\nstring #fod.appBrowserUrl(object rel)\nstring #fod.issueBrowserUrl(object issue)\nobject #fod.release(string nameOrId)\nstring #fod.releaseBrowserUrl(object rel)\nobject #issueSourceFileResolver(map config)\nboolean #issueSourceFileResolver().exists(string issuePath, object lineNumber)\nstring #issueSourceFileResolver().resolve(string issuePath)\nobject #normalizeAndMergeTraceNodes(object input)\nobject #normalizeTraceNodes(object input)\nobject #ssc.appVersion(string nameOrId)\nstring #ssc.appversionBrowserUrl(object av, object fs)\nobject #ssc.filterSet(object av, string titleOrId)\nstring #ssc.issueBrowserUrl(object issue, object fs)\nobject #ssc.ruleDescriptionsProcessor(string avId)\nstring #abbreviate(string input, object maxLength)\nstring #fmt(string fmt, array args)\nstring #htmlToSingleLineText(string html)\nstring #htmlToText(string html)\nstring #ifBlank(string input, string default)\nboolean #isBlank(string input)\nboolean #isNotBlank(string input)\nstring #join(string delimiter, array input)\nstring #joinOrNull(string delimiter, array input)\nstring #numberedList(array input)\nstring #regexQuote(string input)\nstring #repeat(string input, object count)\nstring #replaceAllFromRegExMap(string input, map<string,string> replacements)\nstring #substringAfter(string input, string separator)\nstring #substringBefore(string input, string separator)\nstring #env(string name)\nboolean #fs.exists(string path)\nboolean #fs.isDirectory(string path)\nboolean #fs.isFile(string path)\nboolean #fs.isReadable(string path)\nboolean #fs.isReadableFile(string path)\nboolean #fs.isWritable(string path)\nboolean #fs.isWritableDir(string path)\nstring #jsonStringify(object input[, boolean pretty])\nobject #properties(object input)\nstring #resolveAgainstCurrentWorkDir(string path)\nstring #uriPart(string uri, string part)\nstring #uuid()\nstring #action.copyParametersFromGroup(string group)\nstring #action.runID()\nstring #actionCmd(string envPrefix, string moduleName, string actionName)\nstring #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)\nstring #actionOrNull(string moduleName, string actionName)\nboolean #check(boolean throwError, string msg)\nstring #extraOpts(string envPrefix)\nstring #fcliCmd(string envPrefix, string cmd)\nstring #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #opt(string name, string value)\nstring #optsFromEnv(string input)\nstring #skipBlankEnvReason(string arg0)\nstring #skipReasonIf(boolean skip, string reason)\n\nReturn type structures for functions that return complex objects:\nobject #ado.env:\n{\n  \"buildId\" : \"string\",\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"organization\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"project\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryId\" : \"string\"\n}\n\nobject #bitbucket.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineUuid\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryFullName\" : \"string\",\n  \"repositoryOwner\" : \"string\",\n  \"repositorySlug\" : \"string\",\n  \"workspace\" : \"string\"\n}\n\nobject #github.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"jobSummaryFile\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nobject #gitlab.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineId\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"projectId\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nSee fcli custom action development documentation for more information.\n",
       "type" : [ "boolean", "integer", "string", "number", "null" ]
     },
     "TemplateExpressionWithFormatter" : {

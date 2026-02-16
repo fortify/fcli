@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260216.140738-dev_v3.x
+fcli_version: 0.20260216.184642-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260216.140738-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.140738-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.184642-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260216.140738-dev_v3.x</span>
+<span id="revnumber">version 0.20260216.184642-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -290,10 +290,12 @@ fcli_version: 0.20260216.140738-dev_v3.x
 <li><a href="#_step_records_for_each"><code>[step] records.for-each</code></a></li>
 <li><a href="#_step_with"><code>[step] with</code></a></li>
 <li><a href="#_step_writer_append"><code>[step] writer.append</code></a></li>
-<li><a href="#_step_steps"><code>[step] steps</code></a></li>
+<li><a href="#_step_do"><code>[step] do</code></a></li>
 <li><a href="#_step_throw"><code>[step] throw</code></a></li>
 <li><a href="#_step_exit"><code>[step] exit</code></a></li>
 <li><a href="#_step_if"><code>[step] if</code></a></li>
+<li><a href="#_step_on_fail"><code>[step] on.fail</code></a></li>
+<li><a href="#_step_on_success"><code>[step] on.success</code></a></li>
 </ul>
 </li>
 <li><a href="#yaml-types">YAML types</a>
@@ -443,7 +445,7 @@ fcli_version: 0.20260216.140738-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.140738-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.184642-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -565,7 +567,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260216.140738-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260216.184642-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -915,7 +917,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - var.set:
       var1: Hello ${name}
       var2.p1: This is property 1 on var2
@@ -963,7 +965,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - var.rm:
       - var1    # Remove variable named 'var1'
       - ${var2} # Remove variable name as stored in var2 variable</code></pre>
@@ -992,7 +994,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - log.progress: Processing record ${recordNumber}</code></pre>
 </div>
 </div></div></td>
@@ -1019,7 +1021,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - log.info: Output written to ${fileName}</code></pre>
 </div>
 </div></div></td>
@@ -1046,7 +1048,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - log.warn: Skipping this part due to errors: ${errors}</code></pre>
 </div>
 </div></div></td>
@@ -1073,7 +1075,7 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
    - log.debug: ${#this}   # Log all action variables</code></pre>
 </div>
 </div></div></td>
@@ -1245,7 +1247,7 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - out.write:
       ${cli.file}: {fmt: output}</code></pre>
 </div>
@@ -1399,17 +1401,18 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_step_steps"><a class="anchor" href="#_step_steps"></a><code>[step] steps</code></h3>
+<h3 id="_step_do"><a class="anchor" href="#_step_do"></a><code>[step] do</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 100%;">
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] steps</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] do</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.</p>
+<p class="tableblock">Note: The 'steps' property name is deprecated; use 'do' instead. For backward compatibility, 'steps' is still accepted.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
@@ -1417,10 +1420,10 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - ...
   - if: ${condition}
-    steps:
+    do:
       - ... # One or more steps to execute if ${condition} evaluates to true</code></pre>
 </div>
 </div></div></td>
@@ -1447,7 +1450,7 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - throw: ERROR: ${errorMessage}</code></pre>
 </div>
 </div></div></td>
@@ -1474,7 +1477,7 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">steps:
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
   - if: ${someCondition}
     exit: 1</code></pre>
 </div>
@@ -1495,6 +1498,38 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_step_on_fail"><a class="anchor" href="#_step_on_fail"></a><code>[step] on.fail</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] on.fail</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_step_on_success"><a class="anchor" href="#_step_on_success"></a><code>[step] on.success</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] on.success</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -1575,6 +1610,16 @@ HIDE: Hide the check from output<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -1801,6 +1846,16 @@ options: --option, -o<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -1953,16 +2008,6 @@ full value will be masked.<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional object: Log progress messages during the various stages of request/response processing.<br></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed on each successfull REST response. For simple requests, these steps will be executed once. For paged requests, these steps will be executed after every individual page has been received. Steps can reference the [requestName] and [requestName]_raw variables to access processed and raw response data respectively. Any steps define in 'on.success' will be executed before processing individual response records through the 'records.for-each' instruction.<br></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure. Steps can reference a variable named after the identifier for this REST call, for example 'x_exception', to access the Java Exception object that represents the failure that occurred.<br></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">records.for-each</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#type-rest.call-for-each">rest.call-for-each</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional object: If the processed (successfull) REST response provides an array of records, this instruction allows for executing the steps provided in the 'do' block for each individual record.<br></p></td>
@@ -1971,6 +2016,16 @@ full value will be masked.<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -2040,6 +2095,16 @@ full value will be masked.<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -2153,6 +2218,16 @@ full value will be masked.<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -2257,22 +2332,12 @@ show:           Show fcli stderr output</p>
 <p class="tableblock">Default value: 'show'<br></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if the fcli command was completed successfully. Steps can reference the usual action variables generated by the fcli invocation to access any records, stdout/stderr output, and exit code produced by the fcli command.<br></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if the fcli command returns a non-zero exit code. If not specified, an exception will be thrown and action execution will terminate if the fcli command returned a non-zero exit code, unless 'status' is configured to ignore exit status. Steps can reference the usual action variables generated by the fcli invocation to access any records, stdout/stderr output, and exit code produced by the fcli command.<br></p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">status.check</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">(PREVIEW) Optional boolean value, indicating whether exit status of the fcli command should be checked:</p>
 <p class="tableblock">true: Terminate action execution if the fcli command returned a non-zero exit code<br>
 false: Continue action execution if the fcli command returned a non-zero exit code</p>
-<p class="tableblock">Default value is taken from 'config:run.fcli.status.check.default'. If not specified, default value is 'false' if 'on.fail' is specified, 'true' otherwise.</p>
+<p class="tableblock">Default value is taken from 'config:run.fcli.status.check.default'. If not specified, default value is 'true'.</p>
 <p class="tableblock">For now, this instruction is meant to be used only by built-in fcli actions; custom actions using this instruction may fail to run on other fcli 3.x versions.<br></p></td>
 </tr>
 <tr>
@@ -2298,6 +2363,16 @@ false: Don&#8217;t output an informational message showing exit status</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -2358,6 +2433,16 @@ false: Don&#8217;t output an informational message showing exit status</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -2472,6 +2557,16 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -2553,6 +2648,16 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -2610,6 +2715,16 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -2690,6 +2805,16 @@ header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-b
 <td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -2929,7 +3054,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a comment thread to the current pull request; auto-detects project, repository, and PR context</p>
+<p>(PREVIEW) Adds a comment thread to the current pull request; auto-detects project, repository, and PR context. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -2955,7 +3080,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Publishes test results (free tier); auto-detects project and build ID from the current pipeline run</p>
+<p>(PREVIEW) Publishes test results (free tier); auto-detects project and build ID from the current pipeline run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3004,7 +3129,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run</p>
+<p>(PREVIEW) Uploads SARIF to ADO Advanced Security (paid tier); auto-detects organization/project/repository/commit from the current run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3341,7 +3466,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a comment to the current pull request detected from the workflow run</p>
+<p>(PREVIEW) Adds a comment to the current pull request detected from the workflow run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3368,7 +3493,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a review comment on a specific file and line in the pull request detected from the workflow run</p>
+<p>(PREVIEW) Adds a review comment on a specific file and line in the pull request detected from the workflow run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3406,26 +3531,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().tryUploadSarif(string sarifContent)</code></strong></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string sarifContent</em> - SARIF report content as string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Result object: {success: true, data: &#8230;&#8203;} or {success: false, reason: 'ghas_unavailable'</p></td>
-</tr>
-</tbody>
-</table>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 1%;">
-<col>
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #github.repo().uploadSarif(string sarifContent)</code></strong></p></td>
 </tr>
 <tr>
@@ -3438,7 +3543,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run</p>
+<p>Uploads SARIF to GitHub Code Scanning (paid tier, requires GHAS) using repository/ref/commit from the current workflow run. Throws GhasUnavailableException if GitHub Advanced Security is not enabled. Use on.fail in action YAML to implement fallback logic.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -3592,7 +3697,7 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
-<p>Adds a comment to the merge request detected from the current pipeline run</p>
+<p>(PREVIEW) Adds a comment to the merge request detected from the current pipeline run. This function is not yet used by any built-in fcli actions; signature and implementation may change in future fcli versions based on new insights as to how to best integrate this functionality into fcli built-in actions.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -5985,8 +6090,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260216.140738-dev_v3.x<br>
-Last updated 2026-02-16 14:10:27 UTC
+Version 0.20260216.184642-dev_v3.x<br>
+Last updated 2026-02-16 18:49:34 UTC
 </div>
 </div>
 </body>
