@@ -107,7 +107,7 @@
           "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages.\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -148,7 +148,7 @@
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "on.fail" : {
-                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
                 "type" : "array",
                 "items" : {
                   "$ref" : "#/$defs/ActionStep"
@@ -225,7 +225,7 @@
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "on.fail" : {
-                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
                 "type" : "array",
                 "items" : {
                   "$ref" : "#/$defs/ActionStep"
@@ -257,7 +257,7 @@
                       "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
                     },
                     "on.fail" : {
-                      "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+                      "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
                       "type" : "array",
                       "items" : {
                         "$ref" : "#/$defs/ActionStep"
@@ -323,7 +323,7 @@
           "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -380,7 +380,7 @@
           "description" : "Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -423,7 +423,7 @@
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
             "on.fail" : {
-              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
               "type" : "array",
               "items" : {
                 "$ref" : "#/$defs/ActionStep"
@@ -479,7 +479,7 @@
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -549,7 +549,7 @@
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
             "on.fail" : {
-              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
               "type" : "array",
               "items" : {
                 "$ref" : "#/$defs/ActionStep"
@@ -582,7 +582,7 @@
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException', 'lastException.message', 'lastException.type', and (for named elements) '${name}_exception' with the same sub-properties. For HTTP exceptions, 'lastException.httpStatus' may also be available.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.class.simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
