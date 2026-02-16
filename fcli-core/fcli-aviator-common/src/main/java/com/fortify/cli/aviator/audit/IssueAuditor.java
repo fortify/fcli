@@ -51,6 +51,7 @@ import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClient;
 import com.fortify.cli.aviator.grpc.AviatorGrpcClientHelper;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FprHandle;
 import com.fortify.cli.aviator.util.StringUtil;
 
 
@@ -141,7 +142,7 @@ public class IssueAuditor {
     }
 
     public AuditOutcome performAudit(Map<String, AuditResponse> auditResponses, String token,
-                                    String projectName, String projectBuildId, String url) {
+                                     String projectName, String projectBuildId, String url, FprHandle fprHandle) {
         projectName = StringUtil.isEmpty(projectName) ? projectBuildId : projectName;
         logger.progress("Starting audit for project: %s", projectName);
 
@@ -154,7 +155,7 @@ public class IssueAuditor {
         } else {
             try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(url, logger, DEFAULT_PING_INTERVAL_SECONDS)) {
                 CompletableFuture<Map<String, AuditResponse>> future =
-                        client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName, SSCApplicationVersion, token);
+                        client.processBatchRequests(promptsToAudit, projectName, fprInfo.getBuildId(), SSCApplicationName, SSCApplicationVersion, token, fprHandle);
                 Map<String, AuditResponse> responses = future.get(500, TimeUnit.MINUTES);
                 responses.forEach((requestId, response) -> auditResponses.put(response.getIssueId(), response));
                 logger.progress("Audit completed");

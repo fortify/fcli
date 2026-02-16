@@ -18,6 +18,8 @@ dependencies {
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
     implementation("com.sun.activation:jakarta.activation:2.0.1")
     implementation("jakarta.xml.ws:jakarta.xml.ws-api:3.0.1")
+    // Woodstox is a high-performance StAX implementation
+    implementation("com.fasterxml.woodstox:woodstox-core:6.5.1")
     implementation("com.auth0:java-jwt:4.5.0")
     implementation("io.grpc:grpc-netty-shaded:1.76.0")
     implementation("io.grpc:grpc-protobuf:1.76.0")
