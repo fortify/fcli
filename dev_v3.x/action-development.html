@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260216.133454-dev_v3.x
+fcli_version: 0.20260216.140738-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260216.133454-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.133454-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.140738-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260216.133454-dev_v3.x</span>
+<span id="revnumber">version 0.20260216.140738-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -321,21 +321,96 @@ fcli_version: 0.20260216.133454-dev_v3.x
 <li><a href="#_expression_syntax">Expression Syntax</a></li>
 <li><a href="#_spel_functions">SpEL Functions</a></li>
 <li><a href="#_ci">[ci]</a></li>
+<li><a href="#_ci_detect"><code>_ci.detect</code></a></li>
+<li><a href="#_ado_env"><code>ado.env</code></a></li>
+<li><a href="#_ado_type"><code>ado.type</code></a></li>
 <li><a href="#_ado_project"><code>ado.project</code></a></li>
 <li><a href="#_ado_repo"><code>ado.repo</code></a></li>
+<li><a href="#_bitbucket_env"><code>bitbucket.env</code></a></li>
+<li><a href="#_bitbucket_type"><code>bitbucket.type</code></a></li>
 <li><a href="#_bitbucket_repo"><code>bitbucket.repo</code></a></li>
+<li><a href="#_github_env"><code>github.env</code></a></li>
+<li><a href="#_github_type"><code>github.type</code></a></li>
 <li><a href="#_github_repo"><code>github.repo</code></a></li>
+<li><a href="#_gitlab_env"><code>gitlab.env</code></a></li>
+<li><a href="#_gitlab_type"><code>gitlab.type</code></a></li>
 <li><a href="#_gitlab_project"><code>gitlab.project</code></a></li>
-<li><a href="#_gitlab_project_addmrcomment"><code>gitlab.project().addMrComment</code></a></li>
-<li><a href="#_gitlab_project_uploadcodequalityreport"><code>gitlab.project().uploadCodeQualityReport</code></a></li>
-<li><a href="#_gitlab_project_uploadsecurityreport"><code>gitlab.project().uploadSecurityReport</code></a></li>
 <li><a href="#_date">[date]</a></li>
+<li><a href="#_currentdatetime"><code>currentDateTime</code></a></li>
+<li><a href="#_date_2"><code>date</code></a></li>
+<li><a href="#_formatdatetime"><code>formatDateTime</code></a></li>
+<li><a href="#_formatdatetimeasutc"><code>formatDateTimeAsUTC</code></a></li>
+<li><a href="#_formatdatetimewithzoneid"><code>formatDateTimeWithZoneId</code></a></li>
+<li><a href="#_formatdatetimewithzoneidasutc"><code>formatDateTimewithZoneIdAsUTC</code></a></li>
+<li><a href="#_now"><code>now</code></a></li>
 <li><a href="#_fcli">[fcli]</a></li>
+<li><a href="#_action_fmt"><code>action.fmt</code></a></li>
+<li><a href="#_copyright"><code>copyright</code></a></li>
+<li><a href="#_decrypt"><code>decrypt</code></a></li>
+<li><a href="#_encrypt"><code>encrypt</code></a></li>
+<li><a href="#_fclibuildproperties"><code>fcliBuildProperties</code></a></li>
+<li><a href="#_isdebugenabled"><code>isDebugEnabled</code></a></li>
+<li><a href="#_var"><code>var</code></a></li>
 <li><a href="#_fortify">[fortify]</a></li>
+<li><a href="#_cleanissuedescription"><code>cleanIssueDescription</code></a></li>
+<li><a href="#_cleanruledescription"><code>cleanRuleDescription</code></a></li>
+<li><a href="#_fod_appbrowserurl"><code>fod.appBrowserUrl</code></a></li>
+<li><a href="#_fod_issuebrowserurl"><code>fod.issueBrowserUrl</code></a></li>
+<li><a href="#_fod_release"><code>fod.release</code></a></li>
+<li><a href="#_fod_releasebrowserurl"><code>fod.releaseBrowserUrl</code></a></li>
 <li><a href="#_issuesourcefileresolver"><code>issueSourceFileResolver</code></a></li>
+<li><a href="#_normalizeandmergetracenodes"><code>normalizeAndMergeTraceNodes</code></a></li>
+<li><a href="#_normalizetracenodes"><code>normalizeTraceNodes</code></a></li>
+<li><a href="#_ssc_appversion"><code>ssc.appVersion</code></a></li>
+<li><a href="#_ssc_appversionbrowserurl"><code>ssc.appversionBrowserUrl</code></a></li>
+<li><a href="#_ssc_filterset"><code>ssc.filterSet</code></a></li>
+<li><a href="#_ssc_issuebrowserurl"><code>ssc.issueBrowserUrl</code></a></li>
+<li><a href="#_ssc_ruledescriptionsprocessor"><code>ssc.ruleDescriptionsProcessor</code></a></li>
 <li><a href="#_txt">[txt]</a></li>
+<li><a href="#_abbreviate"><code>abbreviate</code></a></li>
+<li><a href="#_fmt"><code>fmt</code></a></li>
+<li><a href="#_htmltosinglelinetext"><code>htmlToSingleLineText</code></a></li>
+<li><a href="#_htmltotext"><code>htmlToText</code></a></li>
+<li><a href="#_ifblank"><code>ifBlank</code></a></li>
+<li><a href="#_isblank"><code>isBlank</code></a></li>
+<li><a href="#_isnotblank"><code>isNotBlank</code></a></li>
+<li><a href="#_join"><code>join</code></a></li>
+<li><a href="#_joinornull"><code>joinOrNull</code></a></li>
+<li><a href="#_numberedlist"><code>numberedList</code></a></li>
+<li><a href="#_regexquote"><code>regexQuote</code></a></li>
+<li><a href="#_repeat"><code>repeat</code></a></li>
+<li><a href="#_replaceallfromregexmap"><code>replaceAllFromRegExMap</code></a></li>
+<li><a href="#_substringafter"><code>substringAfter</code></a></li>
+<li><a href="#_substringbefore"><code>substringBefore</code></a></li>
 <li><a href="#_util">[util]</a></li>
+<li><a href="#_env"><code>env</code></a></li>
+<li><a href="#_fs_exists"><code>fs.exists</code></a></li>
+<li><a href="#_fs_isdirectory"><code>fs.isDirectory</code></a></li>
+<li><a href="#_fs_isfile"><code>fs.isFile</code></a></li>
+<li><a href="#_fs_isreadable"><code>fs.isReadable</code></a></li>
+<li><a href="#_fs_isreadablefile"><code>fs.isReadableFile</code></a></li>
+<li><a href="#_fs_iswritable"><code>fs.isWritable</code></a></li>
+<li><a href="#_fs_iswritabledir"><code>fs.isWritableDir</code></a></li>
+<li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
+<li><a href="#_properties"><code>properties</code></a></li>
+<li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
+<li><a href="#_uripart"><code>uriPart</code></a></li>
+<li><a href="#_uuid"><code>uuid</code></a></li>
 <li><a href="#_workflow">[workflow]</a></li>
+<li><a href="#_action_copyparametersfromgroup"><code>action.copyParametersFromGroup</code></a></li>
+<li><a href="#_action_runid"><code>action.runID</code></a></li>
+<li><a href="#_actioncmd"><code>actionCmd</code></a></li>
+<li><a href="#_actioncmdskipfromenvreason"><code>actionCmdSkipFromEnvReason</code></a></li>
+<li><a href="#_actioncmdskipnoactionreason"><code>actionCmdSkipNoActionReason</code></a></li>
+<li><a href="#_actionornull"><code>actionOrNull</code></a></li>
+<li><a href="#_check"><code>check</code></a></li>
+<li><a href="#_extraopts"><code>extraOpts</code></a></li>
+<li><a href="#_fclicmd"><code>fcliCmd</code></a></li>
+<li><a href="#_fclicmdskipfromenvreason"><code>fcliCmdSkipFromEnvReason</code></a></li>
+<li><a href="#_opt"><code>opt</code></a></li>
+<li><a href="#_optsfromenv"><code>optsFromEnv</code></a></li>
+<li><a href="#_skipblankenvreason"><code>skipBlankEnvReason</code></a></li>
+<li><a href="#_skipreasonif"><code>skipReasonIf</code></a></li>
 <li><a href="#_internal">[internal]</a></li>
 <li><a href="#_action_docrenderer"><code>action.docRenderer</code></a></li>
 <li><a href="#_action_docrenderer_asciidoc"><code>action.docRenderer().asciidoc</code></a></li>
@@ -344,6 +419,9 @@ fcli_version: 0.20260216.133454-dev_v3.x
 <li><a href="#_action_docrenderer_manpagebaseurl"><code>action.docRenderer().manpageBaseUrl</code></a></li>
 <li><a href="#_action_docrenderer_render"><code>action.docRenderer().render</code></a></li>
 <li><a href="#_action_docrenderer_text"><code>action.docRenderer().text</code></a></li>
+<li><a href="#_actionschema"><code>actionSchema</code></a></li>
+<li><a href="#_actionspelfunctions"><code>actionSpelFunctions</code></a></li>
+<li><a href="#_localrepo"><code>localRepo</code></a></li>
 </ul>
 </li>
 </ul>
@@ -365,7 +443,7 @@ fcli_version: 0.20260216.133454-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.133454-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.140738-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -487,7 +565,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260216.133454-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260216.140738-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -2669,6 +2747,10 @@ for example:</p>
 </div>
 <div class="sect2">
 <h3 id="_ci"><a class="anchor" href="#_ci"></a>[ci]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_ci_detect"><a class="anchor" href="#_ci_detect"></a><code>_ci.detect</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2696,6 +2778,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ado_env"><a class="anchor" href="#_ado_env"></a><code>ado.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2776,6 +2861,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ado_type"><a class="anchor" href="#_ado_type"></a><code>ado.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -2921,6 +3009,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_bitbucket_env"><a class="anchor" href="#_bitbucket_env"></a><code>bitbucket.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3002,6 +3093,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_bitbucket_type"><a class="anchor" href="#_bitbucket_type"></a><code>bitbucket.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3099,6 +3193,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_github_env"><a class="anchor" href="#_github_env"></a><code>github.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3176,6 +3273,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_github_type"><a class="anchor" href="#_github_type"></a><code>github.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3343,6 +3443,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_env"><a class="anchor" href="#_gitlab_env"></a><code>gitlab.env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3421,6 +3524,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_gitlab_type"><a class="anchor" href="#_gitlab_type"></a><code>gitlab.type</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3466,9 +3572,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_project_addmrcomment"><a class="anchor" href="#_gitlab_project_addmrcomment"></a><code>gitlab.project().addMrComment</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3494,9 +3597,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_project_uploadcodequalityreport"><a class="anchor" href="#_gitlab_project_uploadcodequalityreport"></a><code>gitlab.project().uploadCodeQualityReport</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3522,9 +3622,6 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="sect2">
-<h3 id="_gitlab_project_uploadsecurityreport"><a class="anchor" href="#_gitlab_project_uploadsecurityreport"></a><code>gitlab.project().uploadSecurityReport</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3554,6 +3651,10 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </div>
 <div class="sect2">
 <h3 id="_date"><a class="anchor" href="#_date"></a>[date]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_currentdatetime"><a class="anchor" href="#_currentdatetime"></a><code>currentDateTime</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3570,6 +3671,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_date_2"><a class="anchor" href="#_date_2"></a><code>date</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3595,6 +3699,9 @@ will be an empty JSON object, and no other SpEL functions will be available.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetime"><a class="anchor" href="#_formatdatetime"></a><code>formatDateTime</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3625,6 +3732,9 @@ default time zone will be assumed.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetimeasutc"><a class="anchor" href="#_formatdatetimeasutc"></a><code>formatDateTimeAsUTC</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3655,6 +3765,9 @@ default time zone will be assumed.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetimewithzoneid"><a class="anchor" href="#_formatdatetimewithzoneid"></a><code>formatDateTimeWithZoneId</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3686,6 +3799,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_formatdatetimewithzoneidasutc"><a class="anchor" href="#_formatdatetimewithzoneidasutc"></a><code>formatDateTimewithZoneIdAsUTC</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3717,6 +3833,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_now"><a class="anchor" href="#_now"></a><code>now</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3740,6 +3859,10 @@ default time zone id will be used.</p>
 </div>
 <div class="sect2">
 <h3 id="_fcli"><a class="anchor" href="#_fcli"></a>[fcli]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_action_fmt"><a class="anchor" href="#_action_fmt"></a><code>action.fmt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3766,6 +3889,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_copyright"><a class="anchor" href="#_copyright"></a><code>copyright</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3782,6 +3908,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_decrypt"><a class="anchor" href="#_decrypt"></a><code>decrypt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3807,6 +3936,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_encrypt"><a class="anchor" href="#_encrypt"></a><code>encrypt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3832,6 +3964,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fclibuildproperties"><a class="anchor" href="#_fclibuildproperties"></a><code>fcliBuildProperties</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3848,6 +3983,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_isdebugenabled"><a class="anchor" href="#_isdebugenabled"></a><code>isDebugEnabled</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3864,6 +4002,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_var"><a class="anchor" href="#_var"></a><code>var</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3892,6 +4033,10 @@ default time zone id will be used.</p>
 </div>
 <div class="sect2">
 <h3 id="_fortify"><a class="anchor" href="#_fortify"></a>[fortify]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_cleanissuedescription"><a class="anchor" href="#_cleanissuedescription"></a><code>cleanIssueDescription</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3917,6 +4062,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_cleanruledescription"><a class="anchor" href="#_cleanruledescription"></a><code>cleanRuleDescription</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3942,6 +4090,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fod_appbrowserurl"><a class="anchor" href="#_fod_appbrowserurl"></a><code>fod.appBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3962,6 +4113,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fod_issuebrowserurl"><a class="anchor" href="#_fod_issuebrowserurl"></a><code>fod.issueBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -3982,6 +4136,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fod_release"><a class="anchor" href="#_fod_release"></a><code>fod.release</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4002,6 +4159,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fod_releasebrowserurl"><a class="anchor" href="#_fod_releasebrowserurl"></a><code>fod.releaseBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4115,6 +4275,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_normalizeandmergetracenodes"><a class="anchor" href="#_normalizeandmergetracenodes"></a><code>normalizeAndMergeTraceNodes</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4135,6 +4298,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_normalizetracenodes"><a class="anchor" href="#_normalizetracenodes"></a><code>normalizeTraceNodes</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4155,6 +4321,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_appversion"><a class="anchor" href="#_ssc_appversion"></a><code>ssc.appVersion</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4175,6 +4344,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_appversionbrowserurl"><a class="anchor" href="#_ssc_appversionbrowserurl"></a><code>ssc.appversionBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4196,6 +4368,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_filterset"><a class="anchor" href="#_ssc_filterset"></a><code>ssc.filterSet</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4217,6 +4392,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_issuebrowserurl"><a class="anchor" href="#_ssc_issuebrowserurl"></a><code>ssc.issueBrowserUrl</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4238,6 +4416,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ssc_ruledescriptionsprocessor"><a class="anchor" href="#_ssc_ruledescriptionsprocessor"></a><code>ssc.ruleDescriptionsProcessor</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4266,6 +4447,10 @@ default time zone id will be used.</p>
 </div>
 <div class="sect2">
 <h3 id="_txt"><a class="anchor" href="#_txt"></a>[txt]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_abbreviate"><a class="anchor" href="#_abbreviate"></a><code>abbreviate</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4287,6 +4472,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fmt"><a class="anchor" href="#_fmt"></a><code>fmt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4313,6 +4501,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_htmltosinglelinetext"><a class="anchor" href="#_htmltosinglelinetext"></a><code>htmlToSingleLineText</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4338,6 +4529,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_htmltotext"><a class="anchor" href="#_htmltotext"></a><code>htmlToText</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4363,6 +4557,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_ifblank"><a class="anchor" href="#_ifblank"></a><code>ifBlank</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4384,6 +4581,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_isblank"><a class="anchor" href="#_isblank"></a><code>isBlank</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4404,6 +4604,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_isnotblank"><a class="anchor" href="#_isnotblank"></a><code>isNotBlank</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4424,6 +4627,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_join"><a class="anchor" href="#_join"></a><code>join</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4445,6 +4651,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_joinornull"><a class="anchor" href="#_joinornull"></a><code>joinOrNull</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4466,6 +4675,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_numberedlist"><a class="anchor" href="#_numberedlist"></a><code>numberedList</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4491,6 +4703,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_regexquote"><a class="anchor" href="#_regexquote"></a><code>regexQuote</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4516,6 +4731,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_repeat"><a class="anchor" href="#_repeat"></a><code>repeat</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4542,6 +4760,9 @@ default time zone id will be used.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_replaceallfromregexmap"><a class="anchor" href="#_replaceallfromregexmap"></a><code>replaceAllFromRegExMap</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4569,6 +4790,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_substringafter"><a class="anchor" href="#_substringafter"></a><code>substringAfter</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4590,6 +4814,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_substringbefore"><a class="anchor" href="#_substringbefore"></a><code>substringBefore</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4614,6 +4841,10 @@ values provided in the mapping object.</p>
 </div>
 <div class="sect2">
 <h3 id="_util"><a class="anchor" href="#_util"></a>[util]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_env"><a class="anchor" href="#_env"></a><code>env</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4634,6 +4865,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_exists"><a class="anchor" href="#_fs_exists"></a><code>fs.exists</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4659,6 +4893,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isdirectory"><a class="anchor" href="#_fs_isdirectory"></a><code>fs.isDirectory</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4684,6 +4921,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isfile"><a class="anchor" href="#_fs_isfile"></a><code>fs.isFile</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4709,6 +4949,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isreadable"><a class="anchor" href="#_fs_isreadable"></a><code>fs.isReadable</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4734,6 +4977,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_isreadablefile"><a class="anchor" href="#_fs_isreadablefile"></a><code>fs.isReadableFile</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4759,6 +5005,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_iswritable"><a class="anchor" href="#_fs_iswritable"></a><code>fs.isWritable</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4784,6 +5033,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fs_iswritabledir"><a class="anchor" href="#_fs_iswritabledir"></a><code>fs.isWritableDir</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4809,6 +5061,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_jsonstringify"><a class="anchor" href="#_jsonstringify"></a><code>jsonStringify</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4830,6 +5085,9 @@ values provided in the mapping object.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_properties"><a class="anchor" href="#_properties"></a><code>properties</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4856,6 +5114,9 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_resolveagainstcurrentworkdir"><a class="anchor" href="#_resolveagainstcurrentworkdir"></a><code>resolveAgainstCurrentWorkDir</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4881,6 +5142,9 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4907,6 +5171,9 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_uuid"><a class="anchor" href="#_uuid"></a><code>uuid</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4926,6 +5193,10 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </div>
 <div class="sect2">
 <h3 id="_workflow"><a class="anchor" href="#_workflow"></a>[workflow]</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_action_copyparametersfromgroup"><a class="anchor" href="#_action_copyparametersfromgroup"></a><code>action.copyParametersFromGroup</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4946,6 +5217,9 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_action_runid"><a class="anchor" href="#_action_runid"></a><code>action.runID</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -4967,6 +5241,9 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_actioncmd"><a class="anchor" href="#_actioncmd"></a><code>actionCmd</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5025,6 +5302,9 @@ where:</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_actioncmdskipfromenvreason"><a class="anchor" href="#_actioncmdskipfromenvreason"></a><code>actionCmdSkipFromEnvReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5051,6 +5331,9 @@ where:</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_actioncmdskipnoactionreason"><a class="anchor" href="#_actioncmdskipnoactionreason"></a><code>actionCmdSkipNoActionReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5079,6 +5362,9 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_actionornull"><a class="anchor" href="#_actionornull"></a><code>actionOrNull</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5100,6 +5386,9 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_check"><a class="anchor" href="#_check"></a><code>check</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5126,6 +5415,9 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_extraopts"><a class="anchor" href="#_extraopts"></a><code>extraOpts</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5146,6 +5438,9 @@ if not, we return an appropriate skip reason.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fclicmd"><a class="anchor" href="#_fclicmd"></a><code>fcliCmd</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5173,6 +5468,9 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_fclicmdskipfromenvreason"><a class="anchor" href="#_fclicmdskipfromenvreason"></a><code>fcliCmdSkipFromEnvReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5199,6 +5497,9 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_opt"><a class="anchor" href="#_opt"></a><code>opt</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5225,6 +5526,9 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_optsfromenv"><a class="anchor" href="#_optsfromenv"></a><code>optsFromEnv</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5250,6 +5554,9 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_skipblankenvreason"><a class="anchor" href="#_skipblankenvreason"></a><code>skipBlankEnvReason</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5275,6 +5582,9 @@ user-supplied environment variable named <code>&lt;envPrefix&gt;_EXTRA_OPTS</cod
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_skipreasonif"><a class="anchor" href="#_skipreasonif"></a><code>skipReasonIf</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5531,6 +5841,9 @@ Use '_' for product to refer to current/generic context.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_actionschema"><a class="anchor" href="#_actionschema"></a><code>actionSchema</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5552,6 +5865,9 @@ Use '_' for product to refer to current/generic context.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_actionspelfunctions"><a class="anchor" href="#_actionspelfunctions"></a><code>actionSpelFunctions</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5573,6 +5889,9 @@ Use '_' for product to refer to current/generic context.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="sect2">
+<h3 id="_localrepo"><a class="anchor" href="#_localrepo"></a><code>localRepo</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 1%;">
@@ -5666,8 +5985,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260216.133454-dev_v3.x<br>
-Last updated 2026-02-16 13:37:38 UTC
+Version 0.20260216.140738-dev_v3.x<br>
+Last updated 2026-02-16 14:10:27 UTC
 </div>
 </div>
 </body>
