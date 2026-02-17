@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260216.231446-dev_v3.x
+fcli_version: 0.20260217.073129-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260216.231446-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260216.231446-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260217.073129-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260216.231446-dev_v3.x</span>
+<span id="revnumber">version 0.20260217.073129-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -396,6 +396,7 @@ fcli_version: 0.20260216.231446-dev_v3.x
 <li><a href="#_jsonstringify"><code>jsonStringify</code></a></li>
 <li><a href="#_properties"><code>properties</code></a></li>
 <li><a href="#_resolveagainstcurrentworkdir"><code>resolveAgainstCurrentWorkDir</code></a></li>
+<li><a href="#_type"><code>type</code></a></li>
 <li><a href="#_uripart"><code>uriPart</code></a></li>
 <li><a href="#_uuid"><code>uuid</code></a></li>
 <li><a href="#_workflow">[workflow]</a></li>
@@ -445,7 +446,7 @@ fcli_version: 0.20260216.231446-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260216.231446-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260217.073129-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -567,7 +568,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260216.231446-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260217.073129-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -5249,6 +5250,34 @@ used with <code>records.for-each::from</code> to iterate over object properties.
 </table>
 </div>
 <div class="sect2">
+<h3 id="_type"><a class="anchor" href="#_type"></a><code>type</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #type(object object)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>object object</em> - the object whose type should be returned; may be <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The simple class name of the object, or <code>null</code> if the input is <code>null</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns the simple class name of the given object. Primarily used for exception type checking in on.fail handlers.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_uripart"><a class="anchor" href="#_uripart"></a><code>uriPart</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -6090,8 +6119,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260216.231446-dev_v3.x<br>
-Last updated 2026-02-16 23:17:26 UTC
+Version 0.20260217.073129-dev_v3.x<br>
+Last updated 2026-02-17 07:34:16 UTC
 </div>
 </div>
 </body>
