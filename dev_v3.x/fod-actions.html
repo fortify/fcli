@@ -1,6 +1,6 @@
 ---
 title: Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a>
-fcli_version: 0.20260219.123338-dev_v3.x
+fcli_version: 0.20260219.143231-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260219.123338-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260219.123338-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260219.143231-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-fod-action.html"><code>fcli fod action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260219.123338-dev_v3.x</span>
+<span id="revnumber">version 0.20260219.143231-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -625,11 +625,34 @@ sections below list the environment variables supported by this action.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP<br>
 SETUP_ACTION<br>
-SETUP_EXTRA_OPTS</p></td>
+SETUP_EXTRA_OPTS<br>
+OVERRIDE_SAST_SETTINGS</p></td>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or release will be created if they do not yet exist, and static scan settings will be configured if not configured already, using the fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_setup_release">setup-release</a> action, or, if specified, the custom fcli action specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the <code>SETUP_EXTRA_OPTS</code> environment variable.<br>
-<br>
-Depending on your Git workflow, it is recommended to copy state from the release representing your default branch by passing the <code>--copy-from</code> option through <code>SETUP_EXTRA_OPTS</code>. To allow this action to create new applications, depending on FoD version, you may (also) need to provide the <code>--app-owner &lt;user id or name&gt;</code> option through <code>SETUP_EXTRA_OPTS</code>.</p>
+<p>If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or release will be created if they do not yet exist, and static scan settings will be configured if necessary. By default, static scan settings will only be configured if no settings have been previously configured for the release; set  <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code> to override existing static scan settings. The setup will be performed using the fcli-provided fcli-provided <a href="https://fortify.github.io/fcli/latest_dev/fod-actions.html#_setup_release">setup-release</a> action, or, the custom fcli action  specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the  <code>SETUP_EXTRA_OPTS</code> environment variable, but also see below for some convenience environment variables.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">COPY_FROM_RELEASE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Depending on your Git workflow, when a new release is created, it is recommended to copy state from the  release representing your default branch by either setting this environment variable or by passing the  <code>--copy-from</code> option through <code>SETUP_EXTRA_OPTS</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SAST_ASSESSMENT_TYPE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, when setting up a release for SAST scanning, the SAST scan will be configured with the  <code>Static Assessment</code> assessment type. You can choose a different assement type by either setting this  environment variable or by passing the <code>--assessment-type</code> option through <code>SETUP_EXTRA_OPTS</code>. Note  that this won&#8217;t update the assessment type if SAST scan settings have already been configured for the  release, unless you set <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_AVIATOR_AUDIT</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>To enable Aviator audits, set this environment variable to true or pass <code>--use-aviator</code> through <code>SETUP_EXTRA_OPTS</code>. Note that Aviator avaliablility depends on tenant and scan policy configuration, and may consume additional entitlement units. Also note that this setting will be ignored if SAST scan settings have already been configured for the release,  unless you set <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SCA_SCAN</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>To enable Software Composition Analysis in your SAST scans, set this environment variable to true or pass <code>--oss</code>  through <code>SETUP_EXTRA_OPTS</code>. Note that Debricked or Sonatype availability depends on tenant and scan policy configuration, and may consume additional entitlement units. Also note that this option will be ignored if SAST scan settings have already been configured for the release, unless you set <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code>.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -1426,6 +1449,10 @@ appropriate option values and setup commands to run.</p>
 <dd>
 <p>See <a href="manpage/fcli-fod-sast-scan-setup.html"><code>fcli fod sast-scan setup</code></a></p>
 </dd>
+<dt class="hdlist1">--override-sast-settings</dt>
+<dd>
+<p>By default, if SAST scan settings have already been configured, they will not be overridden, hence none of the <a href="manpage/fcli-fod-sast-scan-setup.html"><code>fcli fod sast-scan setup</code></a> options will be applied. Use this option to override existing scan settings.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -1482,8 +1509,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260219.123338-dev_v3.x<br>
-Last updated 2026-02-19 12:36:28 UTC
+Version 0.20260219.143231-dev_v3.x<br>
+Last updated 2026-02-19 14:35:27 UTC
 </div>
 </div>
 </body>
