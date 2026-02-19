@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260219.143231-dev_v3.x
+fcli_version: 0.20260219.162012-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260219.143231-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260219.143231-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260219.162012-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260219.143231-dev_v3.x</span>
+<span id="revnumber">version 0.20260219.162012-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -274,7 +274,7 @@ fcli_version: 0.20260219.143231-dev_v3.x
 <li><a href="#_formatters"><code>formatters</code></a></li>
 </ul>
 </li>
-<li><a href="#type-step">YAML step instructions</a>
+<li><a href="#type-step-regular">YAML step instructions</a>
 <ul class="sectlevel2">
 <li><a href="#_step_var_set"><code>[step] var.set</code></a></li>
 <li><a href="#_step_var_rm"><code>[step] var.rm</code></a></li>
@@ -293,9 +293,13 @@ fcli_version: 0.20260219.143231-dev_v3.x
 <li><a href="#_step_do"><code>[step] do</code></a></li>
 <li><a href="#_step_throw"><code>[step] throw</code></a></li>
 <li><a href="#_step_exit"><code>[step] exit</code></a></li>
-<li><a href="#_step_if"><code>[step] if</code></a></li>
-<li><a href="#_step_on_fail"><code>[step] on.fail</code></a></li>
-<li><a href="#_step_on_success"><code>[step] on.success</code></a></li>
+</ul>
+</li>
+<li><a href="#type-step">YAML step control instructions</a>
+<ul class="sectlevel2">
+<li><a href="#_control_if"><code>[control] if</code></a></li>
+<li><a href="#_control_on_fail"><code>[control] on.fail</code></a></li>
+<li><a href="#_control_on_success"><code>[control] on.success</code></a></li>
 </ul>
 </li>
 <li><a href="#yaml-types">YAML types</a>
@@ -305,6 +309,7 @@ fcli_version: 0.20260219.143231-dev_v3.x
 <li><a href="#type-config"><code>[type] config</code></a></li>
 <li><a href="#type-for-each"><code>[type] for-each</code></a></li>
 <li><a href="#type-mask"><code>[type] mask</code></a></li>
+<li><a href="#type-msg-and-cause"><code>[type] msg-and-cause</code></a></li>
 <li><a href="#type-rest.call"><code>[type] rest.call</code></a></li>
 <li><a href="#type-rest.call-for-each"><code>[type] rest.call-for-each</code></a></li>
 <li><a href="#type-rest.call-log.progress"><code>[type] rest.call-log.progress</code></a></li>
@@ -446,7 +451,7 @@ fcli_version: 0.20260219.143231-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260219.143231-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260219.162012-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -568,7 +573,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260219.143231-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260219.162012-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -864,13 +869,13 @@ provide more details on the expected contents for each property type.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="type-step"><a class="anchor" href="#type-step"></a>YAML step instructions</h2>
+<h2 id="type-step-regular"><a class="anchor" href="#type-step-regular"></a>YAML step instructions</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The sections below list all supported step instructions, that can for example be used in the top-level
-<code>steps</code> instruction, but also other instructions that accept a list of steps, for example within
-<code>for-each</code> blocks. Where applicable, links are provided to <a href="#yaml-types">YAML types</a> sub-sections that
-provide more details on the expected contents for each property type.</p>
+<p>The sections below list all supported step instructions except control instructions (see next section). These can for example
+be used in the top-level <code>steps</code> instruction, but also other instructions that accept a list of steps,
+for example within <code>for-each</code> blocks. Where applicable, links are provided to <a href="#yaml-types">YAML types</a>
+sub-sections that provide more details on the expected contents for each property type.</p>
 </div>
 <div class="sect2">
 <h3 id="_step_var_set"><a class="anchor" href="#_step_var_set"></a><code>[step] var.set</code></h3>
@@ -1011,10 +1016,10 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] log.info</code> - object</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] log.info</code> - <a href="#type-msg-and-cause">msg-and-cause</a></strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with 'msg' and optional 'cause' properties for including exception details.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with <code>msg</code> and optional <code>cause</code> properties for including exception details.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
@@ -1046,10 +1051,10 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] log.warn</code> - object</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] log.warn</code> - <a href="#type-msg-and-cause">msg-and-cause</a></strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with 'msg' and optional 'cause' properties for including exception details.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with <code>msg</code> and optional <code>cause</code> properties for including exception details.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
@@ -1081,10 +1086,10 @@ formatterValue2: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}</p>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] log.debug</code> - object</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] log.debug</code> - <a href="#type-msg-and-cause">msg-and-cause</a></strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Write a debug message to log file (if enabled). This instruction can be specified as either a simple SpEL template expression, or as a structured object with 'msg' and optional 'cause' properties for including exception details.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Write a debug message to log file (if enabled). This instruction can be specified as either a simple SpEL template expression, or as a structured object with <code>msg</code> and optional <code>cause</code> properties for including exception details.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
@@ -1464,10 +1469,10 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] throw</code> - object</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] throw</code> - <a href="#type-msg-and-cause">msg-and-cause</a></strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Throw an exception, thereby terminating action execution. This instruction can be specified as either a simple SpEL template expression that evaluates to a message string, or as a structured object with 'msg' and/or 'cause' properties. When only 'cause' is specified without 'msg', the exception will be rethrown preserving its original type (if FcliException) or wrapped.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Throw an exception, thereby terminating action execution. This instruction can be specified as either a simple SpEL template expression that evaluates to a message string, or as a structured object with <code>msg</code> and/or <code>cause</code> properties. When only <code>cause</code> is specified without <code>msg</code>, the exception will be rethrown preserving its original type (if FcliException) or wrapped.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
@@ -1527,15 +1532,39 @@ do:
 </tbody>
 </table>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="type-step"><a class="anchor" href="#type-step"></a>YAML step control instructions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The sections below list all supported YAML step control instructions. These control instructions can be used in combination with
+the YAML step instructions listed in the previous section to control execution flow and success/error handling, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">- if: false
+  log.info: Scan passed, continuing with post-scan steps</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">- run.fcli:
+    SSC_EXPORT:
+      cmd: ssc artifact download --appversion 123
+      on.fail:
+        - log.warn: Download failed, continuing without artifact</code></pre>
+</div>
+</div>
 <div class="sect2">
-<h3 id="_step_if"><a class="anchor" href="#_step_if"></a><code>[step] if</code></h3>
+<h3 id="_control_if"><a class="anchor" href="#_control_if"></a><code>[control] if</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 100%;">
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] if</code> - <a href="#expression">expression</a></strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[control] if</code> - <a href="#expression">expression</a></strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
@@ -1544,30 +1573,37 @@ do:
 </table>
 </div>
 <div class="sect2">
-<h3 id="_step_on_fail"><a class="anchor" href="#_step_on_fail"></a><code>[step] on.fail</code></h3>
+<h3 id="_control_on_fail"><a class="anchor" href="#_control_on_fail"></a><code>[control] on.fail</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 100%;">
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] on.fail</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[control] on.fail</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_step_on_success"><a class="anchor" href="#_step_on_success"></a><code>[step] on.success</code></h3>
+<h3 id="_control_on_success"><a class="anchor" href="#_control_on_success"></a><code>[control] on.success</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 100%;">
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] on.success</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[control] on.success</code> - array&lt;<a href="#type-step">step</a>&gt;</strong></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
@@ -1655,7 +1691,14 @@ HIDE: Hide the check from output<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -1890,7 +1933,14 @@ options: --option, -o<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -1966,6 +2016,65 @@ full value will be masked.<br></p></td>
 </table>
 <div class="paragraph">
 <p><em><sup>* Generated from com.fortify.cli.common.action.model.ActionInputMask</sup></em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="type-msg-and-cause"><a class="anchor" href="#type-msg-and-cause"></a><code>[type] msg-and-cause</code></h3>
+<div class="paragraph">
+<p>A message with optional exception cause. This can be supplied as either a simple SpEL template expression (in which case it represents the message text), or as a structured object with <code>msg</code> and optional <code>cause</code> properties. Used by <code>throw</code> and <code>log.*</code> instructions.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">msg</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Message text, specified as an SpEL template expression.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cause</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional exception cause, specified as an SpEL template expression that evaluates to a Throwable.<br>
+Can be a direct Throwable reference, wrapped in POJONode, or an ObjectNode with a <code>pojo</code> property (e.g., <code>${lastException}</code> or <code>${lastException.pojo}</code>). If only cause is specified (no msg), the<br>
+exception will be rethrown if it&#8217;s an FcliException, otherwise wrapped.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em><sup>* Generated from com.fortify.cli.common.action.model.MessageWithCause</sup></em></p>
 </div>
 </div>
 <div class="sect2">
@@ -2061,7 +2170,14 @@ full value will be masked.<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2140,7 +2256,14 @@ full value will be masked.<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2262,7 +2385,14 @@ full value will be masked.<br></p></td>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2408,7 +2538,14 @@ false: Don&#8217;t output an informational message showing exit status</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2478,7 +2615,14 @@ false: Don&#8217;t output an informational message showing exit status</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2601,7 +2745,14 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2692,7 +2843,14 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2760,7 +2918,14 @@ for this instruction, may be specified as an SpEL template expression. If 'value
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -2850,7 +3015,14 @@ header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-b
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.<br></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
@@ -6165,8 +6337,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260219.143231-dev_v3.x<br>
-Last updated 2026-02-19 14:35:20 UTC
+Version 0.20260219.162012-dev_v3.x<br>
+Last updated 2026-02-19 16:23:07 UTC
 </div>
 </div>
 </body>

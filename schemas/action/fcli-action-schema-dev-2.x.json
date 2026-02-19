@@ -92,11 +92,11 @@
         },
         "log.debug" : {
           "$ref" : "#/$defs/MessageWithCause",
-          "description" : "Write a debug message to log file (if enabled). This instruction can be specified as either a simple SpEL template expression, or as a structured object with 'msg' and optional 'cause' properties for including exception details.\n"
+          "description" : "Write a debug message to log file (if enabled). This instruction can be specified as either a simple SpEL template expression, or as a structured object with `msg` and optional `cause` properties for including exception details.\n"
         },
         "log.info" : {
           "$ref" : "#/$defs/MessageWithCause",
-          "description" : "Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with 'msg' and optional 'cause' properties for including exception details.\n"
+          "description" : "Write an informational message to console and log file (if enabled). Note that depending on the config:output setting, informational messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with `msg` and optional `cause` properties for including exception details.\n"
         },
         "log.progress" : {
           "$ref" : "#/$defs/TemplateExpression",
@@ -104,10 +104,10 @@
         },
         "log.warn" : {
           "$ref" : "#/$defs/MessageWithCause",
-          "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with 'msg' and optional 'cause' properties for including exception details.\n"
+          "description" : "Write a warning message to console and log file (if enabled). Note that depending on the config:output setting, warning messages may be shown either immediately, or only after all action steps have been executed, to not interfere with progress messages. This instruction can be specified as either a simple SpEL template expression, or as a structured object with `msg` and optional `cause` properties for including exception details.\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -148,7 +148,7 @@
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "on.fail" : {
-                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+                "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
                 "type" : "array",
                 "items" : {
                   "$ref" : "#/$defs/ActionStep"
@@ -196,7 +196,7 @@
         },
         "throw" : {
           "$ref" : "#/$defs/MessageWithCause",
-          "description" : "Throw an exception, thereby terminating action execution. This instruction can be specified as either a simple SpEL template expression that evaluates to a message string, or as a structured object with 'msg' and/or 'cause' properties. When only 'cause' is specified without 'msg', the exception will be rethrown preserving its original type (if FcliException) or wrapped.\n"
+          "description" : "Throw an exception, thereby terminating action execution. This instruction can be specified as either a simple SpEL template expression that evaluates to a message string, or as a structured object with `msg` and/or `cause` properties. When only `cause` is specified without `msg`, the exception will be rethrown preserving its original type (if FcliException) or wrapped.\n"
         },
         "var.rm" : {
           "description" : "Remove one or more local or global variables. Variable names to remove can be provided as plain text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.\n",
@@ -225,7 +225,7 @@
                 "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
               },
               "on.fail" : {
-                "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+                "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
                 "type" : "array",
                 "items" : {
                   "$ref" : "#/$defs/ActionStep"
@@ -257,7 +257,7 @@
                       "description" : "Required SpEL template expression; the session logout command to run after the steps in the do-block have been completed either successfully or with failure.\n"
                     },
                     "on.fail" : {
-                      "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+                      "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
                       "type" : "array",
                       "items" : {
                         "$ref" : "#/$defs/ActionStep"
@@ -323,7 +323,7 @@
           "description" : "Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks. Allowed values:\nFAIL: Fail the check if it was not executed\nPASS: Pass the check if it was not executed\nSKIP: Report that the test was skipped\nHIDE: Hide the check from output\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -380,7 +380,7 @@
           "description" : "Optional string: HTTP method like GET or POST to use for this REST request. Defaults value: GET.\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -423,7 +423,7 @@
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
             "on.fail" : {
-              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+              "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
               "type" : "array",
               "items" : {
                 "$ref" : "#/$defs/ActionStep"
@@ -479,7 +479,7 @@
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -549,7 +549,7 @@
               "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
             },
             "on.fail" : {
-              "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+              "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
               "type" : "array",
               "items" : {
                 "$ref" : "#/$defs/ActionStep"
@@ -582,7 +582,7 @@
           "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "on.fail" : {
-          "description" : "Optional list: Steps to be executed if this element's execution throws an exception. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). Steps executed in on.fail can access exception details via 'lastException' (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). For named elements, '${name}_exception' is also available with the same properties.\n",
+          "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
           "type" : "array",
           "items" : {
             "$ref" : "#/$defs/ActionStep"
@@ -633,14 +633,32 @@
       "properties" : {
         "cause" : {
           "$ref" : "#/$defs/TemplateExpression",
-          "description" : "Optional exception cause, specified as an SpEL template expression that evaluates to a Throwable.\nCan be a direct Throwable reference, wrapped in POJONode, or an ObjectNode with a 'pojo' property (e.g., `${lastException}` or `${lastException.pojo}`). The implementation automatically extracts the Throwable from the ObjectNode.pojo property when present. For throw instruction: if only cause is specified (no msg), the exception will be rethrown if it's an FcliException, otherwise wrapped.\n"
+          "description" : "Optional exception cause, specified as an SpEL template expression that evaluates to a Throwable.\nCan be a direct Throwable reference, wrapped in POJONode, or an ObjectNode with a `pojo` property (e.g., `${lastException}` or `${lastException.pojo}`). If only cause is specified (no msg), the\nexception will be rethrown if it's an FcliException, otherwise wrapped.\n"
+        },
+        "if" : {
+          "$ref" : "#/$defs/TemplateExpression",
+          "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
         },
         "msg" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Message text, specified as an SpEL template expression.\n"
+        },
+        "on.fail" : {
+          "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
+        },
+        "on.success" : {
+          "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ActionStep"
+          }
         }
       },
-      "description" : "A message with optional exception cause. This can be supplied as either a simple SpEL template expression (in which case it represents the message text), or as a structured object with 'msg' and optional 'cause' properties. Used by `throw` and `log.*` instructions.\n",
+      "description" : "A message with optional exception cause. This can be supplied as either a simple SpEL template expression (in which case it represents the message text), or as a structured object with `msg` and optional `cause` properties. Used by `throw` and `log.*` instructions.\n",
       "additionalProperties" : false
     },
     "TemplateExpression" : {
