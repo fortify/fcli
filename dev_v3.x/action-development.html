@@ -1,6 +1,6 @@
 ---
 title: Fcli Action Development Guide
-fcli_version: 0.20260217.113255-dev_v3.x
+fcli_version: 0.20260218.153337-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260217.113255-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260217.113255-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260218.153337-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260217.113255-dev_v3.x</span>
+<span id="revnumber">version 0.20260218.153337-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -420,6 +420,7 @@ fcli_version: 0.20260217.113255-dev_v3.x
 <li><a href="#_action_docrenderer_currentproduct"><code>action.docRenderer().currentProduct</code></a></li>
 <li><a href="#_action_docrenderer_manpagebaseurl"><code>action.docRenderer().manpageBaseUrl</code></a></li>
 <li><a href="#_action_docrenderer_render"><code>action.docRenderer().render</code></a></li>
+<li><a href="#_action_docrenderer_tablecell"><code>action.docRenderer().tableCell</code></a></li>
 <li><a href="#_action_docrenderer_text"><code>action.docRenderer().text</code></a></li>
 <li><a href="#_actionschema"><code>actionSchema</code></a></li>
 <li><a href="#_actionspelfunctions"><code>actionSpelFunctions</code></a></li>
@@ -445,7 +446,7 @@ fcli_version: 0.20260217.113255-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260217.113255-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260218.153337-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
 </tr>
 </tbody>
@@ -567,7 +568,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260217.113255-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260218.153337-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -5961,6 +5962,40 @@ Use '_' for product to refer to current/generic context.</p>
 </table>
 </div>
 <div class="sect2">
+<h3 id="_action_docrenderer_tablecell"><a class="anchor" href="#_action_docrenderer_tablecell"></a><code>action.docRenderer().tableCell</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>string #action.docRenderer().tableCell(string text)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string text</em> - Text to format for table cell</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Text formatted for table cell display</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p><strong>INTERNAL USE ONLY</strong></p>
+</div>
+<div class="paragraph">
+<p>Format text for use in table cells, converting newlines to appropriate line breaks.
+For AsciiDoc: converts newlines to hard line breaks (space + plus + newline).
+For plain text: keeps newlines as-is.
+This method does NOT process other references - call render() first if needed.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_action_docrenderer_text"><a class="anchor" href="#_action_docrenderer_text"></a><code>action.docRenderer().text</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -6130,8 +6165,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260217.113255-dev_v3.x<br>
-Last updated 2026-02-17 11:35:40 UTC
+Version 0.20260218.153337-dev_v3.x<br>
+Last updated 2026-02-18 15:36:23 UTC
 </div>
 </div>
 </body>

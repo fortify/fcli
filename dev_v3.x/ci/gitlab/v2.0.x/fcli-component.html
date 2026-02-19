@@ -1,6 +1,6 @@
 ---
 title: Fortify/components/fcli
-fcli_version: 0.20260217.113255-dev_v3.x
+fcli_version: 0.20260218.153337-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260217.113255-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260217.113255-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260218.153337-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify/components/fcli</h1>
 <div class="details">
-<span id="revnumber">version 0.20260217.113255-dev_v3.x</span>
+<span id="revnumber">version 0.20260218.153337-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -259,6 +259,11 @@ fcli_version: 0.20260217.113255-dev_v3.x
 <li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
 <li><a href="#_quick_start_example">Quick Start Example</a></li>
+</ul>
+</li>
+<li><a href="#_tips_recommendations">Tips &amp; Recommendations</a>
+<ul class="sectlevel2">
+<li><a href="#_air_gapped_environments">Air-Gapped Environments</a></li>
 </ul>
 </li>
 <li><a href="#_configuration">Configuration</a>
@@ -343,6 +348,31 @@ fcli:
     - # Your custom fcli commands here
     -  fod session logout ...</code></pre>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tips_recommendations"><a class="anchor" href="#_tips_recommendations"></a>Tips &amp; Recommendations</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_air_gapped_environments"><a class="anchor" href="#_air_gapped_environments"></a>Air-Gapped Environments</h3>
+<div class="paragraph">
+<p>For air-gapped or restricted network environments, host custom tool definitions and tool bundles in an internal
+SCM repository or artifact registry. Configure the integration to use these internal resources:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Set <code>TOOL_DEFINITIONS</code> to point to your internally hosted tool definitions file</p>
+</li>
+<li>
+<p>Set <code>FCLI_TGZ_URL</code> to download fcli from your internal mirror</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This ensures all required tools are accessible without external internet access.</p>
 </div>
 </div>
 </div>
@@ -558,8 +588,8 @@ fcli-dev:
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260217.113255-dev_v3.x<br>
-Last updated 2026-02-17 11:36:32 UTC
+Version 0.20260218.153337-dev_v3.x<br>
+Last updated 2026-02-18 15:37:13 UTC
 </div>
 </div>
 </body>
