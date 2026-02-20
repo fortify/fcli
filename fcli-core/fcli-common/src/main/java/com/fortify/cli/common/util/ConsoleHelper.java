@@ -86,6 +86,17 @@ public class ConsoleHelper {
      * Install the JAnsi console if not disabled. Safe no-op if disabled or unavailable.
      */
     public static final void installAnsiConsole() {
+        if (PlatformHelper.isWindows()) {
+            if (System.getProperty("jansi.passthrough") == null) {
+                System.setProperty("jansi.passthrough", "true");
+            }
+            if (System.getProperty("jansi.strip") == null) {
+                System.setProperty("jansi.strip", "false");
+            }
+            if (System.getProperty("picocli.ansi") == null) {
+                System.setProperty("picocli.ansi", "true");
+            }
+        }
         invokeAnsiConsoleMethod("systemInstall");
     }
 
