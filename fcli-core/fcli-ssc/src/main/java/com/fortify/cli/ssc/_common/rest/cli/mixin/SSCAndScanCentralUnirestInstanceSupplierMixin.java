@@ -31,7 +31,7 @@ public class SSCAndScanCentralUnirestInstanceSupplierMixin extends AbstractSessi
     
     @Override
     protected final SSCAndScanCentralSessionDescriptor getSessionDescriptor(String sessionName) {
-        return SSCAndScanCentralSessionHelper.instance().get(sessionName, true);
+        return SSCAndScanCentralSessionHelper.getOrSynthetic(sessionName, true);
     }
     
     public final UnirestInstance getSscUnirestInstance() {

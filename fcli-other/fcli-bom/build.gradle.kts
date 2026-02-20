@@ -32,5 +32,7 @@ dependencies {
         api("org.apache.commons:commons-compress:1.28.0")
         api("org.jsoup:jsoup:1.21.2")
         api("org.eclipse.jgit:org.eclipse.jgit:7.4.0.202509020913-r")
+        api("org.eclipse.jetty.ee10:jetty-ee10-servlet:12.0.18")
+        api("org.eclipse.jetty:jetty-server:12.0.18")
     }
 }

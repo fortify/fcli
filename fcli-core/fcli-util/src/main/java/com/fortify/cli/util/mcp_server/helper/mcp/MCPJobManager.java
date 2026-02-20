@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.rest.unirest.HttpMcpAuthContext;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRecordsCache;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -100,7 +101,17 @@ public class MCPJobManager {
     }
     
     private CompletableFuture<CallToolResult> startJobExecution(McpSyncServerExchange exchange, JobExecution exec, Callable<CallToolResult> work, boolean sendNotifications) {
-        CompletableFuture<CallToolResult> future = CompletableFuture.supplyAsync(() -> executeWork(exchange, exec, work, sendNotifications), workExecutor)
+        // Capture auth context from calling thread so it can be propagated to the worker thread
+        var capturedAuth = HttpMcpAuthContext.get();
+        Callable<CallToolResult> wrappedWork = capturedAuth == null ? work : () -> {
+            HttpMcpAuthContext.set(capturedAuth);
+            try {
+                return work.call();
+            } finally {
+                HttpMcpAuthContext.clear();
+            }
+        };
+        CompletableFuture<CallToolResult> future = CompletableFuture.supplyAsync(() -> executeWork(exchange, exec, wrappedWork, sendNotifications), workExecutor)
             .whenComplete((res, t) -> handleJobCompletion(exchange, exec, res, t, sendNotifications));
         exec.future = future;
         return future;
