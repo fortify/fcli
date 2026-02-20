@@ -55,39 +55,36 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
     @Option(names = {"--assign-user"})
     private String assignUser;
     
-    private UnirestInstance unirestInstance;
-    
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        this.unirestInstance = unirest;
         validateInput();
         String appVersionId = appVersionResolver.getAppVersionId(unirest);
         List<SSCIssueIdentifier> issues = fetchIssueRevisionsFromSSC(unirest, appVersionId, issueIds);
 
         if (StringUtils.isNotBlank(assignUser)) {
             executeAssignUserRequest(unirest, appVersionId, issues, assignUser);
-            if (isAuditRequired()) {
+            if (isUpdateRequired()) {
                 issues = fetchIssueRevisionsFromSSC(unirest, appVersionId, issueIds);
             }
         }
 
-        if (isAuditRequired()) {
+        if (isUpdateRequired()) {
             executeAuditRequest(unirest, appVersionId, issues);
         }
 
-        return buildResults();
+        return buildResults(unirest);
     }
 
     private void validateInput() {
         if (issueIds == null || issueIds.isEmpty()) {
             throw new FcliSimpleException("--issue-ids must be specified");
         }
-        if (!isAuditRequired() && StringUtils.isBlank(assignUser)) {
+        if (!isUpdateRequired() && StringUtils.isBlank(assignUser)) {
             throw new FcliSimpleException("At least one of --custom-tags, --suppress, --comment, or --assign-user must be specified");
         }
     }
 
-    private boolean isAuditRequired() {
+    private boolean isUpdateRequired() {
         return hasCustomTags() || suppress != null || StringUtils.isNotBlank(comment);
     }
     
@@ -95,7 +92,7 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
         return customTags != null && !customTags.isEmpty();
     }
 
-    private JsonNode buildResults() {
+    private JsonNode buildResults(UnirestInstance unirest) {
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
 
         String updatesSummary = buildUpdateDetails();
@@ -109,8 +106,8 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
 
         if (hasCustomTags()) {
             ArrayNode customTagsArray = result.putArray("customTagUpdates");
-            String appVersionId = appVersionResolver.getAppVersionId(unirestInstance);
-            var customTagHelper = new SSCIssueCustomTagHelper(unirestInstance, appVersionId);
+            String appVersionId = appVersionResolver.getAppVersionId(unirest);
+            var customTagHelper = new SSCIssueCustomTagHelper(unirest, appVersionId);
             customTagHelper.populateCustomTagUpdates(customTags, customTagsArray);
         }
 
@@ -126,9 +123,7 @@ public class SSCIssueUpdateCommand extends AbstractSSCJsonNodeOutputCommand impl
             result.put("suppressed", suppress);
         }
 
-        ArrayNode resultsArray = JsonHelper.getObjectMapper().createArrayNode();
-        resultsArray.add(result);
-        return resultsArray;
+        return result;
     }
 
     private String buildUpdateDetails() {
