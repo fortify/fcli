@@ -1,6 +1,6 @@
 ---
 title: ast-workflow-script
-fcli_version: 0.20260219.162012-dev_v3.x
+fcli_version: 0.20260221.123620-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,20 +245,21 @@ fcli_version: 0.20260219.162012-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260219.162012-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.123620-dev_v3.x" %}
 
 
 <div id="header">
 <h1>ast-workflow-script</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260219.162012-dev_v3.x</span>
+<span id="revnumber">version 0.20260221.123620-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_overview">Overview</a></li>
 <li><a href="#_quick_start_example">Quick Start Example</a></li>
+<li><a href="#_platform_notes">Platform Notes</a></li>
 <li><a href="#_tips_recommendations">Tips &amp; Recommendations</a>
 <ul class="sectlevel2">
 <li><a href="#_centralized_configuration_management">Centralized Configuration Management</a></li>
@@ -331,12 +332,12 @@ jobs:
             npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
             # Add fcli to PATH
             # - For bash tasks
-            source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env bash)
+            source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env shell)
             # - For PowerShell tasks
             # npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env pwsh | Out-String | Invoke-Expression
             # - To expose fcli path for subsequent tasks
             # npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
-            fcli action run ci  # Or any other fcli-based custom workflow
+            "${FCLI_CMD:-fcli}" action run ci  # Or any other fcli-based custom workflow
         env:
           FOD_URL: $(FOD_URL)
           FOD_CLIENT_ID: $(FOD_CLIENT_ID)
@@ -345,6 +346,29 @@ jobs:
           # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
           FORTIFY_SETUP_VERSION: v2.1      # Or v2 for latest features, v2.1.1 for stability</code></pre>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_platform_notes"><a class="anchor" href="#_platform_notes"></a>Platform Notes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To keep scripts portable across Linux/macOS and Windows agents, use the command path exported by
+<code>@fortify/setup</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Bash: <code>${FCLI_CMD:-fcli} action run ci</code></p>
+</li>
+<li>
+<p>PowerShell: <code>&amp; $env:FCLI_CMD action run ci</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This is particularly important for Bash tasks on Windows agents, where invoking <code>fcli</code> without the
+full executable path may fail.</p>
 </div>
 </div>
 </div>
@@ -390,8 +414,8 @@ steps:
       targetType: 'inline'
       script: |
         npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
-        source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env bash)
-        fcli action run ci
+        source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env shell)
+        "${FCLI_CMD:-fcli}" action run ci
     env:
       FOD_URL: $(FOD_URL)
       FOD_CLIENT_ID: $(FOD_CLIENT_ID)
@@ -473,7 +497,7 @@ This integration requires <code>@fortify/setup</code> v2.1.1 or later, which in 
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260219.162012-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260221.123620-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -788,8 +812,8 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260219.162012-dev_v3.x<br>
-Last updated 2026-02-19 16:23:56 UTC
+Version 0.20260221.123620-dev_v3.x<br>
+Last updated 2026-02-21 12:39:51 UTC
 </div>
 </div>
 </body>
