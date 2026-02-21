@@ -1,6 +1,6 @@
 ---
 title: ast-workflow-script
-fcli_version: 0.20260221.123620-dev_v3.x
+fcli_version: 0.20260221.160742-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,14 +245,14 @@ fcli_version: 0.20260221.123620-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.123620-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.160742-dev_v3.x" %}
 
 
 <div id="header">
 <h1>ast-workflow-script</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260221.123620-dev_v3.x</span>
+<span id="revnumber">version 0.20260221.160742-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -286,13 +286,10 @@ fcli_version: 0.20260221.123620-dev_v3.x
 <div class="sectionbody">
 <div class="paragraph">
 <p>This guide demonstrates how to integrate OpenText Core Application Security (Fortify on Demand) Application Security Testing (AST)
-into your Azure DevOps pipelines using a script-based approach. Unlike GitHub Actions or GitLab Components,
-Azure DevOps integration leverages the <code>@fortify/setup</code> npm package to bootstrap fcli, which then executes
-the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action to run scans and related tasks.</p>
-</div>
-<div class="paragraph">
-<p>This approach provides a unified yet customizable experience across your AST scan workflows, allowing you to
-implement the same scanning logic across different CI/CD platforms.</p>
+into your Azure DevOps pipelines using a script-based approach, leveraging the <code>@fortify/setup</code> npm package
+to bootstrap fcli. Once bootstrapped, you can execute the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action to run scans,
+providing a unified yet customizable experience across your AST scan workflows on Azure DevOps and other
+CI systems. In the future, we may provide native fcli-based Azure DevOps tasks for an even easier integration.</p>
 </div>
 </div>
 </div>
@@ -459,7 +456,7 @@ sections document all available configuration options organized by their purpose
 <div class="sect2">
 <h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
 <div class="paragraph">
-<p>Azure DevOps integration uses a script-based approach leveraging the <code>@fortify/setup</code> npm package to bootstrap fcli
+<p>The script-based Azure DevOps integration leverages the <code>@fortify/setup</code> npm package to bootstrap fcli
 and supporting tools like ScanCentral Client. The environment variables in this section are provided by
 <code>@fortify/setup</code> v2.1.x (configured via <code>FORTIFY_SETUP_VERSION=v2.1.x</code>).
 If you configure a different <code>@fortify/setup</code> version, please refer to the
@@ -497,7 +494,7 @@ This integration requires <code>@fortify/setup</code> v2.1.1 or later, which in 
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260221.123620-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260221.160742-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -812,8 +809,8 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260221.123620-dev_v3.x<br>
-Last updated 2026-02-21 12:39:51 UTC
+Version 0.20260221.160742-dev_v3.x<br>
+Last updated 2026-02-21 16:11:23 UTC
 </div>
 </div>
 </body>

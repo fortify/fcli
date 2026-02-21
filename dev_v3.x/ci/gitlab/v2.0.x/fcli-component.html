@@ -1,6 +1,6 @@
 ---
 title: Fortify/components/fcli
-fcli_version: 0.20260221.123620-dev_v3.x
+fcli_version: 0.20260221.160742-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,22 +245,19 @@ fcli_version: 0.20260221.123620-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.123620-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.160742-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify/components/fcli</h1>
 <div class="details">
-<span id="revnumber">version 0.20260221.123620-dev_v3.x</span>
+<span id="revnumber">version 0.20260221.160742-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_overview">Overview</a>
-<ul class="sectlevel2">
+<li><a href="#_overview">Overview</a></li>
 <li><a href="#_quick_start_example">Quick Start Example</a></li>
-</ul>
-</li>
 <li><a href="#_tips_recommendations">Tips &amp; Recommendations</a>
 <ul class="sectlevel2">
 <li><a href="#_air_gapped_environments">Air-Gapped Environments</a></li>
@@ -270,13 +267,13 @@ fcli_version: 0.20260221.123620-dev_v3.x
 <ul class="sectlevel2">
 <li><a href="#_component_inputs">Component Inputs</a></li>
 <li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
+</ul>
+</li>
 <li><a href="#_advanced_customization">Advanced Customization</a>
-<ul class="sectlevel3">
+<ul class="sectlevel2">
 <li><a href="#_customizing_the_job_name_job">Customizing the <code>&lt;job-name&gt;</code> Job</a></li>
 <li><a href="#_customizing_the_job_name_prepare_job">Customizing the <code>&lt;job-name&gt;-prepare</code> Job</a></li>
 <li><a href="#_using_multiple_component_configurations">Using Multiple Component Configurations</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -324,8 +321,11 @@ AST scanning workflow by including the fcli component and adding scan execution 
 <code>.&lt;job-name&gt;-vars-prepare</code>, <code>.fcli-install</code>) which may be used to implement advanced use cases but
 should not be directly customized.</p>
 </div>
-<div class="sect2">
-<h3 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h3>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Basic setup for custom workflows with fcli version pinning.</p>
 </div>
@@ -347,7 +347,6 @@ fcli:
     -  fod session login ...
     - # Your custom fcli commands here
     -  fod session logout ...</code></pre>
-</div>
 </div>
 </div>
 </div>
@@ -479,10 +478,13 @@ This GitLab Component requires a recent fcli v3.x.y version to function properly
 </tbody>
 </table>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_advanced_customization"><a class="anchor" href="#_advanced_customization"></a>Advanced Customization</h2>
+<div class="sectionbody">
 <div class="sect2">
-<h3 id="_advanced_customization"><a class="anchor" href="#_advanced_customization"></a>Advanced Customization</h3>
-<div class="sect3">
-<h4 id="_customizing_the_job_name_job"><a class="anchor" href="#_customizing_the_job_name_job"></a>Customizing the <code>&lt;job-name&gt;</code> Job</h4>
+<h3 id="_customizing_the_job_name_job"><a class="anchor" href="#_customizing_the_job_name_job"></a>Customizing the <code>&lt;job-name&gt;</code> Job</h3>
 <div class="paragraph">
 <p>By default, <code>&lt;job-name&gt;</code> will just run ` -V` to verify the fcli installation. You&#8217;ll typically want to define
 a custom <code>script</code> section that runs fcli and other commands as needed. For Docker-based runners, you&#8217;ll usually also
@@ -518,8 +520,8 @@ or <code>extends</code>, make sure to keep the original contents:</p>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_customizing_the_job_name_prepare_job"><a class="anchor" href="#_customizing_the_job_name_prepare_job"></a>Customizing the <code>&lt;job-name&gt;-prepare</code> Job</h4>
+<div class="sect2">
+<h3 id="_customizing_the_job_name_prepare_job"><a class="anchor" href="#_customizing_the_job_name_prepare_job"></a>Customizing the <code>&lt;job-name&gt;-prepare</code> Job</h3>
 <div class="paragraph">
 <p>The <code>&lt;job-name&gt;-prepare</code> job can be customized to perform additional preparation tasks beyond fcli installation.
 You can define additional script steps, optionally based on additional variables:</p>
@@ -551,8 +553,8 @@ identified by the `` environment variable.</p>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_using_multiple_component_configurations"><a class="anchor" href="#_using_multiple_component_configurations"></a>Using Multiple Component Configurations</h4>
+<div class="sect2">
+<h3 id="_using_multiple_component_configurations"><a class="anchor" href="#_using_multiple_component_configurations"></a>Using Multiple Component Configurations</h3>
 <div class="paragraph">
 <p>You can include the fcli component multiple times with different configurations, as long as each <code>include</code>
 specifies a different <code>job-name</code>. This allows for using multiple fcli versions within a single pipeline.
@@ -585,11 +587,10 @@ fcli-dev:
 </div>
 </div>
 </div>
-</div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260221.123620-dev_v3.x<br>
-Last updated 2026-02-21 12:39:51 UTC
+Version 0.20260221.160742-dev_v3.x<br>
+Last updated 2026-02-21 16:11:23 UTC
 </div>
 </div>
 </body>
