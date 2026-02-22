@@ -1,6 +1,6 @@
 ---
 title: Fortify/components/fcli
-fcli_version: 0.20260221.160742-dev_v3.x
+fcli_version: 0.20260222.114906-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,13 +245,13 @@ fcli_version: 0.20260221.160742-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.160742-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260222.114906-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify/components/fcli</h1>
 <div class="details">
-<span id="revnumber">version 0.20260221.160742-dev_v3.x</span>
+<span id="revnumber">version 0.20260222.114906-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -343,10 +343,10 @@ stages: [test]
 fcli:
   image: my-build-tools:v1   # Optional: specify build environment
   script:
-    -  -V             # Verify fcli installation
-    -  fod session login ...
+    - ${FCLI} -V             # Verify fcli installation
+    - ${FCLI} fod session login ...
     - # Your custom fcli commands here
-    -  fod session logout ...</code></pre>
+    - ${FCLI} fod session logout ...</code></pre>
 </div>
 </div>
 </div>
@@ -486,7 +486,7 @@ This GitLab Component requires a recent fcli v3.x.y version to function properly
 <div class="sect2">
 <h3 id="_customizing_the_job_name_job"><a class="anchor" href="#_customizing_the_job_name_job"></a>Customizing the <code>&lt;job-name&gt;</code> Job</h3>
 <div class="paragraph">
-<p>By default, <code>&lt;job-name&gt;</code> will just run ` -V` to verify the fcli installation. You&#8217;ll typically want to define
+<p>By default, <code>&lt;job-name&gt;</code> will just run <code>${FCLI} -V</code> to verify the fcli installation. You&#8217;ll typically want to define
 a custom <code>script</code> section that runs fcli and other commands as needed. For Docker-based runners, you&#8217;ll usually also
 want to define the image in which the <code>script</code> section is executed:</p>
 </div>
@@ -495,9 +495,9 @@ want to define the image in which the <code>script</code> section is executed:</
 <pre class="highlight"><code class="language-yaml" data-lang="yaml">&lt;job-name&gt;:
   image: my-build-tools:v1     # Optional: specify Docker image
   script:
-    -  fod session login ...
+    - ${FCLI} fod session login ...
     - # Your custom fcli commands here
-    -  fod session logout ...</code></pre>
+    - ${FCLI} fod session logout ...</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -541,7 +541,7 @@ You can define additional script steps, optionally based on additional variables
 </div>
 <div class="paragraph">
 <p>Any artifacts that need to be shared with the main <code>&lt;job-name&gt;</code> job must be stored under the directory
-identified by the `` environment variable.</p>
+identified by the <code>${FORTIFY_DIR}</code> environment variable.</p>
 </div>
 <div class="paragraph">
 <p>You can also customize the Docker image used for the preparation job. By default, <code>alpine:latest</code> is used:</p>
@@ -576,11 +576,11 @@ Each <code>include</code> must use the same component version to avoid conflicts
 
 fcli-stable:
   script:
-    -  -V
+    - ${FCLI} -V
 
 fcli-dev:
   script:
-    -  -V</code></pre>
+    - ${FCLI} -V</code></pre>
 </div>
 </div>
 </div>
@@ -589,8 +589,8 @@ fcli-dev:
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260221.160742-dev_v3.x<br>
-Last updated 2026-02-21 16:11:23 UTC
+Version 0.20260222.114906-dev_v3.x<br>
+Last updated 2026-02-22 11:52:34 UTC
 </div>
 </div>
 </body>

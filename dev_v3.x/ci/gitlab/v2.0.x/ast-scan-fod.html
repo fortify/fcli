@@ -1,6 +1,6 @@
 ---
 title: Fortify/components/ast-scan
-fcli_version: 0.20260221.160742-dev_v3.x
+fcli_version: 0.20260222.114906-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -245,14 +245,14 @@ fcli_version: 0.20260221.160742-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260221.160742-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260222.114906-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fortify/components/ast-scan</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260221.160742-dev_v3.x</span>
+<span id="revnumber">version 0.20260222.114906-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -370,9 +370,9 @@ stages: [test]
 fortify-ast-scan:
   image: maven:3-openjdk-17   # Docker image with build tools
   variables:
-    FOD_URL:                          # From GitLab CI/CD variables
-    FOD_CLIENT_ID:              # From GitLab CI/CD variables
-    FOD_CLIENT_SECRET:      # From GitLab CI/CD variables
+    FOD_URL: ${FOD_URL}                         # From GitLab CI/CD variables
+    FOD_CLIENT_ID: ${FOD_CLIENT_ID}             # From GitLab CI/CD variables
+    FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}     # From GitLab CI/CD variables
     # FOD_RELEASE: MyApp:main                   # Optional: defaults to repo:branch</code></pre>
 </div>
 </div>
@@ -417,9 +417,9 @@ include:
 
 fortify-ast-scan:
   variables:
-    FOD_URL:
-    FOD_CLIENT_ID:
-    FOD_CLIENT_SECRET:
+    FOD_URL: ${FOD_URL}
+    FOD_CLIENT_ID: ${FOD_CLIENT_ID}
+    FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}
   extends: .my-shared-config  # Additional organization-wide settings</code></pre>
 </div>
 </div>
@@ -542,7 +542,7 @@ This GitLab Component requires a recent fcli v3.x.y version to function properly
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260221.160742-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260222.114906-dev_v3.x; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -842,8 +842,8 @@ environment variables, and other job properties:</p>
     - .my-custom-vars           # Optional: inherit additional variables
   variables:
     FOD_URL: https://ams.fortify.com
-    FOD_CLIENT_ID:      # From GitLab CI/CD variables
-    FOD_CLIENT_SECRET:
+    FOD_CLIENT_ID: ${FOD_CLIENT_ID}     # From GitLab CI/CD variables
+    FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}
     # Additional scan configuration...</code></pre>
 </div>
 </div>
@@ -870,8 +870,8 @@ as GitLab artifacts.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260221.160742-dev_v3.x<br>
-Last updated 2026-02-21 16:11:23 UTC
+Version 0.20260222.114906-dev_v3.x<br>
+Last updated 2026-02-22 11:52:34 UTC
 </div>
 </div>
 </body>
