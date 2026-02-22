@@ -1,0 +1,413 @@
+---
+title: fcli-tool-sc-client-run(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-sc-client-run(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+  
+  /* Theme toggle button */
+  #theme-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.3s ease;
+    z-index: 3000;
+  }
+  
+  #theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 1);
+  }
+  
+  #theme-toggle .light-icon {
+    display: none;
+  }
+  
+  #theme-toggle .dark-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .light-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .dark-icon {
+    display: none;
+  }
+  
+  /* Copy button styles */
+  .listingblock,
+  .literalblock {
+    position: relative;
+  }
+  
+  .copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    z-index: 10;
+  }
+  
+  .listingblock:hover .copy-button,
+  .literalblock:hover .copy-button {
+    opacity: 1;
+  }
+  
+  .copy-button:hover {
+    background-color: var(--link-color);
+    color: #ffffff;
+    border-color: var(--link-color);
+  }
+  
+  .copy-button.copied {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+  }
+  
+  [data-theme="dark"] .copy-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+  }
+  
+  [data-theme="dark"] .copy-button:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+  }
+</style>
+<script>
+(function() {
+  'use strict';
+  const STORAGE_KEY = 'fcli-theme';
+  const DARK_THEME = 'dark';
+  const LIGHT_THEME = 'light';
+
+  function applyTheme(theme) {
+    if (theme === DARK_THEME) {
+      document.documentElement.setAttribute('data-theme', DARK_THEME);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem(STORAGE_KEY, theme);
+  }
+
+  function getCurrentTheme() {
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme) {
+      return storedTheme;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return DARK_THEME;
+    }
+    return LIGHT_THEME;
+  }
+
+  function toggleTheme() {
+    const currentTheme = getCurrentTheme();
+    const newTheme = currentTheme === DARK_THEME ? LIGHT_THEME : DARK_THEME;
+    applyTheme(newTheme);
+  }
+
+  function initTheme() {
+    const theme = getCurrentTheme();
+    applyTheme(theme);
+  }
+
+  function setupToggleButton() {
+    const toggleButton = document.getElementById('theme-toggle');
+    if (toggleButton) {
+      toggleButton.addEventListener('click', toggleTheme);
+    }
+  }
+
+  function listenForSystemThemeChanges() {
+    if (window.matchMedia) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      darkModeQuery.addEventListener('change', function(e) {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          applyTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+        }
+      });
+    }
+  }
+
+  initTheme();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setupToggleButton();
+      listenForSystemThemeChanges();
+      addCopyButtons();
+    });
+  } else {
+    setupToggleButton();
+    listenForSystemThemeChanges();
+    addCopyButtons();
+  }
+
+  function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('.listingblock > .content > pre, .literalblock > .content > pre');
+    
+    codeBlocks.forEach(function(codeBlock) {
+      const container = codeBlock.closest('.listingblock, .literalblock');
+      if (!container || container.querySelector('.copy-button')) {
+        return;
+      }
+      
+      const button = document.createElement('button');
+      button.className = 'copy-button';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      
+      button.addEventListener('click', function() {
+        const code = codeBlock.textContent;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(function() {
+            showCopySuccess(button);
+          }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            fallbackCopy(code, button);
+          });
+        } else {
+          fallbackCopy(code, button);
+        }
+      });
+      
+      container.style.position = 'relative';
+      container.insertBefore(button, container.firstChild);
+    });
+  }
+  
+  function showCopySuccess(button) {
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(function() {
+      button.textContent = originalText;
+      button.classList.remove('copied');
+    }, 2000);
+  }
+  
+  function fallbackCopy(text, button) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      showCopySuccess(button);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+    
+    document.body.removeChild(textArea);
+  }
+})();
+</script>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.15.0" %}
+
+
+<div id="header">
+<h1>fcli-tool-sc-client-run(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-sc-client-run - Run ScanCentral Client.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool sc-client run</strong> [<strong>-d</strong>=<em>&lt;workDir&gt;</em>] [<strong>--logdir</strong>=<em>&lt;logDir&gt;</em>]
+                        [<strong>--use-shell</strong>=<em>&lt;useShell&gt;</em>] [<strong>-v</strong>=<em>&lt;versionToRun&gt;</em>] [[<strong>-h</strong>]
+                        [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
+                        [<strong>--debug</strong>]] [<em>&lt;toolArgs&gt;</em>&#8230;&#8203;]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command allows for running ScanCentral Client as previously installed through the 'fcli tool sc-client install' command. It is recommended to use double dashes to separate fcli options from ScanCentral Client options, i.e., 'fcli tool sc-client run &lt;fcli options&gt;&#8201;&#8212;&#8201;&lt;ScanCentral Client options&gt;' to explicitly differentiate between fcli options and ScanCentral Client options.</p>
+</div>
+<div class="paragraph">
+<p>JRE RESOLUTION:
+The command determines which JRE to use based on how the installation was configured:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Explicit JRE (--jre): Always uses the exact path specified during installation; fails if path no longer exists</p>
+</li>
+<li>
+<p>Embedded JRE (--with-jre): Always uses the embedded JRE installed with ScanCentral Client</p>
+</li>
+<li>
+<p>Auto-detected JRE (no --jre or --with-jre): Re-checks environment variables on each run to detect JRE upgrades:</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>SC_CLIENT_JAVA_HOME environment variable</p>
+</li>
+<li>
+<p>SCANCENTRAL_JAVA_HOME environment variable</p>
+</li>
+<li>
+<p>JAVA_HOME_&lt;version&gt;_&lt;arch&gt; patterns (e.g., JAVA_HOME_17_X86_64, JAVA_HOME_17_X64 for GitHub Actions)</p>
+</li>
+<li>
+<p>JAVA_HOME_&lt;version&gt; patterns (e.g., JAVA_HOME_17, JAVA_HOME_11)</p>
+</li>
+<li>
+<p>JAVA_HOME environment variable (fallback)</p>
+</li>
+<li>
+<p>Stored path from installation (if env vars not set)</p>
+</li>
+<li>
+<p>Java from system PATH</p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The detected JAVA_HOME is automatically set as SCANCENTRAL_JAVA_HOME in the process environment for ScanCentral Client to use.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--workdir</strong>=<em>&lt;workDir&gt;</em></dt>
+<dd>
+<p>The working directory from where the tool should be invoked. Default value: current working directory.</p>
+</dd>
+<dt class="hdlist1"><strong>--logdir</strong>=<em>&lt;logDir&gt;</em></dt>
+<dd>
+<p>Directory where to store ScanCentral Client log files</p>
+</dd>
+<dt class="hdlist1"><strong>--use-shell</strong>=<em>&lt;useShell&gt;</em></dt>
+<dd>
+<p>Whether to use a shell to run the wrapper script provided by this tool, or to use a direct Java invocation. Using a shell provides the same behavior as manually invoking the wrapper script from the command line, but may cause issues if no (compatible) shell is available on the system or in a Docker container. Using a direct Java invocation may cause slightly different tool behavior, but will also work if no compatible shell is available and allows for consistent lookup of the appropriate JRE to use, independent of how the wrapper script performs such a JRE lookup. Allowed values: no, yes, auto. Default value: auto, which will first try to run the wrapper script, and fall back to direct Java invocation if shell invocation fails.</p>
+</dd>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;versionToRun&gt;</em></dt>
+<dd>
+<p>Tool version to run. The specified tool version must have been previously installed using the 'install' command. Default value: the tool version that was last installed.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enables both fcli trace logging and the ScanCentral Client -debug option</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[<em>&lt;toolArgs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>The arguments to be passed to the tool.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-02-22 15:01:20 UTC
+</div>
+</div>
+</body>
+</html>

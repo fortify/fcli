@@ -1,0 +1,432 @@
+---
+title: fcli-fod-access-control-update-group(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-fod-access-control-update-group(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+  
+  /* Theme toggle button */
+  #theme-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.3s ease;
+    z-index: 3000;
+  }
+  
+  #theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 1);
+  }
+  
+  #theme-toggle .light-icon {
+    display: none;
+  }
+  
+  #theme-toggle .dark-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .light-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .dark-icon {
+    display: none;
+  }
+  
+  /* Copy button styles */
+  .listingblock,
+  .literalblock {
+    position: relative;
+  }
+  
+  .copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    z-index: 10;
+  }
+  
+  .listingblock:hover .copy-button,
+  .literalblock:hover .copy-button {
+    opacity: 1;
+  }
+  
+  .copy-button:hover {
+    background-color: var(--link-color);
+    color: #ffffff;
+    border-color: var(--link-color);
+  }
+  
+  .copy-button.copied {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+  }
+  
+  [data-theme="dark"] .copy-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+  }
+  
+  [data-theme="dark"] .copy-button:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+  }
+</style>
+<script>
+(function() {
+  'use strict';
+  const STORAGE_KEY = 'fcli-theme';
+  const DARK_THEME = 'dark';
+  const LIGHT_THEME = 'light';
+
+  function applyTheme(theme) {
+    if (theme === DARK_THEME) {
+      document.documentElement.setAttribute('data-theme', DARK_THEME);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem(STORAGE_KEY, theme);
+  }
+
+  function getCurrentTheme() {
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme) {
+      return storedTheme;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return DARK_THEME;
+    }
+    return LIGHT_THEME;
+  }
+
+  function toggleTheme() {
+    const currentTheme = getCurrentTheme();
+    const newTheme = currentTheme === DARK_THEME ? LIGHT_THEME : DARK_THEME;
+    applyTheme(newTheme);
+  }
+
+  function initTheme() {
+    const theme = getCurrentTheme();
+    applyTheme(theme);
+  }
+
+  function setupToggleButton() {
+    const toggleButton = document.getElementById('theme-toggle');
+    if (toggleButton) {
+      toggleButton.addEventListener('click', toggleTheme);
+    }
+  }
+
+  function listenForSystemThemeChanges() {
+    if (window.matchMedia) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      darkModeQuery.addEventListener('change', function(e) {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          applyTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+        }
+      });
+    }
+  }
+
+  initTheme();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setupToggleButton();
+      listenForSystemThemeChanges();
+      addCopyButtons();
+    });
+  } else {
+    setupToggleButton();
+    listenForSystemThemeChanges();
+    addCopyButtons();
+  }
+
+  function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('.listingblock > .content > pre, .literalblock > .content > pre');
+    
+    codeBlocks.forEach(function(codeBlock) {
+      const container = codeBlock.closest('.listingblock, .literalblock');
+      if (!container || container.querySelector('.copy-button')) {
+        return;
+      }
+      
+      const button = document.createElement('button');
+      button.className = 'copy-button';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      
+      button.addEventListener('click', function() {
+        const code = codeBlock.textContent;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(function() {
+            showCopySuccess(button);
+          }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            fallbackCopy(code, button);
+          });
+        } else {
+          fallbackCopy(code, button);
+        }
+      });
+      
+      container.style.position = 'relative';
+      container.insertBefore(button, container.firstChild);
+    });
+  }
+  
+  function showCopySuccess(button) {
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(function() {
+      button.textContent = originalText;
+      button.classList.remove('copied');
+    }, 2000);
+  }
+  
+  function fallbackCopy(text, button) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      showCopySuccess(button);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+    
+    document.body.removeChild(textArea);
+  }
+})();
+</script>
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.15.0" %}
+
+
+<div id="header">
+<h1>fcli-fod-access-control-update-group(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_fod_session_name_options">FoD session name options</a></li>
+<li><a href="#_output_options_also_see_documentation_link_below">Output options (also see documentation link below)</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-fod-access-control-update-group - Update a user group.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli fod access-control update-group</strong> [<strong>--add-all-users</strong>] [<strong>--remove-all-users</strong>]
+                                     [<strong>--name</strong>=<em>&lt;newName&gt;</em>]
+                                     [<strong>--add-apps</strong>=<em>&lt;addApplications&gt;</em>[,
+                                     <em>&lt;addApplications&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                     [<strong>--add-users</strong>=<em>&lt;addUsers&gt;</em>[,
+                                     <em>&lt;addUsers&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                     [<strong>--remove-apps</strong>=<em>&lt;removeApplications&gt;</em>[,
+                                     <em>&lt;removeApplications&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                     [<strong>--remove-users</strong>=<em>&lt;removeUsers&gt;</em>[,
+                                     <em>&lt;removeUsers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                                     [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                     [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                                     [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
+                                     [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
+                                     <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+                                     [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                     <em>&lt;userGroupNameOrId&gt;</em></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--add-all-users</strong></dt>
+<dd>
+<p>Add all tenant users to the user group.</p>
+</dd>
+<dt class="hdlist1"><strong>--add-apps, --add-applications</strong>=<em>&lt;addApplications&gt;</em>[,<em>&lt;addApplications&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more comma-separated application id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+</dd>
+<dt class="hdlist1"><strong>--add-users</strong>=<em>&lt;addUsers&gt;</em>[,<em>&lt;addUsers&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more comma-separated user id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric user names, you will need to specify the user id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+</dd>
+<dt class="hdlist1"><strong>--name</strong>=<em>&lt;newName&gt;</em></dt>
+<dd>
+<p>The updated name of the user group.</p>
+</dd>
+<dt class="hdlist1"><strong>--remove-all-users</strong></dt>
+<dd>
+<p>Remove all tenant users from the user group.</p>
+</dd>
+<dt class="hdlist1"><strong>--remove-apps, --remove-applications</strong>=<em>&lt;removeApplications&gt;</em>[,<em>&lt;removeApplications&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more comma-separated application id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+</dd>
+<dt class="hdlist1"><strong>--remove-users</strong>=<em>&lt;removeUsers&gt;</em>[,<em>&lt;removeUsers&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more comma-separated user id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric user names, you will need to specify the user id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fod_session_name_options"><a class="anchor" href="#_fod_session_name_options"></a>FoD session name options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name of the FoD session to use for executing this command. Default value: default.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options_also_see_documentation_link_below"><a class="anchor" href="#_output_options_also_see_documentation_link_below"></a>Output options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;type+args&gt;</em></dt>
+<dd>
+<p>Select output type (csv, table, expr, json, xml, yaml) and optional type arguments.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>&lt;var&gt;[:&lt;prop&gt;]</em></dt>
+<dd>
+<p>Store JSON results in an fcli variable for later reference.</p>
+</dd>
+<dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
+<dd>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write output to the specified file.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>&lt;userGroupNameOrId&gt;</em></dt>
+<dd>
+<p>Group id or name. Note that numeric values are always interpreted as id&#8217;s. If you have numeric group names, you will need to specify the group id.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-02-22 15:01:18 UTC
+</div>
+</div>
+</body>
+</html>

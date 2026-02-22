@@ -1,0 +1,827 @@
+---
+title: ast-workflow-script
+fcli_version: 3.15.0
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ast-workflow-script (FoD)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+<style>
+  #toc.toc2 {
+    padding-bottom: 100px;
+  }
+  
+  /* Theme toggle button */
+  #theme-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.3s ease;
+    z-index: 3000;
+  }
+  
+  #theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 1);
+  }
+  
+  #theme-toggle .light-icon {
+    display: none;
+  }
+  
+  #theme-toggle .dark-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .light-icon {
+    display: inline;
+  }
+  
+  [data-theme="dark"] #theme-toggle .dark-icon {
+    display: none;
+  }
+  
+  /* Copy button styles */
+  .listingblock,
+  .literalblock {
+    position: relative;
+  }
+  
+  .copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-color);
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    z-index: 10;
+  }
+  
+  .listingblock:hover .copy-button,
+  .literalblock:hover .copy-button {
+    opacity: 1;
+  }
+  
+  .copy-button:hover {
+    background-color: var(--link-color);
+    color: #ffffff;
+    border-color: var(--link-color);
+  }
+  
+  .copy-button.copied {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+  }
+  
+  [data-theme="dark"] .copy-button {
+    background-color: #3e3e42;
+    border-color: #555555;
+  }
+  
+  [data-theme="dark"] .copy-button:hover {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+  }
+</style>
+<script>
+(function() {
+  'use strict';
+  const STORAGE_KEY = 'fcli-theme';
+  const DARK_THEME = 'dark';
+  const LIGHT_THEME = 'light';
+
+  function applyTheme(theme) {
+    if (theme === DARK_THEME) {
+      document.documentElement.setAttribute('data-theme', DARK_THEME);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem(STORAGE_KEY, theme);
+  }
+
+  function getCurrentTheme() {
+    const storedTheme = localStorage.getItem(STORAGE_KEY);
+    if (storedTheme) {
+      return storedTheme;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return DARK_THEME;
+    }
+    return LIGHT_THEME;
+  }
+
+  function toggleTheme() {
+    const currentTheme = getCurrentTheme();
+    const newTheme = currentTheme === DARK_THEME ? LIGHT_THEME : DARK_THEME;
+    applyTheme(newTheme);
+  }
+
+  function initTheme() {
+    const theme = getCurrentTheme();
+    applyTheme(theme);
+  }
+
+  function setupToggleButton() {
+    const toggleButton = document.getElementById('theme-toggle');
+    if (toggleButton) {
+      toggleButton.addEventListener('click', toggleTheme);
+    }
+  }
+
+  function listenForSystemThemeChanges() {
+    if (window.matchMedia) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      darkModeQuery.addEventListener('change', function(e) {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          applyTheme(e.matches ? DARK_THEME : LIGHT_THEME);
+        }
+      });
+    }
+  }
+
+  initTheme();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setupToggleButton();
+      listenForSystemThemeChanges();
+      addCopyButtons();
+    });
+  } else {
+    setupToggleButton();
+    listenForSystemThemeChanges();
+    addCopyButtons();
+  }
+
+  function addCopyButtons() {
+    const codeBlocks = document.querySelectorAll('.listingblock > .content > pre, .literalblock > .content > pre');
+    
+    codeBlocks.forEach(function(codeBlock) {
+      const container = codeBlock.closest('.listingblock, .literalblock');
+      if (!container || container.querySelector('.copy-button')) {
+        return;
+      }
+      
+      const button = document.createElement('button');
+      button.className = 'copy-button';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      
+      button.addEventListener('click', function() {
+        const code = codeBlock.textContent;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(function() {
+            showCopySuccess(button);
+          }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            fallbackCopy(code, button);
+          });
+        } else {
+          fallbackCopy(code, button);
+        }
+      });
+      
+      container.style.position = 'relative';
+      container.insertBefore(button, container.firstChild);
+    });
+  }
+  
+  function showCopySuccess(button) {
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('copied');
+    
+    setTimeout(function() {
+      button.textContent = originalText;
+      button.classList.remove('copied');
+    }, 2000);
+  }
+  
+  function fallbackCopy(text, button) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      showCopySuccess(button);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
+    
+    document.body.removeChild(textArea);
+  }
+})();
+</script>
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.15.0" %}
+
+
+<div id="header">
+<h1>ast-workflow-script</h1>
+<div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
+<div class="details">
+<span id="revnumber">version 3.15.0</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_overview">Overview</a></li>
+<li><a href="#_quick_start_example">Quick Start Example</a></li>
+<li><a href="#_platform_notes">Platform Notes</a></li>
+<li><a href="#_tips_recommendations">Tips &amp; Recommendations</a>
+<ul class="sectlevel2">
+<li><a href="#_centralized_configuration_management">Centralized Configuration Management</a></li>
+<li><a href="#_air_gapped_environments">Air-Gapped Environments</a></li>
+</ul>
+</li>
+<li><a href="#_configuration">Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
+<li><a href="#_authentication_connection">Authentication &amp; Connection</a></li>
+<li><a href="#_release_management">Release Management</a></li>
+<li><a href="#_package_configuration">Package Configuration</a></li>
+<li><a href="#_scan_execution">Scan Execution</a></li>
+<li><a href="#_post_scan_actions">Post-Scan Actions</a></li>
+</ul>
+</li>
+<li><a href="#_additional_resources">Additional Resources</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide demonstrates how to integrate OpenText Core Application Security (Fortify on Demand) Application Security Testing (AST)
+into your Azure DevOps pipelines using a script-based approach, leveraging the <code>@fortify/setup</code> npm package
+to bootstrap fcli. Once bootstrapped, you can execute the fcli <a href="https://fortify.github.io/fcli/v3.15.0/generic-actions.html#_ci">ci</a> action to run scans,
+providing a unified yet customizable experience across your AST scan workflows on Azure DevOps and other
+CI systems. In the future, we may provide native fcli-based Azure DevOps tasks for an even easier integration.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Minimal configuration for running OpenText Fortify AST scans in Azure DevOps.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">trigger:
+  branches:
+    include:
+      - main
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - group: fortify  # Variable group containing FOD_URL, FOD_CLIENT_ID, FOD_CLIENT_SECRET
+
+jobs:
+  - job: fortify
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - checkout: self                       # Check out source code
+      - task: # ... setup build tool(s)      # Set up build tool(s) required to build your project
+      - task: Bash@3 # Or PowerShell@2, using the PowerShell variant of the script below
+        displayName: 'Run Fortify AST scan'
+        inputs:
+          targetType: 'inline'
+          # Bash variant
+          script: |
+            # Bootstrap fcli
+            npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+            # Add fcli to PATH and set related environment variables for subsequent steps in current script
+            source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env shell)
+            # Alternatively, to make fcli ALSO available for subsequent tasks:
+            # source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado --output-as=shell)
+            # Alternatively, to make fcli ONLY available for subsequent tasks:
+            # npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
+            "${FCLI_CMD:-fcli}" action run ci  # Or any other fcli-based custom workflow
+          # PowerShell variant
+          # script: |
+          #   # Bootstrap fcli
+          #   npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+          #   # Add fcli to PATH and set related environment variables for subsequent steps in current script
+          #   npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env pwsh | Out-String | Invoke-Expression
+          #   # Alternatively, to make fcli ALSO available for subsequent tasks:
+          #   # npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado --output-as=pwsh | Out-String | Invoke-Expression
+          #   # Alternatively, to make fcli ONLY available for subsequent tasks:
+          #   # npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env ado
+          #   &amp; "${env:FCLI_CMD:-fcli}" action run ci  # Or any other fcli-based custom workflow
+        env:
+          FOD_URL: $(FOD_URL)
+          FOD_CLIENT_ID: $(FOD_CLIENT_ID)
+          FOD_CLIENT_SECRET: $(FOD_CLIENT_SECRET)
+          # FOD_RELEASE: MyApp:main        # Optional: defaults to repo:branch
+          # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest
+          FORTIFY_SETUP_VERSION: v2.1      # Or v2 for latest features, v2.1.2 for stability</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_platform_notes"><a class="anchor" href="#_platform_notes"></a>Platform Notes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To keep scripts portable across Linux/macOS and Windows agents, use the command path exported by
+<code>@fortify/setup</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Bash: <code>${FCLI_CMD:-fcli} action run ci</code></p>
+</li>
+<li>
+<p>PowerShell: <code>&amp; $env:FCLI_CMD action run ci</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This is particularly important for Bash tasks on Windows agents, where invoking <code>fcli</code> without the
+full executable path may fail.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tips_recommendations"><a class="anchor" href="#_tips_recommendations"></a>Tips &amp; Recommendations</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_centralized_configuration_management"><a class="anchor" href="#_centralized_configuration_management"></a>Centralized Configuration Management</h3>
+<div class="paragraph">
+<p>For enterprise environments with multiple repositories, consider creating
+<a href="https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates">pipeline templates</a>
+to wrap the Fortify integration. This approach provides:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Version stability</strong>: Pin specific <code>@fortify/setup</code> and fcli versions (e.g., <code>FCLI_BOOTSTRAP_VERSION: v3.15.0</code>) across all pipelines</p>
+</li>
+<li>
+<p><strong>Consistent configuration</strong>: Centrally manage common settings like tool versions and scan parameters</p>
+</li>
+<li>
+<p><strong>Controlled upgrades</strong>: Test new versions centrally before rolling out to all repositories</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Example template structure:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># fortify-scan-template.yml (in your organization's shared template repository)
+parameters:
+  - name: fodRelease
+    displayName: 'Optional FoD release, defaults to &lt;repo&gt;:&lt;branch&gt;'
+    type: string
+    default: ''
+steps:
+  - task: Bash@3
+    displayName: 'Run Fortify AST scan'
+    inputs:
+      targetType: 'inline'
+      script: |
+        npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env init --tools=fcli:bootstrapped
+        source &lt;(npx @fortify/setup@$(FORTIFY_SETUP_VERSION) env shell)
+        "${FCLI_CMD:-fcli}" action run ci
+    env:
+      FOD_URL: $(FOD_URL)
+      FOD_CLIENT_ID: $(FOD_CLIENT_ID)
+      FOD_CLIENT_SECRET: $(FOD_CLIENT_SECRET)
+      FOD_RELEASE: ${{ parameters.fodRelease }}
+      FCLI_BOOTSTRAP_VERSION: v3.15.0  # Centrally managed version
+      FORTIFY_SETUP_VERSION: v2.1.2    # Centrally managed version</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_air_gapped_environments"><a class="anchor" href="#_air_gapped_environments"></a>Air-Gapped Environments</h3>
+<div class="paragraph">
+<p>For air-gapped or restricted network environments, host custom tool definitions and tool bundles in an internal
+SCM repository or artifact registry. Configure the integration to use these internal resources:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Set <code>TOOL_DEFINITIONS</code> to point to your internally hosted tool definitions file</p>
+</li>
+<li>
+<p>Set <code>FCLI_BOOTSTRAP_URL</code> to download fcli from your internal mirror</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This ensures all required tools are accessible without external internet access.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Configuration is accomplished through environment variables set in your Azure DevOps pipeline YAML file.
+Secrets and variables should be configured in Azure DevOps Library or pipeline variables. The following
+sections document all available configuration options organized by their purpose.</p>
+</div>
+<div class="sect2">
+<h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
+<div class="paragraph">
+<p>The script-based Azure DevOps integration leverages the <code>@fortify/setup</code> npm package to bootstrap fcli
+and supporting tools like ScanCentral Client. The environment variables in this section are provided by
+<code>@fortify/setup</code> v2.1.x (configured via <code>FORTIFY_SETUP_VERSION=v2.1.x</code>).
+If you configure a different <code>@fortify/setup</code> version, please refer to the
+<a href="https://www.npmjs.com/package/@fortify/setup/v/v2.1.x">@fortify/setup documentation</a> for
+that version&#8217;s supported variables.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<code>@fortify/setup</code> is automatically configured through the <code>FCLI_BOOTSTRAP_*</code> environment variables documented in this section. For simplicity and to avoid pipelines from interfering with each other, it is recommended to not use the <code>@fortify/setup bootstrap-config</code> command in CI pipelines.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This integration requires <code>@fortify/setup</code> v2.1.2 or later, and fcli v3.15.0 or later.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Environment variables listed in the subsequent sections are for fcli 3.15.0; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/v3.15.0/generic-actions.html#_ci">ci</a> action documentation for that version.
+</td>
+</tr>
+</table>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, the latest <a href="https://github.com/fortify/fcli/releases/v3">fcli v3.x.y release</a> is used for running the fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this environment variable to the desired version. Likewise, you can set this variable to an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code> to experiment with upcoming changes provided by an fcli development version.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_PATH</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, fcli is downloaded from the official GitHub releases page. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. In those cases, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_RSA_SHA256_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Custom URL for the fcli RSA SHA256 signature file. Defaults to <code>&lt;FCLI_BOOTSTRAP_URL&gt;.rsa_sha256</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERIFY_SIGNATURE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>false</code> to skip verification (not recommended) of the fcli download.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PREINSTALLED</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>true</code> to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli  <code>ci</code> action are already installed, preventing tool definitions from being updated or tools from being automatically installed. This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_authentication_connection"><a class="anchor" href="#_authentication_connection"></a>Authentication &amp; Connection</h3>
+<div class="paragraph">
+<p>Configure credentials and connection details for OpenText Core Application Security (Fortify on Demand).</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>OpenText Core Application Security (Fortify on Demand) URL, for example <code><a href="https://ams.fortify.com" class="bare">https://ams.fortify.com</a></code>. This must be rendered by the CI/CD system as plain text, not as a masked secret/variable.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_CLIENT_ID<br>
+FOD_CLIENT_SECRET</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Required when authenticating with an API key: OpenText Core Application Security (Fortify on Demand) Client ID (API key) and Secret (API secret).</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_TENANT<br>
+FOD_USER<br>
+FOD_PASSWORD</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Required when authenticating with user credentials: OpenText Core Application Security (Fortify on Demand) tenant, user and password. It is recommended to use a Personal Access Token instead of an actual user password.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_LOGIN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Extra login options, for example for disabling SSL checks or changing connection time-outs; see  <a href="../manpage/fcli-fod-session-login.html"><code>fcli fod session login</code></a> documentation.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_release_management"><a class="anchor" href="#_release_management"></a>Release Management</h3>
+<div class="paragraph">
+<p>Configure OpenText Core Application Security (Fortify on Demand) release settings, including automatic creation and setup of applications and releases if they don&#8217;t exist.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FOD_RELEASE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>OpenText Core Application Security (Fortify on Demand) release to use with this action. This should be specified as <code>&lt;app-name&gt;:&lt;release-name&gt;</code> (for non-microservices applications) or <code>&lt;app-name&gt;:&lt;microservice-name&gt;:&lt;release-name&gt;</code> (for microservices  applications). Default value is based on repository and branch name, for example <code>myOrg/myRepo:myBranch</code>. Note that you&#8217;ll need to explicitly configure <code>FOD_RELEASE</code> for microservices applications, as the default value lacks a microservice name.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SETUP<br>
+SETUP_ACTION<br>
+SETUP_EXTRA_OPTS<br>
+OVERRIDE_SAST_SETTINGS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>If <code>DO_SETUP</code> is set not set to <code>false</code>, the application and/or release will be created if they do not yet exist, and static scan settings will be configured if necessary. By default, static scan settings will only be configured if no settings have been previously configured for the release; set  <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code> to override existing static scan settings. The setup will be performed using the fcli-provided fcli-provided <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_setup_release">setup-release</a> action, or, the custom fcli action  specified through <code>SETUP_ACTION</code>. Extra options for the fcli action can be passed through the  <code>SETUP_EXTRA_OPTS</code> environment variable, but also see below for some convenience environment variables.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">COPY_FROM_RELEASE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Depending on your Git workflow, when a new release is created, it is recommended to copy state from the  release representing your default branch by either setting this environment variable or by passing the  <code>--copy-from</code> option through <code>SETUP_EXTRA_OPTS</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SAST_ASSESSMENT_TYPE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, when setting up a release for SAST scanning, the SAST scan will be configured with the  <code>Static Assessment</code> assessment type. You can choose a different assement type by either setting this  environment variable or by passing the <code>--assessment-type</code> option through <code>SETUP_EXTRA_OPTS</code>. Note  that this won&#8217;t update the assessment type if SAST scan settings have already been configured for the  release, unless you set <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_AVIATOR_AUDIT</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>To enable Aviator audits, set this environment variable to true or pass <code>--use-aviator</code> through <code>SETUP_EXTRA_OPTS</code>. Note that Aviator avaliablility depends on tenant and scan policy configuration, and may consume additional entitlement units. Also note that this setting will be ignored if SAST scan settings have already been configured for the release,  unless you set <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SCA_SCAN</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>To enable Software Composition Analysis in your SAST scans, set this environment variable to true or pass <code>--oss</code>  through <code>SETUP_EXTRA_OPTS</code>. Note that Debricked or Sonatype availability depends on tenant and scan policy configuration, and may consume additional entitlement units. Also note that this option will be ignored if SAST scan settings have already been configured for the release, unless you set <code>OVERRIDE_SAST_SETTINGS</code> to <code>true</code>.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_package_configuration"><a class="anchor" href="#_package_configuration"></a>Package Configuration</h3>
+<div class="paragraph">
+<p>Configure source code packaging behavior for SAST scans. Control whether to use custom packaging actions, specify pre-built packages, or customize ScanCentral Client usage.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PACKAGE_ACTION<br>
+PACKAGE_ACTION_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, when running a SAST scan, the fcli <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_package">package</a> action is used to (optionally) package the source code to be scanned; see next entry for information on how to configure the default <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_package">package</a> action. If the standard fcli <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_package">package</a> action doesn&#8217;t meet your needs, for example if you want to perform a local translation using Fortify Static Code Analyzer, you can use <code>PACKAGE_ACTION</code> to use a custom action for packaging, optionally providing extra options to this custom action through the <code>PACKAGE_ACTION_EXTRA_OPTS</code> environment variable. Note that any custom action must set the <code>global.package.output</code> action variable, pointing to the package or MBS file to be scanned.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">USE_PACKAGE<br>
+PACKAGE_EXTRA_OPTS<br>
+SC_CLIENT_VERSION<br>
+SC_CLIENT_HOME<br>
+SOURCE_DIR</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>These environment variables define packaging behavior. If <code>USE_PACKAGE</code> is specified, packaging will be skipped and the given package or MBS file (which must already exist) will be used. To pass additional options to the <code>scancentral package</code> command like <code>-bt</code> or <code>-bf</code>, use <code>PACKAGE_EXTRA_OPTS</code>. Note that the <code>-oss</code> option will be automatically added if Software Composition Analysis in enabled in FoD SAST scan settings.<br>
+<br>
+By default: <br>
+* If <code>SC_CLIENT_HOME</code> is specified, the pre-installed ScanCentral Client at that location will be registered and used, skipping automatic installation. The path should point to the installation directory or binary. <br>
+* <code>SC_CLIENT_VERSION</code> may be specified to request a specific ScanCentral Client version to be used. Allowed values: <br>
+  * An explicit version number (e.g. <code>25.2</code> or <code>25.2.0</code>) <br>
+  * Path to a specific ScanCentral Client installation <br>
+  * <code>latest</code> to use the latest available ScanCentral Client version <br>
+  * <code>auto</code> (default) to use a pre-installed version if available, otherwise installs latest <br>
+* If neither <code>SC_CLIENT_VERSION</code> nor <code>SC_CLIENT_HOME</code> are set, defaults to <code>auto</code> behavior. <br>
+* Current working directory will be packaged; use <code>SOURCE_DIR</code> to package a different directory. <br>
+* Debug logging for Scancentral Client is disabled; pass --debug on the fcli invocation to enable debug logging.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_scan_execution"><a class="anchor" href="#_scan_execution"></a>Scan Execution</h3>
+<div class="paragraph">
+<p>Configure SAST scan execution and waiting behavior for OpenText Core Application Security (Fortify on Demand).</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_SCAN<br>
+SAST_SCAN_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>The fcli <code>ci</code> action currently only supports running a SAST scan, which is enabled by default. The <code>SAST_SCAN_EXTRA_OPTS</code> environment variable can be used to provide additional options to the <a href="../manpage/fcli-fod-sast-scan-start.html"><code>fcli fod sast-scan start</code></a> command, for example to specify scan notes. Note that these environment variables only control the submission of the scan request; see the information below for details on waiting for the scan to complete.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_WAIT<br>
+DO_SAST_WAIT<br>
+SAST_WAIT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, the fcli <code>ci</code> action will wait for all started scans to complete; set <code>DO_WAIT</code> to <code>false</code> to just kick off any configured scans without waiting for completion. Note that doing so will skip any post-scan tasks. The <code>SAST_WAIT_EXTRA_OPTS</code> environment variable can be used to pass extra options to the <a href="../manpage/fcli-fod-sast-scan-wait-for.html"><code>fcli fod sast-scan wait-for</code></a> command.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_post_scan_actions"><a class="anchor" href="#_post_scan_actions"></a>Post-Scan Actions</h3>
+<div class="paragraph">
+<p>Configure post-scan tasks including release summaries, policy checks, pull request comments, and vulnerability data exports for OpenText Core Application Security (Fortify on Demand).
+NOTE: Availability and behavior of post-scan tasks may vary across CI/CD systems and fcli versions.</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_RELEASE_SUMMARY<br>
+RELEASE_SUMMARY_ACTION<br>
+RELEASE_SUMMARY_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>If <code>DO_RELEASE_SUMMARY</code> is not set to <code>false</code>, a release summary will be generated using the fcli-provided <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_release_summary">release-summary</a> action or, if specified, the custom fcli action specified through <code>RELEASE_SUMMARY_ACTION</code>. Extra options for the fcli action can be specified through the <code>RELEASE_SUMMARY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_CHECK_POLICY<br>
+CHECK_POLICY_ACTION<br>
+CHECK_POLICY_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>If <code>DO_CHECK_POLICY</code> is set to true (implied if any of the other two <code>CHECK_POLICY_*</code> variables are set), a policy check will be run after scan completion using the fcli-provided <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_check_policy">check-policy</a> action or, if specified, the custom fcli action specified through <code>CHECK_POLICY_ACTION</code>. Extra options for a custom fcli action can be passed through the <code>CHECK_POLICY_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_PR_COMMENT<br>
+PR_COMMENT_ACTION<br>
+PR_COMMENT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>(PREVIEW) If <code>DO_PR_COMMENT</code> is set to true (implied if any of the other two <code>PR_COMMENT_*</code> variables are set), a Pull Request or Merge Request comment will be generated using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_github_pr_comment">github-pr-comment</a> or, if specified, the custom fcli action specified through <code>PR_COMMENT_ACTION</code>. Extra options for the fcli action can be specified through the <code>PR_COMMENT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DO_SAST_EXPORT<br>
+SAST_EXPORT_ACTION<br>
+SAST_EXPORT_EXTRA_OPTS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>If <code>DO_SAST_EXPORT</code> is not set to <code>false</code> and a SAST scan was completed, the SAST vulnerability data will be exported into a CI-specific format using an fcli-provided action matching the current CI system like <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_github_sast_report">github-sast-report</a> or <a href="https://fortify.github.io/fcli/v3.15.0/fod-actions.html#_gitlab_sast_report">gitlab-sast-report</a>, or, if specified, the custom fcli action specified through <code>SAST_EXPORT_ACTION</code>. Extra options for the fcli action can be specified through the <code>SAST_EXPORT_EXTRA_OPTS</code> environment variable, which may include fcli options to allow unsigned custom actions to be used.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_additional_resources"><a class="anchor" href="#_additional_resources"></a>Additional Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema">Azure Pipelines YAML schema reference</a></p>
+</li>
+<li>
+<p><a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables">Define variables in Azure Pipelines</a></p>
+</li>
+<li>
+<p><a href="https://www.npmjs.com/package/@fortify/setup">@fortify/setup npm package documentation</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 3.15.0<br>
+Last updated 2026-02-22 15:02:16 UTC
+</div>
+</div>
+</body>
+</html>
