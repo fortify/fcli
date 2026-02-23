@@ -13,6 +13,8 @@
 package com.fortify.cli.fod._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.ModuleType;
+import com.fortify.cli.common.cli.util.ProductModule;
 import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.access_control.cli.cmd.FoDAccessControlCommands;
 import com.fortify.cli.fod.action.cli.cmd.FoDActionCommands;
@@ -30,6 +32,7 @@ import com.fortify.cli.fod.sast_scan.cli.cmd.FoDSastScanCommands;
 
 import picocli.CommandLine.Command;
 
+@ProductModule(ModuleType.PRODUCT)
 @Command(
         name = "fod",
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",

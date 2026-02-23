@@ -13,6 +13,9 @@
 package com.fortify.cli.util._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.ModuleType;
+import com.fortify.cli.common.cli.util.ProductModule;
+import com.fortify.cli.common.cli.util.RelatedModules;
 import com.fortify.cli.util.all_commands.cli.cmd.AllCommandsCommands;
 import com.fortify.cli.util.autocomplete.cli.cmd.AutoCompleteCommands;
 import com.fortify.cli.util.crypto.cli.cmd.CryptoCommands;
@@ -24,6 +27,8 @@ import com.fortify.cli.util.variable.cli.cmd.VariableCommands;
 
 import picocli.CommandLine.Command;
 
+@ProductModule(ModuleType.OTHER)
+@RelatedModules({"ssc","fod"})
 @Command(
         name = "util",
         resourceBundle = "com.fortify.cli.util.i18n.UtilMessages",

@@ -13,11 +13,14 @@
 package com.fortify.cli.license._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.ModuleType;
+import com.fortify.cli.common.cli.util.ProductModule;
 import com.fortify.cli.license.msp_report.cli.cmd.MspReportCommands;
 import com.fortify.cli.license.ncd_report.cli.cmd.NcdReportCommands;
 
 import picocli.CommandLine.Command;
 
+@ProductModule(ModuleType.OTHER)
 @Command(
         name = "license",
         resourceBundle = "com.fortify.cli.license.i18n.LicenseMessages",

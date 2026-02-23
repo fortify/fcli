@@ -13,6 +13,8 @@
 package com.fortify.cli.config._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.ModuleType;
+import com.fortify.cli.common.cli.util.ProductModule;
 import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
 import com.fortify.cli.config.proxy.cli.cmd.ProxyCommands;
 import com.fortify.cli.config.publickey.cli.cmd.PublicKeyCommands;
@@ -20,6 +22,7 @@ import com.fortify.cli.config.truststore.cli.cmd.TrustStoreCommands;
 
 import picocli.CommandLine.Command;
 
+@ProductModule(ModuleType.OTHER)
 @Command(
         name = "config",
         aliases = "cfg",

@@ -19,9 +19,14 @@ import com.fortify.cli.aviator.entitlement.cli.cmd.AviatorEntitlementCommands;
 import com.fortify.cli.aviator.ssc.cli.cmd.AviatorSSCCommands;
 import com.fortify.cli.aviator.token.cli.cmd.AviatorTokenCommands;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.ModuleType;
+import com.fortify.cli.common.cli.util.ProductModule;
+import com.fortify.cli.common.cli.util.RelatedModules;
 
 import picocli.CommandLine.Command;
 
+@ProductModule(ModuleType.PRODUCT)
+@RelatedModules({"ssc"})
 @Command(
         name = "aviator",
         resourceBundle = "com.fortify.cli.aviator.i18n.AviatorMessages",

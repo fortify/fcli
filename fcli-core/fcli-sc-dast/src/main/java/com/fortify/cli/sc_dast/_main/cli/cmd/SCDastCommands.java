@@ -13,6 +13,9 @@
 package com.fortify.cli.sc_dast._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.ModuleType;
+import com.fortify.cli.common.cli.util.ProductModule;
+import com.fortify.cli.common.cli.util.RelatedModules;
 import com.fortify.cli.sc_dast.rest.cli.cmd.SCDastRestCommands;
 import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan_policy.cli.cmd.SCDastScanPolicyCommands;
@@ -21,6 +24,8 @@ import com.fortify.cli.sc_dast.sensor.cli.cmd.SCDastSensorCommands;
 
 import picocli.CommandLine.Command;
 
+@ProductModule(ModuleType.PRODUCT)
+@RelatedModules({"ssc"})
 @Command(
         name = "sc-dast",
         resourceBundle = "com.fortify.cli.sc_dast.i18n.SCDastMessages",
