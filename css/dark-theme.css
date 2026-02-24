@@ -103,6 +103,8 @@ a:hover {
 pre {
   background-color: var(--code-inline-bg) !important;
   border-color: var(--code-border);
+  white-space: pre;
+  overflow-x: auto;
 }
 
 [data-theme="dark"] .listingblock > .content > pre,
