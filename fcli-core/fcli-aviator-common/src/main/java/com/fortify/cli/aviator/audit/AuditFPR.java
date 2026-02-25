@@ -108,10 +108,19 @@ public class AuditFPR {
             ParsedFprData parsedData, IAviatorLogger logger,
             String token, String appVersion, String url, String sscAppName, String sscAppVersion,
             Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle) {
+            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection,
+            List<String> folderPriorityOrder) {
 
         IssueAuditor issueAuditor = new IssueAuditor(
-                parsedData.vulnerabilities, parsedData.auditProcessor, parsedData.auditIssueMap,
-                parsedData.fprInfo, sscAppName, sscAppVersion, filterSelection, logger
+                parsedData.vulnerabilities,
+                parsedData.auditProcessor,
+                parsedData.auditIssueMap,
+                parsedData.fprInfo,
+                sscAppName,
+                sscAppVersion,
+                filterSelection,
+                logger,
+                folderPriorityOrder
         );
         return issueAuditor.performAudit(
                 auditResponsesToFill, token, appVersion, parsedData.fprInfo.getBuildId(), url, fprHandle
