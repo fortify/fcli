@@ -33,6 +33,10 @@ import com.fortify.aviator.application.ApplicationResponseMessage;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.aviator.application.CreateApplicationRequest;
 import com.fortify.aviator.application.UpdateApplicationRequest;
+import com.fortify.aviator.dastentitlement.DastEntitlement;
+import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
+import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantRequest;
+import com.fortify.aviator.dastentitlement.ListDastEntitlementsByTenantResponse;
 import com.fortify.aviator.entitlement.Entitlement;
 import com.fortify.aviator.entitlement.EntitlementServiceGrpc;
 import com.fortify.aviator.entitlement.ListEntitlementsByTenantRequest;
@@ -72,6 +76,7 @@ public class AviatorGrpcClient implements AutoCloseable {
     private final ApplicationServiceGrpc.ApplicationServiceBlockingStub blockingStub;
     private final TokenServiceGrpc.TokenServiceBlockingStub tokenServiceBlockingStub;
     private final EntitlementServiceGrpc.EntitlementServiceBlockingStub entitlementServiceBlockingStub;
+    private final DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub dastEntitlementServiceBlockingStub;
     private final long defaultTimeoutSeconds;
     private final java.util.concurrent.ExecutorService processingExecutor;
     private final long pingIntervalSeconds;
@@ -86,6 +91,7 @@ public class AviatorGrpcClient implements AutoCloseable {
         this.blockingStub = ApplicationServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.tokenServiceBlockingStub = TokenServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.entitlementServiceBlockingStub = EntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
+        this.dastEntitlementServiceBlockingStub = DastEntitlementServiceGrpc.newBlockingStub(channel).withCompression("gzip").withMaxInboundMessageSize(Constants.MAX_MESSAGE_SIZE).withMaxOutboundMessageSize(Constants.MAX_MESSAGE_SIZE).withWaitForReady();
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
         this.processingExecutor = Executors.newFixedThreadPool(4, r -> {
             Thread t = new Thread(r, "aviator-client-processing-" + r.hashCode());
@@ -229,6 +235,12 @@ public class AviatorGrpcClient implements AutoCloseable {
     public List<Entitlement> listEntitlements(String tenantName, String signature, String message) {
         ListEntitlementsByTenantRequest request = ListEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
         ListEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(entitlementServiceBlockingStub, EntitlementServiceGrpc.EntitlementServiceBlockingStub::listEntitlementsByTenant, request, Constants.OP_LIST_ENTITLEMENTS);
+        return response.getEntitlementsList();
+    }
+
+    public List<DastEntitlement> listDastEntitlements(String tenantName, String signature, String message) {
+        ListDastEntitlementsByTenantRequest request = ListDastEntitlementsByTenantRequest.newBuilder().setTenantName(tenantName).setSignature(signature).setMessage(message).build();
+        ListDastEntitlementsByTenantResponse response = GrpcUtil.executeGrpcCall(dastEntitlementServiceBlockingStub, DastEntitlementServiceGrpc.DastEntitlementServiceBlockingStub::listDastEntitlementsByTenant, request, Constants.OP_LIST_DAST_ENTITLEMENTS);
         return response.getEntitlementsList();
     }
 }

@@ -12,17 +12,13 @@
  */
 package com.fortify.cli.aviator.entitlement.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.aviator._common.output.cli.mixin.AviatorOutputHelperMixins;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-/**
- * Deprecated entitlement list command retained for backward compatibility.
- * Use {@code fcli aviator entitlement list-sast} instead.
- */
-@Command(name = OutputHelperMixins.List.CMD_NAME)
-public class AviatorEntitlementListCommand extends AbstractAviatorSastEntitlementListCommand {
-    @Getter @Mixin private OutputHelperMixins.List outputHelper;
+@Command(name = AviatorOutputHelperMixins.ListSast.CMD_NAME)
+public class AviatorEntitlementListSastCommand extends AbstractAviatorSastEntitlementListCommand {
+    @Getter @Mixin private AviatorOutputHelperMixins.ListSast outputHelper;
 }
