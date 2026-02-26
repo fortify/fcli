@@ -12,6 +12,11 @@ usage:
     For application versions that don't already exist in Aviator, the action will
     automatically create them before submitting for audit.
 
+    When quota limits are exceeded for any application, issues are prioritized by
+    folder using either the default order (Critical > High > Medium > Low) or a
+    custom priority order specified via --folder-priority-order. The same priority
+    order is applied to all audited versions in the bulk operation.
+
     Either --tag-mapping or --add-aviator-tags must be specified. The default tag
     mapping leaves unsure issues unaudited, causing indefinite reselection. Use
     a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
@@ -71,6 +76,11 @@ cli.options:
     description: "Timeout period for metric refresh, e.g., 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default: 60s"
     required: false
     default: "60s"
+  folder-priority-order:
+    names: --folder-priority-order
+    description: "Custom priority order for folder-based filtering when quota is exceeded (comma-separated, highest priority first). Example: Critical,High,Medium,Low. Applied to all audited versions. Default: uses server default (Critical > High > Medium > Low)"
+    required: false
+    default: ""
 
 steps:
   # Configure module
@@ -230,7 +240,10 @@ steps:
                   log.progress: Would create app ${project.project_name}
                 - if: ${cli['add-aviator-tags']}
                   log.progress: Would prepare tags for ${project.project_name}:${project.version_name}
-                - log.progress: Would audit ${project.project_name}:${project.version_name}
+                - if: "${cli['folder-priority-order'] != null && cli['folder-priority-order'] != ''}"
+                  log.progress: "Would audit ${project.project_name}:${project.version_name} with custom priority order: ${cli['folder-priority-order']}"
+                - if: "${cli['folder-priority-order'] == null || cli['folder-priority-order'] == ''}"
+                  log.progress: Would audit ${project.project_name}:${project.version_name}
             - if: ${!cli['dry-run']}
               do:
                 - var.set:
@@ -284,13 +297,13 @@ steps:
                     - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                       run.fcli:
                         run_audit:
-                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
+                          cmd: "aviator ssc audit --av \"${project.project_name}:${project.version_name}\" --app \"${project.project_name}\" --log-level=INFO --tag-mapping=\"${cli['tag-mapping']}\" --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                           status.check: false
 
                     - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                       run.fcli:
                         run_audit:
-                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
+                          cmd: "aviator ssc audit --av \"${project.project_name}:${project.version_name}\" --app \"${project.project_name}\" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout=\"${cli['refresh-timeout']}\"${cli['folder-priority-order'] != null && cli['folder-priority-order'] != '' ? ' --folder-priority-order=\"' + cli['folder-priority-order'] + '\"' : ''}"
                           status.check: false
 
                     - if: ${run_audit.exitCode != 0}

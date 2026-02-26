@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.grpc;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,10 +24,14 @@ class StreamState {
     final String SSCApplicationVersion;
     final String token;
     final int totalRequests;
+    volatile int actualIssuesCount;
     final Set<String> processedIssueIds = ConcurrentHashMap.newKeySet();
     final Set<String> pendingIssueIds = ConcurrentHashMap.newKeySet();
     volatile int streamRetryCount = 0;
     volatile boolean isStreamInitialized = false;
+    volatile long quota = -1;
+    volatile String quotaLastUpdated = null;
+    volatile List<String> customPriorityOrder = null;
 
     StreamState(String streamId, String projectName, String FPRBuildId,
                 String SSCApplicationName, String SSCApplicationVersion,
@@ -38,5 +43,10 @@ class StreamState {
         this.SSCApplicationVersion = SSCApplicationVersion;
         this.token = token;
         this.totalRequests = totalRequests;
+        this.actualIssuesCount = totalRequests;
+    }
+
+    void setCustomPriorityOrder(List<String> customPriorityOrder) {
+        this.customPriorityOrder = customPriorityOrder;
     }
 }
