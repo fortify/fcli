@@ -52,6 +52,10 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
         }
         FoDAppDescriptor appDescriptor = qualifiedMicroserviceNameResolver.getAppDescriptor(unirest, true);
         FoDQualifiedMicroserviceNameDescriptor qualifiedMicroserviceNameDescriptor = qualifiedMicroserviceNameResolver.getQualifiedMicroserviceNameDescriptor();
+        // if the application is not microservice enabled, return the application descriptor with an additional field indicating that the microservice was not created due to the application not being microservice enabled
+        if (!appDescriptor.isHasMicroservices()) {
+            return appDescriptor.asObjectNode().put("__action__", "NOT_MICROSERVICE_ENABLED");
+        }
         FoDMicroserviceUpdateRequest msCreateRequest = FoDMicroserviceUpdateRequest.builder()
                 .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
                 .attributes(FoDAttributeHelper.getAttributesNode(unirest, FoDEnums.AttributeTypes.Microservice,

@@ -17,6 +17,8 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -50,15 +52,21 @@ public class FoDDastAutomatedScanStartCommand extends AbstractFoDScanStartComman
             // get current setup to ensure the scan has been configured
             FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
 
-            // check if scan is already in progress
-            FoDScanDescriptor scan = FoDScanDastAutomatedHelper.handleInProgressScan(unirest, releaseDescriptor,
-                    inProgressScanActionType.getInProgressScanActionType(), progressWriter, maxAttempts,
-                    waitInterval);
+            // check if there have been any scans previously run for this release
+            if (!FoDScanDastAutomatedHelper.getLatestScanDescriptor(unirest, relId, FoDScanType.Dynamic, true)
+                .equals(FoDScanHelper.getEmptyDescriptor())) {
 
-            if (scan != null && scan.getAnalysisStatusType().equals("In_Progress")) {
-                if (inProgressScanActionType.getInProgressScanActionType() == FoDEnums.InProgressScanActionType.DoNotStartScan) {
-                    scanAction = "NOT_STARTED_SCAN_IN_PROGRESS";
-                    return scan;
+                // if there is an in progress scan, handle according to the specified action type
+                FoDScanDescriptor scan = FoDScanDastAutomatedHelper.handleInProgressScan(unirest, releaseDescriptor,
+                        inProgressScanActionType.getInProgressScanActionType(), progressWriter, maxAttempts,
+                        waitInterval);
+
+                // if the action was to not start a new scan, return the in progress scan descriptor
+                if (scan != null && scan.getAnalysisStatusType().equals("In_Progress")) {
+                    if (inProgressScanActionType.getInProgressScanActionType() == FoDEnums.InProgressScanActionType.DoNotStartScan) {
+                        scanAction = "NOT_STARTED_SCAN_IN_PROGRESS";
+                        return scan;
+                    }
                 }
             }
 
@@ -70,4 +78,5 @@ public class FoDDastAutomatedScanStartCommand extends AbstractFoDScanStartComman
     public final String getActionCommandResult() {
         return scanAction;
     }
+
 }

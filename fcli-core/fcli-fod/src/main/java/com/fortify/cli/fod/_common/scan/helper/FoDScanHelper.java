@@ -146,7 +146,7 @@ public class FoDScanHelper {
         Integer assessmentTypeId = 0;
         LOG.info("Finding/Validating entitlement to use.");
 
-        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, scanType, 
+        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, scanType,
             entitlementFrequencyType, assessmentType);
         assessmentTypeId = atd.getAssessmentTypeId();
         entitlementIdToUse = atd.getEntitlementId();
@@ -191,7 +191,7 @@ public class FoDScanHelper {
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 
-    private static final FoDScanDescriptor getEmptyDescriptor() {
+    public static final FoDScanDescriptor getEmptyDescriptor() {
         return JsonHelper.treeToValue(getObjectMapper().createObjectNode(), FoDScanDescriptor.class);
     }
 
