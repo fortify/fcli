@@ -116,11 +116,8 @@ public class AviatorGrpcClient implements AutoCloseable {
         this(channel, defaultTimeoutSeconds, logger, 30);
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, FprHandle fprHandle) {
+    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, FprHandle fprHandle, List<String> customPriorityOrder) {
         AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler, pingIntervalSeconds, defaultTimeoutSeconds, fprHandle);
-        CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token);
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, List<String> customPriorityOrder) {
-        AviatorStreamProcessor processor = new AviatorStreamProcessor(this, logger, asyncStub, processingExecutor, pingScheduler, pingIntervalSeconds, defaultTimeoutSeconds);
         CompletableFuture<Map<String, AuditResponse>> future = processor.processBatchRequests(requests, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token, customPriorityOrder);
         future.whenComplete((res, th) -> processor.close());
         return future.exceptionally(ex -> {

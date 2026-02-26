@@ -65,7 +65,7 @@ public class AuditFPR {
         Map<String, AuditResponse> auditResponses = new ConcurrentHashMap<>();
         AuditOutcome auditOutcome = performAviatorAudit(
                 parsedData, options.getLogger(), options.getToken(), options.getAppVersion(), options.getUrl(), options.getSscAppName(), options.getSscAppVersion(),
-                auditResponses, filterSelection, options.getFprHandle()
+                auditResponses, filterSelection, options.getFprHandle(), options.getFolderPriorityOrder()
         );
 
         // --- STAGE 4: FINALIZATION ---
@@ -107,9 +107,7 @@ public class AuditFPR {
     private static AuditOutcome performAviatorAudit(
             ParsedFprData parsedData, IAviatorLogger logger,
             String token, String appVersion, String url, String sscAppName, String sscAppVersion,
-            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle) {
-            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection,
-            List<String> folderPriorityOrder) {
+            Map<String, AuditResponse> auditResponsesToFill, FilterSelection filterSelection, FprHandle fprHandle, List<String> folderPriorityOrder) {
 
         IssueAuditor issueAuditor = new IssueAuditor(
                 parsedData.vulnerabilities,
