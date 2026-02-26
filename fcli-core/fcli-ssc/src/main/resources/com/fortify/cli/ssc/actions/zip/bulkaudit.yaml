@@ -71,6 +71,18 @@ cli.options:
     description: "Timeout period for metric refresh, e.g., 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default: 60s"
     required: false
     default: "60s"
+  skip-if-exceeding-quota:
+    names: --skip-if-exceeding-quota
+    description: "Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false"
+    required: false
+    default: false
+    type: boolean
+  test-exceeding-quota:
+    names: --test-exceeding-quota
+    description: "Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit. Default: false"
+    required: false
+    default: false
+    type: boolean
 
 steps:
   # Configure module
@@ -82,6 +94,18 @@ steps:
     steps:
       - log.progress: "ERROR: Either --tag-mapping or --add-aviator-tags must be specified."
       - throw: "Either --tag-mapping or --add-aviator-tags must be specified."
+
+  # Validate that --dry-run and --test-exceeding-quota are not used together
+  - if: ${cli['dry-run'] && cli['test-exceeding-quota']}
+    steps:
+      - log.progress: "ERROR: --dry-run and --test-exceeding-quota cannot be used together. Use --test-exceeding-quota alone to check quota without auditing."
+      - throw: "--dry-run and --test-exceeding-quota cannot be used together. Use --test-exceeding-quota alone to check quota without auditing."
+
+  # Validate that --dry-run and --skip-if-exceeding-quota are not used together
+  - if: ${cli['dry-run'] && cli['skip-if-exceeding-quota']}
+    steps:
+      - log.progress: "ERROR: --dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
+      - throw: "--dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
 
   # Get existing Aviator applications
   - log.progress: Retrieving existing Aviator applications...
@@ -217,6 +241,7 @@ steps:
           stats.create_failures: 0
           stats.audit_attempts: 0
           stats.audit_failures: 0
+          stats.quota_skipped: 0
           stats.entitlement_exhausted: false
           stats.create_skipped_due_to_entitlement: 0
 
@@ -236,69 +261,163 @@ steps:
               steps:
                 - var.set:
                     app_ready: ${project.exists_in_aviator}
+                    skip_this_version: false
 
-                # Create app if needed
-                - if: ${!project.exists_in_aviator && !stats.entitlement_exhausted}
-                  steps:
-                    - var.set:
-                        stats.create_attempts: ${stats.create_attempts + 1}
-                    - run.fcli:
-                        create_app:
-                          cmd: aviator app create "${project.project_name}"
-                          status.check: false
-                    - if: ${create_app.exitCode == 0}
-                      var.set:
-                        app_ready: true
-                        stats.create_successes: ${stats.create_successes + 1}
-                    - if: ${create_app.exitCode != 0}
-                      steps:
-                        - var.set:
-                            stats.create_failures: ${stats.create_failures + 1}
-                        - if: ${!stats.entitlement_exhausted}
-                          steps:
-                            - log.warn: App creation failed - suppressing further create attempts
-                            - var.set:
-                                stats.entitlement_exhausted: true
-
-                - if: ${!project.exists_in_aviator && stats.entitlement_exhausted}
-                  var.set:
-                    stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
-
-                # Prepare Aviator tags if requested
-                - if: ${cli['add-aviator-tags']}
-                  steps:
-                    - log.progress: Preparing Aviator tags for ${project.project_name}
-                    - run.fcli:
-                        prepare_tags:
-                          cmd: aviator ssc prepare --av "${project.project_name}:${project.version_name}"
-                          status.check: false
-                    - if: ${prepare_tags.exitCode != 0}
-                      steps:
-                        - log.warn: Aviator tag preparation failed for ${project.project_name}
-
-                # Run audit if app is ready
-                - if: ${app_ready}
+                # --- TEST-EXCEEDING-QUOTA MODE ---
+                # In test mode we only check quota and report; no app creation, no audit.
+                # For non-existing apps, --default-quota-fallback tells the audit command
+                # to use the tenant's default quota instead of reporting "app not found".
+                - if: ${cli['test-exceeding-quota']}
                   steps:
                     - var.set:
                         stats.audit_attempts: ${stats.audit_attempts + 1}
+                        quota_flags: " --test-exceeding-quota"
+                    - if: ${!project.exists_in_aviator}
+                      var.set:
+                        quota_flags: " --test-exceeding-quota --default-quota-fallback"
 
                     - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                       run.fcli:
                         run_audit:
-                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"${quota_flags}'
                           status.check: false
+                          records.collect: true
+                          stdout: show
 
                     - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
                       run.fcli:
                         run_audit:
-                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"'
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"${quota_flags}'
                           status.check: false
+                          records.collect: true
+                          stdout: show
+
+                    - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__.contains('QUOTA EXCEEDED')}
+                      var.set:
+                        stats.quota_skipped: ${stats.quota_skipped + 1}
 
                     - if: ${run_audit.exitCode != 0}
                       steps:
                         - var.set:
                             stats.audit_failures: ${stats.audit_failures + 1}
-                        - log.warn: Audit failed for ${project.project_name}:${project.version_name}
+                        - log.warn: Quota test failed for ${project.project_name}:${project.version_name}
+
+                    - var.set:
+                        skip_this_version: true
+
+                # --- SKIP-IF-EXCEEDING-QUOTA + NON-EXISTING APP ---
+                # Pre-check default quota before creating the app. If the default quota
+                # would be exceeded, skip the version entirely (don't create, don't audit).
+                - if: ${!skip_this_version && cli['skip-if-exceeding-quota'] && !project.exists_in_aviator}
+                  steps:
+                    - log.progress: Pre-checking default quota for new app ${project.project_name}...
+
+                    - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
+                      run.fcli:
+                        quota_precheck:
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}" --test-exceeding-quota --default-quota-fallback'
+                          status.check: false
+                          records.collect: true
+                          stdout: show
+
+                    - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
+                      run.fcli:
+                        quota_precheck:
+                          cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}" --test-exceeding-quota --default-quota-fallback'
+                          status.check: false
+                          records.collect: true
+                          stdout: show
+
+                    # If pre-check shows quota exceeded, skip this version entirely
+                    - if: ${quota_precheck.exitCode == 0 && quota_precheck.records != null && quota_precheck.records.size() > 0 && quota_precheck.records[0].__action__ != null && quota_precheck.records[0].__action__.contains('QUOTA EXCEEDED')}
+                      steps:
+                        - log.progress: Default quota exceeded for ${project.project_name} - skipping app creation and audit
+                        - var.set:
+                            skip_this_version: true
+                            stats.quota_skipped: ${stats.quota_skipped + 1}
+
+                # --- NORMAL FLOW: create app, prepare tags, run audit ---
+                - if: ${!skip_this_version}
+                  steps:
+                    # Create app if needed
+                    - if: ${!project.exists_in_aviator && !stats.entitlement_exhausted}
+                      steps:
+                        - var.set:
+                            stats.create_attempts: ${stats.create_attempts + 1}
+                        - run.fcli:
+                            create_app:
+                              cmd: aviator app create "${project.project_name}"
+                              status.check: false
+                        - if: ${create_app.exitCode == 0}
+                          var.set:
+                            app_ready: true
+                            stats.create_successes: ${stats.create_successes + 1}
+                        - if: ${create_app.exitCode != 0}
+                          steps:
+                            - var.set:
+                                stats.create_failures: ${stats.create_failures + 1}
+                            - if: ${!stats.entitlement_exhausted}
+                              steps:
+                                - log.warn: App creation failed - suppressing further create attempts
+                                - var.set:
+                                    stats.entitlement_exhausted: true
+
+                    - if: ${!project.exists_in_aviator && stats.entitlement_exhausted}
+                      var.set:
+                        stats.create_skipped_due_to_entitlement: ${stats.create_skipped_due_to_entitlement + 1}
+
+                    # Prepare Aviator tags if requested
+                    - if: ${cli['add-aviator-tags']}
+                      steps:
+                        - log.progress: Preparing Aviator tags for ${project.project_name}
+                        - run.fcli:
+                            prepare_tags:
+                              cmd: aviator ssc prepare --av "${project.project_name}:${project.version_name}"
+                              status.check: false
+                        - if: ${prepare_tags.exitCode != 0}
+                          steps:
+                            - log.warn: Aviator tag preparation failed for ${project.project_name}
+
+                    # Run audit if app is ready
+                    - if: ${app_ready}
+                      steps:
+                        - var.set:
+                            stats.audit_attempts: ${stats.audit_attempts + 1}
+
+                        # Build quota flags string (only --skip-if-exceeding-quota here;
+                        # --test-exceeding-quota is handled in its own block above)
+                        - var.set:
+                            quota_flags: ""
+                        - if: ${cli['skip-if-exceeding-quota']}
+                          var.set:
+                            quota_flags: " --skip-if-exceeding-quota"
+
+                        - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
+                          run.fcli:
+                            run_audit:
+                              cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --tag-mapping="${cli[''tag-mapping'']}" --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"${quota_flags}'
+                              status.check: false
+                              records.collect: true
+                              stdout: show
+
+                        - if: ${cli['tag-mapping'] == null || cli['tag-mapping'] == ''}
+                          run.fcli:
+                            run_audit:
+                              cmd: 'aviator ssc audit --av "${project.project_name}:${project.version_name}" --app "${project.project_name}" --log-level=INFO --refresh=${cli.refresh} --refresh-timeout="${cli[''refresh-timeout'']}"${quota_flags}'
+                              status.check: false
+                              records.collect: true
+                              stdout: show
+
+                        # Track quota-skipped results (__action__ field contains QUOTA EXCEEDED)
+                        - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__.contains('QUOTA EXCEEDED')}
+                          var.set:
+                            stats.quota_skipped: ${stats.quota_skipped + 1}
+
+                        - if: ${run_audit.exitCode != 0}
+                          steps:
+                            - var.set:
+                                stats.audit_failures: ${stats.audit_failures + 1}
+                            - log.warn: Audit failed for ${project.project_name}:${project.version_name}
 
       # Summary
       - if: ${cli['dry-run']}
@@ -316,7 +435,10 @@ steps:
 
       - if: ${!cli['dry-run']}
         steps:
-          - log.progress: Complete - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}
+          - if: ${stats.quota_skipped > 0}
+            log.progress: Complete - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}, Quota-skipped ${stats.quota_skipped}
+          - if: ${stats.quota_skipped == 0}
+            log.progress: Complete - Apps created ${stats.create_successes}/${stats.create_attempts}, Audits attempted ${stats.audit_attempts}
           - if: ${stats.entitlement_exhausted}
             log.progress: Note - Entitlement exhausted, some app creations were skipped
 

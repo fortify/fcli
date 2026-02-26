@@ -69,6 +69,9 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--tag-mapping"}) private String tagMapping;
     @Option(names = {"--no-filterset"}) private boolean noFilterSet;
     @Option(names = {"--folder"}, split = ",") @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME) private List<String> folderNames;
+    @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
+    @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
+    @Option(names = {"--default-quota-fallback"}, hidden = true) private boolean defaultQuotaFallback;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
     @Override
@@ -93,6 +96,66 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
             if (auditableIssueCount == 0) {
                 logger.progress("Audit skipped - no auditable issues found matching the specified filters.");
                 return AviatorSSCAuditHelper.buildResultNode(av, "N/A", "SKIPPED (no auditable issues)");
+            }
+
+            // Quota check: only when --skip-if-exceeding-quota or --test-exceeding-quota is active
+            if (skipIfExceedingQuota || testExceedingQuota) {
+                String effectiveAppName = appName != null ? appName : av.getApplicationName();
+                long availableQuota = AviatorSSCAuditHelper.getAvailableQuota(
+                    sessionDescriptor.getAviatorUrl(), sessionDescriptor.getAviatorToken(),
+                    effectiveAppName, logger);
+
+                // App not found — behavior depends on --default-quota-fallback
+                if (availableQuota == AviatorSSCAuditHelper.QUOTA_APP_NOT_FOUND) {
+                    if (defaultQuotaFallback) {
+                        // Bulk audit mode: use default quota for non-existing apps
+                        logger.progress("Application '%s' not found, using default quota for new applications.", effectiveAppName);
+                        availableQuota = AviatorSSCAuditHelper.getDefaultQuota(
+                            sessionDescriptor.getAviatorUrl(), sessionDescriptor.getAviatorToken(), logger);
+                        if (availableQuota == AviatorSSCAuditHelper.QUOTA_UNKNOWN) {
+                            if (testExceedingQuota) {
+                                return AviatorSSCAuditHelper.buildResultNode(av, "N/A",
+                                    "QUOTA UNKNOWN (application '" + effectiveAppName + "' not found, could not retrieve default quota)");
+                            }
+                            logger.progress("Warning: Could not retrieve default quota, proceeding with audit.");
+                        }
+                        // Fall through to normal quota comparison below with the default quota value
+                    } else {
+                        // Individual audit mode: report app not found and stop
+                        logger.progress("Application '%s' does not exist in Aviator.", effectiveAppName);
+                        return AviatorSSCAuditHelper.buildResultNode(av, "N/A",
+                            "SKIPPED (application '" + effectiveAppName + "' not found in Aviator)");
+                    }
+                }
+
+                // If quota retrieval failed for other reasons, handle accordingly
+                if (availableQuota == AviatorSSCAuditHelper.QUOTA_UNKNOWN) {
+                    if (testExceedingQuota) {
+                        return AviatorSSCAuditHelper.buildResultNode(av, "N/A",
+                            "QUOTA UNKNOWN (could not retrieve quota for application '" + effectiveAppName + "')");
+                    }
+                    // --skip-if-exceeding-quota with unknown quota — fall through to normal audit
+                    logger.progress("Warning: Could not retrieve quota for '%s', proceeding with audit.", effectiveAppName);
+                } else if (availableQuota >= 0 && auditableIssueCount > availableQuota) {
+                    // Exceeding quota — gather top categories
+                    var topCategories = AviatorSSCAuditHelper.getTopUnauditedCategories(unirest, av, logger, 10);
+                    String detailedMessage = AviatorSSCAuditHelper.formatQuotaExceededMessage(
+                        av, auditableIssueCount, availableQuota, topCategories);
+                    LOG.info(detailedMessage);
+                    logger.progress("Quota exceeded for %s:%s -- Open issues: %d, Available quota: %d. Audit skipped.",
+                        av.getApplicationName(), av.getVersionName(), auditableIssueCount, availableQuota);
+                    return AviatorSSCAuditHelper.buildQuotaExceededResultNode(
+                        av, auditableIssueCount, availableQuota, topCategories);
+                } else if (testExceedingQuota) {
+                    // Test mode but NOT exceeding quota — report pass, no audit
+                    logger.progress("Quota check passed for %s:%s -- Open issues: %d, Available quota: %s",
+                        av.getApplicationName(), av.getVersionName(), auditableIssueCount,
+                        availableQuota < 0 ? "unlimited" : String.valueOf(availableQuota));
+                    return AviatorSSCAuditHelper.buildResultNode(av, "N/A",
+                        String.format("QUOTA OK (issues: %d, quota: %s)", auditableIssueCount,
+                            availableQuota < 0 ? "unlimited" : String.valueOf(availableQuota)));
+                }
+                // --skip-if-exceeding-quota with quota OK: fall through to normal audit
             }
 
             downloadedFprPath = downloadFpr(unirest, av, logger);
