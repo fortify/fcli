@@ -15,6 +15,7 @@ package com.fortify.cli.aviator.fpr;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.zip.ZipFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,8 @@ import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.model.FPRInfo;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
-import com.fortify.cli.aviator.fpr.processor.FVDLProcessor;
 import com.fortify.cli.aviator.fpr.processor.FilterTemplateParser;
+import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
 import com.fortify.cli.aviator.util.FprHandle;
 
 import lombok.Getter;
@@ -50,10 +51,10 @@ public class FPRProcessor {
     /**
      * Processes the main components of the FPR.
      *
-     * @param fvdlProcessor The processor for handling the audit.fvdl file.
+     * @param streamingFVDLProcessor The processor for handling the audit.fvdl file.
      * @return A list of all vulnerabilities found in the FVDL.
      */
-    public List<Vulnerability> process(FVDLProcessor fvdlProcessor) {
+    public List<Vulnerability> process(StreamingFVDLProcessor streamingFVDLProcessor) {
         logger.info("FPR Processing started");
     try{
         this.fprInfo = new FPRInfo(this.fprHandle);
@@ -83,7 +84,13 @@ public class FPRProcessor {
 
         logger.debug("Audit.xml Issues found: {}", auditIssueMap.size());
 
-        List<Vulnerability> vulnerabilities = fvdlProcessor.processXML();
+        try (ZipFile zipFile = new ZipFile(fprHandle.getFprPath().toFile())) {
+            streamingFVDLProcessor.parse(zipFile, "audit.fvdl");
+        }
+
+        //List<Vulnerability> vulnerabilities = fvdlProcessor.processXML();
+
+        List<Vulnerability> vulnerabilities = streamingFVDLProcessor.getVulnerabilities();
         logger.info("Parsed {} vulnerabilities from FVDL.", vulnerabilities.size());
 
         return vulnerabilities;
