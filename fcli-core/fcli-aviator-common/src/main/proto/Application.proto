@@ -63,7 +63,10 @@ message GetApplicationByTokenRequest {
 }
 
 message GetDefaultQuotaRequest {
-  string token = 1;
+  optional string token = 1;
+  optional string tenant_name = 2;
+  optional string signature = 3;
+  optional string message = 4;
 }
 
 message GetDefaultQuotaResponse {
