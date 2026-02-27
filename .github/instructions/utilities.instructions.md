@@ -1,8 +1,20 @@
+---
+name: 'Common Utilities Guide'
+description: 'Documentation for fcli-common utility classes'
+applyTo: 'fcli/**/*.java'
+---
+
 # Common Utility Classes
 
 The `fcli-common` module provides utility classes in `com.fortify.cli.common.util` for common operations. Always prefer these over direct JDK/third-party equivalents.
 
-**Note for AI assistants:** If you discover utility classes, methods, or patterns in `fcli-common/src/main/java/com/fortify/cli/common/util/` that are not documented here, or if documented utilities appear outdated/incorrect, please notify the user and suggest updates to this section.
+## Maintaining These Instructions
+
+**If you discover utility classes, methods, or patterns** in `fcli-common/src/main/java/com/fortify/cli/common/util/` that are not documented here, or if documented utilities appear outdated/incorrect:
+
+1. **Notify the user** about the missing or outdated documentation
+2. **Suggest specific additions/updates** to this section
+3. **Verify the utility's purpose and usage** in the codebase before documenting
 
 ## Environment & Configuration
 

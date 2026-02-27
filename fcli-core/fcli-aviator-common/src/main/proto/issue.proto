@@ -123,6 +123,8 @@ message AuditorResponse {
   string requestId = 12;
   string streamId = 13;
   PongResponse pong = 14;
+  optional int64 quota = 15;
+  optional string quotaLastUpdated = 16;
 }
 
 message AuditResult {

@@ -62,16 +62,33 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
     
     @Override
     public final Integer call() throws Exception {
+        validateWorkingDirectory();
         var descriptor = getToolInstallationDescriptor();
         var baseCommands = new ArrayList<>(getBaseCommands(descriptor));
         while (true) {
             try {
+                LOG.debug("Attempting to execute command: {}", baseCommands.get(0));
                 return call(baseCommands.get(0));
             } catch ( Exception e ) {
                 if ( baseCommands.size()==1) { throw e; } // No more base commands
-                LOG.debug("Command execution failed; trying fallback command");
+                LOG.debug("Command execution failed ({}): {}; trying fallback command", 
+                    e.getClass().getSimpleName(), e.getMessage());
                 baseCommands.remove(0);
             }
+        }
+    }
+    
+    private void validateWorkingDirectory() {
+        File workDirFile = new File(workDir);
+        if (!workDirFile.exists()) {
+            throw new FcliSimpleException(String.format(
+                "Working directory does not exist: %s", workDir
+            ));
+        }
+        if (!workDirFile.isDirectory()) {
+            throw new FcliSimpleException(String.format(
+                "Working directory path exists but is not a directory: %s", workDir
+            ));
         }
     }
     

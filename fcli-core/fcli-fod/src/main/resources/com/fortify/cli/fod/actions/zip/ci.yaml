@@ -44,16 +44,22 @@ steps:
           - if: ${global.ci.rel==null}
             throw: FoD release must be specified through FOD_RELEASE environment variable
             
+  # Validate that workspace and source directories exist before proceeding
+  - if: ${!#fs.isDirectory(global.ci.workspaceDir)}
+    throw: "Workspace directory does not exist or is not accessible: ${global.ci.workspaceDir}"
+  - if: ${!#fs.isDirectory(global.ci.sourceDir)}
+    throw: "Source directory does not exist or is not accessible: ${global.ci.sourceDir}"
+            
   - var.set:
+      # Configure setup skip reason
+      setup.skipReason: ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
       # Configure scan types to run
-      sca.skipReason:   # TODO
-      sca.skip: true
-      dast.skipReason:  # TODO
-      dast.skip: true
       sast.skipReason: > # Enabled by default, unless explicitly disabled
         ${
             #fcliCmdSkipFromEnvReason('SAST_SCAN', false)
         }
+      debricked.skipReason: # TODO For now, we only support Debricked scan in combination with SAST scan
+      dast.skipReason:  # TODO
       wait.skipReason: >- # Enabled by default, unless explicitly disabled through DO_WAIT or DO_SAST_WAIT (deprecated)
         ${
             #fcliCmdSkipFromEnvReason('WAIT', false)
@@ -63,7 +69,29 @@ steps:
       # successfully. Post-scan skip reason will be reset to null once the wait task for
       # any scan completed successfully. 
       postScan.skipReason: ${#ifBlank(wait.skipReason,'No scans have been run because they failed or were skipped')}
-        
+  
+  # Configure conditional setup options if setup is not skipped.
+  - if: ${#isBlank(setup.skipReason)}
+    do:
+      - var.set:
+          setup.extraOpts: ${#env('SETUP_EXTRA_OPTS')?:''}
+          setup.conditionalOpts: ""
+      - if: ${!setup.extraOpts.contains('--copy-from')}
+        var.set:
+          setup.conditionalOpts: ${setup.conditionalOpts} ${#opt('--copy-from',#env('COPY_FROM_RELEASE'))}
+      - if: ${!setup.extraOpts.contains('--assessment-type')}
+        var.set:
+          setup.conditionalOpts: ${setup.conditionalOpts} ${#opt('--assessment-type',#env('SAST_ASSESSMENT_TYPE'))}
+      - if: ${!setup.extraOpts.contains('--use-aviator')}
+        var.set:
+          setup.conditionalOpts: ${setup.conditionalOpts} "--use-aviator=${#env('DO_AVIATOR_AUDIT')=='true'}"
+      - if: ${!setup.extraOpts.contains('--oss')}
+        var.set:
+          setup.conditionalOpts: ${setup.conditionalOpts} "--oss=${#env('DO_SCA_SCAN')=='true'}"
+      - if: ${!setup.extraOpts.contains('--override-sast-settings')}
+        var.set:
+          setup.conditionalOpts: ${setup.conditionalOpts} "--override-sast-settings=${#env('OVERRIDE_SAST_SETTINGS')=='true'}"
+      
   # Run the fcli commands that make up this CI pipeline. Note that by default, pipeline will
   # continue to run on failures due to config:run.fcli.status.check.default being set to false.
   #
@@ -83,10 +111,10 @@ steps:
   #   Automatically set to an appropriate skip reason by fcli, if <earlierStep> was skipped or failed.
   - run.fcli:
       SETUP:
-        cmd: ${#actionCmd('SETUP', 'fod', 'setup-release')} "--rel=${global.ci.rel}" "--scan-types=sast"
+        cmd: ${#actionCmd('SETUP', 'fod', 'setup-release')} "--rel=${global.ci.rel}" "--scan-types=sast" ${setup.conditionalOpts}
         status.check: true       # Fail immediately if this step fails, as it doesn't make sense to continue
         skip.if-reason:
-          - ${#actionCmdSkipFromEnvReason('SETUP', false)} # Skip if DO_SETUP==false
+          - ${setup.skipReason}
           
       PACKAGE_ACTION: 
         cmd: ${#actionCmd('PACKAGE_ACTION', 'fod', 'package')} "--source-dir=${global.ci.sourceDir}" "--rel=${global.ci.rel}"

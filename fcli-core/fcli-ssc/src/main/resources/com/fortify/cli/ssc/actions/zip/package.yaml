@@ -68,7 +68,7 @@ steps:
   - var.set:
       global.package.output: ${#resolveAgainstCurrentWorkDir(#ifBlank(cli.usePackage,cli.output))}
   - if: ${#isBlank(cli.usePackage)}
-    steps:
+    do:
       - if: "${(#ifBlank(cli.scClientVersion,'auto')=='auto')}"
         run.fcli:
           DETECT_SC_CLIENT_VERSION:

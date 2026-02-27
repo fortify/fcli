@@ -47,7 +47,7 @@ import lombok.NoArgsConstructor;
                 - log.debug: ${currentRecord}
                 - ...
         """)
-public final class ActionStepRecordsForEach extends AbstractActionElementForEachRecord {
+public final class ActionStepRecordsForEach extends AbstractActionStepElementForEachRecord {
     @JsonPropertyDescription("""
         Required SpEL template expression, evaluating to either an array of values to be iterated over, \
         or an IActionStepForEachProcessor instance like returned by ${#ssc.ruleDescriptionsProcessor(appVersionId)}. \

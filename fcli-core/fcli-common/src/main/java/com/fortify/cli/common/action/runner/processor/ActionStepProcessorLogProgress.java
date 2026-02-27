@@ -25,9 +25,9 @@ import lombok.RequiredArgsConstructor;
 public class ActionStepProcessorLogProgress extends AbstractActionStepProcessor {
     private final ActionRunnerContext ctx;
     private final ActionRunnerVars vars;
-    private final TemplateExpression expr;
+    private final TemplateExpression template;
 
     public final void process() {
-        ctx.getProgressWriter().writeProgress(asSingleLineString(vars.eval(expr, Object.class)));
+        ctx.getProgressWriter().writeProgress(asSingleLineString(asString(vars.eval(template, Object.class))));
     }
 }

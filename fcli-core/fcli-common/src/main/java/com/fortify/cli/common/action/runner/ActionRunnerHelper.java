@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeDeepCopyWalker;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctions;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.RequiredArgsConstructor;
@@ -51,7 +53,16 @@ public final class ActionRunnerHelper {
         var rawValue = getValueAsObject(vars, templateExpressionWithFormatter);
         if ( rawValue==null ) { return null; }
         if ( rawValue instanceof JsonNode ) { return (JsonNode)rawValue; }
+        // If object is a SpEL function provider, wrap in POJONode to preserve behavior without serialization
+        if ( isSpelFunctionProvider(rawValue.getClass()) ) {
+            return new POJONode(rawValue);
+        }
         return JsonHelper.getObjectMapper().valueToTree(rawValue);
+    }
+    
+    private static boolean isSpelFunctionProvider(Class<?> clazz) {
+        return clazz.isAnnotationPresent(SpelFunctions.class) 
+            || clazz.isAnnotationPresent(SpelFunctionPrefix.class);
     }
     
     public static final Object formatValueAsObject(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {

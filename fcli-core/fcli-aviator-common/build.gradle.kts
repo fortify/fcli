@@ -14,10 +14,15 @@ tasks.withType<JavaCompile>().configureEach { dependsOn("generateProto") }
 dependencies {
     implementation(project(":fcli-core:fcli-common"))
     implementation("org.yaml:snakeyaml:2.3")
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api:2.3.3")
-    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
+
+    // JAXB for XML object marshalling (used in FVDLProcessor legacy parser)
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:3.0.1")
+    implementation("org.glassfish.jaxb:jaxb-runtime:3.0.2")
     implementation("com.sun.activation:jakarta.activation:2.0.1")
-    implementation("jakarta.xml.ws:jakarta.xml.ws-api:3.0.1")
+
+    // Note: StAX (javax.xml.stream) uses Woodstox 7.1.1 via jackson-dataformat-xml
+    // from fcli-common (needed for XML output). No explicit dependency required.
+
     implementation("com.auth0:java-jwt:4.5.0")
     implementation("io.grpc:grpc-netty-shaded:1.76.0")
     implementation("io.grpc:grpc-protobuf:1.76.0")

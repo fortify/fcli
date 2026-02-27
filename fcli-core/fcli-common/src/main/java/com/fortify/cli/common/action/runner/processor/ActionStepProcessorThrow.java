@@ -12,11 +12,14 @@
  */
 package com.fortify.cli.common.action.runner.processor;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.model.MessageWithCause;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
-import com.fortify.cli.common.spel.wrapper.TemplateExpression;
+import com.fortify.cli.common.exception.AbstractFcliException;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,9 +29,26 @@ import lombok.RequiredArgsConstructor;
 public class ActionStepProcessorThrow extends AbstractActionStepProcessor {
     private final ActionRunnerContext ctx;
     private final ActionRunnerVars vars;
-    private final TemplateExpression expr;
+    private final MessageWithCause msgWithCause;
 
     public final void process() {
-        throw new FcliActionStepException(vars.eval(expr, String.class));
+        var evaluated = evaluateMessageWithCause(msgWithCause, vars);
+        
+        if (StringUtils.isBlank(evaluated.message()) && evaluated.cause() != null) {
+            // Only cause provided - rethrow if FcliException, otherwise wrap
+            if (evaluated.cause() instanceof AbstractFcliException) {
+                throw (AbstractFcliException) evaluated.cause();
+            } else if (evaluated.cause() instanceof RuntimeException) {
+                throw (RuntimeException) evaluated.cause();
+            } else {
+                throw new FcliActionStepException("Exception rethrown", evaluated.cause());
+            }
+        } else if (StringUtils.isNotBlank(evaluated.message())) {
+            // Message provided - throw with optional cause
+            throw new FcliActionStepException(evaluated.message(), evaluated.cause());
+        } else {
+            // No message or cause - throw error
+            throw new FcliActionStepException("throw instruction requires either 'msg' or 'cause' property");
+        }
     }
 }

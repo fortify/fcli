@@ -33,4 +33,5 @@ public class AuditFprOptions {
     private final String filterSetNameOrId;
     private final boolean noFilterSet;
     private final List<String> folderNames;
+    private final List<String> folderPriorityOrder;
 }

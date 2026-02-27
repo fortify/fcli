@@ -49,7 +49,7 @@ import lombok.NoArgsConstructor;
                 failIf: ${condition}
                 ifSkipped: PASS
         """)
-public final class ActionStepCheckEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
+public final class ActionStepCheckEntry extends AbstractActionStepElement implements IMapKeyAware<String> {
     // Shared property description for passIf/failIf
     private static final String PASS_FAIL_IF = """
         Either 'passIf' or 'failIf' must be defined, both taking an SpEL template expression that \

@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.exception;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -32,6 +34,7 @@ import lombok.experimental.Accessors;
  * Subclasses MUST implement {@link #getStackTraceString()} rather than manually concatenating stack trace text; the
  * {@code FcliExecutionExceptionHandler} relies on this for consistent formatting.
  */
+@Reflectable // Required for calling methods like getMessage() and getClass() in on.fail handlers
 public abstract class AbstractFcliException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     @Getter @Setter @Accessors(fluent=true) private Integer exitCode;

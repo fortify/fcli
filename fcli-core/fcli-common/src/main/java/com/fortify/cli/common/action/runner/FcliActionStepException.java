@@ -12,8 +12,10 @@
  */
 package com.fortify.cli.common.action.runner;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.exception.FcliSimpleException;
 
+@Reflectable // Required for calling methods like getMessage() and getClass() in on.fail handlers
 public final class FcliActionStepException extends FcliSimpleException {
     private static final long serialVersionUID = 1L;
 

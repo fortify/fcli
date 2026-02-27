@@ -60,8 +60,11 @@ public class GitHubEnvironmentTest {
         assertEquals("main", env.ciBranch().short_());
         
         assertNotNull(env.ciCommit());
-        assertEquals("1234567890abcdef1234567890abcdef12345678", env.ciCommit().id().full());
-        assertEquals("1234567", env.ciCommit().id().short_());
+        assertEquals("1234567890abcdef1234567890abcdef12345678", env.ciCommit().headId().full());
+        assertEquals("1234567", env.ciCommit().headId().short_());
+        assertEquals("1234567890abcdef1234567890abcdef12345678", env.ciCommit().mergeId().full());
+        assertEquals("1234567", env.ciCommit().mergeId().short_());
+        // For regular commits, headId and mergeId should be the same
         
         assertNotNull(env.pullRequest());
         assertEquals(false, env.pullRequest().active());
@@ -90,6 +93,11 @@ public class GitHubEnvironmentTest {
         assertEquals(true, env.pullRequest().active());
         assertEquals("123", env.pullRequest().id());
         assertEquals("main", env.pullRequest().target());
+        
+        // Without event payload file, both should fall back to GITHUB_SHA
+        assertNotNull(env.ciCommit());
+        assertEquals("abcdef1234567890abcdef1234567890abcdef12", env.ciCommit().headId().full());
+        assertEquals("abcdef1234567890abcdef1234567890abcdef12", env.ciCommit().mergeId().full());
     }
     
     @Test
@@ -141,7 +149,9 @@ public class GitHubEnvironmentTest {
         var env = GitHubEnvironment.detect();
         
         assertNotNull(env);
-        assertEquals("abc", env.ciCommit().id().full());
-        assertEquals("abc", env.ciCommit().id().short_());
+        assertEquals("abc", env.ciCommit().headId().full());
+        assertEquals("abc", env.ciCommit().headId().short_());
+        assertEquals("abc", env.ciCommit().mergeId().full());
+        assertEquals("abc", env.ciCommit().mergeId().short_());
     }
 }

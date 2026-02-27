@@ -77,7 +77,7 @@ cli.options:
 
 steps:
   - if: ${#isBlank(cli.repository)||#isBlank(cli.branch)}
-    steps:
+    do:
       - var.set:
           localRepository: ${#localRepo(cli.sourceDir)}
   - var.set:

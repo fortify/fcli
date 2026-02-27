@@ -86,6 +86,9 @@
   "name" : "java.lang.String",
   "allPublicMethods" : true
 },{
+  "name" : "java.lang.Class",
+  "allPublicMethods" : true
+},{
   "name" : "java.util.ArrayList",
   "allPublicMethods" : true
 },{

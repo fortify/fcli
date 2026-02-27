@@ -214,20 +214,41 @@ public final class PlatformHelper {
     /**
      * Returns the architecture suffix used by GitHub Actions for JAVA_HOME environment variables.
      * GitHub Actions uses patterns like JAVA_HOME_17_X64 instead of standard os.arch values.
+     * Returns the normalized architecture string in uppercase (e.g., "X64", "X86", "ARM64").
      * 
-     * @return GitHub Actions-style architecture suffix (e.g., "X64", "X86", "ARM64"), or null if not recognized
+     * @return GitHub Actions-style architecture suffix (e.g., "X64", "X86", "ARM64")
      */
     public static String getGitHubActionsArchSuffix() {
-        String arch = getArchString();
-        switch (arch) {
-            case "x64":
-                return "X64";
-            case "x86":
-                return "X86";
-            case "arm64":
-                return "ARM64";
-            default:
-                return null;
+        return getArchString().toUpperCase();
+    }
+    
+    /**
+     * Returns the architecture suffix for CI tool cache directories (e.g., GitHub Actions RUNNER_TOOL_CACHE).
+     * This method returns platform-specific suffixes that distinguish between binary-incompatible systems,
+     * particularly musl vs glibc on Linux, which is critical for tools with embedded JREs.
+     * 
+     * Examples:
+     * - Linux glibc x64: "X64"
+     * - Linux musl x64 (Alpine): "X64-musl"
+     * - Linux glibc ARM64: "ARM64"
+     * - Linux musl ARM64 (Alpine): "ARM64-musl"
+     * - Windows x64: "X64"
+     * - macOS ARM64: "ARM64"
+     * 
+     * The musl suffix is only added on Linux systems where musl libc is detected (e.g., Alpine Linux).
+     * This ensures that tools with embedded JREs don't share cache directories between glibc and musl systems,
+     * as glibc-based JREs will not work on musl-based systems.
+     * 
+     * @return CI tool cache architecture suffix (e.g., "X64", "X64-musl", "ARM64", "ARM64-musl")
+     */
+    public static String getToolCacheArchSuffix() {
+        String baseArch = getGitHubActionsArchSuffix();
+        
+        // Only add musl suffix on Linux systems where musl is detected
+        if (isLinux() && isMusl()) {
+            return baseArch + "-musl";
         }
+        
+        return baseArch;
     }
 }

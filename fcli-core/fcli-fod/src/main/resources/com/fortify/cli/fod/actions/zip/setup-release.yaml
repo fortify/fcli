@@ -128,6 +128,11 @@ cli.options:
     required: false
     names: --language-level
     description: "See `fcli fod sast-scan setup`" 
+  override-sast-settings:
+    required: false
+    names: --override-sast-settings
+    description: "By default, if SAST scan settings have already been configured, they will not be overridden, hence none of the `fcli fod sast-scan setup` options will be applied. Use this option to override existing scan settings."
+    type: boolean
   
 steps:
   - log.progress: "Creating FoD application & release if non-existing" 
@@ -139,8 +144,8 @@ steps:
       waitForRelease:
         cmd: fod release wait-for "${cli.release}" --progress=none
   - if: ${cli["scan-types"].contains("sast")}
-    steps:        
+    do:
       - log.progress: "Configuring FoD application release ${rel} for SAST scanning"
       - run.fcli:
           setupSast:
-            cmd: fod sast-scan setup --rel "${cli.release}" --skip-if-exists --frequency "Subscription" --audit-preference Automated ${#action.copyParametersFromGroup("sast_setup_opts")}
+            cmd: fod sast-scan setup "--rel=${cli.release}" "--skip-if-exists=${!cli['override-sast-settings']}" "--frequency=Subscription" "--audit-preference=Automated" ${#action.copyParametersFromGroup("sast_setup_opts")}

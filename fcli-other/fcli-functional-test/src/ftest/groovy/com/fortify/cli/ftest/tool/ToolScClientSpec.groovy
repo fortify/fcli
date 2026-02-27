@@ -71,4 +71,7 @@ class ToolScClientSpec extends FcliBaseSpec {
             }
     }
     
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
 }

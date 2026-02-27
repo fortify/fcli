@@ -12,13 +12,31 @@
  */
 package com.fortify.cli.ftest._common.spec
 
+import com.fortify.cli.ftest._common.Fcli
+
 import spock.lang.Specification
 
 /**
- * Empty class for now, but we keep this in case we every need to 
- * have common fields again.
+ * Base specification class for all fcli functional tests.
+ * Provides common utility methods for test setup and cleanup.
  *
  * @author Ruud Senden
  */
 class FcliBaseSpec extends Specification {
+    /**
+     * Cleanup all tool installations to prevent state leakage between test suites.
+     * This method attempts to uninstall all versions of all known tools, ignoring
+     * any errors (e.g., if a tool is not installed).
+     */
+    protected static void cleanupAllTools() {
+        def tools = ['sc-client', 'fcli', 'debricked-cli', 'fod-uploader', 
+                     'bugtracker-utility', 'vuln-exporter']
+        tools.each { tool ->
+            try {
+                Fcli.run("tool ${tool} uninstall -y -v=all --progress none", {})
+            } catch (Exception e) {
+                // Ignore errors - tool may not be installed
+            }
+        }
+    }
 }

@@ -14,6 +14,8 @@ package com.fortify.cli.common.exception;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import picocli.CommandLine.ParameterException;
 
 /**
@@ -31,6 +33,7 @@ import picocli.CommandLine.ParameterException;
  *   <li>Avoid wrapping an existing {@code AbstractFcliException}; let it propagate unchanged.</li>
  * </ul>
  */
+@Reflectable // Required for calling methods like getMessage() and getClass() in on.fail handlers
 public class FcliSimpleException extends AbstractFcliException {
     private static final long serialVersionUID = 1L;
 

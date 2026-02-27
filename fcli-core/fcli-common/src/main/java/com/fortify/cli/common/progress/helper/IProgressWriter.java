@@ -16,7 +16,9 @@ public interface IProgressWriter extends AutoCloseable {
     boolean isMultiLineSupported();
     void writeProgress(String message, Object... args);
     void writeInfo(String message, Object... args);
+    void writeInfoWithException(String message, Throwable cause, Object... args);
     void writeWarning(String message, Object... args);
+    void writeWarningWithException(String message, Throwable cause, Object... args);
     void clearProgress();
     void close();
     String type();

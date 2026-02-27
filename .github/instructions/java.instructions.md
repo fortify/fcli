@@ -1,4 +1,18 @@
+---
+name: 'Java Development Guide'
+description: 'Java development patterns for fcli commands, exceptions, and utilities'
+applyTo: 'fcli/**/*.java'
+---
+
 # Java Development Guide
+
+## Maintaining These Instructions
+
+**If you detect discrepancies** between these instructions and the actual implementation, or discover patterns/features not documented here:
+
+1. **Notify the user** about the discrepancy or missing documentation
+2. **Suggest specific updates** to this instruction file
+3. **Verify against current code** before proceeding with changes based on potentially outdated instructions
 
 ## Architecture Overview
 
@@ -98,12 +112,4 @@ default -> throw new FcliBugException("Unexpected status: "+status);
 
 ## Common Utility Classes
 
-The `fcli-common` module provides utility classes in `com.fortify.cli.common.util` for common operations. Always prefer these over direct JDK/third-party equivalents.
-
-**Note for AI assistants:** If you discover utility classes, methods, or patterns in `fcli-common/src/main/java/com/fortify/cli/common/util/` that are not documented below, or if documented utilities appear outdated/incorrect, please notify the user and suggest updates to this section.
-
-See [utilities-guide.md](utilities-guide.md) for complete documentation of available utility classes.
-
-## Style Guide
-
-See [style-guide.md](style-guide.md) for detailed coding style guidelines.
+The `fcli-common` module provides utility classes in `com.fortify.cli.common.util` for common operations. Always prefer these over direct JDK/third-party equivalents. See the utilities guide for complete documentation.

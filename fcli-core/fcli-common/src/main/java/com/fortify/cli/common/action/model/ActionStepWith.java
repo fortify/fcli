@@ -39,7 +39,7 @@ import lombok.NoArgsConstructor;
 @JsonTypeName("with")
 @JsonClassDescription("Run the steps in the `do` block within the context of one or more writers or sessions.")
 @SampleYamlSnippets(copyFrom = {ActionStepWithSession.class, ActionStepWithWriter.class})
-public final class ActionStepWith extends AbstractActionElementIf {
+public final class ActionStepWith extends AbstractActionStepElement {
     @JsonPropertyDescription("""
         This instruction allows for running a set of initialization steps before running the \
         steps specified in the do-block. Once the steps specified in the do-block have completed \

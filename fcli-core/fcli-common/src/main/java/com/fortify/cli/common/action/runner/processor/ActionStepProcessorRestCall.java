@@ -27,7 +27,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRequestForEachResponseRecord;
@@ -72,12 +71,13 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     private final void processFailure(ActionStepRestCallEntry requestDescriptor, UnirestException e) {
         var onFailSteps = requestDescriptor.getOnFail();
         if ( onFailSteps==null ) { throw e; }
-        vars.setLocal(requestDescriptor.getKey()+"_exception", new POJONode(e));
+        // Set generic lastException* and ${name}_exception* variables (with .message, .type, .httpStatus sub-properties)
+        setGenericExceptionVars(e, requestDescriptor.getKey(), getVars()::setLocal);
         processSteps(onFailSteps);
     }
     
     private final void processOnResponse(ActionStepRestCallEntry requestDescriptor) {
-        var onResponseSteps = requestDescriptor.getOnResponse();
+        var onResponseSteps = requestDescriptor.getOnSuccess();
         processSteps(onResponseSteps);
     }
 

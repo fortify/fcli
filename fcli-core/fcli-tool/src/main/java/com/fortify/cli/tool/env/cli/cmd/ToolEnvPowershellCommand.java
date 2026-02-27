@@ -17,16 +17,14 @@ import java.util.List;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
+import com.fortify.cli.tool.env.helper.ToolEnvContext;
+import com.fortify.cli.tool.env.helper.ToolEnvOutputHelper;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "powershell", aliases = {"pwsh"})
 public final class ToolEnvPowershellCommand extends AbstractToolEnvCommand {
-    private static final String PATH_TEMPLATE = "{binDir != null ? '$env:PATH = \"' + binDir + ';\" + $env:PATH' : ''}";
-    private static final String HOME_TEMPLATE = "{installDir != null ? '$env:' + defaultEnvPrefix + '_HOME = \"' + installDir + '\"' : ''}";
-    private static final String CMD_TEMPLATE = "{cmd != null ? '$env:' + defaultEnvPrefix + '_CMD = \"' + cmd + '\"' : ''}";
-
     @Mixin private ToolEnvExcludeMixin exclude;
     @Mixin private CommonOptionMixins.OptionalFile outputFile;
 
@@ -34,13 +32,7 @@ public final class ToolEnvPowershellCommand extends AbstractToolEnvCommand {
     protected void process(List<ToolEnvContext> contexts) {
         List<String> lines = new ArrayList<>();
         for (ToolEnvContext context : contexts) {
-            if (exclude.isIncludePath()) {
-                addIfNotBlank(lines, renderTemplate(PATH_TEMPLATE, context));
-            }
-            if (exclude.isIncludeVars()) {
-                addIfNotBlank(lines, renderTemplate(HOME_TEMPLATE, context));
-                addIfNotBlank(lines, renderTemplate(CMD_TEMPLATE, context));
-            }
+            lines.addAll(ToolEnvOutputHelper.pwshLines(context, exclude));
         }
         writeLines(lines, outputFile.getFile(), "PowerShell environment output");
     }

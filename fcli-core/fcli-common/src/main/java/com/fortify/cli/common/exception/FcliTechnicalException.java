@@ -14,6 +14,8 @@ package com.fortify.cli.common.exception;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 /**
  * Represents an unexpected technical failure that occurred while processing a command
  * (e.g. network I/O issue, JSON parsing problem, protocol mismatch, file read error).
@@ -27,6 +29,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  *
  * @author Ruud Senden
  */
+@Reflectable // Required for calling methods like getMessage() and getClass() in on.fail handlers
 public class FcliTechnicalException extends AbstractFcliException {
     private static final long serialVersionUID = 1L;
 

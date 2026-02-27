@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model.ActionStepControlInstruction;
 import com.fortify.cli.common.json.IWithAsJsonMethod;
 import com.fortify.cli.common.util.ReflectionHelper;
 
@@ -148,6 +149,7 @@ public class ActionSchemaDescriptorFactory {
         private final String[] allQualifiedParentNames;
         private final String description;
         private final String[] sampleSnippets;
+        @JsonProperty("isStepControlInstruction") private final boolean stepControlInstruction;
         final Class<?> javaType;
         private final Class<?>[] javaTypeArgs;
         // We lazily evaluate json types
@@ -183,6 +185,7 @@ public class ActionSchemaDescriptorFactory {
                     .javaType(javaType)
                     .javaTypeArgs(javaGenericTypes)
                     .javaToJsonTypeConverter(javaToJsonTypeConverter)
+                    .stepControlInstruction(field.isAnnotationPresent(ActionStepControlInstruction.class))
                     .description(ActionSchemaHelper.getFullJsonPropertyDescription(field))
                     .sampleSnippets(ActionSchemaHelper.getSampleYamlSnippets(field))
                     .field(field)

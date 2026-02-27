@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
-public abstract class AbstractActionElementForEachRecord extends AbstractActionElementIf {
+public abstract class AbstractActionStepElementForEachRecord extends AbstractActionStepElement {
     @JsonPropertyDescription("""
         Required string: Variable name to assign to each individual record being processed, allowing \
         the record to be accessed by other instructions like 'if' or 'breakIf' and the steps defined \

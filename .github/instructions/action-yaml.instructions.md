@@ -1,6 +1,21 @@
+---
+name: 'Action YAML Guide'
+description: 'Editing guide for fcli action YAML files with SpEL expressions'
+applyTo: 'fcli/**/src/main/resources/**/actions/**/*.yaml'
+---
+
 # Action YAML Editing Guide
 
 This guide provides detailed instructions for editing fcli action YAML files.
+
+## Maintaining These Instructions
+
+**If you detect discrepancies** between these instructions and the actual implementation (e.g., in action model classes, generated documentation, or existing YAML files), or discover patterns/features not documented here:
+
+1. **Notify the user** about the discrepancy or missing documentation
+2. **Suggest specific updates** to this instruction file
+3. **Verify against current code** (action model classes in `com.fortify.cli.common.action.model`) and generated docs (`fcli-other/fcli-doc/build/generated-docs/asciidoc/action-development.adoc`) before proceeding
+4. **Check existing action YAML files** for actual usage patterns
 
 ## Schema Discovery and Validation
 
@@ -133,7 +148,7 @@ SpEL expressions may contain characters with special YAML meaning, causing parse
 ```yaml
 # Good: Separate if statement for guarding multiple operations
 - if: ${reportFile!=null}
-  steps:
+  do:
     - out.write:
         ${reportFile}: ${reportContents}
     - if: ${!{'stdout','stderr'}.contains(reportFile)}
@@ -141,33 +156,39 @@ SpEL expressions may contain characters with special YAML meaning, causing parse
 
 # Good: Guarding a significant operation
 - if: ${cli.publish==true}
-  steps:
+  do:
     - var.set:
         githubUpload: ${#github.uploadSarif(reportContents)}
     - log.info: Report published to GitHub
 ```
 
-### Critical: `if:` Syntax Patterns
+### Critical: Step Nesting with `do:` (formerly `steps:`)
 
-The `if:` instruction has **different syntax depending on what you're conditionally executing**:
+**The `do:` property is the current standard for nesting multiple steps**. The `steps:` property name is deprecated but still supported for backward compatibility.
 
-**Pattern 1: `if` + single action instruction** — Nest the action instruction directly:
+**Pattern 1: Nesting steps conditionally or for grouping** — Use `do:` (or `steps:` for backward compatibility):
+```yaml
+# Current standard: do:
+- if: ${!#isEmpty(docListEntries)}
+  do:
+    - var.set:
+        output: ${#join("\n", docListEntries)}
+    - log.info: Generated ${docListEntries.size()} entries
+
+# Legacy but still supported: steps:
+- if: ${condition}
+  steps:
+    - var.set: ...
+```
+
+**Pattern 2: `if` + single action instruction** — Nest the action instruction directly (no `do:` needed):
 ```yaml
 - if: ${!#isBlank(product)}
   var.set:
     productName: ${productNames[product]}
 ```
 
-**Pattern 2: `if` + multiple steps** — Use `steps:` property:
-```yaml
-- if: ${!#isEmpty(docListEntries)}
-  steps:
-    - var.set:
-        output: ${#join("\n", docListEntries)}
-    - log.info: Generated ${docListEntries.size()} entries
-```
-
-**Pattern 3: `records.for-each`** — Always uses `do:` property (not `steps:`):
+**Pattern 3: `records.for-each`** — Always uses `do:` property:
 ```yaml
 - records.for-each:
     from: ${items}
@@ -177,18 +198,134 @@ The `if:` instruction has **different syntax depending on what you're conditiona
           processed..: ${item.name}
 ```
 
-**Common Error:**
-```yaml
-# ❌ WRONG: Using 'do:' with 'if' causes "Unrecognized field 'do'" error
-- if: ${condition}
-  do:
-    - var.set: ...
+**Best practice:** Use `do:` for new action files and when updating existing ones. The `steps:` property will continue to work but is considered deprecated.
 
-# ✅ CORRECT: Use 'steps:' instead
-- if: ${condition}
-  steps:
-    - var.set: ...
+### Error Handling with `on.fail` and `on.success`
+
+**All action step elements** (including individual steps, `rest.call` entries, `run.fcli` entries, and `out.write` entries) support `on.fail` and `on.success` handlers for error handling and post-success processing.
+
+**Default behavior (without `on.fail`):**
+- Failed operations throw exceptions and terminate the entire action (fail-fast)
+- This is usually desired for critical operations
+
+**With `on.fail` handler:**
+- Exceptions are caught and `on.fail` steps are executed
+- Action continues unless `on.fail` steps throw an exception
+- Useful for graceful degradation, fallback logic, or custom error messages
+
+**Available exception variables in `on.fail` blocks:**
+- `lastException` — ObjectNode with exception details:
+  - `lastException.type` — Exception class simple name (e.g., `GhasUnavailableException`)
+  - `lastException.message` — Exception message text
+  - `lastException.httpStatus` — HTTP status code (only present for `UnexpectedHttpResponseException`)
+  - `lastException.pojo` — Original exception as POJONode (for calling methods like `.getMessage()`)
+- `${name}_exception` — For named elements (e.g., `rest.call` or `run.fcli` entries), same structure as `lastException`
+
+**Common patterns:**
+
+**Pattern 1: Graceful fallback**
+```yaml
+- var.set:
+    sarifUploadResponse: ${#github.repo().uploadSarif(reportContents)}
+    sarifUploaded: true
+  on.fail:
+    - log.warn:
+        msg: 'SARIF upload failed, will try Check Run fallback'
+        cause: ${lastException}
+    - var.set:
+        sarifUploaded: false
 ```
+
+**Pattern 2: Conditional error handling based on exception type**
+```yaml
+- var.set:
+    result: ${#someOperation()}
+  on.fail:
+    - if: ${lastException.type=='GhasUnavailableException'}
+      log.info: GitHub Advanced Security not available
+    - if: ${lastException.type!='GhasUnavailableException'}
+      throw:
+        msg: 'Unexpected error'
+        cause: ${lastException}
+```
+
+**Pattern 3: Named element exception handling**
+```yaml
+- rest.call:
+    staticScanSummary:
+      uri: /api/v3/scans/${scanId}/summary
+      on.fail:
+        - log.warn:
+            msg: 'Unable to load scan summary'
+            cause: ${staticScanSummary_exception}
+```
+
+**Pattern 4: Success handler for validation or logging**
+```yaml
+- rest.call:
+    issues:
+      uri: /api/v3/releases/${releaseId}/vulnerabilities
+      on.success:
+        - if: ${issues_raw.totalCount>5000}
+          throw: Too many vulnerabilities to process (${issues_raw.totalCount})
+```
+
+**Pattern 5: Rethrowing with cause (exception chaining)**
+```yaml
+- var.set:
+    result: ${#someOperation()}
+  on.fail:
+    # Simple throw with message
+    - if: ${lastException.type=='NetworkException'}
+      throw: 'Network operation failed: ${lastException.message}'
+    
+    # Structured throw with message and cause
+    - if: ${lastException.type!='NetworkException'}
+      throw:
+        msg: 'Unexpected error during operation'
+        cause: ${lastException}
+    
+    # Rethrow exception (preserves original exception type if FcliException)
+    - throw:
+        cause: ${lastException}
+```
+
+**Pattern 6: Logging with exception cause**
+```yaml
+- var.set:
+    result: ${#someOperation()}
+  on.fail:
+    # Simple log message
+    - log.warn: 'Operation failed: ${lastException.message}'
+    
+    # Log with exception cause (includes stack trace in log files)
+    - log.warn:
+        msg: 'Operation failed with unexpected error'
+        cause: ${lastException}
+```
+
+**`throw` instruction capabilities:**
+- **Simple string:** `throw: "Error message"` — Throws `FcliActionStepException` with message
+- **Structured with msg and cause:** `throw: { msg: "...", cause: ${exception} }` — Attaches original exception as cause
+- **Rethrow only:** `throw: { cause: ${exception} }` — Rethrows FcliException as-is, or wraps other exceptions
+- **Cause extraction:** Automatically unwraps Throwables from `POJONode` or `ObjectNode.pojo` properties
+
+**`log.*` instruction capabilities:**
+- **Simple string:** `log.info: "Message"` — Logs simple message
+- **Structured with msg and cause:** `log.info: { msg: "...", cause: ${exception} }` — Logs message with exception details
+- **Exception support:** `log.info`, `log.warn`, `log.debug` support both simple and structured formats with exception cause
+- **Progress logging:** `log.progress` only supports simple string format (no exception cause support)
+- **Exception cause handling:** When cause is provided, exception details (including stack trace) are included in log output
+
+**When to use `on.fail`:**
+- Implementing fallback strategies (try SARIF, fall back to Check Run)
+- Converting exceptions into warnings for non-critical operations
+- Adding context-specific error messages
+- Recovering from expected failure scenarios
+
+**When NOT to use `on.fail`:**
+- For operations that MUST succeed — let exceptions propagate to fail the action
+- When you just want to log the error but still fail — use fail-fast instead and check logs
 
 **Quick validation (no rebuild required if no related Java changes):**
 ```bash
@@ -282,7 +419,7 @@ steps:
 ```yaml
 steps:
   - if: ${cli.publish==true}
-    steps:
+    do:
       - log.info: Publishing report...
       - rest.call:
           # ... publish steps
@@ -322,17 +459,17 @@ steps:
 Reference these for patterns:
 
 **Report generation:**
-- GitHub SARIF report: [fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/github-sast-report.yaml](../../../fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/github-sast-report.yaml)
-- Policy check: [fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/check-policy.yaml](../../../fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/check-policy.yaml)
+- GitHub SARIF report: `fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/github-sast-report.yaml`
+- Policy check: `fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/check-policy.yaml`
 
 **CI/CD integration:**
-- Generic CI action: [fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip/ci.yaml](../../../fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip/ci.yaml)
-- FoD CI action: [fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/ci.yaml](../../../fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/ci.yaml)
-- SSC CI action: [fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip/ci.yaml](../../../fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip/ci.yaml)
+- Generic CI action: `fcli-core/fcli-action/src/main/resources/com/fortify/cli/generic_action/actions/zip/ci.yaml`
+- FoD CI action: `fcli-core/fcli-fod/src/main/resources/com/fortify/cli/fod/actions/zip/ci.yaml`
+- SSC CI action: `fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip/ci.yaml`
 
 **Documentation generation:**
-- CI documentation action: [fcli-core/fcli-app/src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml](../../../fcli-core/fcli-app/src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml)
-- Action development doc (this guide's source): [fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml](../../../fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml)
+- CI documentation action: `fcli-core/fcli-app/src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml`
+- Action development doc: `fcli-other/fcli-doc/src/actions/generate-action-dev-doc.yaml`
 
 **All built-in actions:**
 - SSC actions: `fcli-core/fcli-ssc/src/main/resources/com/fortify/cli/ssc/actions/zip/`

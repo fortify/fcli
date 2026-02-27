@@ -366,4 +366,8 @@ fi
                 it.any { line -> line.contains("debricked-cli") }
             }
     }
+    
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
 }

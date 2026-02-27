@@ -19,8 +19,7 @@ steps:
   # Only run if not run before; global.isCiInitialized is set at the end of this action.
   # Callers may also check this variable to avoid re-running this action.
   - if: ${global.isCiInitialized==null}
-    steps:
-      # Set default ci values. Where possible, steps below should override these
+    do:      # Set default ci values. Where possible, steps below should override these
       # variables with CI-specific values
       - var.set:
           fcliBuildProps:                  ${#fcliBuildProperties()}
@@ -30,7 +29,8 @@ steps:
           global.ci.id:                    # Id of current CI system, used to look up <id>-* actions 
           global.ci.qualifiedRepoName:     # Fully qualified repository name
           global.ci.sourceBranch:          # The current branch being processed/scanned 
-          global.ci.commitSHA:             # Commit SHA for current commit
+          global.ci.commitHeadSHA:         # Head commit SHA (actual commit on branch)
+          global.ci.commitMergeSHA:        # Merge commit SHA (for PRs on GitHub, same as head otherwise)
           global.ci.workspaceDir:          "." # Workspace/repository root directory (default to current dir)
           global.ci.sourceDir:             "." # Directory containing source files to be scanned (default to current dir)
           global.ci.jobSummaryFile:        ${#env('JOB_SUMMARY_FILE')} # Job summary file path; can be overridden by CI-specific value
@@ -61,7 +61,8 @@ steps:
           global.ci.id:                  ${ci.env?.ciId}
           global.ci.qualifiedRepoName:   ${ci.env?.ciRepository?.name?.full}
           global.ci.sourceBranch:        ${ci.env?.ciBranch?.short}
-          global.ci.commitSHA:           ${ci.env?.ciCommit?.id?.full}
+          global.ci.commitHeadSHA:       ${ci.env?.ciCommit?.headId?.full}
+          global.ci.commitMergeSHA:      ${ci.env?.ciCommit?.mergeId?.full}
           global.ci.workspaceDir:        ${ci.env?.ciRepository?.workspaceDir?:global.ci.workspaceDir}
           global.ci.sourceDir:           ${ci.env?.ciRepository?.workspaceDir?:global.ci.sourceDir}
           global.ci.prActive:            ${ci.env?.pullRequest?.active?:false}
@@ -101,7 +102,8 @@ steps:
           global.ci.id:                local-git
           global.ci.qualifiedRepoName: ${global.ci.localRepo.repository?.name?.full?:global.ci.localRepo.repository?.name?.short}
           global.ci.sourceBranch:      ${global.ci.localRepo.branch?.short}
-          global.ci.commitSHA:         ${global.ci.localRepo.commit?.id?.full}
+          global.ci.commitHeadSHA:     ${global.ci.localRepo.commit?.headId?.full}
+          global.ci.commitMergeSHA:    ${global.ci.localRepo.commit?.mergeId?.full}
     
       # Additional generic variables based on the output of the CI-specific sections above
       - var.set:

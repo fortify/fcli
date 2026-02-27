@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.action.helper.ci;
+package com.fortify.cli.common.action.helper.ci.bitbucket;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
 
@@ -18,14 +18,15 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.ci.bitbucket.BitbucketEnvironment;
 import com.fortify.cli.common.ci.bitbucket.BitbucketRestHelper;
 import com.fortify.cli.common.ci.bitbucket.BitbucketUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
-import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
@@ -63,33 +64,33 @@ public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
     public String getType() {
         return BitbucketEnvironment.TYPE;
     }
-
-    @SpelFunction(cat=ci, desc="Creates or updates a Bitbucket Code Insights report for the current commit using detected workspace/repository data",
-            returns="Response from Bitbucket API")
-    public ObjectNode uploadReport(
-            @SpelFunctionParam(name="reportId", desc="Code Insights report key (for example test-001)") String reportId,
-            @SpelFunctionParam(name="reportContent", desc="JSON payload that follows Bitbucket's Code Insights report schema") String reportContent) {
-        requireEnv("uploadReport");
-        var owner = requireWorkspace("uploadReport");
-        var slug = requireRepositorySlug("uploadReport");
-        var commit = requireCommitSha("uploadReport");
-        var id = requireValue("reportId", reportId);
-        return getRestHelper().upsertCommitReport(owner, slug, commit, id, reportContent);
+    
+    /**
+     * Create a repository-scoped client using environment defaults.
+     * Automatically extracts workspace and repository slug from Bitbucket Pipelines environment.
+     * 
+     * @return Repository-scoped action client
+     */
+    @SpelFunction(cat=ci, desc="Returns a repository-scoped Bitbucket client using workspace and repository detected from the current pipeline run",
+            returns="Bitbucket repository client for CI operations",
+            renderSubFunctions=RenderSubFunctionsMode.INLINE)
+    public ActionBitbucketRepository repo() {
+        requireEnv("repo");
+        return new ActionBitbucketRepository(
+            getRestHelper().repository(
+                requireWorkspace("repo"),
+                requireRepositorySlug("repo")
+            ), 
+            env
+        );
     }
-
-    @SpelFunction(cat=ci, desc="Appends annotations to an existing Bitbucket Code Insights report for the detected commit",
-            returns="Response from Bitbucket API")
-    public ObjectNode addReportAnnotations(
-            @SpelFunctionParam(name="reportId", desc="Code Insights report key to associate the annotations with") String reportId,
-            @SpelFunctionParam(name="annotationsContent", desc="JSON array of annotation objects that match Bitbucket's schema") String annotationsContent) {
-        requireEnv("addReportAnnotations");
-        var owner = requireWorkspace("addReportAnnotations");
-        var slug = requireRepositorySlug("addReportAnnotations");
-        var commit = requireCommitSha("addReportAnnotations");
-        var id = requireValue("reportId", reportId);
-        return getRestHelper().addReportAnnotations(owner, slug, commit, id, annotationsContent);
-    }
-
+    
+    /**
+     * Get the underlying RestHelper for advanced use cases.
+     * Private since this is an internal implementation detail.
+     * 
+     * @return BitbucketRestHelper instance
+     */
     private BitbucketRestHelper getRestHelper() {
         if (restHelper == null) {
             var supplier = BitbucketUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
@@ -121,23 +122,5 @@ public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
                 "Operation '" + operation + "' requires BITBUCKET_REPO_SLUG to be available in the environment.");
         }
         return slug;
-    }
-
-    private String requireCommitSha(String operation) {
-        var commit = env.ciCommit() != null && env.ciCommit().id() != null
-            ? env.ciCommit().id().full()
-            : null;
-        if (StringUtils.isBlank(commit)) {
-            throw new FcliSimpleException(
-                "Operation '" + operation + "' requires BITBUCKET_COMMIT to be available in the environment.");
-        }
-        return commit;
-    }
-
-    private static String requireValue(String name, String value) {
-        if (StringUtils.isBlank(value)) {
-            throw new FcliSimpleException(name + " must be provided");
-        }
-        return value;
     }
 }

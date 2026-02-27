@@ -81,6 +81,11 @@ public class JsonPropertyAccessor implements PropertyAccessor {
 			// Cannot parse - treat as not a JSON
 			return false;
 		}
+		// CHANGED: POJONode should be handled by ReflectivePropertyAccessor, not JsonPropertyAccessor
+		// This allows bean property access (getters) to work correctly via standard Spring mechanisms
+		if (node instanceof POJONode) {
+			return false;
+		}
 		Integer index = maybeIndex(name);
 		if (node instanceof ArrayNode) {
 			return index != null;
@@ -194,8 +199,8 @@ public class JsonPropertyAccessor implements PropertyAccessor {
 			}
 		}
 		// CHANGED: Compared to original version, this code was added to allow access to POJO node values.
-		else if (json.isPojo() ) {
-		    return ((POJONode)json).getPojo();
+		else if (json.isPojo()) {
+			return ((POJONode)json).getPojo();
 		}
 		throw new IllegalArgumentException("Json is not ValueNode.");
 	}

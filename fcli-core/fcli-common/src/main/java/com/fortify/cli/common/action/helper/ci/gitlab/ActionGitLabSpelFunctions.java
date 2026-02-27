@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.common.action.helper.ci;
+package com.fortify.cli.common.action.helper.ci.gitlab;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.ci;
 
@@ -18,14 +18,15 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
 import com.fortify.cli.common.ci.gitlab.GitLabEnvironment;
 import com.fortify.cli.common.ci.gitlab.GitLabRestHelper;
 import com.fortify.cli.common.ci.gitlab.GitLabUnirestInstanceSupplier;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
-import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionPrefix;
 
 import lombok.RequiredArgsConstructor;
@@ -79,79 +80,26 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
         return GitLabEnvironment.TYPE;
     }
     
-    // === Security Report Upload (Ultimate/Premium Tier - Paid) ===
-    
     /**
-     * Upload security report using detected environment values.
-     * Requires GitLab Ultimate or Premium tier.
+     * Create a project-scoped client using environment defaults.
+     * Automatically extracts project ID from GitLab CI environment.
      * 
-     * Report schemas: https://docs.gitlab.com/ee/development/integrations/secure.html
-     * 
-         * @param reportType Report type (sast, dast, dependency_scanning, container_scanning, etc.)
-         * @param reportContent Report content (JSON matching GitLab security report schema)
-     * @return Response from GitLab API
+     * @return Project-scoped action client
      */
-    @SpelFunction(cat=ci, desc="Uploads security report to GitLab (paid tier, requires Ultimate/Premium) using project/pipeline detected from the current run",
-            returns="Response from GitLab API")
-    public ObjectNode uploadSecurityReport(
-            @SpelFunctionParam(name="reportType", desc="report type: sast, dast, dependency_scanning, container_scanning, etc.") String reportType,
-            @SpelFunctionParam(name="reportContent", desc="security report in GitLab schema format") String reportContent) {
-        requireEnv("uploadSecurityReport");
-        return getRestHelper().uploadSecurityReport(
-            requireProjectId("uploadSecurityReport"), 
-            requirePipelineId("uploadSecurityReport"), 
-            reportType, reportContent);
+    @SpelFunction(cat=ci, desc="Returns a project-scoped GitLab client using project ID detected from the current pipeline run",
+            returns="GitLab project client for CI operations",
+            renderSubFunctions=RenderSubFunctionsMode.INLINE)
+    public ActionGitLabProject project() {
+        requireEnv("project");
+        return new ActionGitLabProject(getRestHelper().project(requireProjectId("project")), env);
     }
     
-    // === Code Quality Report (Free Tier) ===
-    
     /**
-     * Upload code quality report to current merge request (available on all tiers).
-     * Shows code quality degradation in merge request UI.
+     * Get the underlying RestHelper for advanced use cases.
+     * Private since this is an internal implementation detail.
      * 
-     * Code quality format: https://docs.gitlab.com/ee/ci/testing/code_quality.html#implement-a-custom-tool
-     * 
-     * @param reportContent Code quality report (JSON array with description, severity, location)
-     * @return Response from GitLab API
+     * @return GitLabRestHelper instance
      */
-    @SpelFunction(cat=ci, desc="Uploads code quality report to the detected merge request (free tier, all GitLab tiers)",
-            returns="Response from GitLab API")
-    public ObjectNode uploadCodeQualityReport(
-            @SpelFunctionParam(name="reportContent", desc="code quality report as JSON array") String reportContent) {
-        requireEnv("uploadCodeQualityReport");
-        if (!env.pullRequest().active()) {
-            throw new FcliSimpleException("Not running in merge request context. CI_MERGE_REQUEST_IID is not set.");
-        }
-        return getRestHelper().uploadCodeQualityReport(
-            requireProjectId("uploadCodeQualityReport"), 
-            env.pullRequest().id(), 
-            reportContent);
-    }
-    
-    // === Merge Request Comments (Auto-Detect Context) ===
-    
-    /**
-     * Add a comment to the current merge request.
-     * Throws exception if not in merge request context.
-     * 
-     * @param body Comment body (Markdown supported)
-     * @return Created note object
-     */
-    @SpelFunction(cat=ci, desc="Adds a comment to the merge request detected from the current pipeline run",
-            returns="Created note object")
-    public ObjectNode addMrComment(
-            @SpelFunctionParam(name="body", desc="comment body (Markdown supported)") String body) {
-        if (!env.pullRequest().active()) {
-            throw new FcliSimpleException("Not running in merge request context. CI_MERGE_REQUEST_IID is not set.");
-        }
-        return getRestHelper().createMergeRequestNote(
-            requireProjectId("addMrComment"), 
-            env.pullRequest().id(), 
-            body);
-    }
-    
-    // === REST Helper Access ===
-    
     private GitLabRestHelper getRestHelper() {
         if (restHelper == null) {
             var supplier = GitLabUnirestInstanceSupplier.fromEnv(ctx.getUnirestContext());
@@ -176,14 +124,5 @@ public class ActionGitLabSpelFunctions implements IActionSpelFunctions {
                 "Operation '" + operation + "' requires CI_PROJECT_ID to be available in the environment.");
         }
         return projectId;
-    }
-    
-    private String requirePipelineId(String operation) {
-        var pipelineId = env.pipelineId();
-        if (StringUtils.isBlank(pipelineId)) {
-            throw new FcliSimpleException(
-                "Operation '" + operation + "' requires CI_PIPELINE_ID to be available in the environment.");
-        }
-        return pipelineId;
     }
 }

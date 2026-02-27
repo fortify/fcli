@@ -33,6 +33,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -77,8 +78,8 @@ public class FcliDataHelper {
     }
     
     public static final void saveSecuredFile(Path relativePath, Object contents, boolean failOnError) {
-        if ( contents == null ) {
-            throwOrLog("Contents may not be null", null, failOnError);
+        if (checkCondition(contents == null, "Contents may not be null", failOnError)) {
+            return;
         }
         try {
             String stringContents = contents instanceof String 
@@ -86,7 +87,7 @@ public class FcliDataHelper {
                     : objectMapper.writeValueAsString(contents);
             saveFile(relativePath, EncryptionHelper.encrypt(stringContents), failOnError);
         } catch (JsonProcessingException e) {
-            throwOrLog("Error serializing contents as String for class "+contents.getClass().getName(), e, failOnError);
+            throwOrLogException("Error serializing contents as String for class "+contents.getClass().getName(), e, failOnError);
         }
     }
     
@@ -104,8 +105,8 @@ public class FcliDataHelper {
     }
     
     public static final void saveFile(Path relativePath, Object contents, boolean failOnError) {
-        if ( contents == null ) {
-            throwOrLog("Contents may not be null", null, failOnError);
+        if (checkCondition(contents == null, "Contents may not be null", failOnError)) {
+            return;
         }
         try {
             String stringContents = contents instanceof String 
@@ -117,12 +118,12 @@ public class FcliDataHelper {
                 try {
                     Files.createDirectories(parentDir);
                 } catch ( IOException e ) {
-                    throwOrLog("Error creating parent directories for "+filePath, e, failOnError);
+                    throwOrLogException("Error creating parent directories for "+filePath, e, failOnError);
                 }
             }
             writeFileWithOwnerOnlyPermissions(filePath, stringContents, failOnError);
         } catch (JsonProcessingException e ) {
-            throwOrLog("Error serializing contents as String for class "+contents.getClass().getName(), e, failOnError);
+            throwOrLogException("Error serializing contents as String for class "+contents.getClass().getName(), e, failOnError);
         }
     }
 
@@ -140,7 +141,7 @@ public class FcliDataHelper {
         writer.write(contents);
         writer.close();
         } catch ( IOException e ) {
-            throwOrLog("Error writing file "+filePath, e, failOnError);
+            throwOrLogException("Error writing file "+filePath, e, failOnError);
         }
     }
     
@@ -151,13 +152,26 @@ public class FcliDataHelper {
     @SuppressWarnings("unchecked")
     public static final <R> R readFile(Path relativePath, Class<R> returnType, boolean failOnError) {
         final Path filePath = resolveFcliHomePath(relativePath);
+        
+        // Check expected conditions before attempting IO
+        if (checkCondition(!Files.exists(filePath), "File does not exist: "+filePath, failOnError)) {
+            return null;
+        }
+        if (checkCondition(!Files.isRegularFile(filePath), "Path exists but is not a regular file: "+filePath, failOnError)) {
+            return null;
+        }
+        if (checkCondition(!Files.isReadable(filePath), "File is not readable: "+filePath, failOnError)) {
+            return null;
+        }
+        
+        // Attempt read - any exception here is unexpected
         try {
             String contents = Files.readString(filePath, StandardCharsets.UTF_8);
             return String.class.isAssignableFrom(returnType)
                     ? (R)contents 
                     : JsonHelper.jsonStringToValue(contents, returnType);
         } catch ( IOException e ) {
-            throwOrLog("Error reading file "+filePath, e, failOnError);
+            throwOrLogException("Error reading file "+filePath, e, failOnError);
             return null;
         }
     }
@@ -179,32 +193,60 @@ public class FcliDataHelper {
     
     public static final Stream<Path> listDir(Path relativePath, boolean failOnError) {
         final Path dirPath = resolveFcliHomePath(relativePath);
+        
+        // Check expected conditions before attempting IO
+        if (checkCondition(!Files.exists(dirPath), "Directory does not exist: "+dirPath, failOnError)) {
+            return null;
+        }
+        if (checkCondition(!Files.isDirectory(dirPath), "Path exists but is not a directory: "+dirPath, failOnError)) {
+            return null;
+        }
+        
         try {
             return Files.list(dirPath);
         } catch ( IOException e ) {
-            throwOrLog("Error getting directory listing for "+dirPath, e, failOnError);
+            throwOrLogException("Error getting directory listing for "+dirPath, e, failOnError);
             return null;
         }
     }
     
     public static final void deleteFile(Path relativePath, boolean failOnError) {
         final Path filePath = resolveFcliHomePath(relativePath);
+        
+        // Verify it's a file if it exists
+        if (Files.exists(filePath) && checkCondition(!Files.isRegularFile(filePath), 
+                "Cannot delete - path exists but is not a regular file: "+filePath, failOnError)) {
+            return;
+        }
+        
         try {
             Files.deleteIfExists(filePath);
         } catch ( IOException e ) {
-            throwOrLog("Error deleting file "+filePath, e, failOnError);
+            throwOrLogException("Error deleting file "+filePath, e, failOnError);
         }
     }
     
     public static final void deleteDir(Path relativePath, boolean failOnError) {
-        final Path filePath = resolveFcliHomePath(relativePath);
+        final Path dirPath = resolveFcliHomePath(relativePath);
+        
+        // Return early if directory doesn't exist
+        if (!Files.exists(dirPath)) {
+            return;
+        }
+        
+        // Verify it's a directory
+        if (checkCondition(!Files.isDirectory(dirPath), 
+                "Cannot delete - path exists but is not a directory: "+dirPath, failOnError)) {
+            return;
+        }
+        
         try {
-            Files.walk(filePath)
+            Files.walk(dirPath)
                 .sorted(Comparator.reverseOrder())
                 .map(Path::toFile)
                 .forEach(File::delete);
         } catch ( IOException e ) {
-            throwOrLog("Error recursively deleting directory "+filePath, e, failOnError);
+            throwOrLogException("Error recursively deleting directory "+dirPath, e, failOnError);
         }
     }
 
@@ -220,11 +262,38 @@ public class FcliDataHelper {
         return getFcliHomePath().resolve(relativePath);
     }
     
-    private static final void throwOrLog(String msg, Exception e, boolean failOnError) {
+    /**
+     * Checks an expected condition (e.g., file exists, is readable). If condition is true:
+     * - When failOnError=true: throws FcliSimpleException with the given message
+     * - When failOnError=false: logs message at DEBUG level
+     * 
+     * @param condition the condition to check; if true, error/log is triggered
+     * @param msg the message to use in exception or log
+     * @param failOnError whether to throw exception (true) or just log (false)
+     * @return true if condition was met (error/log triggered), false otherwise
+     */
+    private static boolean checkCondition(boolean condition, String msg, boolean failOnError) {
+        if (condition) {
+            if (failOnError) {
+                throw new FcliSimpleException(msg);
+            } else {
+                LOG.debug(msg);
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Handles unexpected IO exceptions during file operations.
+     * - When failOnError=true: throws FcliTechnicalException
+     * - When failOnError=false: logs at WARN level with exception details
+     */
+    private static void throwOrLogException(String msg, Exception e, boolean failOnError) {
         if ( failOnError ) {
             throw new FcliTechnicalException(msg, e);
         } else {
-            LOG.info(msg, e);
+            LOG.warn(msg, e);
         }
     }
 }

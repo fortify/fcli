@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.runner.processor;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -23,7 +24,6 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.POJONode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
@@ -46,7 +46,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEntries<String, ActionStepRunFcliEntry> {
     // TODO Restructure vars.set calls across success/skipped/exception/... to reduce code duplication and making sure all relevant variables are set
-    private static final String FMT_EXCEPTION = "%s_exception"; // underscore for legacy reasons
     private static final String FMT_SUCCESS = "%s.success";
     private static final String FMT_FAILED = "%s.failed";
     private static final String FMT_STATUS = "%s.status";
@@ -62,6 +61,15 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private final ActionRunnerContext ctx;
     private final ActionRunnerVars vars;
     private final LinkedHashMap<String,ActionStepRunFcliEntry> map;
+    
+    /**
+     * Override to disable default error handling - run.fcli has its own specialized
+     * on.fail/on.success handling via callback methods.
+     */
+    @Override
+    protected boolean shouldUseDefaultErrorHandling(Map.Entry<String, ActionStepRunFcliEntry> entry) {
+        return false; // Use existing specialized handling
+    }
     
     @Override
     protected final void process(String name, ActionStepRunFcliEntry entry) {
@@ -176,12 +184,13 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
 
     private void onFcliException(ActionStepRunFcliEntry fcli, Throwable t) {
         var name = fcli.getKey();
+        // Set generic lastException* and ${name}_exception* variables (with .message, .type, .httpStatus sub-properties)
+        setGenericExceptionVars(t, name, getVars()::set);
         var msg = t.getMessage();
         msg = msg==null 
             ? "Fcli command terminated with an exception"
             : String.format("Exception: %s", msg.split("\n", 2)[0]); // Get first line only
         vars.set(String.format(FMT_STATUS_REASON, name), new TextNode(msg));
-        vars.set(String.format(FMT_EXCEPTION, name), new POJONode(t));
         vars.set(String.format(FMT_EXIT_CODE, name), new IntNode(1));
         vars.set(String.format(FMT_STATUS, name), "FAILED");
         vars.set(String.format(FMT_SUCCESS, name), BooleanNode.FALSE);

@@ -62,15 +62,15 @@ steps:
       reportContents: {fmt: gitlab-codequality-report}
       reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gl-fortify-codequality.json'}"
   - if: ${reportFile!=null}
-    steps:
+    do:
       - out.write:
           ${reportFile}: ${reportContents}
       - if: ${!{'stdout','stderr'}.contains(reportFile)}
         log.info: Output written to ${reportFile}
   - if: ${cli.publish==true}
-    steps:
+    do:
       - var.set:
-          gitlabUpload: ${#gitlab.uploadCodeQualityReport(reportContents)}
+          gitlabUpload: ${#gitlab.project().uploadCodeQualityReport(reportContents)}
       - log.info: Report published to GitLab merge request
 
 formatters:

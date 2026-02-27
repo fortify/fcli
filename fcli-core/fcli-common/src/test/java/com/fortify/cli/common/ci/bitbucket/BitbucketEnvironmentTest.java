@@ -48,7 +48,9 @@ class BitbucketEnvironmentTest {
         assertEquals("acme/awesome-repo", env.repositoryFullName());
         assertEquals("main", env.ciBranch().short_());
         assertEquals("refs/heads/main", env.ciBranch().full());
-        assertEquals("1234567", env.ciCommit().id().short_());
+        assertEquals("1234567", env.ciCommit().headId().short_());
+        assertEquals("1234567890abcdef1234567890abcdef12345678", env.ciCommit().mergeId().full());
+        // For Bitbucket, headId and mergeId are always the same
         assertEquals(false, env.pullRequest().active());
         assertEquals("/opt/build", env.ciRepository().workspaceDir());
         assertEquals("https://bitbucket.org/acme/awesome-repo.git", env.ciRepository().remoteUrl());

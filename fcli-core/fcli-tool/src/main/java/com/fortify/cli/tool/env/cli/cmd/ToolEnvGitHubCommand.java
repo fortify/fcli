@@ -21,6 +21,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvOutputAsMixin;
+import com.fortify.cli.tool.env.helper.ToolEnvContext;
+import com.fortify.cli.tool.env.helper.ToolEnvOutputHelper;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -31,30 +34,46 @@ public final class ToolEnvGitHubCommand extends AbstractToolEnvCommand {
     private static final String GITHUB_PATH = "GITHUB_PATH";
 
     @Mixin private ToolEnvExcludeMixin exclude;
+    @Mixin private ToolEnvOutputAsMixin outputAs;
 
     @Override
     protected void process(List<ToolEnvContext> contexts) {
+        if (outputAs.hasOutputAs()) {
+            processWithOutputAs(contexts, outputAs.getOutputAs());
+        } else {
+            processNative(contexts);
+        }
+    }
+
+    private void processNative(List<ToolEnvContext> contexts) {
         if (exclude.isIncludeVars()) {
             List<String> envLines = new ArrayList<>();
             for (ToolEnvContext context : contexts) {
-                if (StringUtils.isNotBlank(context.installDir())) {
-                    envLines.add(context.envPrefix() + "_HOME=" + context.installDir());
-                }
-                if (StringUtils.isNotBlank(context.cmd())) {
-                    envLines.add(context.envPrefix() + "_CMD=" + context.cmd());
-                }
+                envLines.addAll(ToolEnvOutputHelper.gitHubEnvLines(context, exclude));
             }
             writeLinesToPath(envLines, requireGithubFile(GITHUB_ENV, "environment"), "GitHub environment output");
         }
         if (exclude.isIncludePath()) {
             List<String> pathLines = new ArrayList<>();
             for (ToolEnvContext context : contexts) {
-                if (StringUtils.isNotBlank(context.binDir())) {
-                    pathLines.add(context.binDir());
-                }
+                pathLines.addAll(ToolEnvOutputHelper.gitHubPathLines(context, exclude));
             }
             writeLinesToPath(pathLines, requireGithubFile(GITHUB_PATH, "PATH"), "GitHub PATH output");
         }
+    }
+
+    private void processWithOutputAs(List<ToolEnvContext> contexts, ToolEnvOutputAsMixin.OutputAs outputAsValue) {
+        List<String> lines = new ArrayList<>();
+        for (ToolEnvContext context : contexts) {
+            lines.addAll(ToolEnvOutputHelper.echoRedirectLines(
+                    ToolEnvOutputHelper.gitHubPathLines(context, exclude),
+                    ToolEnvOutputHelper.gitHubPathTarget(outputAsValue)));
+            lines.addAll(ToolEnvOutputHelper.echoRedirectLines(
+                    ToolEnvOutputHelper.gitHubEnvLines(context, exclude),
+                    ToolEnvOutputHelper.gitHubEnvTarget(outputAsValue)));
+            lines.addAll(ToolEnvOutputHelper.outputAsLines(context, exclude, outputAsValue));
+        }
+        lines.forEach(System.out::println);
     }
 
     private static Path requireGithubFile(String envName, String description) {
@@ -64,5 +83,4 @@ public final class ToolEnvGitHubCommand extends AbstractToolEnvCommand {
         }
         return Path.of(value);
     }
-
 }

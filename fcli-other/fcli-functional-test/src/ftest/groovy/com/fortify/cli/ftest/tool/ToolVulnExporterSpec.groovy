@@ -71,4 +71,7 @@ class ToolVulnExporterSpec extends FcliBaseSpec {
             }
     }
     
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
 }

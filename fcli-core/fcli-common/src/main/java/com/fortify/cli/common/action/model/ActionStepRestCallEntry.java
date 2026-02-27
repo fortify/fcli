@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.action.model;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -60,7 +59,7 @@ import lombok.NoArgsConstructor;
                   do:
                     - ...                     # Steps to execute for each response record
         """)
-public final class ActionStepRestCallEntry extends AbstractActionElementIf implements IMapKeyAware<String> {
+public final class ActionStepRestCallEntry extends AbstractActionStepElement implements IMapKeyAware<String> {
     @JsonIgnore private String key;
     
     @JsonPropertyDescription("""
@@ -110,22 +109,6 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
     @JsonProperty(value = "log.progress", required = false) private ActionStepRestCallEntry.ActionStepRestCallLogProgressDescriptor logProgress;
     
     @JsonPropertyDescription("""
-        Optional list: Steps to be executed on each successfull REST response. For simple requests, these \
-        steps will be executed once. For paged requests, these steps will be executed after every individual \
-        page has been received. Steps can reference the [requestName] and [requestName]_raw variables to \
-        access processed and raw response data respectively. Any steps define in 'on.success' will be executed \
-        before processing individual response records through the 'records.for-each' instruction.
-        """)
-    @JsonProperty(value = "on.success", required = false) private ArrayList<ActionStep> onResponse;
-    
-    @JsonPropertyDescription("""
-        Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown \
-        on request failure. Steps can reference a variable named after the identifier for this REST call, for \
-        example 'x_exception', to access the Java Exception object that represents the failure that occurred.
-        """)
-    @JsonProperty(value = "on.fail", required = false) private ArrayList<ActionStep> onFail;
-
-    @JsonPropertyDescription("""
         Optional object: If the processed (successfull) REST response provides an array of records, this \
         instruction allows for executing the steps provided in the 'do' block for each individual record.
         """)
@@ -168,7 +151,7 @@ public final class ActionStepRestCallEntry extends AbstractActionElementIf imple
                         - ...                     # Steps to execute for each response record
                                                   # Can access pv variable, including embedded artifacts property
             """)
-    public static final class ActionStepRequestForEachResponseRecord extends AbstractActionElementForEachRecord implements IActionStepIfSupplier {
+    public static final class ActionStepRequestForEachResponseRecord extends AbstractActionStepElementForEachRecord {
         @JsonPropertyDescription("""
             Optional map: Allows for making additional REST calls for each individual record being \
             processed. Map values define the REST call to be executed, map keys define under which \

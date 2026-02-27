@@ -15,9 +15,10 @@ package com.fortify.cli.tool.env.cli.cmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvOutputAsMixin;
+import com.fortify.cli.tool.env.helper.ToolEnvContext;
+import com.fortify.cli.tool.env.helper.ToolEnvOutputHelper;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -25,21 +26,18 @@ import picocli.CommandLine.Mixin;
 @Command(name = "ado")
 public final class ToolEnvAdoCommand extends AbstractToolEnvCommand {
     @Mixin private ToolEnvExcludeMixin exclude;
+    @Mixin private ToolEnvOutputAsMixin outputAs;
 
     @Override
     protected void process(List<ToolEnvContext> contexts) {
         List<String> lines = new ArrayList<>();
         for (ToolEnvContext context : contexts) {
-            if (exclude.isIncludePath() && StringUtils.isNotBlank(context.binDir())) {
-                lines.add("##vso[task.prependpath]" + context.binDir());
-            }
-            if (exclude.isIncludeVars()) {
-                if (StringUtils.isNotBlank(context.installDir())) {
-                    lines.add(String.format("##vso[task.setvariable variable=%s_HOME]%s", context.envPrefix(), context.installDir()));
-                }
-                if (StringUtils.isNotBlank(context.cmd())) {
-                    lines.add(String.format("##vso[task.setvariable variable=%s_CMD]%s", context.envPrefix(), context.cmd()));
-                }
+            var adoLines = ToolEnvOutputHelper.adoLines(context, exclude);
+            if (outputAs.hasOutputAs()) {
+                lines.addAll(ToolEnvOutputHelper.echoLines(adoLines));
+                lines.addAll(ToolEnvOutputHelper.outputAsLines(context, exclude, outputAs.getOutputAs()));
+            } else {
+                lines.addAll(adoLines);
             }
         }
         lines.forEach(System.out::println);

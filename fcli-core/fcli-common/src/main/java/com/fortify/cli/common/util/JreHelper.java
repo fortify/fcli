@@ -98,8 +98,8 @@ public final class JreHelper {
                 
                 // Try GitHub Actions-style patterns (e.g., JAVA_HOME_17_X64)
                 // GitHub Actions uses X64 for 64-bit x86 architectures and X86 for 32-bit
-                String githubActionsArch = PlatformHelper.getGitHubActionsArchSuffix();
-                if (githubActionsArch != null) {
+                {
+                    String githubActionsArch = PlatformHelper.getGitHubActionsArchSuffix();
                     String envVarName = "JAVA_HOME_" + version + "_" + githubActionsArch;
                     String javaHome = EnvHelper.env(envVarName);
                     if (StringUtils.isNotBlank(javaHome)) {
@@ -229,8 +229,8 @@ public final class JreHelper {
     }
     
     /**
-     * Finds the java executable in a directory. Checks both the directory itself
-     * and a bin subdirectory.
+     * Finds the java executable in a directory. Checks the directory itself,
+     * bin subdirectory, and jre/bin subdirectory (for older JDK layouts).
      * 
      * @param dir Directory to search
      * @return Path to java executable, or null if not found
@@ -252,6 +252,12 @@ public final class JreHelper {
         Path binExec = dir.resolve("bin").resolve(javaExecName);
         if (Files.isRegularFile(binExec) && Files.isExecutable(binExec)) {
             return binExec;
+        }
+        
+        // Check jre/bin subdirectory (older JDK layouts)
+        Path jreBinExec = dir.resolve("jre").resolve("bin").resolve(javaExecName);
+        if (Files.isRegularFile(jreBinExec) && Files.isExecutable(jreBinExec)) {
+            return jreBinExec;
         }
         
         return null;

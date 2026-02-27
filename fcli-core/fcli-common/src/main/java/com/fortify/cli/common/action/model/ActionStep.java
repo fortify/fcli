@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -62,7 +63,7 @@ import lombok.SneakyThrows;
             run.fcli:
               ...
         """)
-public final class ActionStep extends AbstractActionElementIf {
+public final class ActionStep extends AbstractActionStepElement {
     // Capture fields in this class annotated with @JsonProperty, indexed by JSON property name
     // Only used to initialize getters and propertyTypes 
     @JsonIgnore private static final Map<String, Field> fields = createFields();
@@ -132,7 +133,7 @@ public final class ActionStep extends AbstractActionElementIf {
         formatters that are declared later in the same step.
         """)
     @SampleYamlSnippets(copyFrom=TemplateExpressionWithFormatter.class, value="""
-        steps:
+        do:
           - var.set:
               var1: Hello ${name}
               var2.p1: This is property 1 on var2
@@ -148,7 +149,7 @@ public final class ActionStep extends AbstractActionElementIf {
         text or as a SpEL template expression, resolving to for example 'var1' or 'global.var2'.
         """)
     @SampleYamlSnippets("""
-        steps:
+        do:
           - var.rm:
               - var1    # Remove variable named 'var1'
               - ${var2} # Remove variable name as stored in var2 variable
@@ -161,10 +162,10 @@ public final class ActionStep extends AbstractActionElementIf {
         disappear when the next progress message is written, or after all action steps have \
         been executed. If you need to write an information message that is always displayed \
         to the end user, without the possibility of the message being removed, please use \
-        log.info instead.     
+        log.info instead.
         """)
     @SampleYamlSnippets("""
-        steps:
+        do:
           - log.progress: Processing record ${recordNumber}
         """)
     @JsonProperty(value = "log.progress", required = false) private TemplateExpression logProgress;
@@ -172,31 +173,54 @@ public final class ActionStep extends AbstractActionElementIf {
     @JsonPropertyDescription("""
         Write an informational message to console and log file (if enabled). Note that depending \
         on the config:output setting, informational messages may be shown either immediately, or \
-        only after all action steps have been executed, to not interfere with progress messages.
+        only after all action steps have been executed, to not interfere with progress messages. \
+        This instruction can be specified as either a simple SpEL template expression, or as a \
+        structured object with `msg` and optional `cause` properties for including exception details.
         """)
-    @SampleYamlSnippets("""
-        steps:
+    @SampleYamlSnippets({"""
+        do:
           - log.info: Output written to ${fileName}
-        """)
-    @JsonProperty(value = "log.info", required = false) private TemplateExpression logInfo;
+        ""","""
+        do:
+          - log.info:
+              msg: 'Operation completed with warnings'
+              cause: ${lastException}
+        """})
+    @JsonProperty(value = "log.info", required = false) private MessageWithCause logInfo;
     
     @JsonPropertyDescription("""
         Write a warning message to console and log file (if enabled). Note that depending on the \
         config:output setting, warning messages may be shown either immediately, or only after all \
-        action steps have been executed, to not interfere with progress messages.
+        action steps have been executed, to not interfere with progress messages. This instruction \
+        can be specified as either a simple SpEL template expression, or as a structured object with `msg` \
+        and optional `cause` properties for including exception details.
         """)
-    @SampleYamlSnippets("""
-        steps:
+    @SampleYamlSnippets({"""
+        do:
           - log.warn: Skipping this part due to errors: ${errors}
-        """)
-    @JsonProperty(value = "log.warn", required = false) private TemplateExpression logWarn;
+        ""","""
+        do:
+          - log.warn:
+              msg: 'Failed to complete operation'
+              cause: ${lastException}
+        """})
+    @JsonProperty(value = "log.warn", required = false) private MessageWithCause logWarn;
     
-    @JsonPropertyDescription("Write a debug message to log file (if enabled).")
-    @SampleYamlSnippets("""
-        steps:
+    @JsonPropertyDescription("""
+        Write a debug message to log file (if enabled). This instruction can be specified as either \
+        a simple SpEL template expression, or as a structured object with `msg` and optional `cause` \
+        properties for including exception details.
+        """)
+    @SampleYamlSnippets({"""
+        do:
            - log.debug: ${#this}   # Log all action variables
-         """)
-    @JsonProperty(value = "log.debug", required = false) private TemplateExpression logDebug;
+         ""","""
+        do:
+          - log.debug:
+              msg: 'Debug information'
+              cause: ${lastException}
+        """})
+    @JsonProperty(value = "log.debug", required = false) private MessageWithCause logDebug;
     
     @JsonPropertyDescription("""
         Add REST request targets for use in 'rest.call' steps. This step takes a map, with \
@@ -284,7 +308,7 @@ public final class ActionStep extends AbstractActionElementIf {
         /path/to/myFile3: {value: "${myVar}", fmt: "${myVarFormatterExpression}"}     
         """)
     @SampleYamlSnippets("""
-        steps:
+        do:
           - out.write:
               ${cli.file}: {fmt: output}    
         """)
@@ -337,31 +361,49 @@ public final class ActionStep extends AbstractActionElementIf {
     @JsonProperty(value="writer.append", required = false) private LinkedHashMap<String, TemplateExpressionWithFormatter> writerAppend;
     
     @JsonPropertyDescription("""
-        Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.    
+        Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.
+        
+        Note: The 'steps' property name is deprecated; use 'do' instead. For backward compatibility, 'steps' is \
+        still accepted.
         """)
     @SampleYamlSnippets("""
-        steps:
+        do:
           - ...
           - if: ${condition}
-            steps:
+            do:
               - ... # One or more steps to execute if ${condition} evaluates to true     
         """)
-    @JsonProperty(value = "steps", required = false) private List<ActionStep> steps;
+    @JsonProperty(value = "do", required = false) 
+    @JsonAlias("steps")
+    private List<ActionStep> steps;
     
     @JsonPropertyDescription("""
-        Throw an exception, thereby terminating action execution.
+        Throw an exception, thereby terminating action execution. This instruction can be specified \
+        as either a simple SpEL template expression that evaluates to a message string, or as a \
+        structured object with `msg` and/or `cause` properties. When only `cause` is specified without \
+        `msg`, the exception will be rethrown preserving its original type (if FcliException) or wrapped.
         """)
-    @SampleYamlSnippets("""
-        steps:
+    @SampleYamlSnippets({"""
+        do:
           - throw: ERROR: ${errorMessage}    
-        """)
-    @JsonProperty(value = "throw", required = false) private TemplateExpression _throw;
+        ""","""
+        do:
+          - throw:
+              msg: 'Operation failed'
+              cause: ${lastException}
+        ""","""
+        # Rethrow original exception
+        do:
+          - throw:
+              cause: ${lastException}
+        """})
+    @JsonProperty(value = "throw", required = false) private MessageWithCause _throw;
     
     @JsonPropertyDescription("""
         Terminate action execution and return the given exit code.
         """)
     @SampleYamlSnippets("""
-        steps:
+        do:
           - if: ${someCondition}
             exit: 1    
         """)

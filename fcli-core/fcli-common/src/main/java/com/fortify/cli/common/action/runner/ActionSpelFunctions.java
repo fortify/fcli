@@ -51,7 +51,6 @@ import org.jsoup.safety.Safelist;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
@@ -70,6 +69,7 @@ import com.fortify.cli.common.json.FortifyTraceNodeHelper;
 import com.fortify.cli.common.json.JSONDateTimeConverter;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.SpelFunctionDescriptorsFactory;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.util.EnvHelper;
@@ -485,34 +485,23 @@ public class ActionSpelFunctions {
     }
 
     @SpelFunction(cat=fortify, desc = """
-            Instantiates an issue source file resolver, allowing source file paths as reported by \
-            Fortify to be resolved against a locally cloned source code repository. 
+            Creates an issue source file resolver that maps Fortify-reported paths to workspace-relative paths. \
+            Fortify may add or strip leading directories during scanning; this resolver uses longest-suffix \
+            matching to find the correct file in the workspace.
             
-            In some cases, there is a mismatch between source file paths as reported by SSC or FoD \
-            and actual repository source file paths, with Fortify either inserting or stripping leading \
-            directories. When third-party systems like GitHub or GitLab ingest fcli-generated reports, \
-            such mismatches may prevent third-party systems from properly rendering source code snippets \
-            or links.
+            Configuration properties:
+            * `workspaceDir` - Repository root directory (required for path resolution)
+            * `sourceDir` - Directory that was scanned (optional; used to prioritize matches when multiple files share the same name)
             
-            The issue source file resolver can be initialized like this:
+            Example: `${#issueSourceFileResolver({workspaceDir:\"/workspace\", sourceDir:\"/workspace/src\"})}`
             
-            ```
-            - var.set:
-                issueSourceFileResolver: ${#issueSourceFileResolver({sourceDir:cli.sourceDir})}
-            ```
+            For backward compatibility, if only `sourceDir` is provided, it will be used as `workspaceDir`.
             
-            Once initialized, Fortify-reported issue file paths can be matched and relativized against \
-            the given `sourceDir` through either:
-            
-            * SSC: `${issueSourceFileResolver.resolve(issue.fullFileName)}`
-            * FoD: `${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
-            
-            Of course, the same approach can be used to resolve other Fortify-reported source file paths, \
-            for example in trace node entries. See the various fcli built-in `*-report` actions in SSC and \
-            FoD modules for examples.
+            See available methods via SpEL function documentation of the returned IssueSourceFileResolver object.
             """,
-            returns="Issue source file resolver") 
-    public static final POJONode issueSourceFileResolver(
+            returns="Issue source file resolver with resolve() and exists() methods",
+            renderSubFunctions=RenderSubFunctionsMode.INLINE) 
+    public static final IssueSourceFileResolver issueSourceFileResolver(
             @SpelFunctionParam(name="config", desc="configuration; may contain `workspaceDir` (repo root) and/or `sourceDir` (scan directory for prioritization)") Map<String, String> config) 
     {
         var workspaceDir = config.get("workspaceDir");
@@ -527,7 +516,7 @@ public class ActionSpelFunctions {
         var builder = IssueSourceFileResolver.builder()
                 .workspacePath(StringUtils.isBlank(workspaceDir) ? null : Path.of(workspaceDir))
                 .sourcePath(StringUtils.isBlank(sourceDir) ? null : Path.of(sourceDir));
-        return new POJONode(builder.build());
+        return builder.build();
     }
 
     @SpelFunction(cat=fortify, returns="normalized array of trace nodes") 
@@ -544,12 +533,12 @@ public class ActionSpelFunctions {
         return FortifyTraceNodeHelper.normalizeAndMerge(traceNodes);
     }
 
-    @SpelFunction(cat=fcli, returns="An object describing the fcli action YAML schema")
+    @SpelFunction(cat=internal, returns="An object describing the fcli action YAML schema")
     public static final JsonNode actionSchema() {
         return ActionSchemaDescriptorFactory.getActionSchemaDescriptor().asJson();
     }
 
-    @SpelFunction(cat=fcli, returns="An array listing all available SpEL functions")
+    @SpelFunction(cat=internal, returns="An array listing all available SpEL functions")
     public static final JsonNode actionSpelFunctions() {
         return SpelFunctionDescriptorsFactory.getActionSpelFunctionsDescriptors().asJson();
     }
@@ -632,11 +621,14 @@ public class ActionSpelFunctions {
                         var authorIdent = gitCommit.getAuthorIdent();
                         var committerIdent = gitCommit.getCommitterIdent();
                         
+                        var commitId = CiCommitId.builder()
+                            .full(gitCommit.getId().getName())
+                            .short_(shortId)
+                            .build();
+                        
                         commit = CiCommit.builder()
-                            .id(CiCommitId.builder()
-                                .full(gitCommit.getId().getName())
-                                .short_(shortId)
-                                .build())
+                            .headId(commitId)
+                            .mergeId(commitId)  // Same as headId for local repos
                             .message(CiCommitMessage.builder()
                                 .short_(gitCommit.getShortMessage())
                                 .full(gitCommit.getFullMessage())

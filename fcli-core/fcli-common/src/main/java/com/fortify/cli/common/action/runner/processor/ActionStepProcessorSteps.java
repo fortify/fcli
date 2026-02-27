@@ -104,6 +104,10 @@ public class ActionStepProcessorSteps extends AbstractActionStepProcessorListEnt
         }
             
         private static final String getProcessorClazzSuffix(String jsonPropertyName) {
+            // Map 'do' to 'Steps' for backward compatibility with existing processor class name
+            if ("do".equals(jsonPropertyName)) {
+                return "Steps";
+            }
             var elts = jsonPropertyName.split("\\W+");
             return Arrays.stream(elts).map(StringUtils::capitalize).collect(Collectors.joining());
         }

@@ -46,6 +46,7 @@ import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DebugHelper;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.StringHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import lombok.NoArgsConstructor;
@@ -98,6 +99,17 @@ public class SpelFunctionsStandard {
             @SpelFunctionParam(name="maxLength", desc="the maximum length of the result string, must be at least 4") int maxLength)
     {
         return StringUtils.abbreviate(s, maxLength);
+    }
+
+    @SpelFunction(cat=txt, desc="Indents every line of the input text by prepending the given prefix string.",
+            returns="The input text with each line prefixed by the given indent string, or `null` if the input is `null`")
+    public static final String indent(
+            @SpelFunctionParam(name="input", desc="the text to indent; if a JsonNode, its text value is used; if null, returns null") Object input,
+            @SpelFunctionParam(name="prefix", desc="string to prepend to each line") String prefix)
+    {
+        if (input == null) { return null; }
+        var text = (input instanceof JsonNode j) ? j.asText() : input.toString();
+        return StringHelper.indent(text, prefix);
     }
     
     @SpelFunction(cat=txt, returns="String consisting of the joined elements, separated by the given delimiter")

@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.helper.Tool;
 
 import lombok.Getter;
@@ -102,14 +103,17 @@ public class ToolEnvInitMixin {
         if (runnerToolCache != null && !runnerToolCache.isEmpty()) {
             String arch = EnvHelper.env("RUNNER_ARCH");
             if (arch == null || arch.isEmpty()) {
-                arch = System.getProperty("os.arch", "x64").toUpperCase();
+                // Use platform-aware arch suffix that distinguishes musl vs glibc
+                arch = PlatformHelper.getToolCacheArchSuffix();
             }
             return runnerToolCache + "/{tool}/{version}/" + arch;
         }
         
         String agentToolsDir = EnvHelper.env("AGENT_TOOLSDIRECTORY");
         if (agentToolsDir != null && !agentToolsDir.isEmpty()) {
-            return agentToolsDir + "/fortify/{tool}/{version}/x64";
+            // Use platform-aware arch suffix that distinguishes musl vs glibc
+            String arch = PlatformHelper.getToolCacheArchSuffix();
+            return agentToolsDir + "/fortify/{tool}/{version}/" + arch;
         }
         
         return null; // No pattern

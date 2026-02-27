@@ -87,7 +87,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportResultsGen
         try {
             boolean includeSubgroups = groupConfig.getIncludeSubgroups().orElse(sourceConfig().getIncludeSubgroups().orElse(true));
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.gitlab-repositories", groupId);
-            restHelper.processGroupProjects(groupId, includeSubgroups, project -> {
+            restHelper.group(groupId).queryProjects().includeSubgroups(includeSubgroups).process(project -> {
                 reportContext().repositoryProcessor().processRepository(
                     new NcdReportCombinedRepoSelectorConfig(sourceConfig(), groupConfig),
                     getRepoDescriptor(project),
@@ -149,11 +149,12 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportResultsGen
         for ( var branchDescriptor : branchDescriptors ) {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             List<Boolean> foundFlag = new ArrayList<>();
-            restHelper.processCommits(repoDescriptor.getId(), branchDescriptor.getName(), since, commit -> {
-                foundFlag.add(true);
-                addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
-                return Break.FALSE;
-            });
+            restHelper.project(repoDescriptor.getId())
+                .queryCommits().refName(branchDescriptor.getName()).since(since).process(commit -> {
+                    foundFlag.add(true);
+                    addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
+                    return Break.FALSE;
+                });
             if (!foundFlag.isEmpty()) {
                 commitsFound = true;
             }
@@ -176,8 +177,8 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportResultsGen
      */
     private List<NcdReportGitLabBranchDescriptor> getBranchDescriptors(NcdReportGitLabRepositoryDescriptor repoDescriptor) {
         List<NcdReportGitLabBranchDescriptor> result = new ArrayList<>();
-        restHelper.processBranches(repoDescriptor.getId(), 
-            branch -> {
+        restHelper.project(repoDescriptor.getId())
+            .queryBranches().process(branch -> {
                 result.add(JsonHelper.treeToValue(branch, NcdReportGitLabBranchDescriptor.class));
                 return Break.FALSE;
             });
@@ -188,7 +189,8 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportResultsGen
      * Get a single commit (most recent) for a branch.
      */
     private ArrayNode getLatestCommit(NcdReportGitLabRepositoryDescriptor repoDescriptor, NcdReportGitLabBranchDescriptor branchDescriptor) {
-        return restHelper.getLatestCommit(repoDescriptor.getId(), branchDescriptor.getName());
+        return restHelper.project(repoDescriptor.getId())
+            .getLatestCommit(branchDescriptor.getName());
     }
     
     /**

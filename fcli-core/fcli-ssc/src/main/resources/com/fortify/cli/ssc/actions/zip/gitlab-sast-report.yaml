@@ -84,15 +84,15 @@ steps:
       reportContents: {fmt: gitlab-sast-report}
       reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gl-fortify-sast.json'}"
   - if: ${reportFile!=null}
-    steps:
+    do:
       - out.write:
           ${reportFile}: ${reportContents}
       - if: ${!{'stdout','stderr'}.contains(reportFile)}
         log.info: Output written to ${reportFile}
   - if: ${cli.publish==true}
-    steps:
+    do:
       - var.set:
-          gitlabUpload: ${#gitlab.uploadSecurityReport('sast', reportContents)}
+          gitlabUpload: ${#gitlab.project().uploadSecurityReport('sast', reportContents)}
       - log.info: Report published to GitLab Security Dashboard
 
 

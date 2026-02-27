@@ -67,8 +67,11 @@ public class AdoEnvironmentTest {
         assertEquals("main", env.ciBranch().short_());
         
         assertNotNull(env.ciCommit());
-        assertEquals("9876543210abcdef9876543210abcdef98765432", env.ciCommit().id().full());
-        assertEquals("9876543", env.ciCommit().id().short_());
+        assertEquals("9876543210abcdef9876543210abcdef98765432", env.ciCommit().headId().full());
+        assertEquals("9876543", env.ciCommit().headId().short_());
+        assertEquals("9876543210abcdef9876543210abcdef98765432", env.ciCommit().mergeId().full());
+        assertEquals("9876543", env.ciCommit().mergeId().short_());
+        // For ADO, headId and mergeId are always the same
         
         assertNotNull(env.pullRequest());
         assertEquals(false, env.pullRequest().active());

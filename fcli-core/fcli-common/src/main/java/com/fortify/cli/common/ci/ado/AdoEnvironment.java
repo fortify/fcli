@@ -118,7 +118,11 @@ public record AdoEnvironment(
             .build();
         
         var ciCommit = CiCommit.builder()
-            .id(CiCommitId.builder()
+            .headId(CiCommitId.builder()
+                .full(sha)
+                .short_(StringUtils.isNotBlank(sha) && sha.length() >= 7 ? sha.substring(0, 7) : sha)
+                .build())
+            .mergeId(CiCommitId.builder()
                 .full(sha)
                 .short_(StringUtils.isNotBlank(sha) && sha.length() >= 7 ? sha.substring(0, 7) : sha)
                 .build())

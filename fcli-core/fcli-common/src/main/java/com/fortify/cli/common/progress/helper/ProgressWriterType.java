@@ -16,6 +16,8 @@ import java.io.PrintStream;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.ConsoleHelper;
@@ -54,6 +56,7 @@ public enum ProgressWriterType {
     }
     
     private static abstract class AbstractProgressWriter implements IProgressWriter {
+        private static final Logger LOG = LoggerFactory.getLogger(AbstractProgressWriter.class);
         protected final PrintStream stdout;
         protected final PrintStream stderr;
         protected final PrintStream originalStdout;
@@ -77,21 +80,49 @@ public enum ProgressWriterType {
         
         @Override
         public final void writeWarning(String message, Object... args) {
+            var formattedMessage = format(message, args);
+            LOG.debug("writeWarning: {}", formattedMessage);
             clearProgress();
-            originalStderr.println(format(message, args));
+            originalStderr.println(formattedMessage);
+        }
+        
+        @Override
+        public final void writeWarningWithException(String message, Throwable cause, Object... args) {
+            var formattedMessage = format(message, args);
+            LOG.debug("writeWarningWithException: {}", formattedMessage, cause);
+            clearProgress();
+            originalStderr.println(formattedMessage);
+            if (cause != null) {
+                originalStderr.println("Cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
+            }
         }
         
         @Override
         public final void writeProgress(String message, Object... args) {
-            writeProgress(format(message, args));
+            var formattedMessage = format(message, args);
+            LOG.debug("writeProgress: {}", formattedMessage);
+            writeProgress(formattedMessage);
         }
         
         protected abstract void writeProgress(String message);
         
         @Override
         public final void writeInfo(String message, Object... args) {
+            var formattedMessage = format(message, args);
+            LOG.debug("writeInfo: {}", formattedMessage);
             clearProgress();
-            originalStdout.println(format(message, args));
+            originalStdout.println(formattedMessage);
+        }
+        
+        @Override
+        public final void writeInfoWithException(String message, Throwable cause, Object... args) {
+            var formattedMessage = format(message, args);
+            LOG.debug("writeInfoWithException: {}", formattedMessage, cause);
+            clearProgress();
+            originalStdout.println(formattedMessage);
+            if (cause != null) {
+                originalStdout.println("Cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
+            }
         }
         
         private final String format(String message, Object... args) {

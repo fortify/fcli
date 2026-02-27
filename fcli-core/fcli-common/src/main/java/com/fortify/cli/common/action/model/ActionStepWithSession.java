@@ -45,7 +45,7 @@ import lombok.NoArgsConstructor;
              - run.fcli:  
                  myCmd: fcli fod ... --fod-session-myActionSession
         """)
-public final class ActionStepWithSession extends AbstractActionElementIf {
+public final class ActionStepWithSession extends AbstractActionStepElement {
     @JsonPropertyDescription("""
         Required SpEL template expression; the session login command to run before running \
         the steps specified in the do-block.

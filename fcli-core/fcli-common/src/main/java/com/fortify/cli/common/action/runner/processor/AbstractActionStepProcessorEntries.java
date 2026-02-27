@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.runner.processor;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.model.IActionStepElement;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 
 import lombok.Data;
@@ -23,16 +24,46 @@ import lombok.RequiredArgsConstructor;
 public abstract class AbstractActionStepProcessorEntries<T> extends AbstractActionStepProcessor {
     protected final void processEntry(T entry) {
         if ( _if(entry) ) {
-            var entryStringIfDebugEnabled = getEntryAsStringIfDebugEnabled(entry);
-            logDebug("Start processing", entryStringIfDebugEnabled, null);
-            try {
-                process(entry);
-                logDebug("End processing", entryStringIfDebugEnabled, null);
-            } catch ( Exception e ) {
-                logDebug("Error processing", entryStringIfDebugEnabled, e);
-                throw formatException(e, entryStringIfDebugEnabled, entry);
+            // Check if entry supports on.fail/on.success and if processor should use default handling
+            if (entry instanceof IActionStepElement && shouldUseDefaultErrorHandling(entry)) {
+                processWithErrorHandling((IActionStepElement) entry, () -> processEntryInternal(entry));
+            } else {
+                processEntryInternal(entry);
             }
         }
+    }
+    
+    /**
+     * Internal entry processing with original exception handling behavior.
+     * Separated to allow reuse by processWithErrorHandling.
+     */
+    private void processEntryInternal(T entry) {
+        var entryStringIfDebugEnabled = getEntryAsStringIfDebugEnabled(entry);
+        logDebug("Start processing", entryStringIfDebugEnabled, null);
+        try {
+            process(entry);
+            logDebug("End processing", entryStringIfDebugEnabled, null);
+        } catch ( Exception e ) {
+            logDebug("Error processing", entryStringIfDebugEnabled, e);
+            throw formatException(e, entryStringIfDebugEnabled, entry);
+        }
+    }
+    
+    /**
+     * Determines whether to use default error handling via processWithErrorHandling.
+     * Subclasses can override to opt out of default error handling (e.g., run.fcli and rest.call
+     * which have their own specialized error handling).
+     * 
+     * @param entry The entry being processed
+     * @return true to use default error handling, false to use processor-specific handling
+     */
+    protected boolean shouldUseDefaultErrorHandling(T entry) {
+        // Default: use generic error handling if on.fail or on.success is defined
+        if (entry instanceof IActionStepElement) {
+            var element = (IActionStepElement) entry;
+            return element.getOnFail() != null || element.getOnSuccess() != null;
+        }
+        return false;
     }
     protected abstract void process(T entry);
 

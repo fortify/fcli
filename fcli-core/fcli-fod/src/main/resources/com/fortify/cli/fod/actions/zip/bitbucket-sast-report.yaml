@@ -70,22 +70,22 @@ steps:
       reportFile: "${cli['report-file']!=null ? cli['report-file'] : cli.publish==true ? null : 'bb-fortify-report.json'}"
       annotationsFile: "${cli['annotations-file']!=null ? cli['annotations-file'] : cli.publish==true ? null : 'bb-fortify-annotations.json'}"
   - if: ${reportFile!=null}
-    steps:
+    do:
       - out.write:
           ${reportFile}: ${reportContents}
       - if: ${reportFile!='stdout'}
         log.info: Report written to ${reportFile}
   - if: ${annotationsFile!=null}
-    steps:
+    do:
       - out.write:
           ${annotationsFile}: ${annotationsContents}
       - if: ${annotationsFile!='stdout'}
         log.info: Annotations written to ${annotationsFile}
   - if: ${cli.publish==true}
-    steps:
+    do:
       - var.set:
-          bitbucketReportUpload: ${#bitbucket.uploadReport('fortify-sast', reportContents)}
-          bitbucketAnnotationsUpload: ${#bitbucket.addReportAnnotations('fortify-sast', annotationsContents)}
+          bitbucketReportUpload: ${#bitbucket.repo().uploadReport('fortify-sast', reportContents)}
+          bitbucketAnnotationsUpload: ${#bitbucket.repo().addReportAnnotations('fortify-sast', annotationsContents)}
       - log.info: Report and annotations published to Bitbucket Code Insights
 
 formatters:

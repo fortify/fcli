@@ -53,6 +53,7 @@ steps:
         - var.rm:
             - propertyRows
             - propertySections
+            - propertyControlSections
         # Iterate over all properties for the current jsonType to generate corresponding AsciiDoc tables 
         # and top-level property sections
         - records.for-each:
@@ -64,6 +65,7 @@ steps:
                   property: ${schema.propertiesByQualifiedName[jsonTypePropertyName]}
                   # Add normalized name
                   property.normalizedName: ${property.qualifiedName.replaceAll('(.*)::(.*)', '[$1] $2').replace('[action] ','')}
+                  property.normalizedControlName: ${property.normalizedName.replace('[step] ','[control] ')}
                   # Add cross references for types
                   property.jsonTypeWithLinks: ${#replaceAllFromRegExMap(property.jsonType, xrefs)}
                   # Add formatted description
@@ -78,13 +80,23 @@ steps:
                   propertyRows..:
                     fmt: propertyRow
                     value: ${property}
-                  # Add property section to propertySections array
+              - if: ${jsonType.name=='step' && property.isStepControlInstruction}
+                var.set:
+                  # Add control instruction property section to propertyControlSections array
+                  propertyControlSections..:
+                    fmt: propertySectionControl
+                    value: ${property}
+              - if: ${jsonType.name!='step' || !property.isStepControlInstruction}
+                var.set:
+                  # Add non-control property section to propertySections array
                   propertySections..:
                     fmt: propertySection
                     value: ${property}
-                  # Store propertyRows and propertySections arrays as property on current jsonType
+              - var.set:
+                  # Store propertyRows and property sections arrays as properties on current jsonType
                   jsonType.propertyRows: ${propertyRows}
                   jsonType.propertySections: ${propertySections}
+                  jsonType.controlPropertySections: ${propertyControlSections}
               
         # Generate table from property rows generated above, storing the AsciiDoc-formatted table as a property on current type
         - if: ${propertyRows!=null && propertyRows.size()>0}
@@ -103,7 +115,16 @@ steps:
         - var.set:
             jsonTypesByName.${jsonType.name}: ${jsonType}
 
-   # Process SpEL Functions
+   # Process SpEL Functions - First pass: collect all functions by name
+  - records.for-each:
+     from: ${#actionSpelFunctions()}
+     record.var-name: fn
+     do:
+        - var.set:
+            # Store all functions by name for later lookup
+            allSpelFunctionsByName.${fn.name}: ${fn}
+  
+  # Process SpEL Functions - Second pass: build documentation sections
   - records.for-each:
      from: ${#actionSpelFunctions()}
      record.var-name: fn
@@ -121,14 +142,16 @@ steps:
         # Prepend internal use warning for internal category functions
         - var.set:
             fn.finalDescription: ${(fn.category!='internal'?'':"**INTERNAL USE ONLY**\n\n")}${fn.description}
+            fn.paramTableRows: ${paramTableRows}
+            fn.hideCategory: ${displayedCategories?.contains(fn.category)?:false}
+            fn.tocName: ${fn.displayName}
                           
+        # Add functions to main sections
         - var.set:
-           fn.paramTableRows: ${paramTableRows}
-           fn.hideCategory: ${displayedCategories?.contains(fn.category)?:false}
-           ${fn.category=='internal'?'internal':'public'}SpelFunctionDescriptionSections..:
-             fmt: spelFunctionDescriptionSection
-             value: ${fn}
-           displayedCategories..: ${fn.category}
+            ${fn.category=='internal'?'internal':'public'}SpelFunctionDescriptionSections..:
+              fmt: spelFunctionDescriptionSection
+              value: ${fn}
+            displayedCategories..: ${fn.category}
                        
   - out.write:
       ${cli.outputFile}: {fmt: result}
@@ -249,16 +272,39 @@ formatters:
     provide more details on the expected contents for each property type.
     
     ${#join('\n\n', jsonTypesByName['action'].propertySections)}
-    
-    [[type-step]]
+
+    [[type-step-regular]]
     == YAML step instructions
     
-    The sections below list all supported step instructions, that can for example be used in the top-level
-    `steps` instruction, but also other instructions that accept a list of steps, for example within 
-    `for-each` blocks. Where applicable, links are provided to <<yaml-types,YAML types>> sub-sections that 
-    provide more details on the expected contents for each property type.
+    The sections below list all supported step instructions except control instructions (see next section). These can for example
+    be used in the top-level `steps` instruction, but also other instructions that accept a list of steps,
+    for example within `for-each` blocks. Where applicable, links are provided to <<yaml-types,YAML types>>
+    sub-sections that provide more details on the expected contents for each property type.
     
     ${#join('\n\n', jsonTypesByName['step'].propertySections)}
+
+    [[type-step]]
+    == YAML step control instructions
+
+    The sections below list all supported YAML step control instructions. These control instructions can be used in combination with 
+    the YAML step instructions listed in the previous section to control execution flow and success/error handling, for example:
+
+    [source,yaml]
+    ----
+    - if: ${scanResult=="PASS"}
+      log.info: Scan passed, continuing with post-scan steps
+    ----
+
+    [source,yaml]
+    ----
+    - run.fcli:
+        SSC_EXPORT:
+          cmd: ssc artifact download --appversion 123
+          on.fail:
+            - log.warn: Download failed, continuing without artifact
+    ----
+
+    ${#join('\n\n', jsonTypesByName['step'].controlPropertySections)}
     
     [[yaml-types]]
     == YAML types
@@ -325,6 +371,15 @@ formatters:
     |${formattedDescription}
     ${#isBlank(formattedSampleSnippets)?'':('a|'+formattedSampleSnippets.replace('|','\|'))}
     |===
+  propertySectionControl: |
+    === `${normalizedControlName}`
+
+    [%noheader,%autowidth.stretch]
+    |===
+    |*`${normalizedControlName}` - ${jsonTypeWithLinks}*
+    |${formattedDescription}
+    ${#isBlank(formattedSampleSnippets)?'':('a|'+formattedSampleSnippets.replace('|','\|'))}
+    |===
   typeSection: |
     [[${anchor}]]
     === `[type] ${name}`
@@ -338,11 +393,11 @@ formatters:
   spelFunctionDescriptionSection: |
     ${hideCategory?'':'=== ['+category+']'}
     ${hideCategory || category != 'internal' ? '' : '\nWARNING: Functions in this category are **INTERNAL USE ONLY** and should not be used in custom (runtime) actions. These functions may be removed, renamed, or change signature between fcli versions without notice.\n'}
-    === `${name?:'-'}`
+    ${renderInline||tocName==null?'':('=== `'+tocName+'`')}
     [%noheader,%autowidth.stretch,cols="1,~"]
     |===
     |**Signature**
-    |**`${signature}`**
+    |**`${signature.replaceFirst('#'+name, '#'+displayName)}`**
     
     ${paramTableRows==null ? '' : ('|**Parameters**\n|'+#join(' +\n', paramTableRows))}
     
@@ -354,4 +409,5 @@ formatters:
     ${returns.returnTypeStructure != null ? ('2+a|*Return Type Structure:* +\n\n' + '[source,json]\n----\n' + returns.returnTypeStructure + '\n----\n') : ''}
     
     |===
+
     

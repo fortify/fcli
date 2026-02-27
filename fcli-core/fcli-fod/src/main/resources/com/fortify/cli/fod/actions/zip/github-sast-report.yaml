@@ -67,6 +67,8 @@ steps:
       issueSourceFileResolver: ${#issueSourceFileResolver({workspaceDir:cli.workspaceDir,sourceDir:cli.sourceDir})}
       doOutputSarif: ${cli.type==null || cli.type=='sarif'}
       doOutputCheckRun: ${cli.type==null || cli.type=='check-run'}
+      dateFmt: YYYY-MM-dd HH:mm
+      issueCount: 0
   - log.progress: Loading static scan summary
   - rest.call:
       staticScanSummary:
@@ -95,12 +97,15 @@ steps:
             traces:
               uri: /api/v3/releases/${rel.releaseId}/vulnerabilities/${issue.vulnId}/traces 
           do:
+            - var.set:
+                issueCount: ${issueCount+1}
+                issueCountBySeverity: {fmt: issueCountIncrement}
             - if: ${doOutputSarif}
               var.set:
                 rules..: {fmt: rules, if: "${ruleCache==null || ruleCache[issue.checkId]==null}"}
                 ruleCache.${issue.checkId}: true
                 results..: {fmt: results}
-            - if: ${doOutputCheckRun}
+            - if: ${doOutputCheckRun && issueSourceFileResolver.exists(issue.primaryLocationFull, issue.lineNumber==0?1:issue.lineNumber)}
               var.set:
                 checkRunAnnotations..: {fmt: checkRunAnnotation}
   - if: ${doOutputSarif}
@@ -108,51 +113,55 @@ steps:
       reportContents: {fmt: github-sast-report}
   - if: ${doOutputCheckRun}
     var.set:
-      checkRunSummary: {fmt: checkRunSummary}
+      checkRunBody: {fmt: checkRunBody}
   - var.set:
       reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gh-fortify-sast.sarif'}"
   - if: ${reportFile!=null}
-    steps:
+    do:
       - out.write:
           ${reportFile}: ${reportContents}
       - if: ${!{'stdout','stderr'}.contains(reportFile)}
         log.info: Output written to ${reportFile}
   - if: ${cli.publish==true}
-    steps:
+    do:
       - if: ${cli.dryrun}
-        steps:
+        do:
           - if: ${doOutputSarif}
-            steps:
+            do:
               - log.info: |
                   
                   ===== SARIF contents =====
                   ${reportContents}
           - if: ${doOutputCheckRun}
-            steps:
+            do:
               - log.info: |
                   
-                  ===== Check Run Summary =====
-                  ${checkRunSummary}
-                  
-                  ===== Check Run Annotations (${checkRunAnnotations?.getRealNode()?.size()?:0} total) =====
-                  ${checkRunAnnotations}
+                  ===== Check Run Body =====
+                  ${checkRunBody}
       - if: ${!cli.dryrun && doOutputSarif}
-        steps:
+        do:
           - var.set:
-              uploadResult: ${#github.tryUploadSarif(reportContents)}
-          - if: ${uploadResult.success}
-            log.info: Report published to GitHub Code Scanning
-          - if: ${!uploadResult.success && uploadResult.reason=='ghas_unavailable' && cli.type==null}
-            steps:
+              sarifUploadResponse: ${#github.repo().uploadSarif(reportContents)}
+              sarifUploaded: true
+            on.fail:
+              - if: ${!doOutputCheckRun}
+                throw:
+                  msg: 'Failed to publish SARIF report'
+                  cause: ${lastException}
+              - if: ${lastException.type=='GhasUnavailableException'}
+                log.info: GitHub Advanced Security not available, will try Check Run fallback
+              - if: ${lastException.type!='GhasUnavailableException'}
+                log.warn:
+                  msg: 'SARIF upload failed, will try Check Run fallback'
+                  cause: ${lastException}
               - var.set:
-                  checkRun: ${#github.createCheckRunWithAnnotations('Fortify SAST Scan', 'completed', 'neutral', 'Fortify Security Scan Results', checkRunSummary, checkRunAnnotations)}
-              - log.info: Published as GitHub Check Run (free tier - GHAS not available)
-          - if: ${!uploadResult.success && uploadResult.reason!='ghas_unavailable'}
-            throw: 'Failed to publish report: ${uploadResult.message}'
-      - if: ${!cli.dryrun && cli.type=='check-run'}
-        steps:
+                  sarifUploaded: false
+            on.success:
+              - log.info: Report published to GitHub Code Scanning
+      - if: ${!cli.dryrun && doOutputCheckRun && (!doOutputSarif || !sarifUploaded)}
+        do:
           - var.set:
-              checkRun: ${#github.createCheckRunWithAnnotations('Fortify SAST Scan', 'completed', 'neutral', 'Fortify Security Scan Results', checkRunSummary, checkRunAnnotations)}
+              checkRun: ${#github.repo().createCheckRun(checkRunBody)}
           - log.info: Published as GitHub Check Run
 
 formatters:
@@ -245,35 +254,41 @@ formatters:
         }
         
   # Check Run formatters for free-tier GitHub reporting
-  checkRunSummary: |
-    ## Fortify SAST Scan Results
-    
-    **Application:** ${rel.applicationName}  
-    **Release:** ${rel.releaseName}  
-    **Total Issues:** ${issues?.getRealNode()?.size()?:0}
-    
-    ### Issues by Severity
-    
-    | Severity | Count |
-    |----------|-------|
-    | Critical | ${issues?.^[severityString=='Critical']?.getRealNode()?.size()?:0} |
-    | High | ${issues?.^[severityString=='High']?.getRealNode()?.size()?:0} |
-    | Medium | ${issues?.^[severityString=='Medium']?.getRealNode()?.size()?:0} |
-    | Low | ${issues?.^[severityString=='Low']?.getRealNode()?.size()?:0} |
-    
-    See annotations below for detailed findings at specific file locations.
-    
+  checkRunBody:
+    name: fortify-sast
+    status: completed
+    conclusion: ${issueCount==0?'success':'neutral'}
+    details_url: ${#fod.releaseBrowserUrl(rel)}
+    output:
+      title: Fortify SAST Scan Results
+      summary: |
+        ## [${rel.applicationName} - ${rel.releaseName}](${#fod.releaseBrowserUrl(rel)})
+
+        **Summary generated on:** ${#formatDateTime(dateFmt)}
+        **Total Issues in FoD:** ${issueCount}  
+
+        ### Issues by Severity
+        
+        | Critical | High | Medium | Low |
+        |----------|------|--------|-----|
+        | ${issueCountBySeverity?.Critical?:0} | ${issueCountBySeverity?.High?:0} | ${issueCountBySeverity?.Medium?:0} | ${issueCountBySeverity?.Low?:0} |
+        
+        **Note:** Only a subset of issues may be included in the annotations below; for more details and to view all issues, please check the [results in FoD](${#fod.releaseBrowserUrl(rel)}).
+      annotations: ${checkRunAnnotations?:{}}
+      
   checkRunAnnotation:
-    if: ${issueSourceFileResolver.exists(issue.primaryLocationFull, issue.lineNumber==0?1:issue.lineNumber)}
     path: ${issueSourceFileResolver.resolve(issue.primaryLocationFull)}
     start_line: ${issue.lineNumber==0?1:issue.lineNumber}
     end_line: ${issue.lineNumber==0?1:issue.lineNumber}
-    annotation_level: ${(issue.severityString matches "(Critical|High)") ? "warning":"notice"}
-    title: ${issue.category}
+    annotation_level: notice # GitHub only allows for 10 warn/fail annotations per check run, so we set all annotations to notice and use severity info in the title instead
+    title: ${issue.category} (${issue.severityString})
     message: |
-      **${issue.category}** (Severity: ${issue.severityString})
+      ${#cleanIssueDescription(issue.details?.summary)?.trim()?:''}
+      For more details, see: ${#fod.issueBrowserUrl(issue)}
       
-      ${#cleanIssueDescription(issue.details?.summary)}
-      
-      [View in FoD](${#fod.issueBrowserUrl(issue)})
+  issueCountIncrement:
+    Critical: "${issue.severityString=='Critical' ? (issueCountBySeverity?.Critical?:0)+1 : (issueCountBySeverity?.Critical?:0)}"
+    High: "${issue.severityString=='High' ? (issueCountBySeverity?.High?:0)+1 : (issueCountBySeverity?.High?:0)}"
+    Medium: "${issue.severityString=='Medium' ? (issueCountBySeverity?.Medium?:0)+1 : (issueCountBySeverity?.Medium?:0)}"
+    Low: "${issue.severityString=='Low' ? (issueCountBySeverity?.Low?:0)+1 : (issueCountBySeverity?.Low?:0)}"
       

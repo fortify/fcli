@@ -68,7 +68,7 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
         var orgName = orgConfig.getName();
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.ado-projects", orgName);
-            restHelper.processProjects(projectNode -> {
+            restHelper.organization(orgName).queryProjects().process(projectNode -> {
                 var projectName = projectNode.get("name").asText();
                 var projectConfig = new NcdReportAdoProjectConfig();
                 projectConfig.setName(projectName);
@@ -85,7 +85,7 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
         var projectName = projectConfig.getName();
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.ado-repositories", orgName+"/"+projectName);
-            restHelper.processRepositories(projectName, repoNode -> {
+            restHelper.project(orgName, projectName).queryRepositories().process(repoNode -> {
                 processRepository(restHelper, orgConfig, projectConfig, repoNode);
                 return Break.FALSE;
             });
@@ -136,8 +136,8 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
         for ( var branchDescriptor : branchDescriptors ) {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             List<Boolean> foundFlag = new ArrayList<>();
-            restHelper.processCommits(repoDescriptor.getProjectName(), repoDescriptor.getId(), 
-                branchDescriptor.getName(), since, commit -> {
+            restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
+                .queryCommits().branchName(branchDescriptor.getName()).fromDate(since).process(commit -> {
                     foundFlag.add(true);
                     addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
                     return Break.FALSE;
@@ -157,8 +157,8 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
     
     private List<NcdReportAdoBranchDescriptor> getBranchDescriptors(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor) {
         List<NcdReportAdoBranchDescriptor> result = new ArrayList<>();
-        restHelper.processBranches(repoDescriptor.getProjectName(), repoDescriptor.getId(), 
-            branch -> {
+        restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
+            .queryBranches().process(branch -> {
                 result.add(JsonHelper.treeToValue(branch, NcdReportAdoBranchDescriptor.class));
                 return Break.FALSE;
             });
@@ -166,7 +166,8 @@ public class NcdReportAdoResultsGenerator extends AbstractNcdReportResultsGenera
     }
 
     private ObjectNode getLatestCommit(AdoRestHelper restHelper, NcdReportAdoRepositoryDescriptor repoDescriptor, NcdReportAdoBranchDescriptor branchDescriptor) {
-        return restHelper.getLatestCommit(repoDescriptor.getProjectName(), repoDescriptor.getId(), branchDescriptor.getName());
+        return restHelper.repository(repoDescriptor.getOrganizationName(), repoDescriptor.getProjectName(), repoDescriptor.getId())
+            .getLatestCommit(branchDescriptor.getName());
     }
 
     private NcdReportAdoRepositoryDescriptor getRepoDescriptor(JsonNode repoNode) {

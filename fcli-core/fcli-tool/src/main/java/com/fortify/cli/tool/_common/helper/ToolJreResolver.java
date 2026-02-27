@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.JreHelper;
@@ -29,6 +31,7 @@ import lombok.Data;
  * Provides smart fallback logic and handles JRE upgrades for ENV_VAR sources.
  */
 public class ToolJreResolver {
+    private static final Logger LOG = LoggerFactory.getLogger(ToolJreResolver.class);
     
     /**
      * Resolves Java executable path for running a tool.
@@ -43,6 +46,7 @@ public class ToolJreResolver {
      */
     public static JreResolveResult resolveJavaCommand(JreResolveConfig config) {
         JreSource source = config.descriptor.getJreSource();
+        LOG.debug("Resolving Java command with JRE source: {}", source);
         
         // 1. EMBEDDED: Always use embedded JRE
         if (source == JreSource.EMBEDDED) {
@@ -60,9 +64,11 @@ public class ToolJreResolver {
     
     private static JreResolveResult resolveEmbeddedJre(JreResolveConfig config) {
         Path embeddedJre = config.descriptor.getInstallPath().resolve("jre");
+        LOG.debug("Checking for embedded JRE at: {}", embeddedJre);
         Path javaExec = resolveJavaExecutable(embeddedJre, config.javaExecutableName);
         
         if (javaExec != null && Files.exists(javaExec)) {
+            LOG.debug("Found embedded Java executable: {}", javaExec);
             return JreResolveResult.builder()
                 .javaCommand(javaExec.toString())
                 .javaHome(embeddedJre.toString())
@@ -70,6 +76,7 @@ public class ToolJreResolver {
         }
         
         // Embedded JRE missing - fallback to PATH
+        LOG.debug("Embedded JRE not found, falling back to PATH");
         return JreResolveResult.builder()
             .javaCommand(config.javaExecutableName)
             .build();
@@ -77,6 +84,7 @@ public class ToolJreResolver {
     
     private static JreResolveResult resolveExplicitJre(JreResolveConfig config) {
         String storedPath = config.descriptor.getJreHome();
+        LOG.debug("Using explicit JRE path: {}", storedPath);
         
         if (StringUtils.isBlank(storedPath)) {
             throw new FcliSimpleException(
@@ -94,6 +102,7 @@ public class ToolJreResolver {
             ));
         }
         
+        LOG.debug("Found explicit Java executable: {}", javaExec);
         return JreResolveResult.builder()
             .javaCommand(javaExec.toString())
             .javaHome(storedPath)
@@ -101,6 +110,9 @@ public class ToolJreResolver {
     }
     
     private static JreResolveResult resolveWithEnvFallback(JreResolveConfig config) {
+        LOG.debug("Resolving JRE with environment variable fallback (stored path: {}, env var: {})", 
+            config.descriptor.getJreHome(), config.descriptor.getJreEnvVar());
+        
         // First try environment variables (handles upgrades)
         var detectionResult = JreHelper.findJavaHomeWithFallbacks(
             config.envVarPrefixes,
@@ -109,33 +121,43 @@ public class ToolJreResolver {
         );
         
         if (detectionResult != null) {
+            LOG.debug("Environment variable check found: {}={}", 
+                detectionResult.getEnvVarName(), detectionResult.getJavaHome());
             Path javaExec = resolveJavaExecutable(
                 Path.of(detectionResult.getJavaHome()), 
                 config.javaExecutableName
             );
             
             if (javaExec != null && Files.exists(javaExec)) {
+                LOG.debug("Using Java from environment: {}", javaExec);
                 return JreResolveResult.builder()
                     .javaCommand(javaExec.toString())
                     .javaHome(detectionResult.getJavaHome())
                     .build();
+            } else {
+                LOG.debug("Java executable not found at detected path, trying stored path");
             }
         }
         
         // Fallback to stored path (if env vars didn't work)
         String storedPath = config.descriptor.getJreHome();
         if (StringUtils.isNotBlank(storedPath)) {
+            LOG.debug("Checking stored path: {}", storedPath);
             Path javaExec = resolveJavaExecutable(Path.of(storedPath), config.javaExecutableName);
             
             if (javaExec != null && Files.exists(javaExec)) {
+                LOG.debug("Using Java from stored path: {}", javaExec);
                 return JreResolveResult.builder()
                     .javaCommand(javaExec.toString())
                     .javaHome(storedPath)
                     .build();
+            } else {
+                LOG.debug("Java executable not found at stored path, falling back to PATH");
             }
         }
         
         // Final fallback to PATH
+        LOG.debug("Using java from PATH: {}", config.javaExecutableName);
         return JreResolveResult.builder()
             .javaCommand(config.javaExecutableName)
             .build();
@@ -143,8 +165,20 @@ public class ToolJreResolver {
     
     private static Path resolveJavaExecutable(Path javaHome, String executableName) {
         if (javaHome == null) return null;
+        
+        // Check bin subdirectory first
         Path javaExec = javaHome.resolve("bin").resolve(executableName);
-        return Files.exists(javaExec) ? javaExec : null;
+        if (Files.exists(javaExec)) {
+            return javaExec;
+        }
+        
+        // Check jre/bin subdirectory (older JDK layouts)
+        Path jreBinExec = javaHome.resolve("jre").resolve("bin").resolve(executableName);
+        if (Files.exists(jreBinExec)) {
+            return jreBinExec;
+        }
+        
+        return null;
     }
     
     /**

@@ -24,6 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
+import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctions;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -56,7 +60,8 @@ import lombok.SneakyThrows;
 // TODO Also see TODO comments in IssueSourceFileResolverTest
 // TODO How to handle absolute paths? Always return as-is (or null if not existing and OnNoMatch.NULL)? Or try to resolve against workspacePath?
 // TODO How to handle drive letters (with either absolute or relative path)?
-@Builder @Reflectable
+// NOTE: Any changes to this class will result in action schema changes, so action schema version should be bumped when modifying this class, and the changelog should include a note about potential impact on users' custom actions that use this class.
+@Builder @Reflectable @SpelFunctions
 public class IssueSourceFileResolver {
     private static final Logger LOG = LoggerFactory.getLogger(IssueSourceFileResolver.class);
     /** Workspace/repository root directory path for indexing and resolving file paths */
@@ -67,60 +72,20 @@ public class IssueSourceFileResolver {
     @Builder.Default private final FileSeparator separatorOnReturn = FileSeparator.LINUX;
     private final AtomicReference<SourceFileIndex> indexReference = new AtomicReference<>();
     
-    /**
-     * Find the given {@link Path} in the configured source path. Based on the Fortify behavior
-     * described in the class description, if the configured source path contains a single file 
-     * <code>src/main/java/com/fortify/X.java</code>, this method will return a relative {@link Path} 
-     * representing <code>src/main/java/com/fortify/X.java</code> for each of the following input paths:
-     * <ul>
-     *  <li><code>scancentral123/work/src/main/java/com/fortify/X.java</code></li>
-     *  <li><code>any/leading/dir/src/main/java/com/fortify/X.java</code></li>
-     *  <li><code>src/main/java/com/fortify/X.java</code></li>
-     *  <li><code>main/java/com/fortify/X.java</code></li>
-     *  <li><code>java/com/fortify/X.java</code></li>
-     *  <li><code>com/fortify/X.java</code></li>
-     *  <li><code>fortify/X.java</code></li>
-     *  <li><code>X.java</code></li>
-     * </ul>
-     * Any other input path will be considered a non-matching path, in which case either the given 
-     * path or <code>null</code> will be returned, based on the configured {@link OnNoMatch} setting.
-     * In particular, note that if the given path includes a leading directory, it will only match
-     * if any of its sub-paths match the full relative source path. With the example above, this
-     * means that <code>scancentral123/work/com/fortify/X.java</code> will be considered non-matching,
-     * as it lacks the <code>src/main/java</code> path.
-     */
-    public final Path resolve(Path issuePath) {
-        var result = indexReference.updateAndGet(this::createIndexIfNull).resolve(issuePath);
-        if ( result!=null && LOG.isTraceEnabled() ) { LOG.trace("Resolved issue path {} to source path {}", issuePath, result); }
-        if ( result==null && onNoMatch==OnNoMatch.ORIGINAL ) {
-            result = issuePath;
-        }
-        return result;
-    }
-    
-    /**
-     * This is the {@link String}-based variant of {@link #resolve(Path)}:
-     * <ol>
-     *  <li>Convert the given {@link String} into a {@link Path} instance</li>
-     *  <li>Call the {@link #resolve(Path)} method to find this path in the configured source path</li>
-     *  <li>Convert the {@link Path} instance returned by {@link #resolve(Path)} into a {@link String},
-     *      using the configured {@link #separatorOnReturn} file separator.</li>
-     * </ol>
-     */
-    public final String resolve(String issuePath) {
+    @SpelFunction(cat=SpelFunctionCategory.fortify,
+            desc="Resolves Fortify-reported issue path to workspace-relative path string using configured file separator",
+            returns="Workspace-relative path string, or null/original based on onNoMatch setting")
+    public final String resolve(
+            @SpelFunctionParam(name="issuePath", desc="Fortify-reported source file path") String issuePath) {
         return FileUtils.pathToString(resolve(Path.of(issuePath)), separatorOnReturn.getSeparatorChar());
     }
     
-    /**
-     * Check if the given issue path can be resolved to an existing file at the specified line number.
-     * This is useful for validating issue locations before creating annotations or reports.
-     * 
-     * @param issuePath The Fortify-reported source file path
-     * @param lineNumber The line number to validate (1-based)
-     * @return true if workspacePath is null (no validation possible), or if the resolved file exists 
-     *         as a regular file and the line number is valid (>0)
-     */
-    public final boolean exists(String issuePath, int lineNumber) {
+    @SpelFunction(cat=SpelFunctionCategory.fortify,
+            desc="Validates that resolved path exists as a regular file with valid line number (>0)",
+            returns="true if workspacePath is null (no validation), or if resolved file exists and lineNumber > 0")
+    public final boolean exists(
+            @SpelFunctionParam(name="issuePath", desc="Fortify-reported source file path") String issuePath,
+            @SpelFunctionParam(name="lineNumber", desc="Line number to validate (1-based)") int lineNumber) {
         if ( workspacePath == null ) {
             return true; // No validation possible without source path
         }
@@ -135,6 +100,19 @@ public class IssueSourceFileResolver {
         return Files.exists(fullPath) && Files.isRegularFile(fullPath);
         // Note: We don't validate the actual line count as it would require reading the entire file,
         // which could be expensive for large codebases. GitHub will handle non-existent lines gracefully.
+    }
+
+    /**
+     * Path-based variant of {@link #resolve(String)}. Not exposed as SpEL function to avoid
+     * name collision; use the String-based variant in actions.
+     */
+    private final Path resolve(Path issuePath) {
+        var result = indexReference.updateAndGet(this::createIndexIfNull).resolve(issuePath);
+        if ( result!=null && LOG.isTraceEnabled() ) { LOG.trace("Resolved issue path {} to source path {}", issuePath, result); }
+        if ( result==null && onNoMatch==OnNoMatch.ORIGINAL ) {
+            result = issuePath;
+        }
+        return result;
     }
     
     private final SourceFileIndex createIndexIfNull(SourceFileIndex index) {

@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.model;
 import java.util.LinkedHashMap;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -44,7 +45,9 @@ import lombok.NoArgsConstructor;
                 headers:
                   Authorization: ${exampleAuth}
         """)
-public final class ActionStepRestTargetEntry extends AbstractActionElementIf {
+public final class ActionStepRestTargetEntry extends AbstractActionStepElement implements IMapKeyAware<String> {
+    @JsonIgnore private String key;
+    
     @JsonPropertyDescription("""
         Required SpEL template expression: Base URL to use for REST requests to this request target.
         """)

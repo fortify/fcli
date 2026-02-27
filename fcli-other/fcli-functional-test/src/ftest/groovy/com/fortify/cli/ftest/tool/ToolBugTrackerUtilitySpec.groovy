@@ -70,5 +70,8 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
             }
     }
     
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
     
 }

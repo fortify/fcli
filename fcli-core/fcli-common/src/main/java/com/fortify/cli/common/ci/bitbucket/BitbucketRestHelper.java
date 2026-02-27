@@ -12,54 +12,44 @@
  */
 package com.fortify.cli.common.ci.bitbucket;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Bitbucket REST helper exposing Code Insights report operations. This helper
- * is shared between commands and actions to avoid duplicating request logic.
+ * Bitbucket REST API helper factory providing fluent API for repository operations.
+ * This class can be used from commands, actions, and other modules.
+ * 
+ * <p>Usage examples:
+ * <pre>{@code
+ * // Repository-scoped operations
+ * var repo = restHelper.repository("workspace", "repo-slug");
+ * repo.upsertCommitReport(commitSha, reportId, reportContent);
+ * repo.addReportAnnotations(commitSha, reportId, annotationsContent);
+ * }</pre>
+ * 
+ * @author rsenden
  */
 @Reflectable
 @RequiredArgsConstructor
 public class BitbucketRestHelper {
     private final BitbucketUnirestInstanceSupplier unirestInstanceSupplier;
 
-    public ObjectNode upsertCommitReport(String workspace, String repoSlug, String commitSha,
-            String reportId, String reportContent) {
-        return getUnirest()
-            .put("/repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{report_id}")
-            .routeParam("workspace", workspace)
-            .routeParam("repo_slug", repoSlug)
-            .routeParam("commit", commitSha)
-            .routeParam("report_id", reportId)
-            .header("Content-Type", "application/json")
-            .body(reportContent)
-            .asObject(ObjectNode.class)
-            .getBody();
+    /**
+     * Create a repository-scoped API client for the specified repository.
+     * 
+     * @param workspace Workspace name
+     * @param repoSlug Repository slug
+     * @return Repository-scoped client
+     */
+    public BitbucketRepository repository(String workspace, String repoSlug) {
+        return new BitbucketRepository(getUnirest(), workspace, repoSlug);
     }
 
-    public ObjectNode addReportAnnotations(String workspace, String repoSlug, String commitSha,
-            String reportId, String annotationsContent) {
-        var body = annotationsContent;
-        if (annotationsContent == null) {
-            body = JsonHelper.getObjectMapper().createArrayNode().toString();
-        }
-        return getUnirest()
-            .post("/repositories/{workspace}/{repo_slug}/commit/{commit}/reports/{report_id}/annotations")
-            .routeParam("workspace", workspace)
-            .routeParam("repo_slug", repoSlug)
-            .routeParam("commit", commitSha)
-            .routeParam("report_id", reportId)
-            .header("Content-Type", "application/json")
-            .body(body)
-            .asObject(ObjectNode.class)
-            .getBody();
-    }
-
+    /**
+     * Get the UnirestInstance from the supplier.
+     */
     private UnirestInstance getUnirest() {
         return unirestInstanceSupplier.getUnirestInstance();
     }

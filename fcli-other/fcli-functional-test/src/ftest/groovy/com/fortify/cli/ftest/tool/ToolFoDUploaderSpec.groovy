@@ -156,4 +156,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
             }
     }
     
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
 }

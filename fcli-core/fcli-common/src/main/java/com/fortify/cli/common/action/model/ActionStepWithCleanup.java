@@ -35,7 +35,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 @JsonTypeName("with-cleanup")
 @JsonClassDescription("Define steps to run before and after the steps defined in the `do` block.")
-public final class ActionStepWithCleanup extends AbstractActionElementIf {
+public final class ActionStepWithCleanup extends AbstractActionStepElement {
     // TODO Add property that allows for installing a shutdown hook
     @JsonPropertyDescription("""
         Required list of initialization steps to be run before the steps in the do-block will be \

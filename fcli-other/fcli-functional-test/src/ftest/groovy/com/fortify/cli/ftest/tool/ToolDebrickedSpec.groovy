@@ -71,4 +71,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
             }
     }
     
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
 }

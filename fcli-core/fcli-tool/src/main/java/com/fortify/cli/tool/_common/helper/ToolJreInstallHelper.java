@@ -16,8 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.JreHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor.JreSource;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
@@ -30,6 +33,7 @@ import lombok.Data;
  * Handles auto-detection from environment variables when explicit JRE options are not provided.
  */
 public class ToolJreInstallHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(ToolJreInstallHelper.class);
     
     /**
      * Determines JRE configuration for tool installation based on user options and environment.
@@ -38,8 +42,11 @@ public class ToolJreInstallHelper {
      * @return JRE configuration result indicating source and path
      */
     public static JreInstallResult determineJreConfig(JreInstallConfig config) {
+        LOG.debug("Determining JRE configuration for {} installation", config.toolName);
+        
         // 1. Explicit JRE path provided by user (--jre option)
         if (config.explicitJrePath != null) {
+            LOG.debug("Using explicit JRE path: {}", config.explicitJrePath);
             validateJreCompatibility(config.explicitJrePath, config.versionDescriptor, config.toolName);
             return JreInstallResult.builder()
                 .jreSource(JreSource.EXPLICIT)
@@ -49,33 +56,81 @@ public class ToolJreInstallHelper {
         
         // 2. Embedded JRE requested (--with-jre option)
         if (config.requestEmbeddedJre) {
+            LOG.debug("Embedded JRE explicitly requested");
             return JreInstallResult.builder()
                 .jreSource(JreSource.EMBEDDED)
                 .jrePath(config.embeddedJrePath.toAbsolutePath().normalize().toString())
                 .build();
         }
         
-        // 3. Auto-detect from environment variables
-        var detectionResult = JreHelper.findJavaHomeFromEnv(
-            config.envVarPrefixes,
-            getCompatibleJavaVersions(config.versionDescriptor)
-        );
-        
-        if (detectionResult != null) {
-            // Validate that Java actually exists at the detected path
-            Path detectedJrePath = Path.of(detectionResult.getJavaHome());
-            if (isJavaExecutablePresent(detectedJrePath)) {
-                return JreInstallResult.builder()
-                    .jreSource(JreSource.ENV_VAR)
-                    .jrePath(detectionResult.getJavaHome())
-                    .jreEnvVarName(detectionResult.getEnvVarName())
-                    .build();
+        // 3. Check tool-specific environment variables (fail immediately if set but invalid)
+        if (config.envVarPrefixes != null) {
+            for (String prefix : config.envVarPrefixes) {
+                String envVarName = prefix + "_JAVA_HOME";
+                String javaHome = EnvHelper.env(envVarName);
+                if (StringUtils.isNotBlank(javaHome)) {
+                    LOG.debug("Checking tool-specific env var {}={}", envVarName, javaHome);
+                    Path jrePath = Path.of(javaHome);
+                    Path javaExecutable = JreHelper.findJavaExecutable(jrePath);
+                    
+                    if (javaExecutable == null) {
+                        throw new FcliSimpleException(String.format(
+                            "Environment variable %s is set to '%s', but no java executable found. " +
+                            "Please ensure the path points to a valid JRE/JDK with java in bin/ or jre/bin/ subdirectory.",
+                            envVarName, javaHome
+                        ));
+                    }
+                    
+                    String validationError = validateJavaExecutable(javaExecutable);
+                    if (validationError != null) {
+                        throw new FcliSimpleException(String.format(
+                            "Environment variable %s points to '%s', but java executable is not usable: %s",
+                            envVarName, javaHome, validationError
+                        ));
+                    }
+                    
+                    LOG.debug("Successfully validated Java at {} from {}", javaExecutable, envVarName);
+                    return JreInstallResult.builder()
+                        .jreSource(JreSource.ENV_VAR)
+                        .jrePath(jrePath.toAbsolutePath().normalize().toString())
+                        .jreEnvVarName(envVarName)
+                        .build();
+                }
             }
-            // If detected path is invalid, fall through to install embedded JRE
         }
         
-        // 4. No JRE found - use embedded JRE unless explicitly skipped with --no-with-jre
+        // 4. Check version-specific environment variables (with fallback chain)
+        String[] compatibleVersions = getCompatibleJavaVersions(config.versionDescriptor);
+        if (compatibleVersions != null) {
+            LOG.debug("Searching for compatible Java versions: {}", String.join(", ", compatibleVersions));
+            String osArch = System.getProperty("os.arch", "").toUpperCase();
+            
+            for (String version : compatibleVersions) {
+                // Try JAVA_HOME_<version>_<arch> with raw os.arch value
+                if (StringUtils.isNotBlank(osArch)) {
+                    String envVarName = "JAVA_HOME_" + version + "_" + osArch;
+                    JreInstallResult result = tryVersionEnvVar(envVarName, version);
+                    if (result != null) return result;
+                }
+                
+                // Try GitHub Actions-style patterns (e.g., JAVA_HOME_17_X64)
+                {
+                    String githubActionsArch = com.fortify.cli.common.util.PlatformHelper.getGitHubActionsArchSuffix();
+                    String envVarName = "JAVA_HOME_" + version + "_" + githubActionsArch;
+                    JreInstallResult result = tryVersionEnvVar(envVarName, version);
+                    if (result != null) return result;
+                }
+                
+                // Try JAVA_HOME_<version>
+                String envVarName = "JAVA_HOME_" + version;
+                JreInstallResult result = tryVersionEnvVar(envVarName, version);
+                if (result != null) return result;
+            }
+        }
+        
+        // 5. No valid JRE found - use embedded JRE unless explicitly skipped with --no-with-jre
         if (config.skipEmbeddedJre) {
+            LOG.debug("No JRE found in environment variables and embedded JRE disabled. Runtime will use JAVA_HOME/PATH fallback.");
             // User explicitly disabled embedded JRE, don't store any JRE path
             // Runtime will use ENV_VAR logic (including JAVA_HOME and PATH fallback)
             return JreInstallResult.builder()
@@ -85,11 +140,90 @@ public class ToolJreInstallHelper {
         }
         
         // Default to embedded JRE
+        LOG.debug("No valid JRE found in environment. Will install embedded JRE at {}", config.embeddedJrePath);
         return JreInstallResult.builder()
             .jreSource(JreSource.EMBEDDED)
             .jrePath(config.embeddedJrePath.toAbsolutePath().normalize().toString())
             .requiresEmbeddedJreInstall(true)
             .build();
+    }
+    
+    /**
+     * Tries to use a version-specific environment variable. Returns null if not set or invalid.
+     * Logs warnings for invalid configurations but continues (allows fallback to next version).
+     */
+    private static JreInstallResult tryVersionEnvVar(String envVarName, String version) {
+        String javaHome = EnvHelper.env(envVarName);
+        if (StringUtils.isBlank(javaHome)) {
+            return null; // Not set, try next
+        }
+        
+        LOG.debug("Checking version-specific env var {}={}", envVarName, javaHome);
+        Path jrePath = Path.of(javaHome);
+        Path javaExecutable = JreHelper.findJavaExecutable(jrePath);
+        
+        if (javaExecutable == null) {
+            LOG.warn("Environment variable {} is set to '{}', but no java executable found. Trying next version...", 
+                envVarName, javaHome);
+            return null;
+        }
+        
+        String validationError = validateJavaExecutable(javaExecutable);
+        if (validationError != null) {
+            LOG.warn("Environment variable {} points to '{}', but java executable is not usable: {}. Trying next version...",
+                envVarName, javaHome, validationError);
+            return null;
+        }
+        
+        LOG.debug("Successfully validated Java at {} from {}", javaExecutable, envVarName);
+        return JreInstallResult.builder()
+            .jreSource(JreSource.ENV_VAR)
+            .jrePath(jrePath.toAbsolutePath().normalize().toString())
+            .jreEnvVarName(envVarName)
+            .build();
+    }
+    
+    /**
+     * Validates that a Java executable is actually runnable by executing 'java -version'.
+     * Returns null if valid, or an error message describing the problem.
+     */
+    private static String validateJavaExecutable(Path javaExecutable) {
+        if (javaExecutable == null || !Files.exists(javaExecutable)) {
+            return "File does not exist";
+        }
+        
+        if (!Files.isRegularFile(javaExecutable)) {
+            return "Not a regular file";
+        }
+        
+        if (!Files.isExecutable(javaExecutable)) {
+            return "File is not executable (check permissions)";
+        }
+        
+        // Try to actually run java -version to ensure it's compatible with the platform
+        try {
+            LOG.debug("Validating Java executable: {}", javaExecutable);
+            ProcessBuilder pb = new ProcessBuilder(javaExecutable.toString(), "-version");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            
+            boolean finished = process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                return "Process timed out after 5 seconds";
+            }
+            
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                return String.format("Process exited with code %d (may be incompatible with platform, e.g., Alpine musl vs glibc)", exitCode);
+            }
+            
+            LOG.debug("Java executable validation succeeded");
+            return null; // Success
+            
+        } catch (Exception e) {
+            return String.format("Failed to execute: %s", e.getMessage());
+        }
     }
     
     /**
@@ -108,19 +242,6 @@ public class ToolJreInstallHelper {
                 detectedVersion != null ? detectedVersion : "unknown"
             ));
         }
-    }
-    
-    /**
-     * Checks if a Java executable exists at the given JRE path.
-     */
-    private static boolean isJavaExecutablePresent(Path jrePath) {
-        if (jrePath == null || !Files.exists(jrePath)) {
-            return false;
-        }
-        var javaExecutable = jrePath.resolve("bin").resolve(
-            com.fortify.cli.common.util.PlatformHelper.isWindows() ? "java.exe" : "java"
-        );
-        return Files.exists(javaExecutable) && Files.isRegularFile(javaExecutable);
     }
     
     /**

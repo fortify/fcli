@@ -21,14 +21,23 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.expression.Expression;
+import org.springframework.expression.common.TemplateParserContext;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.tool.env.helper.ToolEnvContext;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -36,6 +45,10 @@ import picocli.CommandLine.Option;
 
 @Command(name = "expr")
 public final class ToolEnvExprCommand extends AbstractToolEnvCommand {
+    private static final SpelExpressionParser PARSER = new SpelExpressionParser();
+    private static final TemplateParserContext TEMPLATE_CONTEXT = new TemplateParserContext("{", "}");
+    private static final Map<String, Expression> EXPRESSION_CACHE = new ConcurrentHashMap<>();
+
     @DisableTest({TestType.MULTI_OPT_PLURAL_NAME, TestType.MULTI_OPT_SPLIT, TestType.OPT_ARITY_VARIABLE})
     @Option(names = "--expr", required = true, arity = "1..*")
     private List<String> expressions;
@@ -56,9 +69,9 @@ public final class ToolEnvExprCommand extends AbstractToolEnvCommand {
         String separator = decodeEscapes(joiner);
         List<String> outputs = new ArrayList<>();
         for (String expr : expressions) {
-            EnvTemplate template = compileTemplate(expr);
+            Expression compiled = parseExpression(expr);
             List<String> values = contexts.stream()
-                    .map(context -> renderTemplate(template, context))
+                    .map(context -> renderExpression(compiled, expr, context.model()))
                     .filter(StringUtils::isNotBlank)
                     .toList();
             if (!values.isEmpty()) {
@@ -74,6 +87,35 @@ public final class ToolEnvExprCommand extends AbstractToolEnvCommand {
         } else {
             write(outputs, target.toPath());
         }
+    }
+
+    private static Expression parseExpression(String template) {
+        return EXPRESSION_CACHE.computeIfAbsent(template, key -> {
+            try {
+                return PARSER.parseExpression(decodeEscapes(key), TEMPLATE_CONTEXT);
+            } catch (Exception e) {
+                throw new FcliSimpleException(String.format("Unable to parse template expression: %s", key), e);
+            }
+        });
+    }
+
+    private static String renderExpression(Expression expression, String source, ObjectNode model) {
+        try {
+            return Optional.ofNullable(JsonHelper.evaluateSpelExpression(model, expression, String.class)).orElse("");
+        } catch (RuntimeException e) {
+            throw new FcliSimpleException(String.format("Error evaluating template expression: %s", source), e);
+        }
+    }
+
+    private static String decodeEscapes(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replace("\\t", "\t")
+                .replace("\\b", "\b")
+                .replace("\\n", "\n")
+                .replace("\\r", "\r")
+                .replace("\\f", "\f");
     }
 
     private void write(List<String> outputs, Path path) {

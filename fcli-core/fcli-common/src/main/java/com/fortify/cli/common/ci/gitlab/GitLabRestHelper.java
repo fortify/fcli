@@ -12,22 +12,27 @@
  */
 package com.fortify.cli.common.ci.gitlab;
 
-import java.util.function.Function;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.Break;
 
 import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Generic GitLab REST API helper providing core operations for projects,
- * merge requests, security reports, and other GitLab features. This class can be
- * used from commands, actions, and other modules like fcli-license.
+ * GitLab REST API helper factory providing fluent API for project and group operations.
+ * This class can be used from commands, actions, and other modules like fcli-license.
+ * 
+ * <p>Usage examples:
+ * <pre>{@code
+ * // Project-scoped operations
+ * var project = restHelper.project("12345");
+ * project.uploadSecurityReport(pipelineId, reportType, reportContent);
+ * project.queryBranches().process(branch -> ...);
+ * project.queryCommits().refName("main").since("2024-01-01").process(commit -> ...);
+ * 
+ * // Group-scoped operations
+ * var group = restHelper.group("group-id");
+ * group.queryProjects().includeSubgroups(true).process(project -> ...);
+ * }</pre>
  * 
  * @author rsenden
  */
@@ -36,168 +41,25 @@ import lombok.RequiredArgsConstructor;
 public class GitLabRestHelper {
     private final GitLabUnirestInstanceSupplier unirestInstanceSupplier;
     
-    // === Security Report Upload (Ultimate/Premium Tier) ===
-    
     /**
-     * Upload security report to GitLab (requires Ultimate/Premium tier).
-     * Supports SAST, DAST, dependency scanning, container scanning, etc.
-     * 
-     * Report schemas: https://docs.gitlab.com/ee/development/integrations/secure.html
-     * SAST schema: https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/blob/master/dist/sast-report-format.json
+     * Create a project-scoped API client for the specified project.
      * 
      * @param projectId Project ID
-     * @param pipelineId Pipeline ID
-     * @param reportType Report type (sast, dast, dependency_scanning, container_scanning, etc.)
-     * @param reportContent Report content (JSON format matching schema)
-     * @return Response from GitLab API
+     * @return Project-scoped client
      */
-    public ObjectNode uploadSecurityReport(String projectId, String pipelineId, 
-                                            String reportType, String reportContent) {
-        return getUnirest()
-            .post("/projects/{id}/pipelines/{pipeline_id}/security_report_summary")
-            .routeParam("id", projectId)
-            .routeParam("pipeline_id", pipelineId)
-            .queryString("report_type", reportType)
-            .header("Content-Type", "application/json")
-            .body(reportContent)
-            .asObject(ObjectNode.class)
-            .getBody();
+    public GitLabProject project(String projectId) {
+        return new GitLabProject(getUnirest(), projectId);
     }
     
     /**
-     * Upload code quality report to GitLab merge request (available on all tiers including free).
-     * Quality reports can be uploaded to merge requests to show code quality degradation.
-     * 
-     * Code quality format: https://docs.gitlab.com/ee/ci/testing/code_quality.html#implement-a-custom-tool
-     * API endpoint: https://docs.gitlab.com/ee/api/merge_requests.html#create-merge-request-quality-report
-     * 
-     * Format: JSON array of objects with:
-     * - description: Issue description
-     * - check_name: Name of the check
-     * - fingerprint: Unique identifier (MD5 hash recommended)
-     * - severity: info, minor, major, critical, blocker
-     * - location: { path, lines: { begin }, positions: { begin: { line, column } } }
-     * 
-     * Note: This requires a merge request context. For pipeline-level quality reports,
-     * use artifacts instead (declare in .gitlab-ci.yml under artifacts.reports.codequality).
-     * 
-     * @param projectId Project ID
-     * @param mergeRequestIid Merge request IID (internal ID)
-     * @param reportContent Code quality report content (JSON array format)
-     * @return Response from GitLab API
-     */
-    public ObjectNode uploadCodeQualityReport(String projectId, String mergeRequestIid, String reportContent) {
-        // Validate format
-        try {
-            var report = JsonHelper.getObjectMapper().readTree(reportContent);
-            if (!report.isArray()) {
-                throw new IllegalArgumentException("Code quality report must be a JSON array");
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JSON in code quality report: " + e.getMessage(), e);
-        }
-        
-        return getUnirest()
-            .post("/projects/{id}/merge_requests/{merge_request_iid}/code_quality_reports")
-            .routeParam("id", projectId)
-            .routeParam("merge_request_iid", mergeRequestIid)
-            .header("Content-Type", "application/json")
-            .body(reportContent)
-            .asObject(ObjectNode.class)
-            .getBody();
-    }
-    
-    // === Merge Request Operations ===
-    
-    /**
-     * Create a note (comment) on a merge request.
-     * 
-     * @param projectId Project ID
-     * @param mergeRequestIid Merge request IID (internal ID)
-     * @param body Comment body (Markdown supported)
-     * @return Created note object
-     */
-    public ObjectNode createMergeRequestNote(String projectId, String mergeRequestIid, String body) {
-        return getUnirest()
-            .post("/projects/{id}/merge_requests/{merge_request_iid}/notes")
-            .routeParam("id", projectId)
-            .routeParam("merge_request_iid", mergeRequestIid)
-            .body(JsonHelper.getObjectMapper().createObjectNode().put("body", body))
-            .asObject(ObjectNode.class)
-            .getBody();
-    }
-    
-    // === Project Operations ===
-    
-    /**
-     * Process all projects in a group.
+     * Create a group-scoped API client for the specified group.
      * 
      * @param groupId Group ID
-     * @param includeSubgroups Whether to include subgroup projects
-     * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
+     * @return Group-scoped client
      */
-    public void processGroupProjects(String groupId, boolean includeSubgroups, Function<JsonNode, Break> processor) {
-        GitLabPagingHelper.processPagedItems(
-            getUnirest(),
-            getUnirest().get("/groups/{id}/projects")
-                .routeParam("id", groupId)
-                .queryString("include_subgroups", includeSubgroups),
-            processor
-        );
+    public GitLabGroup group(String groupId) {
+        return new GitLabGroup(getUnirest(), groupId);
     }
-
-    /**
-     * Process branches for a project.
-     * 
-     * @param projectId Project ID
-     * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
-     */
-    public void processBranches(String projectId, Function<JsonNode, Break> processor) {
-        GitLabPagingHelper.processPagedItems(
-            getUnirest(),
-            getUnirest().get("/projects/{id}/repository/branches")
-                .routeParam("id", projectId),
-            processor
-        );
-    }
-
-    /**
-     * Process commits for a project/branch.
-     * 
-     * @param projectId Project ID
-     * @param refName Branch name or commit SHA
-     * @param since ISO 8601 timestamp to filter commits after this date
-     * @param processor Function that returns Break.TRUE to stop processing, Break.FALSE to continue
-     */
-    public void processCommits(String projectId, String refName, String since, Function<JsonNode, Break> processor) {
-        var request = getUnirest().get("/projects/{id}/repository/commits")
-            .routeParam("id", projectId)
-            .queryString("ref_name", refName);
-        if (since != null) {
-            request = request.queryString("since", since);
-        }
-        GitLabPagingHelper.processPagedItems(getUnirest(), request, processor);
-    }
-    
-    /**
-     * Get the latest commit for a specific branch.
-     * 
-     * @param projectId Project ID (String or int)
-     * @param branchName Branch name
-     * @return ArrayNode containing the commit (single element)
-     */
-    public ArrayNode getLatestCommit(String projectId, String branchName) {
-        return getUnirest().get("/projects/{projectId}/repository/commits?ref_name={branchName}")
-            .routeParam("projectId", projectId)
-            .routeParam("branchName", branchName)
-            .queryString("per_page", 1)
-            .asObject(ArrayNode.class)
-            .getBody();
-    }
-    
-
-    
-    // === Internal Methods ===
     
     /**
      * Get the UnirestInstance from the supplier.

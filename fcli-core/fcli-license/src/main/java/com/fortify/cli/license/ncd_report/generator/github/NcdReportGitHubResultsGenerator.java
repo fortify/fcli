@@ -84,7 +84,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
         String orgName = orgConfig.getName();
         try {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.github-repositories", orgName);
-            restHelper.processRepositories(orgName, repo -> {
+            restHelper.org(orgName).queryRepositories().process(repo -> {
                 reportContext().repositoryProcessor().processRepository(
                     new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig),
                     getRepoDescriptor(repo),
@@ -146,8 +146,8 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
         for ( var branchDescriptor : branchDescriptors ) {
             reportContext().progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             List<Boolean> foundFlag = new ArrayList<>();
-            restHelper.processCommits(repoDescriptor.getOwnerName(), repoDescriptor.getName(), 
-                branchDescriptor.getSha(), since, commit -> {
+            restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
+                .queryCommits().sha(branchDescriptor.getSha()).since(since).process(commit -> {
                     foundFlag.add(true);
                     addCommit(branchCommitCollector, repoDescriptor, branchDescriptor, commit);
                     return Break.FALSE;
@@ -174,8 +174,8 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      */
     private List<NcdReportGitHubBranchDescriptor> getBranchDescriptors(NcdReportGitHubRepositoryDescriptor repoDescriptor) {
         List<NcdReportGitHubBranchDescriptor> result = new ArrayList<>();
-        restHelper.processBranches(repoDescriptor.getOwnerName(), repoDescriptor.getName(), 
-            branch -> {
+        restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
+            .queryBranches().process(branch -> {
                 result.add(JsonHelper.treeToValue(branch, NcdReportGitHubBranchDescriptor.class));
                 return Break.FALSE;
             });
@@ -186,7 +186,8 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportResultsGen
      * Get a single commit (most recent) for a branch.
      */
     private ArrayNode getLatestCommit(NcdReportGitHubRepositoryDescriptor repoDescriptor, NcdReportGitHubBranchDescriptor branchDescriptor) {
-        return restHelper.getLatestCommit(repoDescriptor.getOwnerName(), repoDescriptor.getName(), branchDescriptor.getSha());
+        return restHelper.repo(repoDescriptor.getOwnerName(), repoDescriptor.getName())
+            .getLatestCommit(branchDescriptor.getSha());
     }
     
     /**

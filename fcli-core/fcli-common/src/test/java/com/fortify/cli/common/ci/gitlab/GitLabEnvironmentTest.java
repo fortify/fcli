@@ -65,8 +65,11 @@ public class GitLabEnvironmentTest {
         assertEquals("develop", env.ciBranch().short_());
         
         assertNotNull(env.ciCommit());
-        assertEquals("fedcba0987654321fedcba0987654321fedcba09", env.ciCommit().id().full());
-        assertEquals("fedcba0", env.ciCommit().id().short_());
+        assertEquals("fedcba0987654321fedcba0987654321fedcba09", env.ciCommit().headId().full());
+        assertEquals("fedcba0", env.ciCommit().headId().short_());
+        assertEquals("fedcba0987654321fedcba0987654321fedcba09", env.ciCommit().mergeId().full());
+        assertEquals("fedcba0", env.ciCommit().mergeId().short_());
+        // For GitLab, headId and mergeId are always the same
         
         assertNotNull(env.pullRequest());
         assertEquals(false, env.pullRequest().active());

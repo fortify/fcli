@@ -71,7 +71,7 @@ steps:
           # Process each filter set if included by filtersets parameter value
           record.var-name: filterset
           if: ${filtersetsArray==null || filtersetsArray.contains(filterset.title) || filtersetsArray.contains(filterset.guid) || (filtersetsArray.contains('default') && filterset.defaultFilterSet)}
-          do: 
+          do:
             - log.progress: Loading ${filterset.title} filter set data
             # Collect filter sets
             - var.set:

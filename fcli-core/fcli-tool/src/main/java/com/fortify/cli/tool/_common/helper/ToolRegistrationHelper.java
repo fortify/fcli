@@ -393,6 +393,8 @@ public class ToolRegistrationHelper {
                 toolBinary.getParentFile().toPath(),
                 null
             );
+            // JRE configuration is not set during registration - runtime will use ENV_VAR resolution
+            // with fallbacks to JAVA_HOME and PATH. This allows maximum flexibility for registered tools.
             // Always save descriptor to update timestamp, making this the default version for 'tool run' commands
             installation.save(toolName, versionDescriptor);
             return installation;

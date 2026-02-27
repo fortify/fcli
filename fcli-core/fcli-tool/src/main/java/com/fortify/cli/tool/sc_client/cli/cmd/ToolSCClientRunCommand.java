@@ -17,6 +17,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.DebugHelper;
 import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolRunShellOrJavaCommand;
@@ -30,6 +34,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = "run")
 public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
+    private static final Logger LOG = LoggerFactory.getLogger(ToolSCClientRunCommand.class);
     @Option(names="--logdir", required=false)
     private Path logDir;
     private String detectedJavaHome;
@@ -60,6 +65,8 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
     
     @Override
     protected List<String> getJavaBaseCommand(ToolInstallationDescriptor descriptor) {
+        LOG.debug("Resolving Java command for direct invocation");
+        
         // Use generalized JRE resolver
         var resolveConfig = ToolJreResolver.JreResolveConfig.builder()
             .descriptor(descriptor)
@@ -72,8 +79,32 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
         var resolveResult = ToolJreResolver.resolveJavaCommand(resolveConfig);
         detectedJavaHome = resolveResult.getJavaHome();
         
+        // Validate Java executable exists and is accessible
+        String javaCommand = resolveResult.getJavaCommand();
+        if (!javaCommand.equals("java") && !javaCommand.equals("java.exe")) {
+            // Not falling back to PATH - validate the specific executable
+            Path javaExec = Path.of(javaCommand);
+            if (!Files.exists(javaExec)) {
+                throw new FcliSimpleException(String.format(
+                    "Java executable not found at '%s'. " +
+                    "JRE source: %s. " +
+                    "Please reinstall the tool with --with-jre option or ensure the correct Java environment variable is set.",
+                    javaCommand,
+                    descriptor.getJreSource()
+                ));
+            }
+            if (!Files.isRegularFile(javaExec)) {
+                throw new FcliSimpleException(String.format(
+                    "Java executable at '%s' is not a regular file. " +
+                    "Please reinstall the tool with --with-jre option.",
+                    javaCommand
+                ));
+            }
+            LOG.debug("Validated Java executable: {}", javaCommand);
+        }
+        
         var cmd = new ArrayList<String>();
-        cmd.add(resolveResult.getJavaCommand());
+        cmd.add(javaCommand);
         if ( logDir!=null ) {
             cmd.add("-Dlog4j.dir="+logDir.toAbsolutePath().normalize().toString());
         }
@@ -89,6 +120,7 @@ public class ToolSCClientRunCommand extends AbstractToolRunShellOrJavaCommand {
         }
         // Set SCANCENTRAL_JAVA_HOME if we detected a Java home
         if ( detectedJavaHome!=null ) {
+            LOG.debug("Setting SCANCENTRAL_JAVA_HOME={}", detectedJavaHome);
             System.out.println("SCANCENTRAL_JAVA_HOME: "+detectedJavaHome);
             pb.environment().put("SCANCENTRAL_JAVA_HOME", detectedJavaHome);
         }

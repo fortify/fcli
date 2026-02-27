@@ -49,7 +49,7 @@ import lombok.NoArgsConstructor;
               fmt:   myFmt    
               value: ${expr}
         """})
-public class TemplateExpressionWithFormatter extends AbstractActionElementIf {
+public class TemplateExpressionWithFormatter extends AbstractActionStepElement {
     @JsonPropertyDescription("""
         The optional value to use for this instruction, may be specified as an SpEL template \
         expression. If value is specified without formatter, the value will be used as-is.

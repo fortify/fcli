@@ -21,12 +21,13 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.helper.ci.ActionAdoSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.ActionBitbucketSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.ActionGitHubSpelFunctions;
-import com.fortify.cli.common.action.helper.ci.ActionGitLabSpelFunctions;
 import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.ado.ActionAdoSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.bitbucket.ActionBitbucketSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.github.ActionGitHubSpelFunctions;
+import com.fortify.cli.common.action.helper.ci.gitlab.ActionGitLabSpelFunctions;
+import com.fortify.cli.common.action.helper.fs.ActionFileSystemSpelFunctions;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
@@ -116,6 +117,7 @@ public class ActionRunnerContext implements AutoCloseable {
             configureSpelContext(spelContext, config.getActionConfigSpelEvaluatorConfigurers(), config);
             configureSpelContext(spelContext, config.getActionContextSpelEvaluatorConfigurers(), actionRunnerContext);
             spelContext.setVariable("action", new ActionRunnerContextSpelFunctions(actionRunnerContext));
+            spelContext.setVariable("fs", new ActionFileSystemSpelFunctions());
             registerCiVariables(spelContext);
         }
 

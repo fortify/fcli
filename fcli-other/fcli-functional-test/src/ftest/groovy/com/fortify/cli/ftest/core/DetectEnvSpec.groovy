@@ -43,7 +43,7 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("id: github") }
                 it.any { it.contains("qualifiedRepoName: owner/test-repo") }
                 it.any { it.contains("sourceBranch: main") }
-                it.any { it.contains("commitSHA: abc123def456abc123def456abc123def456abc1") }
+                it.any { it.contains("commitHeadSHA: abc123def456abc123def456abc123def456abc1") }
                 it.any { it.contains("sourceDir: /workspace") }
                 it.any { it.contains("jobSummaryFile: /tmp/summary.md") }
                 // Verify non-PR properties
@@ -72,7 +72,7 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("id: gitlab") }
                 it.any { it.contains("qualifiedRepoName: group/myproject") }
                 it.any { it.contains("sourceBranch: develop") }
-                it.any { it.contains("commitSHA: fedcba0987654321fedcba0987654321fedcba09") }
+                it.any { it.contains("commitHeadSHA: fedcba0987654321fedcba0987654321fedcba09") }
                 it.any { it.contains("sourceDir: /builds/project") }
                 // Verify non-PR properties (uses "Merge Request" terminology for GitLab)
                 it.any { it.contains("prActive: false") }
@@ -99,7 +99,7 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("id: ado") }
                 it.any { it.contains("qualifiedRepoName: MyRepo") }
                 it.any { it.contains("sourceBranch: main") }
-                it.any { it.contains("commitSHA: 9876543210abcdef9876543210abcdef98765432") }
+                it.any { it.contains("commitHeadSHA: 9876543210abcdef9876543210abcdef98765432") }
                 it.any { it.contains("sourceDir: /home/vsts/work/1/s") }
             }
     }
@@ -121,7 +121,7 @@ class DetectEnvSpec extends FcliBaseSpec {
                 it.any { it.contains("id: bitbucket") }
                 it.any { it.contains("qualifiedRepoName: acme/awesome-repo") }
                 it.any { it.contains("sourceBranch: main") }
-                it.any { it.contains("commitSHA: 11223344556677889900aabbccddeeff00112233") }
+                it.any { it.contains("commitHeadSHA: 11223344556677889900aabbccddeeff00112233") }
                 it.any { it.contains("sourceDir: /opt/build/source") }
             }
     }

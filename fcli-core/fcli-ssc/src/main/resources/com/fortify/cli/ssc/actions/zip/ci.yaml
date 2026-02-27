@@ -49,6 +49,12 @@ steps:
           - if: ${global.ci.av==null}
             throw: SSC application version must be specified through SSC_APPVERSION environment variable
             
+  # Validate that workspace and source directories exist before proceeding
+  - if: ${!#fs.isDirectory(global.ci.workspaceDir)}
+    throw: "Workspace directory does not exist or is not accessible: ${global.workspace.dir}"
+  - if: ${!#fs.isDirectory(global.ci.sourceDir)}
+    throw: "Source directory does not exist or is not accessible: ${global.cli.sourceDir}"
+            
   - var.set:
       # Configure session name
       sessionName: ci-${#action.runID()}
@@ -270,7 +276,7 @@ formatters:
   
     # Fcli CI Pipeline Summary
     
-    ${ciSummary}
+    ${ciSummary.replaceAll('\r', '')}
     
     # Fcli Security Policy Status
     

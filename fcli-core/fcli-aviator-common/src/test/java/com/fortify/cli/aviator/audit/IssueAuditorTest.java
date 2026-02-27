@@ -129,7 +129,7 @@ class IssueAuditorTest {
 
         IssueAuditor auditor = new IssueAuditor(
             inputList, null, new HashMap<>(), fprInfo,
-            "TestApp", "1.0", selection, dummyLogger
+            "TestApp", "1.0", selection, dummyLogger, null
         );
 
         Method filterMethod = IssueAuditor.class.getDeclaredMethod("filterVulnerabilities", List.class, FilterSet.class);

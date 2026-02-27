@@ -1,5 +1,53 @@
 # Changelog
 
+## [3.15.0](https://github.com/fortify/fcli/compare/v3.14.3...v3.15.0) (2026-02-22)
+
+
+### Features
+
+* `bitbucket-*-report` actions: Add `--publish` option to publish reports directly to BitBucket (only available when running in BitBucket pipeline) ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli fod issue update`: Add `--attributes` option to allow for updating custom attributes ([371947b](https://github.com/fortify/fcli/commit/371947be6a0876e21b383a0be7d59c0c70c24422))
+* `fcli license ncd-report create`: Make `projects` configuration setting optional, iterating over all projects in organization by default ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli sc-sast sensor list`: Add `--appversion` option for listing sensors for the pool to which the given application version is mapped ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli sc-sast sensor list`: Add `--latest-only` option to only return the latest sensor version ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli sc-sast sensor list`: Add `--pool` option for listing sensors for a specific pool ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli sc-sast sensor list`: Add `compatibleClientVersion` to output ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli tool env *`: Add `--output-as` option for `ado`, `github`, `gitlab` commands ([3de393c](https://github.com/fortify/fcli/commit/3de393cbe5065b98a417fdced81f7783978859a6))
+* `fcli tool env init`: Produce output through fcli output framework to support standard fcli output (format) options and allow other fcli commands or external tools to programmatically process the output ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli tool env init`: Support `fcli:self` and `fcli:bootstrapped` tool specifiers to register current (bootstrapped) fcli path (mostly meant for testing purposes) ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `github-*-report` actions: Add `--publish` option to publish reports directly to GitHub (only available when running in GitHub Actions workflow) ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `gitlab-*-report` actions: Add `--publish` option to publish reports directly to GitLab (only available when running in GitLab pipeline) ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* Documentation: Add comprehensive fcli-based CI integration documentation for GitHub, GitLab, and Azure DevOps ([b936989](https://github.com/fortify/fcli/commit/b936989a1a5a16680eff23dbc49af97b78538ff6))
+* Documentation: Add simplified installation & upgrade instructions based on `@fortify/setup` NPM component ([b936989](https://github.com/fortify/fcli/commit/b936989a1a5a16680eff23dbc49af97b78538ff6))
+* fcli action framework: `out.write` instruction now automatically creates non-existing parent directories ([b936989](https://github.com/fortify/fcli/commit/b936989a1a5a16680eff23dbc49af97b78538ff6))
+* fcli action framework: Add `docRenderer().*` SpEL functions (internal use only) ([b936989](https://github.com/fortify/fcli/commit/b936989a1a5a16680eff23dbc49af97b78538ff6))
+* fcli action framework: Add `on.fail` & `on.success` handling to all step instructions ([cb653b5](https://github.com/fortify/fcli/commit/cb653b567029536f9812107334e83ed20b2d7e83))
+* fcli action framework: Add CI-specific SpEL functions to allow fcli actions to auto-detect current CI system, upload security reports, add PR/MR comments, ... ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* fcli actions framework: Allow `cause` to be specified on `throw` and `log.*` instructions ([7d6c4e9](https://github.com/fortify/fcli/commit/7d6c4e98c28c17471f343bbb166078f08762aa7e))
+* fcli actions framework: Replace nested `steps` instructions with `do` instructions for consistency ([cc922da](https://github.com/fortify/fcli/commit/cc922da8ced308c5e2f2ffc3b7334c0b10e3e995))
+* FoD `ci` action: Add `COPY_FROM_RELEASE` convenience environment variable ([f7356fe](https://github.com/fortify/fcli/commit/f7356feb2504eafd876ec3cb995ce2bb9a4ecdf2))
+* FoD `ci` action: Add `DO_AVIATOR_AUDIT` convenience environment variable ([f7356fe](https://github.com/fortify/fcli/commit/f7356feb2504eafd876ec3cb995ce2bb9a4ecdf2))
+* FoD `ci` action: Add `DO_SCA_SCAN` convenience environment variable ([f7356fe](https://github.com/fortify/fcli/commit/f7356feb2504eafd876ec3cb995ce2bb9a4ecdf2))
+* FoD `ci` action: Add `OVERRIDE_SAST_SETTINGS` environment variable to override existing scan settings ([f7356fe](https://github.com/fortify/fcli/commit/f7356feb2504eafd876ec3cb995ce2bb9a4ecdf2))
+* FoD `ci` action: Add `SAST_ASSESSMENT_TYPE` convenience environment variable ([f7356fe](https://github.com/fortify/fcli/commit/f7356feb2504eafd876ec3cb995ce2bb9a4ecdf2))
+* FoD `package` action: Auto-detect whether `-oss` option needs to be passed based on SAST scan settings ([6fd2957](https://github.com/fortify/fcli/commit/6fd29571a013c82fecdd3de3da64473a1b53043d))
+* FoD `setup-release` action: Add `--override-sast-settings` CLI option ([f7356fe](https://github.com/fortify/fcli/commit/f7356feb2504eafd876ec3cb995ce2bb9a4ecdf2))
+* FoD/SSC `github-sast-report` action: Publish Fortify issues either through SARIF file or as check run annotations depending on availability of GitHub Advanced Security Code Scanning features ([afcad35](https://github.com/fortify/fcli/commit/afcad35e2e6b431482745dce14583b73ba0cbce5))
+* SSC `package` action: Auto-detect compatible ScanCentral Client version for packaging (if no explicit version configured by user) ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+
+
+### Bug Fixes
+
+* `ci` action: Skip PR comment if enabled but current run is not for a PR ([b61c483](https://github.com/fortify/fcli/commit/b61c4836b022c9fb93f9cc65427218d2e8897255))
+* `fcli * action run`: Fix option parsing to better handle boolean flags ([ba8d804](https://github.com/fortify/fcli/commit/ba8d8047c3e6851e824467273431400f9b7b1b3c))
+* `fcli tool * register`: Fix registration of unknown tool versions from user-provided path ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli tool env init`: Fix registration of unknown tool versions from user-provided path ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* `fcli tool sc-client install`: Improve JRE detection ([a9f3146](https://github.com/fortify/fcli/commit/a9f3146e6ae5ea91ef63de1df7caab71b4faa4d3))
+* `fcli tool sc-client install`: Install Alpine-compatible JRE if on Alpine ([f632a4d](https://github.com/fortify/fcli/commit/f632a4d7ce2307180201f4cd654f6d2226639cb1))
+* fcli action framework: `#join` SpEL function: Improve support for multiple newline/tab characters in separator ([b936989](https://github.com/fortify/fcli/commit/b936989a1a5a16680eff23dbc49af97b78538ff6))
+* fcli action framework: Fix output of `log.info` and `log.warn` instructions ([edbe841](https://github.com/fortify/fcli/commit/edbe841e3e73e6842a004df6ae2e493468d1be31))
+* FoD/SSC `*-report` actions: Report issue file paths relative to workspace directory instead of `SOURCE_DIR` ([afcad35](https://github.com/fortify/fcli/commit/afcad35e2e6b431482745dce14583b73ba0cbce5))
+
 ## [3.14.3](https://github.com/fortify/fcli/compare/v3.14.2...v3.14.3) (2026-01-21)
 
 

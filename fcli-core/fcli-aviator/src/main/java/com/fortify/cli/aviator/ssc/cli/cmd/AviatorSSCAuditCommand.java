@@ -72,6 +72,10 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Option(names = {"--skip-if-exceeding-quota"}) private boolean skipIfExceedingQuota;
     @Option(names = {"--test-exceeding-quota"}) private boolean testExceedingQuota;
     @Option(names = {"--default-quota-fallback"}, hidden = true) private boolean defaultQuotaFallback;
+    @Option(names = {"--folder-priority-order"}, split = ",",
+            description = "Custom priority order by folder (comma-separated, highest first). Example: Critical,High,Medium,Low")
+    @DisableTest(DisableTest.TestType.MULTI_OPT_PLURAL_NAME)
+    private List<String> folderPriorityOrder;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCAuditCommand.class);
 
     @Override
@@ -186,6 +190,7 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
                     .filterSetNameOrId(filterSetOptions.getFilterSetTitleOrId())
                     .noFilterSet(noFilterSet)
                     .folderNames(folderNames)
+                    .folderPriorityOrder(folderPriorityOrder)
                     .build());
         }
 
@@ -256,5 +261,14 @@ public class AviatorSSCAuditCommand extends AbstractSSCJsonNodeOutputCommand imp
     @Override
     public boolean isSingular() {
         return true;
+    }
+
+    private List<String> resolvePriorityOrder() {
+        if (folderPriorityOrder != null && !folderPriorityOrder.isEmpty()) {
+            return folderPriorityOrder;
+        }
+
+
+        return null;
     }
 }

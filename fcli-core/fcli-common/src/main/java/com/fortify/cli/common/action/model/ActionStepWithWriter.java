@@ -53,7 +53,7 @@ import lombok.NoArgsConstructor;
                   - writer.append: 
                       csvWriter: ${record}
         """)
-public final class ActionStepWithWriter extends AbstractActionElementIf {
+public final class ActionStepWithWriter extends AbstractActionStepElement {
     @JsonPropertyDescription("""
         Required SpEL template expression; destination where to write the output of this writer. \
         Destination can be specified as one of the following: 

@@ -110,7 +110,11 @@ public record BitbucketEnvironment(
             .build();
 
         var ciCommit = CiCommit.builder()
-            .id(CiCommitId.builder()
+            .headId(CiCommitId.builder()
+                .full(commitSha)
+                .short_(shortSha(commitSha))
+                .build())
+            .mergeId(CiCommitId.builder()
                 .full(commitSha)
                 .short_(shortSha(commitSha))
                 .build())

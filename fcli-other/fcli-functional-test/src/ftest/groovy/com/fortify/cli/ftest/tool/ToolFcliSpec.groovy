@@ -189,4 +189,7 @@ class ToolFcliSpec extends FcliBaseSpec {
             Files.deleteIfExists(nonExecutablePath)
     }
     
+    def cleanupSpec() {
+        cleanupAllTools()
+    }
 }

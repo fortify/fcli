@@ -29,12 +29,28 @@ Fcli is a modular CLI tool for interacting with Fortify products (FoD, SSC, Scan
 - Short methods (~20 lines max); extract helpers or use Streams for clarity
 - No change-tracking comments (e.g., "New ...", "Updated ..."); only explanatory comments when code is complex
 
-## Detailed Development Guides
+## Maintaining Instructions
 
-**When working on specific areas, read the relevant detailed guide:**
+**If you detect discrepancies between these instructions and the actual implementation**, or discover patterns/features not documented here:
 
-- **Java code (commands, utilities, exceptions, etc.):** Read [copilot/java-guide.md](.github/copilot/java-guide.md)
-- **Action YAML files:** Read [copilot/action-yaml-guide.md](.github/copilot/action-yaml-guide.md)
-- **Utility classes:** Reference [copilot/utilities-guide.md](.github/copilot/utilities-guide.md)
-- **Style conventions:** Follow [copilot/style-guide.md](.github/copilot/style-guide.md)
+1. **Notify the user** about the discrepancy or missing documentation
+2. **Suggest specific updates** to the relevant instruction file(s)
+3. **Verify against current code** before making changes based on outdated instructions
+
+This applies to:
+- Main instructions (this file)
+- Specific instruction files in `.github/instructions/`
+- Examples that no longer match current patterns
+- Missing documentation for new features or utilities
+
+## Context-Specific Instructions
+
+Additional detailed instructions are automatically applied based on the file you're working with:
+
+- **Java files** (`fcli/**/*.java`): Java development guide with architecture, command structure, exceptions, and utilities
+- **Action YAML files** (`fcli/**/actions/**/*.yaml`): Action YAML editing guide with SpEL expressions, schema validation, and patterns
+- **All Java files** (`fcli/**/*.java`): Common utility classes documentation for use throughout the codebase
+- **All fcli files** (`fcli/**/*`): Style guide with naming, formatting, and coding conventions
+
+These instructions are defined in `.github/instructions/*.instructions.md` files with `applyTo` directives.
 

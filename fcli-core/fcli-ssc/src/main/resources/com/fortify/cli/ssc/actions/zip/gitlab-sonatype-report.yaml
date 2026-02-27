@@ -75,15 +75,15 @@ steps:
       reportContents: {fmt: gitlab-sonatype-report}
       reportFile: "${cli.file!=null ? cli.file : cli.publish==true ? null : 'gl-fortify-sonatype-depscan.json'}"
   - if: ${reportFile!=null}
-    steps:
+    do:
       - out.write:
           ${reportFile}: ${reportContents}
       - if: ${!{'stdout','stderr'}.contains(reportFile)}
         log.info: Output written to ${reportFile}
   - if: ${cli.publish==true}
-    steps:
+    do:
       - var.set:
-          gitlabUpload: ${#gitlab.uploadSecurityReport('dependency_scanning', reportContents)}
+          gitlabUpload: ${#gitlab.project().uploadSecurityReport('dependency_scanning', reportContents)}
       - log.info: Report published to GitLab Security Dashboard
 
 formatters:

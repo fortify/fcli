@@ -12,10 +12,18 @@
  */
 package com.fortify.cli.common.action.model;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
+ * Annotation for action model properties that represent step control instructions.
  *
  * @author Ruud Senden
  */
-public interface IActionStep extends IActionElement, IActionStepIfSupplier {
-
-}
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface ActionStepControlInstruction {}

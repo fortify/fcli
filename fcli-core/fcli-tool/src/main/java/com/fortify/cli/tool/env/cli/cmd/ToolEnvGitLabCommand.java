@@ -12,14 +12,14 @@
  */
 package com.fortify.cli.tool.env.cli.cmd;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.tool.env.cli.mixin.ToolEnvExcludeMixin;
+import com.fortify.cli.tool.env.cli.mixin.ToolEnvOutputAsMixin;
+import com.fortify.cli.tool.env.helper.ToolEnvContext;
+import com.fortify.cli.tool.env.helper.ToolEnvOutputHelper;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -28,23 +28,33 @@ import picocli.CommandLine.Mixin;
 public final class ToolEnvGitLabCommand extends AbstractToolEnvCommand {
     @Mixin private ToolEnvExcludeMixin exclude;
     @Mixin private CommonOptionMixins.RequiredFile fileMixin;
+    @Mixin private ToolEnvOutputAsMixin outputAs;
 
     @Override
     protected void process(List<ToolEnvContext> contexts) {
+        if (outputAs.hasOutputAs()) {
+            processWithOutputAs(contexts, outputAs.getOutputAs());
+        } else {
+            processNative(contexts);
+        }
+    }
+
+    private void processNative(List<ToolEnvContext> contexts) {
         List<String> lines = new ArrayList<>();
         for (ToolEnvContext context : contexts) {
-            if (exclude.isIncludePath() && StringUtils.isNotBlank(context.binDir())) {
-                lines.add(String.format("PATH=\"%s%s$PATH\"", context.binDir(), File.pathSeparator));
-            }
-            if (exclude.isIncludeVars()) {
-                if (StringUtils.isNotBlank(context.installDir())) {
-                    lines.add(String.format("%s_HOME=\"%s\"", context.envPrefix(), context.installDir()));
-                }
-                if (StringUtils.isNotBlank(context.cmd())) {
-                    lines.add(String.format("%s_CMD=\"%s\"", context.envPrefix(), context.cmd()));
-                }
-            }
+            lines.addAll(ToolEnvOutputHelper.gitLabLines(context, exclude));
         }
         writeLines(lines, fileMixin.getFile(), "GitLab environment output");
+    }
+
+    private void processWithOutputAs(List<ToolEnvContext> contexts, ToolEnvOutputAsMixin.OutputAs outputAsValue) {
+        String filePath = fileMixin.getFile().getAbsolutePath();
+        List<String> lines = new ArrayList<>();
+        for (ToolEnvContext context : contexts) {
+            lines.addAll(ToolEnvOutputHelper.echoRedirectLines(
+                    ToolEnvOutputHelper.gitLabLines(context, exclude), filePath));
+            lines.addAll(ToolEnvOutputHelper.outputAsLines(context, exclude, outputAsValue));
+        }
+        lines.forEach(System.out::println);
     }
 }
