@@ -32,6 +32,7 @@ import picocli.CommandLine.Command;
                 SSCPermissionGetCommand.class,
                 SSCPermissionListCommand.class,
                 SSCUserCreateLocalCommand.class,
+                SSCUserUpdateLocalCommand.class,
                 SSCUserDeleteCommand.class,
                 SSCUserGetCommand.class,
                 SSCUserListCommand.class,
