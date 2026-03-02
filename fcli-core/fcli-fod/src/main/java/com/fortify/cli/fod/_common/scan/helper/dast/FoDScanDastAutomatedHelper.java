@@ -80,13 +80,17 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
                     .queryString("fields", "scanId,scanType,analysisStatusType")
                     .asObject(JsonNode.class).getBody();
             JsonNode itemsNode = response.path("items");
-            if (!itemsNode.isArray() || itemsNode.isEmpty()) continue;
+            if (!itemsNode.isArray() || itemsNode.isEmpty()) {
+                // No scans exist for this release yet; nothing to handle
+                progressWriter.writeProgress("Status: No previous scans found");
+                return null;
+            }
 
             boolean foundActive = false;
             for (JsonNode node : itemsNode) {
                 if (!"Dynamic".equals(node.path("scanType").asText())) continue;
                 String status = node.path("analysisStatusType").asText();
-                
+
                 if (isActiveStatus(status)) {
                     foundActive = true;
                     FoDScanDescriptor result = handleActiveScan(

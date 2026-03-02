@@ -12,13 +12,13 @@
  */
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -50,27 +50,39 @@ public class FoDDastAutomatedScanStartCommand extends AbstractFoDScanStartComman
         try (var progressWriter = progressWriterFactory.create()) {
 
             // get current setup to ensure the scan has been configured
-            FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
+            var setup = FoDScanDastAutomatedHelper.getSetupDescriptor(unirest, relId);
+            if (setup == null) {
+                throw new FcliSimpleException("DAST Automated scan is not configured for release '" + releaseDescriptor.getReleaseName() + "'. Please run the 'fod dast-scan setup' command to configure the scan before starting.");
+            }
 
-            // check if there have been any scans previously run for this release
-            if (!FoDScanDastAutomatedHelper.getLatestScanDescriptor(unirest, relId, FoDScanType.Dynamic, true)
-                .equals(FoDScanHelper.getEmptyDescriptor())) {
+            // handle any in-progress or active scans according to the configured action
+            FoDScanDescriptor scan = FoDScanDastAutomatedHelper.handleInProgressScan(unirest, releaseDescriptor,
+                    inProgressScanActionType.getInProgressScanActionType(), progressWriter, maxAttempts,
+                    waitInterval);
 
-                // if there is an in progress scan, handle according to the specified action type
-                FoDScanDescriptor scan = FoDScanDastAutomatedHelper.handleInProgressScan(unirest, releaseDescriptor,
-                        inProgressScanActionType.getInProgressScanActionType(), progressWriter, maxAttempts,
-                        waitInterval);
-
-                // if the action was to not start a new scan, return the in progress scan descriptor
-                if (scan != null && scan.getAnalysisStatusType().equals("In_Progress")) {
-                    if (inProgressScanActionType.getInProgressScanActionType() == FoDEnums.InProgressScanActionType.DoNotStartScan) {
-                        scanAction = "NOT_STARTED_SCAN_IN_PROGRESS";
-                        return scan;
-                    }
+            // if the action was to not start a new scan, return the in progress scan descriptor
+            if (scan != null && scan.getAnalysisStatusType().equals("In_Progress")) {
+                if (inProgressScanActionType.getInProgressScanActionType() == FoDEnums.InProgressScanActionType.DoNotStartScan) {
+                    scanAction = "NOT_STARTED_SCAN_IN_PROGRESS";
+                    return scan;
                 }
             }
 
-            return FoDScanDastAutomatedHelper.startScan(unirest, releaseDescriptor);
+            try {
+                return FoDScanDastAutomatedHelper.startScan(unirest, releaseDescriptor);
+            } catch (UnexpectedHttpResponseException e) {
+                // If FoD rejects start because a dynamic scan is in progress, try to fetch that scan and return it
+                if (e.getStatus() == 422 && (e.getMessage().contains("dynamic scan is currently in progress") || e.getMessage().contains("errorCode: -10"))) {
+                    FoDScanDescriptor running = FoDScanDastAutomatedHelper.handleInProgressScan(unirest, releaseDescriptor,
+                            FoDEnums.InProgressScanActionType.DoNotStartScan, progressWriter, maxAttempts,
+                            waitInterval);
+                    if (running != null) {
+                        scanAction = "NOT_STARTED_SCAN_IN_PROGRESS";
+                        return running;
+                    }
+                }
+                throw e;
+            }
         }
     }
 
