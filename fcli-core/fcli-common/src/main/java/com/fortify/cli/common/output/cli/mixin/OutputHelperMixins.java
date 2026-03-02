@@ -232,4 +232,8 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "call";
     }
 
+    public static class ImportSarif extends TableNoQuery {
+        public static final String CMD_NAME = "import-sarif";
+    }
+
 }
