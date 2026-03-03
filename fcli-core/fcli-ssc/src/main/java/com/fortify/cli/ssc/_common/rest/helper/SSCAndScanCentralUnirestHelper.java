@@ -22,9 +22,12 @@ import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 
 import kong.unirest.UnirestInstance;
+import kong.unirest.apache.ApacheClient;
 
 public class SSCAndScanCentralUnirestHelper {
     public static final void configureSscUnirestInstance(UnirestInstance unirest, SSCAndScanCentralSessionDescriptor sessionDescriptor) {
+        unirest.config().httpClient(config -> new ApacheClient(config, cb ->
+            cb.setServiceUnavailableRetryStrategy(new SSCRetryStrategy())));
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getSscUrlConfig());
