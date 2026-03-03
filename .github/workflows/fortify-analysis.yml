@@ -25,6 +25,8 @@ on:
   schedule:
     - cron: '16 0 * * 5'
 
+permissions: read-all
+
 jobs:
   checkSecrets:
     runs-on: ubuntu-latest
@@ -64,18 +66,12 @@ jobs:
           java-version: '17'
 
       - name: Run FoD SAST scan
-        uses: fortify/github-action@v2
-        with:
-          sast-scan: true
-          debricked-sca-scan: true
+        uses: fortify/github-action@v3
         env:
           FOD_URL: https://ams.fortify.com/
           FOD_TENANT: ${{secrets.OSS_FOD_TENANT}}
           FOD_USER: ${{secrets.OSS_FOD_USER}}
           FOD_PASSWORD: ${{secrets.OSS_FOD_PAT}}
           FOD_LOGIN_EXTRA_OPTS: --socket-timeout=600s
-          DO_SETUP: true
-          DO_JOB_SUMMARY: true
-          DO_EXPORT: true
+          DO_SCA_SCAN: true
           SETUP_EXTRA_OPTS: --sdlc-status Development --scan-types sast
-          PACKAGE_EXTRA_OPTS: -oss
