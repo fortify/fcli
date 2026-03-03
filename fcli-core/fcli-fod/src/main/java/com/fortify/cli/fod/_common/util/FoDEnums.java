@@ -649,7 +649,7 @@ public class FoDEnums {
 
         /**
          * Resolve an input string which may be either the enum constant name (e.g. "CycloneDX")
-         * or the user-facing value (e.g. "Cyclone DX") to the canonical user-facing value.
+         * or the user-facing value (e.g. "CycloneDX") to the canonical user-facing value.
          * Comparison for the enum name is case-insensitive. Returns an empty Optional when no match.
          */
         public static java.util.Optional<String> resolveValue(String input) {

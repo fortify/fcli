@@ -38,7 +38,7 @@ public class FoDOssScanDownloadLatestCommand extends AbstractFoDScanDownloadLate
         GetRequest req = unirest.get(path)
                 .routeParam("scanId", scanDescriptor.getScanId());
         if ( format != null ) {
-            req = req.routeParam("format", format.name());
+            req = req.queryString("format", format.name());
         }
         return req.accept("application/octet-stream");
     }
