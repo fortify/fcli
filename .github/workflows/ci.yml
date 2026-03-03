@@ -2,13 +2,22 @@ name: Build and release
 on:
   workflow_dispatch:
   pull_request:
+    branches:
+      - 'dev/v3.x'
+      - 'rel/v3.x'
+      - 'feat/v3.x/aviator/*'
   push:
     branches:
-      - '**'
+      - 'dev/v3.x'
+      - 'rel/v3.x'
+      - 'feat/**'
+      - 'poc/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+permissions: read-all
        
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization -march=compatibility
@@ -16,17 +25,21 @@ env:
   graal_java_version: 21
           
 jobs:
-  build:
-    name: Build
+  create-release:
+    name: create-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_created: ${{ steps.create_prod_release.outputs.release_created }}
+      tag_name: ${{ steps.create_prod_release.outputs.tag_name }}
+      version: ${{ steps.create_prod_release.outputs.version }}
+      major: ${{ steps.create_prod_release.outputs.major }}
+      minor: ${{ steps.create_prod_release.outputs.minor }}
+      patch: ${{ steps.create_prod_release.outputs.patch }}
     steps:
       - name: Check-out source code
         uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: googleapis/release-please-action@v4
@@ -35,30 +48,39 @@ jobs:
           skip-github-pull-request: true
           target-branch: ${{ github.ref_name }}
           release-type: simple
-          
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: create-release
+    permissions:
+      contents: read
+    steps:
+      - name: Check-out source code
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: PROD - Define release info
-        if: steps.create_prod_release.outputs.release_created
+        if: needs.create-release.outputs.release_created
         run: |
-          tag=${{steps.create_prod_release.outputs.tag_name}}
-          version=${{steps.create_prod_release.outputs.version}}
-          major=${{steps.create_prod_release.outputs.major}}
-          minor=${{steps.create_prod_release.outputs.minor}}
-          patch=${{steps.create_prod_release.outputs.patch}}  
           echo DO_BUILD=true >> $GITHUB_ENV
           echo DO_RELEASE=true >> $GITHUB_ENV
           echo DO_PROD_RELEASE=true >> $GITHUB_ENV
-          echo RELEASE_TAG=${tag} >> $GITHUB_ENV
-          echo RELEASE_VERSION=${version} >> $GITHUB_ENV
-          echo VERSION_MAJOR=${major} >> $GITHUB_ENV
-          echo VERSION_MINOR=${minor} >> $GITHUB_ENV
-          echo VERSION_PATCH=${patch} >> $GITHUB_ENV
+          echo RELEASE_TAG=${{ needs.create-release.outputs.tag_name }} >> $GITHUB_ENV
+          echo RELEASE_VERSION=${{ needs.create-release.outputs.version }} >> $GITHUB_ENV
+          echo VERSION_MAJOR=${{ needs.create-release.outputs.major }} >> $GITHUB_ENV
+          echo VERSION_MINOR=${{ needs.create-release.outputs.minor }} >> $GITHUB_ENV
+          echo VERSION_PATCH=${{ needs.create-release.outputs.patch }} >> $GITHUB_ENV
           
       - name: DEV - Define release info
         if: (startsWith(github.ref, 'refs/heads/') || github.event_name == 'pull_request') && !env.DO_PROD_RELEASE
         run: |
           # For pull_request events, use head_ref (source branch); for push/workflow_dispatch, extract from ref
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            branch="${{ github.head_ref }}"
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
+            branch="$GITHUB_HEAD_REF"
           else
             branch="${GITHUB_REF#refs/heads/}"
           fi
@@ -155,7 +177,7 @@ jobs:
         run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.common.util.JAnsiConfig -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
+        uses: svenstaro/upx-action@cf8fc6f17554e2c3ac67a479a60cf71b48babc4f
         with:
           files: fcli
 
@@ -200,7 +222,7 @@ jobs:
 
       # Disabled for now, as compressed binaries crash on macOS Ventura or above
       #- name: Compress native fcli
-      #  uses: svenstaro/upx-action@v2
+      #  uses: svenstaro/upx-action@cf8fc6f17554e2c3ac67a479a60cf71b48babc4f
       #  with:
       #    files: fcli
 
@@ -243,7 +265,7 @@ jobs:
 # We don't compress the Windows binary for now as this is incompatible with current Graal version.
 # See https://github.com/fortify/fcli/issues/148
 #      - name: Compress native fcli
-#        uses: svenstaro/upx-action@v2
+#        uses: svenstaro/upx-action@cf8fc6f17554e2c3ac67a479a60cf71b48babc4f
 #        with:
 #          files: fcli.exe
 
@@ -294,6 +316,8 @@ jobs:
     name: Trigger functional tests
     needs: [build, native_linux, native_mac, native_win, combine-artifacts]
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       # Previously we had a workflow_run trigger on functional-tests.yaml, but:
       #  - This approach allows for starting functional tests a bit earlier (no need to wait for Docker builds)
@@ -303,20 +327,24 @@ jobs:
         uses: actions/checkout@v4
       - run: | 
           # Use branch output from build job if available, otherwise fall back to GITHUB_REF
-          if [ -n "${{ needs.build.outputs.branch }}" ]; then
-            ref="${{ needs.build.outputs.branch }}"
+          if [ -n "${BUILD_BRANCH}" ]; then
+            ref="${BUILD_BRANCH}"
           else
             ref="${GITHUB_REF}"
           fi
           gh workflow run functional-tests.yml --ref "${ref}" -f runId=${GITHUB_RUN_ID}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_BRANCH: ${{ needs.build.outputs.branch }}
         
   release:
     name: release
     if: needs.build.outputs.do_release
     needs: [build, native_linux, native_mac, native_win, combine-artifacts]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Check-out source code
         uses: actions/checkout@v4
@@ -338,13 +366,15 @@ jobs:
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
         run: |
-          gh release delete ${{ needs.build.outputs.release_tag }} -y || true
-          gh release create ${{ needs.build.outputs.release_tag }} -p -t "Development Release - ${{ needs.build.outputs.branch }} branch" -n 'See `Assets` section below for latest build artifacts'
+          gh release delete "${RELEASE_TAG}" -y || true
+          gh release create "${RELEASE_TAG}" -p -t "Development Release - ${RELEASE_BRANCH} branch" -n 'See `Assets` section below for latest build artifacts'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
+          RELEASE_BRANCH: ${{ needs.build.outputs.branch }}
           
       - name: DEV - Update ${{ needs.build.outputs.release_tag }} tag
-        uses: richardsimko/update-tag@v1
+        uses: richardsimko/update-tag@4240e630554bce6e0887180f8da115fd2045b814
         if: needs.build.outputs.do_dev_release
         with:
           tag_name: ${{ needs.build.outputs.release_tag }}
@@ -355,9 +385,10 @@ jobs:
         if: needs.build.outputs.do_release
         run: |
           files=$(find "./artifacts/release-assets" -type f -printf "%p ")
-          gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
+          gh release upload "${RELEASE_TAG}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
           
   semantic_versions:
     name: Publish semantic versions
@@ -373,6 +404,8 @@ jobs:
           #      this may cause the older major version to be tagged as 'latest'
           - latest
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check-out source code
         uses: actions/checkout@v4
@@ -384,7 +417,7 @@ jobs:
           name: combined-artifacts
     
       - name: PROD - Publish ${{ matrix.semantic_version }} tag
-        uses: richardsimko/update-tag@v1
+        uses: richardsimko/update-tag@4240e630554bce6e0887180f8da115fd2045b814
         with:
           tag_name: ${{ matrix.semantic_version }}
         env:
@@ -392,12 +425,14 @@ jobs:
       
       - name: PROD - Publish semantic release ${{ matrix.semantic_version }}
         run: |
-          gh release delete ${{ matrix.semantic_version }} -y || true
-          gh release create ${{ matrix.semantic_version }} -t "${{ matrix.semantic_version }}" -n "Semantic version release for [${{ needs.build.outputs.release_tag }}](https://github.com/fortify/fcli/releases/tag/${{ needs.build.outputs.release_tag }})" --verify-tag --latest=false
+          gh release delete "${SEMANTIC_VERSION}" -y || true
+          gh release create "${SEMANTIC_VERSION}" -t "${SEMANTIC_VERSION}" -n "Semantic version release for [${RELEASE_TAG}](https://github.com/fortify/fcli/releases/tag/${RELEASE_TAG})" --verify-tag --latest=false
           files=$(find "./artifacts/release-assets" -type f -printf "%p ")
-          gh release upload "${{ matrix.semantic_version }}" $files --clobber
+          gh release upload "${SEMANTIC_VERSION}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SEMANTIC_VERSION: ${{ matrix.semantic_version }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
           
   docker:
     name: Trigger Docker builds
@@ -411,18 +446,23 @@ jobs:
           gh workflow run docker.yml \
             --repo fortify/fcli-docker \
             --ref main \
-            -f "releaseTag=${{ needs.build.outputs.release_tag }}" \
-            -f "doPublish=${{ needs.build.outputs.do_release }}" \
-            -f "isLatest=${{ needs.build.outputs.do_prod_release }}"
+            -f "releaseTag=${RELEASE_TAG}" \
+            -f "doPublish=${DO_RELEASE}" \
+            -f "isLatest=${DO_PROD_RELEASE}"
           echo "✓ Docker build triggered in fortify/fcli-docker repository"
         env:
-          GITHUB_TOKEN: ${{ secrets.FCLI_DOCKER_TRIGGER_TOKEN }}  
+          GITHUB_TOKEN: ${{ secrets.FCLI_DOCKER_TRIGGER_TOKEN }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
+          DO_RELEASE: ${{ needs.build.outputs.do_release }}
+          DO_PROD_RELEASE: ${{ needs.build.outputs.do_prod_release }}
      
   publishPages:
     name: publishPages
     if: needs.build.outputs.do_release
     needs: [build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check-out existing docs from gh-pages branch
         uses: actions/checkout@v4
@@ -436,6 +476,8 @@ jobs:
           name: build-output
           
       - name: Update documentation from artifact
+        env:
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
         run: |
           # Extract top-level documentation resources
           # TODO Should we do this only when building a release, or also for dev_v3.x,
@@ -443,7 +485,7 @@ jobs:
           unzip -o tmp/docs-gh-pages-static.zip -d "."
           
           # Define the output directory, based on tag/branch name
-          versionDir=${{ needs.build.outputs.release_tag }}
+          versionDir="${RELEASE_TAG}"
           
           # Delete, recreate and fill the directory for the current tag/branch name,
           # while leaving documentation for other tags/branches intact (as checked out above)
@@ -476,6 +518,6 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@fortify.com
           git add .
-          git commit -m "Update documentation for ${{ needs.build.outputs.release_tag }}"
+          git commit -m "Update documentation for ${RELEASE_TAG}"
           git push
           
