@@ -1,0 +1,36 @@
+/*
+ * Copyright 2021-2026 Open Text.
+ *
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
+ * without notice.
+ */
+package com.fortify.cli.tool.sourceanalyzer.cli.cmd;
+
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.tool._common.cli.cmd.AbstractToolGetCommand;
+import com.fortify.cli.tool._common.helper.Tool;
+
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+/**
+ * Command to get information about a specific Fortify Source Analyzer version.
+ * 
+ * @author Sangamesh Vijaykumar
+ */
+@Command(name = OutputHelperMixins.Get.CMD_NAME)
+public class ToolSourceAnalyzerGetCommand extends AbstractToolGetCommand {
+    @Getter @Mixin private OutputHelperMixins.Get outputHelper;
+    
+    @Override
+    protected final Tool getTool() {
+        return Tool.SOURCE_ANALYZER;
+    }
+}

@@ -29,7 +29,8 @@ public enum Tool {
     FOD_UPLOADER(new ToolHelperFoDUploader(), "fod-uploader"),
     BUGTRACKER_UTILITY(new ToolHelperBugTrackerUtility(), "bugtracker-utility", "fbtu"),
     VULN_EXPORTER(new ToolHelperVulnExporter(), "vuln-exporter", "fve"),
-    DEBRICKED_CLI(new ToolHelperDebrickedCli(), "debricked-cli", "dcli");
+    DEBRICKED_CLI(new ToolHelperDebrickedCli(), "debricked-cli", "dcli"),
+    SOURCE_ANALYZER(new ToolHelperSourceAnalyzer(), "sourceanalyzer");
     
     private static final Map<String, Tool> TOOL_NAME_MAP = new HashMap<>();
     private static final Map<String, Tool> TOOL_ALIAS_MAP = new HashMap<>();
@@ -229,6 +230,28 @@ public enum Tool {
         @Override
         public String getDefaultEnvPrefix() {
             return "DEBRICKED";
+        }
+    }
+
+    /**
+     * Helper implementation for sourceanalyzer tool.
+     */
+    private static final class ToolHelperSourceAnalyzer implements IToolHelper {
+        private static final String TOOL_NAME = "sourceanalyzer";
+        
+        @Override
+        public String getToolName() {
+            return TOOL_NAME;
+        }
+        
+        @Override
+        public String getDefaultBinaryName() {
+            return PlatformHelper.isWindows() ? "sourceanalyzer.exe" : "sourceanalyzer";
+        }
+        
+        @Override
+        public String getDefaultEnvPrefix() {
+            return "SOURCEANALYZER";
         }
     }
 }

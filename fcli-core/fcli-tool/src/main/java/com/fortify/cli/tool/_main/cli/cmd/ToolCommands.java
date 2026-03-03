@@ -20,6 +20,7 @@ import com.fortify.cli.tool.env.cli.cmd.ToolEnvCommands;
 import com.fortify.cli.tool.fcli.cli.cmd.ToolFcliCommands;
 import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
 import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
+import com.fortify.cli.tool.sourceanalyzer.cli.cmd.ToolSourceAnalyzerCommands;
 import com.fortify.cli.tool.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
 
 import picocli.CommandLine.Command;
@@ -34,6 +35,7 @@ import picocli.CommandLine.Command;
             ToolFcliCommands.class,
             ToolFoDUploaderCommands.class,
             ToolSCClientCommands.class,
+            ToolSourceAnalyzerCommands.class,
             ToolVulnExporterCommands.class, 
             ToolDefinitionsCommands.class
         }
