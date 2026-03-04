@@ -8,6 +8,10 @@ on:
         required: true
         type: number
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   ft-core:
     strategy:
@@ -26,6 +30,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
+      - name: Validate run-id belongs to this repo
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          run_info=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
+          owner=$(echo "$run_info" | jq -r .repository.full_name)
+          if [ "$owner" != "${GITHUB_REPOSITORY}" ]; then
+            echo "Provided run id does not belong to this repository; aborting." >&2
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.runId }}
+
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
@@ -91,6 +110,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           
+      - name: Validate run-id belongs to this repo
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          run_info=$(curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
+          owner=$(echo "$run_info" | jq -r .repository.full_name)
+          if [ "$owner" != "${GITHUB_REPOSITORY}" ]; then
+            echo "Provided run id does not belong to this repository; aborting." >&2
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.runId }}
+
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4

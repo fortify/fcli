@@ -6,8 +6,10 @@ on:
     - cron: '5 4 * * *'
   push:
     branches:
-      - develop
+      - dev/v3.x
       
 jobs:
   update-repo-docs:
+    permissions:
+      contents: write
     uses: fortify/shared-doc-resources/.github/workflows/update-repo-docs.yml@main

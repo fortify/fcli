@@ -1,21 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-################################################################################################################################################
-# Fortify lets you build secure software fast with an appsec platform that automates testing throughout the DevSecOps pipeline. Fortify static,#
-# dynamic, interactive, and runtime security testing is available on premises or as a service. To learn more about Fortify, start a free trial #
-# or contact our sales team, visit microfocus.com/appsecurity.                                                                                 #
-#                                                                                                                                              #
-# Use this workflow template as a basis for integrating Fortify on Demand Static Application Security Testing(SAST) into your GitHub workflows.#
-# This template demonstrates the steps to prepare the code+dependencies, initiate a scan, download results once complete and import into       #
-# GitHub Security Code Scanning Alerts. Existing customers should review inputs and environment variables below to configure scanning against  #
-# an existing application in your Fortify on Demand tenant. Additional information is available in the comments throughout the workflow, the   #
-# documentation for the Fortify actions used, and the Fortify on Demand / ScanCentral Client product documentation. If you need additional     #
-# assistance with configuration, feel free to create a help ticket in the Fortify on Demand portal.                                            #
-################################################################################################################################################
-
 name: Fortify on Demand Scan
 
 on:
@@ -25,51 +7,14 @@ on:
   schedule:
     - cron: '16 0 * * 5'
 
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 jobs:
-  checkSecrets:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check Secrets
-      shell: bash
-      run: |
-        if [[ -z "${OSS_FOD_TENANT}" || -z "${OSS_FOD_USER}" || -z "${OSS_FOD_PASSWORD}" ]]; then
-          echo "::notice ::Not running FoD scan as OSS_FOD_TENANT, OSS_FOD_USER, and/or OSS_FOD_PASSWORD secrets haven't been defined"
-        else
-          echo DO_FOD_SCAN=true >> $GITHUB_ENV
-        fi
-      env:
-        OSS_FOD_TENANT: ${{secrets.OSS_FOD_TENANT}}
-        OSS_FOD_USER: ${{secrets.OSS_FOD_USER}}
-        OSS_FOD_PASSWORD: ${{secrets.OSS_FOD_PAT}}
-    outputs:
-      DO_FOD_SCAN: ${{ env.DO_FOD_SCAN }}
-              
-  FoD-SAST-Scan:
-    runs-on: ubuntu-latest
-    needs: checkSecrets
-    if: needs.checkSecrets.outputs.DO_FOD_SCAN
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Check Out Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Run FoD SAST scan
-        uses: fortify/github-action@v3
-        env:
-          FOD_URL: https://ams.fortify.com/
-          FOD_TENANT: ${{secrets.OSS_FOD_TENANT}}
-          FOD_USER: ${{secrets.OSS_FOD_USER}}
-          FOD_PASSWORD: ${{secrets.OSS_FOD_PAT}}
-          FOD_LOGIN_EXTRA_OPTS: --socket-timeout=600s
-          DO_SCA_SCAN: true
-          SETUP_EXTRA_OPTS: --sdlc-status Development --scan-types sast
+  FoD-Scan:
+    uses: fortify/.github/.github/workflows/fortify-analysis.yml@main
+    with:
+      java-version: '17'
+    secrets: inherit
