@@ -43,18 +43,21 @@ public class FoDSessionLoginOptions {
         @Getter private FoDCredentialOptions credentialOptions = new FoDCredentialOptions();
         @Option(names="--scopes", defaultValue="api-tenant", split=",")
         @Getter private String[] scopes;
-        @Option(names = {"-t", "--tenant"}, required = false)
-        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
-        @Getter private String tenant; // Optional: required only for user credentials
     }
     
     public static class FoDCredentialOptions {
         @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-        @Getter private UserCredentialOptions userCredentialOptions = new UserCredentialOptions();
+        @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
         @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
         @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
     
+    public static class FoDUserCredentialOptions extends UserCredentialOptions {
+        @Option(names = {"-t", "--tenant"}, required = true)
+        @MaskValue(sensitivity = LogSensitivityLevel.low, description = "FOD TENANT")
+        @Getter private String tenant;
+    }
+
     public static class FoDClientCredentialOptions implements IFoDClientCredentials {
         @Option(names = {"--client-id"}, required = true)
         @MaskValue(sensitivity = LogSensitivityLevel.medium, description = "FOD CLIENT ID")
@@ -64,7 +67,7 @@ public class FoDSessionLoginOptions {
         @Getter private String clientSecret;
     }
 
-    public UserCredentialOptions getUserCredentialOptions() {
+    public FoDUserCredentialOptions getUserCredentialOptions() {
         return Optional.ofNullable(authOptions)
                 .map(FoDAuthOptions::getCredentialOptions)
                 .map(FoDCredentialOptions::getUserCredentialOptions)
@@ -84,9 +87,10 @@ public class FoDSessionLoginOptions {
 
     public final BasicFoDUserCredentials getUserCredentials() {
         var u = getUserCredentialOptions();
-        var t = Optional.ofNullable(authOptions).map(FoDAuthOptions::getTenant).orElse(null);
-        if ( u==null || StringUtils.isBlank(t) || StringUtils.isBlank(u.getUser()) || u.getPassword()==null ) {
-            throw new FcliSimpleException("--tenant, --user and --password must all be specified for user credential authentication");
+        var t = Optional.ofNullable(u).map(FoDUserCredentialOptions::getTenant).orElse(null);
+        if (u == null || StringUtils.isBlank(t) || StringUtils.isBlank(u.getUser()) || u.getPassword() == null) {
+            throw new FcliSimpleException(
+                    "--tenant, --user and --password must all be specified for user credential authentication");
         }
         return BasicFoDUserCredentials.builder().tenant(t).user(u.getUser()).password(u.getPassword()).build();
     }
