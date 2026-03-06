@@ -32,6 +32,9 @@ import com.fortify.aviator.application.ApplicationList;
 import com.fortify.aviator.application.ApplicationResponseMessage;
 import com.fortify.aviator.application.ApplicationServiceGrpc;
 import com.fortify.aviator.application.CreateApplicationRequest;
+import com.fortify.aviator.application.GetApplicationByTokenRequest;
+import com.fortify.aviator.application.GetDefaultQuotaRequest;
+import com.fortify.aviator.application.GetDefaultQuotaResponse;
 import com.fortify.aviator.application.UpdateApplicationRequest;
 import com.fortify.aviator.dastentitlement.DastEntitlement;
 import com.fortify.aviator.dastentitlement.DastEntitlementServiceGrpc;
@@ -186,6 +189,24 @@ public class AviatorGrpcClient implements AutoCloseable {
     public Application getApplication(String projectId, String signature, String message, String tenantName) {
         ApplicationById request = ApplicationById.newBuilder().setId(Long.parseLong(projectId)).setSignature(signature).setMessage(message).setTenantName(tenantName).build();
         return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplication, request, Constants.OP_GET_APP);
+    }
+
+    public Application getApplicationByToken(String token, String appName) {
+        GetApplicationByTokenRequest request = GetApplicationByTokenRequest.newBuilder()
+            .setToken(token)
+            .setAppName(appName)
+            .build();
+        return GrpcUtil.executeGrpcCall(blockingStub, ApplicationServiceGrpc.ApplicationServiceBlockingStub::getApplicationByToken, request, Constants.OP_GET_APP_BY_TOKEN);
+    }
+
+    public long getDefaultQuota(String token) {
+        GetDefaultQuotaRequest request = GetDefaultQuotaRequest.newBuilder()
+            .setToken(token)
+            .build();
+        GetDefaultQuotaResponse response = GrpcUtil.executeGrpcCall(blockingStub,
+            ApplicationServiceGrpc.ApplicationServiceBlockingStub::getDefaultQuota,
+            request, Constants.OP_GET_DEFAULT_QUOTA);
+        return response.getDefaultQuota();
     }
 
     public List<Application> listApplication(String tenantName, String signature, String message) {
