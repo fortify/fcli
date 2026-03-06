@@ -97,16 +97,12 @@ steps:
       module: ssc
 
   # Validate --aviator-app-mapping value
-  - if: ${!('app'.equals(cli['aviator-app-mapping']) || 'version'.equals(cli['aviator-app-mapping']))}
-    do:
-      - log.progress: "ERROR: Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
-      - throw: "Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
+  - if: ${!(cli['aviator-app-mapping'] matches 'app|version')}
+    throw: "Invalid --aviator-app-mapping value '${cli['aviator-app-mapping']}'. Valid values are: app, version"
 
   # Validate that at least one of --tag-mapping or --add-aviator-tags is specified
   - if: ${(cli['tag-mapping'] == null || cli['tag-mapping'] == '') && !cli['add-aviator-tags']}
-    do:
-      - log.progress: "ERROR: Either --tag-mapping or --add-aviator-tags must be specified."
-      - throw: "Either --tag-mapping or --add-aviator-tags must be specified."
+    throw: "Either --tag-mapping or --add-aviator-tags must be specified."
 
   - log.progress: "Using Aviator app mapping: ${cli['aviator-app-mapping']}"
 
