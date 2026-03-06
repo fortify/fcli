@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.producer.AbstractObjectNodeProducer.AbstractObjectNodeProducerBuilder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
@@ -49,6 +48,7 @@ import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -57,8 +57,8 @@ import picocli.CommandLine.Option;
 public class FoDIssueListCommand extends AbstractFoDOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // injected in resolvers
-    @Mixin private FoDAppResolverMixin.OptionalOption appResolver;
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalOption releaseResolver;
+    @ArgGroup(exclusive = true, multiplicity = "1", order = 1)
+    @Getter private TargetSpecifierArgGroup targetSpecifier = new TargetSpecifierArgGroup();
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Mixin private FoDIssueEmbedMixin embedMixin;
     @Mixin private FoDIssueIncludeMixin includeMixin;
@@ -75,23 +75,34 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
             .add("severityString","severityString")
             .add("category","category");
 
+    public static class TargetSpecifierArgGroup {
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) @Getter private AppTarget app = new AppTarget();
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) @Getter private ReleaseTarget release = new ReleaseTarget();
+    }
+
+    public static class AppTarget extends FoDAppResolverMixin.AbstractFoDAppResolverMixin {
+        @Option(names = { "--app" }, required = true, descriptionKey = "fcli.fod.app.app-name-or-id") @Getter private String appNameOrId;
+    }
+
+    public static class ReleaseTarget extends FoDReleaseByQualifiedNameOrIdResolverMixin.AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
+        @Option(names = { "--release", "--rel" }, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id") @Getter private String qualifiedReleaseNameOrId;
+    }
+
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
-        boolean releaseSpecified = releaseResolver.getQualifiedReleaseNameOrId() != null;
-        boolean appSpecified = appResolver.getAppNameOrId() != null;
-        if ( releaseSpecified && appSpecified ) {
-            throw new FcliSimpleException("Cannot specify both an application and release");
+        var appGroup = targetSpecifier.getApp();
+        var releaseGroup = targetSpecifier.getRelease();
+
+        boolean appSpecified = appGroup != null && appGroup.getAppNameOrId() != null;
+        boolean releaseSpecified = releaseGroup != null && releaseGroup.getQualifiedReleaseNameOrId() != null;
+
+        if (releaseSpecified) {
+            releaseGroup.setDelimiterMixin(delimiterMixin);
         }
-        if ( !releaseSpecified && !appSpecified ) {
-            throw new FcliSimpleException("Either an application or release must be specified");
-        }
+
         var result = releaseSpecified
-                ? singleReleaseProducerBuilder(unirest, releaseResolver.getReleaseId(unirest))
-                : applicationProducerBuilder(unirest, appResolver.getAppId(unirest));
-        // For consistent output, we should remove releaseId/releaseName when listing across multiple releases,
-        // but that breaks existing scripts that may rely on those fields, so for now, we only do this in
-        // applicationProducerBuilder(). TODO: Change in in fcli v4.0.
-        // return result.recordTransformer(this::removeReleaseProperties).build();
+                ? singleReleaseProducerBuilder(unirest, releaseGroup.getReleaseId(unirest))
+                : applicationProducerBuilder(unirest, appGroup.getAppId(unirest));
         return result.build();
     }
     
@@ -225,17 +236,15 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
     }
     
     private boolean isEffectiveFastOutput() {
-        boolean appSpecified = appResolver.getAppNameOrId() != null;
-        boolean releaseSpecified = releaseResolver.getQualifiedReleaseNameOrId() != null;
-        if ( !appSpecified || releaseSpecified ) { return false; }
+        var appGroup = targetSpecifier.getApp();
+        var releaseGroup = targetSpecifier.getRelease();
+
+        boolean appSpecified = appGroup != null && appGroup.getAppNameOrId() != null;
+        boolean releaseSpecified = releaseGroup != null && releaseGroup.getQualifiedReleaseNameOrId() != null;
+        if (!appSpecified || releaseSpecified) { return false; }
         boolean fastOutputStyle = outputHelper.getRecordWriterStyle().isFastOutput();
         boolean streamingSupported = outputHelper.isStreamingOutputSupported();
-        boolean recordConsumerConfigured = getRecordConsumer()!=null;
-        // Effective fast output requires:
-        // - application specified (multiple releases)
-        // - fast output style
-        // - no aggregation (merging requires full set)
-        // - streaming output or record consumer configured
+        boolean recordConsumerConfigured = getRecordConsumer() != null;
         return fastOutputStyle && !aggregate && (streamingSupported || recordConsumerConfigured);
     }
     
