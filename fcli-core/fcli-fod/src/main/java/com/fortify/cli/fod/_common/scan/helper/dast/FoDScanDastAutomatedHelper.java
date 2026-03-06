@@ -80,17 +80,13 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
                     .queryString("fields", "scanId,scanType,analysisStatusType")
                     .asObject(JsonNode.class).getBody();
             JsonNode itemsNode = response.path("items");
-            if (!itemsNode.isArray() || itemsNode.isEmpty()) {
-                // No scans exist for this release yet; nothing to handle
-                progressWriter.writeProgress("Status: No previous scans found");
-                return null;
-            }
+            if (!itemsNode.isArray() || itemsNode.isEmpty()) continue;
 
             boolean foundActive = false;
             for (JsonNode node : itemsNode) {
                 if (!"Dynamic".equals(node.path("scanType").asText())) continue;
                 String status = node.path("analysisStatusType").asText();
-
+                
                 if (isActiveStatus(status)) {
                     foundActive = true;
                     FoDScanDescriptor result = handleActiveScan(
@@ -111,13 +107,10 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
         throw new FcliSimpleException("Unable to start Dynamic scan after " + maxAttempts + " attempts. Please check the UI and try again.");
     }
 
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String networkName, FoDReleaseDescriptor releaseDescriptor) {
-        var request = unirest.post(FoDUrls.DAST_AUTOMATED_SCANS + "/start-scan")
-                .routeParam("relId", releaseDescriptor.getReleaseId());
-        if ( networkName != null && !networkName.isBlank() ) {
-            request = request.queryString("networkName", networkName);
-        }
-        JsonNode response = request.asObject(JsonNode.class).getBody();
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+        JsonNode response = unirest.post(FoDUrls.DAST_AUTOMATED_SCANS + "/start-scan")
+                .routeParam("relId", releaseDescriptor.getReleaseId())
+                .asObject(JsonNode.class).getBody();
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new FcliSimpleException("Unable to retrieve scan id from response when starting Dynamic scan.");
@@ -158,7 +151,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
                 Thread.sleep(waitMillis);
                 break;
             case DoNotStartScan:
-                progressWriter.writeProgress("Status: A scan with id %s is %s, no new scan will be started", scanId, status);
+                progressWriter.writeProgress("Status: A scan is running %s, no new scan will be started", scanId);
                 JsonNode scan = objectMapper.createObjectNode()
                         .put("scanId", scanId)
                         .put("scanType", FoDScanType.Dynamic.name())
