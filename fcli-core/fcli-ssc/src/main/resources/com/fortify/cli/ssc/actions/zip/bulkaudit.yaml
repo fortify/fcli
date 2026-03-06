@@ -304,7 +304,7 @@ steps:
                           records.collect: true
                           stdout: show
 
-                    - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__.contains('QUOTA EXCEEDED')}
+                    - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__ == 'QUOTA_EXCEEDED'}
                       var.set:
                         stats.quota_skipped: ${stats.quota_skipped + 1}
 
@@ -420,8 +420,8 @@ steps:
                               records.collect: true
                               stdout: show
 
-                        # Track quota-skipped results (__action__ field contains QUOTA EXCEEDED)
-                        - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__.contains('QUOTA EXCEEDED')}
+                        # Track quota-skipped results
+                        - if: ${run_audit.exitCode == 0 && run_audit.records != null && run_audit.records.size() > 0 && run_audit.records[0].__action__ != null && run_audit.records[0].__action__ == 'QUOTA_EXCEEDED'}
                           var.set:
                             stats.quota_skipped: ${stats.quota_skipped + 1}
 

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.aviator.application.Application;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator.audit.model.FPRAuditResult;
 import com.fortify.cli.aviator.config.AviatorLoggerImpl;
@@ -58,44 +59,113 @@ public final class AviatorSSCAuditHelper {
 
     /**
      * Builds the final JSON result node for the command output.
+     * All fields are always present to ensure a stable, predictable output structure.
+     * Fields not applicable to the current action are set to null.
+     *
+     * <p>Structure:
+     * <pre>
+     * id, applicationName, versionName, artifactId, __action__
+     * operation:
+     *   audit: { message, submitted, succeeded, skipped }
+     * state:
+     *   aviator: { availableQuotaBefore, availableQuotaAfter }
+     *   ssc: { issuesByCategory }
+     * </pre>
+     *
      * @param av The SSCAppVersionDescriptor.
-     * @param artifactId The ID of the uploaded artifact, or a status string.
+     * @param artifactId The ID of the uploaded artifact, or null if not applicable.
      * @param action The final action string for the output.
      * @return An ObjectNode representing the result.
      */
     public static ObjectNode buildResultNode(SSCAppVersionDescriptor av, String artifactId, String action) {
-        ObjectNode result = av.asObjectNode();
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("id", av.getVersionId());
         result.put("applicationName", av.getApplicationName());
-        result.put("name", av.getVersionName());
-        result.put("artifactId", artifactId);
+        result.put("versionName", av.getVersionName());
+        if (artifactId != null) {
+            result.put("artifactId", artifactId);
+        } else {
+            result.putNull("artifactId");
+        }
         result.put(IActionCommandResultSupplier.actionFieldName, action);
+
+        // operation.audit — null by default, populated by setAuditStats or setOperationMessage
+        ObjectNode operation = JsonHelper.getObjectMapper().createObjectNode();
+        operation.putNull("audit");
+        result.set("operation", operation);
+
+        // state.aviator and state.ssc — null sub-objects by default
+        ObjectNode state = JsonHelper.getObjectMapper().createObjectNode();
+        ObjectNode aviatorState = JsonHelper.getObjectMapper().createObjectNode();
+        aviatorState.putNull("availableQuotaBefore");
+        aviatorState.putNull("availableQuotaAfter");
+        state.set("aviator", aviatorState);
+        ObjectNode sscState = JsonHelper.getObjectMapper().createObjectNode();
+        sscState.putNull("issuesByCategory");
+        state.set("ssc", sscState);
+        result.set("state", state);
+
         return result;
     }
 
     /**
-     * Generates a detailed action string based on the FPRAuditResult.
-     * This is used for the 'action' column in the output.
+     * Populates the {@code operation.audit} object on the result node with stats from the FPR audit.
+     * Sets message, submitted, succeeded, and skipped fields.
+     *
+     * @param result The result node to update.
      * @param auditResult The result from the Aviator audit.
-     * @return A descriptive string of the outcome.
      */
-    public static String getDetailedAction(FPRAuditResult auditResult) {
+    public static void setAuditStats(ObjectNode result, FPRAuditResult auditResult) {
+        ObjectNode audit = JsonHelper.getObjectMapper().createObjectNode();
+        String message;
         switch (auditResult.getStatus()) {
-            case "SKIPPED":
-                String reason = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown reason";
-                return "SKIPPED (" + reason + ")";
-            case "FAILED":
-                String message = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown error";
-                return "FAILED (" + message + ")";
-            case "PARTIALLY_AUDITED":
-                return String.format("PARTIALLY_AUDITED (%d/%d audited)",
-                        auditResult.getIssuesSuccessfullyAudited(),
-                        auditResult.getTotalIssuesToAudit());
             case "AUDITED":
-                return "AUDITED";
+                message = "Audit completed successfully";
+                break;
+            case "PARTIALLY_AUDITED":
+                message = auditResult.getMessage() != null ? auditResult.getMessage() : "Audit partially completed";
+                break;
+            case "SKIPPED":
+                message = auditResult.getMessage() != null ? auditResult.getMessage() : "No issues to audit";
+                break;
+            case "FAILED":
+                message = auditResult.getMessage() != null ? auditResult.getMessage() : "Audit failed";
+                break;
             default:
-                return "UNKNOWN";
+                message = auditResult.getMessage() != null ? auditResult.getMessage() : "Unknown audit status";
+                break;
         }
+        audit.put("message", message);
+        audit.put("submitted", auditResult.getTotalIssuesToAudit());
+        audit.put("succeeded", auditResult.getIssuesSuccessfullyAudited());
+        audit.put("skipped", Math.max(0, auditResult.getTotalIssuesToAudit() - auditResult.getIssuesSuccessfullyAudited()));
+        ((ObjectNode) result.get("operation")).set("audit", audit);
+    }
+
+    /**
+     * Sets only the {@code operation.audit.message} field without audit stats.
+     * Used for code paths that don't perform an actual audit (SKIPPED, FAILED, QUOTA_EXCEEDED, etc.).
+     *
+     * @param result The result node to update.
+     * @param message The descriptive message.
+     */
+    public static void setOperationMessage(ObjectNode result, String message) {
+        ObjectNode audit = JsonHelper.getObjectMapper().createObjectNode();
+        audit.put("message", message);
+        audit.putNull("submitted");
+        audit.putNull("succeeded");
+        audit.putNull("skipped");
+        ((ObjectNode) result.get("operation")).set("audit", audit);
+    }
+
+    /**
+     * Sets the {@code state.aviator.availableQuotaBefore} field.
+     *
+     * @param result The result node to update.
+     * @param quota The quota value.
+     */
+    public static void setAvailableQuotaBefore(ObjectNode result, long quota) {
+        ((ObjectNode) result.path("state").path("aviator")).put("availableQuotaBefore", quota);
     }
 
     /**
@@ -258,7 +328,7 @@ public final class AviatorSSCAuditHelper {
                                           AviatorLoggerImpl logger) {
         try (AviatorGrpcClient client = AviatorGrpcClientHelper.createClient(aviatorUrl, logger,
                 Constants.DEFAULT_PING_INTERVAL_SECONDS)) {
-            com.fortify.aviator.application.Application app = client.getApplicationByToken(aviatorToken, appName);
+            Application app = client.getApplicationByToken(aviatorToken, appName);
             long quota = app.getQuota();
             logger.progress("Status: Available Aviator quota for app '%s': %s", appName,
                     quota < 0 ? "unlimited" : String.valueOf(quota));
@@ -308,6 +378,20 @@ public final class AviatorSSCAuditHelper {
             UnirestInstance unirest, SSCAppVersionDescriptor av,
             AviatorLoggerImpl logger, int topN) {
 
+        try {
+            return getTopUnauditedCategoriesInternal(unirest, av, logger, topN);
+        } catch (Exception e) {
+            LOG.warn("Failed to retrieve top unaudited categories for {}:{}: {}",
+                av.getApplicationName(), av.getVersionName(), e.getMessage());
+            logger.progress("WARN: Could not retrieve category breakdown from SSC.");
+            return List.of();
+        }
+    }
+
+    private static List<Map<String, Object>> getTopUnauditedCategoriesInternal(
+            UnirestInstance unirest, SSCAppVersionDescriptor av,
+            AviatorLoggerImpl logger, int topN) {
+
         String versionId = av.getVersionId();
 
         // Resolve "Category" grouping GUID dynamically
@@ -349,6 +433,8 @@ public final class AviatorSSCAuditHelper {
                 if (unaudited > 0) {
                     Map<String, Object> entry = new LinkedHashMap<>();
                     entry.put("categoryName", name);
+                    entry.put("totalIssues", visibleCount);
+                    entry.put("auditedIssues", auditedCount);
                     entry.put("unauditedCount", unaudited);
                     categories.add(entry);
                 }
@@ -366,34 +452,35 @@ public final class AviatorSSCAuditHelper {
 
     /**
      * Builds the JSON result node when a version is skipped due to exceeding quota.
+     * Sets {@code state.aviator.availableQuotaBefore} and populates {@code state.ssc.issuesByCategory}
+     * with total, audited, and unaudited counts per category.
      */
     public static ObjectNode buildQuotaExceededResultNode(
             SSCAppVersionDescriptor av, long openIssueCount, long availableQuota,
             List<Map<String, Object>> topCategories) {
-        // Build a descriptive action string with all relevant quota information
-        StringBuilder actionText = new StringBuilder();
-        actionText.append(String.format("QUOTA EXCEEDED -- Open issues: %d, Available quota: %d.", openIssueCount, availableQuota));
-        if (topCategories != null && !topCategories.isEmpty()) {
-            actionText.append("\nTop unaudited categories:");
-            int rank = 1;
-            for (Map<String, Object> cat : topCategories) {
-                actionText.append(String.format("\n  %d. %s (%d issues)", rank++, cat.get("categoryName"), cat.get("unauditedCount")));
+        ObjectNode result = buildResultNode(av, null, "QUOTA_EXCEEDED");
+        setOperationMessage(result, String.format("Open issues (%d) exceed available quota (%d)", openIssueCount, availableQuota));
+        setAvailableQuotaBefore(result, availableQuota);
+        ((ObjectNode) result.path("state").path("ssc")).set("issuesByCategory", buildIssuesByCategoryArray(topCategories));
+        return result;
+    }
+
+    /**
+     * Converts the category list into a JSON array for the {@code issuesByCategory} field.
+     */
+    private static ArrayNode buildIssuesByCategoryArray(List<Map<String, Object>> categories) {
+        ArrayNode array = JsonHelper.getObjectMapper().createArrayNode();
+        if (categories != null) {
+            for (Map<String, Object> cat : categories) {
+                ObjectNode catNode = JsonHelper.getObjectMapper().createObjectNode();
+                catNode.put("category", (String) cat.get("categoryName"));
+                catNode.put("total", (long) cat.get("totalIssues"));
+                catNode.put("audited", (long) cat.get("auditedIssues"));
+                catNode.put("unaudited", (long) cat.get("unauditedCount"));
+                array.add(catNode);
             }
         }
-
-        ObjectNode result = buildResultNode(av, "N/A", actionText.toString());
-        result.put("openIssueCount", openIssueCount);
-        result.put("availableQuota", availableQuota);
-
-        ArrayNode categoriesArray = JsonHelper.getObjectMapper().createArrayNode();
-        for (Map<String, Object> cat : topCategories) {
-            ObjectNode catNode = JsonHelper.getObjectMapper().createObjectNode();
-            catNode.put("category", (String) cat.get("categoryName"));
-            catNode.put("unauditedCount", (long) cat.get("unauditedCount"));
-            categoriesArray.add(catNode);
-        }
-        result.set("topCategories", categoriesArray);
-        return result;
+        return array;
     }
 
     /**
@@ -406,10 +493,13 @@ public final class AviatorSSCAuditHelper {
         sb.append(String.format("Quota exceeded for %s:%s -- Open issues: %d, Available quota: %d%n",
             av.getApplicationName(), av.getVersionName(), openIssueCount, availableQuota));
         sb.append("Top SAST categories by unaudited issue count:\n");
-        int rank = 1;
-        for (Map<String, Object> cat : topCategories) {
-            sb.append(String.format("  %d. %s (%d issues)%n",
-                rank++, cat.get("categoryName"), cat.get("unauditedCount")));
+        if (topCategories != null) {
+            int rank = 1;
+            for (Map<String, Object> cat : topCategories) {
+                sb.append(String.format("  %d. %s (total: %d, audited: %d, unaudited: %d)%n",
+                    rank++, cat.get("categoryName"), cat.get("totalIssues"),
+                    cat.get("auditedIssues"), cat.get("unauditedCount")));
+            }
         }
         return sb.toString();
     }
