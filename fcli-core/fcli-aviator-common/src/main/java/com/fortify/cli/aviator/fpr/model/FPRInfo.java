@@ -52,6 +52,7 @@ public class FPRInfo {
 
     public FPRInfo(FprHandle fprHandle) {
         FPRName = String.valueOf(fprHandle.getFprPath().getFileName());
+        buildId = "";
         try {
             extractInfoFromAuditFvdlStreaming(fprHandle);
         } catch (Exception e) {
@@ -150,6 +151,10 @@ public class FPRInfo {
 
         } catch (javax.xml.stream.XMLStreamException e) {
             throw new Exception("Failed to parse audit.fvdl using streaming parser", e);
+        }
+
+        if (buildId == null) {
+            buildId = "";
         }
     }
 

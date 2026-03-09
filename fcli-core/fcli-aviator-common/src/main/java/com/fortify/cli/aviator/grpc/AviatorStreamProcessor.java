@@ -52,6 +52,7 @@ import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
 import com.fortify.cli.aviator.util.FileUtil;
 import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.StringUtil;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -488,19 +489,23 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private void sendInitRequest() throws Exception {
         String initRequestId = UUID.randomUUID().toString();
+        StreamInitRequest.Builder initRequestBuilder = StreamInitRequest.newBuilder()
+            .setStreamId(currentStreamState.streamId)
+            .setRequestId(initRequestId)
+            .setToken(currentStreamState.token)
+            .setApplicationName(currentStreamState.projectName)
+            .setSscApplicationName(currentStreamState.SSCApplicationName)
+            .setSscApplicationVersion(currentStreamState.SSCApplicationVersion)
+            .setTotalReportedIssues(currentStreamState.totalRequests)
+            .setTotalIssuesToPredict(currentStreamState.totalRequests);
+
+        if (!StringUtil.isEmpty(currentStreamState.FPRBuildId)) {
+            initRequestBuilder.setFprBuildId(currentStreamState.FPRBuildId);
+        }
+
         UserPromptRequest initRequest = UserPromptRequest.newBuilder()
-                .setInit(StreamInitRequest.newBuilder()
-                        .setStreamId(currentStreamState.streamId)
-                        .setRequestId(initRequestId)
-                        .setToken(currentStreamState.token)
-                        .setApplicationName(currentStreamState.projectName)
-                        .setSscApplicationName(currentStreamState.SSCApplicationName)
-                        .setSscApplicationVersion(currentStreamState.SSCApplicationVersion)
-                        .setFprBuildId(currentStreamState.FPRBuildId)
-                        .setTotalReportedIssues(currentStreamState.totalRequests)
-                        .setTotalIssuesToPredict(currentStreamState.totalRequests)
-                        .build())
-                .build();
+            .setInit(initRequestBuilder.build())
+            .build();
 
         requestHandler.sendRequest(initRequest);
         LOG.info("Client Id for stream initialization {}", currentStreamState.streamId);
