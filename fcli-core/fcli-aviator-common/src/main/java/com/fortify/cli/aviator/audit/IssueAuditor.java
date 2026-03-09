@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.model.AuditOutcome;
@@ -162,7 +163,12 @@ public class IssueAuditor {
                 logger.progress("Audit completed");
             } catch (ExecutionException e) {
                 Throwable cause = e.getCause();
-                if (cause instanceof AviatorSimpleException) {
+                // Handle quota filtering exception (all issues filtered out)
+                if (cause instanceof AviatorQuotaFilterException) {
+                    logger.progress("All issues filtered out due to quota constraints: %s", cause.getMessage());
+                    // Update totalIssuesToAudit to reflect actual auditable count (0)
+                    totalIssuesToAudit = 0;
+                } else if (cause instanceof AviatorSimpleException) {
                     throw (AviatorSimpleException) cause;
                 } else if (cause instanceof AviatorTechnicalException) {
                     throw (AviatorTechnicalException) cause;
