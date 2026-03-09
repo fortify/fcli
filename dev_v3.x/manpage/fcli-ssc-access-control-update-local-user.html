@@ -1,5 +1,5 @@
 ---
-title: 'fcli-ssc-appversion-refresh-metrics(1)'
+title: 'fcli-ssc-access-control-update-local-user(1)'
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-appversion-refresh-metrics(1)</title>
+<title>fcli-ssc-access-control-update-local-user(1)</title>
 
 {% include asciidoc-head.html %}
 {% include fcli-enhancements.html %}
@@ -21,7 +21,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-ssc-appversion-refresh-metrics(1) Manual Page</h1>
+<h1>fcli-ssc-access-control-update-local-user(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -36,7 +36,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-refresh-metrics - Refresh application version metrics.</p>
+<p>fcli-ssc-access-control-update-local-user - Update a local SSC user.</p>
 </div>
 </div>
 <div id="content">
@@ -45,27 +45,21 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion refresh-metrics</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                                    [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
-                                    <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                                    [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                                    [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
-                                    [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
-                                    [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
-                                    <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                                    <em>&lt;appVersionNameOrId&gt;</em></p>
+<p><strong>fcli ssc access-control update-local-user</strong> [<strong>--pne</strong>] [<strong>--rpc</strong>] [<strong>--suspend</strong>]
+[<strong>--email</strong>=<em>&lt;email&gt;</em>] [<strong>--firstname</strong>=<em>&lt;firstName&gt;</em>] [<strong>--lastname</strong>=<em>&lt;lastName&gt;</em>]
+[<strong>--password</strong>=<em>&lt;password&gt;</em>] [<strong>--add-roles</strong>=<em>&lt;addRoles&gt;</em>[,<em>&lt;addRoles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+[<strong>--rm-roles</strong>=<em>&lt;rmRoles&gt;</em>[,<em>&lt;rmRoles&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--roles</strong>=<em>&lt;roles&gt;</em>[,<em>&lt;roles&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+[[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+[<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
+[[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
+[<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>&lt;authEntitySpec&gt;</em></p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>This command allows for refreshing SSC application version metrics, similar to the little 'refresh' button shown on the SSC application version page in case a refresh is required/pending.</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -73,13 +67,45 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dt class="hdlist1"><strong>--add-roles</strong>=<em>&lt;addRoles&gt;</em>[,<em>&lt;addRoles&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+<p>Comma-separated list of role names or ids to add to the user&#8217;s current roles.</p>
 </dd>
-<dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--email</strong>=<em>&lt;email&gt;</em></dt>
 <dd>
-<p>Embed extra application version data. Allowed values: attrs, attrValuesByName, attrValuesByGuid, bugtracker, customTags, filterSets, folders, resultProcessingRules.</p>
+<p>New email for the user.</p>
+</dd>
+<dt class="hdlist1"><strong>--firstname</strong>=<em>&lt;firstName&gt;</em></dt>
+<dd>
+<p>New first name for the user.</p>
+</dd>
+<dt class="hdlist1"><strong>--lastname</strong>=<em>&lt;lastName&gt;</em></dt>
+<dd>
+<p>New last name for the user.</p>
+</dd>
+<dt class="hdlist1"><strong>--password</strong>=<em>&lt;password&gt;</em></dt>
+<dd>
+<p>New password for the user.</p>
+</dd>
+<dt class="hdlist1"><strong>--pne, --password-never-expires</strong></dt>
+<dd>
+<p>Set whether the password should never expire.</p>
+</dd>
+<dt class="hdlist1"><strong>--rm-roles</strong>=<em>&lt;rmRoles&gt;</em>[,<em>&lt;rmRoles&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of role names or ids to remove from the user&#8217;s current roles.</p>
+</dd>
+<dt class="hdlist1"><strong>--roles</strong>=<em>&lt;roles&gt;</em>[,<em>&lt;roles&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of role names or ids to assign, replacing all current roles.</p>
+</dd>
+<dt class="hdlist1"><strong>--rpc, --require-password-change</strong></dt>
+<dd>
+<p>Set whether a password change is required.</p>
+</dd>
+<dt class="hdlist1"><strong>--suspend</strong></dt>
+<dd>
+<p>Set whether the user should be suspended.</p>
 </dd>
 </dl>
 </div>
@@ -161,9 +187,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>&lt;appVersionNameOrId&gt;</em></dt>
+<dt class="hdlist1"><em>&lt;authEntitySpec&gt;</em></dt>
 <dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+<p>User or LDAP group, accepting user id, entity name, or email address.</p>
 </dd>
 </dl>
 </div>
