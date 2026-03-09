@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260309.105911-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260309.113353-dev_v3.x" %}
 
 
 <div id="header">
@@ -44,8 +44,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod oss-scan download-latest</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>-f</strong>=<em>&lt;file&gt;</em> <strong>--rel</strong>=<em>id|app[:</em>
-                          _        ms]:rel_ [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+<p><strong>fcli fod oss-scan download-latest</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>-f</strong>=<em>&lt;file&gt;</em>
+                                  [<strong>--format</strong>=<em>&lt;format&gt;</em>] <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
+                                  [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
                                   [<strong>--debug</strong>]] [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -73,6 +74,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
 <dd>
 <p>File path and name where to save the SBOM file.</p>
+</dd>
+<dt class="hdlist1"><strong>--format</strong>=<em>&lt;format&gt;</em></dt>
+<dd>
+<p>Open Source scan results file format. Valid values: CycloneDX, SPDX (default value is CycloneDX).</p>
 </dd>
 <dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
@@ -158,7 +163,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-03-09 11:01:49 UTC
+Last updated 2026-03-09 11:36:26 UTC
 </div>
 </div>
 </body>
