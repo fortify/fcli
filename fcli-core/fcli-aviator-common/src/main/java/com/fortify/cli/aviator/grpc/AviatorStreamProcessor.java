@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fortify.aviator.grpc.*;
+import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
 import com.fortify.cli.aviator.audit.QuotaBasedFilter;
@@ -211,6 +212,23 @@ class AviatorStreamProcessor implements AutoCloseable {
                             return; // Exit gracefully without propagating exception
                         }
                         resultFuture.completeExceptionally(new AviatorTechnicalException("Interrupted during request processing", e));
+                    } catch (AviatorQuotaFilterException e) {
+                        // Special handling for quota filtering that results in zero issues
+                        logger.info("All issues filtered out by quota constraints, closing stream gracefully");
+
+                        // Clean up stream resources BEFORE completing exceptionally
+                        stopPingPong();
+                        if (requestHandler != null && !requestHandler.isCompleted()) {
+                            requestHandler.complete();
+                        }
+                        streamLatch.countDown();
+
+                        // Complete the future exceptionally so IssueAuditor can handle it
+                        if (!resultFuture.isDone()) {
+                            resultFuture.completeExceptionally(e);
+                        }
+
+                        logger.info("Stream closed successfully after quota filtering");
                     } catch (Exception e) {
                         // Only propagate exceptions if the stream hasn't completed successfully
                         if (requestHandler != null && !requestHandler.isCompleted() && !resultFuture.isDone()) {
@@ -545,12 +563,12 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         int currentQueueSize = processingQueue.size();
         if (currentQueueSize <= currentStreamState.quota) {
-            logger.info("Queue size ({}) within quota ({}), no filtering needed",
+            logger.progress("Queue size %d within quota %d, no filtering needed",
                 currentQueueSize, currentStreamState.quota);
             return;
         }
 
-        logger.warn("Queue size ({}) exceeds reserved quota ({}). Applying priority-based filtering.",
+        logger.progress("Queue size %d exceeds reserved quota %d. Applying priority-based filtering.",
             currentQueueSize, currentStreamState.quota);
 
         List<UserPrompt> allPrompts = new ArrayList<>();
@@ -586,6 +604,22 @@ class AviatorStreamProcessor implements AutoCloseable {
             });
 
         currentStreamState.actualIssuesCount = filteredPrompts.size();
+
+        // Check if filtering resulted in zero issues
+        if (filteredPrompts.isEmpty()) {
+            String reason;
+            if (customPriorityMap != null) {
+                reason = String.format("0 issues to audit as per --folder-priority-order %s",
+                    currentStreamState.customPriorityOrder);
+            } else {
+                reason = "0 issues to audit after quota-based filtering";
+            }
+
+            logger.progress("Quota filtering resulted in 0 issues to audit. Reason: %s", reason);
+            logger.info("Aborting audit - all {} issues were filtered out", currentQueueSize);
+
+            throw new AviatorQuotaFilterException(reason);
+        }
 
         int excludedCount = currentQueueSize - filteredPrompts.size();
         if (filteredPrompts.size() < currentStreamState.quota && customPriorityMap != null) {
