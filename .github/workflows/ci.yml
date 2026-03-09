@@ -374,7 +374,7 @@ jobs:
           RELEASE_BRANCH: ${{ needs.build.outputs.branch }}
           
       - name: DEV - Update ${{ needs.build.outputs.release_tag }} tag
-        uses: richardsimko/update-tag@4240e630554bce6e0887180f8da115fd2045b814
+        uses: richardsimko/update-tag@aab2434e9a5040687874aa39d1c6377ec0cb0d94
         if: needs.build.outputs.do_dev_release
         with:
           tag_name: ${{ needs.build.outputs.release_tag }}
@@ -417,7 +417,7 @@ jobs:
           name: combined-artifacts
     
       - name: PROD - Publish ${{ matrix.semantic_version }} tag
-        uses: richardsimko/update-tag@4240e630554bce6e0887180f8da115fd2045b814
+        uses: richardsimko/update-tag@aab2434e9a5040687874aa39d1c6377ec0cb0d94
         with:
           tag_name: ${{ matrix.semantic_version }}
         env:
