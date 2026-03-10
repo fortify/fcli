@@ -196,28 +196,33 @@ public final class AviatorSSCAuditHelper {
     public static long getAuditableIssueCount(UnirestInstance unirest, SSCAppVersionDescriptor av, AviatorLoggerImpl logger, boolean noFilterSet, SSCIssueFilterSetOptionMixin filterSetOptions, List<String> folderNames) {
         logger.progress("Status: Checking for auditable issues...");
 
-        GetRequest request = unirest.get(SSCUrls.PROJECT_VERSION_ISSUES(av.getVersionId()))
-                .queryString("limit", PAGE_LIMIT)
-                .queryString("embed", "auditValues")
-                .queryString("qm", "issues")
-                .queryString("q", "audited:false");
+        LOG.debug("Starting auditable issue count for SSC version {} (application='{}', version='{}') with pageLimit={}, noFilterSet={}",
+                av.getVersionId(), av.getApplicationName(), av.getVersionName(), PAGE_LIMIT, noFilterSet);
 
         // Apply filter set if specified
         SSCIssueFilterSetDescriptor filterSetDescriptor = null;
+        String filterSetGuid = null;
         if (!noFilterSet) {
             SSCIssueFilterSetHelper filterSetHelper = new SSCIssueFilterSetHelper(unirest, av.getVersionId());
             filterSetDescriptor = filterSetHelper.getDescriptorByTitleOrId(filterSetOptions.getFilterSetTitleOrId(), false);
             if (filterSetDescriptor != null) {
                 logger.progress("Status: Applying filter set '%s' for issue count check", filterSetDescriptor.getTitle());
-                request.queryString("filterset", filterSetDescriptor.getGuid());
+            filterSetGuid = filterSetDescriptor.getGuid();
+                LOG.debug("Applied SSC filter set '{}' with guid {} while counting auditable issues for version {}",
+                filterSetDescriptor.getTitle(), filterSetGuid, av.getVersionId());
+            } else {
+                LOG.debug("No SSC filter set resolved from options while counting auditable issues for version {}",
+                        av.getVersionId());
             }
         }
 
         // Apply folder filter if specified
+        String folderFilter = null;
         if (folderNames != null && !folderNames.isEmpty()) {
-            String folderFilter = getFolderFilter(noFilterSet, filterSetDescriptor, folderNames);
-            request.queryString("filter", folderFilter);
+            folderFilter = getFolderFilter(noFilterSet, filterSetDescriptor, folderNames);
             logger.progress("Status: Applying folder filter for: %s", String.join(", ", folderNames));
+            LOG.debug("Applied folder filter '{}' for folders {} while counting auditable issues for version {}",
+                    folderFilter, folderNames, av.getVersionId());
         }
 
         long totalAuditableCount = 0;
@@ -226,7 +231,21 @@ public final class AviatorSSCAuditHelper {
 
         try {
             do {
-                JsonNode response = request.queryString("start", start).asObject(JsonNode.class).getBody();
+                GetRequest request = unirest.get(SSCUrls.PROJECT_VERSION_ISSUES(av.getVersionId()))
+                        .queryString("limit", PAGE_LIMIT)
+                        .queryString("embed", "auditValues")
+                        .queryString("qm", "issues")
+                        .queryString("q", "audited:false")
+                        .queryString("start", start);
+                if (filterSetGuid != null) {
+                    request.queryString("filterset", filterSetGuid);
+                }
+                if (folderFilter != null) {
+                    request.queryString("filter", folderFilter);
+                }
+                LOG.debug("Requesting SSC issues page for version {} with start={} and limit={}",
+                        av.getVersionId(), start, PAGE_LIMIT);
+                JsonNode response = request.asObject(JsonNode.class).getBody();
                 if (response == null || !response.has("data")) {
                     LOG.warn("Invalid response received from issue check; proceeding with FPR download.");
                     logger.progress("WARN: Invalid response from issue check. Proceeding with FPR download.");
@@ -234,6 +253,8 @@ public final class AviatorSSCAuditHelper {
                 }
                 if (totalFromServer == -1) {
                     totalFromServer = response.get("count").asLong(0);
+                    LOG.debug("SSC reported {} total issues matching the initial auditable count query for version {}",
+                            totalFromServer, av.getVersionId());
                 }
 
                 ArrayNode issues = (ArrayNode) response.get("data");
@@ -242,12 +263,18 @@ public final class AviatorSSCAuditHelper {
                             .filter(issue -> !isProcessedByAviator(issue))
                             .count();
                     totalAuditableCount += auditableOnPage;
+                    LOG.debug("Processed SSC issues page for version {}: pageStart={}, pageSize={}, auditableOnPage={}, cumulativeAuditableCount={}, totalFromServer={}",
+                            av.getVersionId(), start, issues.size(), auditableOnPage, totalAuditableCount, totalFromServer);
                     start += issues.size();
                 } else {
+                    LOG.debug("SSC returned no more issues for version {} at start={}; stopping pagination with cumulativeAuditableCount={} and totalFromServer={}",
+                            av.getVersionId(), start, totalAuditableCount, totalFromServer);
                     break; // No more issues
                 }
             } while (start < totalFromServer);
 
+            LOG.debug("Completed auditable issue count for version {}: totalAuditableCount={}, totalFromServer={}",
+                    av.getVersionId(), totalAuditableCount, totalFromServer);
             logger.progress("Status: Found %d auditable issues.", totalAuditableCount);
             return totalAuditableCount;
         } catch (UnexpectedHttpResponseException e) {
