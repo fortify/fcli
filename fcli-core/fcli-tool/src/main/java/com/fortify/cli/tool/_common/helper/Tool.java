@@ -102,7 +102,15 @@ public enum Tool {
     public String getDefaultEnvPrefix() {
         return toolHelper.getDefaultEnvPrefix();
     }
-    
+ 
+    /**
+     * Determine if this tool requires tool definitions (e.g., for configuration).
+     * @return true if tool definitions are required, false otherwise
+     */
+    public boolean requiresToolDefinitions() {
+        return toolHelper.requiresToolDefinitions();
+    }
+
     /**
      * Interface defining tool-specific helper methods.
      * Each tool implementation provides its own concrete helper class.
@@ -113,6 +121,10 @@ public enum Tool {
         
         default String getDefaultEnvPrefix() {
             return getToolName().toUpperCase().replace('-', '_');
+        }
+
+        default boolean requiresToolDefinitions() {
+            return true;
         }
     }
     
@@ -252,6 +264,11 @@ public enum Tool {
         @Override
         public String getDefaultEnvPrefix() {
             return "SOURCEANALYZER";
+        }
+
+        @Override
+        public boolean requiresToolDefinitions() {
+            return false;
         }
     }
 }

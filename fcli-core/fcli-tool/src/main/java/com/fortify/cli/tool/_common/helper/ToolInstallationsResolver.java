@@ -39,7 +39,7 @@ public final class ToolInstallationsResolver {
         var toolName = tool.getToolName();
 
         // Non-SCA tools keep strict behavior
-        if (tool != Tool.SOURCE_ANALYZER) {
+        if (tool.requiresToolDefinitions()) {
             var definition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
             var lastInstalled = ToolInstallationDescriptor.loadLastModified(toolName);
             var definedRecords = definition.getVersionsStream()
@@ -49,7 +49,7 @@ public final class ToolInstallationsResolver {
             return new ToolInstallations(tool, definition, lastInstalled, records);
         }
 
-        // SCA: definitions optional
+        // Tools with optional definitions: definitions may be absent
         var optDef = ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName);
         ToolDefinitionRootDescriptor definition;
         ToolInstallationDescriptor lastInstalled = ToolInstallationDescriptor.loadLastModified(toolName);

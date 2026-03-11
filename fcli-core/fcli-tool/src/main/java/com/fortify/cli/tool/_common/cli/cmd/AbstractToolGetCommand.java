@@ -45,8 +45,7 @@ public abstract class AbstractToolGetCommand extends AbstractOutputCommand imple
         var toolName = tool.getToolName();
         var optDefinition = ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName);
 
-        //TODO - Check the need of definitions for other tools as well, and if this is the best way to handle this (e.g. should we check for the presence of definitions in the list command instead?)
-        if (tool == Tool.SOURCE_ANALYZER && optDefinition.isEmpty()) {
+        if (!tool.requiresToolDefinitions() && optDefinition.isEmpty()) {
             return getJsonNodeWithoutDefinitions(toolName);
         }
 

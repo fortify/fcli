@@ -209,7 +209,7 @@ public class ToolRegistrationHelper {
             this.defaultBinaryName = defaultBinaryName;
             this.versionDetector = versionDetector;
             Tool tool = Tool.getByToolName(toolName);
-            this.definitionsOptional = (tool == Tool.SOURCE_ANALYZER);
+            this.definitionsOptional = tool != null && !tool.requiresToolDefinitions();
         }
         
         /**

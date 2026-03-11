@@ -31,7 +31,7 @@ import picocli.CommandLine.Command;
  * 
  * @author Sangamesh Vijaykumar
  */
-@Command(name = "update-rule-packs")
+@Command(name = "update-rules")
 public class ToolSourceAnalyzerUpdateRulePacksCommand extends AbstractToolRunCommand {
     @Override
     protected final Tool getTool() {

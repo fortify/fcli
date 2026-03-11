@@ -150,8 +150,8 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         }
 
         // SCA: allow run without sca.yaml
-        if ( tool == Tool.SOURCE_ANALYZER
-                && ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName).isEmpty() ) {
+        if (!tool.requiresToolDefinitions()
+                && ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName).isEmpty()) {
             var descriptor = installations.findByVersion(versionToRun)
                     .map(ToolInstallationsResolver.ToolInstallationRecord::installationDescriptor)
                     .orElseGet(() -> {
