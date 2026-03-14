@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
+import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 
 /**
  * Tests for FoDIssueListCommand.isEffectiveFastOutput logic after migration to style-based fast-output.
@@ -38,6 +39,7 @@ public class FoDIssueListCommandEffectiveFastOutputTest {
         cmd = new FoDIssueListCommand();
         streamingStub = new StreamingStubOutputHelper();
         setField(cmd, "outputHelper", streamingStub);
+        setField(cmd, "appOrRelease", new FoDAppOrReleaseMixin());
     }
 
     @Test
@@ -89,13 +91,15 @@ public class FoDIssueListCommandEffectiveFastOutputTest {
     }
 
     private void setApp(String app) throws Exception {
-        var target = cmd.getTargetSpecifier();
+        var appOrRelease = cmd.getAppOrRelease();
+        var target = appOrRelease.getFodAppOrReleaseArgGroup();
         var appGroup = target.getApp();
         setField(appGroup, "appNameOrId", app);
     }
 
     private void setRelease(String rel) throws Exception {
-        var target = cmd.getTargetSpecifier();
+        var appOrRelease = cmd.getAppOrRelease();
+        var target = appOrRelease.getFodAppOrReleaseArgGroup();
         var releaseGroup = target.getRelease();
         setField(releaseGroup, "qualifiedReleaseNameOrId", rel);
     }

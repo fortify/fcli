@@ -26,6 +26,7 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -33,13 +34,10 @@ import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDOpenSourceScanType;
 import com.fortify.cli.fod._common.scan.helper.oss.FoDScanOssHelper;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -50,34 +48,18 @@ public final class FoDOssComponentsListCommand extends AbstractFoDJsonNodeOutput
     private static final Logger LOG = LoggerFactory.getLogger(FoDOssComponentsListCommand.class);
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin;
-    @ArgGroup(exclusive = true, multiplicity = "1", order = 1) @Getter private TargetSpecifierArgGroup targetSpecifier = new TargetSpecifierArgGroup();
+    @Mixin @Getter private FoDAppOrReleaseMixin appOrRelease;
     @Option(names = "--scan-types", required = true, split = ",", defaultValue = "Debricked") private FoDOpenSourceScanType[] scanTypes;
-
-    public static class TargetSpecifierArgGroup {
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) @Getter private AppTarget app = new AppTarget();
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) @Getter private ReleaseTarget release = new ReleaseTarget();
-    }
-
-    public static class AppTarget extends FoDAppResolverMixin.AbstractFoDAppResolverMixin {
-        @Option(names = { "--app" }, required = true, descriptionKey = "fcli.fod.app.app-name-or-id") @Getter private String appNameOrId;
-    }
-
-    public static class ReleaseTarget extends FoDReleaseByQualifiedNameOrIdResolverMixin.AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
-        @Option(names = { "--release", "--rel" }, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id") @Getter private String qualifiedReleaseNameOrId;
-    }
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         ArrayNode result = JsonHelper.getObjectMapper().createArrayNode();
 
-        var appGroup = targetSpecifier.getApp();
-        var releaseGroup = targetSpecifier.getRelease();
-
-        final String applicationId = (appGroup != null && appGroup.getAppNameOrId() != null)
-                ? appGroup.getAppId(unirest)
+        final String applicationId = appOrRelease.isAppSpecified()
+                ? appOrRelease.getAppId(unirest)
                 : null;
-        final String releaseId = (releaseGroup != null && releaseGroup.getQualifiedReleaseNameOrId() != null)
-                ? releaseGroup.getReleaseId(unirest)
+        final String releaseId = appOrRelease.isReleaseSpecified()
+                ? appOrRelease.getReleaseId(unirest)
                 : null;
 
         Stream.of(scanTypes)

@@ -31,24 +31,22 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.util.Break;
+import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueIncludeMixin;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper.IssueAggregationData;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -56,9 +54,8 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class FoDIssueListCommand extends AbstractFoDOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    @Mixin private FoDDelimiterMixin delimiterMixin; // injected in resolvers
-    @ArgGroup(exclusive = true, multiplicity = "1", order = 1)
-    @Getter private TargetSpecifierArgGroup targetSpecifier = new TargetSpecifierArgGroup();
+    @Mixin private FoDDelimiterMixin delimiterMixin;
+    @Mixin @Getter private FoDAppOrReleaseMixin appOrRelease;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Mixin private FoDIssueEmbedMixin embedMixin;
     @Mixin private FoDIssueIncludeMixin includeMixin;
@@ -75,34 +72,12 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
             .add("severityString","severityString")
             .add("category","category");
 
-    public static class TargetSpecifierArgGroup {
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) @Getter private AppTarget app = new AppTarget();
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) @Getter private ReleaseTarget release = new ReleaseTarget();
-    }
-
-    public static class AppTarget extends FoDAppResolverMixin.AbstractFoDAppResolverMixin {
-        @Option(names = { "--app" }, required = true, descriptionKey = "fcli.fod.app.app-name-or-id") @Getter private String appNameOrId;
-    }
-
-    public static class ReleaseTarget extends FoDReleaseByQualifiedNameOrIdResolverMixin.AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
-        @Option(names = { "--release", "--rel" }, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id") @Getter private String qualifiedReleaseNameOrId;
-    }
-
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
-        var appGroup = targetSpecifier.getApp();
-        var releaseGroup = targetSpecifier.getRelease();
-
-        boolean appSpecified = appGroup != null && appGroup.getAppNameOrId() != null;
-        boolean releaseSpecified = releaseGroup != null && releaseGroup.getQualifiedReleaseNameOrId() != null;
-
-        if (releaseSpecified) {
-            releaseGroup.setDelimiterMixin(delimiterMixin);
-        }
-
+        boolean releaseSpecified = appOrRelease.isReleaseSpecified();
         var result = releaseSpecified
-                ? singleReleaseProducerBuilder(unirest, releaseGroup.getReleaseId(unirest))
-                : applicationProducerBuilder(unirest, appGroup.getAppId(unirest));
+                ? singleReleaseProducerBuilder(unirest, appOrRelease.getReleaseId(unirest))
+                : applicationProducerBuilder(unirest, appOrRelease.getAppId(unirest));
         return result.build();
     }
     
@@ -236,12 +211,9 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
     }
     
     private boolean isEffectiveFastOutput() {
-        var appGroup = targetSpecifier.getApp();
-        var releaseGroup = targetSpecifier.getRelease();
-
-        boolean appSpecified = appGroup != null && appGroup.getAppNameOrId() != null;
-        boolean releaseSpecified = releaseGroup != null && releaseGroup.getQualifiedReleaseNameOrId() != null;
-        if (!appSpecified || releaseSpecified) { return false; }
+        if (!appOrRelease.isAppSpecified() || appOrRelease.isReleaseSpecified()) {
+            return false;
+        }
         boolean fastOutputStyle = outputHelper.getRecordWriterStyle().isFastOutput();
         boolean streamingSupported = outputHelper.isStreamingOutputSupported();
         boolean recordConsumerConfigured = getRecordConsumer() != null;
