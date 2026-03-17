@@ -32,7 +32,7 @@ public class ApplyAutoRemediationOnSource {
         LOG.info("Starting apply auto-remediation process for file: {}", fprHandle.getFprPath());
 
         if (!fprHandle.hasRemediations()) {
-            LOG.error("FPR file does not contain remediations.xml file: {}", fprHandle.getFprPath());
+            //LOG.error("FPR file does not contain remediations.xml file: {}", fprHandle.getFprPath());
             throw new AviatorSimpleException("FPR file does not contain remediations.xml file.");
         }
         LOG.info("FPR validation successful");
