@@ -12,6 +12,10 @@
  */
 package com.fortify.cli.util.all_commands.cli.mixin;
 
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +41,7 @@ import com.fortify.cli.common.spel.query.QueryExpressionTypeConverter;
 import lombok.Data;
 import lombok.Getter;
 import picocli.CommandLine.Model.ArgGroupSpec;
+import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
@@ -352,11 +357,10 @@ public class AllCommandsCommandSelectorMixin {
         boolean secret = isSecretOption(option);
         ArrayNode allowedValues = getAllowedValues(option, option.type(),
                 option.type() != null && option.type().isEnum());
-        String datatype = getDatatype(option.type(), option.arity(), option.splitRegex(),
-                allowedValues.size() > 0);
+        String datatype = getDatatype(option, allowedValues.size() > 0);
         node.put("datatype", datatype);
         node.put("secret", secret);
-        node.put("multiselect", isMultiSelect(option.type(), option.arity(), option.splitRegex()));
+        node.put("multiselect", isMultiSelect(resolveType(option), option.arity(), option.splitRegex()));
         node.set("allowedValues", allowedValues);
         return node;
     }
@@ -369,6 +373,10 @@ public class AllCommandsCommandSelectorMixin {
         node.put("description", normalizeNewlines(
                 param.description().length > 0 ? param.description()[0] : ""));
         node.put("required", param.required());
+        ArrayNode allowedValues = getAllowedValues(param, param.type(), param.type() != null && param.type().isEnum());
+        node.put("datatype", getDatatype(param, allowedValues.size() > 0));
+        node.put("multiselect", isMultiSelect(resolveType(param), param.arity(), param.splitRegex()));
+        node.set("allowedValues", allowedValues);
         return node;
     }
 
@@ -438,11 +446,21 @@ public class AllCommandsCommandSelectorMixin {
                 .orElse(names[0]);
     }
 
+    private static String getDatatype(OptionSpec option, boolean hasAllowedValues) {
+        return getDatatype(option, resolveType(option), option.arity(), option.splitRegex(), hasAllowedValues, option.paramLabel());
+    }
+
+    private static String getDatatype(PositionalParamSpec param, boolean hasAllowedValues) {
+        return getDatatype(param, resolveType(param), param.arity(), param.splitRegex(), hasAllowedValues, param.paramLabel());
+    }
+
     private final static String getDatatype(
+            ArgSpec argSpec,
             Class<?> type,
             picocli.CommandLine.Range arity,
             String splitRegex,
-            boolean hasAllowedValues) {
+            boolean hasAllowedValues,
+            String paramLabel) {
         if (arity != null && arity.max() == 0) {
             return "boolean";
         }
@@ -456,6 +474,10 @@ public class AllCommandsCommandSelectorMixin {
                 return "string";
             }
         }
+        // File/Path types should be presented as file datatype
+        if (type == java.nio.file.Path.class || java.io.File.class.isAssignableFrom(type)) {
+            return "file";
+        }
         boolean isListType = Collection.class.isAssignableFrom(type)
                 || type.isArray()
                 || (splitRegex != null && !splitRegex.isBlank())
@@ -464,6 +486,38 @@ public class AllCommandsCommandSelectorMixin {
             return "array";
         }
         return "string";
+    }
+
+    private static Class<?> resolveType(ArgSpec argSpec) {
+        Class<?> type = argSpec.type();
+        if (type == null || type == String.class || type == Object.class) {
+            Class<?> reflectedType = getReflectedType(argSpec.userObject());
+            if (reflectedType != null) {
+                return reflectedType;
+            }
+        }
+        return type;
+    }
+
+    private static Class<?> getReflectedType(Object userObject) {
+        if (userObject instanceof Field field) {
+            return field.getType();
+        }
+        if (userObject instanceof Method method) {
+            return method.getReturnType();
+        }
+        if (userObject instanceof Parameter parameter) {
+            return parameter.getType();
+        }
+        if (userObject instanceof AccessibleObject accessibleObject) {
+            if (accessibleObject instanceof Field field) {
+                return field.getType();
+            }
+            if (accessibleObject instanceof Method method) {
+                return method.getReturnType();
+            }
+        }
+        return null;
     }
 
     private final static boolean isMultiSelect(Class<?> type, picocli.CommandLine.Range arity, String splitRegex) {
@@ -512,6 +566,26 @@ public class AllCommandsCommandSelectorMixin {
             }
         } else {
             Iterable<?> candidates = option.completionCandidates();
+            if (candidates != null) {
+                for (Object candidate : candidates) {
+                    result.add(String.valueOf(candidate));
+                }
+            }
+        }
+        return result;
+    }
+
+    private final static ArrayNode getAllowedValues(PositionalParamSpec param, Class<?> type, boolean isEnumType) {
+        ArrayNode result = JsonHelper.getObjectMapper().createObjectNode().arrayNode();
+        if (isEnumType && type != null) {
+            Object[] constants = type.getEnumConstants();
+            if (constants != null) {
+                for (Object constant : constants) {
+                    result.add(constant.toString());
+                }
+            }
+        } else {
+            Iterable<?> candidates = param.completionCandidates();
             if (candidates != null) {
                 for (Object candidate : candidates) {
                     result.add(String.valueOf(candidate));
