@@ -55,7 +55,7 @@ public final class SinceOptionHelper {
             } catch (Exception absoluteEx) {
                 throw new FcliSimpleException(
                     "Invalid --since value: '" + sinceValue + "'. " +
-                    "Use a relative duration (e.g. 7d, 2w, 1m, 90d) or an absolute date " +
+                    "Use a relative duration (e.g. 7d, 2w, 1M, 90d) or an absolute date " +
                     "(e.g. 2025-01-01, 2025-01-01T10:30:00, 2025-01-01T10:30:00Z)."
                 );
             }
