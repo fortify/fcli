@@ -16,7 +16,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.log.LogSensitivityLevel;
 import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
@@ -137,9 +136,6 @@ public class FoDSessionLoginOptions {
             public Builder user(String user){ this.user=user; return this; }
             public Builder password(char[] password){ this.password=password; return this; }
             public BasicFoDUserCredentials build(){
-                if ( StringUtils.isBlank(tenant) || StringUtils.isBlank(user) || password==null || password.length==0 ) {
-                    throw new FcliSimpleException("--tenant, --user and --password must all be specified for user credential authentication");
-                }
                 return new BasicFoDUserCredentials(this);
             }
         }
