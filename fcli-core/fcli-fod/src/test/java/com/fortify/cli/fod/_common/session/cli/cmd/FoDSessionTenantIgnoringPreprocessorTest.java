@@ -28,6 +28,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.MissingParameterException;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.UnmatchedArgumentException;
 
 class FoDSessionTenantIgnoringPreprocessorTest {
     @Test
@@ -47,6 +48,29 @@ class FoDSessionTenantIgnoringPreprocessorTest {
     }
 
     @Test
+    void shouldIgnoreCompactTenantWhenClientCredentialsProvided() {
+        var cmd = parse("-tacme", "--client-id", "id", "--client-secret", "secret");
+
+        assertTrue(cmd.loginOptions.hasClientCredentials());
+        assertFalse(cmd.loginOptions.hasUserCredentials());
+    }
+
+    @Test
+    void shouldIgnoreAllSupportedTenantSyntaxWhenClientCredentialsProvided() {
+        assertClientCredentialsOnly("-t", "acme");
+        assertClientCredentialsOnly("-t=acme");
+        assertClientCredentialsOnly("-tacme");
+        assertClientCredentialsOnly("--tenant", "acme");
+        assertClientCredentialsOnly("--tenant=acme");
+    }
+
+    @Test
+    void shouldRejectInvalidLongTenantSyntax() {
+        assertThrows(UnmatchedArgumentException.class,
+                () -> parse("--tenanttenant-value", "--client-id", "id", "--client-secret", "secret"));
+    }
+
+    @Test
     void shouldFailUserCredentialsWithoutTenant() {
         var ex = assertThrows(MissingParameterException.class,
                 () -> parse("--user", "bob", "--password", "pw"));
@@ -60,6 +84,19 @@ class FoDSessionTenantIgnoringPreprocessorTest {
 
         assertTrue(cmd.loginOptions.hasUserCredentials());
         assertDoesNotThrow(() -> cmd.loginOptions.getUserCredentials());
+    }
+
+    private static void assertClientCredentialsOnly(String... tenantArgs) {
+        var args = new ArrayList<String>();
+        Collections.addAll(args, tenantArgs);
+        args.add("--client-id");
+        args.add("id");
+        args.add("--client-secret");
+        args.add("secret");
+
+        var cmd = parse(args.toArray(String[]::new));
+        assertTrue(cmd.loginOptions.hasClientCredentials());
+        assertFalse(cmd.loginOptions.hasUserCredentials());
     }
 
     private static TestFoDLoginCommand parse(String... args) {

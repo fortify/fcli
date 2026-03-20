@@ -58,6 +58,10 @@ public final class FoDSessionTenantIgnoringPreprocessor implements IParameterPre
                 || a.startsWith("--client-secret="));
     }
 
+    private static boolean isCompactTenantOption(String arg) {
+        return arg.startsWith("-t") && arg.length() > 2 && !arg.startsWith("--");
+    }
+
     private static List<String> filterOutTenantOptions(List<String> cliArgs) {
         var result = new ArrayList<String>();
         for ( int i = 0; i < cliArgs.size(); i++ ) {
@@ -68,7 +72,7 @@ public final class FoDSessionTenantIgnoringPreprocessor implements IParameterPre
                 }
                 continue;
             }
-            if ( arg.startsWith("--tenant=") || arg.startsWith("-t=") ) {
+            if ( arg.startsWith("--tenant=") || arg.startsWith("-t=") || isCompactTenantOption(arg) ) {
                 continue;
             }
             result.add(arg);
