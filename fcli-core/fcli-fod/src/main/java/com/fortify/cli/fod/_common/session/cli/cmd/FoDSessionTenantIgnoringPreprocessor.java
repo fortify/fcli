@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import picocli.CommandLine.IParameterPreprocessor;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
@@ -28,6 +30,7 @@ import picocli.CommandLine.Model.CommandSpec;
  * 
  * @author Sangamesh Vijayakumar
  */
+@Reflectable
 public final class FoDSessionTenantIgnoringPreprocessor implements IParameterPreprocessor {
     @Override
     public boolean preprocess(Stack<String> args, CommandSpec commandSpec, ArgSpec argSpec, Map<String, Object> info) {
