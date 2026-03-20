@@ -82,17 +82,17 @@ public class FoDSessionLoginOptions {
     }
 
     public final boolean hasUserCredentials() {
-        return getUserCredentialOptions()!=null;
+        var userCredentialOptions = getUserCredentialOptions();
+        return userCredentialOptions!=null
+                && StringUtils.isNotBlank(userCredentialOptions.getTenant())
+                && StringUtils.isNotBlank(userCredentialOptions.getUser())
+                && userCredentialOptions.getPassword()!=null
+                && userCredentialOptions.getPassword().length > 0;
     }
 
     public final BasicFoDUserCredentials getUserCredentials() {
         var u = getUserCredentialOptions();
-        var t = Optional.ofNullable(u).map(FoDUserCredentialOptions::getTenant).orElse(null);
-        if (u == null || StringUtils.isBlank(t) || StringUtils.isBlank(u.getUser()) || u.getPassword() == null) {
-            throw new FcliSimpleException(
-                    "--tenant, --user and --password must all be specified for user credential authentication");
-        }
-        return BasicFoDUserCredentials.builder().tenant(t).user(u.getUser()).password(u.getPassword()).build();
+        return BasicFoDUserCredentials.builder().tenant(u.getTenant()).user(u.getUser()).password(u.getPassword()).build();
     }
     
     public final boolean hasClientCredentials() {
