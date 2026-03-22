@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260320.154034-dev_v3.x
+fcli_version: 0.20260322.170244-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260320.154034-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260320.154034-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260322.170244-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260320.154034-dev_v3.x</span>
+<span id="revnumber">version 0.20260322.170244-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -225,8 +225,8 @@ fcli_version: 0.20260320.154034-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260320.154034-dev_v3.x</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">2.6.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260322.170244-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.7.0</p></td>
 </tr>
 </tbody>
 </table>
@@ -292,7 +292,7 @@ contents of some of the fcli built-in actions using one of the following approac
 <td class="content">
 <div class="paragraph">
 <p>Online action sources reference a development version of the action schema. For custom actions, please make
-sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</a> instead. Please see the next section for more details.</p>
+sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json" class="bare">https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json</a> instead. Please see the next section for more details.</p>
 </div>
 </td>
 </tr>
@@ -302,7 +302,7 @@ sure to use <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-s
 <div class="sect2">
 <h3 id="_schema_based_code_assistance"><a class="anchor" href="#_schema_based_code_assistance"></a>Schema-based code assistance</h3>
 <div class="paragraph">
-<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">action schema</a>, which allows YAML editors
+<p>Fcli provides an <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json">action schema</a>, which allows YAML editors
 and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may
 need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used
 IDE plugins that are known to work with one of the schema associations listed below:</p>
@@ -326,7 +326,7 @@ IDE plugins that are known to work with one of the schema associations listed be
 <p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
 <div class="listingblock">
 <div class="content">
-<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</pre>
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json</pre>
 </div>
 </div>
 </li>
@@ -334,7 +334,7 @@ IDE plugins that are known to work with one of the schema associations listed be
 <p>YAML property, supported by Eclipse and some other YAML editors:</p>
 <div class="listingblock">
 <div class="content">
-<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</pre>
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json</pre>
 </div>
 </div>
 </li>
@@ -347,8 +347,8 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260320.154034-dev_v3.x supports
-schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json">2.6.0</a>. Other
+<p>As shown in the sample schema statements above, the current fcli version 0.20260322.170244-dev_v3.x supports
+schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json">2.7.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
 same schema minor version range.</p>
@@ -440,12 +440,12 @@ provide more details on the expected contents for each property type.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.6.0.json</code></pre>
+<pre class="highlight"><code class="language-yaml" data-lang="yaml"># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.7.0.json</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -1636,6 +1636,14 @@ options: --option, -o<br></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">mask.env-vars</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">map&lt;string,<a href="#type-mask">mask</a>&gt;</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Optional map: Environment variables used by this action for which values should be masked in the fcli log file. Map keys define environment variables names, map values define masking configuration.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">sensitive-files.ephemeral-encrypt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional boolean: When true, sensitive files created by this action during execution (for example session files)<br>
+will be encrypted with a randomly generated, in-memory password that is only available for the<br>
+duration of the action execution. Pre-existing secured files remain decryptable using the standard<br>
+fcli encryption key.<br></p></td>
 </tr>
 </tbody>
 </table>
@@ -6141,8 +6149,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260320.154034-dev_v3.x<br>
-Last updated 2026-03-20 15:43:29 UTC
+Version 0.20260322.170244-dev_v3.x<br>
+Last updated 2026-03-22 17:05:41 UTC
 </div>
 </div>
 </body>
