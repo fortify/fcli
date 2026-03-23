@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.16.0](https://github.com/fortify/fcli/compare/v3.15.0...v3.16.0) (2026-03-23)
+
+
+### Features
+
+* `fcli fod dast-scan start`: Add `--vpn` option to select Fortify Connect network name ([0d66c01](https://github.com/fortify/fcli/commit/0d66c01880fd3cd8b851326223ad6b376f383ee9))
+* `fcli fod oss-scan download-latest`: Add `--format` option to support selecting CycloneDX or SPDX SBOM formats ([dee92ef](https://github.com/fortify/fcli/commit/dee92ef9e7f2410d22a38682859454c4f2578a89))
+* `fcli fod oss-scan download`: Add `--format` option to support selecting CycloneDX or SPDX SBOM formats ([dee92ef](https://github.com/fortify/fcli/commit/dee92ef9e7f2410d22a38682859454c4f2578a89))
+* `fcli fod sast-scan import-sarf`: new command to support importing SAST scan results in SARIF format ([dee92ef](https://github.com/fortify/fcli/commit/dee92ef9e7f2410d22a38682859454c4f2578a89))
+* `fcli ssc access-control update-local-user`: New command for updating a local SSC user ([0809f3a](https://github.com/fortify/fcli/commit/0809f3af985fbef9a91034fd5efe031ba7f8b60d))
+* `fcli ssc issue update`: New command for updating/auditing SSC issues ([f33d814](https://github.com/fortify/fcli/commit/f33d81466eb7d47fbe51a829b7962ea9aafdf225))
+* `fcli tool sourceanalyzer`: New commands to register pre-installed sourceanalyzer installation, and running `sourceanalyzer` and rule pack update commands ([e5d9e98](https://github.com/fortify/fcli/commit/e5d9e98136dfd6c3c02f010928dfb468048fe523))
+
+
+### Bug Fixes
+
+* `fcli action run ci`: Use ephemeral encryption key for sensitive (session) files (fixes [#949](https://github.com/fortify/fcli/issues/949)) ([5b7c085](https://github.com/fortify/fcli/commit/5b7c085d222762d9b63a1e5aa6663cc1a6863efb))
+* `fcli fod dast-scan start`: Fix DAST scan not starting first time when using fcli (fixes [#917](https://github.com/fortify/fcli/issues/917)) ([0d66c01](https://github.com/fortify/fcli/commit/0d66c01880fd3cd8b851326223ad6b376f383ee9))
+* `fcli fod microservice create`: Disallow microservice creation on non-microservice application (fixes [#873](https://github.com/fortify/fcli/issues/873)) ([0d66c01](https://github.com/fortify/fcli/commit/0d66c01880fd3cd8b851326223ad6b376f383ee9))
+* `fcli tool sc-client install`: Fix `--with-jre` option being ignored ([8db476c](https://github.com/fortify/fcli/commit/8db476c386f28126d35ea80fb5aa6d6f9d247c8a))
+* fcli action framework: Clear progress before writing checks output ([be3c1ae](https://github.com/fortify/fcli/commit/be3c1ae1a5ec94163832f1c8a88b8598623fa1a4))
+* fcli action framework: Return exit code 100 for `FAIL` status on `check` instructions (fixes [#950](https://github.com/fortify/fcli/issues/950)) ([8467063](https://github.com/fortify/fcli/commit/8467063efeff82b5f231f2775433987d03e21f95))
+* Fix ANSI color output on Windows ([7111525](https://github.com/fortify/fcli/commit/7111525743b83b551dba837f167be4f9fe73ff78))
+* Fix multithreading issues (fixes [#925](https://github.com/fortify/fcli/issues/925)) ([4cfd2dd](https://github.com/fortify/fcli/commit/4cfd2dd77f3c3f36e428e302250f6deb519e4e86))
+* harden GitHub Actions workflows against script injection and privilege escalation ([f018e4a](https://github.com/fortify/fcli/commit/f018e4a190d4726b49061228f428dbfd16447d13))
+* reduce build job permissions, add run-id validation, pin update-repo-docs workflow SHA ([6ac448e](https://github.com/fortify/fcli/commit/6ac448e164ce2798b80b8ecf801349354867202d))
+
 ## [3.15.0](https://github.com/fortify/fcli/compare/v3.14.3...v3.15.0) (2026-02-22)
 
 
