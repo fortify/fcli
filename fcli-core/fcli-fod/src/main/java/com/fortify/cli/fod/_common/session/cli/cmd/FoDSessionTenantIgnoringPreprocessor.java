@@ -34,6 +34,11 @@ import picocli.CommandLine.Model.CommandSpec;
 public final class FoDSessionTenantIgnoringPreprocessor implements IParameterPreprocessor {
     @Override
     public boolean preprocess(Stack<String> args, CommandSpec commandSpec, ArgSpec argSpec, Map<String, Object> info) {
+        // TODO Given that we have CommandSpec and ArgSpec available, can we use these to obtain option names
+        //      and aliases, rather than hardcoding/duplicating them here?
+        // TODO If we ever need similar functionality in other places, maybe better to change this into a
+        //      generic, annotation-driven processor, i.e., put some annotation on option fields to indicate
+        //      that the option should be ignored if some criteria are met?
         if ( argSpec!=null || args==null || args.isEmpty() ) {
             return false;
         }
