@@ -34,7 +34,6 @@ jobs:
       pull-requests: write
       issues: write
       packages: write
-      actions: write
       id-token: write
     outputs:
       release_created: ${{ steps.create_prod_release.outputs.release_created }}
