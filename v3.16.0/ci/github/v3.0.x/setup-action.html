@@ -1,0 +1,314 @@
+---
+title: 'fortify/github-action/setup'
+fcli_version: 3.16.0
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fortify/github-action/setup</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.16.0" %}
+
+
+<div id="header">
+<h1>fortify/github-action/setup</h1>
+<div class="details">
+<span id="revnumber">version 3.16.0</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_overview">Overview</a></li>
+<li><a href="#_quick_start_example">Quick Start Example</a></li>
+<li><a href="#_tips_recommendations">Tips &amp; Recommendations</a>
+<ul class="sectlevel2">
+<li><a href="#_air_gapped_environments">Air-Gapped Environments</a></li>
+</ul>
+</li>
+<li><a href="#_configuration">Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#_action_inputs">Action Inputs</a></li>
+<li><a href="#_setup_bootstrap">Setup &amp; Bootstrap</a></li>
+</ul>
+</li>
+<li><a href="#_migrating_from_fortifygithub_actionsetupv2">Migrating from fortify/github-action/setup@v2</a></li>
+<li><a href="#_resources">Resources</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>fortify/github-action/setup@v3</code> action allows for setting up fcli and various other Fortify tools for use in custom CI/CD workflows.
+This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.</p>
+</div>
+<div class="paragraph">
+<p>The Fortify tools to be installed are specified through action inputs, whereas optional bootstrapping behavior for fcli and supporting
+tools can be controlled through environment variables.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_quick_start_example"><a class="anchor" href="#_quick_start_example"></a>Quick Start Example</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Basic setup for custom workflows with fcli version pinning.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">name: Custom Fortify Workflow
+on: [push]
+
+jobs:
+  custom-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: fortify/github-action/setup@v3
+        with:
+          fcli: bootstrapped               # Set up bootstrapped fcli version. May also specify specific version, but
+                                           # then fcli may be downloaded twice (bootstrap version and requested version).
+
+        env:
+          FCLI_BOOTSTRAP_VERSION: v3.15.0  # Defaults to latest v3.x.y, pin to specific version for stability
+      - name: Run custom fcli commands
+        run: |
+          fcli fod session login ...
+          # Your custom workflow here
+          fcli fod session logout ...</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tips_recommendations"><a class="anchor" href="#_tips_recommendations"></a>Tips &amp; Recommendations</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_air_gapped_environments"><a class="anchor" href="#_air_gapped_environments"></a>Air-Gapped Environments</h3>
+<div class="paragraph">
+<p>For air-gapped or restricted network environments, host custom tool definitions and tool bundles in an internal
+SCM repository or artifact registry. Configure the integration to use these internal resources:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Set <code>TOOL_DEFINITIONS</code> to point to your internally hosted tool definitions file</p>
+</li>
+<li>
+<p>Set <code>FCLI_BOOTSTRAP_URL</code> to download fcli from your internal mirror</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This ensures all required tools are accessible without external internet access.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration"><a class="anchor" href="#_configuration"></a>Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Specifying the tools to be installed is done through action inputs, whereas bootstrapping behavior can be controlled through environment variables
+as shown in the following sections.</p>
+</div>
+<div class="sect2">
+<h3 id="_action_inputs"><a class="anchor" href="#_action_inputs"></a>Action Inputs</h3>
+<div class="paragraph">
+<p>Action inputs allow you to specify which Fortify tool versions to install, and whether the corresponding binaries
+should be added to the system <code>PATH</code>. The following action inputs are supported:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Input</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>export-path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to add the installed tools to the system PATH variable. Allowed values: <code>true</code> (default) or <code>false</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fcli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The fcli version to install. Allowed values: <code>skip</code> (default value, do not install), <code>bootstrapped</code> (use the bootstrapped fcli version), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>23.1</code> will install the latest known <code>23.1.y</code> patch version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v23.1</code> and <code>23.1</code> are semantically the same. Recommended value: <code>bootstrapped</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sc-client</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The ScanCentral Client version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fod-uploader</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The FoDUploader version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v5</code> will install the latest known <code>5.x.y</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v5.4.0</code> and <code>5.4.0</code> are semantically the same.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>vuln-exporter</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The FortifyVulnerabilityExporter version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v2</code> will install the latest known <code>2.x.y</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v2.0.4</code> and <code>2.0.4</code> are semantically the same.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>bugtracker-utility</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The FortifyBugTrackerUtility version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v4</code> will install the latest known <code>4.x</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v4.12</code> and <code>4.12</code> are semantically the same.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>debricked-cli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The Debricked CLI version to install. Allowed values: <code>skip</code> (default value, do not install), <code>latest</code>, or specific version number. Supports semantic versioning, for example <code>v1</code> will install the latest known <code>1.x</code> version. Version may be specified either with or without the <code>v</code> prefix, for example <code>v1.7</code> and <code>1.7</code> are semantically the same.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_setup_bootstrap"><a class="anchor" href="#_setup_bootstrap"></a>Setup &amp; Bootstrap</h3>
+<div class="paragraph">
+<p>The environment variables in this section allow you to customize bootstrapping behavior
+of fcli and supporting tools like ScanCentral Client.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This GitHub Action requires at least fcli v3.15.0 to function correctly.
+</td>
+</tr>
+</table>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment Variable</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERSION</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, the latest <a href="https://github.com/fortify/fcli/releases/v3">fcli v3.x.y release</a> is used for running the fcli-provided ci workflow, allowing you to always benefit from the latest features and fixes. If you prefer stability over automatic updates, you can pin to a specific minor or patch release like v3.15 or v3.15.0 by setting this environment variable to the desired version. Likewise, you can set this variable to an fcli <a href="https://github.com/fortify/fcli/releases?q=prerelease%3Atrue">pre-release tag</a> like <code>dev_v3.x</code> to experiment with upcoming changes provided by an fcli development version.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_PATH</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Path to a pre-installed fcli executable. When set, fcli bootstrapping will use this binary instead of downloading fcli.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>By default, fcli is downloaded from the official GitHub releases page. This environment variable allows you to specify a custom URL, for example pointing to an internal mirror in air-gapped environments. In those cases, you&#8217;ll likely also want to set <code>TOOL_DEFINITIONS</code> to point to a custom tool definitions file to allow for downloading supporting tools like ScanCentral Client from the internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_RSA_SHA256_URL</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Custom URL for the fcli RSA SHA256 signature file. Defaults to <code>&lt;FCLI_BOOTSTRAP_URL&gt;.rsa_sha256</code>.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FCLI_BOOTSTRAP_VERIFY_SIGNATURE</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>false</code> to skip verification (not recommended) of the fcli download.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TOOL_DEFINITIONS</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Supporting tools like ScanCentral Client or Debricked CLI are by default downloaded from the URLs defined in the <a href="https://github.com/fortify/tool-definitions/tree/main/v1">default Fortify tool definitions</a>. For airgapped environments, point this environment variable to an internally hosted custom tool definitions zip file to download these tools from an internal mirror.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PREINSTALLED</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Set to <code>true</code> to require that all supporting tools (e.g., ScanCentral Client, Debricked CLI) invoked by the fcli  <code>ci</code> action are already installed, preventing tool definitions from being updated or tools from being automatically installed. This is useful for environments where pre-installed tools must be used, or where automatic tool installation is not permitted.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_migrating_from_fortifygithub_actionsetupv2"><a class="anchor" href="#_migrating_from_fortifygithub_actionsetupv2"></a>Migrating from fortify/github-action/setup@v2</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>fortify/github-action/setup@v3</code> action supports the same action inputs as v2.x.y versions, so migrating should be straightforward.
+However, bootstrapping behavior for fcli has changed; please review the following table for details:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">fortify/github-action/setup@v2</th>
+<th class="tableblock halign-left valign-top">fortify/github-action/setup@v3</th>
+<th class="tableblock halign-left valign-top">Recommended Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Undocumented <code>fcli: action_default</code> input to use internal, pinned fcli version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Documented <code>fcli: bootstrapped</code> input to use bootstrapped fcli version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Use <code>fcli: bootstrapped</code> to leverage bootstrapped fcli version based on <code>FCLI_BOOTSTRAP_*</code> environment variables, to avoid download of multiple fcli versions</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>tool-definitions</code> input for fcli bootstrapping</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>TOOL_DEFINITIONS</code> environment variable and dedicated <code>FCLI_BOOTSTRAP_*</code> environment variables for fcli bootstrapping</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If you used custom tool definitions, you&#8217;ll need to change from <code>tool-definitions</code> input to <code>TOOL_DEFINITIONS</code> environment variable. If your tool definitions included custom fcli download URLs, you&#8217;ll need to configure <code>FCLI_BOOTSTRAP_URL</code> to point to the appropriate fcli download URL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_resources"><a class="anchor" href="#_resources"></a>Resources</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Marketplace Listing: <a href="https://github.com/marketplace/actions/fortify-ast-scan">https://github.com/marketplace/actions/fortify-ast-scan</a></p>
+</li>
+<li>
+<p>Action Repository: <a href="https://www.github.com/fortify/github-action">https://www.github.com/fortify/github-action</a></p>
+</li>
+<li>
+<p>Starter workflow: <a href="https://github.com/actions/starter-workflows/blob/main/code-scanning/fortify.yml">https://github.com/actions/starter-workflows/blob/main/code-scanning/fortify.yml</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 3.16.0<br>
+Last updated 2026-03-24 09:27:28 UTC
+</div>
+</div>
+</body>
+</html>
