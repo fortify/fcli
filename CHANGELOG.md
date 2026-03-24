@@ -24,8 +24,6 @@
 * fcli action framework: Return exit code 100 for `FAIL` status on `check` instructions (fixes [#950](https://github.com/fortify/fcli/issues/950)) ([8467063](https://github.com/fortify/fcli/commit/8467063efeff82b5f231f2775433987d03e21f95))
 * Fix ANSI color output on Windows ([7111525](https://github.com/fortify/fcli/commit/7111525743b83b551dba837f167be4f9fe73ff78))
 * Fix multithreading issues (fixes [#925](https://github.com/fortify/fcli/issues/925)) ([4cfd2dd](https://github.com/fortify/fcli/commit/4cfd2dd77f3c3f36e428e302250f6deb519e4e86))
-* harden GitHub Actions workflows against script injection and privilege escalation ([f018e4a](https://github.com/fortify/fcli/commit/f018e4a190d4726b49061228f428dbfd16447d13))
-* reduce build job permissions, add run-id validation, pin update-repo-docs workflow SHA ([6ac448e](https://github.com/fortify/fcli/commit/6ac448e164ce2798b80b8ecf801349354867202d))
 
 ## [3.15.0](https://github.com/fortify/fcli/compare/v3.14.3...v3.15.0) (2026-02-22)
 
