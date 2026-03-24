@@ -33,6 +33,8 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      packages: write
+      id-token: write
     outputs:
       release_created: ${{ steps.create_prod_release.outputs.release_created }}
       tag_name: ${{ steps.create_prod_release.outputs.tag_name }}
@@ -349,6 +351,8 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      packages: write
+      id-token: write
     steps:
       - name: Check-out source code
         uses: actions/checkout@v6
