@@ -50,6 +50,7 @@ jobs:
         uses: googleapis/release-please-action@v4
         if: contains(github.ref, 'refs/heads/rel/')
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           skip-github-pull-request: true
           target-branch: ${{ github.ref_name }}
           release-type: simple
@@ -367,6 +368,7 @@ jobs:
         if: contains(github.ref, 'refs/heads/rel/')
         uses: googleapis/release-please-action@v4
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           skip-github-release: true
           target-branch: ${{ github.ref_name }}
           release-type: simple
