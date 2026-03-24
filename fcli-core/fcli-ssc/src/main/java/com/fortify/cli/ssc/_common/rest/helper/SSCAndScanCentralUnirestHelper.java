@@ -38,15 +38,19 @@ public class SSCAndScanCentralUnirestHelper {
     
     public static final void configureScSastControllerUnirestInstance(UnirestInstance unirest, SSCAndScanCentralSessionDescriptor sessionDescriptor) {
         checkEnabled("SC-SAST", sessionDescriptor.getScSastDisabledReason());
+        unirest.config().httpClient(config -> new ApacheClient(config, cb ->
+            cb.setServiceUnavailableRetryStrategy(new SSCRetryStrategy())));
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getScSastUrlConfig());
         ProxyHelper.configureProxy(unirest, "sc-sast", sessionDescriptor.getScSastUrlConfig().getUrl());
         unirest.config().setDefaultHeader("fortify-client", String.valueOf(sessionDescriptor.getScSastClientAuthToken()));
     }
-    
+
     public static final void configureScDastControllerUnirestInstance(UnirestInstance unirest, SSCAndScanCentralSessionDescriptor sessionDescriptor) {
         checkEnabled("SC-DAST", sessionDescriptor.getScDastDisabledReason());
+        unirest.config().httpClient(config -> new ApacheClient(config, cb ->
+            cb.setServiceUnavailableRetryStrategy(new SSCRetryStrategy())));
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getScDastUrlConfig());

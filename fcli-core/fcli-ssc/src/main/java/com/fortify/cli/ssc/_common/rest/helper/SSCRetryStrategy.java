@@ -14,16 +14,20 @@ package com.fortify.cli.ssc._common.rest.helper;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This class implements an Apache HttpClient 4.x {@link ServiceUnavailableRetryStrategy}
- * that will retry a request if the server responds with an HTTP 502 (Bad Gateway)
+ * that will retry GET requests if the server responds with an HTTP 502 (Bad Gateway)
  * or 503 (Service Unavailable) response, using exponential backoff with jitter.
+ * Non-GET requests are not retried to avoid the risk of duplicate side effects
+ * (e.g., creating duplicate entities).
  */
 public final class SSCRetryStrategy implements ServiceUnavailableRetryStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(SSCRetryStrategy.class);
@@ -35,10 +39,16 @@ public final class SSCRetryStrategy implements ServiceUnavailableRetryStrategy {
     public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
         int statusCode = response.getStatusLine().getStatusCode();
         if ( executionCount <= MAX_RETRIES && (statusCode == 502 || statusCode == 503) ) {
+            HttpRequest request = (HttpRequest) context.getAttribute(HttpCoreContext.HTTP_REQUEST);
+            String method = request.getRequestLine().getMethod();
+            if ( !"GET".equalsIgnoreCase(method) ) {
+                LOG.debug("SSC returned {}; not retrying non-GET request ({} {})", statusCode, method, request.getRequestLine().getUri());
+                return false;
+            }
             long delay = BASE_DELAY_MS * (1L << (executionCount - 1));
             long jitter = ThreadLocalRandom.current().nextLong(MAX_JITTER_MS + 1);
             long totalDelay = delay + jitter;
-            LOG.debug("SSC returned {}; retrying (attempt {}/{}) after {} ms", statusCode, executionCount, MAX_RETRIES, totalDelay);
+            LOG.debug("SSC returned {}; retrying GET request (attempt {}/{}) after {} ms", statusCode, executionCount, MAX_RETRIES, totalDelay);
             interval.set(totalDelay);
             return true;
         }
