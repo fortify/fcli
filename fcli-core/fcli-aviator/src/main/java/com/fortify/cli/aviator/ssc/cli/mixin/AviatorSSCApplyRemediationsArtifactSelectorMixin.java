@@ -51,7 +51,7 @@ public class AviatorSSCApplyRemediationsArtifactSelectorMixin {
         @Option(names = {"--latest"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.latest")
         private boolean latest;
 
-        @Option(names = {"--all-open-issues"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.all-open-issues")
+        @Option(names = {"--all"}, required = true, descriptionKey = "fcli.aviator.ssc.apply-remediations.all")
         private boolean allOpenIssues;
     }
 
