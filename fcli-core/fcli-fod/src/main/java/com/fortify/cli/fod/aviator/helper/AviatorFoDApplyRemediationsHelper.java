@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fod.helper;
+package com.fortify.cli.fod.aviator.helper;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;

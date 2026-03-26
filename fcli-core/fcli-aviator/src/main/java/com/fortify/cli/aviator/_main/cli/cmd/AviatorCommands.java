@@ -28,18 +28,17 @@ import picocli.CommandLine.Command;
         subcommands = {
                 // This list of product subcommands should be in alphabetical
                 // order, except for:
-                // - session command (should be the first command, as it is a 
+                // - session command (should be the first command, as it is a
                 //   prerequisite for all other commands)
                 // - rest command (should be the last command, as it's a low-level
-                //   command and looks better in the usage command list, as usually 
-                //   'rest' has a different header ('Interact with' compared to most 
+                //   command and looks better in the usage command list, as usually
+                //   'rest' has a different header ('Interact with' compared to most
                 //   other commands ('Manage').
                 AviatorAdminConfigCommands.class,
                 AviatorUserSessionCommands.class,
                 AviatorAppCommands.class,
                 AviatorEntitlementCommands.class,
                 AviatorSSCCommands.class,
-//                AviatorFoDCommands.class,
                 AviatorTokenCommands.class,
         }
 )
