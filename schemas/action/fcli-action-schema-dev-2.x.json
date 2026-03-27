@@ -733,6 +733,10 @@
           "run.fcli.status.log.default" : {
             "type" : "boolean",
             "description" : "    (PREVIEW) Optional boolean: Default value for 'status.log' in 'run.fcli' instructions.\n\n    For now, this instruction is meant to be used only by built-in fcli actions; custom actions     using this instruction may fail to run on other fcli 3.x versions.\n"
+          },
+          "sensitive-files.ephemeral-encrypt" : {
+            "type" : "boolean",
+            "description" : "Optional boolean: When true, sensitive files created by this action during execution (for example session files) will be encrypted with a randomly generated, in-memory password that is only available for the duration of the action execution. When false, sensitive files will be encrypted using the default password. If not set, defaults to true when a with-session step is present, and false otherwise. Pre-existing secured files remain decryptable using the standard fcli encryption password.\n"
           }
         },
         "description" : "Define configuration settings for this action.",
