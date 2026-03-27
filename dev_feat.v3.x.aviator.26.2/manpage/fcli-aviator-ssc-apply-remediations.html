@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260310.090158-dev_feat.v3.x.aviator.26.2" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260327.112930-dev_feat.v3.x.aviator.26.2" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-aviator-ssc-apply-remediations - Apply remediations on the user source code proposed by artifact.</p>
+<p>fcli-aviator-ssc-apply-remediations - Apply auto-remediations from an Aviator-processed artifact to source code.</p>
 </div>
 </div>
 <div id="content">
@@ -44,8 +44,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator ssc apply-remediations</strong> <strong>--artifact-id</strong>=<em>artifact-id</em>
-                                    [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+<p><strong>fcli aviator ssc apply-remediations</strong> [<strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                                    [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                                    [<strong>--since</strong>=<em>&lt;since&gt;</em>]
                                     [<strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em>] [[<strong>-h</strong>]
                                     [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
@@ -54,7 +55,9 @@ fcli_version:
                                     [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]]
                                     [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203;
                                     <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                    (<strong>--artifact-id</strong>=<em>&lt;artifactId&gt;</em> | <strong>--latest</strong> |
+                                    <strong>--all</strong>)</p>
 </div>
 </div>
 </div>
@@ -62,7 +65,46 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Downloads the FPR from an SSC artifact ID, apply the remediations proposed by SAST Aviator on the user&#8217;s source code directory.This command requires an active user session. Use 'fcli aviator session login' to create a session. #fcli.aviator.ssc.apply-remediations.artifact-id = Downloads the FPR based on the artifact ID</p>
+<p>Downloads FPR artifact(s) and applies Aviator-generated remediations to the specified source directory. Exactly one of --artifact-id, --latest, or --all must be specified. This command requires an active user session. Use 'fcli aviator session login' to create a session.</p>
+</div>
+<div class="paragraph">
+<p>Examples:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations from a known artifact by ID:
+  fcli aviator ssc apply-remediations --artifact-id 12345</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations from the latest Aviator-processed artifact for an application version:
+  fcli aviator ssc apply-remediations --av "MyApp:1.0" --latest</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations from the latest artifact, restricting to those uploaded in the last 7 days:
+  fcli aviator ssc apply-remediations --av "MyApp:1.0" --latest --since 7d</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations across all Aviator-processed artifacts for an application version:
+  fcli aviator ssc apply-remediations --av "MyApp:1.0" --all</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations across all artifacts uploaded in the last 2 weeks:
+  fcli aviator ssc apply-remediations --av "MyApp:1.0" --all --since 2w</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Apply remediations from the latest artifact using a custom source directory:
+  fcli aviator ssc apply-remediations --av "MyApp:1.0" --latest --source-dir /path/to/src</pre>
+</div>
 </div>
 </div>
 </div>
@@ -71,17 +113,37 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--artifact-id</strong>=<em>artifact-id</em></dt>
+<dt class="hdlist1"><strong>--all</strong></dt>
 <dd>
-<p>Artifact id.</p>
+<p>Apply remediations from all Aviator-processed artifacts for the given application version, in chronological order. Aggregates remediation statistics across all artifacts. Requires --av/--appversion. Mutually exclusive with --artifact-id and --latest.</p>
+</dd>
+<dt class="hdlist1"><strong>--artifact-id</strong>=<em>&lt;artifactId&gt;</em></dt>
+<dd>
+<p>Specific artifact ID to process. Mutually exclusive with --latest and --all.</p>
+</dd>
+<dt class="hdlist1"><strong>--av, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--latest</strong></dt>
+<dd>
+<p>Automatically select the most recent Aviator-processed artifact. Requires --av/--appversion. Mutually exclusive with --artifact-id and --all.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
+<dt class="hdlist1"><strong>--since</strong>=<em>&lt;since&gt;</em></dt>
+<dd>
+<p>Filter artifacts by upload date. Supports relative durations (e.g. 7d, 2w, 1M, 90d) or absolute dates (e.g. 2025-01-01, 2025-01-01T10:30:00, 2025-01-01T10:30:00Z). Can only be used with --latest or --all; not compatible with --artifact-id.</p>
+</dd>
 <dt class="hdlist1"><strong>--source-dir</strong>=<em>&lt;sourceCodeDirectory&gt;</em></dt>
 <dd>
-<p>Path to the directory containing the source code to remediate. Remediations are applied to files in this directory. Default: current working directory.</p>
+<p>Source code directory where remediations will be applied. Defaults to current directory.</p>
 </dd>
 </dl>
 </div>
@@ -163,7 +225,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-03-10 09:04:34 UTC
+Last updated 2026-03-27 11:32:07 UTC
 </div>
 </div>
 </body>
