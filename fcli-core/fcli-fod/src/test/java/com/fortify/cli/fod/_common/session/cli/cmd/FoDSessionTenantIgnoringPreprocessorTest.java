@@ -65,6 +65,15 @@ class FoDSessionTenantIgnoringPreprocessorTest {
     }
 
     @Test
+    void shouldIgnoreAllSupportedTenantSyntaxWhenClientCredentialsWithEqualsSyntax() {
+        assertClientCredentialsOnlyEqualsStyle("-t", "acme");
+        assertClientCredentialsOnlyEqualsStyle("-t=acme");
+        assertClientCredentialsOnlyEqualsStyle("-tacme");
+        assertClientCredentialsOnlyEqualsStyle("--tenant", "acme");
+        assertClientCredentialsOnlyEqualsStyle("--tenant=acme");
+    }
+
+    @Test
     void shouldRejectInvalidLongTenantSyntax() {
         assertThrows(UnmatchedArgumentException.class,
                 () -> parse("--tenanttenant-value", "--client-id", "id", "--client-secret", "secret"));
@@ -97,6 +106,20 @@ class FoDSessionTenantIgnoringPreprocessorTest {
         var cmd = parse(args.toArray(String[]::new));
         assertTrue(cmd.loginOptions.hasClientCredentials());
         assertFalse(cmd.loginOptions.hasUserCredentials());
+        // Verify other options (e.g. --url) are not corrupted by the preprocessing.
+        assertDoesNotThrow(() -> cmd.loginOptions.getUrlConfigOptions().getUrl());
+    }
+
+    private static void assertClientCredentialsOnlyEqualsStyle(String... tenantArgs) {
+        var args = new ArrayList<String>();
+        Collections.addAll(args, tenantArgs);
+        args.add("--client-id=id");
+        args.add("--client-secret=secret");
+
+        var cmd = parse(args.toArray(String[]::new));
+        assertTrue(cmd.loginOptions.hasClientCredentials());
+        assertFalse(cmd.loginOptions.hasUserCredentials());
+        assertDoesNotThrow(() -> cmd.loginOptions.getUrlConfigOptions().getUrl());
     }
 
     private static TestFoDLoginCommand parse(String... args) {
