@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: Fortify
+usage:
+  header: (PREVIEW) List issues for FoD release
+  description: |
+    This action lists issues for the given FoD release and writes the output as JSON
+    to stdout, stderr, or a file.
+
+config:
+  output: immediate
+  rest.target.default: fod
+
+cli.options:
+  release:
+    names: --release, --rel
+    description: Required release id or <appName>:[<microserviceName>:]<releaseName>
+    required: true
+  query:
+    names: --query, -q
+    description: Optional issue query expression
+    required: false
+  embed:
+    names: --embed
+    description: Optional comma-separated embedded data to include
+    required: false
+  include:
+    names: --include
+    description: Optional comma-separated include flags
+    required: false
+  file:
+    names: --file, -f
+    description: Output target (stdout, stderr, or file path)
+    required: false
+    default: stdout
+
+steps:
+  - run.fcli:
+      issues:
+        cmd: fod issue ls --rel "${cli.release}" ${#opt("-q", cli.query)} ${#opt("--embed", cli.embed)} ${#opt("--include", cli.include)}
+        records.collect: true
+
+  - out.write:
+      ${cli.file}: ${issues.records}
+
+  - if: ${!{'stdout','stderr'}.contains(cli.file)}
+    log.info: Output written to ${cli.file}
