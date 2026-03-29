@@ -9,12 +9,12 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-       
+
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization -march=compatibility
   graal_distribution: graalvm-community
   graal_java_version: 21
-          
+
 jobs:
   build:
     name: Build
@@ -35,7 +35,7 @@ jobs:
           skip-github-pull-request: true
           target-branch: ${{ github.ref_name }}
           release-type: simple
-          
+
       - name: PROD - Define release info
         if: steps.create_prod_release.outputs.release_created
         run: |
@@ -43,7 +43,7 @@ jobs:
           version=${{steps.create_prod_release.outputs.version}}
           major=${{steps.create_prod_release.outputs.major}}
           minor=${{steps.create_prod_release.outputs.minor}}
-          patch=${{steps.create_prod_release.outputs.patch}}  
+          patch=${{steps.create_prod_release.outputs.patch}}
           echo DO_BUILD=true >> $GITHUB_ENV
           echo DO_RELEASE=true >> $GITHUB_ENV
           echo DO_PROD_RELEASE=true >> $GITHUB_ENV
@@ -52,7 +52,7 @@ jobs:
           echo VERSION_MAJOR=${major} >> $GITHUB_ENV
           echo VERSION_MINOR=${minor} >> $GITHUB_ENV
           echo VERSION_PATCH=${patch} >> $GITHUB_ENV
-          
+
       - name: DEV - Define release info
         if: (startsWith(github.ref, 'refs/heads/') || github.event_name == 'pull_request') && !env.DO_PROD_RELEASE
         run: |
@@ -76,29 +76,29 @@ jobs:
           echo VERSION_MAJOR=${major} >> $GITHUB_ENV
           echo VERSION_MINOR=${minor} >> $GITHUB_ENV
           echo VERSION_PATCH=${patch} >> $GITHUB_ENV
-          
+
           if git ls-remote --exit-code origin refs/tags/${tag} >/dev/null 2>&1; then
             echo "Found tag ${tag}, development release will be published"
             echo DO_RELEASE=true >> $GITHUB_ENV
             echo DO_DEV_RELEASE=true >> $GITHUB_ENV
-          else 
+          else
             echo "Tag ${tag} does not exist, no development release will be published"
           fi
-      
+
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
         run: ./gradlew clean build dist distThirdPartyReleaseAsset distFtest -Pversion=${{env.RELEASE_VERSION}} -PautoFormat=false
-        
+
       - name: Check fcli version
         if: env.DO_BUILD
         run: java -jar build/libs/fcli.jar --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
-        
+
       - name: Publish build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: build/dist/**/*
-          
+
     outputs:
       do_release: ${{ env.DO_RELEASE }}
       do_prod_release: ${{ env.DO_PROD_RELEASE }}
@@ -128,30 +128,31 @@ jobs:
           java-version: ${{ env.graal_java_version }}
           native-image-musl: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - uses: actions/download-artifact@v4
         with:
           path: ./artifacts
           name: build-output
-      
+
       # For Linux, we build a statically linked native image, to allow for building a 'FROM scratch'
-      # Docker image, and to avoid libc version issues. Since Jansi is not supported on statically 
-      # linked images (see https://github.com/fusesource/jansi/issues/246), we set a system property 
-      # to indicate that FortifyCLI shouldn't try to invoke AnsiConsole::systemInstall/Uninstall. In 
+      # Docker image, and to avoid libc version issues. Since Jansi is not supported on statically
+      # linked images (see https://github.com/fusesource/jansi/issues/246), we set a system property
+      # to indicate that FortifyCLI shouldn't try to invoke AnsiConsole::systemInstall/Uninstall. In
       # order for FortifyCLI to be able to see this system property, we need to initialize this class
-      # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/). 
+      # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/).
       # We also exclude the native Jansi library resources, as these are now no longer needed.
       - name: Create native fcli
         run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.common.util.JAnsiConfig -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifacts/release-assets/fcli.jar fcli
-
       - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
-        with:
-          files: fcli
-
+        run: |
+          if ! command -v upx >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y upx-ucl || sudo apt-get install -y upx
+          fi
+          upx --best --lzma fcli
       - name: Basic test of native fcli
         run: ./fcli --help && ./fcli get --help && ./fcli action help ci
-        
+
       - name: Check fcli version
         run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
 
@@ -183,14 +184,14 @@ jobs:
           name: build-output
 
       # For MacOS, we build a dynamically linked image. Jansi by default provides a resource-config.json
-      # file to include native libraries for all platforms; we override this to include only the MacOS 
+      # file to include native libraries for all platforms; we override this to include only the MacOS
       # libraries
       - name: Create native fcli
         run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
       # Disabled for now, as compressed binaries crash on macOS Ventura or above
       #- name: Compress native fcli
-      #  uses: svenstaro/upx-action@v2
+      #  (UPX compression disabled on macOS)
       #  with:
       #    files: fcli
 
@@ -220,7 +221,7 @@ jobs:
         with:
           path: ./artifacts
           name: build-output
-    
+
     # For Windows, we build a dynamically linked image. Jansi by default provides a resource-config.json
     # file to include native libraries for all platforms; we override this to include only the 64-bit
     # Windows library
@@ -233,13 +234,13 @@ jobs:
 # We don't compress the Windows binary for now as this is incompatible with current Graal version.
 # See https://github.com/fortify/fcli/issues/148
 #      - name: Compress native fcli
-#        uses: svenstaro/upx-action@v2
+#        (UPX compression disabled on Windows)
 #        with:
 #          files: fcli.exe
 
       - name: Basic test of native fcli
         run: |
-          .\fcli.exe --help 
+          .\fcli.exe --help
           .\fcli.exe get --help
           .\fcli.exe action help ci
 
@@ -250,7 +251,7 @@ jobs:
         with:
           path: ./artifacts/**/fcli-windows.zip
           name: fcli-windows
-        
+
   combine-artifacts:
     needs: [build, native_linux, native_mac, native_win]
     runs-on: ubuntu-latest
@@ -262,13 +263,13 @@ jobs:
           merge-multiple: true
       - run: |
           cd ./artifacts/release-assets
-          for f in *; do 
+          for f in *; do
             sha256sum ${f} > ${f}.sha256
           done
           if [ -z "$SIGN_KEY" ] || [ -z "$SIGN_PASSPHRASE" ]; then
             echo "Signatures for fcli artifacts haven't been calculated; SIGN_KEY and/or SIGN_PASSPHRASE secrets not present"
           else
-            for f in *; do 
+            for f in *; do
               openssl dgst -sha256 -passin env:SIGN_PASSPHRASE -sign <(echo "${SIGN_KEY}") -out ${f}.rsa_sha256 ${f}
             done
           fi
@@ -279,7 +280,7 @@ jobs:
         with:
           path: ./artifacts
           name: combined-artifacts
-  
+
   ftest:
     name: Trigger functional tests
     needs: [build, native_linux, native_mac, native_win, combine-artifacts]
@@ -291,7 +292,7 @@ jobs:
       #    allows for running the workflow file from the same branch as the ci workflow.
       - name: Check-out source code
         uses: actions/checkout@v4
-      - run: | 
+      - run: |
           # Use branch output from build job if available, otherwise fall back to GITHUB_REF
           if [ -n "${{ needs.build.outputs.branch }}" ]; then
             ref="${{ needs.build.outputs.branch }}"
@@ -301,7 +302,7 @@ jobs:
           gh workflow run functional-tests.yml --ref "${ref}" -f runId=${GITHUB_RUN_ID}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+
   release:
     name: release
     if: needs.build.outputs.do_release
@@ -310,13 +311,13 @@ jobs:
     steps:
       - name: Check-out source code
         uses: actions/checkout@v4
-        
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
           name: combined-artifacts
-          
+
       - name: PROD - Prepare release PR
         if: contains(github.ref, 'refs/heads/rel/')
         uses: googleapis/release-please-action@v4
@@ -324,23 +325,24 @@ jobs:
           skip-github-release: true
           target-branch: ${{ github.ref_name }}
           release-type: simple
-          
-      - name: DEV - Prepare GitHub release 
+
+      - name: DEV - Prepare GitHub release
         if: needs.build.outputs.do_dev_release
         run: |
           gh release delete ${{ needs.build.outputs.release_tag }} -y || true
           gh release create ${{ needs.build.outputs.release_tag }} -p -t "Development Release - ${{ needs.build.outputs.branch }} branch" -n 'See `Assets` section below for latest build artifacts'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
       - name: DEV - Update ${{ needs.build.outputs.release_tag }} tag
-        uses: richardsimko/update-tag@v1
         if: needs.build.outputs.do_dev_release
-        with:
-          tag_name: ${{ needs.build.outputs.release_tag }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-          
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa "${{ needs.build.outputs.release_tag }}" -m "Update tag to ${GITHUB_SHA}"
+          git push origin "refs/tags/${{ needs.build.outputs.release_tag }}" --force
+
       - name: Upload assets to release
         if: needs.build.outputs.do_release
         run: |
@@ -348,14 +350,14 @@ jobs:
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
   semantic_versions:
     name: Publish semantic versions
     if: needs.build.outputs.do_prod_release
     needs: [build, native_linux, native_mac, native_win, combine-artifacts, release]
     strategy:
-      matrix: 
-        semantic_version: 
+      matrix:
+        semantic_version:
           - v${{needs.build.outputs.version_major}}.${{needs.build.outputs.version_minor}}
           - v${{needs.build.outputs.version_major}}
           # TODO If we publish a feature/patch for an older major version,
@@ -366,20 +368,20 @@ jobs:
     steps:
       - name: Check-out source code
         uses: actions/checkout@v4
-            
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
           name: combined-artifacts
-    
       - name: PROD - Publish ${{ matrix.semantic_version }} tag
-        uses: richardsimko/update-tag@v1
-        with:
-          tag_name: ${{ matrix.semantic_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa "${{ matrix.semantic_version }}" -m "Update semantic tag to ${{ needs.build.outputs.release_tag }}"
+          git push origin "refs/tags/${{ matrix.semantic_version }}" --force
       - name: PROD - Publish semantic release ${{ matrix.semantic_version }}
         run: |
           gh release delete ${{ matrix.semantic_version }} -y || true
@@ -388,7 +390,7 @@ jobs:
           gh release upload "${{ matrix.semantic_version }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
   docker:
     name: Trigger Docker builds
     needs: [build, release, semantic_versions]
@@ -397,7 +399,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Docker image builds in fcli-docker repository
-        run: | 
+        run: |
           gh workflow run docker.yml \
             --repo fortify/fcli-docker \
             --ref main \
@@ -406,8 +408,8 @@ jobs:
             -f "isLatest=${{ needs.build.outputs.do_prod_release }}"
           echo "✓ Docker build triggered in fortify/fcli-docker repository"
         env:
-          GITHUB_TOKEN: ${{ secrets.FCLI_DOCKER_TRIGGER_TOKEN }}  
-     
+          GITHUB_TOKEN: ${{ secrets.FCLI_DOCKER_TRIGGER_TOKEN }}
+
   publishPages:
     name: publishPages
     if: needs.build.outputs.do_release
@@ -418,29 +420,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-        
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./tmp
           name: build-output
-          
+
       - name: Update documentation from artifact
         run: |
           # Extract top-level documentation resources
           # TODO Should we do this only when building a release, or also for dev_v3.x,
           #      or for all (dev & release) versions like we do now?
           unzip -o tmp/docs-gh-pages-static.zip -d "."
-          
+
           # Define the output directory, based on tag/branch name
           versionDir=${{ needs.build.outputs.release_tag }}
-          
+
           # Delete, recreate and fill the directory for the current tag/branch name,
           # while leaving documentation for other tags/branches intact (as checked out above)
           rm -rf "${versionDir}"
           mkdir -p "${versionDir}"
           unzip tmp/docs-gh-pages-versioned.zip -d "${versionDir}"
-          
+
           # Update symlinks based on available versions, processing versions in ascending order
           # to replace previous links with a newer version if appropriate. For example, 'latest'
           # will first point to the oldest version, then replaced with second-oldest version, ...,
@@ -450,22 +452,23 @@ jobs:
             ln -sfT $line $(echo "$line" | cut -d. -f 1)   # v<major>
             ln -sfT $line $(echo "$line" | cut -d. -f 1,2) # v<major>.<minor>
           done
-          
+
           # Same for dev_*, but only generating latest_dev symlink
           ls -d dev_* | sort -V | while read line; do
             ln -sfT $line latest_dev
           done
-          
+
           # Recreate version data files, which may be empty if no versions available
           mkdir -p _data/versions
           touch _data/versions/release.yml
           touch _data/versions/dev.yml
           ls -d v*.*.* | sort -rV | while read line; do echo "- '$line'"; done > _data/versions/release.yml
           ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
-          
+
           git config user.name github-actions
           git config user.email github-actions@fortify.com
           git add .
           git commit -m "Update documentation for ${{ needs.build.outputs.release_tag }}"
           git push
-          
+
+
