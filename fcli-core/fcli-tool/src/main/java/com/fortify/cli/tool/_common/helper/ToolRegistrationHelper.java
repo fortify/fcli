@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -292,7 +293,7 @@ public class ToolRegistrationHelper {
             
             // If specific version requested, look for matching installation
             if (!"any".equals(requestedVersion)) {
-                var optionalVersionDescriptor = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+                var optionalVersionDescriptor = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
                 if (optionalVersionDescriptor.isPresent()) {
                     var requestedVersionDescriptor = optionalVersionDescriptor.get();
                     var installation = ToolInstallationDescriptor.load(toolName, requestedVersionDescriptor);
@@ -388,7 +389,7 @@ public class ToolRegistrationHelper {
         private void validateVersionMatch(ToolDefinitionVersionDescriptor versionDescriptor, String requestedVersion) {
             if (!definitionsOptional) {
                 var toolDefinition = getRequiredDefinition();
-                var optionalRequestedVersion = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+                var optionalRequestedVersion = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
                 if (optionalRequestedVersion.isEmpty()) {
                     throw new FcliSimpleException(
                             String.format("Requested version %s not found in tool definitions. Detected version is %s",
@@ -411,7 +412,7 @@ public class ToolRegistrationHelper {
                 // No definitions → accept any detected version for requestedVersion
                 return;
             }
-            var optionalRequestedVersion = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+            var optionalRequestedVersion = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
             if (optionalRequestedVersion.isEmpty()) {
                 // Without definitions, we already returned; if we got here, behave like strict
                 // mode
@@ -444,7 +445,7 @@ public class ToolRegistrationHelper {
         
         private File findMatchingCandidate(List<File> candidates, String requestedVersion) {
             var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-            var optionalVersionDescriptor = toolDefinition.getOptionalVersionOrDefault(requestedVersion);
+            var optionalVersionDescriptor = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
             if (optionalVersionDescriptor.isEmpty()) {
                 throw new FcliSimpleException(
                     String.format("Requested version %s not found in tool definitions", requestedVersion));
@@ -512,7 +513,7 @@ public class ToolRegistrationHelper {
             String normalizedVersion = toolDefinition.normalizeVersionFormat(detectedVersion);
 
             // Try to find matching version in tool definitions using normalized version
-            return toolDefinition.getOptionalVersion(normalizedVersion)
+            return getOptionalVersion(toolDefinition, normalizedVersion)
                     .orElseGet(() -> {
                         // Version not found in definitions, create synthetic descriptor with normalized
                         // version
@@ -524,6 +525,23 @@ public class ToolRegistrationHelper {
                     });
         }
 
+        private Optional<ToolDefinitionVersionDescriptor> getOptionalVersionOrDefault(
+                ToolDefinitionRootDescriptor toolDefinition, String versionOrAlias) {
+            try {
+                return Optional.of(toolDefinition.getVersionOrDefault(versionOrAlias));
+            } catch (FcliSimpleException e) {
+                return Optional.empty();
+            }
+        }
+
+        private Optional<ToolDefinitionVersionDescriptor> getOptionalVersion(
+                ToolDefinitionRootDescriptor toolDefinition, String versionOrAlias) {
+            try {
+                return Optional.of(toolDefinition.getVersion(versionOrAlias));
+            } catch (FcliSimpleException e) {
+                return Optional.empty();
+            }
+        }
         private ToolDefinitionRootDescriptor getRequiredDefinition() {
             return ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
         }
