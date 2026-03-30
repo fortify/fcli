@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260330.074047-dev_feat.v3.x.aviator.26.2" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260330.074052-dev_feat.v3.x.aviator.26.2" %}
 
 
 <div id="header">
@@ -62,7 +62,7 @@ fcli_version:
 <p>Detects, registers, and installs Fortify tools. Supports auto-detection of pre-installed tools, dynamic installation with signature verification, platform-specific tool caching, air-gapped environments, and Docker multi-stage builds.</p>
 </div>
 <div class="paragraph">
-<p>The --tools option specifies which tools to set up, along with optional version or path specifiers. The following tools are supported: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
+<p>The --tools option specifies which tools to set up, along with optional version or path specifiers. The following tools are supported: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli, sourceanalyzer.</p>
 </div>
 <div class="paragraph">
 <p><code>&lt;tool&gt;:&lt;path&gt;</code>
@@ -89,7 +89,9 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 - bugtracker-utility:
     FBTU_VERSION, FBTU_HOME
 - vuln-exporter:
-    FVE_VERSION, FVE_HOME</p>
+    FVE_VERSION, FVE_HOME
+- sourceanalyzer:
+    SOURCEANALYZER_VERSION, SOURCEANALYZER_HOME</p>
 </div>
 <div class="paragraph">
 <p>For ScanCentral Client, the init command will look for a compatible JRE based on the following environment variables (in this order):
@@ -134,7 +136,7 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 </dd>
 <dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSpecs&gt;</em>[,<em>&lt;toolSpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Comma-separated list of tools to set up in the format &lt;tool&gt;[:&lt;version&gt;|&lt;path&gt;]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. Supported tools: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli.</p>
+<p>Comma-separated list of tools to set up in the format &lt;tool&gt;[:&lt;version&gt;|&lt;path&gt;]. Examples: sc-client, fcli:v3, debricked-cli:/opt/debricked. If a tool is not listed, it will be skipped. Supported tools: fcli, sc-client, fod-uploader, bugtracker-utility, vuln-exporter, debricked-cli, sourceanalyzer.</p>
 </dd>
 </dl>
 </div>
@@ -203,7 +205,7 @@ Check for <code>&lt;TOOL_ENV_PREFIX&gt;_HOME</code> or <code>&lt;TOOL_ENV_PREFIX
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-03-30 07:43:17 UTC
+Last updated 2026-03-30 07:43:27 UTC
 </div>
 </div>
 </body>
