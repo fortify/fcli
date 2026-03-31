@@ -13,6 +13,7 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -101,7 +102,7 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
         return buildResponse(result, allRecords);
     }
     
-    private ObjectNode buildResponse(Result result, java.util.List<JsonNode> records) {
+    private ObjectNode buildResponse(Result result, List<JsonNode> records) {
         var response = objectMapper.createObjectNode();
         response.put("exitCode", result.getExitCode());
         

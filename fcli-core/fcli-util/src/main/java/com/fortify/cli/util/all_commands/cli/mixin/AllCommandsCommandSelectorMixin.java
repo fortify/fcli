@@ -12,10 +12,12 @@
  */
 package com.fortify.cli.util.all_commands.cli.mixin;
 
+import java.io.File;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -174,7 +177,7 @@ public class AllCommandsCommandSelectorMixin {
 
         ArrayNode optionGroups = mapper.createArrayNode();
 
-        java.util.function.Consumer<String> addGroupByHeading = heading -> {
+        Consumer<String> addGroupByHeading = heading -> {
             List<OptionSpec> opts = optionsByHeading.get(heading);
             if (opts == null || opts.isEmpty()) {
                 return;
@@ -475,7 +478,7 @@ public class AllCommandsCommandSelectorMixin {
             }
         }
         // File/Path types should be presented as file datatype
-        if (type == java.nio.file.Path.class || java.io.File.class.isAssignableFrom(type)) {
+        if (type == Path.class || File.class.isAssignableFrom(type)) {
             return "file";
         }
         boolean isListType = Collection.class.isAssignableFrom(type)
@@ -538,18 +541,6 @@ public class AllCommandsCommandSelectorMixin {
             return true;
         }
         if (arity != null && arity.max() > 1) {
-            return true;
-        }
-        return false;
-    }
-
-    private final static boolean hasCompletionCandidates(OptionSpec option) {
-        Iterable<?> candidates = option.completionCandidates();
-        if (candidates == null) {
-            return false;
-        }
-        for (@SuppressWarnings("unused")
-        Object ignored : candidates) {
             return true;
         }
         return false;
