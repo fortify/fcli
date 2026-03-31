@@ -5,7 +5,7 @@ usage:
   header: (PREVIEW) Run local SourceAnalyzer scan and upload to SSC
   description: |
     This action performs a local Fortify SourceAnalyzer scan against the given source directory,
-    writes an FPR file, and optionally uploads the resulting artifact to SSC.
+    writes an FPR file, and uploads the resulting artifact to SSC if an application version is specified.
 
 config:
   output: immediate
@@ -14,12 +14,8 @@ config:
   run.fcli.status.check.default: true
 
 cli.options:
-  appversion:
-    names: --appversion, --av
-    description: SSC application version id or <appName>:<versionName> to upload scan results to
-    required: true
   sourceDir:
-    names: --source-dir, -s
+    names: --source-dir, -d
     description: Source directory to scan
     required: false
     default: .
@@ -29,7 +25,7 @@ cli.options:
     required: false
     default: fcli-local-scan
   fprFile:
-    names: --fpr-file, -f
+    names: --output-fpr-file, -o
     description: Output FPR file path
     required: false
     default: sourceanalyzer.fpr
@@ -40,22 +36,6 @@ cli.options:
       Defaults to SOURCEANALYZER_HOME or SOURCEANALYZER_VERSION env vars, then auto.
     required: false
     default: ${#ifBlank(#env('SOURCEANALYZER_HOME'),#ifBlank(#env('SOURCEANALYZER_VERSION'),'auto'))}
-  toolDefinitions:
-    names: --tool-definitions
-    description: Custom tool definitions for resolving SourceAnalyzer versions and download URLs
-    required: false
-  upload:
-    names: --upload
-    description: Upload generated FPR to SSC
-    required: false
-    type: boolean
-    default: true
-  skipWait:
-    names: --skip-wait
-    description: Skip waiting for SSC artifact processing after upload
-    required: false
-    type: boolean
-    default: false
   extraTranslateOpts:
     names: --extra-translate-opts
     description: Extra options to pass to the SourceAnalyzer translate phase
@@ -64,23 +44,32 @@ cli.options:
     names: --extra-scan-opts
     description: Extra options to pass to the SourceAnalyzer scan phase
     required: false
+  appversion:
+    names: --appversion, --av
+    description: SSC application version id or <appName>:<versionName>; if specified, upload scan results to SSC
+    required: false
+  skipWait:
+    names: --skip-wait
+    description: Skip waiting for SSC artifact processing after upload
+    required: false
+    type: boolean
+    default: false
 
 steps:
   - var.set:
       resolvedFprFile: ${#resolveAgainstCurrentWorkDir(cli.fprFile)}
       artifactStoreVar: sa_local_scan_${#action.runID().replace('-','_')}
+      waitForCmd: 'fcli ssc artifact wait-for ::${artifactStoreVar}::'
 
   - run.fcli:
-      SETUP_TOOLS: fcli tool env init "--tools=sourceanalyzer:${cli.sourceAnalyzerVersion}" ${#opt("--tool-definitions", cli.toolDefinitions)}
-      TRANSLATE:
-        cmd: fcli tool sourceanalyzer run --workdir ${cli.sourceDir} -- -b "${cli.buildId}" ${cli.extraTranslateOpts}
-      SCAN:
-        cmd: fcli tool sourceanalyzer run --workdir ${cli.sourceDir} -- -b "${cli.buildId}" -scan -f "${resolvedFprFile}" ${cli.extraScanOpts}
+      SETUP_TOOLS: fcli tool env init "--tools=sourceanalyzer:${cli.sourceAnalyzerVersion}"
+      TRANSLATE: fcli tool sourceanalyzer run -- -b "${cli.buildId}" ${cli.sourceDir} ${cli.extraTranslateOpts}
+      SCAN: fcli tool sourceanalyzer run -- -b "${cli.buildId}" -scan -f "${resolvedFprFile}" ${cli.extraScanOpts}
 
-  - if: ${cli.upload}
+  - if: ${#isNotBlank(cli.appversion)}
     run.fcli:
       UPLOAD: fcli ssc artifact upload --av "${cli.appversion}" -f "${resolvedFprFile}" --store ${artifactStoreVar}
 
-  - if: ${cli.upload && !cli.skipWait}
+  - if: ${#isNotBlank(cli.appversion) && !cli.skipWait}
     run.fcli:
-      WAIT: fcli ssc artifact wait-for ::${artifactStoreVar}::
+      WAIT: ${waitForCmd}
