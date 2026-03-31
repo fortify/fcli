@@ -17,9 +17,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.FcliDataHelper;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
@@ -33,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  * @author Ruud Senden
  */
 public class ToolRegistrationHelper {
-    
+          
     /**
      * Find all potential tool binary candidates from fcli installed versions and provided paths.
      * Used when version filtering is needed - returns all candidates for version matching.
@@ -201,11 +203,14 @@ public class ToolRegistrationHelper {
         private final String defaultBinaryName;
         private final VersionDetector versionDetector;
         private RegistrationAction action;
+        private final boolean definitionsOptional;
         
         public RegistrationContext(String toolName, String defaultBinaryName, VersionDetector versionDetector) {
             this.toolName = toolName;
             this.defaultBinaryName = defaultBinaryName;
             this.versionDetector = versionDetector;
+            Tool tool = Tool.getByToolName(toolName);
+            this.definitionsOptional = tool != null && !tool.requiresToolDefinitions();
         }
         
         /**
@@ -276,12 +281,21 @@ public class ToolRegistrationHelper {
         }
         
         private File findExistingInstallation(String requestedVersion) {
-            var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
+            ToolDefinitionRootDescriptor toolDefinition;
+            if (!definitionsOptional) {
+                toolDefinition = getRequiredDefinition();
+            } else {
+                toolDefinition = getOptionalDefinitionOrNull();
+                if (toolDefinition == null) {
+                    return null;
+                }
+            }
             
             // If specific version requested, look for matching installation
             if (!"any".equals(requestedVersion)) {
-                try {
-                    var requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
+                var optionalVersionDescriptor = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
+                if (optionalVersionDescriptor.isPresent()) {
+                    var requestedVersionDescriptor = optionalVersionDescriptor.get();
                     var installation = ToolInstallationDescriptor.load(toolName, requestedVersionDescriptor);
                     if (installation != null && installation.getBinPath() != null) {
                         File binDir = installation.getBinPath().toFile();
@@ -291,8 +305,6 @@ public class ToolRegistrationHelper {
                             return toolBinary;
                         }
                     }
-                } catch (IllegalArgumentException e) {
-                    // Requested version not in definitions, will search paths
                 }
             } else {
                 // No version requested, try to find most recently registered installation
@@ -320,25 +332,28 @@ public class ToolRegistrationHelper {
         }
         
         private File findToolBinaryInMultiplePaths(String[] paths, String requestedVersion) {
-            if (!"any".equals(requestedVersion)) {
+            boolean hasRequestedVersion = !"any".equals(requestedVersion);
+            boolean hasDefinitions = !definitionsOptional || getOptionalDefinitionOrNull() != null;
+
+            if (hasRequestedVersion && hasDefinitions) {
                 var candidates = findAllToolBinariesInPaths(toolName, defaultBinaryName, paths);
-                
+
                 File toolBinary = findMatchingCandidate(candidates, requestedVersion);
                 if (toolBinary == null) {
                     throw new FcliSimpleException(
-                        String.format("%s version matching %s not found in specified paths", 
-                            toolName, requestedVersion));
+                            String.format("%s version matching %s not found in specified paths",
+                                    toolName, requestedVersion));
                 }
                 action = RegistrationAction.REGISTERED;
                 return toolBinary;
             } else {
                 File toolBinary = findToolBinaryInPaths(toolName, defaultBinaryName, paths);
-                
+
                 if (toolBinary == null) {
                     throw new FcliSimpleException(
-                        toolName + " not found in specified paths");
+                            toolName + " not found in specified paths");
                 }
-                
+
                 validateBinaryExecutable(toolBinary);
                 action = RegistrationAction.REGISTERED;
                 return toolBinary;
@@ -372,18 +387,45 @@ public class ToolRegistrationHelper {
         }
         
         private void validateVersionMatch(ToolDefinitionVersionDescriptor versionDescriptor, String requestedVersion) {
-            var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-            try {
-                var requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
+            if (!definitionsOptional) {
+                var toolDefinition = getRequiredDefinition();
+                var optionalRequestedVersion = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
+                if (optionalRequestedVersion.isEmpty()) {
+                    throw new FcliSimpleException(
+                            String.format("Requested version %s not found in tool definitions. Detected version is %s",
+                                    requestedVersion, versionDescriptor.getVersion()));
+                }
+                var requestedVersionDescriptor = optionalRequestedVersion.get();
                 if (!versionDescriptor.getVersion().equals(requestedVersionDescriptor.getVersion())) {
                     throw new FcliSimpleException(
-                        String.format("Detected %s version %s does not match requested version %s (resolves to %s)", 
-                            toolName, versionDescriptor.getVersion(), requestedVersion, requestedVersionDescriptor.getVersion()));
+                            String.format("Detected %s version %s does not match requested version %s (resolves to %s)",
+                                    toolName, versionDescriptor.getVersion(), requestedVersion,
+                                    requestedVersionDescriptor.getVersion()));
                 }
-            } catch (IllegalArgumentException e) {
+                return;
+            }
+
+            // SCA with optional definitions: try strict check if definitions exist, else
+            // skip
+            var toolDefinition = getOptionalDefinitionOrNull();
+            if (toolDefinition == null) {
+                // No definitions → accept any detected version for requestedVersion
+                return;
+            }
+            var optionalRequestedVersion = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
+            if (optionalRequestedVersion.isEmpty()) {
+                // Without definitions, we already returned; if we got here, behave like strict
+                // mode
                 throw new FcliSimpleException(
-                    String.format("Requested version %s not found in tool definitions. Detected version is %s", 
-                        requestedVersion, versionDescriptor.getVersion()));
+                        String.format("Requested version %s not found in tool definitions. Detected version is %s",
+                                requestedVersion, versionDescriptor.getVersion()));
+            }
+            var requestedVersionDescriptor = optionalRequestedVersion.get();
+            if (!versionDescriptor.getVersion().equals(requestedVersionDescriptor.getVersion())) {
+                throw new FcliSimpleException(
+                        String.format("Detected %s version %s does not match requested version %s (resolves to %s)",
+                                toolName, versionDescriptor.getVersion(), requestedVersion,
+                                requestedVersionDescriptor.getVersion()));
             }
         }
         
@@ -394,6 +436,8 @@ public class ToolRegistrationHelper {
                 toolBinary.getParentFile().toPath(),
                 null
             );
+            // JRE configuration is not set during registration - runtime will use ENV_VAR resolution
+            // with fallbacks to JAVA_HOME and PATH. This allows maximum flexibility for registered tools.
             // Always save descriptor to update timestamp, making this the default version for 'tool run' commands
             installation.save(toolName, versionDescriptor);
             return installation;
@@ -401,13 +445,12 @@ public class ToolRegistrationHelper {
         
         private File findMatchingCandidate(List<File> candidates, String requestedVersion) {
             var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-            ToolDefinitionVersionDescriptor requestedVersionDescriptor;
-            try {
-                requestedVersionDescriptor = toolDefinition.getVersionOrDefault(requestedVersion);
-            } catch (IllegalArgumentException e) {
+            var optionalVersionDescriptor = getOptionalVersionOrDefault(toolDefinition, requestedVersion);
+            if (optionalVersionDescriptor.isEmpty()) {
                 throw new FcliSimpleException(
                     String.format("Requested version %s not found in tool definitions", requestedVersion));
             }
+            var requestedVersionDescriptor = optionalVersionDescriptor.get();
             
             for (File candidate : candidates) {
                 if (!candidate.canExecute() && !candidate.getName().endsWith(".jar")) {
@@ -435,9 +478,28 @@ public class ToolRegistrationHelper {
         }
         
         private ToolDefinitionVersionDescriptor resolveVersionDescriptor(String detectedVersion) {
-            var toolDefinition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-            
-            // If version is unknown, create synthetic descriptor immediately without normalization
+            // Decide how to obtain the definition
+            ToolDefinitionRootDescriptor toolDefinition;
+            if (!definitionsOptional) {
+                toolDefinition = getRequiredDefinition(); // strict: throws if missing
+            } else {
+                toolDefinition = getOptionalDefinitionOrNull(); // may be null for SCA
+            }
+
+            // If we are in definitions-optional mode and no definitions exist:
+            if (definitionsOptional && toolDefinition == null) {
+                ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
+                syntheticDescriptor.setVersion(detectedVersion);
+                syntheticDescriptor.setStable(true);
+                syntheticDescriptor.setAliases(new String[0]);
+                return syntheticDescriptor;
+            }
+
+            // From here on, toolDefinition is non-null (either strict mode or
+            // optional+present)
+
+            // If version is unknown, create synthetic descriptor immediately without
+            // normalization
             if ("unknown".equals(detectedVersion)) {
                 ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
                 syntheticDescriptor.setVersion("unknown");
@@ -445,21 +507,47 @@ public class ToolRegistrationHelper {
                 syntheticDescriptor.setAliases(new String[0]);
                 return syntheticDescriptor;
             }
-            
-            // Normalize version format to match tool definitions (e.g., 24.2.0.0050 -> 24.2.0)
+
+            // Normalize version format to match tool definitions (e.g., 24.2.0.0050 ->
+            // 24.2.0)
             String normalizedVersion = toolDefinition.normalizeVersionFormat(detectedVersion);
-            
+
             // Try to find matching version in tool definitions using normalized version
+            return getOptionalVersion(toolDefinition, normalizedVersion)
+                    .orElseGet(() -> {
+                        // Version not found in definitions, create synthetic descriptor with normalized
+                        // version
+                        ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
+                        syntheticDescriptor.setVersion(normalizedVersion);
+                        syntheticDescriptor.setStable(true);
+                        syntheticDescriptor.setAliases(new String[0]);
+                        return syntheticDescriptor;
+                    });
+        }
+
+        private Optional<ToolDefinitionVersionDescriptor> getOptionalVersionOrDefault(
+                ToolDefinitionRootDescriptor toolDefinition, String versionOrAlias) {
             try {
-                return toolDefinition.getVersion(normalizedVersion);
-            } catch (IllegalArgumentException e) {
-                // Version not found in definitions, create synthetic descriptor with normalized version
-                ToolDefinitionVersionDescriptor syntheticDescriptor = new ToolDefinitionVersionDescriptor();
-                syntheticDescriptor.setVersion(normalizedVersion);
-                syntheticDescriptor.setStable(true);
-                syntheticDescriptor.setAliases(new String[0]);
-                return syntheticDescriptor;
+                return Optional.of(toolDefinition.getVersionOrDefault(versionOrAlias));
+            } catch (FcliSimpleException e) {
+                return Optional.empty();
             }
+        }
+
+        private Optional<ToolDefinitionVersionDescriptor> getOptionalVersion(
+                ToolDefinitionRootDescriptor toolDefinition, String versionOrAlias) {
+            try {
+                return Optional.of(toolDefinition.getVersion(versionOrAlias));
+            } catch (FcliSimpleException e) {
+                return Optional.empty();
+            }
+        }
+        private ToolDefinitionRootDescriptor getRequiredDefinition() {
+            return ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
+        }
+
+        private ToolDefinitionRootDescriptor getOptionalDefinitionOrNull() {
+            return ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName).orElse(null);
         }
     }
     

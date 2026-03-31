@@ -28,7 +28,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+@Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false, preprocessor = FoDSessionTenantIgnoringPreprocessor.class)
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionDescriptor> {
     @Getter @Mixin private OutputHelperMixins.Login outputHelper;
     @Getter private FoDSessionHelper sessionHelper = FoDSessionHelper.instance();
