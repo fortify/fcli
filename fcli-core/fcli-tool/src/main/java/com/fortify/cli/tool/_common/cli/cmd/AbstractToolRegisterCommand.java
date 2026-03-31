@@ -47,7 +47,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
     @Getter @Mixin private OutputHelperMixins.Register outputHelper;
     
     @Option(names = {"-p", "--path"}, required = true, descriptionKey = "fcli.tool.register.path")
-    private String pathOption;
+    private File pathOption;
     
     @Option(names = {"-v", "--version"}, required = false, descriptionKey = "fcli.tool.register.version")
     private String requestedVersion = "any";
@@ -91,7 +91,7 @@ public abstract class AbstractToolRegisterCommand extends AbstractOutputCommand
             this::detectVersion
         );
         
-        var result = context.register(pathOption, requestedVersion);
+        var result = context.register(pathOption.getAbsolutePath(), requestedVersion);
         
         ToolInstallationOutputDescriptor descriptor = new ToolInstallationOutputDescriptor(
             getTool().getToolName(), 

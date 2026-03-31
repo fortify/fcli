@@ -16,8 +16,6 @@ import java.io.File;
 import java.util.Date;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
@@ -49,8 +47,8 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
 {
     @ArgGroup(exclusive = true, multiplicity = "1") private OutputArgGroup outputArgGroup;
     private static final class OutputArgGroup {
-        @Option(names = {"-z", "--report-zip"}, required = true) private String reportZipName;   
-        @Option(names = {"-d", "--report-dir"}, required = true) private String reportDirName;
+        @Option(names = {"-z", "--report-zip"}, required = true) private File reportZipName;
+        @Option(names = {"-d", "--report-dir"}, required = true) private File reportDirName;
     }
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
@@ -70,21 +68,20 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
     }
     
     private IReportWriter createReportWriter() {
-        if ( StringUtils.isNotBlank(outputArgGroup.reportZipName) ) {
+        if ( outputArgGroup.reportZipName != null) {
             deleteExisting(outputArgGroup.reportZipName, File::delete);
-            return new ReportZipWriter(outputArgGroup.reportZipName, getCommandHelper().getMessageResolver());
-        } else if ( StringUtils.isNotBlank(outputArgGroup.reportDirName) ) {
+            return new ReportZipWriter(outputArgGroup.reportZipName.getAbsolutePath(), getCommandHelper().getMessageResolver());
+        } else if ( outputArgGroup.reportDirName != null) {
             deleteExisting(outputArgGroup.reportDirName, this::deleteDirectory);
-            return new ReportDirWriter(outputArgGroup.reportDirName, getCommandHelper().getMessageResolver());
+            return new ReportDirWriter(outputArgGroup.reportDirName.getAbsolutePath(), getCommandHelper().getMessageResolver());
         } else {
             throw new FcliSimpleException("Either --report-file or --report-dir must be specified");
         }
     }   
     
-    private void deleteExisting(String name, Consumer<File> deleter) {
-        var file = new File(name); 
+    private void deleteExisting(File file, Consumer<File> deleter) {
         if ( file.exists() ) {
-            requireConfirmation.checkConfirmed(name);
+            requireConfirmation.checkConfirmed(file);
             deleter.accept(file);
         }
     }

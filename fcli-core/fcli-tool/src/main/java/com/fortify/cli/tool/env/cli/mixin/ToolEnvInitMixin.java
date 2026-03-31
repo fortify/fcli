@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.tool.env.cli.mixin;
 
+import java.io.File;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +41,7 @@ public class ToolEnvInitMixin {
     @Getter private String toolDefinitions;
     
     @Option(names = "--base-dir")
-    @Getter private String baseDir;
+    @Getter private File baseDir;
     
     @Option(names = "--self")
     @Getter private String self;

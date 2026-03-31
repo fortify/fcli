@@ -601,6 +601,13 @@ public class AllCommandsCommandSelectorMixin {
             return "";
         }
         String withoutDashes = primaryName.replaceFirst("^-+", "");
+        var messages = option.messages();
+        if (messages != null) {
+            String fromBundle = messages.getString("output.option.title." + withoutDashes, null);
+            if (fromBundle != null) {
+                return fromBundle;
+            }
+        }
         return computeTitleFromLabel(withoutDashes);
     }
 

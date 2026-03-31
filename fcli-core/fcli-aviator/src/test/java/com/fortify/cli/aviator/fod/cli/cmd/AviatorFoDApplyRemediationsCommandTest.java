@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.File;
 import java.lang.reflect.Field;
 
 import org.junit.jupiter.api.Test;
@@ -29,12 +30,12 @@ class AviatorFoDApplyRemediationsCommandTest {
 
         Field field = AviatorFoDApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
-        String fieldValue = (String) field.get(command);
+        File fieldValue = (File) field.get(command);
 
         assertNotNull(fieldValue,
             "sourceCodeDirectory must have default value to prevent NPE when --source-dir not specified");
 
-        assertEquals(System.getProperty("user.dir"), fieldValue,
+        assertEquals(new File(System.getProperty("user.dir")), fieldValue,
             "sourceCodeDirectory default should be current working directory");
     }
 
@@ -45,10 +46,10 @@ class AviatorFoDApplyRemediationsCommandTest {
         Field field = AviatorFoDApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
 
-        String customPath = "/custom/source/directory";
+        File customPath = new File("/custom/source/directory");
         field.set(command, customPath);
 
-        String fieldValue = (String) field.get(command);
+        File fieldValue = (File) field.get(command);
 
         assertEquals(customPath, fieldValue,
             "sourceCodeDirectory should be overridable when --source-dir option is provided");
@@ -60,7 +61,7 @@ class AviatorFoDApplyRemediationsCommandTest {
 
         Field field = AviatorFoDApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
-        field.set(command, "");
+        field.set(command, new File("/test/Blank/SourceCodeDirectory"));
 
         assertThrows(FcliSimpleException.class, () -> command.getJsonNode(null),
             "Blank sourceCodeDirectory should throw FcliSimpleException");

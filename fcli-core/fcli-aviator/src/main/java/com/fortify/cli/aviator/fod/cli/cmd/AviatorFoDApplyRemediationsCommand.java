@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.fod.cli.cmd;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -51,7 +52,7 @@ public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorFoDApplyRemediationsCommand.class);
-    @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
+    @Option(names = {"--source-dir"}) private File sourceCodeDirectory = new File(System.getProperty("user.dir"));
 
     @Override @SneakyThrows
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -64,7 +65,7 @@ public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
     }
     
     private void validateSourceCodeDirectory() {
-        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
+        if (sourceCodeDirectory == null || !sourceCodeDirectory.isDirectory()) {
             throw new FcliSimpleException("--source-dir must specify a valid directory path");
         }
     }
@@ -78,7 +79,7 @@ public class AviatorFoDApplyRemediationsCommand extends AbstractFoDJsonNodeOutpu
 
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
             try (FprHandle fprHandle = new FprHandle(downloadedFprPath)) {
-                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory.getAbsolutePath(), logger);
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
                 return AviatorFoDApplyRemediationsHelper.buildResultNode(rd, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
             }

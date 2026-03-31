@@ -59,14 +59,7 @@ public class RemediationProcessor {
         int totalRemediations;
         int appliedRemediations;
 
-        // Sanitize and normalize the base source directory path once.
-        String trimmedSourceDir = sourceCodeDirectory.trim();
-        if (trimmedSourceDir.length() > 1 && 
-            ((trimmedSourceDir.startsWith("\"") && trimmedSourceDir.endsWith("\"")) ||
-             (trimmedSourceDir.startsWith("'") && trimmedSourceDir.endsWith("'")))) {
-            trimmedSourceDir = trimmedSourceDir.substring(1, trimmedSourceDir.length() - 1);
-        }
-        final Path sourceBasePath = Paths.get(trimmedSourceDir).toAbsolutePath().normalize();
+        final Path sourceBasePath = Paths.get(sourceCodeDirectory).normalize();
 
         try (InputStream remediationStream = Files.newInputStream(remediationPath)) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

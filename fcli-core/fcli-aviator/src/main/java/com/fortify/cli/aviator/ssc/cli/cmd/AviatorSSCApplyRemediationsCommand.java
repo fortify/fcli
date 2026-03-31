@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.ssc.cli.cmd;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,7 +51,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     //Downloading of the FPR will be based on artifact and not app version
     @Mixin private SSCArtifactResolverMixin.RequiredOption artifactResolver;
     private static final Logger LOG = LoggerFactory.getLogger(AviatorSSCApplyRemediationsCommand.class);
-    @Option(names = {"--source-dir"}) private String sourceCodeDirectory = System.getProperty("user.dir");
+    @Option(names = {"--source-dir"}) private File sourceCodeDirectory = new File(System.getProperty("user.dir"));
 
     @Override
     @SneakyThrows
@@ -64,7 +65,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
     }
     
     private void validateSourceCodeDirectory() {
-        if (sourceCodeDirectory == null || sourceCodeDirectory.isBlank()) {
+        if (sourceCodeDirectory == null || !sourceCodeDirectory.isDirectory()) {
             throw new FcliSimpleException("--source-dir must specify a valid directory path");
         }
     }
@@ -84,7 +85,7 @@ public class AviatorSSCApplyRemediationsCommand extends AbstractSSCJsonNodeOutpu
             logger.progress("Status: Processing FPR with Aviator for Applying Auto Remediations");
 
             try (FprHandle fprHandle = new FprHandle(fprPath)) {
-                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory, logger);
+                var remediationMetric = ApplyAutoRemediationOnSource.applyRemediations(fprHandle, sourceCodeDirectory.getAbsolutePath(), logger);
                 String status = remediationMetric.appliedRemediations() > 0 ? "Remediation-Applied" : "No-Remediation-Applied";
 
                 return AviatorSSCApplyRemediationsHelper.buildResultNode(ad, remediationMetric.totalRemediations(), remediationMetric.appliedRemediations(), remediationMetric.skippedRemediations(), status);
