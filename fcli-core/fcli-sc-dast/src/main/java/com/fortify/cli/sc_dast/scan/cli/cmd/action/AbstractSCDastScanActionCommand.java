@@ -43,11 +43,20 @@ public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScan
         SCDastScanDescriptor descriptor = scanResolver.getScanDescriptor(unirest);
         ObjectNode body = new ObjectMapper().createObjectNode()
                 .put("scanActionType", getAction().name());
-        unirest.post("/api/v2/scans/{id}/scan-action")
-            .routeParam("id", descriptor.getId())
-            .body(body)
+        var request = unirest.post("/api/v2/scans/{id}/scan-action")
+            .routeParam("id", descriptor.getId());
+        request = updateRequest(request);
+        request.body(body)
             .asString().getBody(); // TODO Does SC DAST return proper HTTP codes if there are any errors, or should we parse the response?
         return descriptor.asJsonNode();
+    }
+
+    /**
+     * Subclasses can override this method to add query parameters or other
+     * modifications to the request before it is sent.
+     */
+    protected kong.unirest.core.HttpRequestWithBody updateRequest(kong.unirest.core.HttpRequestWithBody request) {
+        return request;
     }
     
     @Override

@@ -14,16 +14,28 @@ package com.fortify.cli.sc_dast.scan.cli.cmd.action;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
+import kong.unirest.core.HttpRequestWithBody;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class SCDastScanDeleteCommand extends AbstractSCDastScanActionCommand {
-@Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    
+    @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
+    @Option(names = {"--force-delete", "-f"}, description = "Force deletion of the scan by adding forceDelete=true query parameter")
+    private boolean forceDelete;
+
     @Override
     protected SCDastScanAction getAction() {
         return SCDastScanAction.DeleteScan;
+    }
+
+    @Override
+    protected HttpRequestWithBody updateRequest(HttpRequestWithBody request) {
+        if (forceDelete) {
+            request.queryString("forceDelete", "true");
+        }
+        return request;
     }
 }
