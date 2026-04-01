@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.sc_dast.scan.cli.cmd.action;
 
+import java.util.Collections;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,18 +48,18 @@ public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScan
                 .put("scanActionType", getAction().name());
         var request = unirest.post("/api/v2/scans/{id}/scan-action")
             .routeParam("id", descriptor.getId());
-        request = updateRequest(request);
+        getQueryParameters().forEach(request::queryString);
         request.body(body)
             .asString().getBody(); // TODO Does SC DAST return proper HTTP codes if there are any errors, or should we parse the response?
         return descriptor.asJsonNode();
     }
 
     /**
-     * Subclasses can override this method to add query parameters or other
-     * modifications to the request before it is sent.
+     * Subclasses can override this method to provide additional query parameters
+     * for the scan-action request.
      */
-    protected kong.unirest.core.HttpRequestWithBody updateRequest(kong.unirest.core.HttpRequestWithBody request) {
-        return request;
+    protected Map<String, Object> getQueryParameters() {
+        return Collections.emptyMap();
     }
     
     @Override

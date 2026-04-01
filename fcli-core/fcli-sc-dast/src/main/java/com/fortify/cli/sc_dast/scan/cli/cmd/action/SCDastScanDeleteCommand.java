@@ -12,9 +12,11 @@
  */
 package com.fortify.cli.sc_dast.scan.cli.cmd.action;
 
+import java.util.Collections;
+import java.util.Map;
+
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
-import kong.unirest.core.HttpRequestWithBody;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -32,10 +34,10 @@ public class SCDastScanDeleteCommand extends AbstractSCDastScanActionCommand {
     }
 
     @Override
-    protected HttpRequestWithBody updateRequest(HttpRequestWithBody request) {
+    protected Map<String, Object> getQueryParameters() {
         if (forceDelete) {
-            request.queryString("forceDelete", "true");
+            return Map.of("forceDelete", "true");
         }
-        return request;
+        return Collections.emptyMap();
     }
 }
