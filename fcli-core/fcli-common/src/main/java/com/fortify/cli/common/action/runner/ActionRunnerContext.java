@@ -14,10 +14,12 @@ package com.fortify.cli.common.action.runner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ci.ActionCiSpelFunctions;
@@ -53,6 +55,7 @@ public class ActionRunnerContext implements AutoCloseable {
     @Getter(AccessLevel.NONE)
     private final IConfigurableSpelEvaluator spelEvaluator;
     private final Map<String, IActionRequestHelper> requestHelpers;
+    @Getter private Function<JsonNode, Boolean> yieldConsumer;
     
     /** Root context constructor — used by {@link #create(ActionRunnerConfig, IProgressWriterI18n, ObjectNode)} */
     private ActionRunnerContext(ActionRunnerGlobalContext global, IConfigurableSpelEvaluator spelEvaluator) {
@@ -81,6 +84,7 @@ public class ActionRunnerContext implements AutoCloseable {
         // Reconfigure SpEL context now that we have a full ActionRunnerContext
         // (needed for SpEL functions that reference the context)
         spelEvaluatorFactory.reconfigureWithContext(ctx);
+        ctx.registerFnVariable();
         return ctx;
     }
     
@@ -101,9 +105,39 @@ public class ActionRunnerContext implements AutoCloseable {
         var childSpel = spelEvaluator.copy();
         var childHelpers = new HashMap<>(requestHelpers);
         var child = new ActionRunnerContext(global, this.vars, childSpel, childHelpers);
+        child.registerFnVariable();
         provider.configureSpelContext(childSpel, child, session);
         provider.configureActionContext(child, session);
         return child;
+    }
+    
+    /**
+     * Create a child context for function invocations. Uses isolated vars (no propagation
+     * to parent), a copied SpEL evaluator, and injects the args as a local variable.
+     */
+    public ActionRunnerContext createChildForFunction(ObjectNode argsNode) {
+        var childVars = vars.createIsolatedChild();
+        childVars.setLocal("args", argsNode);
+        var childSpel = spelEvaluator.copy();
+        var child = new ActionRunnerContext(global, childVars, childSpel, new HashMap<>(requestHelpers));
+        child.registerFnVariable();
+        childVars.setSpelEvaluator(childSpel);
+        return child;
+    }
+    
+    /**
+     * Set the yield consumer for streaming function execution.
+     */
+    public void setYieldConsumer(Function<JsonNode, Boolean> yieldConsumer) {
+        this.yieldConsumer = yieldConsumer;
+    }
+    
+    /**
+     * Register the #fn SpEL variable pointing to this context.
+     */
+    void registerFnVariable() {
+        spelEvaluator.configure(spelCtx ->
+            spelCtx.setVariable("fn", new ActionFunctionSpelFunctions(this)));
     }
     
     /**
