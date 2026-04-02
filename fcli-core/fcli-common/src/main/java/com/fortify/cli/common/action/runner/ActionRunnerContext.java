@@ -92,6 +92,30 @@ public class ActionRunnerContext implements AutoCloseable {
         return new ActionRunnerContext(global, vars.createChild(), spelEvaluator, requestHelpers);
     }
     
+    /**
+     * Create a child context for product blocks (with.product). Shares the same vars
+     * as the parent, but has a copied SpEL evaluator and request helpers map so that
+     * product-specific additions don't leak to the parent scope.
+     */
+    public ActionRunnerContext createChildForProduct(IActionProductContextProvider provider, String session) {
+        var childSpel = spelEvaluator.copy();
+        var childHelpers = new HashMap<>(requestHelpers);
+        var child = new ActionRunnerContext(global, this.vars, childSpel, childHelpers);
+        provider.configureSpelContext(childSpel, child, session);
+        provider.configureActionContext(child, session);
+        return child;
+    }
+    
+    /**
+     * Close request helpers that were added in this context but not present in the parent.
+     * Used by with.product to clean up product-specific REST connections.
+     */
+    public void closeAddedRequestHelpers(ActionRunnerContext parent) {
+        requestHelpers.entrySet().stream()
+            .filter(e -> !parent.requestHelpers.containsKey(e.getKey()))
+            .forEach(e -> e.getValue().close());
+    }
+    
     public final ActionRunnerContext initialize() {
         getConfig().getActionContextConfigurers().forEach(configurer->configurer.accept(this));
         var actionConfig = getConfig().getAction().getConfig();
