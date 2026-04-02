@@ -56,11 +56,10 @@ public class ActionRunner {
         int exitCode = 0;
         var progressWriter = config.getProgressWriter();
         var parameterValues = getParameterValues(args);
-        try ( var ctx = createContext(progressWriter, parameterValues) ) {
+        try ( var ctx = ActionRunnerContext.create(config, progressWriter, parameterValues) ) {
             initializeCheckStatuses(ctx);
-            ActionRunnerVars vars = ctx.getVars();
             try {
-                new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
+                new ActionStepProcessorSteps(ctx, config.getAction().getSteps()).process();
             } finally {
                 overallCheckstatus = processAndPrintCheckStatuses(ctx);
             }
@@ -72,11 +71,7 @@ public class ActionRunner {
     }
 
     private ActionRunnerContext createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
-        return ActionRunnerContext.builder()
-                .config(config)
-                .progressWriter(progressWriter)
-                .parameterValues(parameterValues)
-                .build().initialize();
+        return ActionRunnerContext.create(config, progressWriter, parameterValues);
     }
 
     private ObjectNode getParameterValues(String[] args) {

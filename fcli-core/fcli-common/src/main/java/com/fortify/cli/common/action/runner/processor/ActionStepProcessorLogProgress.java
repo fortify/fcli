@@ -14,7 +14,6 @@ package com.fortify.cli.common.action.runner.processor;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -24,10 +23,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorLogProgress extends AbstractActionStepProcessor {
     private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
     private final TemplateExpression template;
 
     public final void process() {
-        ctx.getProgressWriter().writeProgress(asSingleLineString(asString(vars.eval(template, Object.class))));
+        ctx.getProgressWriter().writeProgress(asSingleLineString(asString(getVars().eval(template, Object.class))));
     }
 }

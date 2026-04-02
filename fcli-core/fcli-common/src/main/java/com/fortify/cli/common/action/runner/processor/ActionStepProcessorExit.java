@@ -14,7 +14,6 @@ package com.fortify.cli.common.action.runner.processor;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -24,11 +23,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorExit extends AbstractActionStepProcessor {
     private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
     private final TemplateExpression expr;
 
     public final void process() {
-        ctx.setExitCode(vars.eval(expr, Integer.class));
+        ctx.setExitCode(getVars().eval(expr, Integer.class));
         ctx.setExitRequested(true);
     }
 }

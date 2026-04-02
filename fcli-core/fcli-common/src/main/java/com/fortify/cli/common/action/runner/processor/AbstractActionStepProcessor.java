@@ -68,7 +68,7 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     }
     
     protected final void processSteps(List<ActionStep> steps) {
-        new ActionStepProcessorSteps(getCtx(), getVars(), steps).process();
+        new ActionStepProcessorSteps(getCtx(), steps).process();
     }
     
     protected boolean processForEachStepNode(AbstractActionStepElementForEachRecord forEachRecord, JsonNode node) {
@@ -282,5 +282,5 @@ public abstract class AbstractActionStepProcessor implements IActionStepProcesso
     }
     
     public abstract ActionRunnerContext getCtx();
-    public abstract ActionRunnerVars getVars();
+    public final ActionRunnerVars getVars() { return getCtx().getVars(); }
 }

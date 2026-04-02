@@ -19,7 +19,6 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -30,13 +29,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcessor {
     private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
     private final ActionStepRecordsForEach step;
 
     @Override
     public void process() {
     // TODO Clean up this method
-        var from = vars.eval(step.getFrom(), Object.class);
+        var from = getVars().eval(step.getFrom(), Object.class);
         if ( from==null ) { return; }
         if ( from instanceof IActionStepForEachProcessor ) {
             ((IActionStepForEachProcessor)from).process(node->processForEachStepNode(step, node));
