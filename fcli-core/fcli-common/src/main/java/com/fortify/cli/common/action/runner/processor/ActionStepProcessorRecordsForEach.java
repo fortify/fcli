@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcessor {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final ActionStepRecordsForEach step;
 
     @Override

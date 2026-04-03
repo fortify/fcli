@@ -29,7 +29,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry.ActionStepFcliForEachDescriptor;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory.FcliCommandExecutor;
@@ -58,7 +58,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private static final String FMT_STDOUT = "%s.stdout";
     private static final String FMT_STDERR = "%s.stderr";
     
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String,ActionStepRunFcliEntry> map;
     
     /**

@@ -76,8 +76,8 @@ import picocli.CommandLine.Option;
 @Slf4j
 public class MCPServerStartCommand extends AbstractRunnableCommand {
     @Option(names={"--module", "-m"}, required = false) private McpModule module;
-    @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_ARITY_PRESENT})
-    @Option(names={"--import"}, split=",", descriptionKey="fcli.util.mcp-server.start.import") private List<String> importFiles;
+    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names={"--import"}, split=",") private List<String> importFiles;
     @Option(names={"--work-threads"}, defaultValue="10") private int workThreads;
     @Option(names={"--progress-threads"}, defaultValue="4") private int progressThreads;
     @Option(names={"--job-safe-return"}, defaultValue="25s") private String jobSafeReturnPeriod;

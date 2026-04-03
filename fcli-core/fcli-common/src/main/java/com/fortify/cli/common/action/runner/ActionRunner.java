@@ -56,7 +56,7 @@ public class ActionRunner {
         int exitCode = 0;
         var progressWriter = config.getProgressWriter();
         var parameterValues = getParameterValues(args);
-        try ( var ctx = ActionRunnerContext.create(config, progressWriter, parameterValues) ) {
+        try ( var ctx = ActionRunnerContextLocal.create(config, progressWriter, parameterValues) ) {
             initializeCheckStatuses(ctx);
             try {
                 new ActionStepProcessorSteps(ctx, config.getAction().getSteps()).process();
@@ -70,8 +70,8 @@ public class ActionRunner {
         return exitCode + (overallCheckstatus==CheckStatus.FAIL ? 100 : 0);
     }
 
-    private ActionRunnerContext createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
-        return ActionRunnerContext.create(config, progressWriter, parameterValues);
+    private ActionRunnerContextLocal createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
+        return ActionRunnerContextLocal.create(config, progressWriter, parameterValues);
     }
 
     private ObjectNode getParameterValues(String[] args) {
@@ -83,7 +83,7 @@ public class ActionRunner {
         return parameterValues;
     }
     
-    private static final void initializeCheckStatuses(ActionRunnerContext ctx) {
+    private static final void initializeCheckStatuses(ActionRunnerContextLocal ctx) {
         for ( var elt : ctx.getConfig().getAction().getAllActionElements() ) {
             if ( elt instanceof ActionStepCheckEntry ) {
                 var checkStep = (ActionStepCheckEntry)elt;
@@ -93,7 +93,7 @@ public class ActionRunner {
         }
     }
     
-    private final CheckStatus processAndPrintCheckStatuses(ActionRunnerContext ctx) {
+    private final CheckStatus processAndPrintCheckStatuses(ActionRunnerContextLocal ctx) {
         ctx.getProgressWriter().clearProgress();
         var checkStatuses = ctx.getCheckStatuses();
         if ( checkStatuses.isEmpty() ) { return CheckStatus.SKIP; }

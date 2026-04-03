@@ -18,7 +18,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fortify.cli.common.action.model.ActionStepWith;
 import com.fortify.cli.common.action.model.ActionStepWithWriter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.processor.writer.ActionStepRecordWriterFactory;
 
 import lombok.Data;
@@ -26,11 +26,11 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data
 public class ActionStepWithWriterHandler implements IActionStepWithHandler {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final String id;
     private final ActionStepWithWriter withWriter;
     
-    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContext ctx, ActionStepWith withStep) {
+    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContextLocal ctx, ActionStepWith withStep) {
         var withWriters = withStep.getWriters();
         return withWriters==null || withWriters.isEmpty() 
                 ? Collections.emptyList() 

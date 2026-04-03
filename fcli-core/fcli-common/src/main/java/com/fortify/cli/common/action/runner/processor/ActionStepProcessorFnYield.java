@@ -14,7 +14,7 @@ package com.fortify.cli.common.action.runner.processor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionStepBreakException;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorFnYield extends AbstractActionStepProcessor {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final TemplateExpression fnYield;
 
     @Override

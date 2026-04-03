@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.action.helper;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.IActionProductContextProvider;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
@@ -39,7 +39,7 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
     }
 
     @Override
-    public void configureActionContext(ActionRunnerContext ctx, String sessionName) {
+    public void configureActionContext(ActionRunnerContextLocal ctx, String sessionName) {
         var descriptor = getSessionDescriptor(sessionName);
         ctx.addRequestHelper("ssc", new SSCActionRequestHelper(
                 () -> createSscUnirestInstance(descriptor), SSCProductHelper.INSTANCE));
@@ -50,7 +50,7 @@ public class SSCActionProductContextProvider implements IActionProductContextPro
     }
 
     @Override
-    public void configureSpelContext(IConfigurableSpelEvaluator spelEvaluator, ActionRunnerContext ctx, String sessionName) {
+    public void configureSpelContext(IConfigurableSpelEvaluator spelEvaluator, ActionRunnerContextLocal ctx, String sessionName) {
         var descriptor = getSessionDescriptor(sessionName);
         spelEvaluator.configure(spelCtx ->
             spelCtx.setVariable("ssc", new SSCActionSpelFunctions(

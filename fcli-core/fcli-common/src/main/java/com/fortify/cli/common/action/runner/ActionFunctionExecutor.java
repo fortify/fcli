@@ -22,7 +22,7 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
 /**
  * Thread-safe executor for a single action function. Creates a fresh
- * {@link ActionRunnerContext} per invocation, builds the args ObjectNode,
+ * {@link ActionRunnerContextLocal} per invocation, builds the args ObjectNode,
  * and delegates to {@link ActionFunctionSpelFunctions#call(String, Object...)}.
  * <p>
  * Used by MCP/RPC server implementations to invoke exported functions.
@@ -58,7 +58,7 @@ public final class ActionFunctionExecutor {
                 .progressWriter(new ProgressWriterI18n(ProgressWriterType.none, null))
                 .onValidationErrors(r -> new RuntimeException(String.join("; ", r.getValidationErrors())))
                 .build();
-        try (var ctx = ActionRunnerContext.create(config, config.getProgressWriter(), JsonHelper.getObjectMapper().createObjectNode())) {
+        try (var ctx = ActionRunnerContextLocal.create(config, config.getProgressWriter(), JsonHelper.getObjectMapper().createObjectNode())) {
             ctx.initialize();
             var fnSpel = new ActionFunctionSpelFunctions(ctx);
             return fnSpel.call(function.getKey(), argsNode);

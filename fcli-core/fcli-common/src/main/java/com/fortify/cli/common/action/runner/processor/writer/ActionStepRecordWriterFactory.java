@@ -15,7 +15,7 @@ package com.fortify.cli.common.action.runner.processor.writer;
 import java.util.Arrays;
 
 import com.fortify.cli.common.action.model.ActionStepWithWriter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class ActionStepRecordWriterFactory {
-    public static final IRecordWriter createWriter(ActionRunnerContext ctx, ActionStepWithWriter withWriter) {
+    public static final IRecordWriter createWriter(ActionRunnerContextLocal ctx, ActionStepWithWriter withWriter) {
         var config = new WithWriterConfig(ctx, withWriter);
         return createStandardWriter(config);
     }
@@ -37,13 +37,13 @@ public final class ActionStepRecordWriterFactory {
     
     @Getter
     static final class WithWriterConfig {
-        private final ActionRunnerContext ctx;
+        private final ActionRunnerContextLocal ctx;
         private final RecordWriterFactory factory;
         private final String to;
         private final RecordWriterStyle style;
         private final String recordWriterArgs;
         
-        public WithWriterConfig(ActionRunnerContext ctx, ActionStepWithWriter withWriter) {
+        public WithWriterConfig(ActionRunnerContextLocal ctx, ActionStepWithWriter withWriter) {
             this.ctx = ctx;
             var vars = ctx.getVars();
             this.factory = getFactory(vars.eval(withWriter.getType(), String.class));

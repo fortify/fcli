@@ -373,13 +373,13 @@ public final class ActionStep extends AbstractActionStepElement {
         """)
     @SampleYamlSnippets("""
         do:
-          - function.call:
+          - fn.call:
               myFunction:
                 var-name: result
                 arg1: ${someValue}
                 arg2: otherValue
         """)
-    @JsonProperty(value = "function.call", required = false) private LinkedHashMap<String, ActionStepFunctionCallEntry> functionCall;
+    @JsonProperty(value = "fn.call", required = false) private LinkedHashMap<String, ActionStepFunctionCallEntry> fnCall;
     
     @JsonPropertyDescription("""
         Yield a single record from a streaming function. Only valid inside functions with \

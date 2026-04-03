@@ -44,8 +44,8 @@ import picocli.CommandLine.Option;
 @MCPExclude
 @Slf4j
 public class RPCServerStartCommand extends AbstractRunnableCommand {
-    @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_ARITY_PRESENT})
-    @Option(names={"--import"}, split=",", descriptionKey="fcli.util.rpc-server.start.import") private List<String> importFiles;
+    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names={"--import"}, split=",") private List<String> importFiles;
     @Option(names={"--no-defaults"}, defaultValue="false") private boolean noDefaults;
     
     @Override

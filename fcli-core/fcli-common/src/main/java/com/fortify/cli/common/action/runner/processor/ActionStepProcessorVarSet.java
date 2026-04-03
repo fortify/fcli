@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorVarSet extends AbstractActionStepProcessorVarSet {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> map;
 
     @Override

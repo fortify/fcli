@@ -30,7 +30,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Describes a single function invocation within a {@code function.call} step.
+ * Describes a single function invocation within a {@code fn.call} step.
  * The map key is the function name; this entry holds the {@code var-name} for
  * storing the return value and all argument name/value pairs.
  */

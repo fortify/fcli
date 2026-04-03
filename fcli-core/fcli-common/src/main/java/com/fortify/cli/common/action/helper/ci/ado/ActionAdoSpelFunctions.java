@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.ci.ado.AdoEnvironment;
 import com.fortify.cli.common.ci.ado.AdoRestHelper;
 import com.fortify.cli.common.ci.ado.AdoUnirestInstanceSupplier;
@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @SpelFunctionPrefix("ado.")
 public class ActionAdoSpelFunctions implements IActionSpelFunctions {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final AdoEnvironment env;
     private AdoRestHelper restHelper;
     
@@ -52,7 +52,7 @@ public class ActionAdoSpelFunctions implements IActionSpelFunctions {
      * Create helper with automatic environment detection.
      * Does not throw if not in CI - use getEnv() != null to check.
      */
-    public ActionAdoSpelFunctions(ActionRunnerContext ctx) {
+    public ActionAdoSpelFunctions(ActionRunnerContextLocal ctx) {
         this.ctx = ctx;
         this.env = AdoEnvironment.detect();
     }

@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.spel.SpelHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
@@ -34,10 +34,10 @@ import kong.unirest.UnirestInstance;
 public final class FoDActionSpelFunctions {
     private final Supplier<UnirestInstance> fodUnirestSupplier;
     private final Supplier<String> baseUrlSupplier;
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     
     /** Constructor for picocli mixin usage (existing FoDActionRunCommand pattern). */
-    public FoDActionSpelFunctions(FoDUnirestInstanceSupplierMixin mixin, ActionRunnerContext ctx) {
+    public FoDActionSpelFunctions(FoDUnirestInstanceSupplierMixin mixin, ActionRunnerContextLocal ctx) {
         this(mixin::getUnirestInstance,
              () -> mixin.getSessionDescriptor().getUrlConfig().getUrl(),
              ctx);
@@ -46,7 +46,7 @@ public final class FoDActionSpelFunctions {
     /** Constructor for programmatic usage (product context provider). */
     public FoDActionSpelFunctions(Supplier<UnirestInstance> fodUnirestSupplier,
                                    Supplier<String> baseUrlSupplier,
-                                   ActionRunnerContext ctx) {
+                                   ActionRunnerContextLocal ctx) {
         this.fodUnirestSupplier = fodUnirestSupplier;
         this.baseUrlSupplier = baseUrlSupplier;
         this.ctx = ctx;

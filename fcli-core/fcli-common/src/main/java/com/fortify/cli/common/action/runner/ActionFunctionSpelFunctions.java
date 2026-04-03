@@ -39,7 +39,7 @@ import lombok.RequiredArgsConstructor;
 @SpelFunctionPrefix("fn.")
 public final class ActionFunctionSpelFunctions {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
 
     @SpelFunction(cat = workflow, desc = "Call an action function by name. Arguments can be passed positionally (matching args declaration order) or as a single named-args map.",
             returns = "The function's return value (JsonNode), or an IActionStepForEachProcessor for streaming functions")

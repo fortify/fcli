@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerHelper;
 
 import lombok.Data;
@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorWriterAppend extends AbstractActionStepProcessorMapEntries<String, TemplateExpressionWithFormatter>{
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String,TemplateExpressionWithFormatter> map;
     
     @Override

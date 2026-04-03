@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerHelper;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorOutWrite extends AbstractActionStepProcessorMapEntries<TemplateExpression, TemplateExpressionWithFormatter> {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<TemplateExpression,TemplateExpressionWithFormatter> map;
     
     @Override

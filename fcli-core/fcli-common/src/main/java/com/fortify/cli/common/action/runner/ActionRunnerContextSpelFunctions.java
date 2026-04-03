@@ -37,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 @Reflectable @RequiredArgsConstructor
 @SpelFunctionPrefix("action.")
 public final class ActionRunnerContextSpelFunctions {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final static String RUN_ID = UUID.randomUUID().toString();
     
     @SpelFunction(cat = workflow, desc = "This function returns the current fcli run id, which uniquely represents the current fcli invocation. Different invocations of the fcli executable are guaranteed to have a different, unique run id. Within a single fcli executable invocation, the run id remains the same, even across run.fcli instructions and any other internal fcli command invocations.", 
@@ -141,7 +141,7 @@ public final class ActionRunnerContextSpelFunctions {
     @SpelFunctions
     @RequiredArgsConstructor
     public static final class DocRenderer {
-        private final ActionRunnerContext ctx;
+        private final ActionRunnerContextLocal ctx;
         private boolean isAsciiDoc = false;
         private String manpageBaseUrl = "../manpage";
         private String currentProduct = null;

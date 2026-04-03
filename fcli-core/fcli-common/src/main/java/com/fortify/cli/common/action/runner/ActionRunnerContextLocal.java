@@ -44,13 +44,13 @@ import lombok.Getter;
 
 /**
  * This class holds action execution context. Global state (config, writers, check statuses,
- * exit code) is shared across all child contexts via {@link ActionRunnerGlobalContext}.
+ * exit code) is shared across all child contexts via {@link ActionRunnerContextGlobal}.
  * Local state (vars, spelEvaluator, requestHelpers) is scoped per context instance.
  * @author Ruud Senden
  */
-public class ActionRunnerContext implements AutoCloseable {
+public class ActionRunnerContextLocal implements AutoCloseable {
     @Getter(AccessLevel.NONE)
-    private final ActionRunnerGlobalContext global;
+    private final ActionRunnerContextGlobal global;
     @Getter private final ActionRunnerVars vars;
     @Getter(AccessLevel.NONE)
     private final IConfigurableSpelEvaluator spelEvaluator;
@@ -58,7 +58,7 @@ public class ActionRunnerContext implements AutoCloseable {
     @Getter private Function<JsonNode, Boolean> yieldConsumer;
     
     /** Root context constructor — used by {@link #create(ActionRunnerConfig, IProgressWriterI18n, ObjectNode)} */
-    private ActionRunnerContext(ActionRunnerGlobalContext global, IConfigurableSpelEvaluator spelEvaluator) {
+    private ActionRunnerContextLocal(ActionRunnerContextGlobal global, IConfigurableSpelEvaluator spelEvaluator) {
         this.global = global;
         this.spelEvaluator = spelEvaluator;
         this.requestHelpers = new HashMap<>();
@@ -66,7 +66,7 @@ public class ActionRunnerContext implements AutoCloseable {
     }
     
     /** Child context constructor — used by {@link #createChild()} */
-    private ActionRunnerContext(ActionRunnerGlobalContext global, ActionRunnerVars vars,
+    private ActionRunnerContextLocal(ActionRunnerContextGlobal global, ActionRunnerVars vars,
             IConfigurableSpelEvaluator spelEvaluator, Map<String, IActionRequestHelper> requestHelpers) {
         this.global = global;
         this.vars = vars;
@@ -75,12 +75,12 @@ public class ActionRunnerContext implements AutoCloseable {
     }
     
     /**
-     * Create a root {@link ActionRunnerContext} for an action execution.
+     * Create a root {@link ActionRunnerContextLocal} for an action execution.
      */
-    static ActionRunnerContext create(ActionRunnerConfig config, IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
-        var global = new ActionRunnerGlobalContext(config, progressWriter, parameterValues);
+    static ActionRunnerContextLocal create(ActionRunnerConfig config, IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
+        var global = new ActionRunnerContextGlobal(config, progressWriter, parameterValues);
         var spelEvaluatorFactory = new ActionConfigSpelEvaluatorFactory(global);
-        var ctx = new ActionRunnerContext(global, spelEvaluatorFactory.getSpelEvaluator());
+        var ctx = new ActionRunnerContextLocal(global, spelEvaluatorFactory.getSpelEvaluator());
         // Reconfigure SpEL context now that we have a full ActionRunnerContext
         // (needed for SpEL functions that reference the context)
         spelEvaluatorFactory.reconfigureWithContext(ctx);
@@ -92,8 +92,8 @@ public class ActionRunnerContext implements AutoCloseable {
      * Create a child context for loops (records.for-each). Child vars propagate to parent.
      * SpEL evaluator and request helpers are inherited (shared references).
      */
-    public ActionRunnerContext createChild() {
-        return new ActionRunnerContext(global, vars.createChild(), spelEvaluator, requestHelpers);
+    public ActionRunnerContextLocal createChild() {
+        return new ActionRunnerContextLocal(global, vars.createChild(), spelEvaluator, requestHelpers);
     }
     
     /**
@@ -101,10 +101,10 @@ public class ActionRunnerContext implements AutoCloseable {
      * as the parent, but has a copied SpEL evaluator and request helpers map so that
      * product-specific additions don't leak to the parent scope.
      */
-    public ActionRunnerContext createChildForProduct(IActionProductContextProvider provider, String session) {
+    public ActionRunnerContextLocal createChildForProduct(IActionProductContextProvider provider, String session) {
         var childSpel = spelEvaluator.copy();
         var childHelpers = new HashMap<>(requestHelpers);
-        var child = new ActionRunnerContext(global, this.vars, childSpel, childHelpers);
+        var child = new ActionRunnerContextLocal(global, this.vars, childSpel, childHelpers);
         child.registerFnVariable();
         provider.configureSpelContext(childSpel, child, session);
         provider.configureActionContext(child, session);
@@ -115,11 +115,11 @@ public class ActionRunnerContext implements AutoCloseable {
      * Create a child context for function invocations. Uses isolated vars (no propagation
      * to parent), a copied SpEL evaluator, and injects the args as a local variable.
      */
-    public ActionRunnerContext createChildForFunction(ObjectNode argsNode) {
+    public ActionRunnerContextLocal createChildForFunction(ObjectNode argsNode) {
         var childVars = vars.createIsolatedChild();
         childVars.setLocal("args", argsNode);
         var childSpel = spelEvaluator.copy();
-        var child = new ActionRunnerContext(global, childVars, childSpel, new HashMap<>(requestHelpers));
+        var child = new ActionRunnerContextLocal(global, childVars, childSpel, new HashMap<>(requestHelpers));
         child.registerFnVariable();
         childVars.setSpelEvaluator(childSpel);
         return child;
@@ -144,13 +144,13 @@ public class ActionRunnerContext implements AutoCloseable {
      * Close request helpers that were added in this context but not present in the parent.
      * Used by with.product to clean up product-specific REST connections.
      */
-    public void closeAddedRequestHelpers(ActionRunnerContext parent) {
+    public void closeAddedRequestHelpers(ActionRunnerContextLocal parent) {
         requestHelpers.entrySet().stream()
             .filter(e -> !parent.requestHelpers.containsKey(e.getKey()))
             .forEach(e -> e.getValue().close());
     }
     
-    public final ActionRunnerContext initialize() {
+    public final ActionRunnerContextLocal initialize() {
         getConfig().getActionContextConfigurers().forEach(configurer->configurer.accept(this));
         var actionConfig = getConfig().getAction().getConfig();
         if ( actionConfig!=null && Boolean.TRUE.equals(actionConfig.getEphemeralEncrypt()) ) {
@@ -203,14 +203,14 @@ public class ActionRunnerContext implements AutoCloseable {
     }
     
     private static final class ActionConfigSpelEvaluatorFactory extends AbstractSpelEvaluatorFactory {
-        private final ActionRunnerGlobalContext global;
-        private ActionRunnerContext actionRunnerContext;
+        private final ActionRunnerContextGlobal global;
+        private ActionRunnerContextLocal actionRunnerContext;
         
-        ActionConfigSpelEvaluatorFactory(ActionRunnerGlobalContext global) {
+        ActionConfigSpelEvaluatorFactory(ActionRunnerContextGlobal global) {
             this.global = global;
         }
         
-        void reconfigureWithContext(ActionRunnerContext ctx) {
+        void reconfigureWithContext(ActionRunnerContextLocal ctx) {
             this.actionRunnerContext = ctx;
             // Re-register variables that need the full context reference
             getSpelEvaluator().configure(spelCtx -> {
@@ -231,7 +231,7 @@ public class ActionRunnerContext implements AutoCloseable {
             spelContext.setVariable("fs", new ActionFileSystemSpelFunctions());
         }
 
-        private void registerCiVariables(SimpleEvaluationContext spelContext, ActionRunnerContext ctx) {
+        private void registerCiVariables(SimpleEvaluationContext spelContext, ActionRunnerContextLocal ctx) {
             var ciSpecificSpelFunctions = new IActionSpelFunctions[] {
                 new ActionGitHubSpelFunctions(ctx),
                 new ActionGitLabSpelFunctions(ctx),

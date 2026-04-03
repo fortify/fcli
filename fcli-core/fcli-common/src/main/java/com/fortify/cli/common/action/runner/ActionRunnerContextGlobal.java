@@ -32,7 +32,7 @@ import lombok.Setter;
  * across the root {@link ActionRunnerContext} and all its children.
  */
 @Getter
-final class ActionRunnerGlobalContext {
+final class ActionRunnerContextGlobal {
     private final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     private final ActionRunnerConfig config;
     private final IProgressWriterI18n progressWriter;
@@ -42,7 +42,7 @@ final class ActionRunnerGlobalContext {
     @Setter private int exitCode = 0;
     @Setter private boolean exitRequested = false;
 
-    ActionRunnerGlobalContext(ActionRunnerConfig config, IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
+    ActionRunnerContextGlobal(ActionRunnerConfig config, IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
         this.config = config;
         this.progressWriter = progressWriter;
         this.parameterValues = parameterValues;

@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.fod.action.helper;
 
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.IActionProductContextProvider;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
@@ -36,14 +36,14 @@ public class FoDActionProductContextProvider implements IActionProductContextPro
     }
 
     @Override
-    public void configureActionContext(ActionRunnerContext ctx, String sessionName) {
+    public void configureActionContext(ActionRunnerContextLocal ctx, String sessionName) {
         var descriptor = getSessionDescriptor(sessionName);
         ctx.addRequestHelper("fod", new BasicActionRequestHelper(
                 () -> createFoDUnirestInstance(descriptor), FoDProductHelper.INSTANCE));
     }
 
     @Override
-    public void configureSpelContext(IConfigurableSpelEvaluator spelEvaluator, ActionRunnerContext ctx, String sessionName) {
+    public void configureSpelContext(IConfigurableSpelEvaluator spelEvaluator, ActionRunnerContextLocal ctx, String sessionName) {
         var descriptor = getSessionDescriptor(sessionName);
         spelEvaluator.configure(spelCtx ->
             spelCtx.setVariable("fod", new FoDActionSpelFunctions(

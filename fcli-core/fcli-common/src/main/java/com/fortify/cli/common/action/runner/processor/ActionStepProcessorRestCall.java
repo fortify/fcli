@@ -33,7 +33,7 @@ import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepReq
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRequestType;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallLogProgressDescriptor;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.ActionRequestDescriptor;
@@ -46,7 +46,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String, ActionStepRestCallEntry> requests;
 
     @Override
@@ -107,7 +107,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     
     @FunctionalInterface
     private interface IRequestStepForEachEntryProcessor {
-        void process(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerContext childCtx);
+        void process(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerContextLocal childCtx);
     }
     
     private final void processRequestStepForEach(ActionStepRequestForEachResponseRecord forEach, ArrayNode source, IRequestStepForEachEntryProcessor entryProcessor) {
@@ -133,7 +133,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
         getVars().setLocal(totalCountName, new IntNode(totalCount.asInt()+array.size()));
     }
 
-    private void processRequestStepForEachEntryDo(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerContext childCtx) {
+    private void processRequestStepForEachEntryDo(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerContextLocal childCtx) {
         new ActionStepProcessorSteps(childCtx, forEach.get_do()).process();
     }
     
@@ -150,17 +150,17 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     
     @RequiredArgsConstructor
     private static final class ActionStepRequestsProcessor {
-        private final ActionRunnerContext ctx;
+        private final ActionRunnerContextLocal ctx;
         private final Map<String, List<IActionRequestHelper.ActionRequestDescriptor>> simpleRequests = new LinkedHashMap<>();
         private final Map<String, List<IActionRequestHelper.ActionRequestDescriptor>> pagedRequests = new LinkedHashMap<>();
         
-        final void addRequests(Map<String, ActionStepRestCallEntry> requestDescriptors, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContext reqCtx) {
+        final void addRequests(Map<String, ActionStepRestCallEntry> requestDescriptors, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContextLocal reqCtx) {
             if ( requestDescriptors!=null ) {
                 requestDescriptors.values().forEach(r->addRequest(r, responseConsumer, failureConsumer, reqCtx));
             }
         }
         
-        private final void addRequest(ActionStepRestCallEntry requestDescriptor, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContext reqCtx) {
+        private final void addRequest(ActionStepRestCallEntry requestDescriptor, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContextLocal reqCtx) {
             var vars = reqCtx.getVars();
             var _if = requestDescriptor.get_if();
             if ( _if==null || vars.eval(_if, Boolean.class) ) {

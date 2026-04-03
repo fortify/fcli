@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorCheck extends AbstractActionStepProcessorMapEntries<String, ActionStepCheckEntry> {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String,ActionStepCheckEntry> map;
     
     @Override

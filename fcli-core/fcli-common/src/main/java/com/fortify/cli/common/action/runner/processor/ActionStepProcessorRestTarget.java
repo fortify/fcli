@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRestTargetEntry;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRestTarget extends AbstractActionStepProcessorMapEntries<String, ActionStepRestTargetEntry> {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String,ActionStepRestTargetEntry> map;
     
     @Override

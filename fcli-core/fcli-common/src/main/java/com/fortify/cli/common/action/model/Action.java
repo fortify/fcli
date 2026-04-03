@@ -111,7 +111,7 @@ public class Action implements IActionElement {
     
     @JsonPropertyDescription("""
         Optional map: Reusable functions that can be called from action steps via \
-        function.call steps or #fn.call() SpEL expressions. Map keys define function \
+        fn.call steps or #fn.call() SpEL expressions. Map keys define function \
         names, map values define function arguments, steps, and return expressions.
         """)
     @SampleYamlSnippets("""

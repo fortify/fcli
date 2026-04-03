@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionSpelFunctions;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
@@ -57,10 +57,10 @@ import lombok.SneakyThrows;
 public final class SSCActionSpelFunctions {
     private final Supplier<UnirestInstance> sscUnirestSupplier;
     private final Supplier<String> baseUrlSupplier;
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     
     /** Constructor for picocli mixin usage (existing SSCActionRunCommand pattern). */
-    public SSCActionSpelFunctions(SSCAndScanCentralUnirestInstanceSupplierMixin mixin, ActionRunnerContext ctx) {
+    public SSCActionSpelFunctions(SSCAndScanCentralUnirestInstanceSupplierMixin mixin, ActionRunnerContextLocal ctx) {
         this(mixin::getSscUnirestInstance,
              () -> mixin.getSessionDescriptor().getSscUrlConfig().getUrl(),
              ctx);
@@ -69,7 +69,7 @@ public final class SSCActionSpelFunctions {
     /** Constructor for programmatic usage (product context provider). */
     public SSCActionSpelFunctions(Supplier<UnirestInstance> sscUnirestSupplier,
                                    Supplier<String> baseUrlSupplier,
-                                   ActionRunnerContext ctx) {
+                                   ActionRunnerContextLocal ctx) {
         this.sscUnirestSupplier = sscUnirestSupplier;
         this.baseUrlSupplier = baseUrlSupplier;
         this.ctx = ctx;

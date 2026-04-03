@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStep;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.exception.FcliBugException;
 
 import lombok.Data;
@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorSteps extends AbstractActionStepProcessorListEntries<ActionStep> {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final List<ActionStep> list;
 
     // Note that if-handling and logging is handled by AbstractActionStepProcessorListEntries
@@ -82,12 +82,12 @@ public class ActionStepProcessorSteps extends AbstractActionStepProcessorListEnt
             while ( currentType!=null ) {
                 try {
                     return MethodHandles.lookup().findConstructor(processorClazz,
-                        MethodType.methodType(Void.TYPE, ActionRunnerContext.class, currentType));
+                        MethodType.methodType(Void.TYPE, ActionRunnerContextLocal.class, currentType));
                 } catch (NoSuchMethodException e) {
                     currentType = currentType.getSuperclass();
                 }
             }
-            throw new FcliBugException(String.format("Step processor %s doesn't provide required constructor(ActionRunnerContext, %s)", processorClazz.getSimpleName(), valueType.getSimpleName()));
+            throw new FcliBugException(String.format("Step processor %s doesn't provide required constructor(ActionRunnerContextLocal, %s)", processorClazz.getSimpleName(), valueType.getSimpleName()));
         }
     
         @SuppressWarnings("unchecked")

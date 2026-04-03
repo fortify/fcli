@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepFunctionCallEntry;
 import com.fortify.cli.common.action.runner.ActionFunctionSpelFunctions;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.Data;
@@ -28,14 +28,14 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Processor for the {@code function.call} step. Resolves the named function,
+ * Processor for the {@code fn.call} step. Resolves the named function,
  * builds the args ObjectNode from the entry's argument template expressions,
  * delegates execution to {@link ActionFunctionSpelFunctions}, and stores the
  * return value in the caller's vars.
  */
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
-public class ActionStepProcessorFunctionCall extends AbstractActionStepProcessorMapEntries<String, ActionStepFunctionCallEntry> {
-    private final ActionRunnerContext ctx;
+public class ActionStepProcessorFnCall extends AbstractActionStepProcessorMapEntries<String, ActionStepFunctionCallEntry> {
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String, ActionStepFunctionCallEntry> map;
 
     @Override

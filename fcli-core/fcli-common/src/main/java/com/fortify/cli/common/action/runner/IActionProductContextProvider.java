@@ -21,6 +21,6 @@ import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
  */
 public interface IActionProductContextProvider {
     String getProductName();
-    void configureActionContext(ActionRunnerContext ctx, String sessionName);
-    void configureSpelContext(IConfigurableSpelEvaluator spelEvaluator, ActionRunnerContext ctx, String sessionName);
+    void configureActionContext(ActionRunnerContextLocal ctx, String sessionName);
+    void configureSpelContext(IConfigurableSpelEvaluator spelEvaluator, ActionRunnerContextLocal ctx, String sessionName);
 }
