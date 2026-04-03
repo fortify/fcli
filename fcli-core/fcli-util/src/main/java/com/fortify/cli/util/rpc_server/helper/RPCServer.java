@@ -52,13 +52,20 @@ public final class RPCServer {
     private final FcliRecordsCache cache;
     
     public RPCServer(ObjectMapper objectMapper) {
+        this(objectMapper, true);
+    }
+
+    public RPCServer(ObjectMapper objectMapper, boolean registerDefaults) {
         this.objectMapper = objectMapper;
         this.methodHandlers = new LinkedHashMap<>();
         this.cache = new FcliRecordsCache();
-        registerDefaultMethods();
+        if (registerDefaults) {
+            registerDefaultFcliMethods();
+        }
+        registerMethod("rpc.listMethods", new RPCMethodHandlerListMethods(objectMapper, methodHandlers));
     }
     
-    private void registerDefaultMethods() {
+    private void registerDefaultFcliMethods() {
         registerMethod("fcli.execute", new RPCMethodHandlerFcliExecute(objectMapper));
         registerMethod("fcli.executeAsync", new RPCMethodHandlerFcliExecuteAsync(objectMapper, cache));
         registerMethod("fcli.getPage", new RPCMethodHandlerFcliGetPage(objectMapper, cache));
@@ -66,7 +73,6 @@ public final class RPCServer {
         registerMethod("fcli.clearCache", new RPCMethodHandlerFcliClearCache(objectMapper, cache));
         registerMethod("fcli.listCommands", new RPCMethodHandlerFcliListCommands(objectMapper));
         registerMethod("fcli.version", new RPCMethodHandlerFcliVersion(objectMapper));
-        registerMethod("rpc.listMethods", new RPCMethodHandlerListMethods(objectMapper, methodHandlers));
     }
     
     /**
