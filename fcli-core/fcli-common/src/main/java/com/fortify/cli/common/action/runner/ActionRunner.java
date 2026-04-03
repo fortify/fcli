@@ -31,7 +31,6 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
-import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.RequiredArgsConstructor;
@@ -68,10 +67,6 @@ public class ActionRunner {
         }
         // Determine final exit code: add 100 when checks failed
         return exitCode + (overallCheckstatus==CheckStatus.FAIL ? 100 : 0);
-    }
-
-    private ActionRunnerContextLocal createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
-        return ActionRunnerContextLocal.create(config, progressWriter, parameterValues);
     }
 
     private ObjectNode getParameterValues(String[] args) {

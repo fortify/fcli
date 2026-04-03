@@ -89,6 +89,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
         // (needed for SpEL functions that reference the context)
         spelEvaluatorFactory.reconfigureWithContext(ctx);
         ctx.registerFnVariable();
+        ctx.initialize();
         return ctx;
     }
     
@@ -101,15 +102,17 @@ public class ActionRunnerContextLocal implements AutoCloseable {
     }
     
     /**
-     * Create a child context for product blocks (with.product). Shares the same vars
-     * as the parent, but has a copied SpEL evaluator and request helpers map so that
-     * product-specific additions don't leak to the parent scope.
+     * Create a child context for product blocks (with.product). Child vars propagate
+     * to parent but use a copied SpEL evaluator so that product-specific SpEL variables
+     * and request helpers don't leak to the parent scope.
      */
     public ActionRunnerContextLocal createChildForProduct(IActionProductContextProvider provider, String session) {
         var childSpel = spelEvaluator.copy();
         var childHelpers = new HashMap<>(requestHelpers);
-        var child = new ActionRunnerContextLocal(global, this.vars, childSpel, childHelpers, new HashMap<>(writers));
+        var childVars = vars.createChild();
+        var child = new ActionRunnerContextLocal(global, childVars, childSpel, childHelpers, new HashMap<>(writers));
         child.registerFnVariable();
+        childVars.setSpelEvaluator(childSpel);
         provider.configureSpelContext(childSpel, child, session);
         provider.configureActionContext(child, session);
         return child;
@@ -218,6 +221,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
             this.actionRunnerContext = ctx;
             // Re-register variables that need the full context reference
             getSpelEvaluator().configure(spelCtx -> {
+                configureSpelContext(spelCtx, global.getConfig().getActionContextSpelEvaluatorConfigurers(), ctx);
                 spelCtx.setVariable("action", new ActionRunnerContextSpelFunctions(ctx));
                 registerCiVariables(spelCtx, ctx);
             });
