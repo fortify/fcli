@@ -17,10 +17,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.util.rpc_server.helper.IRPCMethodHandler;
 import com.fortify.cli.util.rpc_server.helper.RPCServer;
 
 /**
@@ -398,6 +403,89 @@ class JRPCServerTest {
         assertTrue(hasGetPage, "fcli.getPage method should be present");
         assertTrue(hasCancelCollection, "fcli.cancelCollection method should be present");
         assertTrue(hasClearCache, "fcli.clearCache method should be present");
+    }
+    
+    @Nested
+    class NoDefaultsMode {
+        @Test
+        void shouldNotRegisterDefaultMethodsWhenNoDefaults() throws Exception {
+            var noDefaultServer = new RPCServer(objectMapper, false);
+            
+            // rpc.listMethods should always be present
+            String response = noDefaultServer.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}");
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("result"));
+            
+            var methods = node.get("result").get("methods");
+            // Only rpc.listMethods should be present
+            assertEquals(1, methods.size(), "Only rpc.listMethods expected when no defaults");
+            assertEquals("rpc.listMethods", methods.get(0).get("name").asText());
+        }
+        
+        @Test
+        void shouldReturnMethodNotFoundForFcliVersionWhenNoDefaults() throws Exception {
+            var noDefaultServer = new RPCServer(objectMapper, false);
+            
+            String response = noDefaultServer.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.version\",\"id\":1}");
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("error"));
+            assertEquals(-32601, node.get("error").get("code").asInt());
+        }
+    }
+    
+    @Nested
+    class CustomMethodRegistration {
+        @Test
+        void shouldExecuteRegisteredCustomMethod() throws Exception {
+            IRPCMethodHandler handler = params -> objectMapper.createObjectNode().put("echo", "hello");
+            server.registerMethod("custom.echo", handler);
+            
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"custom.echo\",\"id\":1}");
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("result"));
+            assertEquals("hello", node.get("result").get("echo").asText());
+        }
+        
+        @Test
+        void shouldListCustomMethodInRpcListMethods() throws Exception {
+            IRPCMethodHandler handler = params -> objectMapper.createObjectNode();
+            server.registerMethod("fn.myFunc", handler);
+            
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}");
+            var node = objectMapper.readTree(response);
+            var methods = node.get("result").get("methods");
+            
+            Set<String> methodNames = new HashSet<>();
+            for (var method : methods) {
+                methodNames.add(method.get("name").asText());
+            }
+            assertTrue(methodNames.contains("fn.myFunc"), "Custom method should be listed");
+        }
+        
+        @Test
+        void shouldSupportCustomMethodWithNoDefaults() throws Exception {
+            var noDefaultServer = new RPCServer(objectMapper, false);
+            IRPCMethodHandler handler = params -> {
+                var result = objectMapper.createObjectNode();
+                result.put("value", params != null && params.has("x") ? params.get("x").asInt() * 2 : 0);
+                return result;
+            };
+            noDefaultServer.registerMethod("fn.double", handler);
+            
+            String response = noDefaultServer.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"fn.double\",\"params\":{\"x\":21},\"id\":1}");
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("result"));
+            assertEquals(42, node.get("result").get("value").asInt());
+        }
     }
     
 }
