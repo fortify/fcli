@@ -29,14 +29,15 @@ public class ActionStepProcessorWith extends AbstractActionStepProcessor {
 
     @Override
     public void process() {
+        var childCtx = ctx.createChild();
         var handlers = new ArrayList<IActionStepWithHandler>();
-        handlers.addAll(ActionStepWithCleanupHandler.createHandlers(this, ctx, withStep));
-        handlers.addAll(ActionStepWithSessionHandler.createHandlers(this, ctx, withStep));
-        handlers.addAll(ActionStepWithWriterHandler.createHandlers(this, ctx, withStep));
+        handlers.addAll(ActionStepWithCleanupHandler.createHandlers(this, childCtx, withStep));
+        handlers.addAll(ActionStepWithSessionHandler.createHandlers(this, childCtx, withStep));
+        handlers.addAll(ActionStepWithWriterHandler.createHandlers(this, childCtx, withStep));
         var shutdownThread = registerShutdownThread(handlers);
         try {
             handlers.forEach(IActionStepWithHandler::doBefore);
-            processSteps(withStep.get_do());
+            new ActionStepProcessorSteps(childCtx, withStep.get_do()).process();
         } finally {
             handlers.forEach(IActionStepWithHandler::doAfter);
             if ( shutdownThread!=null ) {

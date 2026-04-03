@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.action.runner;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -21,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 
 import lombok.Getter;
@@ -38,7 +36,6 @@ final class ActionRunnerContextGlobal {
     private final IProgressWriterI18n progressWriter;
     private final ObjectNode parameterValues;
     private final Map<ActionStepCheckEntry, CheckStatus> checkStatuses = new LinkedHashMap<>();
-    private final Map<String, IRecordWriter> writers = new HashMap<>();
     @Setter private int exitCode = 0;
     @Setter private boolean exitRequested = false;
 

@@ -55,6 +55,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
     @Getter(AccessLevel.NONE)
     private final IConfigurableSpelEvaluator spelEvaluator;
     private final Map<String, IActionRequestHelper> requestHelpers;
+    private final Map<String, IRecordWriter> writers;
     @Getter private Function<JsonNode, Boolean> yieldConsumer;
     
     /** Root context constructor — used by {@link #create(ActionRunnerConfig, IProgressWriterI18n, ObjectNode)} */
@@ -62,16 +63,19 @@ public class ActionRunnerContextLocal implements AutoCloseable {
         this.global = global;
         this.spelEvaluator = spelEvaluator;
         this.requestHelpers = new HashMap<>();
+        this.writers = new HashMap<>();
         this.vars = new ActionRunnerVars(spelEvaluator, global.getParameterValues());
     }
     
     /** Child context constructor — used by {@link #createChild()} */
     private ActionRunnerContextLocal(ActionRunnerContextGlobal global, ActionRunnerVars vars,
-            IConfigurableSpelEvaluator spelEvaluator, Map<String, IActionRequestHelper> requestHelpers) {
+            IConfigurableSpelEvaluator spelEvaluator, Map<String, IActionRequestHelper> requestHelpers,
+            Map<String, IRecordWriter> writers) {
         this.global = global;
         this.vars = vars;
         this.spelEvaluator = spelEvaluator;
         this.requestHelpers = requestHelpers;
+        this.writers = writers;
     }
     
     /**
@@ -93,7 +97,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
      * SpEL evaluator and request helpers are inherited (shared references).
      */
     public ActionRunnerContextLocal createChild() {
-        return new ActionRunnerContextLocal(global, vars.createChild(), spelEvaluator, requestHelpers);
+        return new ActionRunnerContextLocal(global, vars.createChild(), spelEvaluator, requestHelpers, new HashMap<>(writers));
     }
     
     /**
@@ -104,7 +108,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
     public ActionRunnerContextLocal createChildForProduct(IActionProductContextProvider provider, String session) {
         var childSpel = spelEvaluator.copy();
         var childHelpers = new HashMap<>(requestHelpers);
-        var child = new ActionRunnerContextLocal(global, this.vars, childSpel, childHelpers);
+        var child = new ActionRunnerContextLocal(global, this.vars, childSpel, childHelpers, new HashMap<>(writers));
         child.registerFnVariable();
         provider.configureSpelContext(childSpel, child, session);
         provider.configureActionContext(child, session);
@@ -119,7 +123,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
         var childVars = vars.createIsolatedChild();
         childVars.setLocal("args", argsNode);
         var childSpel = spelEvaluator.copy();
-        var child = new ActionRunnerContextLocal(global, childVars, childSpel, new HashMap<>(requestHelpers));
+        var child = new ActionRunnerContextLocal(global, childVars, childSpel, new HashMap<>(requestHelpers), new HashMap<>(writers));
         child.registerFnVariable();
         childVars.setSpelEvaluator(childSpel);
         return child;
@@ -165,7 +169,7 @@ public class ActionRunnerContextLocal implements AutoCloseable {
     public final IProgressWriterI18n getProgressWriter() { return global.getProgressWriter(); }
     public final ObjectNode getParameterValues() { return global.getParameterValues(); }
     public final Map<ActionStepCheckEntry, CheckStatus> getCheckStatuses() { return global.getCheckStatuses(); }
-    public final Map<String, IRecordWriter> getWriters() { return global.getWriters(); }
+    public final Map<String, IRecordWriter> getWriters() { return writers; }
     public final int getExitCode() { return global.getExitCode(); }
     public final void setExitCode(int exitCode) { global.setExitCode(exitCode); }
     public final boolean isExitRequested() { return global.isExitRequested(); }
