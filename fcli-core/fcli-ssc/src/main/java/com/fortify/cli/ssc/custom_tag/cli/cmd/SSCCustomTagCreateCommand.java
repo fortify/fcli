@@ -46,6 +46,8 @@ public class SSCCustomTagCreateCommand extends AbstractSSCJsonNodeOutputCommand 
     private boolean hidden;
     @Option(names = {"--requires-comment"}, required = false, negatable = true, defaultValue = "false")
     private boolean requiresComment;
+    @Option(names = {"--extensible"}, required = false, negatable = true, defaultValue = "false")
+    private boolean extensible;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -77,7 +79,7 @@ public class SSCCustomTagCreateCommand extends AbstractSSCJsonNodeOutputCommand 
         body.put("requiresComment", requiresComment);
         body.put("customTagType", "CUSTOM");
         if (valueType == SSCCustomTagValueType.LIST) {
-            body.put("extensible", true);
+            body.put("extensible", extensible);
             body.set("valueList", buildValueList());
         }
         return body;
