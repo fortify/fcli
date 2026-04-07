@@ -21,7 +21,8 @@ public class Fcli {
         "fcli.env.FCLI_DEFAULT_STYLE", "no-fast-output" // Disable fast output style for tests
     )
     // Pre-built list of -D arguments as plain java.lang.String instances (avoid GString for static type checking)
-    private static final List<String> FCLI_SYSTEM_PROPERTY_ARGS = FCLI_SYSTEM_PROPERTIES
+    // Package-accessible for RPCServerHelper which builds subprocess commands independently
+    static final List<String> FCLI_SYSTEM_PROPERTY_ARGS = FCLI_SYSTEM_PROPERTIES
         .collect { k,v -> ("-D"+k+"="+v) as String } as List<String>
     
     static void initialize(Path fortifyDataDir) {

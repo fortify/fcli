@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.util.rpc_server.cli.cmd;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +46,30 @@ import picocli.CommandLine.Option;
 @MCPExclude
 @Slf4j
 public class RPCServerStartCommand extends AbstractRunnableCommand {
+    // Stream overrides for functional tests (RPCServerHelper) that run the server
+    // in-process via reflective invocation, where System streams cannot be replaced.
+    private static volatile InputStream inputOverride;
+    private static volatile OutputStream outputOverride;
+    private static volatile OutputStream statusOutputOverride;
+    
+    /**
+     * Configure stream overrides for the next server invocation, used by functional
+     * tests to run the server in-process with piped streams. Set any parameter to
+     * {@code null} to use the corresponding System stream.
+     */
+    public static void configureStreams(InputStream input, OutputStream output, OutputStream statusOutput) {
+        inputOverride = input;
+        outputOverride = output;
+        statusOutputOverride = statusOutput;
+    }
+    
+    /** Clear any previously configured stream overrides. */
+    public static void clearStreamOverrides() {
+        inputOverride = null;
+        outputOverride = null;
+        statusOutputOverride = null;
+    }
+    
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @Option(names={"--import"}, split=",") private List<String> importFiles;
     @Option(names={"--no-defaults"}, defaultValue="false") private boolean noDefaults;
@@ -64,7 +90,10 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
             }
         }
         
-        server.start(System.in, System.out);
+        var input = inputOverride != null ? inputOverride : System.in;
+        var output = outputOverride != null ? outputOverride : System.out;
+        var statusOutput = statusOutputOverride != null ? statusOutputOverride : System.err;
+        server.start(input, output, statusOutput);
         
         return 0;
     }
@@ -84,8 +113,6 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
     private Action loadImportedAction(String importFile) {
         var sources = ActionSource.externalActionSources(importFile);
         var validationHandler = ActionValidationHandler.WARN;
-        return ActionLoaderHelper.streamAsActions(sources, validationHandler)
-                .findFirst()
-                .orElseThrow(() -> new FcliSimpleException("No action found in: " + importFile));
+        return ActionLoaderHelper.load(sources, importFile, validationHandler).getAction();
     }
 }

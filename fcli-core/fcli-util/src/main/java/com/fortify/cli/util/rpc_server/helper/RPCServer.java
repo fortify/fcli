@@ -85,13 +85,26 @@ public final class RPCServer {
     
     /**
      * Start the server, reading from the given input stream and writing to the output stream.
+     * Status messages (like the startup message) are written to {@code System.err}.
      * This method blocks until the input stream is closed or an error occurs.
      * Requests are processed synchronously in the order they are received.
      */
     public void start(InputStream input, OutputStream output) {
+        start(input, output, System.err);
+    }
+    
+    /**
+     * Start the server, reading from the given input stream and writing to the output stream.
+     * Status messages (like the startup message) are written to {@code statusOutput}.
+     * This method blocks until the input stream is closed or an error occurs.
+     * Requests are processed synchronously in the order they are received.
+     */
+    public void start(InputStream input, OutputStream output, OutputStream statusOutput) {
         running.set(true);
         log.info("JSON-RPC server starting on stdio");
-        System.err.println("Fcli JSON-RPC server running on stdio. Hit Ctrl-C to exit.");
+        var statusWriter = new PrintWriter(statusOutput, true, StandardCharsets.UTF_8);
+        statusWriter.println("Fcli JSON-RPC server running on stdio. Hit Ctrl-C to exit.");
+        statusWriter.flush();
         
         try (var reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
              var writer = new PrintWriter(output, true, StandardCharsets.UTF_8)) {

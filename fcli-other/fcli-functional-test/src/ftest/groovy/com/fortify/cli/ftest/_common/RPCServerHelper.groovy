@@ -1,61 +1,139 @@
 package com.fortify.cli.ftest._common
 
+import java.util.concurrent.TimeUnit
+
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 
 /**
  * Helper for testing the fcli RPC server via stdio.
- * Spawns fcli as a subprocess, communicates via stdin/stdout using JSON-RPC.
+ * In build/reflective mode, starts the server in a separate thread with piped streams.
+ * In external mode (jar/native), spawns fcli as a subprocess.
+ * Communicates via stdin/stdout using JSON-RPC in both modes.
  */
 class RPCServerHelper implements Closeable {
     private static final ObjectMapper objectMapper = new ObjectMapper()
-    private final Process process
     private final BufferedWriter writer
     private final BufferedReader reader
     private final BufferedReader errorReader
+    private final Closeable serverResource
 
-    private RPCServerHelper(Process process) {
-        this.process = process
-        this.writer = new BufferedWriter(new OutputStreamWriter(process.outputStream, "UTF-8"))
-        this.reader = new BufferedReader(new InputStreamReader(process.inputStream, "UTF-8"))
-        this.errorReader = new BufferedReader(new InputStreamReader(process.errorStream, "UTF-8"))
+    private RPCServerHelper(BufferedWriter writer, BufferedReader reader, BufferedReader errorReader, Closeable serverResource) {
+        this.writer = writer
+        this.reader = reader
+        this.errorReader = errorReader
+        this.serverResource = serverResource
     }
 
     /**
-     * Start an fcli RPC server subprocess with the given arguments.
+     * Start an fcli RPC server with the given arguments.
+     * Uses reflective in-process invocation (build mode) or subprocess (jar/native),
+     * matching the approach used by Fcli.groovy for regular command execution.
      * Waits for the server to print its startup message on stderr.
      * @param serverArgs fcli arguments (e.g. "util rpc-server start --import file.yaml")
      * @return RPCServerHelper for sending/receiving JSON-RPC messages
      */
     static RPCServerHelper start(String serverArgs) {
-        def javaHome = System.getProperty("java.home")
-        def classpath = System.getProperty("java.class.path")
-        def cmd = [
-            "${javaHome}/bin/java" as String,
-            "-cp", classpath,
-            "com.fortify.cli.app.FortifyCLI"
-        ] + serverArgs.split(" ").toList()
+        def fcli = Input.FcliCommand.get()
+        if ( !fcli || fcli == "build" ) {
+            return startReflective(serverArgs)
+        } else {
+            return startExternal(serverArgs)
+        }
+    }
 
+    private static RPCServerHelper startReflective(String serverArgs) {
+        // Create piped streams for stdin/stdout/stderr communication
+        def toServerPipe = new PipedOutputStream()
+        def serverIn = new PipedInputStream(toServerPipe)
+        def fromServerPipe = new PipedOutputStream()
+        def fromServer = new PipedInputStream(fromServerPipe)
+        def fromServerErrPipe = new PipedOutputStream()
+        def fromServerErr = new PipedInputStream(fromServerErrPipe)
+
+        // Configure RPCServerStartCommand stream overrides reflectively
+        def cmdClass = Class.forName("com.fortify.cli.util.rpc_server.cli.cmd.RPCServerStartCommand")
+        def configureMethod = cmdClass.getMethod("configureStreams", InputStream.class, OutputStream.class, OutputStream.class)
+        def clearMethod = cmdClass.getMethod("clearStreamOverrides")
+        configureMethod.invoke(null, serverIn, fromServerPipe, fromServerErrPipe)
+
+        def args = toArgsList(serverArgs) as String[]
+        def runnerClass = Class.forName("com.fortify.cli.app.runner.DefaultFortifyCLIRunner")
+        def method = runnerClass.getMethod("run", String[].class)
+        def serverError = new java.util.concurrent.atomic.AtomicReference<Throwable>()
+        def serverThread = new Thread({
+            try {
+                method.invoke(null, [args] as Object[])
+            } catch (Exception e) {
+                serverError.set(e)
+            } finally {
+                clearMethod.invoke(null)
+            }
+        }, "rpc-server")
+        serverThread.daemon = true
+        serverThread.start()
+
+        def writer = new BufferedWriter(new OutputStreamWriter(toServerPipe, "UTF-8"))
+        def rdr = new BufferedReader(new InputStreamReader(fromServer, "UTF-8"))
+        def errRdr = new BufferedReader(new InputStreamReader(fromServerErr, "UTF-8"))
+        Closeable resource = {
+            try { toServerPipe.close() } catch (Exception ignored) {}
+            serverThread.join(5000)
+            if ( serverThread.alive ) { serverThread.interrupt() }
+            clearMethod.invoke(null)
+        }
+        def helper = new RPCServerHelper(writer, rdr, errRdr, resource)
+        helper.waitForStartup(serverThread, serverError)
+        return helper
+    }
+
+    private static RPCServerHelper startExternal(String serverArgs) {
+        String fcli = Input.FcliCommand.get()
+        String java = Input.JavaCommand.get() ?: "java"
+        def cmd = [] as List<String>
+        if ( fcli.endsWith(".jar") ) {
+            cmd.add(java)
+            cmd.addAll(Fcli.FCLI_SYSTEM_PROPERTY_ARGS)
+            cmd.add("-jar")
+            cmd.add(fcli)
+        } else {
+            cmd.add(fcli)
+            cmd.addAll(Fcli.FCLI_SYSTEM_PROPERTY_ARGS)
+        }
+        cmd.addAll(toArgsList(serverArgs))
         def pb = new ProcessBuilder(cmd)
         pb.redirectErrorStream(false)
         def process = pb.start()
-        def helper = new RPCServerHelper(process)
+        def writer = new BufferedWriter(new OutputStreamWriter(process.outputStream, "UTF-8"))
+        def rdr = new BufferedReader(new InputStreamReader(process.inputStream, "UTF-8"))
+        def errRdr = new BufferedReader(new InputStreamReader(process.errorStream, "UTF-8"))
+        Closeable resource = {
+            process.destroyForcibly()
+            process.waitFor(5, TimeUnit.SECONDS)
+        }
+        def helper = new RPCServerHelper(writer, rdr, errRdr, resource)
         helper.waitForStartup()
         return helper
     }
 
-    private void waitForStartup() {
+    private void waitForStartup(Thread serverThread = null, java.util.concurrent.atomic.AtomicReference<Throwable> serverError = null) {
         def deadline = System.currentTimeMillis() + 30_000
         while (System.currentTimeMillis() < deadline) {
+            if (serverThread != null && !serverThread.alive) {
+                def err = serverError?.get()
+                throw new RuntimeException("RPC server thread died before startup completed" + 
+                    (err ? ": " + err.message : ""), err)
+            }
             if (errorReader.ready()) {
                 def line = errorReader.readLine()
-                if (line != null && (line.contains("running on stdio") || line.contains("server running"))) {
+                if (line != null && line.contains("running on stdio")) {
                     return
                 }
             }
             Thread.sleep(100)
         }
-        throw new RuntimeException("Server did not start within 30 seconds")
+        throw new RuntimeException("RPC server did not start within 30 seconds" +
+            (serverThread != null ? " (thread alive: " + serverThread.alive + ")" : ""))
     }
 
     /**
@@ -103,7 +181,10 @@ class RPCServerHelper implements Closeable {
         try { writer.close() } catch (Exception ignored) {}
         try { reader.close() } catch (Exception ignored) {}
         try { errorReader.close() } catch (Exception ignored) {}
-        process.destroyForcibly()
-        process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
+        serverResource.close()
+    }
+
+    private static List<String> toArgsList(String argsString) {
+        argsString.split(" ").toList()
     }
 }
