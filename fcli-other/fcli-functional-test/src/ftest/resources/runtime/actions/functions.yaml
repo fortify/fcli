@@ -32,7 +32,7 @@ functions:
     description: Yield each element from the given list
     streaming: true
     args:
-      items: { required: true }
+      items: { required: true, type: array }
     steps:
       - records.for-each:
           from: ${args.items}
@@ -45,7 +45,7 @@ functions:
     description: Yield each element, logging before each yield
     streaming: true
     args:
-      items: { required: true }
+      items: { required: true, type: array }
     steps:
       - records.for-each:
           from: ${args.items}
@@ -82,7 +82,7 @@ functions:
             var-name: greeting
             name: ${args.name}
       - var.set:
-          _result: ${greeting.asText() + ' Sum=' + sum.asText()}
+          _result: ${greeting + ' Sum=' + sum}
 
 cli.options:
   mode:

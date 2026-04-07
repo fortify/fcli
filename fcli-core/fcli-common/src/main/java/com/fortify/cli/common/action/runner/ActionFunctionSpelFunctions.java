@@ -14,6 +14,7 @@ package com.fortify.cli.common.action.runner;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.workflow;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -70,6 +71,7 @@ public final class ActionFunctionSpelFunctions {
             applyDefaults(declaredArgs, argsNode);
             return argsNode;
         }
+        callArgs = coalesceVarargsToArray(declaredArgs, callArgs);
         if (isNamedInvocation(declaredArgs, callArgs)) {
             applyNamedArgs(declaredArgs, callArgs[0], argsNode);
         } else {
@@ -78,6 +80,21 @@ public final class ActionFunctionSpelFunctions {
         applyDefaults(declaredArgs, argsNode);
         validateRequiredArgs(function, declaredArgs, argsNode);
         return argsNode;
+    }
+
+    /**
+     * When a function declares exactly one arg of type 'array', and SpEL has spread an
+     * inline list (e.g. {10, 20, 30}) into separate varargs entries, re-wrap them into a
+     * single array so positional binding assigns the whole list to that argument.
+     */
+    private Object[] coalesceVarargsToArray(Map<String, ActionFunctionArg> declaredArgs, Object[] callArgs) {
+        if (callArgs.length > 1 && declaredArgs.size() == 1) {
+            var singleArg = declaredArgs.values().iterator().next();
+            if ("array".equalsIgnoreCase(singleArg.getType())) {
+                return new Object[]{ Arrays.asList(callArgs) };
+            }
+        }
+        return callArgs;
     }
 
     /**
@@ -96,7 +113,7 @@ public final class ActionFunctionSpelFunctions {
     @SuppressWarnings("unchecked")
     private void applyNamedArgs(Map<String, ActionFunctionArg> declaredArgs, Object source, ObjectNode argsNode) {
         if (source instanceof ObjectNode on) {
-            on.fields().forEachRemaining(e -> argsNode.set(e.getKey(), e.getValue()));
+            on.properties().forEach(e -> argsNode.set(e.getKey(), e.getValue()));
         } else if (source instanceof Map<?,?>) {
             ((Map<String, Object>) source).forEach((k, v) -> argsNode.set(k, toJsonNode(v)));
         }

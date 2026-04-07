@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.runner.processor;
 import java.util.Collection;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
@@ -36,6 +37,9 @@ public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcess
     // TODO Clean up this method
         var from = getVars().eval(step.getFrom(), Object.class);
         if ( from==null ) { return; }
+        if ( from instanceof POJONode ) {
+            from = ((POJONode) from).getPojo();
+        }
         if ( from instanceof IActionStepForEachProcessor ) {
             ((IActionStepForEachProcessor)from).process(node->processForEachStepNode(step, node));
             return;
@@ -47,7 +51,7 @@ public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcess
             JsonHelper.stream((ArrayNode)from)
                 .allMatch(value->processForEachStepNode(step, value));
         } else {
-            throw new FcliActionStepException("steps:records.for-each:from must evaluate to either an array or IActionStepForEachProcessor instance");
+            throw new FcliActionStepException("steps:records.for-each:from must evaluate to either an array or IActionStepForEachProcessor instance; actual type: " + from.getClass().getName());
         }
     }
 }
