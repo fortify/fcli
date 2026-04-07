@@ -345,6 +345,56 @@ public final class ActionStep extends AbstractActionStepElement {
     @JsonProperty(value = "with", required = false) private ActionStepWith with;
     
     @JsonPropertyDescription("""
+        Run the steps in the 'do' block within the context of a product session (e.g., SSC or FoD). \
+        This makes product-specific SpEL functions (like #ssc.appVersion() or #fod.release()) and \
+        REST targets (like 'ssc' or 'fod') available within the 'do' block. The product context is \
+        automatically cleaned up when the 'do' block completes.
+        """)
+    @SampleYamlSnippets("""
+        do:
+          - with.product:
+              name: ssc
+              session: default
+            do:
+              - var.set:
+                  av: ${#ssc.appVersion(cli.appversion)}
+              - rest.call:
+                  result:
+                    target: ssc
+                    uri: /api/v1/projectVersions/${av.id}/issues
+        """)
+    @JsonProperty(value = "with.product", required = false) private ActionStepWithProduct withProduct;
+    
+    @JsonPropertyDescription("""
+        Invoke one or more functions defined in the functions: section. This step takes a map, \
+        with keys identifying the function to call, and values specifying the var-name \
+        for storing the return value and argument values. For streaming functions, the return \
+        value is an IActionStepForEachProcessor that can be used with records.for-each.
+        """)
+    @SampleYamlSnippets("""
+        do:
+          - fn.call:
+              myFunction:
+                var-name: result
+                arg1: ${someValue}
+                arg2: otherValue
+        """)
+    @JsonProperty(value = "fn.call", required = false) private LinkedHashMap<String, ActionStepFunctionCallEntry> fnCall;
+    
+    @JsonPropertyDescription("""
+        Yield a single record from a streaming function. Only valid inside functions with \
+        streaming enabled. The expression is evaluated and emitted to the consumer. \
+        If the consumer signals termination, remaining steps are skipped.
+        """)
+    @SampleYamlSnippets("""
+        functions:
+          myStreamingFn:
+            steps:
+              - fn.yield: ${currentRecord}
+        """)
+    @JsonProperty(value = "fn.yield", required = false) private TemplateExpression fnYield;
+    
+    @JsonPropertyDescription("""
         This instruction may only be used from within a with:do, with the with:writers instruction defining the writers \
         that the writer.append instruction can append data to. The given data will be formatted an written according to \
         the corresponding writer configuration.  

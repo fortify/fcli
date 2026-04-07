@@ -18,4 +18,5 @@ import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 public interface IConfigurableSpelEvaluator extends ISpelEvaluator {
     IConfigurableSpelEvaluator configure(Consumer<SimpleEvaluationContext> contextConfigurer);
+    IConfigurableSpelEvaluator copy();
 }

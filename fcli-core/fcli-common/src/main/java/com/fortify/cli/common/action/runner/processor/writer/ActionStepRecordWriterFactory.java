@@ -15,8 +15,7 @@ package com.fortify.cli.common.action.runner.processor.writer;
 import java.util.Arrays;
 
 import com.fortify.cli.common.action.model.ActionStepWithWriter;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
@@ -27,8 +26,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public final class ActionStepRecordWriterFactory {
-    public static final IRecordWriter createWriter(ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWithWriter withWriter) {
-        var config = new WithWriterConfig(ctx, vars, withWriter);
+    public static final IRecordWriter createWriter(ActionRunnerContextLocal ctx, ActionStepWithWriter withWriter) {
+        var config = new WithWriterConfig(ctx, withWriter);
         return createStandardWriter(config);
     }
 
@@ -38,25 +37,20 @@ public final class ActionStepRecordWriterFactory {
     
     @Getter
     static final class WithWriterConfig {
-        private final ActionRunnerContext ctx;
-        private final ActionRunnerVars vars;
+        private final ActionRunnerContextLocal ctx;
         private final RecordWriterFactory factory;
         private final String to;
         private final RecordWriterStyle style;
         private final String recordWriterArgs;
         
-        public WithWriterConfig(ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWithWriter withWriter) {
+        public WithWriterConfig(ActionRunnerContextLocal ctx, ActionStepWithWriter withWriter) {
             this.ctx = ctx;
-            this.vars = vars;
+            var vars = ctx.getVars();
             this.factory = getFactory(vars.eval(withWriter.getType(), String.class));
             this.to = vars.eval(withWriter.getTo(), String.class);
-            this.style = getStyle(vars, withWriter);
-            this.recordWriterArgs = vars.eval(withWriter.getTypeArgs(), String.class);
-        }
-
-        private RecordWriterStyle getStyle(ActionRunnerVars vars, ActionStepWithWriter withWriter) {
             var styleElementsString = vars.eval(withWriter.getStyle(), String.class);
-            return RecordWriterStyle.apply(styleElementsString==null?null:styleElementsString.split("[\\s,]+"));
+            this.style = RecordWriterStyle.apply(styleElementsString==null?null:styleElementsString.split("[\\s,]+"));
+            this.recordWriterArgs = vars.eval(withWriter.getTypeArgs(), String.class);
         }
 
         private static final RecordWriterFactory getFactory(String type) {

@@ -21,9 +21,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.action.runner.ActionProductContextProviders;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
+import com.fortify.cli.fod.action.helper.FoDActionProductContextProvider;
+import com.fortify.cli.ssc.action.helper.SSCActionProductContextProvider;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
 
 import lombok.AccessLevel;
@@ -46,7 +49,13 @@ public final class FortifyCLIStaticInitializer {
         ToolUninstaller.deleteAllPending();
         initializeTrustStore();
         initializeLocale();
+        initializeProductContextProviders();
         System.getProperties().putAll(FortifyCLIResourceBundlePropertiesHelper.getResourceBundleProperties());
+    }
+    
+    private void initializeProductContextProviders() {
+        ActionProductContextProviders.register(new SSCActionProductContextProvider());
+        ActionProductContextProviders.register(new FoDActionProductContextProvider());
     }
     
     private void initializeTrustStore() {

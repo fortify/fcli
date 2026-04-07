@@ -17,35 +17,33 @@ import java.util.List;
 
 import com.fortify.cli.common.action.model.ActionStepWith;
 import com.fortify.cli.common.action.model.ActionStepWithCleanup;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data
 public class ActionStepWithCleanupHandler implements IActionStepWithHandler {
-    private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
+    private final ActionRunnerContextLocal ctx;
     private final ActionStepWithCleanup withCleanup;
     
-    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContext ctx, ActionRunnerVars vars, ActionStepWith withStep) {
+    public static final List<? extends IActionStepWithHandler> createHandlers(ActionStepProcessorWith actionStepProcessorWith, ActionRunnerContextLocal ctx, ActionStepWith withStep) {
         List<ActionStepWithCleanupHandler> result = new ArrayList<>();
         var withCleanup = withStep.getCleanup();
         if ( withCleanup!=null && actionStepProcessorWith._if(withCleanup) ) {
-            result.add(new ActionStepWithCleanupHandler(ctx, vars, withCleanup));
+            result.add(new ActionStepWithCleanupHandler(ctx, withCleanup));
         }
         return result;
     }
 
     @Override
     public final void doBefore() {
-        new ActionStepProcessorSteps(ctx, vars, withCleanup.getInitSteps()).process();
+        new ActionStepProcessorSteps(ctx, withCleanup.getInitSteps()).process();
     }
     
     @Override
     public final void doAfter() {
-        new ActionStepProcessorSteps(ctx, vars, withCleanup.getCleanupSteps()).process();
+        new ActionStepProcessorSteps(ctx, withCleanup.getCleanupSteps()).process();
     }
     
     @Override

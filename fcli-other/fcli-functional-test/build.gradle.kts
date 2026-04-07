@@ -22,6 +22,11 @@ testing {
                 implementation(platform("org.spockframework:spock-bom:2.3-groovy-4.0"))
                 implementation("org.spockframework:spock-core")
                 implementation("org.junit.platform:junit-platform-launcher:1.10.2")
+                implementation(platform("com.fasterxml.jackson:jackson-bom:2.21.2"))
+                implementation("com.fasterxml.jackson.core:jackson-databind")
+                implementation(platform("io.modelcontextprotocol.sdk:mcp-bom:1.1.1"))
+                implementation("io.modelcontextprotocol.sdk:mcp-core")
+                implementation("io.modelcontextprotocol.sdk:mcp-json-jackson2")
                 val fcliProp = project.findProperty("ftest.fcli")?.toString()
                 if (fcliProp == null || fcliProp == "build") {
                     val appRef = project.findProperty("fcliAppRef") as String

@@ -14,6 +14,7 @@ package com.fortify.cli.common.spel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -41,7 +42,6 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.SpelFunctionsStandard;
 
-import lombok.RequiredArgsConstructor;
 
 public enum SpelEvaluator implements ISpelEvaluator {
     JSON_GENERIC(SpelEvaluator::createJsonGenericContext),
@@ -74,12 +74,18 @@ public enum SpelEvaluator implements ISpelEvaluator {
     } 
 
     public final IConfigurableSpelEvaluator copy() {
-        return new ConfigurableSpelEvaluator(contextSupplier.get());
+        return new ConfigurableSpelEvaluator(contextSupplier.get(), contextSupplier);
     }
     
-    @RequiredArgsConstructor
     private static final class ConfigurableSpelEvaluator implements IConfigurableSpelEvaluator {
         private final SimpleEvaluationContext context;
+        private final Supplier<SimpleEvaluationContext> contextFactory;
+        private final List<Consumer<SimpleEvaluationContext>> configurers = new ArrayList<>();
+        
+        ConfigurableSpelEvaluator(SimpleEvaluationContext context, Supplier<SimpleEvaluationContext> contextFactory) {
+            this.context = context;
+            this.contextFactory = contextFactory;
+        }
         
         public final <R> R evaluate(Expression expression, Object input, Class<R> returnClass) {
             return SpelEvaluator.evaluate(context, expression, input, returnClass);
@@ -92,7 +98,18 @@ public enum SpelEvaluator implements ISpelEvaluator {
         @Override
         public IConfigurableSpelEvaluator configure(Consumer<SimpleEvaluationContext> contextConfigurer) {
             contextConfigurer.accept(context);
+            configurers.add(contextConfigurer);
             return this;
+        }
+        
+        @Override
+        public IConfigurableSpelEvaluator copy() {
+            var newContext = contextFactory.get();
+            var copy = new ConfigurableSpelEvaluator(newContext, contextFactory);
+            for (var configurer : configurers) {
+                copy.configure(configurer);
+            }
+            return copy;
         }
     }
     

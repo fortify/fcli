@@ -16,8 +16,7 @@ import java.util.ArrayList;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepWith;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,20 +24,20 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorWith extends AbstractActionStepProcessor {
-    private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
+    private final ActionRunnerContextLocal ctx;
     private final ActionStepWith withStep;
 
     @Override
     public void process() {
+        var childCtx = ctx.createChild();
         var handlers = new ArrayList<IActionStepWithHandler>();
-        handlers.addAll(ActionStepWithCleanupHandler.createHandlers(this, ctx, vars, withStep));
-        handlers.addAll(ActionStepWithSessionHandler.createHandlers(this, ctx, vars, withStep));
-        handlers.addAll(ActionStepWithWriterHandler.createHandlers(this, ctx, vars, withStep));
+        handlers.addAll(ActionStepWithCleanupHandler.createHandlers(this, childCtx, withStep));
+        handlers.addAll(ActionStepWithSessionHandler.createHandlers(this, childCtx, withStep));
+        handlers.addAll(ActionStepWithWriterHandler.createHandlers(this, childCtx, withStep));
         var shutdownThread = registerShutdownThread(handlers);
         try {
             handlers.forEach(IActionStepWithHandler::doBefore);
-            processSteps(withStep.get_do());
+            new ActionStepProcessorSteps(childCtx, withStep.get_do()).process();
         } finally {
             handlers.forEach(IActionStepWithHandler::doAfter);
             if ( shutdownThread!=null ) {

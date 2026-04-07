@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest with.product
+  description: Tests with.product step for SSC and FoD product context
+
+cli.options:
+  mode:
+    names: --mode
+    description: Test mode to run
+    required: true
+  id:
+    names: --id
+    description: Entity id (app version id for SSC, release id for FoD)
+    required: false
+
+steps:
+  # Test SSC REST helper via with.product
+  - if: ${cli.mode == 'ssc-rest'}
+    do:
+      - with.product:
+          name: ssc
+          do:
+            - rest.call:
+                versions:
+                  from: ssc
+                  uri: /api/v1/projectVersions?limit=1
+                  on.success:
+                    - out.write:
+                        stdout: "SSC-REST-OK count=${versions_raw.count}\n"
+
+  # Test SSC SpEL function via with.product
+  - if: ${cli.mode == 'ssc-spel'}
+    do:
+      - with.product:
+          name: ssc
+          do:
+            - var.set:
+                av: ${#ssc.appVersion(cli.id)}
+            - out.write:
+                stdout: "SSC-SPEL-OK name=${av.project.name}:${av.name}\n"
+
+  # Test FoD REST helper via with.product
+  - if: ${cli.mode == 'fod-rest'}
+    do:
+      - with.product:
+          name: fod
+          do:
+            - rest.call:
+                apps:
+                  from: fod
+                  uri: /api/v3/applications?limit=1
+                  on.success:
+                    - out.write:
+                        stdout: "FOD-REST-OK count=${apps_raw.totalCount}\n"
+
+  # Test FoD SpEL function via with.product
+  - if: ${cli.mode == 'fod-spel'}
+    do:
+      - with.product:
+          name: fod
+          do:
+            - var.set:
+                rel: ${#fod.release(cli.id)}
+            - out.write:
+                stdout: "FOD-SPEL-OK name=${rel.applicationName}:${rel.releaseName}\n"

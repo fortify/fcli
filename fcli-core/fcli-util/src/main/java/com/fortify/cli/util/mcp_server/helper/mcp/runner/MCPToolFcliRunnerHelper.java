@@ -21,31 +21,27 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.mcp.MCPDefaultValue;
-import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 import com.fortify.cli.common.util.ReflectionHelper;
+import com.fortify.cli.util._common.helper.FcliRunnerHelper;
 
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
- * Helper methods for running a given fcli command, collecting either records or stdout
+ * Helper methods for running a given fcli command, collecting either records or stdout.
+ * Delegates to {@link FcliRunnerHelper} for command execution, adding MCP-specific default
+ * option resolution from {@link MCPDefaultValue} annotations on the given {@link CommandSpec}.
  * 
  * @author Ruud Senden
  */
-public class MCPToolFcliRunnerHelper {
+class MCPToolFcliRunnerHelper {
     static final Result collectStdout(String fullCmd, CommandSpec spec) {
-        return createBuilder(fullCmd, spec)
-            .stdoutOutputType(OutputType.collect)
-            .build().create().execute();
+        return FcliRunnerHelper.collectStdout(fullCmd, collectMcpDefaultOptions(spec));
     }
     
     static final Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer, CommandSpec spec) {
-        return createBuilder(fullCmd, spec)
-            .stdoutOutputType(OutputType.suppress)
-            .recordConsumer(recordConsumer)
-            .build().create().execute();
+        return FcliRunnerHelper.collectRecords(fullCmd, recordConsumer, collectMcpDefaultOptions(spec));
     }
     
     static final MCPToolResult collectRecords(String fullCmd, CommandSpec spec) {
@@ -54,16 +50,7 @@ public class MCPToolFcliRunnerHelper {
         return MCPToolResult.fromRecords(result, records);
     }
     
-    private static final FcliCommandExecutorFactory.FcliCommandExecutorFactoryBuilder createBuilder(String fullCmd, CommandSpec spec) {
-        return FcliCommandExecutorFactory.builder()
-            .cmd(fullCmd)
-            .defaultOptionsIfNotPresent(collectMcpDefaultOptions(spec))
-            .onFail(r->{})
-            .createInvocationContext(true)
-            .stderrOutputType(OutputType.collect);           
-    }
-
-    private static final Map<String,String> collectMcpDefaultOptions(CommandSpec spec) {
+    static final Map<String,String> collectMcpDefaultOptions(CommandSpec spec) {
         if ( spec==null ) {
             return Map.of();
         }

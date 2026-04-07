@@ -42,7 +42,7 @@ public class ActionStepRecordWriterConfigFactory {
     @SneakyThrows
     public static final Writer createWriter(WithWriterConfig config) {
         var to = config.getTo();
-        var vars = config.getVars();
+        var vars = config.getCtx().getVars();
         if ( "stdout".equals(to) ) {
             return new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out));
         } else if ( "stderr".equals(to) ) {

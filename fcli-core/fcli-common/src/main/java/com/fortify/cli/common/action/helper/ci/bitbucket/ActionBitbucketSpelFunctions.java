@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.helper.ci.IActionSpelFunctions;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.ci.bitbucket.BitbucketEnvironment;
 import com.fortify.cli.common.ci.bitbucket.BitbucketRestHelper;
 import com.fortify.cli.common.ci.bitbucket.BitbucketUnirestInstanceSupplier;
@@ -41,11 +41,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @SpelFunctionPrefix("bitbucket.")
 public class ActionBitbucketSpelFunctions implements IActionSpelFunctions {
-    private final ActionRunnerContext ctx;
+    private final ActionRunnerContextLocal ctx;
     private final BitbucketEnvironment env;
     private BitbucketRestHelper restHelper;
 
-    public ActionBitbucketSpelFunctions(ActionRunnerContext ctx) {
+    public ActionBitbucketSpelFunctions(ActionRunnerContextLocal ctx) {
         this.ctx = ctx;
         this.env = BitbucketEnvironment.detect();
     }

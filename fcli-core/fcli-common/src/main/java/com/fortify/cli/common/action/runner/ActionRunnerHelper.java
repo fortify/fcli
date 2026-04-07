@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
  * @author Ruud Senden
  */
 public final class ActionRunnerHelper {
-    public static final JsonNode fmt(ActionRunnerContext ctx, String formatterName, JsonNode input) {
+    public static final JsonNode fmt(ActionRunnerContextLocal ctx, String formatterName, JsonNode input) {
         var format = ctx.getConfig().getAction().getFormatters().get(formatterName);
         return new JsonNodeSpelEvaluatorWalker(ctx, input).walk(format);
     }
@@ -65,16 +65,16 @@ public final class ActionRunnerHelper {
             || clazz.isAnnotationPresent(SpelFunctionPrefix.class);
     }
     
-    public static final Object formatValueAsObject(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+    public static final Object formatValueAsObject(ActionRunnerContextLocal ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
         return formatValue(ctx, vars, templateExpressionWithFormatter, ActionRunnerHelper::getValueAsObject);
     }
     
-    public static final JsonNode formatValueAsJsonNode(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
+    public static final JsonNode formatValueAsJsonNode(ActionRunnerContextLocal ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter) {
         return formatValue(ctx, vars, templateExpressionWithFormatter, ActionRunnerHelper::getValueAsJsonNode);
     }
     
     @SuppressWarnings("unchecked") // BiFunction parameter must return either Object or JsonNode
-    public static final <T> T formatValue(ActionRunnerContext ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter, BiFunction<ActionRunnerVars, TemplateExpressionWithFormatter, T> nonFormattedValueProvider) {
+    public static final <T> T formatValue(ActionRunnerContextLocal ctx, ActionRunnerVars vars, TemplateExpressionWithFormatter templateExpressionWithFormatter, BiFunction<ActionRunnerVars, TemplateExpressionWithFormatter, T> nonFormattedValueProvider) {
         var formatterName = getFormatterName(vars, templateExpressionWithFormatter);
         if ( StringUtils.isBlank(formatterName) ) {
             return nonFormattedValueProvider.apply(vars, templateExpressionWithFormatter);
@@ -86,7 +86,7 @@ public final class ActionRunnerHelper {
     
     @RequiredArgsConstructor
     private static final class JsonNodeSpelEvaluatorWalker extends JsonNodeDeepCopyWalker {
-        private final ActionRunnerContext ctx;
+        private final ActionRunnerContextLocal ctx;
         private final JsonNode input;
         @Override
         protected JsonNode copyValue(JsonNode state, String path, JsonNode parent, ValueNode node) {

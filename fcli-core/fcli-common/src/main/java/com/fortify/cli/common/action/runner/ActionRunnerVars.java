@@ -54,8 +54,9 @@ public final class ActionRunnerVars {
     private static final String[] PROTECTED_VAR_NAMES = {GLOBAL_VAR_NAME, CLI_OPTIONS_VAR_NAME};
     @Getter private final ObjectNode values;
     private final ObjectNode globalValues;
-    private final IConfigurableSpelEvaluator spelEvaluator;
+    private IConfigurableSpelEvaluator spelEvaluator;
     private final ActionRunnerVars parent;
+    private final boolean propagateToParent;
     
     /**
      * Construct a new instance of this class with the given SpEL evaluator and action parameters.
@@ -70,23 +71,43 @@ public final class ActionRunnerVars {
         this.values.set(GLOBAL_VAR_NAME, this.globalValues);
         this.values.set(CLI_OPTIONS_VAR_NAME, cliOptions);
         this.parent = null;
+        this.propagateToParent = true;
     }
     
     /**
-     * Constructor solely used by {@link #createChild()}
+     * Constructor solely used by {@link #createChild()} and {@link #createIsolatedChild()}
      */
-    private ActionRunnerVars(ActionRunnerVars parent) {
+    private ActionRunnerVars(ActionRunnerVars parent, boolean propagateToParent) {
         this.spelEvaluator = parent.spelEvaluator;
         this.values = JsonHelper.shallowCopy(parent.values);
         this.globalValues = parent.globalValues;
         this.parent = parent;
+        this.propagateToParent = propagateToParent;
     }
     
     /**
-     * Create a child of the current {@link ActionRunnerVars} instance
+     * Create a child of the current {@link ActionRunnerVars} instance.
+     * Variables set in the child propagate to the parent (existing behavior).
      */
     public final ActionRunnerVars createChild() {
-        return new ActionRunnerVars(this);
+        return new ActionRunnerVars(this, true);
+    }
+    
+    /**
+     * Create an isolated child of the current {@link ActionRunnerVars} instance.
+     * Variables set in the child do NOT propagate to the parent.
+     * Used for function calls where the function body should not affect the caller's scope.
+     */
+    public final ActionRunnerVars createIsolatedChild() {
+        return new ActionRunnerVars(this, false);
+    }
+    
+    /**
+     * Update the SpEL evaluator for this vars instance. Package-private — used
+     * when a child context gets a copied SpEL evaluator (e.g., function calls).
+     */
+    void setSpelEvaluator(IConfigurableSpelEvaluator spelEvaluator) {
+        this.spelEvaluator = spelEvaluator;
     }
     
     /**
@@ -220,7 +241,7 @@ public final class ActionRunnerVars {
      */
     private void _setLocalAndParents(String name, JsonNode value) {
         values.set(name, value);
-        if ( parent!=null ) { parent._setLocalAndParents(name, value); }
+        if ( parent!=null && propagateToParent ) { parent._setLocalAndParents(name, value); }
     }
 
     /**
@@ -228,7 +249,7 @@ public final class ActionRunnerVars {
      */
     private void _unset(String name) {
         values.remove(name);
-        if ( parent!=null ) { parent._unset(name); }
+        if ( parent!=null && propagateToParent ) { parent._unset(name); }
     }
     
     /**
