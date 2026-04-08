@@ -121,7 +121,11 @@ public class FcliGlobalExtension implements IGlobalExtension {
             annotation.value().each {
                 def handler = it.handler
                 if ( !elt.excluded && !elt.skipped ) {
-                    handler.login()
+                    try {
+                        handler.login()
+                    } catch ( Exception e ) {
+                        throw new RuntimeException("${elt.name}: ${e.message}", e)
+                    }
                 }
             }
         }

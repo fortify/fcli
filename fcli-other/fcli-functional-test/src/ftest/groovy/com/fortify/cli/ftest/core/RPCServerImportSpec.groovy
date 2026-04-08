@@ -44,14 +44,20 @@ class RPCServerImportSpec extends FcliBaseSpec {
             def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath} --no-defaults")
         then:
             try {
-                def response = server.rpcCall("fn.generateItems", [items: [0, 1, 2]], 3)
-                assert response.get("result") != null
-                assert response.get("error") == null
-                // Streaming functions should return collected results
-                def result = response.get("result")
-                assert result.toString().contains("item-0")
-                assert result.toString().contains("item-1")
-                assert result.toString().contains("item-2")
+                // Streaming functions return a cacheKey; results must be retrieved via rpc.getPage
+                def streamResponse = server.rpcCall("fn.generateItems", [items: [0, 1, 2]], 3)
+                assert streamResponse.get("result") != null
+                assert streamResponse.get("error") == null
+                def cacheKey = streamResponse.get("result").get("cacheKey").asText()
+                assert cacheKey != null && !cacheKey.isEmpty()
+                def pageResponse = server.rpcCall("rpc.getPage", [cacheKey: cacheKey, wait: true], 4)
+                assert pageResponse.get("result") != null
+                assert pageResponse.get("error") == null
+                def records = pageResponse.get("result").get("records")
+                assert records != null
+                assert records.toString().contains("item-0")
+                assert records.toString().contains("item-1")
+                assert records.toString().contains("item-2")
             } finally {
                 server.close()
             }
