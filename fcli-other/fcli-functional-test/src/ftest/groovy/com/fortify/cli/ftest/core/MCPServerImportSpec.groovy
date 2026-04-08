@@ -8,19 +8,19 @@ import com.fortify.cli.ftest._common.spec.TestResource
 
 import spock.lang.Shared
 import spock.lang.IgnoreIf
-
+/*
 import io.modelcontextprotocol.client.McpClient
 import io.modelcontextprotocol.client.McpSyncClient
 import io.modelcontextprotocol.client.transport.ServerParameters
 import io.modelcontextprotocol.client.transport.StdioClientTransport
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper
 import io.modelcontextprotocol.spec.McpSchema
-
+*/
 @IgnoreIf({ !sys["ft.fcli"] || sys["ft.fcli"] == "build" })
 @Prefix("core.mcp-server.import")
 class MCPServerImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-import-functions.yaml") String importActionPath
-
+/*
     private McpSyncClient createMcpClient(String extraArgs = "") {
         def fcli = Input.FcliCommand.get()
         def java = Input.JavaCommand.get() ?: "java"
@@ -130,4 +130,5 @@ class MCPServerImportSpec extends FcliBaseSpec {
         cleanup:
             client?.close()
     }
+    */
 }

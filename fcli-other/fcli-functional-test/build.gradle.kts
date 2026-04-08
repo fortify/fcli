@@ -17,22 +17,19 @@ testing {
         register<JvmTestSuite>("ftest") {
             useJUnitJupiter()
             dependencies {
+                val bomRef = project.findProperty("fcliBomRef") as String
+                implementation(platform(project(bomRef)))
                 implementation(platform("org.apache.groovy:groovy-bom:4.0.20"))
                 implementation("org.apache.groovy:groovy")
                 implementation(platform("org.spockframework:spock-bom:2.3-groovy-4.0"))
                 implementation("org.spockframework:spock-core")
                 implementation("org.junit.platform:junit-platform-launcher:1.10.2")
-                
-                // TODO Previously we conditionally included fcli-app, but as we need
-                //      transitive dependencies to get the MCP client, we now always 
-                //      include it, as manual includes of MCP libs cause unexpected
-                //      logback issues in native images
-                //val fcliProp = project.findProperty("ftest.fcli")?.toString()
-                //if (fcliProp == null || fcliProp == "build") {
+                implementation("com.fasterxml.jackson.core:jackson-databind")
+                val fcliProp = project.findProperty("ftest.fcli")?.toString()
+                if (fcliProp == null || fcliProp == "build") {
                     val appRef = project.findProperty("fcliAppRef") as String
                     implementation(project(appRef))
-                //}
-                
+                }
             }
             targets { all { testTask.configure {
                 // Pass all ft.* or ftest.* system properties through
