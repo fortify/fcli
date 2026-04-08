@@ -16,9 +16,9 @@ import java.util.LinkedHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepFunctionCallEntry;
+import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionFunctionSpelFunctions;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.json.JsonHelper;
@@ -44,9 +44,11 @@ public class ActionStepProcessorFnCall extends AbstractActionStepProcessorMapEnt
         var result = new ActionFunctionSpelFunctions(ctx).call(key, argsNode);
         if (result instanceof JsonNode jn) {
             getVars().set(entry.getVarName(), jn);
-        } else {
-            // For streaming functions, wrap IActionStepForEachProcessor in POJONode
-            getVars().set(entry.getVarName(), new POJONode(result));
+        } else if (result instanceof IActionStepForEachProcessor processor) {
+            // Collect streaming function results into an ArrayNode for reliable variable storage
+            var arrayNode = JsonHelper.getObjectMapper().createArrayNode();
+            processor.process(node -> { arrayNode.add(node); return true; });
+            getVars().set(entry.getVarName(), arrayNode);
         }
     }
 

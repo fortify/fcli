@@ -2,10 +2,13 @@ package com.fortify.cli.ftest.core
 
 import java.time.Duration
 
+import com.fortify.cli.ftest._common.Fcli
+import com.fortify.cli.ftest._common.Input
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
 
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import io.modelcontextprotocol.client.McpClient
@@ -15,20 +18,30 @@ import io.modelcontextprotocol.client.transport.StdioClientTransport
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper
 import io.modelcontextprotocol.spec.McpSchema
 
+// MCP server tests require an external fcli binary; not supported in build/reflective mode
+@IgnoreIf({ !sys["ft.fcli"] || sys["ft.fcli"] == "build" })
 @Prefix("core.mcp-server.import")
 class MCPServerImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-import-functions.yaml") String importActionPath
 
     private McpSyncClient createMcpClient(String extraArgs = "") {
-        def javaHome = System.getProperty("java.home")
-        def classpath = System.getProperty("java.class.path")
-        def args = ["-cp", classpath, "com.fortify.cli.app.FortifyCLI",
-                    "util", "mcp-server", "start", "--import", importActionPath]
+        def fcli = Input.FcliCommand.get()
+        def java = Input.JavaCommand.get() ?: "java"
+        def serverArgs = ["util", "mcp-server", "start", "--import", importActionPath]
         if (extraArgs) {
-            args.addAll(extraArgs.split(" ").toList())
+            serverArgs.addAll(extraArgs.split(" ").toList())
         }
-        def serverParams = ServerParameters.builder("${javaHome}/bin/java")
-                .args(args as List<String>)
+        String executable
+        List<String> cmdArgs
+        if (fcli.endsWith(".jar")) {
+            executable = java
+            cmdArgs = Fcli.FCLI_SYSTEM_PROPERTY_ARGS + ["-jar", fcli] + serverArgs
+        } else {
+            executable = fcli
+            cmdArgs = Fcli.FCLI_SYSTEM_PROPERTY_ARGS + serverArgs
+        }
+        def serverParams = ServerParameters.builder(executable)
+                .args(cmdArgs as List<String>)
                 .build()
         def transport = new StdioClientTransport(serverParams, new JacksonMcpJsonMapper())
         def client = McpClient.sync(transport)

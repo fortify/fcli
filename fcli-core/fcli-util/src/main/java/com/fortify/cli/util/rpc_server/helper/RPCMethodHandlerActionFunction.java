@@ -14,6 +14,7 @@ package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -39,6 +40,11 @@ public final class RPCMethodHandlerActionFunction implements IRPCMethodHandler {
             var result = executor.execute(argsNode);
             if (result instanceof JsonNode jn) {
                 return jn;
+            } else if (result instanceof IActionStepForEachProcessor processor) {
+                // Collect streaming function results into an ArrayNode
+                var arrayNode = JsonHelper.getObjectMapper().createArrayNode();
+                processor.process(node -> { arrayNode.add(node); return true; });
+                return arrayNode;
             } else if (result != null) {
                 return JsonHelper.getObjectMapper().valueToTree(result);
             }

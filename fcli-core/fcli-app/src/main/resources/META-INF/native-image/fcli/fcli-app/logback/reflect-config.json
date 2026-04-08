@@ -218,6 +218,16 @@
         "name": "ch.qos.logback.classic.filter.ThresholdFilter",
         "allDeclaredConstructors": true,
         "allPublicMethods":true
+    },
+    {
+        "name": "ch.qos.logback.classic.util.DefaultJoranConfigurator",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "ch.qos.logback.classic.BasicConfigurator",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
     }
     
 ]

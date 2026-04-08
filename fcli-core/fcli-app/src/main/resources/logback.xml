@@ -10,7 +10,7 @@
     herein. The information contained herein is subject to change 
     without notice.
  -->
-<configuration>
+<configuration status="OFF">
   <appender name="default" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.err</target>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
