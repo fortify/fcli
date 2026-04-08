@@ -23,7 +23,7 @@ steps:
           do:
             - rest.call:
                 versions:
-                  from: ssc
+                  target: ssc
                   uri: /api/v1/projectVersions?limit=1
                   on.success:
                     - out.write:

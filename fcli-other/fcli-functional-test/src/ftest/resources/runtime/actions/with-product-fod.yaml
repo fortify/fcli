@@ -23,7 +23,7 @@ steps:
           do:
             - rest.call:
                 apps:
-                  from: fod
+                  target: fod
                   uri: /api/v3/applications?limit=1
                   on.success:
                     - out.write:
