@@ -2,6 +2,7 @@ package com.fortify.cli.ftest.core
 
 import java.time.Duration
 
+import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
