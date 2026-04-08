@@ -10,6 +10,8 @@ import com.fortify.cli.ftest._common.spec.TestResource
 import spock.lang.Shared
 import spock.lang.IgnoreIf
 
+import com.fasterxml.jackson.databind.ObjectMapper
+
 import io.modelcontextprotocol.client.McpClient
 import io.modelcontextprotocol.client.McpSyncClient
 import io.modelcontextprotocol.client.transport.ServerParameters
@@ -31,7 +33,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
         def serverParams = ServerParameters.builder(cmd[0])
                 .args(cmd.tail())
                 .build()
-        def transport = new StdioClientTransport(serverParams, new JacksonMcpJsonMapper())
+        def transport = new StdioClientTransport(serverParams, new JacksonMcpJsonMapper(new ObjectMapper()))
         def client = McpClient.sync(transport)
                 .requestTimeout(Duration.ofSeconds(30))
                 .build()
