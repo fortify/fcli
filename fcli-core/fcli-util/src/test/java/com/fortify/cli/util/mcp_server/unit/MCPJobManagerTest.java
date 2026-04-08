@@ -41,7 +41,7 @@ class MCPJobManagerTest {
     @BeforeEach
     void setUp() {
         // Create job manager with short timeout for testing
-        jobManager = new MCPJobManager("test", 4, 2, 500, 100);
+        jobManager = new MCPJobManager(4, 2, 500, 100);
         objectMapper = new ObjectMapper();
     }
     

@@ -100,9 +100,8 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         if ( progressIntervalMillis<=0 ) {
             progressIntervalMillis = 500;
         }
-        var moduleLabel = module != null ? module.toString() : "imported";
         // Instantiate job manager prior to building tool specs so we can include job tool spec
-        this.jobManager = new MCPJobManager(moduleLabel, workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
+        this.jobManager = new MCPJobManager(workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
         var toolSpecs = createToolSpecs();
         var resourceTemplateSpecs = createResourceTemplateSpecs();
         var hasResources = !resourceTemplateSpecs.isEmpty();
@@ -160,7 +159,8 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         // Register function tools from --import files
         if (importFiles != null) {
             for (var importFile : importFiles) {
-                result.addAll(createImportedFunctionToolSpecs(importFile));
+                var action = loadImportedAction(importFile);
+                result.addAll(createImportedFunctionToolSpecs(action));
             }
         }
         // Job management tool
@@ -172,7 +172,8 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         var result = new ArrayList<SyncResourceTemplateSpecification>();
         if (importFiles != null) {
             for (var importFile : importFiles) {
-                result.addAll(createImportedFunctionResourceTemplateSpecs(importFile));
+                var action = loadImportedAction(importFile);
+                result.addAll(createImportedFunctionResourceTemplateSpecs(action));
             }
         }
         return result;
@@ -204,15 +205,11 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     private Action loadImportedAction(String importFile) {
         var sources = ActionSource.externalActionSources(importFile);
         var validationHandler = ActionValidationHandler.WARN;
-        // The external source loads a single action from the file path
-        return ActionLoaderHelper.streamAsActions(sources, validationHandler)
-                .findFirst()
-                .orElseThrow(() -> new FcliSimpleException("No action found in: " + importFile));
+        return ActionLoaderHelper.load(sources, importFile, validationHandler).getAction();
     }
 
-    private List<SyncToolSpecification> createImportedFunctionToolSpecs(String importFile) {
+    private List<SyncToolSpecification> createImportedFunctionToolSpecs(Action action) {
         var result = new ArrayList<SyncToolSpecification>();
-        var action = loadImportedAction(importFile);
         for (var entry : action.getFunctions().entrySet()) {
             var function = entry.getValue();
             if (!function.isExported()) { continue; }
@@ -244,9 +241,8 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         return result;
     }
 
-    private List<SyncResourceTemplateSpecification> createImportedFunctionResourceTemplateSpecs(String importFile) {
+    private List<SyncResourceTemplateSpecification> createImportedFunctionResourceTemplateSpecs(Action action) {
         var result = new ArrayList<SyncResourceTemplateSpecification>();
-        var action = loadImportedAction(importFile);
         for (var entry : action.getFunctions().entrySet()) {
             var function = entry.getValue();
             if (!function.isExported()) { continue; }
@@ -342,7 +338,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             if ( toolSpecArgHelper.isPaged() ) {
                 // Append paging guidance for LLM/client
                 base = base + "\nPaging Guidance: This tool may return partial results if background record collection is still in progress. "
-                        + "When pagination.totalRecords is null, call the job tool 'fcli_"+module.toString().replace('-', '_')+"_mcp_job' with operation=wait and the pagination.jobToken value to finalize loading and obtain totalRecords & totalPages.";
+                        + "When pagination.totalRecords is null, call the job tool '"+MCPJobManager.JOB_TOOL_NAME+"' with operation=wait and the pagination.jobToken value to finalize loading and obtain totalRecords & totalPages.";
             }
             return base;
         }

@@ -56,7 +56,7 @@ class MCPToolFcliRunnerRecordsTest {
         commandSpec = commandLine.getCommandSpec();
         
         // Create dependencies
-        jobManager = new MCPJobManager("test", 2, 1, 500, 100);
+        jobManager = new MCPJobManager(2, 1, 500, 100);
         argHandlers = new MCPToolArgHandlers(commandSpec);
         
         // Create runner
