@@ -164,9 +164,9 @@ class JRPCServerTest {
     
     @Test
     void shouldReturnInvalidParamsForZeroLimit() throws Exception {
-        // Test limit validation in fcli.getPage
+        // Test limit validation in rpc.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"limit\":0},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"limit\":0},\"id\":1}");
         
         // Assert
         assertNotNull(response);
@@ -178,9 +178,9 @@ class JRPCServerTest {
     
     @Test
     void shouldReturnInvalidParamsForNegativeOffset() throws Exception {
-        // Test offset validation in fcli.getPage
+        // Test offset validation in rpc.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"offset\":-5},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"offset\":-5},\"id\":1}");
         
         // Assert
         assertNotNull(response);
@@ -315,7 +315,7 @@ class JRPCServerTest {
     void shouldReturnNotFoundForGetPageWithInvalidCacheKey() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.getPage\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
         );
         
         // Assert
@@ -329,7 +329,7 @@ class JRPCServerTest {
     void shouldReturnInvalidParamsForGetPageWithoutCacheKey() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.getPage\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.getPage\",\"params\":{},\"id\":1}"
         );
         
         // Assert
@@ -343,7 +343,7 @@ class JRPCServerTest {
     void shouldHandleCancelCollectionForNonExistentKey() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.cancelCollection\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.cancelCollection\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
         );
         
         // Assert
@@ -357,7 +357,7 @@ class JRPCServerTest {
     void shouldHandleClearCacheAll() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.clearCache\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.clearCache\",\"params\":{},\"id\":1}"
         );
         
         // Assert
@@ -382,10 +382,9 @@ class JRPCServerTest {
         
         var methods = node.get("result").get("methods");
         assertTrue(methods.isArray());
-        // Verify minimum expected methods - don't hardcode exact count for maintainability
         assertTrue(methods.size() >= 8, "Should have at least 8 methods including async ones");
         
-        // Verify new methods are present
+        // Verify expected methods are present (using rpc.* names for paging)
         boolean hasExecuteAsync = false;
         boolean hasGetPage = false;
         boolean hasCancelCollection = false;
@@ -394,15 +393,15 @@ class JRPCServerTest {
         for (var method : methods) {
             String name = method.get("name").asText();
             if ("fcli.executeAsync".equals(name)) hasExecuteAsync = true;
-            if ("fcli.getPage".equals(name)) hasGetPage = true;
-            if ("fcli.cancelCollection".equals(name)) hasCancelCollection = true;
-            if ("fcli.clearCache".equals(name)) hasClearCache = true;
+            if ("rpc.getPage".equals(name)) hasGetPage = true;
+            if ("rpc.cancelCollection".equals(name)) hasCancelCollection = true;
+            if ("rpc.clearCache".equals(name)) hasClearCache = true;
         }
         
         assertTrue(hasExecuteAsync, "fcli.executeAsync method should be present");
-        assertTrue(hasGetPage, "fcli.getPage method should be present");
-        assertTrue(hasCancelCollection, "fcli.cancelCollection method should be present");
-        assertTrue(hasClearCache, "fcli.clearCache method should be present");
+        assertTrue(hasGetPage, "rpc.getPage method should be present");
+        assertTrue(hasCancelCollection, "rpc.cancelCollection method should be present");
+        assertTrue(hasClearCache, "rpc.clearCache method should be present");
     }
     
     @Nested
@@ -419,9 +418,14 @@ class JRPCServerTest {
             assertNotNull(node.get("result"));
             
             var methods = node.get("result").get("methods");
-            // Only rpc.listMethods should be present
-            assertEquals(1, methods.size(), "Only rpc.listMethods expected when no defaults");
-            assertEquals("rpc.listMethods", methods.get(0).get("name").asText());
+            // rpc.listMethods, rpc.getPage, rpc.cancelCollection, rpc.clearCache are always present
+            assertEquals(4, methods.size(), "Only rpc.* methods expected when no defaults");
+            Set<String> names = new HashSet<>();
+            methods.forEach(m -> names.add(m.get("name").asText()));
+            assertTrue(names.contains("rpc.listMethods"));
+            assertTrue(names.contains("rpc.getPage"));
+            assertTrue(names.contains("rpc.cancelCollection"));
+            assertTrue(names.contains("rpc.clearCache"));
         }
         
         @Test

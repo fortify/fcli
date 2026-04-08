@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.util._common.helper.FcliRecordsCache;
+import com.fortify.cli.util._common.helper.RecordProducerFcliCommand;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *   - command (string, required): The fcli command to execute (e.g., "ssc issue list")
  * 
  * Returns:
- *   - cacheKey (string): Key to retrieve results via fcli.getPage
+ *   - cacheKey (string): Key to retrieve results via rpc.getPage
  *   - status (string): "started" or "cached"
  *   - message (string): Human-readable status message
  *
@@ -54,12 +55,12 @@ public final class RPCMethodHandlerFcliExecuteAsync implements IRPCMethodHandler
         log.debug("Starting async execution: command={}", command);
         
         try {
-            var cacheKey = cache.startBackgroundCollection(command);
-            
+            var cacheKey = cache.startBackgroundCollection(new RecordProducerFcliCommand(command));
+
             ObjectNode result = objectMapper.createObjectNode();
             result.put("cacheKey", cacheKey);
             result.put("status", "started");
-            result.put("message", "Background collection started. Use fcli.getPage with this cacheKey to retrieve results.");
+            result.put("message", "Background collection started. Use rpc.getPage with this cacheKey to retrieve results.");
             
             return result;
         } catch (Exception e) {

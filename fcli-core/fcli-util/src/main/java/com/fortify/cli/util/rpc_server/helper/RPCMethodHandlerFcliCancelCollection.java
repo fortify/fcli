@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for cancelling an in-progress collection.
  * 
- * Method: fcli.cancelCollection
+ * Method: rpc.cancelCollection
  * Params:
  *   - cacheKey (string, required): Cache key from fcli.executeAsync
  * 

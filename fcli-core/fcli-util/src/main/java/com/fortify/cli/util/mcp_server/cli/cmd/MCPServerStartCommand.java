@@ -46,11 +46,13 @@ import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.IMCPToolArgHandler;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerActionOption;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerPaging;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.IMCPToolRunner;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPResourceFcliRunnerFunction;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerAction;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerFunction;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerFunctionStreaming;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerPlainText;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecords;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
@@ -217,17 +219,27 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             if (hasMcpResourceMeta(function)) { continue; } // Resources handled separately
             var executor = new ActionFunctionExecutor(action, function);
             var toolName = "fcli_fn_" + function.getKey().replace('-', '_');
+            var schema = buildFunctionArgsSchema(function);
+            var description = function.getDescription() != null ? function.getDescription() : function.getKey();
+            IMCPToolRunner runner;
+            if (function.isStreaming()) {
+                new MCPToolArgHandlerPaging().updateSchema(schema);
+                description = description + "\nPaging Guidance: This function streams records. "
+                        + "When pagination.totalRecords is null, use the pagination.jobToken to wait for loading to complete.";
+                runner = new MCPToolFcliRunnerFunctionStreaming(executor, jobManager, toolName);
+            } else {
+                runner = new MCPToolFcliRunnerFunction(executor, jobManager, toolName);
+            }
             var tool = Tool.builder()
                     .name(toolName)
-                    .description(function.getDescription() != null ? function.getDescription() : function.getKey())
-                    .inputSchema(buildFunctionArgsSchema(function))
+                    .description(description)
+                    .inputSchema(schema)
                     .build();
-            var runner = new MCPToolFcliRunnerFunction(executor, jobManager, toolName);
             result.add(McpServerFeatures.SyncToolSpecification.builder()
                     .tool(tool)
                     .callHandler(runner::run)
                     .build());
-            log.debug("Registering function tool: {}", toolName);
+            log.debug("Registering function tool: {} (streaming={})", toolName, function.isStreaming());
         }
         return result;
     }

@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for clearing cache entries.
  * 
- * Method: fcli.clearCache
+ * Method: rpc.clearCache
  * Params:
  *   - cacheKey (string, optional): Specific cache key to clear. If not provided, clears all.
  * 

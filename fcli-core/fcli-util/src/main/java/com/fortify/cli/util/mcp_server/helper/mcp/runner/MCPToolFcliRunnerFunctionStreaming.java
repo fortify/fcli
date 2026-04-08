@@ -13,14 +13,12 @@
 package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.OutputHelper.Result;
+import com.fortify.cli.util._common.helper.RecordProducerActionFunction;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -28,35 +26,34 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
 /**
- * {@link IMCPToolRunner} implementation for non-streaming action functions. Executes the
- * function synchronously via {@link ActionFunctionExecutor} and returns the result as JSON text.
- * For streaming action functions use {@link MCPToolFcliRunnerFunctionStreaming} instead.
+ * {@link IMCPToolRunner} implementation for streaming action functions. Records are
+ * collected in the background using {@link MCPToolFcliRecordsCache}, and results are
+ * returned as paged responses via {@link MCPToolFcliPagedHelper} — the same mechanism
+ * used by {@link MCPToolFcliRunnerRecordsPaged} for streaming fcli commands.
  *
  * @author Ruud Senden
  */
-public final class MCPToolFcliRunnerFunction implements IMCPToolRunner {
+public final class MCPToolFcliRunnerFunctionStreaming implements IMCPToolRunner {
     private final ActionFunctionExecutor executor;
     private final MCPJobManager jobManager;
     private final String toolName;
+    private final MCPToolFcliPagedHelper pagedHelper;
 
-    public MCPToolFcliRunnerFunction(ActionFunctionExecutor executor, MCPJobManager jobManager, String toolName) {
+    public MCPToolFcliRunnerFunctionStreaming(ActionFunctionExecutor executor, MCPJobManager jobManager, String toolName) {
         this.executor = executor;
         this.jobManager = jobManager;
         this.toolName = toolName;
+        this.pagedHelper = new MCPToolFcliPagedHelper(jobManager);
     }
 
     @Override
     public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request) {
-        try {
-            var argsNode = buildArgsNode(request);
-            Callable<CallToolResult> work = () -> {
-                var result = executor.execute(argsNode);
-                return toCallToolResult(result);
-            };
-            return jobManager.execute(exchange, toolName, work, MCPJobManager.ticking(new AtomicInteger()), true);
-        } catch (Exception e) {
-            return MCPToolResult.fromError(e).asCallToolResult();
-        }
+        var argsNode = buildArgsNode(request);
+        var cacheKey = toolName + ":" + argsNode;
+        var pageParams = MCPToolFcliPagedHelper.PageParams.from(request);
+        var producer = new RecordProducerActionFunction(executor, argsNode);
+        return pagedHelper.run(cacheKey, pageParams,
+            (key, refresh) -> jobManager.getRecordsCache().getOrStartBackground(key, refresh, producer));
     }
 
     private ObjectNode buildArgsNode(CallToolRequest request) {
@@ -72,12 +69,5 @@ public final class MCPToolFcliRunnerFunction implements IMCPToolRunner {
             }
         }
         return argsNode;
-    }
-
-    private CallToolResult toCallToolResult(Object result) {
-        if (result instanceof JsonNode jn) {
-            return MCPToolResult.fromPlainText(new Result(0, jn.toPrettyString(), "")).asCallToolResult();
-        }
-        return MCPToolResult.fromPlainText(new Result(0, String.valueOf(result), "")).asCallToolResult();
     }
 }

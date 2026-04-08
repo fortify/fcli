@@ -17,11 +17,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.util._common.helper.FcliExecutionResult;
 import com.fortify.cli.util._common.helper.FcliRecordsCache;
-import com.fortify.cli.util._common.helper.FcliToolResult;
+import com.fortify.cli.util._common.helper.IRecordProducer;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
-
-import picocli.CommandLine.Model.CommandSpec;
 
 /**
  * Thin adapter over {@link FcliRecordsCache} for MCP tool use. Translates between
@@ -47,18 +46,21 @@ public class MCPToolFcliRecordsCache {
     }
 
     /**
-     * Return cached result, or start/retrieve a background collection.
+     * Return cached result, or start/retrieve a background collection using the given producer.
      * Returns null if already cached. Returns {@link InProgressEntry} if a
      * background collection is in progress or was just started.
      */
-    public InProgressEntry getOrStartBackground(String fullCmd, boolean refresh, CommandSpec spec) {
-        var options = MCPToolFcliRunnerHelper.collectMcpDefaultOptions(spec);
-        var entry = delegate.getOrStartBackground(fullCmd, refresh, fullCmd, options);
+    public InProgressEntry getOrStartBackground(String cacheKey, boolean refresh, IRecordProducer producer) {
+        var entry = delegate.getOrStartBackground(cacheKey, refresh, producer);
         if (entry == null) return null;
-        var jobToken = jobTokens.computeIfAbsent(fullCmd,
+        return trackEntry(cacheKey, entry);
+    }
+
+    private InProgressEntry trackEntry(String cacheKey, FcliRecordsCache.InProgressEntry entry) {
+        var jobToken = jobTokens.computeIfAbsent(cacheKey,
             k -> jobManager.trackFuture("cache_loader", entry.getFuture(),
                 () -> entry.getRecords().size()));
-        entry.getFuture().whenComplete((r, t) -> jobTokens.remove(fullCmd));
+        entry.getFuture().whenComplete((r, t) -> jobTokens.remove(cacheKey));
         return new InProgressEntry(entry, jobToken);
     }
 
@@ -72,7 +74,7 @@ public class MCPToolFcliRecordsCache {
         delegate.shutdown();
     }
 
-    private static MCPToolResult toMCPResult(FcliToolResult result) {
+    private static MCPToolResult toMCPResult(FcliExecutionResult result) {
         return MCPToolResult.builder()
             .exitCode(result.getExitCode())
             .stderr(result.getStderr())

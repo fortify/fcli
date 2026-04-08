@@ -105,7 +105,7 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
             if (!function.isExported()) { continue; }
             var methodName = "fn." + function.getKey();
             var executor = new ActionFunctionExecutor(action, function);
-            server.registerMethod(methodName, new RPCMethodHandlerActionFunction(executor));
+            server.registerMethod(methodName, new RPCMethodHandlerActionFunction(executor, server.getCache()));
             log.debug("Registered imported function as RPC method: {}", methodName);
         }
     }

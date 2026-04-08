@@ -19,7 +19,7 @@ dependencies {
         api("org.fusesource.jansi:jansi:2.4.3")
         api("org.slf4j:slf4j-api:2.0.17")
         api("org.slf4j:jcl-over-slf4j:2.0.17")
-        api("ch.qos.logback:logback-classic:1.5.32")
+        api("ch.qos.logback:logback-classic:1.5.23")
         api("com.konghq:unirest-java:3.14.5")
         api("com.konghq:unirest-objectmapper-jackson:3.14.5")
         api("com.github.freva:ascii-table:1.9.0")

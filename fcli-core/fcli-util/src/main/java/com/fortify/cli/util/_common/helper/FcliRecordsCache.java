@@ -75,70 +75,53 @@ public class FcliRecordsCache {
     }
     
     /**
-     * Get cached result, or start background collection if not cached.
+     * Get cached result, or start background collection using the given producer if not cached.
      * Returns null if result is already cached (caller should use getCached).
-     * Returns InProgressEntry if background collection started/exists.
+     * Returns InProgressEntry if background collection is started or already in progress.
      */
-    public InProgressEntry getOrStartBackground(String cacheKey, boolean refresh, String command) {
-        return getOrStartBackground(cacheKey, refresh, command, null);
-    }
-
-    /**
-     * Get cached result, or start background collection if not cached.
-     * Returns null if result is already cached (caller should use getCached).
-     * Returns InProgressEntry if background collection started/exists.
-     */
-    public InProgressEntry getOrStartBackground(String cacheKey, boolean refresh, String command, Map<String, String> defaultOptions) {
+    public InProgressEntry getOrStartBackground(String cacheKey, boolean refresh, IRecordProducer producer) {
         var cached = getCached(cacheKey);
         if (!refresh && cached != null) {
             return null;  // Already cached
         }
-        
         var existing = inProgress.get(cacheKey);
         if (existing != null && !existing.isExpired(ttl)) {
             return existing;  // Already loading
         }
-        
-        return startNewBackgroundCollection(cacheKey, command, defaultOptions);
+        return startNewBackgroundCollection(cacheKey, producer);
     }
-    
+
     /**
-     * Start a background collection and return immediately with the cacheKey.
+     * Start a background collection using the given producer and return immediately with a fresh cacheKey.
      */
-    public String startBackgroundCollection(String command) {
+    public String startBackgroundCollection(IRecordProducer producer) {
         var cacheKey = UUID.randomUUID().toString();
-        startNewBackgroundCollection(cacheKey, command, null);
+        getOrStartBackground(cacheKey, false, producer);
         return cacheKey;
     }
-    
-    private InProgressEntry startNewBackgroundCollection(String cacheKey, String command, Map<String, String> defaultOptions) {
-        var entry = new InProgressEntry(cacheKey, command);
+
+    private InProgressEntry startNewBackgroundCollection(String cacheKey, IRecordProducer producer) {
+        var entry = new InProgressEntry(cacheKey);
         inProgress.put(cacheKey, entry);
-        
-        var future = buildCollectionFuture(entry, command, defaultOptions);
+        var future = buildCollectionFuture(entry, producer);
         future.whenComplete(createCompletionHandler(entry, cacheKey));
-        
         entry.setFuture(future);
-        log.debug("Started background collection: cacheKey={} command={}", cacheKey, command);
-        
+        log.debug("Started background collection: cacheKey={}", cacheKey);
         return entry;
     }
-    
-    private CompletableFuture<FcliToolResult> buildCollectionFuture(InProgressEntry entry, String command, Map<String, String> defaultOptions) {
-        
+
+    private CompletableFuture<FcliExecutionResult> buildCollectionFuture(InProgressEntry entry, IRecordProducer producer) {
         return CompletableFuture.supplyAsync(() -> {
             var records = entry.getRecords();
-            var result = FcliRunnerHelper.collectRecords(command, record -> {
+            var result = producer.produce(record -> {
                 if (!Thread.currentThread().isInterrupted()) {
                     records.add(record);
                 }
-            }, defaultOptions);
-            
+            });
             if (Thread.currentThread().isInterrupted()) {
                 return null;
             }
-            
-            var fullResult = FcliToolResult.fromRecords(result, records);
+            var fullResult = FcliExecutionResult.fromRecords(result, records);
             if (result.getExitCode() == 0) {
                 put(entry.getCacheKey(), fullResult);
             }
@@ -146,7 +129,7 @@ public class FcliRecordsCache {
         }, backgroundExecutor);
     }
     
-    private BiConsumer<FcliToolResult, Throwable> createCompletionHandler(InProgressEntry entry, String cacheKey) {
+    private BiConsumer<FcliExecutionResult, Throwable> createCompletionHandler(InProgressEntry entry, String cacheKey) {
         return (result, throwable) -> {
             entry.setCompleted(true);
             captureExecutionResult(entry, result, throwable);
@@ -155,7 +138,7 @@ public class FcliRecordsCache {
         };
     }
     
-    private void captureExecutionResult(InProgressEntry entry, FcliToolResult result, Throwable throwable) {
+    private void captureExecutionResult(InProgressEntry entry, FcliExecutionResult result, Throwable throwable) {
         if (throwable != null) {
             entry.setExitCode(999);
             entry.setStderr(throwable.getMessage() != null ? throwable.getMessage() : "Background collection failed");
@@ -177,7 +160,7 @@ public class FcliRecordsCache {
     /**
      * Store a result in the cache.
      */
-    public void put(String cacheKey, FcliToolResult result) {
+    public void put(String cacheKey, FcliExecutionResult result) {
         if (result == null) {
             return;
         }
@@ -190,7 +173,7 @@ public class FcliRecordsCache {
     /**
      * Get a cached result if present and not expired.
      */
-    public FcliToolResult getCached(String cacheKey) {
+    public FcliExecutionResult getCached(String cacheKey) {
         synchronized (cache) {
             var entry = cache.get(cacheKey);
             return entry == null || entry.isExpired(ttl) ? null : entry.getFullResult();
@@ -207,7 +190,7 @@ public class FcliRecordsCache {
     /**
      * Wait for collection to complete (up to maxWaitMs) and return the result.
      */
-    public FcliToolResult waitForCompletion(String cacheKey, long maxWaitMs) {
+    public FcliExecutionResult waitForCompletion(String cacheKey, long maxWaitMs) {
         var entry = inProgress.get(cacheKey);
         if (entry == null) {
             return getCached(cacheKey);
@@ -304,24 +287,22 @@ public class FcliRecordsCache {
     @Data
     public static final class InProgressEntry {
         private final String cacheKey;
-        private final String command;
         private final long created = System.currentTimeMillis();
         private final CopyOnWriteArrayList<JsonNode> records = new CopyOnWriteArrayList<>();
-        private volatile CompletableFuture<FcliToolResult> future;
+        private volatile CompletableFuture<FcliExecutionResult> future;
         private volatile boolean completed = false;
         private volatile int exitCode = 0;
         private volatile String stderr = "";
-        
-        public InProgressEntry(String cacheKey, String command) {
+
+        public InProgressEntry(String cacheKey) {
             this.cacheKey = cacheKey;
-            this.command = command;
         }
         
         public boolean isExpired(long ttl) {
             return System.currentTimeMillis() > created + ttl;
         }
         
-        public void setFuture(CompletableFuture<FcliToolResult> f) {
+        public void setFuture(CompletableFuture<FcliExecutionResult> f) {
             this.future = f;
         }
         
@@ -343,7 +324,7 @@ public class FcliRecordsCache {
     @Data
     @RequiredArgsConstructor
     private static final class CacheEntry {
-        private final FcliToolResult fullResult;
+        private final FcliExecutionResult fullResult;
         private final long created = System.currentTimeMillis();
         
         public boolean isExpired(long ttl) {

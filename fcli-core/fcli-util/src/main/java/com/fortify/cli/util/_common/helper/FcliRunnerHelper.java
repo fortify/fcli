@@ -82,33 +82,33 @@ public class FcliRunnerHelper {
     }
     
     /**
-     * Execute a command and return a FcliToolResult with all collected records.
+     * Execute a command and return a FcliExecutionResult with all collected records.
      */
-    public static FcliToolResult collectRecordsAsResult(String fullCmd) {
+    public static FcliExecutionResult collectRecordsAsResult(String fullCmd) {
         return collectRecordsAsResult(fullCmd, null);
     }
     
     /**
-     * Execute a command and return a FcliToolResult with all collected records and default options.
+     * Execute a command and return a FcliExecutionResult with all collected records and default options.
      */
-    public static FcliToolResult collectRecordsAsResult(String fullCmd, Map<String, String> defaultOptions) {
+    public static FcliExecutionResult collectRecordsAsResult(String fullCmd, Map<String, String> defaultOptions) {
         var records = new ArrayList<JsonNode>();
         var result = collectRecords(fullCmd, records::add, defaultOptions);
-        return FcliToolResult.fromRecords(result, records);
+        return FcliExecutionResult.fromRecords(result, records);
     }
     
     /**
-     * Execute a command and return a FcliToolResult with stdout.
+     * Execute a command and return a FcliExecutionResult with stdout.
      */
-    public static FcliToolResult collectStdoutAsResult(String fullCmd) {
+    public static FcliExecutionResult collectStdoutAsResult(String fullCmd) {
         return collectStdoutAsResult(fullCmd, null);
     }
     
     /**
-     * Execute a command and return a FcliToolResult with stdout and default options.
+     * Execute a command and return a FcliExecutionResult with stdout and default options.
      */
-    public static FcliToolResult collectStdoutAsResult(String fullCmd, Map<String, String> defaultOptions) {
+    public static FcliExecutionResult collectStdoutAsResult(String fullCmd, Map<String, String> defaultOptions) {
         var result = collectStdout(fullCmd, defaultOptions);
-        return FcliToolResult.fromPlainText(result);
+        return FcliExecutionResult.fromPlainText(result);
     }
 }

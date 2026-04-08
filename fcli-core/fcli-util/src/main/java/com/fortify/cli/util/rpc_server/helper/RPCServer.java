@@ -59,18 +59,20 @@ public final class RPCServer {
         this.objectMapper = objectMapper;
         this.methodHandlers = new LinkedHashMap<>();
         this.cache = new FcliRecordsCache();
+        // rpc.* methods are always registered: they support paged retrieval of results
+        // from both fcli commands and streaming functions regardless of --no-defaults.
+        registerMethod("rpc.listMethods", new RPCMethodHandlerListMethods(objectMapper, methodHandlers));
+        registerMethod("rpc.getPage", new RPCMethodHandlerFcliGetPage(objectMapper, cache));
+        registerMethod("rpc.cancelCollection", new RPCMethodHandlerFcliCancelCollection(objectMapper, cache));
+        registerMethod("rpc.clearCache", new RPCMethodHandlerFcliClearCache(objectMapper, cache));
         if (registerDefaults) {
             registerDefaultFcliMethods();
         }
-        registerMethod("rpc.listMethods", new RPCMethodHandlerListMethods(objectMapper, methodHandlers));
     }
     
     private void registerDefaultFcliMethods() {
         registerMethod("fcli.execute", new RPCMethodHandlerFcliExecute(objectMapper));
         registerMethod("fcli.executeAsync", new RPCMethodHandlerFcliExecuteAsync(objectMapper, cache));
-        registerMethod("fcli.getPage", new RPCMethodHandlerFcliGetPage(objectMapper, cache));
-        registerMethod("fcli.cancelCollection", new RPCMethodHandlerFcliCancelCollection(objectMapper, cache));
-        registerMethod("fcli.clearCache", new RPCMethodHandlerFcliClearCache(objectMapper, cache));
         registerMethod("fcli.listCommands", new RPCMethodHandlerFcliListCommands(objectMapper));
         registerMethod("fcli.version", new RPCMethodHandlerFcliVersion(objectMapper));
     }
@@ -81,6 +83,11 @@ public final class RPCServer {
     public void registerMethod(String methodName, IRPCMethodHandler handler) {
         methodHandlers.put(methodName, handler);
         log.debug("Registered RPC method: {}", methodName);
+    }
+
+    /** Expose the shared cache so callers can construct handlers that use it. */
+    public FcliRecordsCache getCache() {
+        return cache;
     }
     
     /**

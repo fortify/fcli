@@ -18,8 +18,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.util._common.helper.FcliExecutionResult;
 import com.fortify.cli.util._common.helper.FcliRecordsCache;
-import com.fortify.cli.util._common.helper.FcliToolResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for retrieving a page of results from cache.
  * 
- * Method: fcli.getPage
+ * Method: rpc.getPage
  * Params:
- *   - cacheKey (string, required): Cache key from fcli.executeAsync
+ *   - cacheKey (string, required): Cache key from fcli.executeAsync or a streaming fn.* call
  *   - offset (integer, optional): Start offset (default: 0)
  *   - limit (integer, optional): Maximum records to return (default: 100)
  *   - wait (boolean, optional): If true, wait for completion if still loading (default: false)
@@ -107,7 +107,7 @@ public final class RPCMethodHandlerFcliGetPage implements IRPCMethodHandler {
         }
     }
     
-    private ObjectNode buildCompletedResponse(FcliToolResult result, int offset, int limit, String cacheKey) {
+    private ObjectNode buildCompletedResponse(FcliExecutionResult result, int offset, int limit, String cacheKey) {
         var allRecords = result.getRecords();
         var totalRecords = allRecords != null ? allRecords.size() : 0;
         

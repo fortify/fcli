@@ -45,23 +45,15 @@ public final class RPCMethodHandlerListMethods implements IRPCMethodHandler {
     static {
         // Core execution methods
         METHOD_DESCRIPTIONS.put("fcli.execute", "Execute an fcli command synchronously and return all results");
-        METHOD_DESCRIPTIONS.put("fcli.executeAsync", "Start async fcli command execution, returns cacheKey for paged retrieval");
-        METHOD_DESCRIPTIONS.put("fcli.getPage", "Retrieve a page of results from cache by cacheKey");
-        METHOD_DESCRIPTIONS.put("fcli.cancelCollection", "Cancel an in-progress async collection by cacheKey");
-        METHOD_DESCRIPTIONS.put("fcli.clearCache", "Clear cache entries (specific cacheKey or all)");
-        
+        METHOD_DESCRIPTIONS.put("fcli.executeAsync", "Start async fcli command execution; returns cacheKey for paged retrieval via rpc.getPage");
         // Info methods
         METHOD_DESCRIPTIONS.put("fcli.listCommands", "List available fcli commands with optional filtering");
         METHOD_DESCRIPTIONS.put("fcli.version", "Get fcli version information");
+        // RPC protocol methods — always registered
         METHOD_DESCRIPTIONS.put("rpc.listMethods", "List available RPC methods");
-        
-        // SSC session methods
-        METHOD_DESCRIPTIONS.put("fcli.ssc.login", "Login to SSC (params: url, user+password or token or ci-token)");
-        METHOD_DESCRIPTIONS.put("fcli.ssc.logout", "Logout from SSC session");
-        
-        // FoD session methods
-        METHOD_DESCRIPTIONS.put("fcli.fod.login", "Login to FoD (params: url, client-id+client-secret or user+password+tenant)");
-        METHOD_DESCRIPTIONS.put("fcli.fod.logout", "Logout from FoD session");
+        METHOD_DESCRIPTIONS.put("rpc.getPage", "Retrieve a page of results from cache by cacheKey (works for both fcli.executeAsync and streaming fn.* calls)");
+        METHOD_DESCRIPTIONS.put("rpc.cancelCollection", "Cancel an in-progress background collection by cacheKey");
+        METHOD_DESCRIPTIONS.put("rpc.clearCache", "Clear cache entries (specific cacheKey or all)");
     }
     
     @Override
