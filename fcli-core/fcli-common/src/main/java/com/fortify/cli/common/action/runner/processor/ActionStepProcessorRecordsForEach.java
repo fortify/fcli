@@ -14,6 +14,9 @@ package com.fortify.cli.common.action.runner.processor;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -29,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcessor {
+    private static final Logger LOG = LoggerFactory.getLogger(ActionStepProcessorRecordsForEach.class);
     private final ActionRunnerContextLocal ctx;
     private final ActionStepRecordsForEach step;
 
@@ -36,6 +40,9 @@ public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcess
     public void process() {
     // TODO Clean up this method
         var from = getVars().eval(step.getFrom(), Object.class);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("records.for-each 'from' evaluated to: {} (class={})", from, from==null?"null":from.getClass().getName());
+        }
         if ( from==null ) { return; }
         if ( from instanceof POJONode ) {
             from = ((POJONode) from).getPojo();
@@ -51,6 +58,7 @@ public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcess
             JsonHelper.stream((ArrayNode)from)
                 .allMatch(value->processForEachStepNode(step, value));
         } else {
+            LOG.trace("records.for-each unexpected 'from' type: {}", from.getClass().getName());
             throw new FcliActionStepException("steps:records.for-each:from must evaluate to either an array or IActionStepForEachProcessor instance; actual type: " + from.getClass().getName());
         }
     }

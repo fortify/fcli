@@ -17,6 +17,9 @@ import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.
 import java.util.Arrays;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -39,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 @Reflectable @RequiredArgsConstructor
 @SpelFunctionPrefix("fn.")
 public final class ActionFunctionSpelFunctions {
+    private static final Logger LOG = LoggerFactory.getLogger(ActionFunctionSpelFunctions.class);
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     private final ActionRunnerContextLocal ctx;
 
@@ -50,9 +54,17 @@ public final class ActionFunctionSpelFunctions {
         var function = resolveFunction(name);
         var argsNode = buildArgsNode(function, args);
         if (function.isStreaming()) {
-            return createStreamingProcessor(function, argsNode);
+            var proc = createStreamingProcessor(function, argsNode);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("#fn.call streaming function '{}' invoked; returning processor instance: {}", name, proc.getClass().getName());
+            }
+            return proc;
         }
-        return executeNonStreaming(function, argsNode);
+        var result = executeNonStreaming(function, argsNode);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("#fn.call non-streaming function '{}' invoked; returned type: {}", name, result==null?"null":result.getClass().getName());
+        }
+        return result;
     }
 
     private ActionFunction resolveFunction(String name) {

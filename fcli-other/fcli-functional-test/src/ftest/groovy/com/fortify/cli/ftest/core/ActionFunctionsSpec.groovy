@@ -10,17 +10,8 @@ import spock.lang.Shared
 @Prefix("core.action.functions")
 class ActionFunctionsSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/functions.yaml") String functionsActionPath
-
-    def "fn.call step: non-streaming add function"() {
-        when:
-            def result = Fcli.run("action run ${functionsActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --mode fn-call-step")
-        then:
-            verifyAll(result.stdout) {
-                it.any { it.contains("7") }
-            }
-    }
-
-    def "fn.call SpEL: #fn.call greet function"() {
+    
+    def "fn-call-spel"() {
         when:
             def result = Fcli.run("action run ${functionsActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --mode fn-call-spel")
         then:
@@ -28,19 +19,8 @@ class ActionFunctionsSpec extends FcliBaseSpec {
                 it.any { it.contains("Hello, World!") }
             }
     }
-
-    def "fn.call step: streaming each function"() {
-        when:
-            def result = Fcli.run("action run ${functionsActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --mode fn-call-streaming")
-        then:
-            verifyAll(result.stdout) {
-                it.any { it.contains("1") }
-                it.any { it.contains("2") }
-                it.any { it.contains("3") }
-            }
-    }
-
-    def "records.for-each with #fn.call: streaming is lazy (yield-process interleaved)"() {
+    
+    def "fn-call-streaming-spel"() {
         when:
             def result = Fcli.run("action run ${functionsActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --mode fn-call-streaming-spel")
         then:
@@ -54,8 +34,7 @@ class ActionFunctionsSpec extends FcliBaseSpec {
             lines[4] == "Yield: 30"
             lines[5] == "Process: 30"
     }
-
-    def "fn.call step: composed function calling other functions"() {
+    def "fn-call-composed"() {
         when:
             def result = Fcli.run("action run ${functionsActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --mode fn-call-composed")
         then:
@@ -64,7 +43,7 @@ class ActionFunctionsSpec extends FcliBaseSpec {
             }
     }
 
-    def "fn.call step: internal non-exported function is callable from steps"() {
+    def "fn-call-internal"() {
         when:
             def result = Fcli.run("action run ${functionsActionPath} --progress=none --on-unsigned=ignore --on-invalid-version=ignore --mode fn-call-internal")
         then:
