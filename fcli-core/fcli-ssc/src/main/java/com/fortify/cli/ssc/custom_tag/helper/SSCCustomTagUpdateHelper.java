@@ -12,20 +12,70 @@
  */
 package com.fortify.cli.ssc.custom_tag.helper;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 
 import kong.unirest.UnirestInstance;
 
 public class SSCCustomTagUpdateHelper {
+    private final UnirestInstance unirest;
     private final SSCCustomTagHelper tagHelper;
 
     public SSCCustomTagUpdateHelper(UnirestInstance unirest) {
+        this.unirest = unirest;
         this.tagHelper = new SSCCustomTagHelper(unirest);
+    }
+
+    public int addValueToListTag(String tagGuid, String newValue) {
+        SSCCustomTagDescriptor desc = tagHelper.getDescriptorByCustomTagSpec(tagGuid, true);
+        ObjectNode body = (ObjectNode) desc.asJsonNode().deepCopy();
+        LinkedHashMap<String, ObjectNode> valueMap = buildValueMap(body);
+        if (!valueMap.containsKey(newValue)) {
+            ObjectNode entry = JsonNodeFactory.instance.objectNode();
+            entry.put("lookupValue", newValue);
+            entry.put("deletable", true);
+            entry.put("description", "");
+            entry.putNull("auditAssistantTrainingLabel");
+            entry.put("hidden", false);
+            valueMap.put(newValue, entry);
+        }
+        int newLookupIndex = -1;
+        ArrayNode newValueList = JsonNodeFactory.instance.arrayNode();
+        int idx = 1;
+        for (Map.Entry<String, ObjectNode> e : valueMap.entrySet()) {
+            e.getValue().put("lookupIndex", idx);
+            e.getValue().put("seqNumber", idx);
+            newValueList.add(e.getValue());
+            if (e.getKey().equalsIgnoreCase(newValue)) {
+                newLookupIndex = idx;
+            }
+            idx++;
+        }
+        body.set("valueList", newValueList);
+        unirest.put(SSCUrls.CUSTOM_TAG(desc.getId()))
+                .body(body)
+                .asObject(JsonNode.class)
+                .getBody();
+        return newLookupIndex;
+    }
+
+    private LinkedHashMap<String, ObjectNode> buildValueMap(ObjectNode body) {
+        var valueList = body.withArray("valueList");
+        LinkedHashMap<String, ObjectNode> valueMap = new LinkedHashMap<>();
+        for (JsonNode v : valueList) {
+            valueMap.put(v.path("lookupValue").asText(), (ObjectNode) v);
+        }
+        return valueMap;
     }
 
     /**

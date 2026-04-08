@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
+import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagUpdateHelper;
 import com.fortify.cli.ssc.custom_tag.helper.SSCCustomTagValueType;
 
 import kong.unirest.UnirestInstance;
@@ -42,7 +43,7 @@ public class SSCIssueCustomTagHelper {
     @Getter(lazy = true) 
     private final Map<String, CustomTagInfo> customTagInfoMap = loadCustomTagInfo();
     
-    public List<SSCIssueCustomTagAuditValue> processCustomTags(Map<String,String> customTags) {
+    public List<SSCIssueCustomTagAuditValue> processCustomTags(Map<String,String> customTags, boolean extend) {
         if (customTags == null || customTags.isEmpty()) {
             return List.of();
         }
@@ -57,7 +58,7 @@ public class SSCIssueCustomTagHelper {
                     if (tagInfo == null) {
                         throw new FcliSimpleException("Custom tag '" + tagName + "' is not available for this application version");
                     }
-                    return createAuditValue(tagName, tagValue, tagInfo);
+                    return createAuditValue(tagName, tagValue, tagInfo, extend);
                 })
                 .collect(Collectors.toList());
     }
@@ -107,7 +108,7 @@ public class SSCIssueCustomTagHelper {
         return null;
     }
     
-    private SSCIssueCustomTagAuditValue createAuditValue(String tagName, String value, CustomTagInfo tagInfo) {
+    private SSCIssueCustomTagAuditValue createAuditValue(String tagName, String value, CustomTagInfo tagInfo, boolean extend) {
         String guid = tagInfo.getGuid();
         boolean isUnset = value == null || value.isBlank();
         switch (tagInfo.getValueType()) {
@@ -128,7 +129,7 @@ public class SSCIssueCustomTagHelper {
                 return SSCIssueCustomTagAuditValue.forDate(guid, dateValue);
             case LIST:
                 if (isUnset) return SSCIssueCustomTagAuditValue.forList(guid, -1);
-                Integer lookupIndex = getListValueIndex(value, tagName, tagInfo);
+                Integer lookupIndex = getListValueIndex(value, tagName, tagInfo, extend);
                 return SSCIssueCustomTagAuditValue.forList(guid, lookupIndex);
             default:
                 throw new FcliSimpleException("Unsupported custom tag value type: " + tagInfo.getValueType());
@@ -144,25 +145,41 @@ public class SSCIssueCustomTagHelper {
         }
     }
     
-    private Integer getListValueIndex(String value, String tagName, CustomTagInfo tagInfo) {
-        if (tagInfo.getValueList() == null || tagInfo.getValueList().isEmpty()) {
-            throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured");
-        }
-        
-        for (ValueListItem item : tagInfo.getValueList()) {
-            if (value.equalsIgnoreCase(item.getLookupValue())) {
-                return item.getLookupIndex();
+    private Integer getListValueIndex(String value, String tagName, CustomTagInfo tagInfo, boolean extend) {
+        var valueList = tagInfo.getValueList();
+        if (valueList != null) {
+            for (ValueListItem item : valueList) {
+                if (value.equalsIgnoreCase(item.getLookupValue())) {
+                    return item.getLookupIndex();
+                }
             }
         }
-        
-        String validValues = tagInfo.getValueList().stream()
+        if (tagInfo.isExtensible() && extend) {
+            return extendTagWithValue(tagInfo, value);
+        }
+        String hint = tagInfo.isExtensible()
+                ? " To add new value, pass --extend."
+                : " This tag is not extensible.";
+        if (valueList == null || valueList.isEmpty()) {
+            throw new FcliSimpleException("Custom tag '" + tagName + "' has no valid list values configured." + hint);
+        }
+        String validValues = valueList.stream()
                 .map(ValueListItem::getLookupValue)
                 .collect(Collectors.joining(", "));
-        
-        throw new FcliSimpleException("Invalid value '" + value + "' for list custom tag '" + tagName + "'. " +
-                "Valid values are: " + validValues);
+        throw new FcliSimpleException("Invalid value '" + value + "' for list custom tag '" + tagName + "'."
+                + " Valid values are: " + validValues + "." + hint);
     }
     
+    private int extendTagWithValue(CustomTagInfo tagInfo, String newValue) {
+        int newIndex = new SSCCustomTagUpdateHelper(unirest).addValueToListTag(tagInfo.getGuid(), newValue);
+        // Keep local cache in sync so subsequent lookups within the same helper instance are consistent
+        ValueListItem newItem = new ValueListItem();
+        newItem.setLookupIndex(newIndex);
+        newItem.setLookupValue(newValue);
+        tagInfo.getValueList().add(newItem);
+        return newIndex;
+    }
+
     private Map<String, CustomTagInfo> loadCustomTagInfo() {
         try {
             JsonNode response = unirest.get(SSCUrls.PROJECT_VERSION_CUSTOM_TAGS(appVersionId))
@@ -195,7 +212,7 @@ public class SSCIssueCustomTagHelper {
         tagInfo.setGuid(tagNode.get("guid").asText());
         tagInfo.setName(tagNode.get("name").asText());
         tagInfo.setValueType(SSCCustomTagValueType.valueOf(tagNode.get("valueType").asText()));
-        
+        tagInfo.setExtensible(tagNode.path("extensible").asBoolean(false));
         JsonNode valueListNode = tagNode.get("valueList");
         if (valueListNode != null && valueListNode.isArray()) {
             for (JsonNode valueNode : valueListNode) {
@@ -214,6 +231,7 @@ public class SSCIssueCustomTagHelper {
         private String guid;
         private String name;
         private SSCCustomTagValueType valueType;
+        private boolean extensible;
         private List<ValueListItem> valueList = new ArrayList<>();
     }
     
