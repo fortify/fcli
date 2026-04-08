@@ -14,6 +14,8 @@ package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 
+import com.fortify.cli.common.rest.unirest.HttpHeader;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
@@ -22,7 +24,8 @@ public abstract class AbstractFoDScanDownloadFprCommand extends AbstractFoDScanD
     protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDScanDescriptor scanDescriptor) {
         return unirest.get("/api/v3/scans/{scanId}/fpr")
                 .routeParam("scanId", scanDescriptor.getScanId())
-                .accept("application/octet-stream")
+                // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+                .headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
                 .queryString("scanType", scanDescriptor.getScanType());
     }
 }

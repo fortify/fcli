@@ -19,6 +19,8 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
+import com.fortify.cli.common.rest.unirest.HttpHeader;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -40,7 +42,8 @@ public class FoDOssScanDownloadLatestCommand extends AbstractFoDScanDownloadLate
         if ( format != null ) {
             req = req.queryString("format", format.getValue());
         }
-        return req.accept("application/octet-stream");
+        // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+        return req.headerReplace(HttpHeader.ACCEPT, "application/octet-stream");
     }
 
     @Override

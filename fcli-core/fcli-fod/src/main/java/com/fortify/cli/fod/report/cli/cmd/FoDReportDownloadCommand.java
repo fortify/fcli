@@ -24,6 +24,8 @@ import com.fortify.cli.fod.report.cli.mixin.FoDReportResolverMixin;
 import com.fortify.cli.fod.report.helper.FoDReportDescriptor;
 import com.fortify.cli.fod.report.helper.FoDReportHelper;
 
+import com.fortify.cli.common.rest.unirest.HttpHeader;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -44,7 +46,8 @@ public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand i
         var file = outputFileMixin.getFile().getAbsolutePath();
         GetRequest request = unirest.get(FoDUrls.REPORT + "/download")
                 .routeParam("reportId", reportResolver.getReportId())
-                .accept("application/octet-stream");
+                // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+                .headerReplace(HttpHeader.ACCEPT, "application/octet-stream");
         int status = 202;
         while ( status==202 ) {
             status = request

@@ -23,6 +23,8 @@ import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 
+import com.fortify.cli.common.rest.unirest.HttpHeader;
+
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
@@ -63,7 +65,8 @@ public class SSCFileTransferHelper {
                     .multiPartContent() // Force multipart request with correct Content-Type header
                     .field("file", filePath)
                     .uploadMonitor(uploadMonitor)
-                    .headerReplace("Accept", "application/xml") 
+                    // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+                    .headerReplace(HttpHeader.ACCEPT, "application/xml") 
                     .withObjectMapper(XMLMAPPER)
                     .asObject(returnType).getBody();
             }
@@ -98,7 +101,7 @@ public class SSCFileTransferHelper {
         public static final ISSCAddDownloadTokenFunction QUERYSTRING_MAT = 
                 (token, unirest) -> unirest.queryString("mat", token);
         public static final ISSCAddDownloadTokenFunction AUTHHEADER = 
-                (token, unirest) -> unirest.headerReplace("Authorization", "FortifyToken "+token);
+                (token, unirest) -> unirest.headerReplace(HttpHeader.AUTHORIZATION, "FortifyToken "+token);
     }
     
     @FunctionalInterface
@@ -108,7 +111,7 @@ public class SSCFileTransferHelper {
         public static final ISSCAddUploadTokenFunction QUERYSTRING_MAT = 
                 (token, unirest) -> unirest.queryString("mat", token);
         public static final ISSCAddUploadTokenFunction AUTHHEADER = 
-                (token, unirest) -> unirest.headerReplace("Authorization", "FortifyToken "+token);
+                (token, unirest) -> unirest.headerReplace(HttpHeader.AUTHORIZATION, "FortifyToken "+token);
     }
     
     @RequiredArgsConstructor
@@ -139,8 +142,9 @@ public class SSCFileTransferHelper {
             this.unirest = unirest;
             ObjectNode response = unirest.post("/api/v1/fileTokens")
                     .body(String.format("{ \"fileTokenType\": \"%s\"}", tokenType.name()))
-                    .accept("application/json")
-                    .contentType("application/json")
+                    // Use headerReplace to replace rather than add headers (avoid duplicates with defaults)
+                    .headerReplace(HttpHeader.ACCEPT, "application/json")
+                    .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
                     .asObject(ObjectNode.class)
                     .getBody();
             this.token = JsonHelper.evaluateSpelExpression(response, "data.token", String.class);

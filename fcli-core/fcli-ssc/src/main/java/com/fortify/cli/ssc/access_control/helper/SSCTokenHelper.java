@@ -31,6 +31,7 @@ import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestBasicAuthConfigurer;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
@@ -161,7 +162,8 @@ public class SSCTokenHelper {
     private static final <T> T createToken(UnirestInstance unirest, IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
         configureUnirest(unirest, urlConfig, uc);
         return unirest.post("/api/v1/tokens")
-                .header("accept-encoding", null)
+                // Disable Accept-Encoding to avoid gzip/deflate compression issues with SSC token endpoint
+                .headerReplace(HttpHeader.ACCEPT_ENCODING, null)
                 .body(tokenCreateRequest)
                 .asObject(returnType)
                 .getBody();
