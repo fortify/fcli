@@ -22,12 +22,11 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 import com.fortify.cli.sc_dast.scan_policy.cli.mixin.SCDastScanPolicyResolverMixin;
 import com.fortify.cli.sc_dast.scan_settings.cli.mixin.SCDastScanSettingsResolverMixin;
-
-import com.fortify.cli.common.rest.unirest.HttpHeader;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

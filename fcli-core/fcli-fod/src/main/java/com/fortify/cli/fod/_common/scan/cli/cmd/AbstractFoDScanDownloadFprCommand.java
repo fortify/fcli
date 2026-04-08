@@ -12,9 +12,8 @@
  */
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
-import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
-
 import com.fortify.cli.common.rest.unirest.HttpHeader;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
