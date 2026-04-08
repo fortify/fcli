@@ -36,6 +36,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
         def transport = new StdioClientTransport(serverParams, new JacksonMcpJsonMapper(new ObjectMapper()))
         def client = McpClient.sync(transport)
                 .requestTimeout(Duration.ofSeconds(30))
+                .initializationTimeout(Duration.ofSeconds(60))
                 .build()
         client.initialize()
         return client
@@ -55,7 +56,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
             // Internal function should NOT be registered
             !toolNames.contains("fcli_fn__helperInternal")
         cleanup:
-            client?.close()
+            client?.closeGracefully()
     }
 
     def "callTool: non-streaming echo function"() {
@@ -69,7 +70,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
             text.contains("hello-mcp")
             !result.isError()
         cleanup:
-            client?.close()
+            client?.closeGracefully()
     }
 
     def "callTool: non-streaming multiply function"() {
@@ -83,7 +84,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
             text.contains("42")
             !result.isError()
         cleanup:
-            client?.close()
+            client?.closeGracefully()
     }
 
     def "callTool: streaming generateItems function"() {
@@ -99,7 +100,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
             text.contains("item-2")
             !result.isError()
         cleanup:
-            client?.close()
+            client?.closeGracefully()
     }
 
     def "callTool: non-existent tool returns error"() {
@@ -110,7 +111,7 @@ class MCPServerImportSpec extends FcliBaseSpec {
         then:
             thrown(Exception)
         cleanup:
-            client?.close()
+            client?.closeGracefully()
     }
 
     def "server capabilities include tools"() {
@@ -121,6 +122,6 @@ class MCPServerImportSpec extends FcliBaseSpec {
         then:
             capabilities.tools() != null
         cleanup:
-            client?.close()
+            client?.closeGracefully()
     }
 }
