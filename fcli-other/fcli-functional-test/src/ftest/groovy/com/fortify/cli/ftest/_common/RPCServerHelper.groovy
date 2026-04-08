@@ -2,18 +2,16 @@ package com.fortify.cli.ftest._common
 
 import java.util.concurrent.TimeUnit
 
-/*
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-*/
+
 /**
  * Helper for testing the fcli RPC server via stdio.
  * In build/reflective mode, starts the server in a separate thread with piped streams.
  * In external mode (jar/native), spawns fcli as a subprocess.
  * Communicates via stdin/stdout using JSON-RPC in both modes.
  */
-class RPCServerHelper /*implements Closeable*/ {
-    /*
+class RPCServerHelper implements Closeable {
     private static final ObjectMapper objectMapper = new ObjectMapper()
     private final BufferedWriter writer
     private final BufferedReader reader
@@ -27,7 +25,7 @@ class RPCServerHelper /*implements Closeable*/ {
         this.serverResource = serverResource
     }
 
-    *//**
+    /**
      * Start an fcli RPC server with the given arguments.
      * Uses reflective in-process invocation (build mode) or subprocess (jar/native),
      * matching the approach used by Fcli.groovy for regular command execution.
@@ -35,10 +33,8 @@ class RPCServerHelper /*implements Closeable*/ {
      * @param serverArgs fcli arguments (e.g. "util rpc-server start --import file.yaml")
      * @return RPCServerHelper for sending/receiving JSON-RPC messages
      */
-    /*
     static RPCServerHelper start(String serverArgs) {
-        def fcli = Input.FcliCommand.get()
-        if ( !fcli || fcli == "build" ) {
+        if ( Fcli.isReflective() ) {
             return startReflective(serverArgs)
         } else {
             return startExternal(serverArgs)
@@ -91,19 +87,7 @@ class RPCServerHelper /*implements Closeable*/ {
     }
 
     private static RPCServerHelper startExternal(String serverArgs) {
-        String fcli = Input.FcliCommand.get()
-        String java = Input.JavaCommand.get() ?: "java"
-        def cmd = [] as List<String>
-        if ( fcli.endsWith(".jar") ) {
-            cmd.add(java)
-            cmd.addAll(Fcli.FCLI_SYSTEM_PROPERTY_ARGS)
-            cmd.add("-jar")
-            cmd.add(fcli)
-        } else {
-            cmd.add(fcli)
-            cmd.addAll(Fcli.FCLI_SYSTEM_PROPERTY_ARGS)
-        }
-        cmd.addAll(toArgsList(serverArgs))
+        def cmd = Fcli.buildExternalCommand(toArgsList(serverArgs))
         def pb = new ProcessBuilder(cmd)
         pb.redirectErrorStream(false)
         def process = pb.start()
@@ -139,14 +123,13 @@ class RPCServerHelper /*implements Closeable*/ {
             (serverThread != null ? " (thread alive: " + serverThread.alive + ")" : ""))
     }
 
-    *//**
+    /**
      * Send a JSON-RPC request and read the response.
      * @param method RPC method name
      * @param params Parameter map (can be null)
      * @param id Request ID
      * @return Parsed JSON response node
      */
-    /*
     JsonNode rpcCall(String method, Map<String, Object> params, int id) {
         def request = objectMapper.createObjectNode()
         request.put("jsonrpc", "2.0")
@@ -191,5 +174,4 @@ class RPCServerHelper /*implements Closeable*/ {
     private static List<String> toArgsList(String argsString) {
         argsString.split(" ").toList()
     }
-    */
 }

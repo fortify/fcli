@@ -9,7 +9,6 @@ import spock.lang.Shared
 
 @Prefix("core.rpc-server.import")
 class RPCServerImportSpec extends FcliBaseSpec {
-    /*
     @Shared @TestResource("runtime/actions/server-import-functions.yaml") String importActionPath
 
     def "imported non-streaming function executes via RPC"() {
@@ -119,5 +118,4 @@ class RPCServerImportSpec extends FcliBaseSpec {
                 server.close()
             }
     }
-    */
 }

@@ -8,37 +8,27 @@ import com.fortify.cli.ftest._common.spec.TestResource
 
 import spock.lang.Shared
 import spock.lang.IgnoreIf
-/*
+
 import io.modelcontextprotocol.client.McpClient
 import io.modelcontextprotocol.client.McpSyncClient
 import io.modelcontextprotocol.client.transport.ServerParameters
 import io.modelcontextprotocol.client.transport.StdioClientTransport
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper
 import io.modelcontextprotocol.spec.McpSchema
-*/
+
 @IgnoreIf({ !sys["ft.fcli"] || sys["ft.fcli"] == "build" })
 @Prefix("core.mcp-server.import")
 class MCPServerImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-import-functions.yaml") String importActionPath
-/*
+
     private McpSyncClient createMcpClient(String extraArgs = "") {
-        def fcli = Input.FcliCommand.get()
-        def java = Input.JavaCommand.get() ?: "java"
         def serverArgs = ["util", "mcp-server", "start", "--import", importActionPath]
         if (extraArgs) {
             serverArgs.addAll(extraArgs.split(" ").toList())
         }
-        String executable
-        List<String> cmdArgs
-        if (fcli.endsWith(".jar")) {
-            executable = java
-            cmdArgs = Fcli.FCLI_SYSTEM_PROPERTY_ARGS + ["-jar", fcli] + serverArgs
-        } else {
-            executable = fcli
-            cmdArgs = Fcli.FCLI_SYSTEM_PROPERTY_ARGS + serverArgs
-        }
-        def serverParams = ServerParameters.builder(executable)
-                .args(cmdArgs as List<String>)
+        def cmd = Fcli.buildExternalCommand(serverArgs)
+        def serverParams = ServerParameters.builder(cmd[0])
+                .args(cmd.tail())
                 .build()
         def transport = new StdioClientTransport(serverParams, new JacksonMcpJsonMapper())
         def client = McpClient.sync(transport)
@@ -130,5 +120,4 @@ class MCPServerImportSpec extends FcliBaseSpec {
         cleanup:
             client?.close()
     }
-    */
 }
