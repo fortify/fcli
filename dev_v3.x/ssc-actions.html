@@ -1,6 +1,6 @@
 ---
 title: 'Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a>'
-fcli_version: 0.20260409.122008-dev_v3.x
+fcli_version: 0.20260409.142645-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260409.122008-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260409.122008-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260409.142645-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Action Documentation: <a href="manpage/fcli-ssc-action.html"><code>fcli ssc action</code></a></h1>
 <div class="details">
-<span id="revnumber">version 0.20260409.122008-dev_v3.x</span>
+<span id="revnumber">version 0.20260409.142645-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -371,6 +371,17 @@ while ignoring versions for which audit information needs to be refreshed.</p>
 automatically create them before submitting for audit.</p>
 </div>
 <div class="paragraph">
+<p>By default (--aviator-app-mapping=app), SSC project versions map to a single
+Aviator application per SSC project. Set --aviator-app-mapping=version to map
+each SSC project version to its own Aviator application (project_name__version_name).</p>
+</div>
+<div class="paragraph">
+<p>When quota limits are exceeded for any application, issues are prioritized by
+folder using either the default order (Critical &gt; High &gt; Medium &gt; Low) or a
+custom priority order specified via --folder-priority-order. The same priority
+order is applied to all audited versions in the bulk operation.</p>
+</div>
+<div class="paragraph">
 <p>Either --tag-mapping or --add-aviator-tags must be specified. The default tag
 mapping leaves unsure issues unaudited, causing indefinite reselection. Use
 a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
@@ -388,6 +399,10 @@ and Aviator (admin role for application listing and creation).</p>
 <dt class="hdlist1">--max-audits, -m</dt>
 <dd>
 <p>Maximum number of project versions to audit. Default: -1 (unlimited)</p>
+</dd>
+<dt class="hdlist1">--aviator-app-mapping</dt>
+<dd>
+<p>Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name).</p>
 </dd>
 <dt class="hdlist1">--filter, -f</dt>
 <dd>
@@ -407,7 +422,7 @@ and Aviator (admin role for application listing and creation).</p>
 </dd>
 <dt class="hdlist1">--add-aviator-tags</dt>
 <dd>
-<p>If specified, runs 'fcli aviator prepare' for the application before audit. Required unless --tag-mapping is specified.</p>
+<p>If specified, runs 'fcli aviator ssc prepare' for the application before audit. Required unless --tag-mapping is specified.</p>
 </dd>
 <dt class="hdlist1">--refresh</dt>
 <dd>
@@ -416,6 +431,18 @@ and Aviator (admin role for application listing and creation).</p>
 <dt class="hdlist1">--refresh-timeout</dt>
 <dd>
 <p>Timeout period for metric refresh, e.g., 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default: 60s</p>
+</dd>
+<dt class="hdlist1">--skip-if-exceeding-quota</dt>
+<dd>
+<p>Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false</p>
+</dd>
+<dt class="hdlist1">--test-exceeding-quota</dt>
+<dd>
+<p>Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit. Default: false</p>
+</dd>
+<dt class="hdlist1">--folder-priority-order</dt>
+<dd>
+<p>Custom priority order for folder-based filtering when quota is exceeded (comma-separated, highest priority first). Example: Critical,High,Medium,Low. Applied to all audited versions. Default: uses server default (Critical &gt; High &gt; Medium &gt; Low)</p>
 </dd>
 </dl>
 </div>
@@ -1578,8 +1605,8 @@ appropriate option values and setup commands to run.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260409.122008-dev_v3.x<br>
-Last updated 2026-04-09 12:23:12 UTC
+Version 0.20260409.142645-dev_v3.x<br>
+Last updated 2026-04-09 14:30:11 UTC
 </div>
 </div>
 </body>

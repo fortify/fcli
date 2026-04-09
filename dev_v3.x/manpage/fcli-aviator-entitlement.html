@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260409.122008-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260409.142645-dev_v3.x" %}
 
 
 <div id="header">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-aviator-entitlement - Manage SAST Aviator entitlements.</p>
+<p>fcli-aviator-entitlement - Manage Aviator entitlements.</p>
 </div>
 </div>
 <div id="content">
@@ -50,7 +50,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Commands for managing SAST Aviator entitlements. These commands require an administrator configuration.</p>
+<p>Commands for managing SAST and DAST Aviator entitlements. These commands require an administrator configuration.</p>
 </div>
 </div>
 </div>
@@ -74,7 +74,15 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><a href="fcli-aviator-entitlement-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
 <dd>
-<p>List entitlements for a tenant.</p>
+<p>(DEPRECATED) List SAST entitlements for a tenant.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-aviator-entitlement-list-sast.html"><strong>list-sast</strong>, <strong>lss</strong></a></dt>
+<dd>
+<p>List SAST entitlements for a tenant.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-aviator-entitlement-list-dast.html"><strong>list-dast</strong>, <strong>lsd</strong></a></dt>
+<dd>
+<p>List DAST entitlements for a tenant.</p>
 </dd>
 </dl>
 </div>
@@ -85,7 +93,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-09 12:22:43 UTC
+Last updated 2026-04-09 14:29:44 UTC
 </div>
 </div>
 </body>

@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260409.122008-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260409.142645-dev_v3.x" %}
 
 
 <div id="header">
@@ -45,14 +45,18 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli aviator ssc audit</strong> [<strong>--no-filterset</strong>] [<strong>--[no-]refresh</strong>] [<strong>--app</strong>=<em>&lt;appName&gt;</em>]
+<p><strong>fcli aviator ssc audit</strong> [<strong>--default-quota-fallback</strong>] [<strong>--no-filterset</strong>] [<strong>--[no-]</strong>
+                *       refresh*] [<strong>--skip-if-exceeding-quota</strong>]
+                       [<strong>--test-exceeding-quota</strong>] [<strong>--app</strong>=<em>&lt;appName&gt;</em>]
                        <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                        [<strong>--fs</strong>=<em>&lt;filterSetTitleOrId&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                        [<strong>--refresh-timeout</strong>=<em>&lt;timeoutPeriod&gt;</em>]
                        [<strong>--tag-mapping</strong>=<em>&lt;tagMapping&gt;</em>] [<strong>--folder</strong>=<em>&lt;folderNames&gt;</em>[,
-                       <em>&lt;folderNames&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                       [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                       <em>&lt;folderNames&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                       [<strong>--folder-priority-order</strong>=<em>&lt;folderPriorityOrder&gt;</em>[,
+                       <em>&lt;folderPriorityOrder&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                       [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                        [[<strong>--ssc-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                        [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
                        [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [[<strong>--av-session</strong>=<em>&lt;sessionName&gt;</em>]]</p>
@@ -80,6 +84,10 @@ fcli_version:
 <dd>
 <p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
 </dd>
+<dt class="hdlist1"><strong>--default-quota-fallback</strong></dt>
+<dd>
+<p>(Internal) When the Aviator application does not exist, use the tenant default quota instead of reporting app not found. Used by bulk audit.</p>
+</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
@@ -87,6 +95,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--folder</strong>=<em>&lt;folderNames&gt;</em>[,<em>&lt;folderNames&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Filter issues by a comma-separated list of specific folder names from the selected FilterSet (e.g., 'Hot,Critical'). This option requires a FilterSet to be active.</p>
+</dd>
+<dt class="hdlist1"><strong>--folder-priority-order</strong>=<em>&lt;folderPriorityOrder&gt;</em>[,<em>&lt;folderPriorityOrder&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Custom priority order for folder-based filtering when quota is exceeded (comma-separated, highest priority first). Example: Critical,High,Medium,Low. If not specified, uses default priority order.</p>
 </dd>
 <dt class="hdlist1"><strong>--fs, --filterset</strong>=<em>&lt;filterSetTitleOrId&gt;</em></dt>
 <dd>
@@ -108,9 +120,17 @@ fcli_version:
 <dd>
 <p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour). Default value: 60s</p>
 </dd>
+<dt class="hdlist1"><strong>--skip-if-exceeding-quota</strong></dt>
+<dd>
+<p>Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown.</p>
+</dd>
 <dt class="hdlist1"><strong>--tag-mapping</strong>=<em>&lt;tagMapping&gt;</em></dt>
 <dd>
 <p>Custom tag mapping for audit results.</p>
+</dd>
+<dt class="hdlist1"><strong>--test-exceeding-quota</strong></dt>
+<dd>
+<p>Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit.</p>
 </dd>
 </dl>
 </div>
@@ -205,7 +225,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-09 12:22:43 UTC
+Last updated 2026-04-09 14:29:44 UTC
 </div>
 </div>
 </body>
