@@ -40,18 +40,20 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.aviator.grpc.AuditRequest;
-import com.fortify.aviator.grpc.AuditorResponse;
-import com.fortify.aviator.grpc.AuditorServiceGrpc;
-import com.fortify.aviator.grpc.PingRequest;
-import com.fortify.aviator.grpc.StreamInitRequest;
-import com.fortify.aviator.grpc.UserPromptRequest;
+import com.fortify.aviator.grpc.*;
+import com.fortify.cli.aviator._common.exception.AviatorQuotaFilterException;
 import com.fortify.cli.aviator._common.exception.AviatorSimpleException;
 import com.fortify.cli.aviator._common.exception.AviatorTechnicalException;
+import com.fortify.cli.aviator.audit.QuotaBasedFilter;
 import com.fortify.cli.aviator.audit.model.AuditResponse;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
 import com.fortify.cli.aviator.config.IAviatorLogger;
+import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.aviator.util.FileUtil;
+import com.fortify.cli.aviator.util.FprHandle;
+import com.fortify.cli.aviator.util.StringUtil;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -91,8 +93,9 @@ class AviatorStreamProcessor implements AutoCloseable {
     private CountDownLatch streamLatch;
     private volatile Future<?> processingTask;
     private final Object retryLock = new Object();
+    private final FprHandle fprHandle;
 
-    public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub, ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds, long defaultTimeoutSeconds) {
+    public AviatorStreamProcessor(AviatorGrpcClient client, IAviatorLogger logger, AuditorServiceGrpc.AuditorServiceStub asyncStub, ExecutorService processingExecutor, ScheduledExecutorService pingScheduler, long pingIntervalSeconds, long defaultTimeoutSeconds, FprHandle fprHandle) {
         this.client = client;
         this.logger = logger;
         this.asyncStub = asyncStub;
@@ -100,9 +103,10 @@ class AviatorStreamProcessor implements AutoCloseable {
         this.pingScheduler = pingScheduler;
         this.pingIntervalSeconds = pingIntervalSeconds;
         this.defaultTimeoutSeconds = defaultTimeoutSeconds;
+        this.fprHandle = fprHandle;
     }
 
-    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token) {
+    public CompletableFuture<Map<String, AuditResponse>> processBatchRequests(Queue<UserPrompt> requests, String projectName, String FPRBuildId, String SSCApplicationName, String SSCApplicationVersion, String token, List<String> customPriorityOrder) {
         if (requests == null || requests.isEmpty()) {
             LOG.info("No issues to process");
             return CompletableFuture.completedFuture(new HashMap<>());
@@ -110,6 +114,7 @@ class AviatorStreamProcessor implements AutoCloseable {
 
         String streamId = UUID.randomUUID().toString();
         currentStreamState = new StreamState(streamId, projectName, FPRBuildId, SSCApplicationName, SSCApplicationVersion, token, requests.size());
+        currentStreamState.setCustomPriorityOrder(customPriorityOrder);
 
         requests.stream().map(RequestWrapper::new).forEach(wrapper -> {
             this.processingQueue.add(wrapper);
@@ -197,7 +202,9 @@ class AviatorStreamProcessor implements AutoCloseable {
                             reQueueUnprocessedRequests();
                         }
 
-                        processRequestQueue(currentStreamState.totalRequests, processedRequests, responses, resultFuture, this.streamLatch);
+                        applyQuotaFilteringIfNeeded();
+
+                        processRequestQueue(currentStreamState.actualIssuesCount, processedRequests, responses, resultFuture, this.streamLatch);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         // Check if interruption is due to normal shutdown
@@ -206,6 +213,23 @@ class AviatorStreamProcessor implements AutoCloseable {
                             return; // Exit gracefully without propagating exception
                         }
                         resultFuture.completeExceptionally(new AviatorTechnicalException("Interrupted during request processing", e));
+                    } catch (AviatorQuotaFilterException e) {
+                        // Special handling for quota filtering that results in zero issues
+                        logger.info("All issues filtered out by quota constraints, closing stream gracefully");
+
+                        // Clean up stream resources BEFORE completing exceptionally
+                        stopPingPong();
+                        if (requestHandler != null && !requestHandler.isCompleted()) {
+                            requestHandler.complete();
+                        }
+                        streamLatch.countDown();
+
+                        // Complete the future exceptionally so IssueAuditor can handle it
+                        if (!resultFuture.isDone()) {
+                            resultFuture.completeExceptionally(e);
+                        }
+
+                        logger.info("Stream closed successfully after quota filtering");
                     } catch (Exception e) {
                         // Only propagate exceptions if the stream hasn't completed successfully
                         if (requestHandler != null && !requestHandler.isCompleted() && !resultFuture.isDone()) {
@@ -286,7 +310,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 }
 
                 if ("SERVER_BUSY".equals(response.getStatus())) {
-                    handleServerBusy(response.getRequestId(), currentStreamState.totalRequests,
+                    handleServerBusy(response.getRequestId(), currentStreamState.actualIssuesCount,
                             processedRequests, responses, resultFuture, streamLatch);
                     return;
                 }
@@ -323,6 +347,18 @@ class AviatorStreamProcessor implements AutoCloseable {
                 if (completedWrapper == null) {
                     if (!isInitialized.get()) {
                         if ("SUCCESS".equals(response.getStatus())) {
+                            if (response.hasQuota()) {
+                                currentStreamState.quota = response.getQuota();
+                                if (response.hasQuotaLastUpdated()) {
+                                    currentStreamState.quotaLastUpdated = response.getQuotaLastUpdated();
+                                    logger.info("Server quota received: {} (last updated: {})",
+                                        currentStreamState.quota, currentStreamState.quotaLastUpdated);
+                            } else {
+                                logger.info("Server quota received: {}", currentStreamState.quota);
+                            }
+                        } else {
+                            LOG.debug("No quota limit received from server (unlimited or feature disabled)");
+                        }
                             isInitialized.set(true);
                             currentStreamState.isStreamInitialized = true;
                             initLatch.countDown();
@@ -362,7 +398,7 @@ class AviatorStreamProcessor implements AutoCloseable {
                 responses.put(instanceId, auditResponse);
                 int completed = processedRequests.incrementAndGet();
 
-                logger.progress("Processed " + completed + " out of " + currentStreamState.totalRequests + " issues");
+                logger.progress("Processed " + completed + " out of " + currentStreamState.actualIssuesCount + " issues");
 
                 if (completed >= currentStreamState.totalRequests) {
                     logger.info("All requests accounted for, completing stream.");
@@ -471,19 +507,23 @@ class AviatorStreamProcessor implements AutoCloseable {
 
     private void sendInitRequest() throws Exception {
         String initRequestId = UUID.randomUUID().toString();
+        StreamInitRequest.Builder initRequestBuilder = StreamInitRequest.newBuilder()
+            .setStreamId(currentStreamState.streamId)
+            .setRequestId(initRequestId)
+            .setToken(currentStreamState.token)
+            .setApplicationName(currentStreamState.projectName)
+            .setSscApplicationName(currentStreamState.SSCApplicationName)
+            .setSscApplicationVersion(currentStreamState.SSCApplicationVersion)
+            .setTotalReportedIssues(currentStreamState.totalRequests)
+            .setTotalIssuesToPredict(currentStreamState.totalRequests);
+
+        if (!StringUtil.isEmpty(currentStreamState.FPRBuildId)) {
+            initRequestBuilder.setFprBuildId(currentStreamState.FPRBuildId);
+        }
+
         UserPromptRequest initRequest = UserPromptRequest.newBuilder()
-                .setInit(StreamInitRequest.newBuilder()
-                        .setStreamId(currentStreamState.streamId)
-                        .setRequestId(initRequestId)
-                        .setToken(currentStreamState.token)
-                        .setApplicationName(currentStreamState.projectName)
-                        .setSscApplicationName(currentStreamState.SSCApplicationName)
-                        .setSscApplicationVersion(currentStreamState.SSCApplicationVersion)
-                        .setFprBuildId(currentStreamState.FPRBuildId)
-                        .setTotalReportedIssues(currentStreamState.totalRequests)
-                        .setTotalIssuesToPredict(currentStreamState.totalRequests)
-                        .build())
-                .build();
+            .setInit(initRequestBuilder.build())
+            .build();
 
         requestHandler.sendRequest(initRequest);
         LOG.info("Client Id for stream initialization {}", currentStreamState.streamId);
@@ -515,6 +555,84 @@ class AviatorStreamProcessor implements AutoCloseable {
             if (outstandingRequests.get() < 0) {
                 outstandingRequests.set(0);
             }
+        }
+    }
+
+    private void applyQuotaFilteringIfNeeded() {
+        LOG.debug("Applying Quota based filter Quota for the application is {}", currentStreamState.quota);
+        //currentStreamState.quota = 5;
+        if (currentStreamState.quota <= 0) {
+            LOG.debug("No quota filtering applied (quota not set or unlimited)");
+            return;
+        }
+
+        int currentQueueSize = processingQueue.size();
+        if (currentQueueSize <= currentStreamState.quota) {
+            logger.progress("Queue size %d within quota %d, no filtering needed",
+                currentQueueSize, currentStreamState.quota);
+            return;
+        }
+
+        logger.progress("Queue size %d exceeds reserved quota %d. Applying priority-based filtering.",
+            currentQueueSize, currentStreamState.quota);
+
+        List<UserPrompt> allPrompts = new ArrayList<>();
+        processingQueue.forEach(wrapper -> allPrompts.add(wrapper.userPrompt));
+
+        Map<String, Integer> customPriorityMap = null;
+        if (currentStreamState.customPriorityOrder != null &&
+            !currentStreamState.customPriorityOrder.isEmpty()) {
+
+            customPriorityMap = QuotaBasedFilter.buildCustomPriorityOrder(
+                currentStreamState.customPriorityOrder);
+
+            logger.info("Using custom folder priority order for filtering: {} (issues with priorities not in this list will be excluded)",
+                       currentStreamState.customPriorityOrder);
+        } else {
+            logger.info("Using default priority order for filtering (Critical > High > Medium > Low)");
+        }
+
+        List<UserPrompt> filteredPrompts = QuotaBasedFilter.filterByQuota(
+            allPrompts,
+            currentStreamState.quota,
+            customPriorityMap
+        );
+
+        processingQueue.clear();
+        currentStreamState.pendingIssueIds.clear();
+
+        filteredPrompts.stream()
+            .map(RequestWrapper::new)
+            .forEach(wrapper -> {
+                processingQueue.add(wrapper);
+                currentStreamState.pendingIssueIds.add(wrapper.userPrompt.getIssueData().getInstanceID());
+            });
+
+        currentStreamState.actualIssuesCount = filteredPrompts.size();
+
+        // Check if filtering resulted in zero issues
+        if (filteredPrompts.isEmpty()) {
+            String reason;
+            if (customPriorityMap != null) {
+                reason = String.format("0 issues to audit as per --folder-priority-order %s",
+                    currentStreamState.customPriorityOrder);
+            } else {
+                reason = "0 issues to audit after quota-based filtering";
+            }
+
+            logger.progress("Quota filtering resulted in 0 issues to audit. Reason: %s", reason);
+            logger.info("Aborting audit - all {} issues were filtered out", currentQueueSize);
+
+            throw new AviatorQuotaFilterException(reason);
+        }
+
+        int excludedCount = currentQueueSize - filteredPrompts.size();
+        if (filteredPrompts.size() < currentStreamState.quota && customPriorityMap != null) {
+            logger.info("Filtering complete: {} issues retained out of {} (filtered out: {}, including issues with unknown priorities)",
+                filteredPrompts.size(), currentQueueSize, excludedCount);
+        } else {
+            logger.info("Filtering complete: {} issues retained out of {} (filtered out: {})",
+                filteredPrompts.size(), currentQueueSize, excludedCount);
         }
     }
 
@@ -583,12 +701,26 @@ class AviatorStreamProcessor implements AutoCloseable {
                 }
 
                 wrapper = processingQueue.poll();
+
                 if (wrapper == null) {
                     requestSemaphore.release();
                     continue;
                 }
 
                 String instanceId = wrapper.userPrompt.getIssueData().getInstanceID();
+
+                // Lazy Loading of source code files for individual issue
+                SourceCodeEnricher sourceCodeEnricher = new SourceCodeEnricher(fprHandle);
+
+                Map<String, com.fortify.cli.aviator.audit.model.File> enrichedFiles =
+                    sourceCodeEnricher.enrichWithSourceCode(wrapper.userPrompt.getStackTrace());
+                List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles  = new ArrayList<>(enrichedFiles.values());
+
+                wrapper.userPrompt.getFiles().addAll(sourceCodeFiles);
+                wrapper.userPrompt.getProgrammingLanguages().addAll(programmingLanguages(sourceCodeFiles));
+
+                logger.info("Size of files {}", wrapper.userPrompt.getFiles().size());
+                logger.info("Size of programming language {}", wrapper.userPrompt.getProgrammingLanguages().size());
 
                 if (currentStreamState.processedIssueIds.contains(instanceId)) {
                     requestSemaphore.release();
@@ -662,6 +794,20 @@ class AviatorStreamProcessor implements AutoCloseable {
         logger.info("Processing queue loop completed. Queue size: {}, Processed: {}/{}, Outstanding: {}",
                 processingQueue.size(), processedRequests.get(), totalRequests, outstandingRequests.get());
     }
+
+    private Set<String> programmingLanguages(List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles){
+        Set<String> programmingLanguages = new HashSet<>();
+        for (com.fortify.cli.aviator.audit.model.File file : sourceCodeFiles) {
+            String fileExtension = FileUtil.getFileExtension(file.getName());
+            String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
+            if (language != null) {
+                programmingLanguages.add(language);
+            }
+        }
+        return programmingLanguages;
+    }
+
+
 
     private void handleServerBusy(String requestId, int totalRequests, AtomicInteger processedRequests, Map<String, AuditResponse> responses, CompletableFuture<Map<String, AuditResponse>> resultFuture, CountDownLatch streamLatch) {
         RequestWrapper wrapperToRetry = inflightRequests.remove(requestId);

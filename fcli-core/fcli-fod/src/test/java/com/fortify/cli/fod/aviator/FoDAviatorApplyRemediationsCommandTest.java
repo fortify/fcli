@@ -10,24 +10,23 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fod.cli.cmd;
+package com.fortify.cli.fod.aviator;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.fod.aviator.cmd.FoDAviatorApplyRemediationsCommand;
 
-class AviatorFoDApplyRemediationsCommandTest {
+class FoDAviatorApplyRemediationsCommandTest {
     @Test
     void testSourceCodeDirectoryHasDefaultValue() throws Exception {
-        AviatorFoDApplyRemediationsCommand command = new AviatorFoDApplyRemediationsCommand();
+        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
 
-        Field field = AviatorFoDApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
         String fieldValue = (String) field.get(command);
 
@@ -40,9 +39,9 @@ class AviatorFoDApplyRemediationsCommandTest {
 
     @Test
     void testSourceCodeDirectoryCanBeOverridden() throws Exception {
-        AviatorFoDApplyRemediationsCommand command = new AviatorFoDApplyRemediationsCommand();
+        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
 
-        Field field = AviatorFoDApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
 
         String customPath = "/custom/source/directory";
@@ -56,9 +55,9 @@ class AviatorFoDApplyRemediationsCommandTest {
 
     @Test
     void testBlankSourceCodeDirectoryThrowsException() throws Exception {
-        AviatorFoDApplyRemediationsCommand command = new AviatorFoDApplyRemediationsCommand();
+        FoDAviatorApplyRemediationsCommand command = new FoDAviatorApplyRemediationsCommand();
 
-        Field field = AviatorFoDApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
+        Field field = FoDAviatorApplyRemediationsCommand.class.getDeclaredField("sourceCodeDirectory");
         field.setAccessible(true);
         field.set(command, "");
 

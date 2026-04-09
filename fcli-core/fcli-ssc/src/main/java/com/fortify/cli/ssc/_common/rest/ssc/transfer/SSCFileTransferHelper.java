@@ -22,7 +22,6 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
-
 import com.fortify.cli.common.rest.unirest.HttpHeader;
 
 import kong.unirest.GetRequest;

@@ -10,19 +10,18 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.aviator.fod.cli.cmd;
+package com.fortify.cli.fod.aviator.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine;
 
 @CommandLine.Command(
-        name = "fod",
-        hidden = true,
+        name = "aviator",
         subcommands = {
-                AviatorFoDApplyRemediationsCommand.class
+                FoDAviatorApplyRemediationsCommand.class
         }
 )
 
-public class AviatorFoDCommands extends AbstractContainerCommand {
+public class FoDAviatorCommands extends AbstractContainerCommand {
 }
