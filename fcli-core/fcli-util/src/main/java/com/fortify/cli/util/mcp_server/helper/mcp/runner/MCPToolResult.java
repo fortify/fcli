@@ -166,7 +166,8 @@ public class MCPToolResult {
     }
     
     public final CallToolResult asCallToolResult() {
-        var output = asJsonString();
+        var jsonNode = JsonHelper.getObjectMapper().valueToTree(this);
+        var output = jsonNode.toPrettyString();
         var hasError = exitCode!=null && exitCode!=0;
         if ( hasError && output.contains(FcliNoSessionException.class.getSimpleName()) ) {
             var loginCmd = FcliNoSessionException.getLoginCmd(output);
@@ -175,9 +176,11 @@ public class MCPToolResult {
                     and ask them to run the '%s' command from a terminal window. Please \
                     show the command to be run on a separate line for better visibility.
                     """, loginCmd);
+            LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringHelper.indent(output, "\t"));
+            return CallToolResult.builder().addTextContent(output).isError(hasError).build();
         }
         LOG.debug("Returning MCP tool result (hasError={}):\n{}", hasError, StringHelper.indent(output, "\t"));
-        return new CallToolResult(output, hasError);
+        return CallToolResult.builder().addTextContent(output).isError(hasError).build();
     }
     
     // Pagination metadata inner class

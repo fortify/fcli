@@ -54,6 +54,24 @@ applyTo: 'fcli/**/*.java'
 - Sessions stored in fcli state directory; access via `*SessionHelper.instance().get(sessionName)`
 - UnirestInstance configured per session; managed by `*UnirestInstanceSupplierMixin` with automatic caching
 
+### Unirest HTTP Headers
+
+Always use `headerReplace(name, value)` instead of convenience methods like `accept()`, `contentType()`, or `header()` when setting HTTP headers on Unirest requests. The convenience methods **add** a new header entry rather than replacing an existing one, which causes duplicate headers when default headers are already configured on the `UnirestInstance` (e.g., via `UnirestJsonHeaderConfigurer`).
+
+Use constants from `com.fortify.cli.common.rest.unirest.HttpHeader` for header names:
+- `HttpHeader.ACCEPT` — `"Accept"`
+- `HttpHeader.CONTENT_TYPE` — `"Content-Type"`
+- `HttpHeader.AUTHORIZATION` — `"Authorization"`
+- `HttpHeader.ACCEPT_ENCODING` — `"Accept-Encoding"`
+
+```java
+// Wrong — accept() adds a header, potentially duplicating the default
+request.accept("application/octet-stream")
+
+// Correct — headerReplace() replaces any existing value for the same header name
+request.headerReplace(HttpHeader.ACCEPT, "application/octet-stream")
+```
+
 ### Output Handling
 
 - Commands implement `IOutputConfigSupplier` to define default output format (table/json/csv/xml/yaml)

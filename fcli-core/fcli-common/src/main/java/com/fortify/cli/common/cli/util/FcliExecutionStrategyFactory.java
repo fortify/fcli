@@ -23,7 +23,7 @@ import picocli.CommandLine.IExecutionStrategy;
 public class FcliExecutionStrategyFactory {
     public static IExecutionStrategy createExecutionStrategy() {
         IExecutionStrategy defaultStrategy = new CommandLine.RunLast();
-        return new FcliInitializationExecutionStrategy(defaultStrategy);
+        return new FcliExecutionStrategy(defaultStrategy);
     }
 
     public static CommandLine configureCommandLine(CommandLine cmd) {

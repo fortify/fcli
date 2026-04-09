@@ -39,6 +39,7 @@ import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
 import io.modelcontextprotocol.spec.McpSchema.ProgressNotification;
+import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import lombok.extern.slf4j.Slf4j;
 
@@ -186,7 +187,7 @@ public class MCPJobManager {
         n.put("tool", exec.toolName);
         n.put("progress", exec.progress.get());
         n.put("message", "Operation still running; call fcli_"+moduleName+"_mcp_job for status|wait|cancel");
-        return new CallToolResult(n.toPrettyString(), false);
+        return CallToolResult.builder().addTextContent(n.toPrettyString()).isError(false).build();
     }
 
     /**
@@ -249,7 +250,7 @@ public class MCPJobManager {
         n.put("job_token", exec.token);
         n.put("tool", exec.toolName);
         n.put("message", exec.status==JobStatus.COMPLETED?"background collection completed":"background collection ended");
-        return new CallToolResult(n.toPrettyString(), false);
+        return CallToolResult.builder().addTextContent(n.toPrettyString()).isError(false).build();
     }
 
     public SyncToolSpecification getJobToolSpecification() {
@@ -288,19 +289,20 @@ public class MCPJobManager {
 
     private CallToolResult handleJobOperation(String token, String op) {
         if ( token==null || op==null ) {
-            return new CallToolResult("Missing job_token or operation", true);
+            return CallToolResult.builder().addTextContent("Missing job_token or operation").isError(true).build();
         }
         JobExecution exec = jobs.get(token);
         try {
             return JobOperation.valueOf(op.toUpperCase()).apply(this, exec, token);
         } catch ( IllegalArgumentException e ) {
-            return new CallToolResult("Invalid operation: "+op, true);
+            return CallToolResult.builder().addTextContent("Invalid operation: "+op).isError(true).build();
         }
     }
 
     private CallToolResult status(JobExecution exec, String token) {
         if ( exec==null ) {
-            return new CallToolResult(json(mapper.createObjectNode().put("job_token", token).put("status", "not_found")), false);
+            var notFound = mapper.createObjectNode().put("job_token", token).put("status", "not_found");
+            return CallToolResult.builder().addTextContent(json(notFound)).isError(false).build();
         }
         var n = mapper.createObjectNode();
         n.put("job_token", token);
@@ -315,7 +317,7 @@ public class MCPJobManager {
                 addFinalResult(n, exec.result);
             }
         }
-        return new CallToolResult(n.toPrettyString(), false);
+        return CallToolResult.builder().addTextContent(n.toPrettyString()).isError(false).build();
     }
 
     private CallToolResult wait(JobExecution exec, String token) {
@@ -434,7 +436,7 @@ public class MCPJobManager {
         n.put("job_token", token);
         n.put("tool", tool);
         n.put("error", message==null?"Unknown":message);
-        return new CallToolResult(n.toPrettyString(), true);
+        return CallToolResult.builder().addTextContent(n.toPrettyString()).isError(true).build();
     }
     
     private CallToolResult buildMessageResult(String status, String token, String tool, String msg) {
@@ -443,16 +445,15 @@ public class MCPJobManager {
         n.put("job_token", token);
         n.put("tool", tool);
         n.put("message", msg);
-        return new CallToolResult(n.toPrettyString(), false);
+        return CallToolResult.builder().addTextContent(n.toPrettyString()).isError(false).build();
     }
 
     private void addFinalResult(ObjectNode target, CallToolResult result) {
-        String content = null;
-        try {
-            content = (String)result.getClass().getMethod("content").invoke(result);
-        } catch ( Exception e ) {
-            content = result.toString();
-        }
+        String content = result.content().stream()
+            .filter(c -> c instanceof TextContent)
+            .map(c -> ((TextContent) c).text())
+            .findFirst()
+            .orElse(null);
         if ( content==null ) {
             return;
         }
@@ -468,11 +469,7 @@ public class MCPJobManager {
     }
 
     private boolean isError(CallToolResult result) {
-        try {
-            return (Boolean)result.getClass().getMethod("isError").invoke(result);
-        } catch ( Exception e ) {
-            return false;
-        }
+        return Boolean.TRUE.equals(result.isError());
     }
 
     private void sendProgressNotification(McpSyncServerExchange exchange, JobExecution exec, boolean finalNotification) {

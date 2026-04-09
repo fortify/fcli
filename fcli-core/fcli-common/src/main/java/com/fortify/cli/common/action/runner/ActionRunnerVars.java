@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.IConfigurableSpelEvaluator;
 import com.fortify.cli.common.spel.wrapper.TemplateExpression;
@@ -51,8 +52,8 @@ public final class ActionRunnerVars {
     private static final String GLOBAL_VAR_NAME = "global";
     private static final String CLI_OPTIONS_VAR_NAME = "cli";
     private static final String[] PROTECTED_VAR_NAMES = {GLOBAL_VAR_NAME, CLI_OPTIONS_VAR_NAME};
-    private static final ObjectNode globalValues = objectMapper.createObjectNode(); 
     @Getter private final ObjectNode values;
+    private final ObjectNode globalValues;
     private final IConfigurableSpelEvaluator spelEvaluator;
     private final ActionRunnerVars parent;
     
@@ -65,7 +66,8 @@ public final class ActionRunnerVars {
     public ActionRunnerVars(IConfigurableSpelEvaluator spelEvaluator, ObjectNode cliOptions) {
         this.spelEvaluator = spelEvaluator;
         this.values = objectMapper.createObjectNode();
-        this.values.set(GLOBAL_VAR_NAME, globalValues);
+        this.globalValues = FcliExecutionContextHolder.current().getGlobalValues();
+        this.values.set(GLOBAL_VAR_NAME, this.globalValues);
         this.values.set(CLI_OPTIONS_VAR_NAME, cliOptions);
         this.parent = null;
     }
@@ -76,6 +78,7 @@ public final class ActionRunnerVars {
     private ActionRunnerVars(ActionRunnerVars parent) {
         this.spelEvaluator = parent.spelEvaluator;
         this.values = JsonHelper.shallowCopy(parent.values);
+        this.globalValues = parent.globalValues;
         this.parent = parent;
     }
     

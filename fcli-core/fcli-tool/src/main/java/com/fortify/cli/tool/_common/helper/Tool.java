@@ -29,7 +29,8 @@ public enum Tool {
     FOD_UPLOADER(new ToolHelperFoDUploader(), "fod-uploader"),
     BUGTRACKER_UTILITY(new ToolHelperBugTrackerUtility(), "bugtracker-utility", "fbtu"),
     VULN_EXPORTER(new ToolHelperVulnExporter(), "vuln-exporter", "fve"),
-    DEBRICKED_CLI(new ToolHelperDebrickedCli(), "debricked-cli", "dcli");
+    DEBRICKED_CLI(new ToolHelperDebrickedCli(), "debricked-cli", "dcli"),
+    SOURCE_ANALYZER(new ToolHelperSourceAnalyzer(), "sourceanalyzer");
     
     private static final Map<String, Tool> TOOL_NAME_MAP = new HashMap<>();
     private static final Map<String, Tool> TOOL_ALIAS_MAP = new HashMap<>();
@@ -101,7 +102,15 @@ public enum Tool {
     public String getDefaultEnvPrefix() {
         return toolHelper.getDefaultEnvPrefix();
     }
-    
+ 
+    /**
+     * Determine if this tool requires tool definitions (e.g., for configuration).
+     * @return true if tool definitions are required, false otherwise
+     */
+    public boolean requiresToolDefinitions() {
+        return toolHelper.requiresToolDefinitions();
+    }
+
     /**
      * Interface defining tool-specific helper methods.
      * Each tool implementation provides its own concrete helper class.
@@ -112,6 +121,10 @@ public enum Tool {
         
         default String getDefaultEnvPrefix() {
             return getToolName().toUpperCase().replace('-', '_');
+        }
+
+        default boolean requiresToolDefinitions() {
+            return true;
         }
     }
     
@@ -229,6 +242,33 @@ public enum Tool {
         @Override
         public String getDefaultEnvPrefix() {
             return "DEBRICKED";
+        }
+    }
+
+    /**
+     * Helper implementation for sourceanalyzer tool.
+     */
+    private static final class ToolHelperSourceAnalyzer implements IToolHelper {
+        private static final String TOOL_NAME = "sourceanalyzer";
+        
+        @Override
+        public String getToolName() {
+            return TOOL_NAME;
+        }
+        
+        @Override
+        public String getDefaultBinaryName() {
+            return PlatformHelper.isWindows() ? "sourceanalyzer.exe" : "sourceanalyzer";
+        }
+        
+        @Override
+        public String getDefaultEnvPrefix() {
+            return "SOURCEANALYZER";
+        }
+
+        @Override
+        public boolean requiresToolDefinitions() {
+            return false;
         }
     }
 }

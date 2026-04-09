@@ -88,20 +88,24 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
         
         var jreResult = ToolJreInstallHelper.determineJreConfig(jreConfig);
         
-        // Update installation descriptor with JRE info
         var descriptor = installationResult.getInstallationDescriptor();
+
+        // Install embedded JRE if needed. Perform installation before persisting the descriptor
+        // so we don't save a descriptor that points to a non-existing embedded JRE directory.
+        if (jreResult.isRequiresEmbeddedJreInstall()) {
+            try {
+                installJre(installer);
+            } catch (Exception e) {
+                throw new FcliSimpleException("Failed to install embedded JRE: " + e.getMessage(), e);
+            }
+        }
+
+        // Update installation descriptor with JRE info and persist
         descriptor.setJreHome(jreResult.getJrePath());
         descriptor.setJreSource(jreResult.getJreSource());
         if (jreResult.getJreEnvVarName() != null) {
             descriptor.setJreEnvVar(jreResult.getJreEnvVarName());
         }
-        
-        // Install embedded JRE if needed
-        if (jreResult.isRequiresEmbeddedJreInstall()) {
-            installJre(installer);
-        }
-        
-        // Save the descriptor with updated JRE information
         descriptor.save(getTool().getToolName(), installer.getVersionDescriptor());
         
         installer.installGlobalBinScript(BinScriptType.bash, "scancentral", "bin/scancentral");

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -172,7 +173,8 @@ public class FoDAttributeHelper {
 
     public static FoDAttributeDescriptor createAttribute(UnirestInstance unirest, FoDAttributeCreateRequest request) {
         var response =  unirest.post(FoDUrls.ATTRIBUTES)
-                .header("Content-Type", "application/json")
+                // Use headerReplace to replace rather than add the Content-Type header (avoid duplicates with defaults)
+                .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
                 .body(request)
                 .asObject(JsonNode.class)
                 .getBody();

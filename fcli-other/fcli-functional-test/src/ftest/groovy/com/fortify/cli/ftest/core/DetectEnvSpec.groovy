@@ -8,20 +8,7 @@ import com.fortify.cli.ftest._common.spec.Prefix
 class DetectEnvSpec extends FcliBaseSpec {
     
     def setup() {
-        // Clear global action variables before each test to ensure clean state, as otherwise
-        // no detection logic will be run after the first test due to global.isCiInitialized
-        // already being true.
-        // Use reflection since ActionRunnerVars is not in functional test classpath.
-        try {
-            def actionRunnerVarsClass = Class.forName("com.fortify.cli.common.action.runner.ActionRunnerVars")
-            def globalValuesField = actionRunnerVarsClass.getDeclaredField("globalValues")
-            globalValuesField.setAccessible(true)
-            def globalValues = globalValuesField.get(null)
-            globalValues.removeAll()
-        } catch (ClassNotFoundException e) {
-            // If class not found, we're probably running with ExternalRunner (not ReflectiveRunner)
-            // In that case, each fcli invocation is a separate process with clean state anyway
-        }
+        // Execution context isolation is handled by the global extension
     }
     
     def "detect-env-github"() {

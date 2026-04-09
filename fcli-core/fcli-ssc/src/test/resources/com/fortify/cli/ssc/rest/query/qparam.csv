@@ -40,3 +40,28 @@
 # AND expression
 "nested?.reword?.wrapped=='test' && nested?.reword?.plain=='test2'", "rewordWrapped:""test""+and+rewordPlain:test2"
 
+# Plain matches (no wildcards, no special chars) - treated as equals
+"plain matches '54'","plain:54"
+"plain matches 'abc'","plain:abc"
+"wrapped matches 'abc'","wrapped:""abc"""
+
+# Matches with leading wildcard only
+"plain matches '.*abc'","plain:*abc*"
+
+# Matches with trailing wildcard only
+"plain matches 'abc.*'","plain:*abc*"
+
+# Matches with leading and trailing wildcards
+"plain matches '.*abc.*'","plain:*abc*"
+"wrapped matches '.*abc.*'","wrapped:""*abc*"""
+
+# Matches with complex regex (not supported) - should return null
+"plain matches '.*[0-9]+.*'",null
+"plain matches 'a.b'",null
+
+# Matches combined with AND on known property
+"plain matches '.*abc.*' && wrapped matches 'test'","plain:*abc*+and+wrapped:""test"""
+
+# Matches with unknown property - should return null
+"unknown matches 'abc'",null
+

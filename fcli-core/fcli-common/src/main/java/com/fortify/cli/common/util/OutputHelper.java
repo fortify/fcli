@@ -24,6 +24,7 @@ import java.util.function.Function;
 import org.apache.commons.io.output.NullOutputStream;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
 
 import lombok.Builder;
 import lombok.Data;
@@ -41,21 +42,23 @@ public class OutputHelper {
     @Builder.Default private final Charset charset = StandardCharsets.UTF_8;
     
     public final <T extends OutputStream> Result call(Callable<Integer> callable) throws Exception {
-        var orgStdout = System.out;
-        var orgStderr = System.err;
+        FcliExecutionOutputContext.installIfNeeded();
+        var orgStdout = FcliExecutionOutputContext.getOriginalOut();
+        var orgStderr = FcliExecutionOutputContext.getOriginalErr();
         try ( var stdoutStream = stdoutType.streamSupplier.apply(new NonClosingPrintStream(false, "System.out", orgStdout));
             var stderrStream = stderrType.streamSupplier.apply(new NonClosingPrintStream(false, "System.err", orgStderr));
             var stdoutPS = new PrintStream(stdoutStream);
             var stderrPS = new PrintStream(stderrStream) ) {
-            System.setOut(stdoutPS);
-            System.setErr(stderrPS);
+            // Set per-thread delegates so other threads are unaffected
+            FcliExecutionOutputContext.setThreadOut(stdoutPS);
+            FcliExecutionOutputContext.setThreadErr(stderrPS);
             int exitCode = callable.call();
-            System.out.flush();
-            System.err.flush();
+            stdoutPS.flush();
+            stderrPS.flush();
             return new Result(exitCode, stdoutType.stringFunction.apply(stdoutStream, charset), stderrType.stringFunction.apply(stderrStream, charset));
         } finally {
-            System.setOut(orgStdout);
-            System.setErr(orgStderr);
+            FcliExecutionOutputContext.clearThreadOut();
+            FcliExecutionOutputContext.clearThreadErr();
         }
     }
     

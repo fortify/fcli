@@ -32,17 +32,44 @@ import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
  * the new env command hierarchy.
  */
 public final class ToolInstallationsResolver {
-    private ToolInstallationsResolver() {}
+    private ToolInstallationsResolver() {
+    }
 
     public static ToolInstallations resolve(Tool tool) {
         var toolName = tool.getToolName();
-        var definition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
-        var lastInstalled = ToolInstallationDescriptor.loadLastModified(toolName);
-        var definedRecords = definition.getVersionsStream()
-                .map(vd -> createRecord(toolName, vd, lastInstalled, true));
-        var unknownRecords = getUnknownRecords(toolName, definition, lastInstalled);
-        var records = Stream.concat(definedRecords, unknownRecords)
-                .toList();
+
+        // Non-SCA tools keep strict behavior
+        if (tool.requiresToolDefinitions()) {
+            var definition = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
+            var lastInstalled = ToolInstallationDescriptor.loadLastModified(toolName);
+            var definedRecords = definition.getVersionsStream()
+                    .map(vd -> createRecord(toolName, vd, lastInstalled, true));
+            var unknownRecords = getUnknownRecords(toolName, definition, lastInstalled);
+            var records = Stream.concat(definedRecords, unknownRecords).toList();
+            return new ToolInstallations(tool, definition, lastInstalled, records);
+        }
+
+        // Tools with optional definitions: definitions may be absent
+        var optDef = ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName);
+        ToolDefinitionRootDescriptor definition;
+        ToolInstallationDescriptor lastInstalled = ToolInstallationDescriptor.loadLastModified(toolName);
+        Stream<ToolInstallationRecord> definedRecords;
+        Stream<ToolInstallationRecord> unknownRecords;
+
+        if (optDef.isPresent()) {
+            definition = optDef.get();
+            definedRecords = definition.getVersionsStream()
+                    .map(vd -> createRecord(toolName, vd, lastInstalled, true));
+            unknownRecords = getUnknownRecords(toolName, definition, lastInstalled);
+        } else {
+            // No sca.yaml: only installed versions, all treated as "known"
+            definition = buildSyntheticDefinitionFromInstallations(toolName);
+            definedRecords = definition.getVersionsStream()
+                    .map(vd -> createRecord(toolName, vd, lastInstalled, true));
+            unknownRecords = Stream.empty();
+        }
+
+        var records = Stream.concat(definedRecords, unknownRecords).toList();
         return new ToolInstallations(tool, definition, lastInstalled, records);
     }
 
@@ -71,7 +98,8 @@ public final class ToolInstallationsResolver {
         if (versionFileName.equals(toolName)) {
             return false;
         }
-        // Special handling for "unknown" version - don't try to look it up in definitions
+        // Special handling for "unknown" version - don't try to look it up in
+        // definitions
         if ("unknown".equals(versionFileName)) {
             return true;
         }
@@ -123,12 +151,15 @@ public final class ToolInstallationsResolver {
         public Stream<ToolInstallationRecord> stream() {
             return records.stream();
         }
+
         public Stream<ToolInstallationRecord> installedStream() {
             return records.stream().filter(ToolInstallationRecord::isInstalled);
         }
+
         public Optional<ToolInstallationRecord> defaultInstallation() {
             return installedStream().filter(ToolInstallationRecord::isDefault).findFirst();
         }
+
         public Optional<ToolInstallationRecord> findByVersion(String version) {
             return records.stream()
                     .filter(record -> record.versionDescriptor().getVersion().equals(version))
@@ -144,5 +175,29 @@ public final class ToolInstallationsResolver {
         public boolean isInstalled() {
             return installationDescriptor != null && StringUtils.isNotBlank(installationDescriptor.getInstallDir());
         }
+    }
+
+    private static ToolDefinitionRootDescriptor buildSyntheticDefinitionFromInstallations(String toolName) {
+        Path stateDir = ToolInstallationHelper.getToolsStatePath().resolve(toolName);
+        ToolDefinitionRootDescriptor def = new ToolDefinitionRootDescriptor();
+        File[] versionFiles = Files.isDirectory(stateDir)
+                ? stateDir.toFile().listFiles(File::isFile)
+                : null;
+        if (versionFiles == null || versionFiles.length == 0) {
+            def.setVersions(new ToolDefinitionVersionDescriptor[0]);
+            return def;
+        }
+        ToolDefinitionVersionDescriptor[] versions = Stream.of(versionFiles)
+                .map(File::getName)
+                .map(vName -> {
+                    ToolDefinitionVersionDescriptor vd = new ToolDefinitionVersionDescriptor();
+                    vd.setVersion(vName);
+                    vd.setStable(true);
+                    vd.setAliases(new String[0]);
+                    return vd;
+                })
+                .toArray(ToolDefinitionVersionDescriptor[]::new);
+        def.setVersions(versions);
+        return def;
     }
 }

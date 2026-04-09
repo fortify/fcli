@@ -42,6 +42,7 @@ usage:
 config:
   output: immediate
   mcp: exclude
+  sensitive-files.ephemeral-encrypt: true
   mask.env-vars:
     FOD_URL:
       description: FOD HOST NAME

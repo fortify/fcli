@@ -14,12 +14,10 @@ package com.fortify.cli.common.rest.cli.mixin;
 
 import java.util.function.Consumer;
 
-import com.fortify.cli.common.rest.unirest.IUnirestContextAware;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 
 /**
@@ -28,14 +26,13 @@ import picocli.CommandLine.Command;
  * than implementing {@link IUnirestContextAware} directly.
  */
 @Command
-public class UnirestContextMixin implements IUnirestContextAware {
-    @Getter @Setter private UnirestContext unirestContext;
-
+public class UnirestContextMixin {
+    public UnirestContext getUnirestContext() { return FcliExecutionContextHolder.current().getUnirestContext(); }
     public final UnirestInstance getUnirestInstance(String key, Consumer<UnirestInstance> configurer) {
-        return unirestContext.getUnirestInstance(key, configurer);
+        return getUnirestContext().getUnirestInstance(key, configurer);
     }
-    
+
     public final void close(String key) {
-        unirestContext.close(key);
+        FcliExecutionContextHolder.current().getUnirestContext().close();
     }
 }

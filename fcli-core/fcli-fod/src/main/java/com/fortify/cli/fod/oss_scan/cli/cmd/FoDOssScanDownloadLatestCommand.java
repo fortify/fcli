@@ -16,22 +16,34 @@ import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanDownloadLatestCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+
+import com.fortify.cli.common.rest.unirest.HttpHeader;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.DownloadLatest.CMD_NAME)
 public class FoDOssScanDownloadLatestCommand extends AbstractFoDScanDownloadLatestCommand {
     @Getter @Mixin private FoDOutputHelperMixins.DownloadLatest outputHelper;
+    @Option(names="--format", required = false, defaultValue = "CycloneDX")
+    private FoDEnums.SBOMFormat format;
 
     @Override
     protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanDescriptor scanDescriptor) {
-        return unirest.get("/api/v3/open-source-scans/{scanId}/sbom")
-                .routeParam("scanId", scanDescriptor.getScanId());
+        String path = "/api/v3/open-source-scans/{scanId}/sbom";
+        GetRequest req = unirest.get(path)
+            .routeParam("scanId", scanDescriptor.getScanId());
+        if ( format != null ) {
+            req = req.queryString("format", format.getValue());
+        }
+        // Use headerReplace to replace rather than add the Accept header (avoid duplicates with defaults)
+        return req.headerReplace(HttpHeader.ACCEPT, "application/octet-stream");
     }
 
     @Override

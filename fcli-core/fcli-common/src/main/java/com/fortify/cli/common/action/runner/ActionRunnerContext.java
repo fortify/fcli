@@ -32,6 +32,7 @@ import com.fortify.cli.common.action.model.ActionStepCheckEntry;
 import com.fortify.cli.common.action.model.ActionStepCheckEntry.CheckStatus;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
@@ -77,6 +78,11 @@ public class ActionRunnerContext implements AutoCloseable {
     
     public final ActionRunnerContext initialize() {
         config.getActionContextConfigurers().forEach(configurer->configurer.accept(this));
+        // Enable ephemeral encryption for this execution when configured on the action
+        var actionConfig = config.getAction().getConfig();
+        if ( actionConfig!=null && Boolean.TRUE.equals(actionConfig.getEphemeralEncrypt()) ) {
+            FcliExecutionContextHolder.current().enableEphemeralEncryption();
+        }
         return this;
     }
     

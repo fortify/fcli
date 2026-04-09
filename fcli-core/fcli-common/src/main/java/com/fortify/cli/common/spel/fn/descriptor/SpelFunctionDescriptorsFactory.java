@@ -24,9 +24,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.ArrayListWithAsJsonMethod;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.RenderSubFunctionsMode;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory;
@@ -304,7 +307,7 @@ public final class SpelFunctionDescriptorsFactory {
             return null;
         }
         
-        var mapper = com.fortify.cli.common.json.JsonHelper.getObjectMapper();
+        var mapper = JsonHelper.getObjectMapper();
         var structure = buildReturnTypeStructureNode(clazz, mapper);
         
         if (structure == null || structure.isEmpty()) {
@@ -318,7 +321,7 @@ public final class SpelFunctionDescriptorsFactory {
         }
     }
     
-    private static final ObjectNode buildReturnTypeStructureNode(Class<?> clazz, com.fasterxml.jackson.databind.ObjectMapper mapper) {
+    private static final ObjectNode buildReturnTypeStructureNode(Class<?> clazz, ObjectMapper mapper) {
         if (clazz == null || clazz == void.class || !clazz.isRecord()) {
             return null;
         }
@@ -334,7 +337,7 @@ public final class SpelFunctionDescriptorsFactory {
             var componentName = component.getName();
             try {
                 var accessor = component.getAccessor();
-                var jsonProperty = accessor.getAnnotation(com.fasterxml.jackson.annotation.JsonProperty.class);
+                var jsonProperty = accessor.getAnnotation(JsonProperty.class);
                 if (jsonProperty != null && !jsonProperty.value().isEmpty()) {
                     componentName = jsonProperty.value();
                 }

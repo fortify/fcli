@@ -45,6 +45,7 @@ public class FcliCommandSpecHelper {
     @Setter // Injected by DefaultFortifyCLIRunner
     private static CommandLine rootCommandLine;
     
+    
     public static final CommandLine getRootCommandLine() {
         if ( rootCommandLine==null ) {
             throw new FcliBugException("Root command line hasn't been configured upon fcli initialization");

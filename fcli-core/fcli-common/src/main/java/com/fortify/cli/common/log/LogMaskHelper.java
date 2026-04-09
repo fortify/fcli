@@ -14,8 +14,8 @@ package com.fortify.cli.common.log;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +42,7 @@ public final class LogMaskHelper {
     /** The log mask level to apply to logging entries. This is set by FortifyCLIDynamicInitializer based
      *  on the value of the generic fcli <pre>--log-mask</pre> option. */ 
     @Setter private LogMaskLevel logMaskLevel;
-    private final Map<LogMessageType, MultiPatternReplacer> multiPatternReplacers = new HashMap<>();
+    private final Map<LogMessageType, MultiPatternReplacer> multiPatternReplacers = new ConcurrentHashMap<>();
     
     /** Global pattern replacer for stdio masking (applies to all output regardless of message type) */
     private final MultiPatternReplacer stdioPatternReplacer = new MultiPatternReplacer();

@@ -20,8 +20,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.FileSystemException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -89,6 +91,26 @@ public final class FileUtils {
             return in.readAllBytes();
         }
     }
+
+    public static void writeStringWithOwnerOnlyPermissions(Path filePath, String contents) throws IOException {
+        var parent = filePath.getParent();
+        if ( parent!=null && !Files.exists(parent) ) {
+            Files.createDirectories(parent);
+        }
+        Files.writeString(filePath, contents==null?"":contents, StandardCharsets.UTF_8);
+        if ( FileSystems.getDefault().supportedFileAttributeViews().contains("posix") ) {
+            Files.setPosixFilePermissions(filePath, PosixFilePermissions.fromString("rw-------"));
+        } else {
+            File file = filePath.toFile();
+            file.setExecutable(false, false);
+            file.setReadable(true, true);
+            file.setWritable(true, true);
+        }
+    }
+
+    public static String readString(Path filePath) throws IOException {
+        return Files.readString(filePath, StandardCharsets.UTF_8);
+    }
     
     public static final void copyResource(String resourcePath, Path destinationFilePath, CopyOption... options) {
         var parent = destinationFilePath.getParent();
@@ -119,7 +141,7 @@ public final class FileUtils {
                 .forEach(name->move(sourcePath.resolve(name), targetPath.resolve(name)));
         }
     }
-    
+
     public static final void move(Path source, Path target) {
         try {
             Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
@@ -127,14 +149,14 @@ public final class FileUtils {
             throw new FcliSimpleException(String.format("Error moving %s to %s", source, target), e);
         }
     }
-    
+
     @SneakyThrows
     public static final void setAllFilePermissions(Path path, Set<PosixFilePermission> permissions, boolean recursive) {
         if ( path!=null && Files.exists(path) ) {
             if ( Files.isDirectory(path) ) {
                 try (Stream<Path> walk = Files.walk(path)) {
                     walk.forEach(p->{
-                        var isDir = Files.isDirectory(p); 
+                        var isDir = Files.isDirectory(p);
                         if ( isDir && recursive ) {
                             setAllFilePermissions(p, permissions, recursive);
                         } else if ( !isDir ) {
@@ -145,16 +167,17 @@ public final class FileUtils {
             }
         }
     }
-    
+
     @SneakyThrows
     public static final void setSinglePathPermissions(Path p, Set<PosixFilePermission> permissions) {
         try {
             Files.setPosixFilePermissions(p, permissions);
         } catch ( UnsupportedOperationException e ) {
             // Log warning?
+            // Ignore on filesystems that don't support POSIX permissions
         }
     }
-    
+
     public static final Function<Path,Path> defaultExtractPathResolver(Path targetPath, Function<Path,Path> sourcePathRewriter) {
         return sourcePath->{
             var newSourcePath = sourcePathRewriter==null ? sourcePath : sourcePathRewriter.apply(sourcePath);

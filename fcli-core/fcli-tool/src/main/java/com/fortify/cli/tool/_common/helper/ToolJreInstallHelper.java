@@ -14,6 +14,7 @@ package com.fortify.cli.tool._common.helper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.JreHelper;
+import com.fortify.cli.common.util.PlatformHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor.JreSource;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
@@ -60,6 +62,7 @@ public class ToolJreInstallHelper {
             return JreInstallResult.builder()
                 .jreSource(JreSource.EMBEDDED)
                 .jrePath(config.embeddedJrePath.toAbsolutePath().normalize().toString())
+                .requiresEmbeddedJreInstall(true)
                 .build();
         }
         
@@ -115,7 +118,7 @@ public class ToolJreInstallHelper {
                 
                 // Try GitHub Actions-style patterns (e.g., JAVA_HOME_17_X64)
                 {
-                    String githubActionsArch = com.fortify.cli.common.util.PlatformHelper.getGitHubActionsArchSuffix();
+                    String githubActionsArch = PlatformHelper.getGitHubActionsArchSuffix();
                     String envVarName = "JAVA_HOME_" + version + "_" + githubActionsArch;
                     JreInstallResult result = tryVersionEnvVar(envVarName, version);
                     if (result != null) return result;
@@ -207,7 +210,7 @@ public class ToolJreInstallHelper {
             pb.redirectErrorStream(true);
             Process process = pb.start();
             
-            boolean finished = process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
+            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
                 return "Process timed out after 5 seconds";

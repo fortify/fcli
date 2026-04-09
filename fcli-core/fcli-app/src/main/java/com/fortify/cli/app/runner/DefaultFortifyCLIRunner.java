@@ -30,12 +30,15 @@ import com.fortify.cli.common.util.FcliDockerHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import picocli.CommandLine;
+import picocli.CommandLine.Help;
+import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Help.Ansi.Text;
 import picocli.CommandLine.Model.ArgGroupSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 public final class DefaultFortifyCLIRunner {
+    public static Ansi ANSI = Help.Ansi.AUTO;
     // TODO See https://github.com/remkop/picocli/issues/2066
     //@Getter(value = AccessLevel.PRIVATE, lazy = true)
     //private final CommandLine commandLine = createCommandLine();
@@ -43,6 +46,7 @@ public final class DefaultFortifyCLIRunner {
     private static final CommandLine createCommandLine(boolean useWrapperHelp) {
         FortifyCLIStaticInitializer.getInstance().initialize();
         CommandLine cl = new CommandLine(FCLIRootCommands.class);
+        cl.setColorScheme(Help.defaultColorScheme(ANSI));
         FcliCommandSpecHelper.setRootCommandLine(cl);
         // Custom parameter exception handler is disabled for now as it causes https://github.com/fortify/fcli/issues/434.
         // See comments in I18nParameterExceptionHandler for more detail.

@@ -18,6 +18,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -78,7 +79,7 @@ public abstract class AbstractFoDDastAutomatedScanSetupCommand extends AbstractF
             int fileIdToUse = response.get("fileId").intValue();
             fileId = fileIdToUse;
             ArrayList<String> hosts = response.has("hosts") ?
-                objectMapper.convertValue(response.get("hosts"), new com.fasterxml.jackson.core.type.TypeReference<ArrayList<String>>() {}) :
+                objectMapper.convertValue(response.get("hosts"), new TypeReference<ArrayList<String>>() {}) :
                 new ArrayList<>();
             return new FileUploadResult(fileIdToUse, hosts);
         }

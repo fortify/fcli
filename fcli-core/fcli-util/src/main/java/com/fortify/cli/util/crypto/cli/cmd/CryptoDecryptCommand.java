@@ -20,6 +20,6 @@ import picocli.CommandLine.Command;
 public final class CryptoDecryptCommand extends AbstractCryptoCommand {
     @Override
     protected String process(String value) {
-        return EncryptionHelper.decrypt(value);
+        return EncryptionHelper.DEFAULT.decrypt(value);
     }
 }

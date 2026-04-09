@@ -15,6 +15,7 @@ package com.fortify.cli.common.util;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * Utility methods for platform detection and normalization.
@@ -80,7 +81,7 @@ public final class PlatformHelper {
             
             // Check for musl dynamic linker in /lib and /usr/lib
             // Common patterns: /lib/ld-musl-x86_64.so.1, /lib/ld-musl-aarch64.so.1, etc.
-            return java.util.stream.Stream.of("/lib", "/usr/lib")
+            return Stream.of("/lib", "/usr/lib")
                     .map(Path::of)
                     .filter(Files::exists)
                     .anyMatch(dir -> FileUtils.processMatchingFileStream(dir, "ld-musl-*", 1,

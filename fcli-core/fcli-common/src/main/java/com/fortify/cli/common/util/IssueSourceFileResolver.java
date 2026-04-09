@@ -15,7 +15,11 @@ package com.fortify.cli.common.util;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -136,10 +140,10 @@ public class IssueSourceFileResolver {
     private static final class SourceFileIndex {
         /** Full relative paths only, like src/main/java/com/fortify/X.java.
          * Values are lists to handle multiple files with the same name (e.g., index.js in multiple directories) */
-        private final Map<String,java.util.List<Path>> fullRelativePathsIndex;
+        private final Map<String,List<Path>> fullRelativePathsIndex;
         /** Full and partial relative paths, like src/main/java/com/fortify/X.java, com/fortify/X.java, X.java.
          * Values are lists to handle multiple files with the same name (e.g., index.js in multiple directories) */ 
-        private final Map<String,java.util.List<Path>> fullAndPartialRelativePathsIndex;
+        private final Map<String,List<Path>> fullAndPartialRelativePathsIndex;
         /** Optional source path (relative to workspace) for prioritizing matches */
         private final Path sourcePathRelative;
         
@@ -193,7 +197,7 @@ public class IssueSourceFileResolver {
          * Select the best candidate from a list of matching paths.
          * Priority: 1) paths under sourcePath, 2) shortest path (fewest components)
          */
-        private Path selectBestCandidate(java.util.List<Path> candidates) {
+        private Path selectBestCandidate(List<Path> candidates) {
             if ( candidates==null || candidates.isEmpty() ) { return null; }
             if ( candidates.size()==1 ) { return candidates.get(0); }
             
@@ -212,7 +216,7 @@ public class IssueSourceFileResolver {
             
             // Among remaining candidates, prefer shortest path
             var result = candidates.stream()
-                .min(java.util.Comparator.comparingInt(Path::getNameCount))
+                .min(Comparator.comparingInt(Path::getNameCount))
                 .orElse(candidates.get(0));
             
             if ( LOG.isDebugEnabled() && candidates.size() > 1 ) {
@@ -232,8 +236,8 @@ public class IssueSourceFileResolver {
         }
 
         @SneakyThrows
-        private static final Map<String, java.util.List<Path>> createFullRelativePathsIndex(Path workspacePath) {
-            var result = new HashMap<String, java.util.List<Path>>();
+        private static final Map<String, List<Path>> createFullRelativePathsIndex(Path workspacePath) {
+            var result = new HashMap<String, List<Path>>();
             if ( workspacePath!=null && Files.isDirectory(workspacePath) ) {
                 var normalizedWorkspacePath = workspacePath.normalize();
                 try (Stream<Path> stream = Files.walk(normalizedWorkspacePath)) {
@@ -242,15 +246,15 @@ public class IssueSourceFileResolver {
                             var fullRelativePath = normalizedWorkspacePath.relativize(p.normalize());
                             if ( LOG.isTraceEnabled() ) { LOG.trace("Adding source path {} to index", fullRelativePath); }
                             var key = pathToString(fullRelativePath);
-                            result.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(fullRelativePath);
+                            result.computeIfAbsent(key, k -> new ArrayList<>()).add(fullRelativePath);
                         });
                 }
             }
             return result;
         }
         
-        private static final Map<String, java.util.List<Path>> createFullAndPartialRelativePathsIndex(java.util.Collection<java.util.List<Path>> fullRelativePaths) {
-            var result = new HashMap<String, java.util.List<Path>>();
+        private static final Map<String, List<Path>> createFullAndPartialRelativePathsIndex(Collection<List<Path>> fullRelativePaths) {
+            var result = new HashMap<String, List<Path>>();
             fullRelativePaths.forEach(paths -> 
                 paths.forEach(fullRelativePath -> 
                     addPathToFullAndPartialRelativePathsIndex(result, fullRelativePath, fullRelativePath)
@@ -259,9 +263,9 @@ public class IssueSourceFileResolver {
             return result;
         }
         
-        private static final void addPathToFullAndPartialRelativePathsIndex(Map<String, java.util.List<Path>> index, Path fullRelativePath, Path partialRelativePath) {
+        private static final void addPathToFullAndPartialRelativePathsIndex(Map<String, List<Path>> index, Path fullRelativePath, Path partialRelativePath) {
             var key = pathToString(partialRelativePath);
-            index.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(fullRelativePath);
+            index.computeIfAbsent(key, k -> new ArrayList<>()).add(fullRelativePath);
             var nameCount = partialRelativePath.getNameCount(); 
             if ( nameCount > 1 ) {
                 addPathToFullAndPartialRelativePathsIndex(index, fullRelativePath, partialRelativePath.subpath(1, nameCount));

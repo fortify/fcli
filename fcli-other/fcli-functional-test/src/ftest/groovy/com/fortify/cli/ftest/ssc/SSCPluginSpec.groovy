@@ -29,6 +29,32 @@ import spock.lang.Stepwise
 class SSCPluginSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/ssc/fortify-ssc-parser-sample-1.0.2.jar") String samplePlugin
     
+    def setupSpec() {
+        // Ensure no leftover test plugin instances remain from previous runs
+        def pluginQuery = "ssc plugin list --store plugin -q pluginId=='com.example.ssc.parser.sample.alternative'"
+        while (true) {
+            try {
+                def listResult = Fcli.run(pluginQuery, { it.expectSuccess() })
+                // If only header or no data, break out
+                if ( listResult.stdout == null || listResult.stdout.size()<=1 || (listResult.stdout.size()==1 && listResult.stdout[0].equals("No data")) ) {
+                    break
+                }
+                // Uninstall first matching plugin (repeat until none left)
+                try {
+                    Fcli.run("ssc plugin uninstall ::plugin::get(0).id", { it.expectZeroExitCode() })
+                } catch (Exception e) {
+                    // If uninstall fails, log and break to avoid infinite loop
+                    println "Warning: failed to uninstall existing test plugin: ${e.message}"
+                    break
+                }
+            } catch (Exception e) {
+                // If listing fails for some reason, log and stop cleanup
+                println "Warning: failed to list plugins for cleanup: ${e.message}"
+                break
+            }
+        }
+    }
+    
     
     def "listAll"() {
         def args = "ssc plugin list --store plugins"

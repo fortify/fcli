@@ -49,7 +49,7 @@ public final class MultiPatternReplacer {
      * value is found in a given input string, it will be replaced with the given replacement
      * value.
      */
-    public final MultiPatternReplacer registerValue(String valueToReplace, String replacement) {
+    public synchronized final MultiPatternReplacer registerValue(String valueToReplace, String replacement) {
         valuesToReplace.put(valueToReplace, replacement);
         registerGlobalMatchPattern(Pattern.quote(valueToReplace));
         return this;
@@ -77,7 +77,7 @@ public final class MultiPatternReplacer {
      * won't match the future log message. As such, we want to register the token itself as a value to be
      * replaced.</p>
      */
-    public final MultiPatternReplacer registerPattern(String patternString, String defaultReplacement) {
+    public synchronized final MultiPatternReplacer registerPattern(String patternString, String defaultReplacement) {
         patternsToReplace.put(Pattern.compile(patternString), defaultReplacement);
         registerGlobalMatchPattern(patternString);
         return this;
@@ -87,7 +87,7 @@ public final class MultiPatternReplacer {
      * Add the given pattern string to the global match pattern, allowing us to perform all replacement
      * operations using a single pattern matching operation.
      */
-    private final void registerGlobalMatchPattern(String patternString) {
+    private synchronized final void registerGlobalMatchPattern(String patternString) {
         globalMatchPatterns.add(patternString);
         globalMatchPattern = Pattern.compile(String.join("|", globalMatchPatterns), Pattern.MULTILINE); // TODO Make flags configurable?
     }
@@ -97,7 +97,7 @@ public final class MultiPatternReplacer {
      * with our own {@link #registerValue(String, String)} method, to have any values identified by
      * patterns to be registered for replacement in future input strings. 
      */
-    public final String applyReplacements(String value) {
+    public synchronized final String applyReplacements(String value) {
         return applyReplacements(value, this::registerValue);
     }
     
@@ -114,7 +114,7 @@ public final class MultiPatternReplacer {
      *      future input strings.</li>
      * </ul>
      */
-    public final String applyReplacements(String value, BiConsumer<String,String> replacementValueConsumer) {
+    public synchronized final String applyReplacements(String value, BiConsumer<String,String> replacementValueConsumer) {
         if ( globalMatchPattern==null ) { return value; }
         return globalMatchPattern.matcher(value).replaceAll(mr->applyReplacement(mr, replacementValueConsumer));
     }
@@ -128,7 +128,7 @@ public final class MultiPatternReplacer {
      * quoted in order to apply the replacement as-is, without backslashes or dollar signs being interpreted
      * by the regex engine.
      */
-    private final String applyReplacement(MatchResult mr, BiConsumer<String,String> replacementValueConsumer) {
+    private synchronized final String applyReplacement(MatchResult mr, BiConsumer<String,String> replacementValueConsumer) {
         var matchingValue = mr.group();
         var result = valuesToReplace.get(matchingValue);
         if ( result == null ) { result = applyGroupReplacements(matchingValue, replacementValueConsumer); }
@@ -144,7 +144,7 @@ public final class MultiPatternReplacer {
      * value. Each capturing group value is also passed to the given replacement value consumer, to allow
      * each capturing group value to be considered for replacement in future input messages.
      */
-    private String applyGroupReplacements(String value, BiConsumer<String,String> replacementValueConsumer) {
+    private synchronized String applyGroupReplacements(String value, BiConsumer<String,String> replacementValueConsumer) {
         var entry = findMatchingMatcher(value);
         var matcher = entry.getKey();
         var defaultReplacement = entry.getValue();
@@ -167,7 +167,7 @@ public final class MultiPatternReplacer {
      * the given value. If no matching pattern is found, an {@link FcliBugException} will be 
      * thrown as we should always be able to find a matching pattern. 
      */
-    private final Map.Entry<Matcher, String> findMatchingMatcher(String value) {
+    private synchronized final Map.Entry<Matcher, String> findMatchingMatcher(String value) {
         for ( var entry : patternsToReplace.entrySet() ) {
             var matcher = entry.getKey().matcher(value);
             if ( matcher.matches() ) {

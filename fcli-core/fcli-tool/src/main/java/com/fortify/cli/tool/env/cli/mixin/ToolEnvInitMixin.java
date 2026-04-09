@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.tool.env.cli.mixin;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -124,7 +125,7 @@ public class ToolEnvInitMixin {
      * Scans for <TOOL>_VERSION or <TOOL>_HOME environment variables for all supported tools.
      */
     private List<String> autoDetectToolsFromEnvironment() {
-        return java.util.Arrays.stream(Tool.values())
+        return Arrays.stream(Tool.values())
             .filter(tool -> {
                 String versionVar = tool.getDefaultEnvPrefix() + "_VERSION";
                 String homeVar = tool.getDefaultEnvPrefix() + "_HOME";

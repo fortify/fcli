@@ -42,6 +42,7 @@ public class FoDUrls {
     public static final String RELEASE_SCANS = RELEASE + "/scans";
     public static final String STATIC_SCANS = ApiBase + "/releases/{relId}/static-scans";
     public static final String STATIC_SCANS_IMPORT = STATIC_SCANS + "/import-scan";
+    public static final String STATIC_SCANS_IMPORT_SARIF = STATIC_SCANS + "/import-sarif";
     public static final String STATIC_SCAN_START = STATIC_SCANS + "/start-scan";
     public static final String STATIC_SCAN_START_WITH_DEFAULTS = STATIC_SCANS + "/start-scan-with-defaults";
     public static final String STATIC_SCAN_START_ADVANCED = STATIC_SCANS + "/start-scan-advanced";

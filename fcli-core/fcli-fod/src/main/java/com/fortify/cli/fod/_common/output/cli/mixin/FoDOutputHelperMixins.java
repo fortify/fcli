@@ -84,6 +84,9 @@ public class FoDOutputHelperMixins {
     public static class ImportOpenSource extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-open-source";
     }
+    public static class ImportSarif extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "import-sarif";
+    }
 
     public static class Lookup extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "lookup";

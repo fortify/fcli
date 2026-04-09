@@ -16,6 +16,8 @@ import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
 import com.fortify.cli.common.output.transform.mask.StdIoMaskHelper;
 import com.fortify.cli.common.util.ConsoleHelper;
 
+import picocli.CommandLine.Help.Ansi;
+
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
  * and also registers some GraalVM features, allowing the application to run properly 
@@ -34,12 +36,14 @@ public class FortifyCLI {
 
     private static final int execute(String[] args) {
         try {
-            ConsoleHelper.installAnsiConsole();
+            ConsoleHelper.installJAnsiConsole();
+            // Need to do ANSI detection before installing StdIoMaskHelper, as the latter may interfere with ANSI detection
+            DefaultFortifyCLIRunner.ANSI = Ansi.AUTO.enabled() ? Ansi.ON : Ansi.AUTO;
             StdIoMaskHelper.INSTANCE.install();
             return DefaultFortifyCLIRunner.run(args);
         } finally {
             StdIoMaskHelper.INSTANCE.uninstall();
-            ConsoleHelper.uninstallAnsiConsole();
+            ConsoleHelper.uninstallJAnsiConsole();
         }
     }
 }

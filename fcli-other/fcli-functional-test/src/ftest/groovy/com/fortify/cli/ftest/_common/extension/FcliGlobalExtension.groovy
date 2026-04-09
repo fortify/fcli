@@ -37,8 +37,29 @@ public class FcliGlobalExtension implements IGlobalExtension {
         updateSpecName(spec);
         skipFeatures(spec);
         initFcliSessions(spec);
+        addFeatureExecutionContextInterceptor(spec);
         if ( !spec.skipped ) {
             spec.allFields.each { FieldInfo field -> initializeField(spec, field) }
+        }
+    }
+
+    private final void addFeatureExecutionContextInterceptor(SpecInfo spec) {
+        spec.allFeatures.each { feature ->
+            feature.addInterceptor { invocation ->
+                try {
+                    def holderClass = Class.forName("com.fortify.cli.common.cli.util.FcliExecutionContextHolder")
+                    def push = holderClass.getMethod("pushNew")
+                    def pop = holderClass.getMethod("pop")
+                    push.invoke(null)
+                    try {
+                        invocation.proceed()
+                    } finally {
+                        pop.invoke(null)
+                    }
+                } catch (ClassNotFoundException e) {
+                    invocation.proceed()
+                }
+            }
         }
     }
     

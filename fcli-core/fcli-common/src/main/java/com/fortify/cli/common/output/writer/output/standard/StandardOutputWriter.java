@@ -32,6 +32,7 @@ import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.util.AppendOnCloseWriterWrapper;
+import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.NonClosingPrintStream;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
@@ -94,7 +95,7 @@ public class StandardOutputWriter implements IOutputWriter {
     private IObjectNodeConsumer recordConsumer(IRecordWriter rw) {
         return r -> {
             rw.append(r);
-            return com.fortify.cli.common.util.Break.FALSE;
+            return Break.FALSE;
         };
     }
 

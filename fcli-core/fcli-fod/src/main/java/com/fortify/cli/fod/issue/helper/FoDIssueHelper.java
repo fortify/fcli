@@ -19,7 +19,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +31,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
+import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
@@ -49,8 +53,8 @@ public class FoDIssueHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     // Local cache for attribute descriptors used during bulk issue updates. Populated by loadAllAttributes().
-    private static final java.util.concurrent.ConcurrentHashMap<String, FoDAttributeDescriptor> ATTR_CACHE_BY_NAME = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.concurrent.ConcurrentHashMap<Integer, FoDAttributeDescriptor> ATTR_CACHE_BY_ID = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, FoDAttributeDescriptor> ATTR_CACHE_BY_NAME = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, FoDAttributeDescriptor> ATTR_CACHE_BY_ID = new ConcurrentHashMap<>();
     private static volatile boolean attributesPrefetched = false;
 
     /**
@@ -60,8 +64,8 @@ public class FoDIssueHelper {
     public static synchronized void loadAllAttributes(UnirestInstance unirest) {
         if ( attributesPrefetched ) return;
         // Use local temporary maps to build the cache so a failed fetch/parse doesn't leave partial data
-        var tmpById = new java.util.HashMap<Integer, FoDAttributeDescriptor>();
-        var tmpByName = new java.util.HashMap<String, FoDAttributeDescriptor>();
+        var tmpById = new HashMap<Integer, FoDAttributeDescriptor>();
+        var tmpByName = new HashMap<String, FoDAttributeDescriptor>();
         try {
             var request = unirest.get(FoDUrls.ATTRIBUTES);
             var body = request.asObject(ObjectNode.class).getBody();
@@ -87,9 +91,9 @@ public class FoDIssueHelper {
             }
             attributesPrefetched = true; // set only after successful population
         } catch (kong.unirest.UnirestException e) {
-            throw new com.fortify.cli.common.exception.FcliTechnicalException("Error loading attribute descriptors", e);
+            throw new FcliTechnicalException("Error loading attribute descriptors", e);
         } catch (Exception e) {
-            throw new com.fortify.cli.common.exception.FcliTechnicalException("Error processing attribute descriptors", e);
+            throw new FcliTechnicalException("Error processing attribute descriptors", e);
         }
     }
 
@@ -107,13 +111,13 @@ public class FoDIssueHelper {
             loadAllAttributes(unirest);
         }
         if ( nameOrId==null ) {
-            if ( failIfNotFound ) throw new com.fortify.cli.common.exception.FcliSimpleException("No attribute found for name or id: null");
+            if ( failIfNotFound ) throw new FcliSimpleException("No attribute found for name or id: null");
             return null;
         }
         try {
             int id = Integer.parseInt(nameOrId);
             var desc = ATTR_CACHE_BY_ID.get(id);
-            if ( desc==null && failIfNotFound ) throw new com.fortify.cli.common.exception.FcliSimpleException("No attribute found for name or id: " + nameOrId);
+            if ( desc==null && failIfNotFound ) throw new FcliSimpleException("No attribute found for name or id: " + nameOrId);
             return desc;
         } catch (NumberFormatException nfe) {
             var desc = ATTR_CACHE_BY_NAME.get(nameOrId);
@@ -121,7 +125,7 @@ public class FoDIssueHelper {
                 // try trimmed
                 desc = ATTR_CACHE_BY_NAME.get(nameOrId.trim());
             }
-            if ( desc==null && failIfNotFound ) throw new com.fortify.cli.common.exception.FcliSimpleException("No attribute found for name or id: " + nameOrId);
+            if ( desc==null && failIfNotFound ) throw new FcliSimpleException("No attribute found for name or id: " + nameOrId);
             return desc;
         }
     }
@@ -299,10 +303,10 @@ public class FoDIssueHelper {
             } else if ( status==404 ) {
                 return false;
             } else {
-                throw new com.fortify.cli.common.exception.FcliTechnicalException(String.format("Unexpected response checking issue existence: HTTP %d", status));
+                throw new FcliTechnicalException(String.format("Unexpected response checking issue existence: HTTP %d", status));
             }
         } catch (kong.unirest.UnirestException e) {
-            throw new com.fortify.cli.common.exception.FcliTechnicalException("Error checking issue existence", e);
+            throw new FcliTechnicalException("Error checking issue existence", e);
         }
     }
 
@@ -332,7 +336,7 @@ public class FoDIssueHelper {
                     .queryString("fields", "id,vulnId")
                     .queryString("includeFixed", "true")
                     .queryString("includeSuppressed", "true");
-            var stream = com.fortify.cli.fod._common.rest.helper.FoDPagingHelper.pagedRequest(request).stream()
+            var stream = FoDPagingHelper.pagedRequest(request).stream()
                 .map(HttpResponse::getBody)
                 .map(FoDInputTransformer::getItems)
                 .filter(items -> items!=null && items.isArray())
@@ -356,7 +360,7 @@ public class FoDIssueHelper {
                 }
             }
         } catch (Exception e) {
-            throw new com.fortify.cli.common.exception.FcliTechnicalException("Error retrieving vulnerabilities for release", e);
+            throw new FcliTechnicalException("Error retrieving vulnerabilities for release", e);
         }
         return result;
     }
@@ -412,7 +416,7 @@ public class FoDIssueHelper {
             try {
                 int providedId = Integer.parseInt(candidate);
                 for (var pv : picklist) {
-                    if ( java.util.Objects.equals(pv.getId(), providedId) ) {
+                    if ( Objects.equals(pv.getId(), providedId) ) {
                         return pv.getName();
                     }
                 }
@@ -438,20 +442,20 @@ public class FoDIssueHelper {
     /**
      * Result carrier for vuln filtering: kept (normalized ids to update), skipped (original values skipped), totalCount
      */
-    public static record VulnFilterResult(java.util.List<String> kept, java.util.List<String> skipped, int totalCount) {}
+    public static record VulnFilterResult(List<String> kept, List<String> skipped, int totalCount) {}
 
     /**
      * Filter a list of requested vuln identifiers (either internal 'id' or 'vulnId') against the release's
      * vulnerabilities. Preserves original order in the returned 'kept' list. Uses server-side paging and
      * early-exit when possible.
      */
-    public static VulnFilterResult filterRequestedVulnIds(UnirestInstance unirest, String releaseId, java.util.List<String> requested) {
+    public static VulnFilterResult filterRequestedVulnIds(UnirestInstance unirest, String releaseId, List<String> requested) {
         int totalCount = requested==null ? 0 : requested.size();
         if ( requested==null || requested.isEmpty() ) {
             return new VulnFilterResult(new ArrayList<>(), new ArrayList<>(), totalCount);
         }
         // Build normalized requested set for lookup/early-exit
-        var requestedSet = new java.util.HashSet<String>();
+        var requestedSet = new HashSet<String>();
         for ( String vid : requested ) {
             String normalized = normalizeVulnId(vid);
             if ( normalized!=null ) { requestedSet.add(normalized); }

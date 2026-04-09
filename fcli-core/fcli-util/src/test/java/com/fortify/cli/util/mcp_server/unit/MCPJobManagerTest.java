@@ -55,7 +55,7 @@ class MCPJobManagerTest {
         // Arrange
         var counter = new AtomicInteger();
         String testContent = "{\"result\":\"test\"}";
-        CallToolResult expectedResult = new CallToolResult(testContent, false);
+        CallToolResult expectedResult = CallToolResult.builder().addTextContent(testContent).isError(false).build();
         
         // Act
         CallToolResult result = jobManager.execute(
@@ -89,7 +89,7 @@ class MCPJobManagerTest {
             () -> {
                 Thread.sleep(2000);
                 counter.incrementAndGet();
-                return new CallToolResult("{\"completed\":true}", false);
+                return CallToolResult.builder().addTextContent("{\"completed\":true}").isError(false).build();
             },
             MCPJobManager.recordCounter(counter),
             false
@@ -144,7 +144,7 @@ class MCPJobManagerTest {
                     counter.incrementAndGet();
                     Thread.sleep(50);
                 }
-                return new CallToolResult("completed with " + counter.get() + " records", false);
+                return CallToolResult.builder().addTextContent("completed with " + counter.get() + " records").isError(false).build();
             },
             MCPJobManager.recordCounter(counter),
             false
@@ -218,7 +218,7 @@ class MCPJobManagerTest {
             "ticking_test_tool",
             () -> {
                 Thread.sleep(100);
-                return new CallToolResult("completed", false);
+                return CallToolResult.builder().addTextContent("completed").isError(false).build();
             },
             MCPJobManager.ticking(counter),
             false

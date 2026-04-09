@@ -22,6 +22,7 @@ import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.expression.spel.ast.OpEQ;
+import org.springframework.expression.spel.ast.OperatorMatches;
 
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.spel.AbstractSpelNodeVisitor;
@@ -66,6 +67,7 @@ public final class SSCQParamGenerator implements IServerSideQueryParamValueGener
             LOG.trace("Visiting node: "+node);
             JavaHelper.as(node, OpAnd.class).ifPresent(this::visitAnd);
             JavaHelper.as(node, OpEQ.class).ifPresent(this::visitEQ);
+            JavaHelper.as(node, OperatorMatches.class).ifPresent(this::visitMatches);
         }
         
         private void visitAnd(OpAnd node) {
@@ -82,6 +84,34 @@ public final class SSCQParamGenerator implements IServerSideQueryParamValueGener
             }
         }
         
+        private void visitMatches(OperatorMatches node) {
+            var propertyName = SpelNodeHelper.operand(node, SpelNodeHelper::qualifiedPropertyName).orElse(null);
+            var literalString = SpelNodeHelper.operand(node, SpelNodeHelper::literalString).orElse(null);
+            LOG.trace("OperatorMatches property: {}, literal: {}", propertyName, literalString);
+            if ( propertyName!=null && literalString!=null ) {
+                addMatches(propertyName, literalString);
+            }
+        }
+
+        private void addMatches(String propertyName, String pattern) {
+            String qName = qNamesByPropertyPaths.get(propertyName);
+            if ( qName == null ) { return; }
+            var hasLeadingWildcard = pattern.startsWith(".*");
+            var hasTrailingWildcard = pattern.endsWith(".*");
+            var stripped = pattern
+                    .replaceAll("^(\\.\\*)+", "")
+                    .replaceAll("(\\.\\*)+$", "");
+            // If remaining pattern has regex special chars, cannot translate to q-param
+            if ( stripped.matches(".*[.\\[\\](){}*+?^$|\\\\].*") ) {
+                LOG.trace("Skipping OperatorMatches with complex regex pattern: {}", pattern);
+                return;
+            }
+            boolean hasWildcard = hasLeadingWildcard || hasTrailingWildcard;
+            String value = hasWildcard ? "*" + stripped + "*" : stripped;
+            Function<String, String> valueGenerator = valueGeneratorsByPropertyPaths.get(propertyName);
+            addQuery(String.format("%s:%s", qName, valueGenerator.apply(value)));
+        }
+
         private void addEQ(String propertyName, String value) {
             String qName = qNamesByPropertyPaths.get(propertyName);
             if ( qName!=null ) {

@@ -19,8 +19,6 @@ import com.fortify.cli.common.cli.mixin.ICommandAware;
 import com.fortify.cli.common.log.LogMaskHelper;
 import com.fortify.cli.common.log.LogMaskSource;
 import com.fortify.cli.common.log.MaskValue;
-import com.fortify.cli.common.rest.unirest.IUnirestContextAware;
-import com.fortify.cli.common.rest.unirest.UnirestContext;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDockerHelper;
 import com.fortify.cli.common.util.JavaHelper;
@@ -47,10 +45,10 @@ import picocli.CommandLine.ParseResult;
  * for performance.
  */
 @Slf4j
-public final class FcliInitializationExecutionStrategy implements IExecutionStrategy {
+public final class FcliExecutionStrategy implements IExecutionStrategy {
     private final IExecutionStrategy delegate;
 
-    public FcliInitializationExecutionStrategy(IExecutionStrategy delegate) {
+    public FcliExecutionStrategy(IExecutionStrategy delegate) {
         this.delegate = delegate;
     }
 
@@ -58,30 +56,26 @@ public final class FcliInitializationExecutionStrategy implements IExecutionStra
     public int execute(ParseResult parseResult) throws CommandLine.ExecutionException {
         var leaf = getLeafParseResult(parseResult);
         var leafSpec = leaf.commandSpec();
-        // Perform initialization (command spec injection & logging) and Unirest context management
-        try (var outHandler = new NonClosingOutHandler(); var unirestContext = new UnirestContext()) {
-            log.debug("Starting command execution with {}: {}", unirestContext.identity(), leafSpec.qualifiedName());
-            initializeCommand(leafSpec, unirestContext);
-            var result = delegate.execute(parseResult);
-            log.debug("Finished command execution with {}: {}", unirestContext.identity(), leafSpec.qualifiedName());
-            return result;
+        var execCtx = FcliExecutionContextHolder.current();
+        try (var outHandler = new NonClosingOutHandler()) {  
+            log.debug("Starting command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
+            initializeCommand(leafSpec);
+            return delegate.execute(parseResult);
+        } finally {
+            log.debug("Finished command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
         }
     }
 
-    private void initializeCommand(CommandSpec commandSpec, UnirestContext unirestContext) {
+    private void initializeCommand(CommandSpec commandSpec) {
         // Register log masks for option values (cheap operation separate from main iteration)
         registerLogMasks(commandSpec);
         // Log version & args before actual command execution
         logVersionAndArgs(commandSpec);
-        // Single pass over all user objects to inject CommandSpec and UnirestContext
+        // Single pass over all user objects to inject CommandSpec.
         FcliCommandSpecHelper.getAllUserObjectsStream(commandSpec)
             .forEach(o -> {
                 if ( o instanceof ICommandAware cAware ) {
                     cAware.setCommandSpec(commandSpec);
-                }
-                if ( o instanceof IUnirestContextAware uAware ) {
-                    log.debug("Injecting {} into: {}", unirestContext.identity(), o.getClass().getName());
-                    uAware.setUnirestContext(unirestContext);
                 }
             });
     }
@@ -115,21 +109,24 @@ public final class FcliInitializationExecutionStrategy implements IExecutionStra
     private static final class NonClosingOutHandler implements AutoCloseable {
         private final PrintStream orgOut;
         private final PrintStream orgErr;
-        
+
         public NonClosingOutHandler() {
-            // Avoid any fcli code from closing stdout/stderr streams
-            log.debug("Installing NonClosingPrintStream for stdout/stderr");
-            this.orgOut = System.out;
-            this.orgErr = System.err;
-            System.setOut(new NonClosingPrintStream("System.out", orgOut));
-            System.setErr(new NonClosingPrintStream("System.err", orgErr));
+            // Ensure delegating streams are installed once per JVM
+            FcliExecutionOutputContext.installIfNeeded();
+            log.debug("Installing NonClosingPrintStream delegates for stdout/stderr");
+            this.orgOut = FcliExecutionOutputContext.getOriginalOut();
+            this.orgErr = FcliExecutionOutputContext.getOriginalErr();
+            // Instead of globally replacing System.out/err, set per-thread delegates
+            FcliExecutionOutputContext.setThreadOut(new NonClosingPrintStream("System.out", orgOut));
+            FcliExecutionOutputContext.setThreadErr(new NonClosingPrintStream("System.err", orgErr));
         }
-        
+
         @Override
         public void close() {
-            System.setOut(orgOut);
-            System.setErr(orgErr);
-            log.debug("Restored original stdout/stderr PrintStreams");
+            // Clear thread-local delegates so delegating streams fall back to originals
+            FcliExecutionOutputContext.clearThreadOut();
+            FcliExecutionOutputContext.clearThreadErr();
+            log.debug("Cleared thread-local stdout/stderr delegates");
         }
     }
 }

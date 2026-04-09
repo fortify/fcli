@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest configurable exit-code action
+  description: Action configurable via CLI options to set exit code, trigger failing check, and run a failing command
+
+cli.options:
+  exit-code:
+    names: --exit-code
+    description: Exit code to set via exit step
+    type: int
+    required: false
+    default: "0"
+  fail-check:
+    names: --fail-check
+    description: Whether to run a failing check
+    type: boolean
+    required: false
+    default: "false"
+  run-failing-cmd:
+    names: --run-failing-cmd
+    description: Whether to run a failing fcli command
+    type: boolean
+    required: false
+    default: "false"
+
+steps:
+  - check:
+      FAIL_CHECK:
+        fail.if: ${cli['fail-check']==true}
+  - if: ${cli['run-failing-cmd']==true}
+    run.fcli: 
+      FAIL_CMD: fcli nonexistent-command
+  - exit: ${cli['exit-code']}

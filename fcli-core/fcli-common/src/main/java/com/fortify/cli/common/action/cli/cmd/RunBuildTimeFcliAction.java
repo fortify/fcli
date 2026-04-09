@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.cli.cmd;
 
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
+
 import java.util.Arrays;
 
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,7 @@ public class RunBuildTimeFcliAction {
             var actionPath = args[1];
             var actionArgs = args.length==2 ? new String[]{} : Arrays.copyOfRange(args, 2, args.length);
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+            Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
             rootLogger.detachAndStopAllAppenders();
             rootLogger.setLevel(Level.TRACE);
             configureLogFile(rootLogger, logFile);

@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.app.runner.util;
 
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -91,7 +93,7 @@ public final class FortifyCLIDynamicInitializer {
             // Configure logging if logLevel is not set to NONE, and logFile and/or logLevel 
             // have been specified
             LoggerContext loggerContext = initializeLoggerContext();
-            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+            Logger rootLogger = loggerContext.getLogger(ROOT_LOGGER_NAME);
             configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile.getAbsolutePath());
             configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
         }

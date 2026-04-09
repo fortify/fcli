@@ -14,6 +14,7 @@ package com.fortify.cli.common.output.transform.mask;
 
 import java.io.PrintStream;
 
+import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
 import com.fortify.cli.common.log.LogMaskHelper;
 
 import lombok.AccessLevel;
@@ -41,13 +42,14 @@ public final class StdIoMaskHelper {
         if (installed) {
             return this;
         }
-        
-        originalOut = System.out;
-        originalErr = System.err;
-        
-        System.setOut(new MaskingPrintStream(originalOut, this::mask));
-        System.setErr(new MaskingPrintStream(originalErr, this::mask));
-        
+        FcliExecutionOutputContext.installIfNeeded();
+
+        originalOut = FcliExecutionOutputContext.getOriginalOut();
+        originalErr = FcliExecutionOutputContext.getOriginalErr();
+
+        FcliExecutionOutputContext.setThreadOut(new MaskingPrintStream(originalOut, this::mask));
+        FcliExecutionOutputContext.setThreadErr(new MaskingPrintStream(originalErr, this::mask));
+
         installed = true;
         return this;
     }
@@ -60,14 +62,9 @@ public final class StdIoMaskHelper {
         if (!installed) {
             return this;
         }
-        
-        if (originalOut != null) {
-            System.setOut(originalOut);
-        }
-        if (originalErr != null) {
-            System.setErr(originalErr);
-        }
-        
+        FcliExecutionOutputContext.clearThreadOut();
+        FcliExecutionOutputContext.clearThreadErr();
+
         originalOut = null;
         originalErr = null;
         installed = false;

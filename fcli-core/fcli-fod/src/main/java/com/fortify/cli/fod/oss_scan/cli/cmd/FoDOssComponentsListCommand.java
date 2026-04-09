@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.fod.oss_scan.cli.cmd;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,7 +76,7 @@ public final class FoDOssComponentsListCommand extends AbstractFoDJsonNodeOutput
                 ? "Retrieving OSS components for application " + applicationId + " and scan type " + scanType.name()
                 : "Retrieving OSS components for release " + releaseId + " and scan type " + scanType.name());
         ArrayNode result = JsonHelper.getObjectMapper().createArrayNode();
-        Map<String, Object> queryParams = new java.util.HashMap<>();
+        Map<String, Object> queryParams = new HashMap<>();
         if (applicationId != null) {
             queryParams.put("filters", "applicationId:" + applicationId);
         }

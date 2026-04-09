@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.ci.github;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -165,7 +166,7 @@ public class GitHubRepo {
             ((ObjectNode) createBody.get("output")).remove("annotations");
         }
         if (!createBody.has("started_at")) {
-            createBody.put("started_at", java.time.Instant.now().toString());
+            createBody.put("started_at", Instant.now().toString());
         }
         return createBody;
     }
@@ -203,7 +204,7 @@ public class GitHubRepo {
             updateBody.put("conclusion", conclusion);
         }
         if ("completed".equals(status) && !hasCompletedAt) {
-            updateBody.put("completed_at", java.time.Instant.now().toString());
+            updateBody.put("completed_at", Instant.now().toString());
         }
         updateCheckRun(checkRunId, updateBody);
     }

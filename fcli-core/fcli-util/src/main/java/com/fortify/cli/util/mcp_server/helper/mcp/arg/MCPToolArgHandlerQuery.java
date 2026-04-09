@@ -97,8 +97,8 @@ public final class MCPToolArgHandlerQuery implements IMCPToolArgHandler {
         schemaPropertyNames.forEach(p->properties.set(p, getPropertySchema(spec, p)));
         return JsonHelper.getObjectMapper().createObjectNode()
                 .put("type", "object")
-                .put("description", "TODO")
-                .put("title", "TODO")
+                .put("description", "Filter results of this MCP tool using the given queries; the query keys should be one of the following: "+String.join(", ", schemaPropertyNames)+". Queries must be passed in proper JSON format as defined by this schema.")
+                .put("title", "Query properties")
                 .set("properties", properties);
     }
 

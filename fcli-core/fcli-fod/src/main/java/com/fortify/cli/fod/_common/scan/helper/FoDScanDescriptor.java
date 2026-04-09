@@ -12,12 +12,17 @@
  */
 package com.fortify.cli.fod._common.scan.helper;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,6 +40,7 @@ public class FoDScanDescriptor extends JsonNodeHolder {
     private String microserviceName;
     private String analysisStatusType;
     private String status;
+    private ArrayList<FoDAttributeDescriptor> attributes;
 
     @JsonIgnore
     public String getReleaseAndScanId() {
@@ -45,4 +51,15 @@ public class FoDScanDescriptor extends JsonNodeHolder {
     private Date startedDateTime;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyy-MM-dd'T'hh:mm:ss")
     private Date completedDateTime;
+
+    public Map<Integer, String> attributesAsMap() {
+        if (attributes == null || attributes.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Integer, String> attrMap = new HashMap<>();
+        for (FoDAttributeDescriptor attr : attributes) {
+            attrMap.put(attr.getId(), attr.getValue());
+        }
+        return Collections.unmodifiableMap(attrMap);
+    }
 }

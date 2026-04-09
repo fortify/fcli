@@ -27,6 +27,8 @@ import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 import com.fortify.cli.sc_dast.scan_policy.cli.mixin.SCDastScanPolicyResolverMixin;
 import com.fortify.cli.sc_dast.scan_settings.cli.mixin.SCDastScanSettingsResolverMixin;
 
+import com.fortify.cli.common.rest.unirest.HttpHeader;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -54,8 +56,9 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         String scanId = unirest.post("/api/v2/scans/start-scan-cicd")
-            .accept("application/json")
-            .header("Content-Type", "application/json")
+            // Use headerReplace to replace rather than add headers (avoid duplicates with defaults)
+            .headerReplace(HttpHeader.ACCEPT, "application/json")
+            .headerReplace(HttpHeader.CONTENT_TYPE, "application/json")
             .body(getBody(unirest))
             .asObject(JsonNode.class)
             .getBody().get("id").asText();

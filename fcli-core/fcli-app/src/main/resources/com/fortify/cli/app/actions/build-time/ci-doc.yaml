@@ -599,7 +599,7 @@ formatters:
                         custom-scan:
                           runs-on: ubuntu-latest
                           steps:
-                            - uses: actions/checkout@v4
+                            - uses: actions/checkout@v6
                             - uses: fortify/github-action/setup@v3
                               with:
                                 fcli: bootstrapped               # Set up bootstrapped fcli version. May also specify specific version, but
@@ -764,7 +764,7 @@ formatters:
                           #   security-events: write   # Required for publishing security reports to GitHub Security tab
                           #   pull-requests: write     # Required if DO_PR_COMMENT is set to true
                           steps:
-                            - uses: actions/checkout@v4            # Check out source code
+                            - uses: actions/checkout@v6            # Check out source code
                             - uses: actions/setup-<build-tool>@vX  # Set up build tool(s) required to build your project
                             - uses: fortify/github-action@v3       # Run Fortify scans
                               env:
@@ -784,7 +784,7 @@ formatters:
                         scan:
                           runs-on: ubuntu-latest
                           steps:
-                            - uses: actions/checkout@v4
+                            - uses: actions/checkout@v6
                             - uses: fortify/github-action@v3.0.0 # Centrally managed version
                               env:
                       $eval{#indent(snippets.tipsEnvVars, '          ')}

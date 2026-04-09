@@ -31,6 +31,8 @@ import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.tool._common.helper.Tool;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstallationsResolver;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -59,7 +61,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
     private String workDir = System.getProperty("user.dir");
     @Parameters(descriptionKey="fcli.tool.run.tool-args")
     @Getter private List<String> toolArgs;
-    
+
     @Override
     public final Integer call() throws Exception {
         validateWorkingDirectory();
@@ -71,13 +73,13 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
                 return call(baseCommands.get(0));
             } catch ( Exception e ) {
                 if ( baseCommands.size()==1) { throw e; } // No more base commands
-                LOG.debug("Command execution failed ({}): {}; trying fallback command", 
+                LOG.debug("Command execution failed ({}): {}; trying fallback command",
                     e.getClass().getSimpleName(), e.getMessage());
                 baseCommands.remove(0);
             }
         }
     }
-    
+
     private void validateWorkingDirectory() {
         File workDirFile = new File(workDir);
         if (!workDirFile.exists()) {
@@ -91,7 +93,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
             ));
         }
     }
-    
+
     private final Integer call(List<String> baseCmd) throws Exception {
         if ( baseCmd==null ) { throw new FcliBugException("Base command to execute may not be null"); }
         var fullCmd = Stream.of(baseCmd, getToolArgs())
@@ -102,7 +104,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         var pb = new ProcessBuilder()
                 .command(fullCmd)
                 .directory(new File(workDir))
-                // .inheritIO(); 
+                // .inheritIO();
                 // Can't use inheritIO as this as it may inherit original stdout/stderr, rather than
                 // those created by OutputHelper.OutputType (for example through FcliCommandExecutor).
                 // Instead, we use pipes and manually copy the output to current System.out/System.err.
@@ -125,7 +127,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         }
         return process.exitValue();
     }
-    
+
     private static void inheritIO(final InputStream src, final PrintStream dest) {
         new Thread(new Runnable() {
             @SneakyThrows
@@ -136,7 +138,8 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
     }
 
     private final ToolInstallationDescriptor getToolInstallationDescriptor() {
-        var installations = ToolInstallationsResolver.resolve(getTool());
+        var tool = getTool();
+        var installations = ToolInstallationsResolver.resolve(tool);
         var toolName = installations.tool().getToolName();
         if (StringUtils.isBlank(versionToRun)) {
             return checkNotNull(
@@ -145,6 +148,22 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
                             .orElse(null),
                     "No tool installations detected");
         }
+
+        // SCA: allow run without sca.yaml
+        if (!tool.requiresToolDefinitions()
+                && ToolDefinitionsHelper.tryGetToolDefinitionRootDescriptor(toolName).isEmpty()) {
+            var descriptor = installations.findByVersion(versionToRun)
+                    .map(ToolInstallationsResolver.ToolInstallationRecord::installationDescriptor)
+                    .orElseGet(() -> {
+                        ToolDefinitionVersionDescriptor vd = new ToolDefinitionVersionDescriptor();
+                        vd.setVersion(versionToRun);
+                        vd.setStable(true);
+                        vd.setAliases(new String[0]);
+                        return ToolInstallationDescriptor.load(toolName, vd);
+                    });
+            return checkNotNull(descriptor, "No tool installation detected for version " + versionToRun);
+        }
+
         var versionDescriptor = installations.definition().getVersion(versionToRun);
         var descriptor = installations.findByVersion(versionDescriptor.getVersion())
                 .map(ToolInstallationsResolver.ToolInstallationRecord::installationDescriptor)
@@ -158,7 +177,7 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         }
         return descriptor;
     }
-    
+
     protected abstract Tool getTool();
     protected List<List<String>> getBaseCommands(ToolInstallationDescriptor descriptor) {
         return List.of(getBaseCommand(descriptor));
@@ -167,5 +186,5 @@ public abstract class AbstractToolRunCommand extends AbstractRunnableCommand {
         return null;
     }
     protected void updateProcessBuilder(ProcessBuilder pb) {};
-    
+
 }

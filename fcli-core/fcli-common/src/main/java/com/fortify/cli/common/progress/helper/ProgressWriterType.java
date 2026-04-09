@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.ConsoleHelper;
 
@@ -63,18 +64,19 @@ public enum ProgressWriterType {
         protected final PrintStream originalStderr;
 
         protected AbstractProgressWriter() {
-            this.originalStdout = System.out;
-            this.originalStderr = System.err;
+            FcliExecutionOutputContext.installIfNeeded();
+            this.originalStdout = FcliExecutionOutputContext.getOriginalOut();
+            this.originalStderr = FcliExecutionOutputContext.getOriginalErr();
             this.stdout = new ProgressWriterPrintStreamWrapper("System.out", originalStdout, this);
             this.stderr = new ProgressWriterPrintStreamWrapper("System.err", originalStderr, this);
-            System.setOut(stdout);
-            System.setErr(stderr);
+            FcliExecutionOutputContext.setThreadOut(stdout);
+            FcliExecutionOutputContext.setThreadErr(stderr);
         }
 
         @Override
         public void close() {
-            System.setOut(originalStdout);
-            System.setErr(originalStderr);
+            FcliExecutionOutputContext.clearThreadOut();
+            FcliExecutionOutputContext.clearThreadErr();
             clearProgress();
         }
         

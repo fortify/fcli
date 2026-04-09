@@ -282,7 +282,7 @@ public class SpelFunctionsStandard {
     public static final String encrypt(
             @SpelFunctionParam(name="input", desc="the string to encrypt") String s)
     {
-        return EncryptionHelper.encrypt(s);
+        return EncryptionHelper.DEFAULT.encrypt(s);
     }
 
     @SpelFunction(cat=fcli, desc = "Decrypts the given encrypted string using the fcli decryption mechanism, compatible with the 'fcli util crypto' commands.",
@@ -290,7 +290,7 @@ public class SpelFunctionsStandard {
     public static final String decrypt(
             @SpelFunctionParam(name="input", desc="the encrypted string to decrypt") String s)
     {
-        return EncryptionHelper.decrypt(s);
+        return EncryptionHelper.DEFAULT.decrypt(s);
     }
 
     @SpelFunction(cat=util, returns="JSON string representation of the given object")

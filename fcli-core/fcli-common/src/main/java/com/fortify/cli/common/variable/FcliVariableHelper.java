@@ -90,7 +90,7 @@ public final class FcliVariableHelper {
         try {
             String variableContents = FcliDataHelper.readFile(variablePath, failIfUnavailable);
             if ( descriptor.encrypted ) {
-                variableContents = EncryptionHelper.decrypt(variableContents);
+                variableContents = EncryptionHelper.DEFAULT.decrypt(variableContents);
             }
             saveVariableDescriptor(descriptor);
             return variableContents==null ? null : objectMapper.readValue(variableContents, JsonNode.class);
@@ -115,7 +115,7 @@ public final class FcliVariableHelper {
         VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, singular, encrypt);
         saveVariableDescriptor(descriptor);
         VariableContentsWriter vcw = new VariableContentsWriter(getVariableContentsAbsolutePath(variableName).toString());
-        return encrypt ? new EncryptionHelper.EncryptWriter(vcw) : vcw;
+        return encrypt ? EncryptionHelper.DEFAULT.new EncryptWriter(vcw) : vcw;
     }
     
     public static final String[] resolveVariables(String[] args) {
@@ -173,7 +173,7 @@ public final class FcliVariableHelper {
     private static void saveVariableContents(VariableDescriptor descriptor, JsonNode variableContents) {
         String variableContentsString = objectMapper.writeValueAsString(variableContents);
         if ( descriptor.encrypted ) {
-            variableContentsString = EncryptionHelper.encrypt(variableContentsString);
+            variableContentsString = EncryptionHelper.DEFAULT.encrypt(variableContentsString);
         }
         FcliDataHelper.saveFile(getVariableContentsRelativePath(descriptor.getName()), variableContentsString, true);
     }

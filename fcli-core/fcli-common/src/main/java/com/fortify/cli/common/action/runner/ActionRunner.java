@@ -13,7 +13,6 @@
 package com.fortify.cli.common.action.runner;
 
 import java.io.OutputStreamWriter;
-import java.util.Collections;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +52,6 @@ public class ActionRunner {
     // TODO Review try/close/finally blocks and handling of output in delayed console writers
     //      to see whether anything can be simplified, and whether there are any bugs.
     public final Integer _run(String[] args) {
-        Map<ActionStepCheckEntry, CheckStatus> checkStatuses = Collections.emptyMap();
         CheckStatus overallCheckstatus = CheckStatus.SKIP;
         int exitCode = 0;
         var progressWriter = config.getProgressWriter();
@@ -64,14 +62,13 @@ public class ActionRunner {
             try {
                 new ActionStepProcessorSteps(ctx, vars, config.getAction().getSteps()).process();
             } finally {
-                processAndPrintCheckStatuses(ctx.getCheckStatuses());
-                overallCheckstatus = processAndPrintCheckStatuses(checkStatuses);
+                overallCheckstatus = processAndPrintCheckStatuses(ctx);
             }
             // Retrieve exit code set by action's exit step (if any)
             exitCode = ctx.getExitCode();
         }
-        // Determine final exit code
-        return exitCode==0 && overallCheckstatus==CheckStatus.FAIL ? 100 : exitCode;
+        // Determine final exit code: add 100 when checks failed
+        return exitCode + (overallCheckstatus==CheckStatus.FAIL ? 100 : 0);
     }
 
     private ActionRunnerContext createContext(IProgressWriterI18n progressWriter, ObjectNode parameterValues) {
@@ -101,7 +98,9 @@ public class ActionRunner {
         }
     }
     
-    private final CheckStatus processAndPrintCheckStatuses(Map<ActionStepCheckEntry, CheckStatus> checkStatuses) {
+    private final CheckStatus processAndPrintCheckStatuses(ActionRunnerContext ctx) {
+        ctx.getProgressWriter().clearProgress();
+        var checkStatuses = ctx.getCheckStatuses();
         if ( checkStatuses.isEmpty() ) { return CheckStatus.SKIP; }
         try ( var recordWriter = createCheckStatusWriter(); ) {
             checkStatuses.entrySet().stream()
@@ -126,9 +125,9 @@ public class ActionRunner {
 
     private IRecordWriter createCheckStatusWriter() {
         var recordWriterConfig = RecordWriterConfig.builder()
-                .style(RecordWriterStyle.apply(RecordWriterStyleElement.md_border))
-                .writerSupplier(()->new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
-                .build();
+            .style(RecordWriterStyle.apply(RecordWriterStyleElement.md_border))
+            .writerSupplier(()->new OutputStreamWriter(new NonClosingPrintStream(false, "System.out", System.out)))
+            .build();
         var recordWriter = RecordWriterFactory.table.createWriter(recordWriterConfig);
         return recordWriter;
     }

@@ -12,16 +12,10 @@
  */
 package com.fortify.cli.common.util;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
@@ -31,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.crypto.helper.EncryptionHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
@@ -85,7 +79,9 @@ public class FcliDataHelper {
             String stringContents = contents instanceof String 
                     ? (String)contents
                     : objectMapper.writeValueAsString(contents);
-            saveFile(relativePath, EncryptionHelper.encrypt(stringContents), failOnError);
+            // Resolve absolute path for registration
+            final Path filePath = resolveFcliHomePath(relativePath);
+            FcliExecutionContextHolder.current().saveEncrypted(filePath, stringContents);
         } catch (JsonProcessingException e) {
             throwOrLogException("Error serializing contents as String for class "+contents.getClass().getName(), e, failOnError);
         }
@@ -98,10 +94,12 @@ public class FcliDataHelper {
     
     @SuppressWarnings("unchecked")
     public static final <T> T readSecuredFile(Path relativePath, Class<T> returnType, boolean failOnError) {
-        String contents = EncryptionHelper.decrypt(readFile(relativePath, failOnError));
+        // Resolve absolute path to determine whether this file was saved using ephemeral encryption
+        final Path filePath = resolveFcliHomePath(relativePath);
+        var contents = FcliExecutionContextHolder.current().readEncrypted(filePath);
         return String.class.isAssignableFrom(returnType) 
                 ? (T)contents 
-                : JsonHelper.jsonStringToValue(readSecuredFile(relativePath, failOnError), returnType);
+                : JsonHelper.jsonStringToValue(contents, returnType);
     }
     
     public static final void saveFile(Path relativePath, Object contents, boolean failOnError) {
@@ -113,37 +111,17 @@ public class FcliDataHelper {
                     ? (String)contents
                     : objectMapper.writeValueAsString(contents);
             final Path filePath = resolveFcliHomePath(relativePath);
-            final Path parentDir = filePath.getParent();
-            if (!Files.exists(parentDir)) {
-                try {
-                    Files.createDirectories(parentDir);
-                } catch ( IOException e ) {
-                    throwOrLogException("Error creating parent directories for "+filePath, e, failOnError);
-                }
+            try {
+                FileUtils.writeStringWithOwnerOnlyPermissions(filePath, stringContents);
+            } catch ( IOException e ) {
+                throwOrLogException("Error writing file "+filePath, e, failOnError);
             }
-            writeFileWithOwnerOnlyPermissions(filePath, stringContents, failOnError);
         } catch (JsonProcessingException e ) {
             throwOrLogException("Error serializing contents as String for class "+contents.getClass().getName(), e, failOnError);
         }
     }
 
-    private static void writeFileWithOwnerOnlyPermissions(final Path filePath, final String contents, boolean failOnError) {
-        try (var fos = new FileOutputStream(filePath.toString()); var osw = new OutputStreamWriter(fos, "UTF-8"); BufferedWriter  writer = new BufferedWriter(osw); ){
-            writer.write("");
-            if ( FileSystems.getDefault().supportedFileAttributeViews().contains("posix") ) {
-                Files.setPosixFilePermissions(filePath, PosixFilePermissions.fromString("rw-------"));
-            } else {
-                File file = filePath.toFile();
-                file.setExecutable(false, false);
-                file.setReadable(true, true);
-                file.setWritable(true, true);
-            }
-        writer.write(contents);
-        writer.close();
-        } catch ( IOException e ) {
-            throwOrLogException("Error writing file "+filePath, e, failOnError);
-        }
-    }
+    
     
     public static final String readFile(Path relativePath, boolean failOnError) {
         return readFile(relativePath, String.class, failOnError);
@@ -166,7 +144,7 @@ public class FcliDataHelper {
         
         // Attempt read - any exception here is unexpected
         try {
-            String contents = Files.readString(filePath, StandardCharsets.UTF_8);
+            String contents = FileUtils.readString(filePath);
             return String.class.isAssignableFrom(returnType)
                     ? (R)contents 
                     : JsonHelper.jsonStringToValue(contents, returnType);

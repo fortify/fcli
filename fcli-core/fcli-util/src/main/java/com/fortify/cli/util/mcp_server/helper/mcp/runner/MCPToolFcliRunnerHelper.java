@@ -59,6 +59,7 @@ public class MCPToolFcliRunnerHelper {
             .cmd(fullCmd)
             .defaultOptionsIfNotPresent(collectMcpDefaultOptions(spec))
             .onFail(r->{})
+            .createInvocationContext(true)
             .stderrOutputType(OutputType.collect);           
     }
 
