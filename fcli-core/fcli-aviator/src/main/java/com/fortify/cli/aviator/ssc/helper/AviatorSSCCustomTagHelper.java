@@ -97,7 +97,7 @@ public class AviatorSSCCustomTagHelper {
         ObjectNode tagNode = JsonHelper.getObjectMapper().createObjectNode();
         tagNode.put("name", tagDef.getName());
         tagNode.put("guid", tagDef.getGuid());
-        tagNode.put("description", "Custom tag for Fortify Aviator.");
+        tagNode.put("description", "Custom tag for AppSec Aviator integration.");
         tagNode.put("valueType", "LIST");
         tagNode.put("customTagType", "CUSTOM");
         ArrayNode values = tagNode.putArray("valueList");

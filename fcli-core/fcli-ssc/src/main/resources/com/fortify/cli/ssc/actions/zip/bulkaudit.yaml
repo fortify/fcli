@@ -2,19 +2,19 @@
 
 author: Fortify
 usage:
-  header: (PREVIEW) Perform SAST Aviator audits of SSC application versions in bulk.
+  header: (PREVIEW) Perform AppSec Aviator for Vulnerability Remediation audits of SSC application versions in bulk.
   description: |
     This action identifies SSC application versions with pending audit issues and
-    automatically submits them for auditing by Fortify SAST Aviator. The action
+    automatically submits them for auditing by AppSec Aviator for Vulnerability Remediation. The action
     intelligently filters to only process versions with actual pending audit issues,
     while ignoring versions for which audit information needs to be refreshed.
 
-    For application versions that don't already exist in Aviator, the action will
+    For application versions that don't already exist in AppSec Aviator, the action will
     automatically create them before submitting for audit.
 
     By default (--aviator-app-mapping=app), SSC project versions map to a single
-    Aviator application per SSC project. Set --aviator-app-mapping=version to map
-    each SSC project version to its own Aviator application (project_name__version_name).
+    AppSec Aviator application per SSC project. Set --aviator-app-mapping=version to map
+    each SSC project version to its own AppSec Aviator application (project_name__version_name).
 
     When quota limits are exceeded for any application, issues are prioritized by
     folder using either the default order (Critical > High > Medium > Low) or a
@@ -23,11 +23,11 @@ usage:
 
     Either --tag-mapping or --add-aviator-tags must be specified. The default tag
     mapping leaves unsure issues unaudited, causing indefinite reselection. Use
-    a custom mapping file or 'fcli ssc aviator prepare' to configure Aviator-specific
+    a custom mapping file or 'fcli aviator ssc prepare' to configure AppSec Aviator-specific
     issue templates.
 
-    This action assumes active sessions with SSC, Aviator (user role for auditing),
-    and Aviator (admin role for application listing and creation).
+    This action assumes active sessions with SSC, AppSec Aviator (user role for auditing),
+    and AppSec Aviator (admin role for application listing and creation).
 
 config:
   output: immediate
@@ -45,7 +45,7 @@ cli.options:
     type: int
   aviator-app-mapping:
     names: --aviator-app-mapping
-    description: "Controls how SSC project versions map to Aviator applications. 'app' (default) maps one Aviator app per SSC project; 'version' maps one Aviator app per SSC project version (using project_name__version_name)."
+    description: "Controls how SSC project versions map to AppSec Aviator applications. 'app' (default) maps one AppSec Aviator app per SSC project; 'version' maps one AppSec Aviator app per SSC project version (using project_name__version_name)."
     required: false
     default: app
   filter:
@@ -60,13 +60,13 @@ cli.options:
     default: ""
   dry-run:
     names: --dry-run, -n
-    description: "Show what aviator commands would be executed without actually running them. Default: false"
+    description: "Show what fcli aviator commands would be executed without actually running them. Default: false"
     required: false
     default: false
     type: boolean
   tag-mapping:
     names: --tag-mapping, -t
-    description: "Path to tag mapping YAML file. This custom mapping ensures that SAST Aviator 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
+    description: "Path to tag mapping YAML file. This custom mapping ensures that AppSec Aviator for Vulnerability Remediation 'Unsure' audit results are properly handled. Required unless --add-aviator-tags is specified."
     required: false
   add-aviator-tags:
     names: --add-aviator-tags
@@ -87,13 +87,13 @@ cli.options:
     default: "60s"
   skip-if-exceeding-quota:
     names: --skip-if-exceeding-quota
-    description: "Skip audit if the number of open issues exceeds the available Aviator quota. When skipped, a summary with top unaudited categories is shown. Default: false"
+    description: "Skip audit if the number of open issues exceeds the available AppSec Aviator for Vulnerability Remediation quota. When skipped, a summary with top unaudited categories is shown. Default: false"
     required: false
     default: false
     type: boolean
   test-exceeding-quota:
     names: --test-exceeding-quota
-    description: "Check whether the number of open issues exceeds the available Aviator quota and report the result without performing an audit. Default: false"
+    description: "Check whether the number of open issues exceeds the available AppSec Aviator for Vulnerability Remediation quota and report the result without performing an audit. Default: false"
     required: false
     default: false
     type: boolean
@@ -128,10 +128,10 @@ steps:
       - log.progress: "ERROR: --dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
       - throw: "--dry-run and --skip-if-exceeding-quota cannot be used together. --dry-run prevents server interaction, but --skip-if-exceeding-quota requires quota retrieval."
 
-  - log.progress: "Using Aviator app mapping: ${cli['aviator-app-mapping']}"
+  - log.progress: "Using AppSec Aviator app mapping: ${cli['aviator-app-mapping']}"
 
   # Get existing Aviator applications
-  - log.progress: Retrieving existing Aviator applications...
+  - log.progress: Retrieving existing AppSec Aviator applications...
   - run.fcli:
       aviator_apps:
         cmd: aviator app ls -o json
@@ -355,7 +355,7 @@ steps:
                 # would be exceeded, skip the version entirely (don't create, don't audit).
                 - if: ${!skip_this_version && cli['skip-if-exceeding-quota'] && !app_known_in_aviator}
                   do:
-                    - log.progress: Pre-checking default quota for new app ${project.aviator_app_name}...
+                    - log.progress: Pre-checking default AppSec Aviator quota for new app ${project.aviator_app_name}...
 
                     - if: ${cli['tag-mapping'] != null && cli['tag-mapping'] != ''}
                       run.fcli:
@@ -376,7 +376,7 @@ steps:
                     # If pre-check shows quota exceeded, skip this version entirely
                     - if: ${quota_precheck.exitCode == 0 && quota_precheck.records != null && quota_precheck.records.size() > 0 && quota_precheck.records[0].__action__ != null && quota_precheck.records[0].__action__ == 'QUOTA_EXCEEDED'}
                       do:
-                        - log.progress: Default quota exceeded for ${project.aviator_app_name} - skipping app creation and audit
+                        - log.progress: Default AppSec Aviator quota exceeded for ${project.aviator_app_name} - skipping app creation and audit
                         - var.set:
                             skip_this_version: true
                             stats.quota_skipped: ${stats.quota_skipped + 1}
@@ -427,14 +427,14 @@ steps:
                     # Prepare Aviator tags if requested
                     - if: ${cli['add-aviator-tags']}
                       do:
-                        - log.progress: Preparing Aviator tags for ${project.project_name}:${project.version_name}
+                        - log.progress: Preparing AppSec Aviator tags for ${project.project_name}:${project.version_name}
                         - run.fcli:
                             prepare_tags:
                               cmd: aviator ssc prepare --av "${project.id}"
                               status.check: false
                         - if: ${prepare_tags.exitCode != 0}
                           do:
-                            - log.warn: Aviator tag preparation failed for ${project.project_name}:${project.version_name}
+                            - log.warn: AppSec Aviator tag preparation failed for ${project.project_name}:${project.version_name}
 
                     # Run audit if app is ready
                     - if: ${app_ready}
