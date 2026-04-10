@@ -1,0 +1,132 @@
+---
+title: 'fcli-tool-env-gitlab(1)'
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-env-gitlab(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.17.0" %}
+
+
+<div id="header">
+<h1>fcli-tool-env-gitlab(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-env-gitlab - Write to a GitLab environment file.</p>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool env gitlab</strong> <strong>-f</strong>=<em>&lt;file&gt;</em> [<strong>--output-as</strong>=<em>&lt;outputAs&gt;</em>] [<strong>--excludes</strong>=<em>&lt;exclude&gt;</em>[,
+                     <em>&lt;exclude&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--tools</strong>=<em>&lt;toolSelectors&gt;</em>[,
+                     <em>&lt;toolSelectors&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
+                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                     [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Generates PATH and variable entries in KEY=VALUE format. Use --file to point to the GitLab-provided environment file. Use --output-as=shell|pwsh to instead emit echo redirect statements and direct environment assignments, suitable for use with source or Invoke-Expression.</p>
+</div>
+<div class="paragraph">
+<p>Example usage (shell): source &lt;(fcli tool env gitlab --file=$ENV_FILE --output-as=shell)
+Example usage (pwsh):  fcli tool env gitlab --file=$env:ENV_FILE --output-as=pwsh | Out-String | Invoke-Expression</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--excludes</strong>=<em>&lt;exclude&gt;</em>[,<em>&lt;exclude&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of values to exclude from output. Allowed values: path, vars. Default: (none).</p>
+</dd>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
+<dd>
+<p>Path to the GitLab-provided environment file that should receive the generated entries.</p>
+</dd>
+<dt class="hdlist1"><strong>--output-as</strong>=<em>&lt;outputAs&gt;</em></dt>
+<dd>
+<p>Generate additional shell or PowerShell assignment statements alongside the CI-native output, so the script can update both the current task&#8217;s environment and subsequent tasks in a single pipe. Allowed values: shell, pwsh.</p>
+</dd>
+<dt class="hdlist1"><strong>--tools</strong>=<em>&lt;toolSelectors&gt;</em>[,<em>&lt;toolSelectors&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma-separated list of tool selectors in the form &lt;tool-name&gt;[:&lt;version&gt;]. Version selectors accept exact versions, aliases, partial semantic versions like '3' or '3.1', and '*' or 'all' to include every installed version. Defaults to the last installed version for each tool when omitted.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-04-10 14:33:01 UTC
+</div>
+</div>
+</body>
+</html>

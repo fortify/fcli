@@ -1,0 +1,116 @@
+---
+title: 'fcli-tool-env(1)'
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-tool-env(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="3.17.0" %}
+
+
+<div id="header">
+<h1>fcli-tool-env(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-tool-env - Initialize and manage tool environment.</p>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli tool env</strong> [<strong>-h</strong>] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The 'fcli tool env' commands provide a unified interface for setting up Fortify tools and generating environment configurations. Use 'fcli tool env init' to detect, register, and install tools, then use the format-specific commands (shell, github, ado, etc.) to emit environment variables and PATH updates for one or more Fortify tool installations.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-tool-env-init.html"><strong>init</strong></a></dt>
+<dd>
+<p>Initialize Fortify tool environment.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-env-shell.html"><strong>shell</strong></a></dt>
+<dd>
+<p>Emit POSIX shell exports.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-env-powershell.html"><strong>powershell</strong>, <strong>pwsh</strong></a></dt>
+<dd>
+<p>Emit PowerShell assignments.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-env-github.html"><strong>github</strong></a></dt>
+<dd>
+<p>Append to GitHub Actions environment files.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-env-gitlab.html"><strong>gitlab</strong></a></dt>
+<dd>
+<p>Write to a GitLab environment file.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-env-ado.html"><strong>ado</strong></a></dt>
+<dd>
+<p>Emit Azure DevOps logging commands.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool-env-expr.html"><strong>expr</strong></a></dt>
+<dd>
+<p>Evaluate custom template expressions.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-04-10 14:33:01 UTC
+</div>
+</div>
+</body>
+</html>
