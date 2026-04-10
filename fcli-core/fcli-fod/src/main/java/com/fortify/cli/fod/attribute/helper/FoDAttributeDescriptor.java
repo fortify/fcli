@@ -36,4 +36,5 @@ public class FoDAttributeDescriptor extends JsonNodeHolder {
     private Boolean isRestricted;
     private ArrayList<FoDPickListDescriptor> picklistValues;
     private String value;
+    private String defaultValue;
 }
