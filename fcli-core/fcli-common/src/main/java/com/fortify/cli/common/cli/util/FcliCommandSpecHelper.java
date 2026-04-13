@@ -14,6 +14,7 @@ package com.fortify.cli.common.cli.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -248,6 +249,14 @@ public class FcliCommandSpecHelper {
         ).filter(Objects::nonNull);
     }
         
+    public static final List<Annotation> getMetadataAnnotations(CommandSpec spec) {
+        var userObject = spec.userObject();
+        if (userObject == null) { return List.of(); }
+        return Stream.of(userObject.getClass().getAnnotations())
+                .filter(ann -> ann.annotationType().isAnnotationPresent(FcliCommandMetadata.class))
+                .toList();
+    }
+
     public static final Optional<QueryExpression> getQueryExpression(CommandSpec commandSpec) {
         var expressions = getAllUserObjectsStream(commandSpec)
                 .filter(o -> o instanceof IQueryExpressionSupplier)

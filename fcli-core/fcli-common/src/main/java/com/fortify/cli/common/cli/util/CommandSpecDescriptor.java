@@ -13,7 +13,9 @@
 package com.fortify.cli.common.cli.util;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -31,9 +33,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spel.query.QueryExpression;
 
@@ -111,6 +117,7 @@ public final class CommandSpecDescriptor {
 
         result.set("options", spec.optionsMap().keySet().stream().map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
         result.put("optionsString", spec.optionsMap().keySet().stream().collect(Collectors.joining(", ")));
+        result.set("metadata", createMetadataNode(spec));
 
         return result;
     }
@@ -632,6 +639,59 @@ public final class CommandSpecDescriptor {
             current.add(name);
             buildCombinations(hierarchyNames, index + 1, current, out);
             current.remove(current.size() - 1);
+        }
+    }
+
+    private static ObjectNode createMetadataNode(CommandSpec spec) {
+        var mapper = JsonHelper.getObjectMapper();
+        var result = mapper.createObjectNode();
+        for (var ann : FcliCommandSpecHelper.getMetadataAnnotations(spec)) {
+            var key = deriveMetadataKey(ann.annotationType());
+            var methods = Stream.of(ann.annotationType().getDeclaredMethods()).toList();
+            if (methods.size() == 1 && methods.get(0).getName().equals("value")) {
+                result.set(key, annotationElementToJsonNode(methods.get(0), ann));
+            } else {
+                var node = mapper.createObjectNode();
+                for (var method : methods) {
+                    node.set(method.getName(), annotationElementToJsonNode(method, ann));
+                }
+                result.set(key, node);
+            }
+        }
+        return result;
+    }
+
+    private static String deriveMetadataKey(Class<? extends Annotation> annotationType) {
+        var name = annotationType.getSimpleName();
+        if (name.startsWith("Fcli")) { name = name.substring(4); }
+        return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+    }
+
+    private static JsonNode annotationElementToJsonNode(Method method, Annotation annotation) {
+        try {
+            return toJsonNode(method.invoke(annotation));
+        } catch (ReflectiveOperationException e) {
+            throw new FcliBugException("Error reading annotation element: " + method.getName(), e);
+        }
+    }
+
+    private static JsonNode toJsonNode(Object value) {
+        if (value instanceof Enum<?> e) {
+            return TextNode.valueOf(e.toString());
+        } else if (value instanceof String s) {
+            return TextNode.valueOf(s);
+        } else if (value instanceof Boolean b) {
+            return BooleanNode.valueOf(b);
+        } else if (value instanceof Integer i) {
+            return IntNode.valueOf(i);
+        } else if (value != null && value.getClass().isArray()) {
+            var arr = JsonHelper.getObjectMapper().createArrayNode();
+            for (int i = 0; i < Array.getLength(value); i++) {
+                arr.add(toJsonNode(Array.get(value, i)));
+            }
+            return arr;
+        } else {
+            return TextNode.valueOf(String.valueOf(value));
         }
     }
 }

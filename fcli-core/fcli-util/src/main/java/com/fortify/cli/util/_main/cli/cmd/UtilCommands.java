@@ -12,7 +12,10 @@
  */
 package com.fortify.cli.util._main.cli.cmd;
 
+import static com.fortify.cli.common.cli.util.FcliModuleCategories.UTIL;
+
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.FcliModuleCategory;
 import com.fortify.cli.util.all_commands.cli.cmd.AllCommandsCommands;
 import com.fortify.cli.util.autocomplete.cli.cmd.AutoCompleteCommands;
 import com.fortify.cli.util.crypto.cli.cmd.CryptoCommands;
@@ -24,6 +27,7 @@ import com.fortify.cli.util.variable.cli.cmd.VariableCommands;
 
 import picocli.CommandLine.Command;
 
+@FcliModuleCategory(UTIL)
 @Command(
         name = "util",
         resourceBundle = "com.fortify.cli.util.i18n.UtilMessages",

@@ -12,7 +12,10 @@
  */
 package com.fortify.cli.ssc._main.cli.cmd;
 
+import static com.fortify.cli.common.cli.util.FcliModuleCategories.PRODUCT;
+
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.cli.util.FcliModuleCategory;
 import com.fortify.cli.ssc._common.session.cli.cmd.SSCSessionCommands;
 import com.fortify.cli.ssc.access_control.cli.cmd.SSCAccessControlCommands;
 import com.fortify.cli.ssc.action.cli.cmd.SSCActionCommands;
@@ -33,6 +36,7 @@ import com.fortify.cli.ssc.variable.cli.cmd.SSCVariableCommands;
 
 import picocli.CommandLine.Command;
 
+@FcliModuleCategory(PRODUCT)
 @Command(
         name = "ssc",
         resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages",
