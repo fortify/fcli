@@ -109,24 +109,42 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
     private static final class NonClosingOutHandler implements AutoCloseable {
         private final PrintStream orgOut;
         private final PrintStream orgErr;
+        private final boolean installedOut;
+        private final boolean installedErr;
 
         public NonClosingOutHandler() {
             // Ensure delegating streams are installed once per JVM
             FcliExecutionOutputContext.installIfNeeded();
-            log.debug("Installing NonClosingPrintStream delegates for stdout/stderr");
             this.orgOut = FcliExecutionOutputContext.getOriginalOut();
             this.orgErr = FcliExecutionOutputContext.getOriginalErr();
-            // Instead of globally replacing System.out/err, set per-thread delegates
-            FcliExecutionOutputContext.setThreadOut(new NonClosingPrintStream("System.out", orgOut));
-            FcliExecutionOutputContext.setThreadErr(new NonClosingPrintStream("System.err", orgErr));
+            // Only install per-thread delegates if OutputHelper hasn't already set one for
+            // this thread (e.g. for output capture/suppression). Overwriting an existing
+            // delegate would route captured output to the real stream instead of the
+            // capture buffer, causing output to leak to unexpected destinations.
+            this.installedOut = FcliExecutionOutputContext.getThreadOut() == null;
+            this.installedErr = FcliExecutionOutputContext.getThreadErr() == null;
+            if (installedOut) {
+                log.debug("Installing NonClosingPrintStream delegate for stdout");
+                FcliExecutionOutputContext.setThreadOut(new NonClosingPrintStream("System.out", orgOut));
+            }
+            if (installedErr) {
+                log.debug("Installing NonClosingPrintStream delegate for stderr");
+                FcliExecutionOutputContext.setThreadErr(new NonClosingPrintStream("System.err", orgErr));
+            }
         }
 
         @Override
         public void close() {
-            // Clear thread-local delegates so delegating streams fall back to originals
-            FcliExecutionOutputContext.clearThreadOut();
-            FcliExecutionOutputContext.clearThreadErr();
-            log.debug("Cleared thread-local stdout/stderr delegates");
+            // Only clear the delegates that we installed; if OutputHelper set one,
+            // it is responsible for clearing it in its own finally block.
+            if (installedOut) {
+                FcliExecutionOutputContext.clearThreadOut();
+                log.debug("Cleared thread-local stdout delegate");
+            }
+            if (installedErr) {
+                FcliExecutionOutputContext.clearThreadErr();
+                log.debug("Cleared thread-local stderr delegate");
+            }
         }
     }
 }
