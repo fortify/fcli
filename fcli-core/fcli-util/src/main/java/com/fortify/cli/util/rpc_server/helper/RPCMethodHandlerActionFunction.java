@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Non-streaming functions are executed synchronously and the result is returned directly.
  * Streaming functions behave like {@code fcli.executeAsync}: a background collection is
- * started and a {@code cacheKey} is returned for use with {@code rpc.getPage}.
+ * started and a {@code cacheKey} is returned for use with {@code cache.getPage}.
  *
  * @author Ruud Senden
  */
@@ -39,6 +39,13 @@ import lombok.extern.slf4j.Slf4j;
 public final class RPCMethodHandlerActionFunction implements IRPCMethodHandler {
     private final ActionFunctionExecutor executor;
     private final FcliRecordsCache cache;
+
+    @Override
+    public String description() {
+        var fn = executor.getFunction();
+        var base = fn.getDescription() != null ? fn.getDescription() : "Exported action function: " + fn.getKey();
+        return fn.isStreaming() ? base + " (streaming; returns cacheKey for cache.getPage)" : base;
+    }
 
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
@@ -71,7 +78,7 @@ public final class RPCMethodHandlerActionFunction implements IRPCMethodHandler {
         var response = JsonHelper.getObjectMapper().createObjectNode();
         response.put("cacheKey", cacheKey);
         response.put("status", "started");
-        response.put("message", "Background collection started. Use rpc.getPage with this cacheKey to retrieve results.");
+        response.put("message", "Background collection started. Use cache.getPage with this cacheKey to retrieve results.");
         log.debug("Started streaming function background collection: fn={} cacheKey={}",
             executor.getFunction().getKey(), cacheKey);
         return response;

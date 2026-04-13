@@ -18,76 +18,41 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fortify.cli.util._common.helper.FcliRecordsCache;
+import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * A lightweight JSON-RPC 2.0 server that reads requests from an input stream
  * and writes responses to an output stream (typically stdin/stdout for IDE integration).
- * 
+ *
  * This implementation:
  * - Supports JSON-RPC 2.0 specification
  * - Handles single requests and batch requests
  * - Supports notifications (requests without id)
  * - Is compatible with GraalVM native image compilation
  * - Processes requests synchronously (appropriate for stdio-based IDE integration)
- * - Includes caching for efficient paged access to large result sets
- * 
+ *
+ * Method handlers and the shared cache are managed by {@link RPCMethodHandlerRegistry},
+ * which is built via {@link RPCMethodHandlerRegistry#builder()} and passed to the
+ * constructor.
+ *
  * @author Ruud Senden
  */
 @Slf4j
 public final class RPCServer {
-    private final ObjectMapper objectMapper;
-    private final Map<String, IRPCMethodHandler> methodHandlers;
+    private static final ObjectMapper OM = JsonHelper.getObjectMapper();
+    private final RPCMethodHandlerRegistry registry;
     private final AtomicBoolean running = new AtomicBoolean(false);
-    private final FcliRecordsCache cache;
-    
-    public RPCServer(ObjectMapper objectMapper) {
-        this(objectMapper, true);
-    }
 
-    public RPCServer(ObjectMapper objectMapper, boolean registerDefaults) {
-        this.objectMapper = objectMapper;
-        this.methodHandlers = new LinkedHashMap<>();
-        this.cache = new FcliRecordsCache();
-        // rpc.* methods are always registered: they support paged retrieval of results
-        // from both fcli commands and streaming functions regardless of --no-defaults.
-        registerMethod("rpc.listMethods", new RPCMethodHandlerListMethods(objectMapper, methodHandlers));
-        registerMethod("rpc.getPage", new RPCMethodHandlerFcliGetPage(objectMapper, cache));
-        registerMethod("rpc.cancelCollection", new RPCMethodHandlerFcliCancelCollection(objectMapper, cache));
-        registerMethod("rpc.clearCache", new RPCMethodHandlerFcliClearCache(objectMapper, cache));
-        if (registerDefaults) {
-            registerDefaultFcliMethods();
-        }
-    }
-    
-    private void registerDefaultFcliMethods() {
-        registerMethod("fcli.execute", new RPCMethodHandlerFcliExecute(objectMapper));
-        registerMethod("fcli.executeAsync", new RPCMethodHandlerFcliExecuteAsync(objectMapper, cache));
-        registerMethod("fcli.listCommands", new RPCMethodHandlerFcliListCommands(objectMapper));
-        registerMethod("fcli.version", new RPCMethodHandlerFcliVersion(objectMapper));
-    }
-    
-    /**
-     * Register a custom method handler.
-     */
-    public void registerMethod(String methodName, IRPCMethodHandler handler) {
-        methodHandlers.put(methodName, handler);
-        log.debug("Registered RPC method: {}", methodName);
-    }
-
-    /** Expose the shared cache so callers can construct handlers that use it. */
-    public FcliRecordsCache getCache() {
-        return cache;
+    public RPCServer(RPCMethodHandlerRegistry registry) {
+        this.registry = registry;
     }
     
     /**
@@ -134,7 +99,7 @@ public final class RPCServer {
             log.error("Error in JSON-RPC server", e);
         } finally {
             running.set(false);
-            cache.shutdown();
+            registry.getCache().shutdown();
             log.info("JSON-RPC server stopped");
         }
     }
@@ -152,7 +117,7 @@ public final class RPCServer {
      */
     public String processRequest(String requestJson) {
         try {
-            JsonNode requestNode = objectMapper.readTree(requestJson);
+            JsonNode requestNode = OM.readTree(requestJson);
             
             // Check for batch request
             if (requestNode.isArray()) {
@@ -172,12 +137,12 @@ public final class RPCServer {
             return toJson(RPCResponse.invalidRequest(null));
         }
         
-        ArrayNode responses = objectMapper.createArrayNode();
+        ArrayNode responses = OM.createArrayNode();
         for (JsonNode request : requests) {
             String responseJson = processSingleRequest(request);
             if (responseJson != null) {
                 try {
-                    responses.add(objectMapper.readTree(responseJson));
+                    responses.add(OM.readTree(responseJson));
                 } catch (JsonProcessingException e) {
                     log.error("Error processing batch response", e);
                 }
@@ -195,7 +160,7 @@ public final class RPCServer {
     private String processSingleRequest(JsonNode requestNode) {
         RPCRequest request;
         try {
-            request = objectMapper.treeToValue(requestNode, RPCRequest.class);
+            request = OM.treeToValue(requestNode, RPCRequest.class);
         } catch (JsonProcessingException e) {
             return toJson(RPCResponse.invalidRequest(null));
         }
@@ -216,7 +181,7 @@ public final class RPCServer {
     }
     
     private RPCResponse executeMethod(RPCRequest request) {
-        var handler = methodHandlers.get(request.method());
+        var handler = registry.get(request.method());
         if (handler == null) {
             return RPCResponse.methodNotFound(request.id(), request.method());
         }
@@ -234,7 +199,7 @@ public final class RPCServer {
     
     private String toJson(Object obj) {
         try {
-            return objectMapper.writeValueAsString(obj);
+            return OM.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize response", e);
             // Fallback to a hardcoded error response to avoid infinite recursion

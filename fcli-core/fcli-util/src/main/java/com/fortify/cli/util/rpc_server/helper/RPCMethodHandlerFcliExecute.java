@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
@@ -48,8 +48,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
-    private final ObjectMapper objectMapper;
-    
+
+    @Override
+    public String description() {
+        return "Execute an fcli command synchronously and return all results";
+    }
+
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
         if (params == null || !params.has("command")) {
@@ -103,7 +107,7 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
     }
     
     private ObjectNode buildResponse(Result result, List<JsonNode> records) {
-        var response = objectMapper.createObjectNode();
+        var response = JsonHelper.getObjectMapper().createObjectNode();
         response.put("exitCode", result.getExitCode());
         
         if (records != null) {

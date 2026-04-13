@@ -15,36 +15,47 @@ package com.fortify.cli.util.rpc_server.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.FcliBuildProperties;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * RPC method handler for getting fcli version information.
- * 
- * Method: fcli.version
+ * RPC method handler for returning full fcli build information.
+ *
+ * Method: fcli.buildInfo
  * Params: none
- * 
- * Returns:
- *   - version (string): The fcli version
- *   - buildDate (string): The build date
- *   - actionSchemaVersion (string): The action schema version
+ *
+ * Returns an object with all fcli build properties:
+ *   - projectName (string)
+ *   - version (string)
+ *   - buildDate (string)
+ *   - actionSchemaVersion (string)
+ *   - actionSchemaUrl (string)
+ *   - docBaseUrl (string)
+ *   - sourceCodeBaseUrl (string)
  *
  * @author Ruud Senden
  */
-@RequiredArgsConstructor
-public final class RPCMethodHandlerFcliVersion implements IRPCMethodHandler {
-    private final ObjectMapper objectMapper;
-    
+public final class RPCMethodHandlerFcliInfo implements IRPCMethodHandler {
+    private static final ObjectMapper OM = JsonHelper.getObjectMapper();
+
+    @Override
+    public String description() {
+        return "Get fcli build information (version, build date, schema versions, URLs)";
+    }
+
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
         var props = FcliBuildProperties.INSTANCE;
-        
-        ObjectNode result = objectMapper.createObjectNode();
+
+        ObjectNode result = OM.createObjectNode();
+        result.put("projectName", props.getFcliProjectName());
         result.put("version", props.getFcliVersion());
         result.put("buildDate", props.getFcliBuildDateString());
         result.put("actionSchemaVersion", props.getFcliActionSchemaVersion());
-        
+        result.put("actionSchemaUrl", props.getFcliActionSchemaUrl());
+        result.put("docBaseUrl", props.getFcliDocBaseUrl());
+        result.put("sourceCodeBaseUrl", props.getSourceCodeBaseUrl());
+
         return result;
     }
 }

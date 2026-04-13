@@ -18,11 +18,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.cli.util.CommandSpecDescriptor;
+import com.fortify.cli.common.json.JsonHelper;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import picocli.CommandLine.Model.CommandSpec;
 
 /**
  * RPC method handler for listing available fcli commands.
@@ -44,10 +43,14 @@ import picocli.CommandLine.Model.CommandSpec;
  * @author Ruud Senden
  */
 @Slf4j
-@RequiredArgsConstructor
 public final class RPCMethodHandlerFcliListCommands implements IRPCMethodHandler {
-    private final ObjectMapper objectMapper;
-    
+    private static final ObjectMapper OM = JsonHelper.getObjectMapper();
+
+    @Override
+    public String description() {
+        return "List available fcli commands with optional filtering";
+    }
+
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
         var module = params != null && params.has("module") 
@@ -61,33 +64,30 @@ public final class RPCMethodHandlerFcliListCommands implements IRPCMethodHandler
                   module, runnableOnly, includeHidden);
         
         try {
-            var rootSpec = FcliCommandSpecHelper.getRootCommandLine().getCommandSpec();
-            Stream<CommandSpec> commandStream = FcliCommandSpecHelper.commandTreeStream(rootSpec);
+            Stream<CommandSpecDescriptor> descriptorStream = CommandSpecDescriptor.rootDescriptorStream();
             
             // Apply filters
             if (module != null && !module.isBlank()) {
                 final String modulePrefix = "fcli " + module + " ";
                 final String moduleExact = "fcli " + module;
-                commandStream = commandStream.filter(spec -> {
-                    var qualifiedName = spec.qualifiedName(" ");
+                descriptorStream = descriptorStream.filter(d -> {
+                    var qualifiedName = d.getSpec().qualifiedName(" ");
                     return qualifiedName.startsWith(modulePrefix) || qualifiedName.equals(moduleExact);
                 });
             }
-            
+
             if (runnableOnly) {
-                commandStream = commandStream.filter(FcliCommandSpecHelper::isRunnable);
+                descriptorStream = descriptorStream.filter(d -> d.getSpec() != null && (d.getSpec().userObject() instanceof Runnable || d.getSpec().userObject() instanceof java.util.concurrent.Callable));
             }
-            
+
             if (!includeHidden) {
-                commandStream = commandStream.filter(spec -> !spec.usageMessage().hidden());
+                descriptorStream = descriptorStream.filter(d -> !d.getSpec().usageMessage().hidden());
             }
+
+            ArrayNode commands = OM.createArrayNode();
+            descriptorStream.map(CommandSpecDescriptor::getCommandSpecNode).forEach(commands::add);
             
-            ArrayNode commands = objectMapper.createArrayNode();
-            commandStream
-                .map(this::specToDescriptor)
-                .forEach(commands::add);
-            
-            ObjectNode result = objectMapper.createObjectNode();
+            ObjectNode result = OM.createObjectNode();
             result.set("commands", commands);
             result.put("count", commands.size());
             
@@ -98,33 +98,5 @@ public final class RPCMethodHandlerFcliListCommands implements IRPCMethodHandler
         }
     }
     
-    private ObjectNode specToDescriptor(CommandSpec spec) {
-        var descriptor = objectMapper.createObjectNode();
-        var qualifiedName = spec.qualifiedName(" ");
-        
-        descriptor.put("name", qualifiedName);
-        descriptor.put("module", extractModule(qualifiedName));
-        descriptor.put("usageHeader", getUsageHeader(spec));
-        descriptor.put("runnable", FcliCommandSpecHelper.isRunnable(spec));
-        descriptor.put("hidden", spec.usageMessage().hidden());
-        
-        return descriptor;
-    }
-    
-    private String extractModule(String qualifiedName) {
-        // Format: "fcli <module> ..." or just "fcli"
-        var parts = qualifiedName.split(" ");
-        if (parts.length >= 2) {
-            return parts[1];
-        }
-        return "";
-    }
-    
-    private String getUsageHeader(CommandSpec spec) {
-        var headerLines = spec.usageMessage().header();
-        if (headerLines != null && headerLines.length > 0) {
-            return String.join(" ", headerLines);
-        }
-        return "";
-    }
+    // Returning commandSpecNode directly; no further conversion needed.
 }

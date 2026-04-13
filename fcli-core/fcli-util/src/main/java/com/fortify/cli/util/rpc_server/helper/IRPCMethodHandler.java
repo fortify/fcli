@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @author Ruud Senden
  */
-@FunctionalInterface
 public interface IRPCMethodHandler {
     /**
      * Execute the RPC method with the given parameters.
@@ -30,4 +29,7 @@ public interface IRPCMethodHandler {
      * @throws RPCMethodException if the method execution fails
      */
     JsonNode execute(JsonNode params) throws RPCMethodException;
+
+    /** Short description shown by {@code rpc.listMethods}. */
+    default String description() { return ""; }
 }

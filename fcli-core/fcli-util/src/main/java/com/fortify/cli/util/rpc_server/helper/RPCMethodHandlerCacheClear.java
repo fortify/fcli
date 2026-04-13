@@ -15,6 +15,7 @@ package com.fortify.cli.util.rpc_server.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.FcliRecordsCache;
 
 import lombok.RequiredArgsConstructor;
@@ -22,39 +23,44 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * RPC method handler for clearing cache entries.
- * 
- * Method: rpc.clearCache
+ *
+ * Method: cache.clear
  * Params:
- *   - cacheKey (string, optional): Specific cache key to clear. If not provided, clears all.
- * 
+ *   - cacheKey (string, optional): Specific cache key to clear. If omitted, clears all entries.
+ *
  * Returns:
- *   - success (boolean): Whether operation was successful
+ *   - success (boolean): Whether the operation was successful
  *   - message (string): Human-readable status message
- *   - stats (object, optional): Cache statistics after clearing
+ *   - stats (object): Cache statistics after clearing
  *
  * @author Ruud Senden
  */
 @Slf4j
 @RequiredArgsConstructor
-public final class RPCMethodHandlerFcliClearCache implements IRPCMethodHandler {
-    private final ObjectMapper objectMapper;
+public final class RPCMethodHandlerCacheClear implements IRPCMethodHandler {
+    private static final ObjectMapper OM = JsonHelper.getObjectMapper();
     private final FcliRecordsCache cache;
-    
+
+    @Override
+    public String description() {
+        return "Clear cache entries (specific cacheKey, or all if omitted)";
+    }
+
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
-        var cacheKey = params != null && params.has("cacheKey") 
-            ? params.get("cacheKey").asText() 
+        var cacheKey = params != null && params.has("cacheKey")
+            ? params.get("cacheKey").asText()
             : null;
-        
-        ObjectNode result = objectMapper.createObjectNode();
-        
+
+        ObjectNode result = OM.createObjectNode();
+
         if (cacheKey != null && !cacheKey.isBlank()) {
             log.debug("Clearing cache entry: cacheKey={}", cacheKey);
             var cleared = cache.clear(cacheKey);
             result.put("success", cleared);
             result.put("cacheKey", cacheKey);
-            result.put("message", cleared 
-                ? "Cache entry cleared successfully" 
+            result.put("message", cleared
+                ? "Cache entry cleared successfully"
                 : "No cache entry found for this cacheKey");
         } else {
             log.debug("Clearing all cache entries");
@@ -62,13 +68,12 @@ public final class RPCMethodHandlerFcliClearCache implements IRPCMethodHandler {
             result.put("success", true);
             result.put("message", "All cache entries cleared");
         }
-        
-        // Add current stats
+
         var stats = cache.getStats();
         ObjectNode statsNode = result.putObject("stats");
         statsNode.put("cachedEntries", stats.getCachedEntries());
         statsNode.put("inProgressEntries", stats.getInProgressEntries());
-        
+
         return result;
     }
 }

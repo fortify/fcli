@@ -13,8 +13,8 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.FcliRecordsCache;
 import com.fortify.cli.util._common.helper.RecordProducerFcliCommand;
 
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *   - command (string, required): The fcli command to execute (e.g., "ssc issue list")
  * 
  * Returns:
- *   - cacheKey (string): Key to retrieve results via rpc.getPage
+ *   - cacheKey (string): Key to retrieve results via cache.getPage
  *   - status (string): "started" or "cached"
  *   - message (string): Human-readable status message
  *
@@ -38,9 +38,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public final class RPCMethodHandlerFcliExecuteAsync implements IRPCMethodHandler {
-    private final ObjectMapper objectMapper;
     private final FcliRecordsCache cache;
-    
+
+    @Override
+    public String description() {
+        return "Start async fcli command execution (record-producing commands only); returns cacheKey for paged retrieval via cache.getPage";
+    }
+
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
         if (params == null || !params.has("command")) {
@@ -57,10 +61,10 @@ public final class RPCMethodHandlerFcliExecuteAsync implements IRPCMethodHandler
         try {
             var cacheKey = cache.startBackgroundCollection(new RecordProducerFcliCommand(command));
 
-            ObjectNode result = objectMapper.createObjectNode();
+            ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
             result.put("cacheKey", cacheKey);
             result.put("status", "started");
-            result.put("message", "Background collection started. Use rpc.getPage with this cacheKey to retrieve results.");
+            result.put("message", "Background collection started. Use cache.getPage with this cacheKey to retrieve results.");
             
             return result;
         } catch (Exception e) {
