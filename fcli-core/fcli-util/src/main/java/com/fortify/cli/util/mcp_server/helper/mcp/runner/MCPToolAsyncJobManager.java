@@ -17,56 +17,56 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.FcliExecutionResult;
-import com.fortify.cli.util._common.helper.FcliRecordsCache;
-import com.fortify.cli.util._common.helper.IRecordProducer;
+import com.fortify.cli.util._common.helper.IAsyncTask;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 
 /**
- * Thin adapter over {@link FcliRecordsCache} for MCP tool use. Translates between
- * {@link FcliToolResult} and {@link MCPToolResult}, and registers background loading
+ * Thin adapter over {@link AsyncJobManager} for MCP tool use. Translates between
+ * {@link FcliExecutionResult} and {@link MCPToolResult}, and registers background loading
  * futures with {@link MCPJobManager} for progress and cancellation support.
  */
-public class MCPToolFcliRecordsCache {
-    private final FcliRecordsCache delegate;
+public class MCPToolAsyncJobManager {
+    private final AsyncJobManager delegate;
     private final MCPJobManager jobManager;
     private final Map<String, String> jobTokens = new ConcurrentHashMap<>();
 
-    public MCPToolFcliRecordsCache(MCPJobManager jobManager) {
+    public MCPToolAsyncJobManager(MCPJobManager jobManager, AsyncJobManager delegate) {
         this.jobManager = jobManager;
-        this.delegate = new FcliRecordsCache();
+        this.delegate = delegate;
     }
 
     /**
-     * Return cached full result if present and valid, or null.
+     * Return completed result if present and valid, or null.
      */
-    public MCPToolResult getCached(String fullCmd) {
-        var result = delegate.getCached(fullCmd);
+    public MCPToolResult getCached(String jobId) {
+        var result = delegate.getCompleted(jobId);
         return result == null ? null : toMCPResult(result);
     }
 
     /**
-     * Return cached result, or start/retrieve a background collection using the given producer.
-     * Returns null if already cached. Returns {@link InProgressEntry} if a
-     * background collection is in progress or was just started.
+     * Return completed result, or start/retrieve a background async job using the given task.
+     * Returns null if already completed. Returns {@link InProgressEntry} if a
+     * background job is in progress or was just started.
      */
-    public InProgressEntry getOrStartBackground(String cacheKey, boolean refresh, IRecordProducer producer) {
-        var entry = delegate.getOrStartBackground(cacheKey, refresh, producer);
+    public InProgressEntry getOrStartBackground(String jobId, boolean refresh, IAsyncTask task) {
+        var entry = delegate.getOrStartBackground(jobId, refresh, task);
         if (entry == null) return null;
-        return trackEntry(cacheKey, entry);
+        return trackEntry(jobId, entry);
     }
 
-    private InProgressEntry trackEntry(String cacheKey, FcliRecordsCache.InProgressEntry entry) {
-        var jobToken = jobTokens.computeIfAbsent(cacheKey,
-            k -> jobManager.trackFuture("cache_loader", entry.getFuture(),
+    private InProgressEntry trackEntry(String jobId, AsyncJobManager.InProgressEntry entry) {
+        var jobToken = jobTokens.computeIfAbsent(jobId,
+            k -> jobManager.trackFuture("async_job", entry.getFuture(),
                 () -> entry.getRecords().size()));
-        entry.getFuture().whenComplete((r, t) -> jobTokens.remove(cacheKey));
+        entry.getFuture().whenComplete((r, t) -> jobTokens.remove(jobId));
         return new InProgressEntry(entry, jobToken);
     }
 
-    /** Cancel a background collection if running. */
-    public void cancel(String fullCmd) {
-        delegate.cancel(fullCmd);
+    /** Cancel a background async job if running. */
+    public void cancel(String jobId) {
+        delegate.cancel(jobId);
     }
 
     /** Shutdown background executor gracefully. */
@@ -84,10 +84,10 @@ public class MCPToolFcliRecordsCache {
 
     /** Thin wrapper giving access to background collection state and its job tracking token. */
     public static final class InProgressEntry {
-        private final FcliRecordsCache.InProgressEntry delegate;
+        private final AsyncJobManager.InProgressEntry delegate;
         private final String jobToken;
 
-        InProgressEntry(FcliRecordsCache.InProgressEntry delegate, String jobToken) {
+        InProgressEntry(AsyncJobManager.InProgressEntry delegate, String jobToken) {
             this.delegate = delegate;
             this.jobToken = jobToken;
         }

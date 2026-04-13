@@ -22,36 +22,42 @@ import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
+import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * RPC method handler for executing fcli commands synchronously.
- * 
+ * RPC method handler for executing fcli commands.
+ *
  * Method: fcli.execute
  * Params:
  *   - command (string, required): The fcli command to execute (e.g., "ssc appversion list")
- *   - collectRecords (boolean, optional): If true, collect structured records instead of stdout
- * 
- * Returns:
+ *   - collectRecords (boolean, optional): If true, collect structured records; if false, collect stdout (default: false)
+ *   - async (boolean, optional): If true, run in background and return a jobId (default: false)
+ *
+ * Synchronous response (async=false):
  *   - exitCode (integer): The command exit code
- *   - records (array, optional): Array of ALL record objects if collectRecords=true
- *   - stdout (string, optional): Standard output if collectRecords=false
- *   - stderr (string): Standard error output
- * 
- * Note: This method returns ALL records without paging. For commands that may return
- * large datasets (e.g., issue list), use fcli.executeAsync + fcli.getPage instead.
+ *   - records (array, optional): All records when collectRecords=true
+ *   - stdout (string, optional): Standard output when collectRecords=false
+ *   - stderr (string, optional): Standard error output
+ *
+ * Async response (async=true):
+ *   - jobId (string): Key for use with async.getPage or async.getResult
+ *   - status (string): "started"
+ *   - jobType (string): "records" or "stdout"
  *
  * @author Ruud Senden
  */
 @Slf4j
 @RequiredArgsConstructor
 public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
+    private final AsyncJobManager asyncJobManager;
 
     @Override
     public String description() {
-        return "Execute an fcli command synchronously and return all results";
+        return "Execute an fcli command, optionally in the background (async=true); use async.getPage or async.getResult to retrieve results";
     }
 
     @Override
@@ -59,18 +65,21 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
         if (params == null || !params.has("command")) {
             throw RPCMethodException.invalidParams("'command' parameter is required");
         }
-        
+
         var command = params.get("command").asText();
         var collectRecords = params.has("collectRecords") && params.get("collectRecords").asBoolean(false);
-        
+        var async = params.has("async") && params.get("async").asBoolean(false);
+
         if (command == null || command.isBlank()) {
             throw RPCMethodException.invalidParams("'command' cannot be empty");
         }
-        
-        log.debug("Executing fcli command: {} (collectRecords={})", command, collectRecords);
-        
+
+        log.debug("Executing fcli command: {} (collectRecords={} async={})", command, collectRecords, async);
+
         try {
-            if (collectRecords) {
+            if (async) {
+                return executeAsync(command, collectRecords);
+            } else if (collectRecords) {
                 return executeWithRecords(command);
             } else {
                 return executeWithStdout(command);
@@ -80,7 +89,19 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
             throw RPCMethodException.internalError("Command execution failed: " + e.getMessage(), e);
         }
     }
-    
+
+    private JsonNode executeAsync(String command, boolean collectRecords) {
+        var task = new AsyncTaskFcliCommand(command, collectRecords);
+        var jobId = asyncJobManager.startBackground(task);
+
+        var response = JsonHelper.getObjectMapper().createObjectNode();
+        response.put("jobId", jobId);
+        response.put("status", "started");
+        response.put("jobType", collectRecords ? "records" : "stdout");
+        log.debug("Started async command: command={} jobId={}", command, jobId);
+        return response;
+    }
+
     private JsonNode executeWithStdout(String command) {
         var result = FcliCommandExecutorFactory.builder()
             .cmd(command)
@@ -88,13 +109,13 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
             .stderrOutputType(OutputType.collect)
             .onFail(r -> {})
             .build().create().execute();
-        
+
         return buildResponse(result, null);
     }
-    
+
     private JsonNode executeWithRecords(String command) {
         var allRecords = new ArrayList<JsonNode>();
-        
+
         var result = FcliCommandExecutorFactory.builder()
             .cmd(command)
             .stdoutOutputType(OutputType.suppress)
@@ -102,14 +123,14 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
             .recordConsumer(allRecords::add)
             .onFail(r -> {})
             .build().create().execute();
-        
+
         return buildResponse(result, allRecords);
     }
-    
+
     private ObjectNode buildResponse(Result result, List<JsonNode> records) {
         var response = JsonHelper.getObjectMapper().createObjectNode();
         response.put("exitCode", result.getExitCode());
-        
+
         if (records != null) {
             ArrayNode recordsArray = response.putArray("records");
             records.forEach(recordsArray::add);
@@ -117,11 +138,11 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
         } else {
             response.put("stdout", result.getOut());
         }
-        
+
         if (result.getErr() != null && !result.getErr().isBlank()) {
             response.put("stderr", result.getErr());
         }
-        
+
         return response;
     }
 }

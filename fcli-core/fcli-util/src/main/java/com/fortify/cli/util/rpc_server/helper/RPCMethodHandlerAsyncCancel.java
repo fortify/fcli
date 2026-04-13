@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util._common.helper.FcliRecordsCache;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,49 +24,49 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for cancelling an in-progress collection.
  *
- * Method: cache.cancel
+ * Method: async.cancel
  * Params:
- *   - cacheKey (string, required): Cache key from {@code fcli.executeAsync} or a streaming {@code fn.*} call
+ *   - jobId (string, required): Job ID of the async job to cancel
  *
  * Returns:
  *   - success (boolean): Whether cancellation was successful
- *   - cacheKey (string): The cache key provided
+ *   - jobId (string): The job ID provided
  *   - message (string): Human-readable status message
  *
  * @author Ruud Senden
  */
 @Slf4j
 @RequiredArgsConstructor
-public final class RPCMethodHandlerCacheCancel implements IRPCMethodHandler {
+public final class RPCMethodHandlerAsyncCancel implements IRPCMethodHandler {
     private static final ObjectMapper OM = JsonHelper.getObjectMapper();
-    private final FcliRecordsCache cache;
+    private final AsyncJobManager asyncJobManager;
 
     @Override
     public String description() {
-        return "Cancel an in-progress background collection by cacheKey";
+        return "Cancel an in-progress async job by jobId";
     }
 
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
-        if (params == null || !params.has("cacheKey")) {
-            throw RPCMethodException.invalidParams("'cacheKey' parameter is required");
+        if (params == null || !params.has("jobId")) {
+            throw RPCMethodException.invalidParams("'jobId' parameter is required");
         }
 
-        var cacheKey = params.get("cacheKey").asText();
-        if (cacheKey == null || cacheKey.isBlank()) {
-            throw RPCMethodException.invalidParams("'cacheKey' cannot be empty");
+        var jobId = params.get("jobId").asText();
+        if (jobId == null || jobId.isBlank()) {
+            throw RPCMethodException.invalidParams("'jobId' cannot be empty");
         }
 
-        log.debug("Cancelling collection: cacheKey={}", cacheKey);
+        log.debug("Cancelling async job: jobId={}", jobId);
 
-        var cancelled = cache.cancel(cacheKey);
+        var cancelled = asyncJobManager.cancel(jobId);
 
         ObjectNode result = OM.createObjectNode();
         result.put("success", cancelled);
-        result.put("cacheKey", cacheKey);
+        result.put("jobId", jobId);
         result.put("message", cancelled
-            ? "Collection cancelled successfully"
-            : "No in-progress collection found for this cacheKey");
+            ? "Async job cancelled successfully"
+            : "No in-progress async job found for this jobId");
 
         return result;
     }

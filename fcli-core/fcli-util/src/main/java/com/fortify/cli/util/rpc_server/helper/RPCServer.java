@@ -99,7 +99,7 @@ public final class RPCServer {
             log.error("Error in JSON-RPC server", e);
         } finally {
             running.set(false);
-            registry.getCache().shutdown();
+            registry.getAsyncJobManager().shutdown();
             log.info("JSON-RPC server stopped");
         }
     }

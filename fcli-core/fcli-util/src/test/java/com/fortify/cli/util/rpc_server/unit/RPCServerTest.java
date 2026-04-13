@@ -43,7 +43,7 @@ class JRPCServerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        server = new RPCServer(RPCMethodHandlerRegistry.builder().withDefaults().build());
+        server = new RPCServer(RPCMethodHandlerRegistry.builder().build());
     }
 
     @Test
@@ -166,9 +166,9 @@ class JRPCServerTest {
 
     @Test
     void shouldReturnInvalidParamsForZeroLimit() throws Exception {
-        // Test limit validation in cache.getPage
+        // Test limit validation in async.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"cache.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"limit\":0},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{\"jobId\":\"test-key\",\"limit\":0},\"id\":1}");
 
         assertNotNull(response);
         var node = objectMapper.readTree(response);
@@ -179,9 +179,9 @@ class JRPCServerTest {
 
     @Test
     void shouldReturnInvalidParamsForNegativeOffset() throws Exception {
-        // Test offset validation in cache.getPage
+        // Test offset validation in async.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"cache.getPage\",\"params\":{\"cacheKey\":\"test-key\",\"offset\":-5},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{\"jobId\":\"test-key\",\"offset\":-5},\"id\":1}");
 
         assertNotNull(response);
         var node = objectMapper.readTree(response);
@@ -260,7 +260,7 @@ class JRPCServerTest {
     }
 
     @Test
-    void shouldReturnErrorForListCommandsWithoutAppContext() throws Exception {
+    void shouldExecuteFcliListCommandsWithNoQuery() throws Exception {
         String response = server.processRequest(
             "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.listCommands\",\"params\":{},\"id\":1}"
         );
@@ -268,33 +268,29 @@ class JRPCServerTest {
         assertNotNull(response);
         var node = objectMapper.readTree(response);
         assertEquals("2.0", node.get("jsonrpc").asText());
+        // Result or error is acceptable here (no app context in unit tests),
+        // but the response must be well-formed JSON-RPC.
         assertTrue(node.has("error") || node.has("result"));
     }
 
     @Test
-    void shouldReturnCacheKeyForExecuteAsync() throws Exception {
-        // Act
+    void shouldReturnErrorForListCommandsWithInvalidSpelQuery() throws Exception {
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.executeAsync\",\"params\":{\"command\":\"util sample-data list\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.listCommands\",\"params\":{\"query\":\"!!!invalid!!!\"},\"id\":1}"
         );
 
-        // Assert
         assertNotNull(response);
         var node = objectMapper.readTree(response);
-        assertNotNull(node.get("result"));
-        assertNull(node.get("error"));
-
-        var result = node.get("result");
-        assertTrue(result.has("cacheKey"));
-        assertNotNull(result.get("cacheKey").asText());
-        assertEquals("started", result.get("status").asText());
+        assertEquals("2.0", node.get("jsonrpc").asText());
+        assertNotNull(node.get("error"));
+        assertEquals(-32603, node.get("error").get("code").asInt());
     }
 
     @Test
     void shouldReturnInvalidParamsForExecuteAsyncWithoutCommand() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.executeAsync\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"params\":{\"async\":true},\"id\":1}"
         );
 
         // Assert
@@ -305,10 +301,10 @@ class JRPCServerTest {
     }
 
     @Test
-    void shouldReturnNotFoundForGetPageWithInvalidCacheKey() throws Exception {
+    void shouldReturnNotFoundForGetPageWithInvalidJobId() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"cache.getPage\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{\"jobId\":\"non-existent-key\"},\"id\":1}"
         );
 
         // Assert
@@ -319,10 +315,10 @@ class JRPCServerTest {
     }
 
     @Test
-    void shouldReturnInvalidParamsForGetPageWithoutCacheKey() throws Exception {
+    void shouldReturnInvalidParamsForGetPageWithoutJobId() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"cache.getPage\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{},\"id\":1}"
         );
 
         // Assert
@@ -336,7 +332,7 @@ class JRPCServerTest {
     void shouldHandleCancelForNonExistentKey() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"cache.cancel\",\"params\":{\"cacheKey\":\"non-existent-key\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"async.cancel\",\"params\":{\"jobId\":\"non-existent-key\"},\"id\":1}"
         );
 
         // Assert
@@ -350,7 +346,7 @@ class JRPCServerTest {
     void shouldHandleClearCacheAll() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"cache.clear\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"async.clear\",\"params\":{},\"id\":1}"
         );
 
         // Assert
@@ -358,7 +354,10 @@ class JRPCServerTest {
         var node = objectMapper.readTree(response);
         assertNotNull(node.get("result"));
         assertEquals(true, node.get("result").get("success").asBoolean());
-        assertNotNull(node.get("result").get("stats"));
+        var stats = node.get("result").get("stats");
+        assertNotNull(stats);
+        assertTrue(stats.has("completedEntries"), "stats should have completedEntries");
+        assertTrue(stats.has("runningEntries"), "stats should have runningEntries");
     }
 
     @Test
@@ -377,61 +376,23 @@ class JRPCServerTest {
         assertTrue(methods.isArray());
         assertTrue(methods.size() >= 8, "Should have at least 8 methods including async ones");
 
-        boolean hasExecuteAsync = false;
         boolean hasGetPage = false;
         boolean hasCancel = false;
         boolean hasClear = false;
+        boolean hasGetResult = false;
 
         for (var method : methods) {
             String name = method.get("name").asText();
-            if ("fcli.executeAsync".equals(name)) hasExecuteAsync = true;
-            if ("cache.getPage".equals(name)) hasGetPage = true;
-            if ("cache.cancel".equals(name)) hasCancel = true;
-            if ("cache.clear".equals(name)) hasClear = true;
+            if ("async.getPage".equals(name)) hasGetPage = true;
+            if ("async.cancel".equals(name)) hasCancel = true;
+            if ("async.clear".equals(name)) hasClear = true;
+            if ("async.getResult".equals(name)) hasGetResult = true;
         }
 
-        assertTrue(hasExecuteAsync, "fcli.executeAsync method should be present");
-        assertTrue(hasGetPage, "cache.getPage method should be present");
-        assertTrue(hasCancel, "cache.cancel method should be present");
-        assertTrue(hasClear, "cache.clear method should be present");
-    }
-
-    @Nested
-    class NoDefaultsMode {
-        @Test
-        void shouldNotRegisterDefaultMethodsWhenNoDefaults() throws Exception {
-            var noDefaultServer = new RPCServer(RPCMethodHandlerRegistry.builder().build());
-
-            // rpc.listMethods should always be present
-            String response = noDefaultServer.processRequest(
-                "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}");
-            assertNotNull(response);
-            var node = objectMapper.readTree(response);
-            assertNotNull(node.get("result"));
-
-            var methods = node.get("result").get("methods");
-            // rpc.listMethods, fcli.buildInfo, cache.getPage, cache.cancel, cache.clear are always present
-            assertEquals(5, methods.size(), "Only always-registered methods expected when no defaults");
-            Set<String> names = new HashSet<>();
-            methods.forEach(m -> names.add(m.get("name").asText()));
-            assertTrue(names.contains("rpc.listMethods"));
-            assertTrue(names.contains("fcli.buildInfo"));
-            assertTrue(names.contains("cache.getPage"));
-            assertTrue(names.contains("cache.cancel"));
-            assertTrue(names.contains("cache.clear"));
-        }
-
-        @Test
-        void shouldReturnMethodNotFoundForFcliExecuteWhenNoDefaults() throws Exception {
-            var noDefaultServer = new RPCServer(RPCMethodHandlerRegistry.builder().build());
-
-            String response = noDefaultServer.processRequest(
-                "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"id\":1}");
-            assertNotNull(response);
-            var node = objectMapper.readTree(response);
-            assertNotNull(node.get("error"));
-            assertEquals(-32601, node.get("error").get("code").asInt());
-        }
+        assertTrue(hasGetPage, "async.getPage method should be present");
+        assertTrue(hasCancel, "async.cancel method should be present");
+        assertTrue(hasClear, "async.clear method should be present");
+        assertTrue(hasGetResult, "async.getResult method should be present");
     }
 
     @Nested
@@ -440,7 +401,7 @@ class JRPCServerTest {
         void shouldExecuteRegisteredCustomMethod() throws Exception {
             IRPCMethodHandler handler = params -> objectMapper.createObjectNode().put("echo", "hello");
             var customServer = new RPCServer(
-                RPCMethodHandlerRegistry.builder().withDefaults().register("custom.echo", handler).build());
+                RPCMethodHandlerRegistry.builder().register("custom.echo", handler).build());
 
             String response = customServer.processRequest(
                 "{\"jsonrpc\":\"2.0\",\"method\":\"custom.echo\",\"id\":1}");
@@ -454,7 +415,7 @@ class JRPCServerTest {
         void shouldListCustomMethodInRpcListMethods() throws Exception {
             IRPCMethodHandler handler = params -> objectMapper.createObjectNode();
             var customServer = new RPCServer(
-                RPCMethodHandlerRegistry.builder().withDefaults().register("fn.myFunc", handler).build());
+                RPCMethodHandlerRegistry.builder().register("fn.myFunc", handler).build());
 
             String response = customServer.processRequest(
                 "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}");
@@ -469,7 +430,7 @@ class JRPCServerTest {
         }
 
         @Test
-        void shouldSupportCustomMethodWithNoDefaults() throws Exception {
+        void shouldSupportCustomMethodRegistration() throws Exception {
             IRPCMethodHandler handler = params -> {
                 var result = objectMapper.createObjectNode();
                 result.put("value", params != null && params.has("x") ? params.get("x").asInt() * 2 : 0);

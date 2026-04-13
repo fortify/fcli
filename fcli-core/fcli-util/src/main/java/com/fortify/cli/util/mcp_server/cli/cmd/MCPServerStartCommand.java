@@ -43,6 +43,8 @@ import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.FcliBuildProperties;
+import com.fortify.cli.util._common.cli.mixin.AsyncJobManagerMixin;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.IMCPToolArgHandler;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerActionOption;
@@ -70,6 +72,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
@@ -84,6 +87,8 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     @Option(names={"--progress-threads"}, defaultValue="4") private int progressThreads;
     @Option(names={"--job-safe-return"}, defaultValue="25s") private String jobSafeReturnPeriod;
     @Option(names={"--progress-interval"}, defaultValue="5s") private String progressIntervalPeriod;
+    @Mixin private AsyncJobManagerMixin asyncJobManagerMixin;
+    private static final AsyncJobManager.Config MCP_ASYNC_DEFAULTS = AsyncJobManager.Config.builder().build();
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
     private MCPJobManager jobManager;
 
@@ -100,8 +105,9 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         if ( progressIntervalMillis<=0 ) {
             progressIntervalMillis = 500;
         }
+        var asyncConfig = asyncJobManagerMixin.buildAsyncJobManager(MCP_ASYNC_DEFAULTS);
         // Instantiate job manager prior to building tool specs so we can include job tool spec
-        this.jobManager = new MCPJobManager(workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
+        this.jobManager = new MCPJobManager(workThreads, progressThreads, safeReturnMillis, progressIntervalMillis, asyncConfig);
         var toolSpecs = createToolSpecs();
         var resourceTemplateSpecs = createResourceTemplateSpecs();
         var hasResources = !resourceTemplateSpecs.isEmpty();

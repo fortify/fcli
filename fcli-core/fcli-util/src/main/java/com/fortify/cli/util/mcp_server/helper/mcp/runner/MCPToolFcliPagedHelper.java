@@ -35,14 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 final class MCPToolFcliPagedHelper {
 
     /**
-     * Starts or resumes background collection for the given cache key.
-     * Returns {@code null} if the result is already fully cached (the caller should fall
-     * back to a direct {@link MCPToolFcliRecordsCache#getCached} lookup), or an
-     * {@link MCPToolFcliRecordsCache.InProgressEntry} when collection is still running.
+     * Starts or resumes a background async job for the given job ID.
+     * Returns {@code null} if the result is already completed (the caller should fall
+     * back to a direct {@link MCPToolAsyncJobManager#getCached} lookup), or an
+     * {@link MCPToolAsyncJobManager.InProgressEntry} when the job is still running.
      */
     @FunctionalInterface
     interface BackgroundStarter {
-        MCPToolFcliRecordsCache.InProgressEntry start(String cacheKey, boolean refresh);
+        MCPToolAsyncJobManager.InProgressEntry start(String jobId, boolean refresh);
     }
 
     /**
@@ -63,57 +63,57 @@ final class MCPToolFcliPagedHelper {
      * Execute the paged-result flow. Checks the cache first, then falls back to starting or
      * resuming background collection via the supplied {@link BackgroundStarter}.
      */
-    CallToolResult run(String cacheKey, PageParams pageParams, BackgroundStarter starter) {
+    CallToolResult run(String jobId, PageParams pageParams, BackgroundStarter starter) {
         try {
-            return tryGetCachedResult(cacheKey, pageParams)
+            return tryGetCachedResult(jobId, pageParams)
                 .or(() -> {
                     try {
-                        return tryGetInProgressResult(cacheKey, pageParams, starter);
+                        return tryGetInProgressResult(jobId, pageParams, starter);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Interrupted while waiting for records", e);
                     }
                 })
-                .orElseThrow(() -> new IllegalStateException("No result path succeeded for: " + cacheKey));
+                .orElseThrow(() -> new IllegalStateException("No result path succeeded for: " + jobId));
         } catch (Exception e) {
-            log.warn("Paged helper failed cacheKey='{}' offset={} limit={} error={}",
-                cacheKey, pageParams.offset, pageParams.limit, e.toString());
+            log.warn("Paged helper failed jobId='{}' offset={} limit={} error={}",
+                jobId, pageParams.offset, pageParams.limit, e.toString());
             return MCPToolResult.fromError(e).asCallToolResult();
         }
     }
 
-    private Optional<CallToolResult> tryGetCachedResult(String cacheKey, PageParams params) {
+    private Optional<CallToolResult> tryGetCachedResult(String jobId, PageParams params) {
         if (params.refresh) {
             return Optional.empty();
         }
-        return Optional.ofNullable(jobManager.getRecordsCache().getCached(cacheKey))
+        return Optional.ofNullable(jobManager.getAsyncJobManager().getCached(jobId))
             .map(cached -> {
-                log.debug("Cache hit cacheKey='{}' offset={} limit={} total={}",
-                    cacheKey, params.offset, params.limit, cached.getRecords().size());
+                log.debug("Completed job hit jobId='{}' offset={} limit={} total={}",
+                    jobId, params.offset, params.limit, cached.getRecords().size());
                 return MCPToolResult.fromCompletedPagedResult(cached, params.offset, params.limit).asCallToolResult();
             });
     }
 
     private Optional<CallToolResult> tryGetInProgressResult(
-            String cacheKey, PageParams params, BackgroundStarter starter) throws InterruptedException {
-        var inProgress = starter.start(cacheKey, params.refresh);
+            String jobId, PageParams params, BackgroundStarter starter) throws InterruptedException {
+        var inProgress = starter.start(jobId, params.refresh);
         if (inProgress == null) {
-            return handleSyncCollectionCompleted(cacheKey, params);
+            return handleSyncJobCompleted(jobId, params);
         }
         waitForSufficientRecords(inProgress, params);
-        return checkForCompletedWithError(inProgress, cacheKey)
-            .or(() -> checkForCompletedSuccessfully(inProgress, cacheKey, params))
-            .or(() -> buildPartialPageResult(inProgress, cacheKey, params));
+        return checkForCompletedWithError(inProgress, jobId)
+            .or(() -> checkForCompletedSuccessfully(inProgress, jobId, params))
+            .or(() -> buildPartialPageResult(inProgress, jobId, params));
     }
 
-    private Optional<CallToolResult> handleSyncCollectionCompleted(String cacheKey, PageParams params) {
-        return Optional.ofNullable(jobManager.getRecordsCache().getCached(cacheKey))
+    private Optional<CallToolResult> handleSyncJobCompleted(String jobId, PageParams params) {
+        return Optional.ofNullable(jobManager.getAsyncJobManager().getCached(jobId))
             .map(cached -> MCPToolResult.fromCompletedPagedResult(cached, params.offset, params.limit).asCallToolResult())
-            .or(() -> Optional.of(MCPToolResult.fromError("Collection completed but no cached result found").asCallToolResult()));
+            .or(() -> Optional.of(MCPToolResult.fromError("Async job completed but no completed result found").asCallToolResult()));
     }
 
     private void waitForSufficientRecords(
-            MCPToolFcliRecordsCache.InProgressEntry inProgress, PageParams params) throws InterruptedException {
+            MCPToolAsyncJobManager.InProgressEntry inProgress, PageParams params) throws InterruptedException {
         var records = inProgress.getRecords();
         var requiredCount = params.offset + params.limit + 1;
         while (records.size() < requiredCount && !inProgress.isCompleted()) {
@@ -122,10 +122,10 @@ final class MCPToolFcliPagedHelper {
     }
 
     private Optional<CallToolResult> checkForCompletedWithError(
-            MCPToolFcliRecordsCache.InProgressEntry inProgress, String cacheKey) {
+            MCPToolAsyncJobManager.InProgressEntry inProgress, String jobId) {
         if (inProgress.isCompleted() && inProgress.getExitCode() != 0) {
-            log.warn("Background collection failed cacheKey='{}' exitCode={} stderr='{}'",
-                cacheKey, inProgress.getExitCode(), inProgress.getStderr());
+            log.warn("Background async job failed jobId='{}' exitCode={} stderr='{}'",
+                jobId, inProgress.getExitCode(), inProgress.getStderr());
             var errorResult = MCPToolResult.builder()
                 .exitCode(inProgress.getExitCode())
                 .stderr(inProgress.getStderr())
@@ -137,27 +137,27 @@ final class MCPToolFcliPagedHelper {
     }
 
     private Optional<CallToolResult> checkForCompletedSuccessfully(
-            MCPToolFcliRecordsCache.InProgressEntry inProgress, String cacheKey, PageParams params) {
+            MCPToolAsyncJobManager.InProgressEntry inProgress, String jobId, PageParams params) {
         if (!inProgress.isCompleted()) {
             return Optional.empty();
         }
-        return Optional.ofNullable(jobManager.getRecordsCache().getCached(cacheKey))
+        return Optional.ofNullable(jobManager.getAsyncJobManager().getCached(jobId))
             .map(cached -> {
-                log.debug("Returning COMPLETE paged result cacheKey='{}' offset={} limit={} loaded={} total={}",
-                    cacheKey, params.offset, params.limit, inProgress.getRecords().size(), cached.getRecords().size());
+                log.debug("Returning COMPLETE paged result jobId='{}' offset={} limit={} loaded={} total={}",
+                    jobId, params.offset, params.limit, inProgress.getRecords().size(), cached.getRecords().size());
                 return MCPToolResult.fromCompletedPagedResult(cached, params.offset, params.limit).asCallToolResult();
             })
             .or(() -> {
-                log.warn("Background collection completed without cache entry cacheKey='{}'", cacheKey);
+                log.warn("Background async job completed without completed entry jobId='{}'", jobId);
                 return Optional.empty();
             });
     }
 
     private Optional<CallToolResult> buildPartialPageResult(
-            MCPToolFcliRecordsCache.InProgressEntry inProgress, String cacheKey, PageParams params) {
+            MCPToolAsyncJobManager.InProgressEntry inProgress, String jobId, PageParams params) {
         var requiredCount = params.offset + params.limit + 1;
-        log.debug("Returning PARTIAL paged result cacheKey='{}' offset={} limit={} loaded={} need>={} jobToken={}",
-            cacheKey, params.offset, params.limit, inProgress.getRecords().size(), requiredCount, inProgress.getJobToken());
+        log.debug("Returning PARTIAL paged result jobId='{}' offset={} limit={} loaded={} need>={} jobToken={}",
+            jobId, params.offset, params.limit, inProgress.getRecords().size(), requiredCount, inProgress.getJobToken());
         var result = MCPToolResult.fromPartialPagedResult(
             inProgress.getRecords(), params.offset, params.limit, false, inProgress.getJobToken());
         return Optional.of(result.asCallToolResult());

@@ -24,19 +24,19 @@ import com.fortify.cli.common.util.OutputHelper.Result;
 import lombok.RequiredArgsConstructor;
 
 /**
- * {@link IRecordProducer} that executes an action function and feeds its records to the
+ * {@link IAsyncTask} that executes an action function and feeds its records to the
  * consumer. For streaming functions the {@link IActionStepForEachProcessor} is iterated;
  * for non-streaming functions the single return value is emitted as one record.
  *
  * @author Ruud Senden
  */
 @RequiredArgsConstructor
-public final class RecordProducerActionFunction implements IRecordProducer {
+public final class AsyncTaskActionFunction implements IAsyncTask {
     private final ActionFunctionExecutor executor;
     private final ObjectNode argsNode;
 
     @Override
-    public Result produce(Consumer<JsonNode> recordConsumer) {
+    public Result run(Consumer<JsonNode> recordConsumer) {
         var result = executor.execute(argsNode);
         if (result instanceof IActionStepForEachProcessor p) {
             p.process(node -> {

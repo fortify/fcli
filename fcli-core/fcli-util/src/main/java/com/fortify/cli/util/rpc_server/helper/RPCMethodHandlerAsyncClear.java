@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.util._common.helper.FcliRecordsCache;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,55 +24,55 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for clearing cache entries.
  *
- * Method: cache.clear
+ * Method: async.clear
  * Params:
- *   - cacheKey (string, optional): Specific cache key to clear. If omitted, clears all entries.
+ *   - jobId (string, optional): Specific async job ID to clear. If omitted, clears all.
  *
  * Returns:
  *   - success (boolean): Whether the operation was successful
  *   - message (string): Human-readable status message
- *   - stats (object): Cache statistics after clearing
+ *   - stats (object): Job manager statistics after clearing
  *
  * @author Ruud Senden
  */
 @Slf4j
 @RequiredArgsConstructor
-public final class RPCMethodHandlerCacheClear implements IRPCMethodHandler {
+public final class RPCMethodHandlerAsyncClear implements IRPCMethodHandler {
     private static final ObjectMapper OM = JsonHelper.getObjectMapper();
-    private final FcliRecordsCache cache;
+    private final AsyncJobManager asyncJobManager;
 
     @Override
     public String description() {
-        return "Clear cache entries (specific cacheKey, or all if omitted)";
+        return "Clear async job entries (specific jobId, or all if omitted)";
     }
 
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
-        var cacheKey = params != null && params.has("cacheKey")
-            ? params.get("cacheKey").asText()
+        var jobId = params != null && params.has("jobId")
+            ? params.get("jobId").asText()
             : null;
 
         ObjectNode result = OM.createObjectNode();
 
-        if (cacheKey != null && !cacheKey.isBlank()) {
-            log.debug("Clearing cache entry: cacheKey={}", cacheKey);
-            var cleared = cache.clear(cacheKey);
+        if (jobId != null && !jobId.isBlank()) {
+            log.debug("Clearing async job entry: jobId={}", jobId);
+            var cleared = asyncJobManager.clear(jobId);
             result.put("success", cleared);
-            result.put("cacheKey", cacheKey);
+            result.put("jobId", jobId);
             result.put("message", cleared
-                ? "Cache entry cleared successfully"
-                : "No cache entry found for this cacheKey");
+                ? "Async job entry cleared successfully"
+                : "No async job entry found for this jobId");
         } else {
-            log.debug("Clearing all cache entries");
-            cache.clearAll();
+            log.debug("Clearing all async job entries");
+            asyncJobManager.clearAll();
             result.put("success", true);
-            result.put("message", "All cache entries cleared");
+            result.put("message", "All async job entries cleared");
         }
 
-        var stats = cache.getStats();
+        var stats = asyncJobManager.getStats();
         ObjectNode statsNode = result.putObject("stats");
-        statsNode.put("cachedEntries", stats.getCachedEntries());
-        statsNode.put("inProgressEntries", stats.getInProgressEntries());
+        statsNode.put("completedEntries", stats.getCompletedEntries());
+        statsNode.put("runningEntries", stats.getRunningEntries());
 
         return result;
     }

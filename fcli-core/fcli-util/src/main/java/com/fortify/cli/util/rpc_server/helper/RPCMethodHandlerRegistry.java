@@ -20,7 +20,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
-import com.fortify.cli.util._common.helper.FcliRecordsCache;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,22 +31,21 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li>{@code rpc.listMethods} — protocol-level method listing</li>
  *   <li>{@code fcli.buildInfo} — fcli build/version metadata</li>
- *   <li>{@code cache.*} — paged retrieval and lifecycle operations for async results</li>
+ *   <li>{@code fcli.execute}, {@code fcli.listCommands}, {@code fcli.getCommandDetails} — fcli command invocation</li>
+ *   <li>{@code async.*} — paged retrieval and lifecycle operations for async jobs</li>
  * </ul>
- * Default fcli command methods ({@code fcli.execute}, {@code fcli.executeAsync},
- * {@code fcli.listCommands}, {@code fcli.getCommandDetails}) are added via
- * {@link Builder#withDefaults()}. Exported functions from action YAML files are
- * registered as {@code fn.<functionKey>} methods via {@link Builder#importAction(String)}.
+ * Exported functions from action YAML files are registered as {@code fn.<functionKey>}
+ * methods via {@link Builder#importAction(String)}.
  *
  * @author Ruud Senden
  */
 public final class RPCMethodHandlerRegistry {
     private final Map<String, IRPCMethodHandler> handlers;
-    private final FcliRecordsCache cache;
+    private final AsyncJobManager asyncJobManager;
 
-    private RPCMethodHandlerRegistry(Map<String, IRPCMethodHandler> handlers, FcliRecordsCache cache) {
+    private RPCMethodHandlerRegistry(Map<String, IRPCMethodHandler> handlers, AsyncJobManager asyncJobManager) {
         this.handlers = handlers;
-        this.cache = cache;
+        this.asyncJobManager = asyncJobManager;
     }
 
     public IRPCMethodHandler get(String methodName) {
@@ -57,36 +56,36 @@ public final class RPCMethodHandlerRegistry {
         return handlers;
     }
 
-    public FcliRecordsCache getCache() {
-        return cache;
+    public AsyncJobManager getAsyncJobManager() {
+        return asyncJobManager;
     }
 
     public static Builder builder() {
-        return new Builder();
+        return new Builder(new AsyncJobManager());
+    }
+
+    public static Builder builder(AsyncJobManager asyncJobManager) {
+        return new Builder(asyncJobManager);
     }
 
     @Slf4j
     public static final class Builder {
-        private final FcliRecordsCache cache = new FcliRecordsCache();
+        private final AsyncJobManager asyncJobManager;
         private final Map<String, IRPCMethodHandler> handlers = new LinkedHashMap<>();
 
-        private Builder() {
+        private Builder(AsyncJobManager asyncJobManager) {
+            this.asyncJobManager = asyncJobManager;
             // Always registered — rpc.listMethods references the live handlers map so it
-            // reflects all later additions made in withDefaults() / importAction().
+            // reflects all later additions made in importAction().
             register("rpc.listMethods", new RPCMethodHandlerListMethods(handlers));
             register("fcli.buildInfo", new RPCMethodHandlerFcliInfo());
-            register("cache.getPage", new RPCMethodHandlerCacheGetPage(cache));
-            register("cache.cancel", new RPCMethodHandlerCacheCancel(cache));
-            register("cache.clear", new RPCMethodHandlerCacheClear(cache));
-        }
-
-        /** Register the default fcli command methods. */
-        public Builder withDefaults() {
-            register("fcli.execute", new RPCMethodHandlerFcliExecute());
-            register("fcli.executeAsync", new RPCMethodHandlerFcliExecuteAsync(cache));
+            register("fcli.execute", new RPCMethodHandlerFcliExecute(asyncJobManager));
             register("fcli.listCommands", new RPCMethodHandlerFcliListCommands());
             register("fcli.getCommandDetails", new RPCMethodHandlerFcliGetCommandDetails());
-            return this;
+            register("async.getPage", new RPCMethodHandlerAsyncGetPage(asyncJobManager));
+            register("async.getResult", new RPCMethodHandlerAsyncGetResult(asyncJobManager));
+            register("async.cancel", new RPCMethodHandlerAsyncCancel(asyncJobManager));
+            register("async.clear", new RPCMethodHandlerAsyncClear(asyncJobManager));
         }
 
         /**
@@ -104,7 +103,7 @@ public final class RPCMethodHandlerRegistry {
                 if (!function.isExported()) { continue; }
                 var methodName = "fn." + function.getKey();
                 var executor = new ActionFunctionExecutor(action, function);
-                register(methodName, new RPCMethodHandlerActionFunction(executor, cache));
+                register(methodName, new RPCMethodHandlerActionFunction(executor, asyncJobManager));
                 log.debug("Registered imported function as RPC method: {}", methodName);
             }
             return this;
@@ -118,7 +117,7 @@ public final class RPCMethodHandlerRegistry {
         }
 
         public RPCMethodHandlerRegistry build() {
-            return new RPCMethodHandlerRegistry(Collections.unmodifiableMap(handlers), cache);
+            return new RPCMethodHandlerRegistry(Collections.unmodifiableMap(handlers), asyncJobManager);
         }
     }
 }

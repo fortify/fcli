@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.util.mcp_server.helper.mcp.runner;
 
-import com.fortify.cli.util._common.helper.RecordProducerFcliCommand;
+import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 
@@ -49,8 +49,8 @@ public final class MCPToolFcliRunnerRecordsPaged extends AbstractMCPToolFcliRunn
         var fullCmd = getFullCmd(request);
         var pageParams = MCPToolFcliPagedHelper.PageParams.from(request);
         var defaultOptions = MCPToolFcliRunnerHelper.collectMcpDefaultOptions(commandSpec);
-        var producer = new RecordProducerFcliCommand(fullCmd, defaultOptions);
+        var producer = new AsyncTaskFcliCommand(fullCmd, defaultOptions);
         return pagedHelper.run(fullCmd, pageParams,
-            (cacheKey, refresh) -> jobManager.getRecordsCache().getOrStartBackground(cacheKey, refresh, producer));
+            (jobId, refresh) -> jobManager.getAsyncJobManager().getOrStartBackground(jobId, refresh, producer));
     }
 }

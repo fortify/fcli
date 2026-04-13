@@ -12,30 +12,21 @@
  */
 package com.fortify.cli.util._common.helper;
 
-import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.util.OutputHelper.Result;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * {@link IRecordProducer} that runs a fcli command and streams its output records.
+ * Runs an async task by invoking the given consumer for each produced record, and returns
+ * execution metadata once the task is complete. Used by {@link AsyncJobManager} to abstract over
+ * the source of records (fcli command, streaming action function, …).
+ * For non-record-producing tasks the consumer is never called and stdout is captured in the
+ * returned {@link Result}.
  *
  * @author Ruud Senden
  */
-@RequiredArgsConstructor
-public final class RecordProducerFcliCommand implements IRecordProducer {
-    private final String command;
-    private final Map<String, String> defaultOptions;
-
-    public RecordProducerFcliCommand(String command) {
-        this(command, null);
-    }
-
-    @Override
-    public Result produce(Consumer<JsonNode> recordConsumer) {
-        return FcliRunnerHelper.collectRecords(command, on -> recordConsumer.accept(on), defaultOptions);
-    }
+@FunctionalInterface
+public interface IAsyncTask {
+    Result run(Consumer<JsonNode> recordConsumer);
 }

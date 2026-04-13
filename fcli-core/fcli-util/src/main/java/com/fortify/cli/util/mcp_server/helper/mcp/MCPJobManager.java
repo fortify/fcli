@@ -31,7 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRecordsCache;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolAsyncJobManager;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -62,20 +63,20 @@ public class MCPJobManager {
     private final long progressIntervalMillis;
     private final Map<String, JobExecution> jobs = new ConcurrentHashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final MCPToolFcliRecordsCache recordsCache;
+    private final MCPToolAsyncJobManager asyncJobManager;
 
-    public MCPJobManager(int workThreads, int progressThreads, long safeReturnMillis, long progressIntervalMillis) {
+    public MCPJobManager(int workThreads, int progressThreads, long safeReturnMillis, long progressIntervalMillis, AsyncJobManager asyncJobManager) {
         this.workExecutor = Executors.newFixedThreadPool(workThreads);
         this.progressExecutor = Executors.newScheduledThreadPool(progressThreads);
         this.safeReturnMillis = safeReturnMillis;
         this.progressIntervalMillis = progressIntervalMillis;
-        this.recordsCache = new MCPToolFcliRecordsCache(this);
+        this.asyncJobManager = new MCPToolAsyncJobManager(this, asyncJobManager);
         log.info("Initialized MCPJobManager workThreads={} progressThreads={} safeReturnMillis={} progressIntervalMillis={}",
                 workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
     }
 
-    public MCPToolFcliRecordsCache getRecordsCache() {
-        return recordsCache;
+    public MCPToolAsyncJobManager getAsyncJobManager() {
+        return asyncJobManager;
     }
 
     // Public API for runners

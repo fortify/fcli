@@ -17,16 +17,18 @@ import java.io.OutputStream;
 import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.util._common.cli.mixin.AsyncJobManagerMixin;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util.rpc_server.helper.RPCMethodHandlerRegistry;
 import com.fortify.cli.util.rpc_server.helper.RPCServer;
 
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 /**
@@ -66,19 +68,16 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
     
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @Option(names={"--import"}, split=",") private List<String> importFiles;
-    @Option(names={"--no-defaults"}, defaultValue="false") private boolean noDefaults;
-    
+    @Mixin private AsyncJobManagerMixin asyncJobManagerMixin;
+
+    private static final AsyncJobManager.Config RPC_ASYNC_DEFAULTS = AsyncJobManager.Config.builder()
+        .maxEntries(20).bgThreads(4).ttlMillis(30 * 60 * 1000L).build();
+
     @Override
     public Integer call() throws Exception {
-        if (noDefaults && (importFiles == null || importFiles.isEmpty())) {
-            throw new FcliSimpleException("--import is required when --no-defaults is specified");
-        }
         log.info("Starting JSON-RPC server");
 
-        var registryBuilder = RPCMethodHandlerRegistry.builder();
-        if (!noDefaults) {
-            registryBuilder.withDefaults();
-        }
+        var registryBuilder = RPCMethodHandlerRegistry.builder(asyncJobManagerMixin.buildAsyncJobManager(RPC_ASYNC_DEFAULTS));
         if (importFiles != null) {
             importFiles.forEach(registryBuilder::importAction);
         }
