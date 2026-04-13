@@ -45,7 +45,7 @@ public class Constants {
     public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
 
     // User Names
-    public static final String USER_NAME = "AppSec Aviator for Vulnerability Remediation";
+    public static final String USER_NAME = "AppSec Aviator";
 
     // Other Constants
     public static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
