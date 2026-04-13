@@ -95,9 +95,9 @@ public final class FprHandle implements AutoCloseable {
     public void validate() {
         if (!Files.exists(getPath("/audit.fvdl"))) {
             if (Files.exists(getPath("/webinspect.xml"))) {
-                throw new AviatorSimpleException("Invalid FPR: The provided file is a DAST (WebInspect) scan result. Fortify Aviator requires an FPR from a SAST scan.");
+                throw new AviatorSimpleException("Invalid FPR: The provided file is a DAST (WebInspect) scan result. AppSec Aviator for Vulnerability Remediation requires an FPR from a SAST scan.");
             }
-            throw new AviatorSimpleException("Invalid FPR: The file does not contain 'audit.fvdl' and does not appear to be a valid SAST scan result.");
+            throw new AviatorSimpleException("Invalid FPR: The file does not contain 'audit.fvdl' and does not appear to be a valid SAST scan result for AppSec Aviator for Vulnerability Remediation.");
         }
         if (!hasSource()) {
             throw new AviatorSimpleException("Invalid FPR: Source code is missing or incomplete. The 'src-archive' directory must contain 'index.xml' and at least one source file.");

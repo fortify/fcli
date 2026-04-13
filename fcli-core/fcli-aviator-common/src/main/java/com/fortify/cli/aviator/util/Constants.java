@@ -45,7 +45,7 @@ public class Constants {
     public static final String FOD_TAG_ID = "604f0fbe-b5fe-47cd-a9cb-587ad8ebe93a";
 
     // User Names
-    public static final String USER_NAME = "Fortify Aviator";
+    public static final String USER_NAME = "AppSec Aviator";
 
     // Other Constants
     public static final String AUDIT_NAMESPACE_URI = "xmlns://www.fortify.com/schema/audit";
@@ -55,8 +55,8 @@ public class Constants {
     //Limiting Constants
     public static final int MAX_PER_CATEGORY = 500;
     public static final int MAX_TOTAL = 2500;
-    public static final String MAX_PER_CATEGORY_EXCEEDED = "Fortify detected {issues_new_in_category} new issues in this (sub)category. Fortify Aviator auditing was limited to the first {MAX_PER_CATEGORY}.";
-    public static final String MAX_TOTAL_EXCEEDED = "Fortify detected {issues_new_total} new issues. Fortify Aviator auditing was limited to {MAX_TOTAL} issues in total, while ensuring that representative issues in each category were audited.";
+    public static final String MAX_PER_CATEGORY_EXCEEDED = "Fortify detected {issues_new_in_category} new issues in this (sub)category. AppSec Aviator for Vulnerability Remediation auditing was limited to the first {MAX_PER_CATEGORY}.";
+    public static final String MAX_TOTAL_EXCEEDED = "Fortify detected {issues_new_total} new issues. AppSec Aviator for Vulnerability Remediation auditing was limited to {MAX_TOTAL} issues in total, while ensuring that representative issues in each category were audited.";
 
     // Operation constants for error messages
     public static final String OP_CREATE_APP = "application creation";

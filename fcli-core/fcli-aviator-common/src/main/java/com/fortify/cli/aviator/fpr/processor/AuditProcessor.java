@@ -406,7 +406,7 @@ public class AuditProcessor {
         tagHistory.appendChild(editTime);
 
         Element username = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
-        username.setTextContent("Fortify Aviator");
+        username.setTextContent(Constants.USER_NAME);
         tagHistory.appendChild(username);
 
         clientAuditTrail.appendChild(tagHistory);
@@ -460,7 +460,7 @@ public class AuditProcessor {
         commentElement.appendChild(contentElement);
 
         Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
-        usernameElement.setTextContent("Fortify Aviator");
+        usernameElement.setTextContent(Constants.USER_NAME);
         commentElement.appendChild(usernameElement);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
