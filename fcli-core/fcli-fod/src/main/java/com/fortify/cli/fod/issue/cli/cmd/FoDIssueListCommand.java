@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.producer.AbstractObjectNodeProducer.AbstractObjectNodeProducerBuilder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
@@ -32,17 +31,16 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.util.Break;
+import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueEmbedMixin;
 import com.fortify.cli.fod.issue.cli.mixin.FoDIssueIncludeMixin;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper;
 import com.fortify.cli.fod.issue.helper.FoDIssueHelper.IssueAggregationData;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
@@ -56,9 +54,8 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class FoDIssueListCommand extends AbstractFoDOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    @Mixin private FoDDelimiterMixin delimiterMixin; // injected in resolvers
-    @Mixin private FoDAppResolverMixin.OptionalOption appResolver;
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalOption releaseResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin;
+    @Mixin @Getter private FoDAppOrReleaseMixin appOrRelease;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Mixin private FoDIssueEmbedMixin embedMixin;
     @Mixin private FoDIssueIncludeMixin includeMixin;
@@ -77,21 +74,10 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
 
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
-        boolean releaseSpecified = releaseResolver.getQualifiedReleaseNameOrId() != null;
-        boolean appSpecified = appResolver.getAppNameOrId() != null;
-        if ( releaseSpecified && appSpecified ) {
-            throw new FcliSimpleException("Cannot specify both an application and release");
-        }
-        if ( !releaseSpecified && !appSpecified ) {
-            throw new FcliSimpleException("Either an application or release must be specified");
-        }
+        boolean releaseSpecified = appOrRelease.isReleaseSpecified();
         var result = releaseSpecified
-                ? singleReleaseProducerBuilder(unirest, releaseResolver.getReleaseId(unirest))
-                : applicationProducerBuilder(unirest, appResolver.getAppId(unirest));
-        // For consistent output, we should remove releaseId/releaseName when listing across multiple releases,
-        // but that breaks existing scripts that may rely on those fields, so for now, we only do this in
-        // applicationProducerBuilder(). TODO: Change in in fcli v4.0.
-        // return result.recordTransformer(this::removeReleaseProperties).build();
+                ? singleReleaseProducerBuilder(unirest, appOrRelease.getReleaseId(unirest))
+                : applicationProducerBuilder(unirest, appOrRelease.getAppId(unirest));
         return result.build();
     }
     
@@ -225,17 +211,12 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
     }
     
     private boolean isEffectiveFastOutput() {
-        boolean appSpecified = appResolver.getAppNameOrId() != null;
-        boolean releaseSpecified = releaseResolver.getQualifiedReleaseNameOrId() != null;
-        if ( !appSpecified || releaseSpecified ) { return false; }
+        if (!appOrRelease.isAppSpecified() || appOrRelease.isReleaseSpecified()) {
+            return false;
+        }
         boolean fastOutputStyle = outputHelper.getRecordWriterStyle().isFastOutput();
         boolean streamingSupported = outputHelper.isStreamingOutputSupported();
-        boolean recordConsumerConfigured = getRecordConsumer()!=null;
-        // Effective fast output requires:
-        // - application specified (multiple releases)
-        // - fast output style
-        // - no aggregation (merging requires full set)
-        // - streaming output or record consumer configured
+        boolean recordConsumerConfigured = getRecordConsumer() != null;
         return fastOutputStyle && !aggregate && (streamingSupported || recordConsumerConfigured);
     }
     

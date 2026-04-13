@@ -14,6 +14,7 @@ package com.fortify.cli.fod.attribute.helper;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,23 +69,9 @@ public class FoDAttributeHelper {
             FoDAttributeDescriptor currentLookup = lookupIterator.next();
             // currentLookup.getAttributeTypeId() == 1 if "Application", 4 if "Release" - filter above does not support querying on this yet!
             if (currentLookup.getIsRequired() && (attrType.getValue() == 0 || currentLookup.getAttributeTypeId() == attrType.getValue())) {
-                switch (currentLookup.getAttributeDataType()) {
-                    case "Text":
-                        reqAttrs.put(currentLookup.getName(), "autofilled by fcli");
-                        break;
-                    case "Boolean":
-                        reqAttrs.put(currentLookup.getName(), String.valueOf(false));
-                        break;
-                    case "User":
-                        // use the first user in the list
-                        reqAttrs.put(currentLookup.getName(), currentLookup.getPicklistValues().get(0).getName());
-                        break;
-                    case "Picklist":
-                        // use the first value in the picklist
-                        reqAttrs.put(currentLookup.getName(), currentLookup.getPicklistValues().get(0).getName());
-                        break;
-                    default:
-                        break;
+                var defaultValue = getDefaultValue(currentLookup);
+                if (defaultValue != null) {
+                    reqAttrs.put(currentLookup.getName(), defaultValue);
                 }
             }
         }
@@ -204,4 +191,16 @@ public class FoDAttributeHelper {
 
     }
 
+    private static String getDefaultValue(FoDAttributeDescriptor attribute) {
+        if (StringUtils.isNotBlank(attribute.getDefaultValue())) {
+            return attribute.getDefaultValue();
+        }
+        return switch (attribute.getAttributeDataType()) {
+            case "Text" -> "autofilled by fcli";
+            case "Boolean" -> String.valueOf(false);
+            case "User", "Picklist" -> attribute.getPicklistValues() != null && !attribute.getPicklistValues().isEmpty()
+                ? attribute.getPicklistValues().get(0).getName() : null;
+            default -> null;
+        };
+    }
 }

@@ -27,6 +27,7 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -34,8 +35,6 @@ import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDOpenSourceScanType;
 import com.fortify.cli.fod._common.scan.helper.oss.FoDScanOssHelper;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
@@ -48,24 +47,24 @@ import picocli.CommandLine.Option;
 @CommandGroup("oss-components")
 public final class FoDOssComponentsListCommand extends AbstractFoDJsonNodeOutputCommand {
     private static final Logger LOG = LoggerFactory.getLogger(FoDOssComponentsListCommand.class);
-    @Getter
-    @Mixin
-    private OutputHelperMixins.TableWithQuery outputHelper;
-    @Mixin
-    private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin
-    private FoDAppResolverMixin.OptionalOption appResolver;
-    @Mixin
-    private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalOption releaseResolver;
-    @Option(names = "--scan-types", required = true, split = ",", defaultValue = "Debricked")
-    private FoDOpenSourceScanType[] scanTypes;
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
+    @Mixin private FoDDelimiterMixin delimiterMixin;
+    @Mixin @Getter private FoDAppOrReleaseMixin appOrRelease;
+    @Option(names = "--scan-types", required = true, split = ",", defaultValue = "Debricked") private FoDOpenSourceScanType[] scanTypes;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         ArrayNode result = JsonHelper.getObjectMapper().createArrayNode();
+
+        final String applicationId = appOrRelease.isAppSpecified()
+                ? appOrRelease.getAppId(unirest)
+                : null;
+        final String releaseId = appOrRelease.isReleaseSpecified()
+                ? appOrRelease.getReleaseId(unirest)
+                : null;
+
         Stream.of(scanTypes)
-                .map(t -> getForOpenSourceScanType(unirest, t, releaseResolver.getReleaseId(unirest),
-                        appResolver.getAppId(unirest), false))
+                .map(t -> getForOpenSourceScanType(unirest, t, releaseId, applicationId, false))
                 .forEach(result::addAll);
         return result;
     }
@@ -101,7 +100,7 @@ public final class FoDOssComponentsListCommand extends AbstractFoDJsonNodeOutput
             if (failOnError) {
                 throw e;
             }
-            LOG.error("Error retrieving OSS components for release " + releaseResolver.getReleaseId(unirest)
+            LOG.error("Error retrieving OSS components for release " + releaseId
                     + " and scan type " + scanType.name() + ": " + e.getMessage());
             return JsonHelper.getObjectMapper().createArrayNode();
         }

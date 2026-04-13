@@ -73,18 +73,17 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
-        int roleId = 0;
         FoDUserDescriptor userDescriptor = userResolver.getUserDescriptor(unirest);
-        if (roleNameOrId != null && !roleNameOrId.isEmpty()) {
-            roleId = FoDUserHelper.getRoleId(unirest, roleNameOrId);
-        }
+        int roleId = (roleNameOrId != null && !roleNameOrId.isEmpty())
+                ? Integer.parseInt(FoDUserHelper.getRoleDescriptor(unirest, roleNameOrId).getValue())
+                : userDescriptor.getRoleId();
 
         FoDUserUpdateRequest userUpdateRequest = FoDUserUpdateRequest.builder()
                 .email(StringUtils.isNotBlank(email) ? email : userDescriptor.getEmail())
                 .firstName(StringUtils.isNotBlank(firstName) ? firstName : userDescriptor.getFirstName())
                 .lastName(StringUtils.isNotBlank(lastName) ? lastName : userDescriptor.getLastName())
                 .phoneNumber(StringUtils.isNotBlank(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
-                .roleId(roleId > 0 ? roleId : userDescriptor.getRoleId())
+                .roleId(roleId)
                 .passwordNeverExpires(passwordNeverExpires)
                 .isSuspended(isSuspended)
                 .mustChange(mustChange).build();

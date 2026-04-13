@@ -23,8 +23,7 @@ import org.junit.jupiter.api.Test;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle;
 import com.fortify.cli.common.output.writer.record.RecordWriterStyle.RecordWriterStyleElement;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 
 /**
  * Tests for FoDIssueListCommand.isEffectiveFastOutput logic after migration to style-based fast-output.
@@ -39,10 +38,8 @@ public class FoDIssueListCommandEffectiveFastOutputTest {
     void init() throws Exception {
         cmd = new FoDIssueListCommand();
         streamingStub = new StreamingStubOutputHelper();
-        setField(cmd, "outputHelper", streamingStub); // inject stub
-        // Provide empty mixins so reflection can set their private fields
-        setField(cmd, "appResolver", new FoDAppResolverMixin.OptionalOption());
-        setField(cmd, "releaseResolver", new FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalOption());
+        setField(cmd, "outputHelper", streamingStub);
+        setField(cmd, "appOrRelease", new FoDAppOrReleaseMixin());
     }
 
     @Test
@@ -94,17 +91,17 @@ public class FoDIssueListCommandEffectiveFastOutputTest {
     }
 
     private void setApp(String app) throws Exception {
-        Object appResolver = getField(cmd, "appResolver");
-        setField(appResolver, "appNameOrId", app);
+        var appOrRelease = cmd.getAppOrRelease();
+        var target = appOrRelease.getFodAppOrReleaseArgGroup();
+        var appGroup = target.getApp();
+        setField(appGroup, "appNameOrId", app);
     }
+
     private void setRelease(String rel) throws Exception {
-        Object relResolver = getField(cmd, "releaseResolver");
-        setField(relResolver, "qualifiedReleaseNameOrId", rel);
-    }
-    private Object getField(Object target, String fieldName) throws Exception {
-        Field f = target.getClass().getDeclaredField(fieldName);
-        f.setAccessible(true);
-        return f.get(target);
+        var appOrRelease = cmd.getAppOrRelease();
+        var target = appOrRelease.getFodAppOrReleaseArgGroup();
+        var releaseGroup = target.getRelease();
+        setField(releaseGroup, "qualifiedReleaseNameOrId", rel);
     }
 
     private boolean invokeIsEffectiveFastOutput() throws Exception {

@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package com.fortify.aviator;
+
+option java_multiple_files = true;
+option java_package = "com.fortify.aviator.dastentitlement";
+option java_outer_classname = "DastEntitlementProto";
+
+import "google/protobuf/timestamp.proto";
+
+// Service definition for DAST entitlement operations.
+// Used by fcli to check DAST credit availability before initiating recordings.
+service DastEntitlementService {
+    // Lists DAST entitlements for a given tenant with credit balance information.
+    rpc ListDastEntitlementsByTenant (ListDastEntitlementsByTenantRequest) returns (ListDastEntitlementsByTenantResponse) {}
+}
+
+// Request message for listing DAST entitlements by tenant.
+message ListDastEntitlementsByTenantRequest {
+    // The tenant name to look up entitlements for.
+    string tenant_name = 1;
+
+    // Message to be signed: "tenantName;timestamp"
+    string message = 2;
+
+    // HMAC-SHA256 signature of the message, signed with tenant's secret key.
+    string signature = 3;
+}
+
+// Response message containing DAST entitlements and credit information.
+message ListDastEntitlementsByTenantResponse {
+    // List of active DAST entitlements with credit details.
+    repeated DastEntitlement entitlements = 1;
+
+    // Summary of credit availability across all entitlements.
+    DastCreditSummary credit_summary = 2;
+}
+
+// DAST entitlement message containing credit balance details.
+message DastEntitlement {
+    // Unique entitlement ID.
+    int64 id = 1;
+
+    // Start date of the entitlement validity period (ISO-8601 format: YYYY-MM-DD).
+    string start_date = 2;
+
+    // End date of the entitlement validity period (ISO-8601 format: YYYY-MM-DD).
+    string end_date = 3;
+
+    // When the entitlement was created.
+    google.protobuf.Timestamp created_at = 4;
+
+    // When the entitlement was last updated.
+    google.protobuf.Timestamp updated_at = 5;
+
+    // Number of recording credits purchased with this entitlement.
+    int32 number_of_units = 6;
+
+    // Number of credits consumed (successful recordings).
+    int32 credits_consumed = 7;
+
+    // Number of credits currently reserved (recordings in progress).
+    int32 credits_reserved = 8;
+
+    // Total credit adjustments (positive for top-ups, can be negative).
+    int32 credit_adjustments = 9;
+
+    // Remaining credits available for new recordings.
+    // Formula: number_of_units - (credits_consumed + credits_reserved) + credit_adjustments
+    int32 credits_remaining = 10;
+
+    // Contract ID associated with this entitlement (optional).
+    string contract_id = 11;
+
+    // Tenant information.
+    DastTenantInfo tenant = 12;
+
+    // Whether this entitlement is currently valid (within date range and not deleted).
+    bool is_valid = 13;
+}
+
+// Tenant information for DAST entitlements.
+message DastTenantInfo {
+    // Unique tenant ID.
+    int64 id = 1;
+
+    // Tenant name.
+    string name = 2;
+}
+
+// Summary of credit availability across all entitlements.
+message DastCreditSummary {
+    // Total credits purchased across all active entitlements.
+    int32 total_credits = 1;
+
+    // Total credits consumed (successful recordings) across all entitlements.
+    int32 total_consumed = 2;
+
+    // Total credits currently reserved (in-progress recordings).
+    int32 total_reserved = 3;
+
+    // Total credit adjustments across all entitlements.
+    int32 total_adjustments = 4;
+
+    // Total remaining credits available for new recordings.
+    int32 total_remaining = 5;
+
+    // Whether the tenant has any active entitlement.
+    bool has_active_entitlement = 6;
+
+    // Whether the tenant can start a new recording (has remaining credits).
+    bool can_record = 7;
+
+    // Earliest expiration date among active entitlements (ISO-8601 format).
+    string earliest_expiration = 8;
+}

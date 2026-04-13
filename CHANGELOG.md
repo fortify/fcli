@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.17.0](https://github.com/fortify/fcli/compare/v3.16.0...v3.17.0) (2026-04-10)
+
+
+### Features
+
+* `fcli aviator entitlement list-dast`: New command for querying DAST entitlements (credit-based model) ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli aviator entitlement list-sast`: New command for querying SAST entitlements ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli aviator entitlement list`: Deprecated; use `fcli aviator entitlement list-sast` instead ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli aviator ssc apply-remediations`: Add `--latest`, `--all`, `--since`, `--av` options for easier selection of Aviator-processed artifacts ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli aviator ssc audit` : Add `--folder-priority-order` option to prioritize folder for issues selection if open issues exceed aviator app quota ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli aviator ssc audit`: Add `--skip-if-exceeding-quota` option to skip audits if open issues exceed aviator app quota ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli aviator ssc audit`: Add `--test-exceeding-quota` option for dry-run mode to report potential skips without auditing if open issues exceed aviator app quota ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli fod aviator apply-remediations`: New command for applying Aviator remediations from Fortify on Demand ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli sc-dast scan delete`: Add `--force` option to request forced deletion ([0fb8a4d](https://github.com/fortify/fcli/commit/0fb8a4dbb249d008551b4c4850c215f5f123b736))
+* SSC `bulkaudit` action: Add `--aviator-app-mapping` option to control SSC app/version to Aviator application mapping ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+
+
+### Bug Fixes
+
+* `fcli aviator ssc audit`: Reduce memory consumption while parsing FPR files ([8521a9f](https://github.com/fortify/fcli/commit/8521a9ff0a5c66264948488b1df09ac2a24ae0af))
+* `fcli fod access-control`: Throw exception if invalid role is specified on `create-user` or `update-user` commands ([c0fb907](https://github.com/fortify/fcli/commit/c0fb9070e706baaffe1ddf5c0642a63dd4f91056))
+* `fcli fod`: Fix loading of attribute definitions on FoD 26.2+ ([5af0833](https://github.com/fortify/fcli/commit/5af08336f1bd6198d3709e976e4f81fc19560522))
+* `fcli fod`: Use default attribute values from FoD 26.2+ if available for `--auto-required-attrs` ([#969](https://github.com/fortify/fcli/issues/969)) ([fd0fefd](https://github.com/fortify/fcli/commit/fd0fefd664482037e1c2c2c38c331297a17754f4))
+* `fcli ssc * list`: Improve server-side query generation to support `matches` operator ([eb1170d](https://github.com/fortify/fcli/commit/eb1170dd2f841754be70c36dfa7237adf3031dd2))
+* `fcli util mcp-server start`: Expose `fcli ssc issue update` command ([10ce4bc](https://github.com/fortify/fcli/commit/10ce4bc79aa6e158755ddd472118aed3b71adbef))
+* `fcli util mcp-server start`: Improve server-side query generation/handling ([eb1170d](https://github.com/fortify/fcli/commit/eb1170dd2f841754be70c36dfa7237adf3031dd2))
+* Fix duplicate HTTP request headers ([427e929](https://github.com/fortify/fcli/commit/427e929536036fa8bd504d223eca32f7d71a7da0))
+* Implement exponential back-off retry strategy on HTTP 502/503 errors for `GET` requests to SSC, SC-DAST, SC-DAST, and FoD ([45a47ca](https://github.com/fortify/fcli/commit/45a47caf06e20864b9fca0596cf6b4da4d5b97e5))
+
 ## [3.16.0](https://github.com/fortify/fcli/compare/v3.15.0...v3.16.0) (2026-03-24)
 
 

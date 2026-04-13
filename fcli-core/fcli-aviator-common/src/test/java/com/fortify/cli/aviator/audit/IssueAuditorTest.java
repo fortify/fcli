@@ -82,6 +82,37 @@ class IssueAuditorTest {
     }
 
     @Test
+    void testFprInfoMissingBuildIdDefaultsToEmptyString() throws Exception {
+        if (fprHandle != null) {
+            fprHandle.close();
+            fprHandle = null;
+        }
+        if (tempFprFile != null) {
+            Files.deleteIfExists(tempFprFile);
+        }
+
+        tempFprFile = Files.createTempFile("test_aviator_missing_build", ".fpr");
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(tempFprFile))) {
+            ZipEntry entry = new ZipEntry("audit.fvdl");
+            zos.putNextEntry(entry);
+            String minimalXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><FVDL><UUID>test-uuid</UUID><Build></Build></FVDL>";
+            zos.write(minimalXml.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+
+            ZipEntry indexEntry = new ZipEntry("src-archive/index.xml");
+            zos.putNextEntry(indexEntry);
+            String indexXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><index></index>";
+            zos.write(indexXml.getBytes(StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+
+        fprHandle = new FprHandle(tempFprFile);
+        FPRInfo fprInfo = new FPRInfo(fprHandle);
+
+        assertEquals("", fprInfo.getBuildId());
+    }
+
+    @Test
     void testFilterVulnerabilities_LegacySyntaxWithSpaces() throws Exception {
 
         // Manual Logger Stub (No-op)
@@ -129,7 +160,7 @@ class IssueAuditorTest {
 
         IssueAuditor auditor = new IssueAuditor(
             inputList, null, new HashMap<>(), fprInfo,
-            "TestApp", "1.0", selection, dummyLogger
+            "TestApp", "1.0", selection, dummyLogger, null
         );
 
         Method filterMethod = IssueAuditor.class.getDeclaredMethod("filterVulnerabilities", List.class, FilterSet.class);

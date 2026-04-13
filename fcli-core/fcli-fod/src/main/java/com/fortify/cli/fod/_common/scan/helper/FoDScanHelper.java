@@ -146,7 +146,7 @@ public class FoDScanHelper {
         Integer assessmentTypeId = 0;
         LOG.info("Finding/Validating entitlement to use.");
 
-        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, scanType, 
+        var atd = FoDReleaseAssessmentTypeHelper.getAssessmentTypeDescriptor(unirest, relId, scanType,
             entitlementFrequencyType, assessmentType);
         assessmentTypeId = atd.getAssessmentTypeId();
         entitlementIdToUse = atd.getEntitlementId();

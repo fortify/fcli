@@ -12,8 +12,7 @@
  */
 package com.fortify.cli.aviator.grpc;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -34,7 +33,10 @@ import com.fortify.cli.aviator.audit.model.Autoremediation;
 import com.fortify.cli.aviator.audit.model.Change;
 import com.fortify.cli.aviator.audit.model.StackTraceElement;
 import com.fortify.cli.aviator.audit.model.UserPrompt;
+import com.fortify.cli.aviator.fpr.utils.SourceCodeEnricher;
 import com.fortify.cli.aviator.util.Constants;
+import com.fortify.cli.aviator.util.FileTypeLanguageMapperUtil;
+import com.fortify.cli.aviator.util.FileUtil;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -42,6 +44,7 @@ import io.grpc.stub.AbstractBlockingStub;
 
 class GrpcUtil {
     private static final Logger LOG = LoggerFactory.getLogger(GrpcUtil.class);
+    SourceCodeEnricher sourceCodeEnricher;
 
     @FunctionalInterface
     interface GrpcCall<S, T, R> {
@@ -135,15 +138,20 @@ class GrpcUtil {
         if (userPrompt.getLongestStackTrace() != null) {
             builder.addAllLongestStackTrace(userPrompt.getLongestStackTrace().stream().map(GrpcUtil::convertToStackTraceElement).collect(Collectors.toList()));
         }
+
         if (userPrompt.getFiles() != null) {
             builder.addAllFiles(userPrompt.getFiles().stream().map(file -> File.newBuilder().setName(file.getName() == null ? "" : file.getName()).setContent(file.getContent() == null ? "" : file.getContent()).setSegment(file.isSegment()).setStartLine(file.getStartLine()).setEndLine(file.getEndLine()).build()).collect(Collectors.toList()));
         }
         if (userPrompt.getLastStackTraceElement() != null) {
             builder.setLastStackTraceElement(convertToStackTraceElement(userPrompt.getLastStackTraceElement()));
         }
-        if (userPrompt.getProgrammingLanguages() != null) {
+
+        //We are setting list of files later for lazy loading that's why programming language will be unavailable
+        if(userPrompt.getFiles()!=null)
+         builder.addAllProgrammingLanguages(programmingLanguages(userPrompt.getFiles()));
+        /*if (userPrompt.getProgrammingLanguages() != null) {
             builder.addAllProgrammingLanguages(userPrompt.getProgrammingLanguages());
-        }
+        }*/
         builder.setFileExtension(userPrompt.getFileExtension() == null ? "" : userPrompt.getFileExtension());
         builder.setLanguage(userPrompt.getLanguage() == null ? "" : userPrompt.getLanguage());
         builder.setCategory(userPrompt.getCategory() == null ? "" : userPrompt.getCategory());
@@ -158,6 +166,18 @@ class GrpcUtil {
         builder.setStreamId(streamId);
 
         return builder.build();
+    }
+
+    private static Set<String> programmingLanguages(List<com.fortify.cli.aviator.audit.model.File> sourceCodeFiles){
+        Set<String> programmingLanguages = new HashSet<>();
+        for (com.fortify.cli.aviator.audit.model.File file : sourceCodeFiles) {
+            String fileExtension = FileUtil.getFileExtension(file.getName());
+            String language = FileTypeLanguageMapperUtil.getProgrammingLanguage(fileExtension);
+            if (language != null) {
+                programmingLanguages.add(language);
+            }
+        }
+        return programmingLanguages;
     }
 
     private static com.fortify.aviator.grpc.StackTraceElement convertToStackTraceElement(StackTraceElement element) {
