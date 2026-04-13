@@ -54,7 +54,7 @@ public final class CommandSpecDescriptor {
     @Getter private final CommandSpec spec;
 
     // Lazily initialized JSON nodes
-    @Getter(lazy=true) private final ObjectNode commandSpecNode = createHighLevelNode();
+    @Getter(lazy=true) private final ObjectNode commandSpecNode = createCommandSpecNode();
     @Getter(lazy=true) private final ObjectNode commandArgsNode = createCommandArgsNode(spec);
 
     public boolean matches(QueryExpression qe) {
@@ -78,7 +78,7 @@ public final class CommandSpecDescriptor {
         return FcliCommandSpecHelper.rootCommandTreeStream().map(CommandSpecDescriptor::from);
     }
 
-    private ObjectNode createHighLevelNode() {
+    private ObjectNode createCommandSpecNode() {
         var spec = this.spec;
         var hiddenParent = FcliCommandSpecHelper.hasHiddenParent(spec);
         var hiddenSelf = FcliCommandSpecHelper.isHiddenSelf(spec);
