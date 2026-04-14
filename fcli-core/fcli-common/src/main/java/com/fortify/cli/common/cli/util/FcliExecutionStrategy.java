@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.cli.util;
 
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
@@ -22,7 +21,6 @@ import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDockerHelper;
 import com.fortify.cli.common.util.JavaHelper;
-import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -57,7 +55,8 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
         var leaf = getLeafParseResult(parseResult);
         var leafSpec = leaf.commandSpec();
         var execCtx = FcliExecutionContextHolder.current();
-        try (var outHandler = new NonClosingOutHandler()) {  
+        FcliExecutionOutputContext.installIfNeeded();
+        try {
             log.debug("Starting command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
             initializeCommand(leafSpec);
             return delegate.execute(parseResult);
@@ -103,48 +102,5 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
 
     private static void registerLogMask(Field field, Object value) {
         LogMaskHelper.INSTANCE.registerValue(field.getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
-    }
-    
-    
-    private static final class NonClosingOutHandler implements AutoCloseable {
-        private final PrintStream orgOut;
-        private final PrintStream orgErr;
-        private final boolean installedOut;
-        private final boolean installedErr;
-
-        public NonClosingOutHandler() {
-            // Ensure delegating streams are installed once per JVM
-            FcliExecutionOutputContext.installIfNeeded();
-            this.orgOut = FcliExecutionOutputContext.getOriginalOut();
-            this.orgErr = FcliExecutionOutputContext.getOriginalErr();
-            // Only install per-thread delegates if OutputHelper hasn't already set one for
-            // this thread (e.g. for output capture/suppression). Overwriting an existing
-            // delegate would route captured output to the real stream instead of the
-            // capture buffer, causing output to leak to unexpected destinations.
-            this.installedOut = FcliExecutionOutputContext.getThreadOut() == null;
-            this.installedErr = FcliExecutionOutputContext.getThreadErr() == null;
-            if (installedOut) {
-                log.debug("Installing NonClosingPrintStream delegate for stdout");
-                FcliExecutionOutputContext.setThreadOut(new NonClosingPrintStream("System.out", orgOut));
-            }
-            if (installedErr) {
-                log.debug("Installing NonClosingPrintStream delegate for stderr");
-                FcliExecutionOutputContext.setThreadErr(new NonClosingPrintStream("System.err", orgErr));
-            }
-        }
-
-        @Override
-        public void close() {
-            // Only clear the delegates that we installed; if OutputHelper set one,
-            // it is responsible for clearing it in its own finally block.
-            if (installedOut) {
-                FcliExecutionOutputContext.clearThreadOut();
-                log.debug("Cleared thread-local stdout delegate");
-            }
-            if (installedErr) {
-                FcliExecutionOutputContext.clearThreadErr();
-                log.debug("Cleared thread-local stderr delegate");
-            }
-        }
     }
 }

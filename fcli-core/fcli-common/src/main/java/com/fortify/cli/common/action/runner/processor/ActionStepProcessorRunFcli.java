@@ -269,8 +269,6 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     }
     @RequiredArgsConstructor
     private class FcliRecordConsumer implements Consumer<ObjectNode> {
-        private final PrintStream stdout = System.out;
-        private final PrintStream stderr = System.err;
         private final ActionStepFcliForEachDescriptor fcliForEach;
         private final boolean collectRecords;
         @Getter(lazy=true) private final ArrayNode records = JsonHelper.getObjectMapper().createArrayNode();
@@ -294,18 +292,12 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         }
         
         private final class TempRestoreOutput implements AutoCloseable {
-            private final PrintStream prevThreadOut = FcliExecutionOutputContext.getThreadOut();
-            private final PrintStream prevThreadErr = FcliExecutionOutputContext.getThreadErr();
-            public TempRestoreOutput() {
-                FcliExecutionOutputContext.setThreadOut(stdout);
-                FcliExecutionOutputContext.setThreadErr(stderr);
-            }
+            private final PrintStream poppedOut = FcliExecutionOutputContext.popOut();
+            private final PrintStream poppedErr = FcliExecutionOutputContext.popErr();
             @Override
             public void close() {
-                if ( prevThreadOut==null ) { FcliExecutionOutputContext.clearThreadOut(); }
-                else { FcliExecutionOutputContext.setThreadOut(prevThreadOut); }
-                if ( prevThreadErr==null ) { FcliExecutionOutputContext.clearThreadErr(); }
-                else { FcliExecutionOutputContext.setThreadErr(prevThreadErr); }
+                FcliExecutionOutputContext.pushErr(poppedErr);
+                FcliExecutionOutputContext.pushOut(poppedOut);
             }
         }
     }

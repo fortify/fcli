@@ -47,8 +47,8 @@ public final class StdIoMaskHelper {
         originalOut = FcliExecutionOutputContext.getOriginalOut();
         originalErr = FcliExecutionOutputContext.getOriginalErr();
 
-        FcliExecutionOutputContext.setThreadOut(new MaskingPrintStream(originalOut, this::mask));
-        FcliExecutionOutputContext.setThreadErr(new MaskingPrintStream(originalErr, this::mask));
+        FcliExecutionOutputContext.pushOut(new MaskingPrintStream(originalOut, this::mask));
+        FcliExecutionOutputContext.pushErr(new MaskingPrintStream(originalErr, this::mask));
 
         installed = true;
         return this;
@@ -62,8 +62,8 @@ public final class StdIoMaskHelper {
         if (!installed) {
             return this;
         }
-        FcliExecutionOutputContext.clearThreadOut();
-        FcliExecutionOutputContext.clearThreadErr();
+        FcliExecutionOutputContext.popOut();
+        FcliExecutionOutputContext.popErr();
 
         originalOut = null;
         originalErr = null;

@@ -75,19 +75,19 @@ public class FcliConcurrencyTest {
         Callable<String> t1 = () -> {
             var baos = new ByteArrayOutputStream();
             var ps = new PrintStream(baos, true);
-            FcliExecutionOutputContext.setThreadOut(ps);
+            FcliExecutionOutputContext.pushOut(ps);
             System.out.println("hello-1");
             ps.flush();
-            FcliExecutionOutputContext.clearThreadOut();
+            FcliExecutionOutputContext.popOut();
             return baos.toString();
         };
         Callable<String> t2 = () -> {
             var baos = new ByteArrayOutputStream();
             var ps = new PrintStream(baos, true);
-            FcliExecutionOutputContext.setThreadOut(ps);
+            FcliExecutionOutputContext.pushOut(ps);
             System.out.println("hello-2");
             ps.flush();
-            FcliExecutionOutputContext.clearThreadOut();
+            FcliExecutionOutputContext.popOut();
             return baos.toString();
         };
         var f1 = ex.submit(t1);

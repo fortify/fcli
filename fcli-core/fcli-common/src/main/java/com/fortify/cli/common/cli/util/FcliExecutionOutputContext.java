@@ -16,13 +16,14 @@
 package com.fortify.cli.common.cli.util;
 
 import java.io.PrintStream;
-import java.util.Objects;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 public final class FcliExecutionOutputContext {
     private FcliExecutionOutputContext() {}
 
-    private static final ThreadLocal<PrintStream> currentOut = new InheritableThreadLocal<>();
-    private static final ThreadLocal<PrintStream> currentErr = new InheritableThreadLocal<>();
+    private static final ThreadLocal<Deque<PrintStream>> outStack = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<Deque<PrintStream>> errStack = ThreadLocal.withInitial(ArrayDeque::new);
 
     private static volatile boolean installed = false;
     private static PrintStream originalOut;
@@ -33,20 +34,23 @@ public final class FcliExecutionOutputContext {
         // Capture originals before replacing
         originalOut = System.out;
         originalErr = System.err;
-        // Install delegating streams that forward to the thread-local delegates or fall back to originals
-        System.setOut(new DelegatingPrintStream(() -> Objects.requireNonNullElse(currentOut.get(), originalOut)));
-        System.setErr(new DelegatingPrintStream(() -> Objects.requireNonNullElse(currentErr.get(), originalErr)));
+        // Install delegating streams that peek the per-thread stack or fall back to originals
+        System.setOut(new DelegatingPrintStream(() -> {
+            var stack = outStack.get();
+            return stack.isEmpty() ? originalOut : stack.peek();
+        }));
+        System.setErr(new DelegatingPrintStream(() -> {
+            var stack = errStack.get();
+            return stack.isEmpty() ? originalErr : stack.peek();
+        }));
         installed = true;
     }
 
     public static PrintStream getOriginalOut() { return originalOut; }
     public static PrintStream getOriginalErr() { return originalErr; }
 
-    public static PrintStream getThreadOut() { return currentOut.get(); }
-    public static PrintStream getThreadErr() { return currentErr.get(); }
-
-    public static void setThreadOut(PrintStream ps) { currentOut.set(ps); }
-    public static void setThreadErr(PrintStream ps) { currentErr.set(ps); }
-    public static void clearThreadOut() { currentOut.remove(); }
-    public static void clearThreadErr() { currentErr.remove(); }
+    public static void pushOut(PrintStream ps) { outStack.get().push(ps); }
+    public static void pushErr(PrintStream ps) { errStack.get().push(ps); }
+    public static PrintStream popOut() { return outStack.get().pop(); }
+    public static PrintStream popErr() { return errStack.get().pop(); }
 }
