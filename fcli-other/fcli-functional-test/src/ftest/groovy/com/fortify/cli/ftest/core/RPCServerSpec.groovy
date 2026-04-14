@@ -10,6 +10,7 @@ import spock.lang.Shared
 @Prefix("core.rpc-server")
 class RPCServerSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/actions/server-import-functions.yaml") String importActionPath
+    @Shared @TestResource("runtime/actions/server-global-vars.yaml") String globalVarsActionPath
 
     def "imported non-streaming function executes via RPC"() {
         when:
@@ -277,6 +278,81 @@ class RPCServerSpec extends FcliBaseSpec {
                 def response = server.rpcCall("fcli.listCommands", [query: "!!!invalid!!!"], 20)
                 assert response.get("error") != null
                 assert response.get("result") == null
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute action run has isolated global vars per invocation"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def actionCmd = "action run ${globalVarsActionPath} --on-unsigned ignore" as String
+                // First invocation: set global var 'color' to 'red'; old value should be null
+                def r1 = server.rpcCall("fcli.execute",
+                    [command: "${actionCmd} --key color --value red" as String], 21)
+                assert r1.get("error") == null : "Unexpected error: ${r1}"
+                def result1 = r1.get("result")
+                assert result1 != null : "No result in response: ${r1}"
+                def stdout1 = result1.get("stdout")?.asText() ?: ""
+                def stderr1 = result1.get("stderr")?.asText() ?: ""
+                assert stdout1.contains("old=,") : "Expected old=, in stdout but got stdout='${stdout1}', stderr='${stderr1}', result=${result1}"
+                assert stdout1.contains("new=red")
+
+                // Second invocation: set same key again; old value should still be empty (isolated context)
+                def r2 = server.rpcCall("fcli.execute",
+                    [command: "${actionCmd} --key color --value blue" as String], 22)
+                assert r2.get("error") == null
+                def stdout2 = r2.get("result").get("stdout").asText()
+                assert stdout2.contains("old=,") : "Expected isolated context but got: ${stdout2}"
+                assert stdout2.contains("new=blue")
+
+                // Third invocation with a different key: also should be empty (fresh context)
+                def r3 = server.rpcCall("fcli.execute",
+                    [command: "${actionCmd} --key size --value large" as String], 23)
+                assert r3.get("error") == null
+                def stdout3 = r3.get("result").get("stdout").asText()
+                assert stdout3.contains("old=,")
+                assert stdout3.contains("new=large")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "imported function shares global vars across invocations"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${globalVarsActionPath}")
+        then:
+            try {
+                // First call: set global 'color' to 'red'; no previous value
+                def r1 = server.rpcCall("fn.setAndGetGlobal", [key: "color", value: "red"], 24)
+                assert r1.get("error") == null
+                assert r1.get("result").asText() == "old=,new=red"
+
+                // Second call: set same key to 'blue'; should see previous value 'red'
+                def r2 = server.rpcCall("fn.setAndGetGlobal", [key: "color", value: "blue"], 25)
+                assert r2.get("error") == null
+                assert r2.get("result").asText() == "old=red,new=blue"
+
+                // Third call: read the value back via getGlobal
+                def r3 = server.rpcCall("fn.getGlobal", [key: "color"], 26)
+                assert r3.get("error") == null
+                assert r3.get("result").asText() == "blue"
+
+                // Fourth call: set a different key; 'color' should still be there
+                def r4 = server.rpcCall("fn.setAndGetGlobal", [key: "size", value: "large"], 27)
+                assert r4.get("error") == null
+                assert r4.get("result").asText() == "old=,new=large"
+
+                // Verify both keys are present
+                def r5 = server.rpcCall("fn.getGlobal", [key: "color"], 28)
+                assert r5.get("error") == null
+                assert r5.get("result").asText() == "blue"
+
+                def r6 = server.rpcCall("fn.getGlobal", [key: "size"], 29)
+                assert r6.get("error") == null
+                assert r6.get("result").asText() == "large"
             } finally {
                 server.close()
             }

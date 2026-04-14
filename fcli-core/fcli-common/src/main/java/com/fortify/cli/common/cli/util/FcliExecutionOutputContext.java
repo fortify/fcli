@@ -49,6 +49,16 @@ public final class FcliExecutionOutputContext {
     public static PrintStream getOriginalOut() { return originalOut; }
     public static PrintStream getOriginalErr() { return originalErr; }
 
+    public static PrintStream currentOut() {
+        var stack = outStack.get();
+        return stack.isEmpty() ? originalOut : stack.peek();
+    }
+
+    public static PrintStream currentErr() {
+        var stack = errStack.get();
+        return stack.isEmpty() ? originalErr : stack.peek();
+    }
+
     public static void pushOut(PrintStream ps) { outStack.get().push(ps); }
     public static void pushErr(PrintStream ps) { errStack.get().push(ps); }
     public static PrintStream popOut() { return outStack.get().pop(); }
