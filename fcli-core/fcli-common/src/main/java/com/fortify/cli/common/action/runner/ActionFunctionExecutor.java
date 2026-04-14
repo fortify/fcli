@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionFunction;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.ProgressWriterI18n;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
@@ -25,15 +27,22 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
  * {@link ActionRunnerContextLocal} per invocation, builds the args ObjectNode,
  * and delegates to {@link ActionFunctionSpelFunctions#call(String, Object...)}.
  * <p>
+ * All executors created for the same server share a single
+ * {@link FcliExecutionContext} so that {@code globalValues} persist across
+ * invocations. The shared context is pushed onto the calling thread's stack
+ * during execution and popped afterwards.
+ * <p>
  * Used by MCP/RPC server implementations to invoke exported functions.
  */
 public final class ActionFunctionExecutor {
     private final Action action;
     private final ActionFunction function;
+    private final FcliExecutionContext sharedContext;
 
-    public ActionFunctionExecutor(Action action, ActionFunction function) {
+    public ActionFunctionExecutor(Action action, ActionFunction function, FcliExecutionContext sharedContext) {
         this.action = action;
         this.function = function;
+        this.sharedContext = sharedContext;
     }
 
     public Action getAction() {
@@ -53,15 +62,20 @@ public final class ActionFunctionExecutor {
      *         For streaming functions: an IActionStepForEachProcessor.
      */
     public Object execute(ObjectNode argsNode) {
-        var config = ActionRunnerConfig.builder()
-                .action(action)
-                .progressWriter(new ProgressWriterI18n(ProgressWriterType.none, null))
-                .onValidationErrors(r -> new RuntimeException(String.join("; ", r.getValidationErrors())))
-                .build();
-        try (var ctx = ActionRunnerContextLocal.create(config, config.getProgressWriter(), JsonHelper.getObjectMapper().createObjectNode())) {
-            ctx.initialize();
-            var fnSpel = new ActionFunctionSpelFunctions(ctx);
-            return fnSpel.call(function.getKey(), argsNode);
+        FcliExecutionContextHolder.push(sharedContext);
+        try {
+            var config = ActionRunnerConfig.builder()
+                    .action(action)
+                    .progressWriter(new ProgressWriterI18n(ProgressWriterType.none, null))
+                    .onValidationErrors(r -> new RuntimeException(String.join("; ", r.getValidationErrors())))
+                    .build();
+            try (var ctx = ActionRunnerContextLocal.create(config, config.getProgressWriter(), JsonHelper.getObjectMapper().createObjectNode())) {
+                ctx.initialize();
+                var fnSpel = new ActionFunctionSpelFunctions(ctx);
+                return fnSpel.call(function.getKey(), argsNode);
+            }
+        } finally {
+            FcliExecutionContextHolder.pop();
         }
     }
 

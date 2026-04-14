@@ -18,12 +18,11 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
+import com.fortify.cli.util._common.helper.FcliRunnerHelper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -103,27 +102,13 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
     }
 
     private JsonNode executeWithStdout(String command) {
-        var result = FcliCommandExecutorFactory.builder()
-            .cmd(command)
-            .stdoutOutputType(OutputType.collect)
-            .stderrOutputType(OutputType.collect)
-            .onFail(r -> {})
-            .build().create().execute();
-
+        var result = FcliRunnerHelper.collectStdout(command);
         return buildResponse(result, null);
     }
 
     private JsonNode executeWithRecords(String command) {
         var allRecords = new ArrayList<JsonNode>();
-
-        var result = FcliCommandExecutorFactory.builder()
-            .cmd(command)
-            .stdoutOutputType(OutputType.suppress)
-            .stderrOutputType(OutputType.collect)
-            .recordConsumer(allRecords::add)
-            .onFail(r -> {})
-            .build().create().execute();
-
+        var result = FcliRunnerHelper.collectRecords(command, allRecords::add);
         return buildResponse(result, allRecords);
     }
 

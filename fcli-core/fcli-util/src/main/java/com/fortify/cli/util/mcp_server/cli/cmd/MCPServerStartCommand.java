@@ -34,6 +34,7 @@ import com.fortify.cli.common.action.model.ActionMcpIncludeExclude;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
@@ -90,6 +91,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     @Mixin private AsyncJobManagerMixin asyncJobManagerMixin;
     private static final AsyncJobManager.Config MCP_ASYNC_DEFAULTS = AsyncJobManager.Config.builder().build();
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
+    private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext();
     private MCPJobManager jobManager;
 
     @Override
@@ -220,7 +222,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             var function = entry.getValue();
             if (!function.isExported()) { continue; }
             if (hasMcpResourceMeta(function)) { continue; } // Resources handled separately
-            var executor = new ActionFunctionExecutor(action, function);
+            var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
             var toolName = "fcli_fn_" + function.getKey().replace('-', '_');
             var schema = buildFunctionArgsSchema(function);
             var description = function.getDescription() != null ? function.getDescription() : function.getKey();
@@ -258,7 +260,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             if (uriTemplate == null) { continue; }
             var name = getMetaString(resourceMeta, "name");
             var mimeType = getMetaString(resourceMeta, "mime-type");
-            var executor = new ActionFunctionExecutor(action, function);
+            var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
             var template = ResourceTemplate.builder()
                     .uriTemplate(uriTemplate)
                     .name(name != null ? name : function.getKey())

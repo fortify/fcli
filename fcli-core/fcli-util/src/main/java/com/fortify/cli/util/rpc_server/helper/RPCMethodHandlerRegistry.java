@@ -20,6 +20,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +72,7 @@ public final class RPCMethodHandlerRegistry {
     @Slf4j
     public static final class Builder {
         private final AsyncJobManager asyncJobManager;
+        private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext();
         private final Map<String, IRPCMethodHandler> handlers = new LinkedHashMap<>();
 
         private Builder(AsyncJobManager asyncJobManager) {
@@ -102,7 +104,7 @@ public final class RPCMethodHandlerRegistry {
                 var function = entry.getValue();
                 if (!function.isExported()) { continue; }
                 var methodName = "fn." + function.getKey();
-                var executor = new ActionFunctionExecutor(action, function);
+                var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
                 register(methodName, new RPCMethodHandlerActionFunction(executor, asyncJobManager));
                 log.debug("Registered imported function as RPC method: {}", methodName);
             }

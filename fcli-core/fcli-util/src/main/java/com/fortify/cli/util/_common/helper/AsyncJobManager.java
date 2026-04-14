@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 
 import lombok.Builder;
 import lombok.Data;
@@ -119,22 +120,27 @@ public class AsyncJobManager {
 
     private CompletableFuture<FcliExecutionResult> buildJobFuture(InProgressEntry entry, IAsyncTask task) {
         return CompletableFuture.supplyAsync(() -> {
-            var records = entry.getRecords();
-            var result = task.run(record -> {
-                if (!Thread.currentThread().isInterrupted()) {
-                    records.add(record);
+            FcliExecutionContextHolder.pushNew();
+            try {
+                var records = entry.getRecords();
+                var result = task.run(record -> {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        records.add(record);
+                    }
+                });
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
                 }
-            });
-            if (Thread.currentThread().isInterrupted()) {
-                return null;
+                var fullResult = records.isEmpty() && result.getOut() != null && !result.getOut().isBlank()
+                    ? FcliExecutionResult.fromPlainText(result)
+                    : FcliExecutionResult.fromRecords(result, records);
+                if (result.getExitCode() == 0) {
+                    putCompleted(entry.getJobId(), fullResult);
+                }
+                return fullResult;
+            } finally {
+                FcliExecutionContextHolder.pop();
             }
-            var fullResult = records.isEmpty() && result.getOut() != null && !result.getOut().isBlank()
-                ? FcliExecutionResult.fromPlainText(result)
-                : FcliExecutionResult.fromRecords(result, records);
-            if (result.getExitCode() == 0) {
-                putCompleted(entry.getJobId(), fullResult);
-            }
-            return fullResult;
         }, backgroundExecutor);
     }
 
