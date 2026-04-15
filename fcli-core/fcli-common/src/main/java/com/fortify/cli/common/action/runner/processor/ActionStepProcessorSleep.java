@@ -31,6 +31,7 @@ public class ActionStepProcessorSleep extends AbstractActionStepProcessor {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            return;
         }
     }
 }

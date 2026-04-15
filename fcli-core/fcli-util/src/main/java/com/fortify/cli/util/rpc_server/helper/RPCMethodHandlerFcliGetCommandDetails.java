@@ -10,9 +10,6 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-/*
- * Copyright 2021-2026 Open Text.
- */
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
