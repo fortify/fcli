@@ -17,7 +17,7 @@ class RPCServerSpec extends FcliBaseSpec {
             def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
         then:
             try {
-                def response = server.rpcCall("fn.echo", [message: "hello-rpc"], 1)
+                def response = server.rpcCall("fn.call", [name: "echo", args: [message: "hello-rpc"]], 1)
                 assert response.get("result") != null
                 assert response.get("result").asText().contains("hello-rpc")
                 assert response.get("error") == null
@@ -31,7 +31,7 @@ class RPCServerSpec extends FcliBaseSpec {
             def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
         then:
             try {
-                def response = server.rpcCall("fn.multiply", [x: 6, y: 7], 2)
+                def response = server.rpcCall("fn.call", [name: "multiply", args: [x: 6, y: 7]], 2)
                 assert response.get("result") != null
                 assert response.get("result").asText().contains("42")
                 assert response.get("error") == null
@@ -47,7 +47,7 @@ class RPCServerSpec extends FcliBaseSpec {
             try {
                 // Streaming functions with async=true start a background job;
                 // results must be retrieved via async.getPage
-                def streamResponse = server.rpcCall("fn.generateItems", [items: [0, 1, 2], async: true], 3)
+                def streamResponse = server.rpcCall("fn.call", [name: "generateItems", args: [items: [0, 1, 2]], async: true], 3)
                 assert streamResponse.get("result") != null
                 assert streamResponse.get("error") == null
                 def jobId = streamResponse.get("result").get("jobId").asText()
@@ -66,13 +66,13 @@ class RPCServerSpec extends FcliBaseSpec {
             }
     }
 
-    def "internal (export=false) function is NOT registered as RPC method"() {
+    def "internal (export=false) function is NOT accessible via fn.call"() {
         when:
             def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
         then:
             try {
-                // Call the internal function should return method not found
-                def response = server.rpcCall("fn._helperInternal", [:], 4)
+                // Non-exported functions are not registered; fn.call returns method not found
+                def response = server.rpcCall("fn.call", [name: "_helperInternal", args: [:]], 4)
                 assert response.get("error") != null
                 assert response.get("error").get("code").asInt() == -32601 // method not found
             } finally {
@@ -80,7 +80,7 @@ class RPCServerSpec extends FcliBaseSpec {
             }
     }
 
-    def "rpc.listMethods shows all default methods and imported functions"() {
+    def "rpc.listMethods shows all default methods including fn.call and fn.list"() {
         when:
             def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
         then:
@@ -102,12 +102,37 @@ class RPCServerSpec extends FcliBaseSpec {
                 assert methodNames.contains("async.getResult")
                 assert methodNames.contains("async.cancel")
                 assert methodNames.contains("async.clear")
-                // Should also have imported exported functions
-                assert methodNames.contains("fn.echo")
-                assert methodNames.contains("fn.multiply")
-                assert methodNames.contains("fn.generateItems")
-                // Should NOT have internal function
-                assert !methodNames.contains("fn._helperInternal")
+                // fn dispatch methods should always be present
+                assert methodNames.contains("fn.call")
+                assert methodNames.contains("fn.list")
+                // Per-function methods are no longer registered; functions are accessed via fn.call
+                assert !methodNames.contains("fn.echo")
+                assert !methodNames.contains("fn.multiply")
+                assert !methodNames.contains("fn.generateItems")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fn.list returns all exported imported functions"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                def response = server.rpcCall("fn.list", null, 6)
+                assert response.get("result") != null
+                assert response.get("error") == null
+                def fns = response.get("result").get("functions")
+                assert fns != null && fns.isArray()
+                def fnNames = [] as Set
+                for (def f : fns) {
+                    fnNames.add(f.get("name").asText())
+                }
+                assert fnNames.contains("echo")
+                assert fnNames.contains("multiply")
+                assert fnNames.contains("generateItems")
+                // Non-exported functions must not appear
+                assert !fnNames.contains("_helperInternal")
             } finally {
                 server.close()
             }
@@ -326,31 +351,31 @@ class RPCServerSpec extends FcliBaseSpec {
         then:
             try {
                 // First call: set global 'color' to 'red'; no previous value
-                def r1 = server.rpcCall("fn.setAndGetGlobal", [key: "color", value: "red"], 24)
+                def r1 = server.rpcCall("fn.call", [name: "setAndGetGlobal", args: [key: "color", value: "red"]], 24)
                 assert r1.get("error") == null
                 assert r1.get("result").asText() == "old=,new=red"
 
                 // Second call: set same key to 'blue'; should see previous value 'red'
-                def r2 = server.rpcCall("fn.setAndGetGlobal", [key: "color", value: "blue"], 25)
+                def r2 = server.rpcCall("fn.call", [name: "setAndGetGlobal", args: [key: "color", value: "blue"]], 25)
                 assert r2.get("error") == null
                 assert r2.get("result").asText() == "old=red,new=blue"
 
                 // Third call: read the value back via getGlobal
-                def r3 = server.rpcCall("fn.getGlobal", [key: "color"], 26)
+                def r3 = server.rpcCall("fn.call", [name: "getGlobal", args: [key: "color"]], 26)
                 assert r3.get("error") == null
                 assert r3.get("result").asText() == "blue"
 
                 // Fourth call: set a different key; 'color' should still be there
-                def r4 = server.rpcCall("fn.setAndGetGlobal", [key: "size", value: "large"], 27)
+                def r4 = server.rpcCall("fn.call", [name: "setAndGetGlobal", args: [key: "size", value: "large"]], 27)
                 assert r4.get("error") == null
                 assert r4.get("result").asText() == "old=,new=large"
 
                 // Verify both keys are present
-                def r5 = server.rpcCall("fn.getGlobal", [key: "color"], 28)
+                def r5 = server.rpcCall("fn.call", [name: "getGlobal", args: [key: "color"]], 28)
                 assert r5.get("error") == null
                 assert r5.get("result").asText() == "blue"
 
-                def r6 = server.rpcCall("fn.getGlobal", [key: "size"], 29)
+                def r6 = server.rpcCall("fn.call", [name: "getGlobal", args: [key: "size"]], 29)
                 assert r6.get("error") == null
                 assert r6.get("result").asText() == "large"
             } finally {

@@ -50,6 +50,10 @@ public class RPCMethodException extends Exception {
         return new RPCError(code, getMessage(), data);
     }
     
+    public static RPCMethodException methodNotFound(String message) {
+        return new RPCMethodException(RPCError.METHOD_NOT_FOUND, message);
+    }
+
     public static RPCMethodException invalidParams(String message) {
         return new RPCMethodException(RPCError.INVALID_PARAMS, message);
     }

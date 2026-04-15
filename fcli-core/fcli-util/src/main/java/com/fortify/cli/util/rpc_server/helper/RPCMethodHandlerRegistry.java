@@ -34,9 +34,10 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>{@code fcli.buildInfo} — fcli build/version metadata</li>
  *   <li>{@code fcli.execute}, {@code fcli.listCommands}, {@code fcli.getCommandDetails} — fcli command invocation</li>
  *   <li>{@code async.*} — paged retrieval and lifecycle operations for async jobs</li>
+ *   <li>{@code fn.call}, {@code fn.list} — dispatch and discovery of imported action functions</li>
  * </ul>
- * Exported functions from action YAML files are registered as {@code fn.<functionKey>}
- * methods via {@link Builder#importAction(String)}.
+ * Exported functions from action YAML files are made available via {@code fn.call}
+ * and discoverable via {@code fn.list} by calling {@link Builder#importAction(String)}.
  *
  * @author Ruud Senden
  */
@@ -74,11 +75,12 @@ public final class RPCMethodHandlerRegistry {
         private final AsyncJobManager asyncJobManager;
         private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext();
         private final Map<String, IRPCMethodHandler> handlers = new LinkedHashMap<>();
+        private final Map<String, ActionFunctionExecutor> importedFunctions = new LinkedHashMap<>();
 
         private Builder(AsyncJobManager asyncJobManager) {
             this.asyncJobManager = asyncJobManager;
-            // Always registered — rpc.listMethods references the live handlers map so it
-            // reflects all later additions made in importAction().
+            // Always registered — rpc.listMethods and fn.call/fn.list reference the live maps
+            // so they reflect all later additions made in importAction().
             register("rpc.listMethods", new RPCMethodHandlerListMethods(handlers));
             register("fcli.buildInfo", new RPCMethodHandlerFcliInfo());
             register("fcli.execute", new RPCMethodHandlerFcliExecute(asyncJobManager));
@@ -88,11 +90,13 @@ public final class RPCMethodHandlerRegistry {
             register("async.getResult", new RPCMethodHandlerAsyncGetResult(asyncJobManager));
             register("async.cancel", new RPCMethodHandlerAsyncCancel(asyncJobManager));
             register("async.clear", new RPCMethodHandlerAsyncClear(asyncJobManager));
+            register("fn.call", new RPCMethodHandlerFnCall(importedFunctions, asyncJobManager));
+            register("fn.list", new RPCMethodHandlerFnList(importedFunctions));
         }
 
         /**
-         * Load the action YAML at {@code importFile} and register each exported
-         * function as an {@code fn.<functionKey>} RPC method.
+         * Load the action YAML at {@code importFile} and make each exported function
+         * available via {@code fn.call} and discoverable via {@code fn.list}.
          */
         public Builder importAction(String importFile) {
             var action = ActionLoaderHelper.load(
@@ -103,10 +107,9 @@ public final class RPCMethodHandlerRegistry {
             for (var entry : action.getFunctions().entrySet()) {
                 var function = entry.getValue();
                 if (!function.isExported()) { continue; }
-                var methodName = "fn." + function.getKey();
                 var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
-                register(methodName, new RPCMethodHandlerActionFunction(executor, asyncJobManager));
-                log.debug("Registered imported function as RPC method: {}", methodName);
+                importedFunctions.put(function.getKey(), executor);
+                log.debug("Imported exported function for fn.call: {}", function.getKey());
             }
             return this;
         }

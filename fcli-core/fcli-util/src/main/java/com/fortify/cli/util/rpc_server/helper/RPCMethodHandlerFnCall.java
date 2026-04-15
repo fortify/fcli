@@ -13,6 +13,7 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -27,13 +28,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * RPC method handler that wraps an {@link ActionFunctionExecutor} as a JSON-RPC method.
- * All exported functions from imported action files are registered as RPC methods.
+ * RPC method handler for {@code fn.call}.
+ * <p>
+ * Dispatches to an imported action function by name, keeping RPC-level parameters
+ * ({@code name}, {@code async}) cleanly separate from function arguments ({@code args}).
  *
- * Method: fn.&lt;key&gt;
+ * Method: fn.call
  * Params:
+ *   - name (string, required): Name of the exported function to call (see fn.list)
+ *   - args (object, optional): Function arguments as key/value pairs
  *   - async (boolean, optional): If true, run in background and return a jobId (default: false)
- *   - (plus any function-specific arguments)
  *
  * Synchronous response (async=false):
  *   - For non-streaming functions: the function's return value directly
@@ -48,48 +52,51 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RequiredArgsConstructor
-public final class RPCMethodHandlerActionFunction implements IRPCMethodHandler {
-    private final ActionFunctionExecutor executor;
+public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
+    private final Map<String, ActionFunctionExecutor> functions;
     private final AsyncJobManager asyncJobManager;
 
     @Override
     public String description() {
-        var fn = executor.getFunction();
-        var base = fn.getDescription() != null ? fn.getDescription() : "Exported action function: " + fn.getKey();
-        return fn.isStreaming()
-            ? base + " (streaming; use async=true to get a jobId for async.getPage)"
-            : base;
+        return "Call an imported function by name; use fn.list to see available functions";
     }
 
     @Override
     public JsonNode execute(JsonNode params) throws RPCMethodException {
-        log.debug("Executing action function: {}", executor.getFunction().getKey());
+        if (params == null || !params.has("name")) {
+            throw RPCMethodException.invalidParams("'name' parameter is required");
+        }
+        var name = params.get("name").asText();
+        var executor = functions.get(name);
+        if (executor == null) {
+            throw RPCMethodException.methodNotFound("Function not found: " + name);
+        }
+        log.debug("Executing action function: {}", name);
         try {
             var argsNode = buildArgsNode(params);
-            var async = params != null && params.has("async") && params.get("async").asBoolean(false);
+            var async = params.has("async") && params.get("async").asBoolean(false);
             if (async) {
-                return executeAsync(argsNode);
+                return executeAsync(executor, argsNode);
             } else if (executor.getFunction().isStreaming()) {
-                return executeStreamingSync(argsNode);
+                return executeStreamingSync(executor, argsNode);
             } else {
-                return executeNonStreamingSync(argsNode);
+                return executeNonStreamingSync(executor, argsNode);
             }
         } catch (Exception e) {
-            log.error("Error executing action function: {}", executor.getFunction().getKey(), e);
+            log.error("Error executing action function: {}", name, e);
             throw RPCMethodException.internalError("Function execution failed: " + e.getMessage(), e);
         }
     }
 
     private ObjectNode buildArgsNode(JsonNode params) {
-        if (params instanceof ObjectNode on) {
-            var copy = on.deepCopy();
-            copy.remove("async");
-            return copy;
+        var argsNode = params.get("args");
+        if (argsNode instanceof ObjectNode on) {
+            return on;
         }
         return JsonHelper.getObjectMapper().createObjectNode();
     }
 
-    private JsonNode executeNonStreamingSync(ObjectNode argsNode) {
+    private JsonNode executeNonStreamingSync(ActionFunctionExecutor executor, ObjectNode argsNode) {
         var result = executor.execute(argsNode);
         if (result instanceof JsonNode jn) {
             return jn;
@@ -99,7 +106,7 @@ public final class RPCMethodHandlerActionFunction implements IRPCMethodHandler {
         return JsonHelper.getObjectMapper().createObjectNode();
     }
 
-    private JsonNode executeStreamingSync(ObjectNode argsNode) {
+    private JsonNode executeStreamingSync(ActionFunctionExecutor executor, ObjectNode argsNode) {
         var records = new ArrayList<JsonNode>();
         var result = executor.execute(argsNode);
         if (result instanceof IActionStepForEachProcessor p) {
@@ -111,10 +118,9 @@ public final class RPCMethodHandlerActionFunction implements IRPCMethodHandler {
         return response;
     }
 
-    private JsonNode executeAsync(ObjectNode argsNode) {
+    private JsonNode executeAsync(ActionFunctionExecutor executor, ObjectNode argsNode) {
         var task = new AsyncTaskActionFunction(executor, argsNode);
         var jobId = asyncJobManager.startBackground(task);
-
         var response = JsonHelper.getObjectMapper().createObjectNode();
         response.put("jobId", jobId);
         response.put("status", "started");
