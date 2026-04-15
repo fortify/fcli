@@ -1,0 +1,252 @@
+---
+title: 'fcli-util-rpc-server-start(1)'
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-util-rpc-server-start(1)</title>
+
+{% include asciidoc-head.html %}
+{% include fcli-enhancements.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260415.151753-dev_feat.v3.x.jrpc" %}
+
+
+<div id="header">
+<h1>fcli-util-rpc-server-start(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_generic_fcli_options_also_see_documentation_link_below">Generic fcli options (also see documentation link below)</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-util-rpc-server-start - (PREVIEW) Start fcli JSON-RPC server for IDE plugin integration</p>
+</div>
+</div>
+<div id="content">
+{% raw %}
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli util rpc-server start</strong> [<strong>--async-bg-threads</strong>=<em>&lt;bgThreads&gt;</em>]
+                           [<strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                           [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
+                           [<strong>--debug</strong>]]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The fcli JSON-RPC server provides a simple JSON-RPC 2.0 interface for IDE plugins and other tools to interact with Fortify products through fcli. Unlike the MCP server which is designed for LLM integration, the RPC server exposes a smaller set of general-purpose methods suitable for programmatic access from IDE plugins.</p>
+</div>
+<div class="paragraph">
+<p>The server reads JSON-RPC requests from stdin and writes responses to stdout, one JSON object per line. Sessions must be established in advance using the standard fcli session login commands.</p>
+</div>
+<div class="paragraph">
+<p>Available RPC methods:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>EXECUTION METHODS:</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>fcli.execute: Execute an fcli command asynchronously
+Parameters:</p>
+</li>
+<li>
+<p>command (string, required): The fcli command to execute (e.g., "ssc appversion list")</p>
+</li>
+<li>
+<p>collectRecords (boolean, optional): Collect structured records instead of stdout (default: false)
+Response: jobId, status="started", jobType ("records" or "stdout")</p>
+</li>
+<li>
+<p>fn.call: Call an imported action function (if --import was used)
+Parameters: name (string, required), plus function-specific args
+Response: jobId, status="started", jobType</p>
+</li>
+<li>
+<p>fn.list: List available imported functions
+Parameters: none</p>
+<div class="literalblock">
+<div class="content">
+<pre>JOB METHODS:</pre>
+</div>
+</div>
+</li>
+<li>
+<p>job.getPage: Retrieve a page of records/results from an async job
+Parameters:</p>
+</li>
+<li>
+<p>jobId (string, required): Job ID from fcli.execute or fn.call</p>
+</li>
+<li>
+<p>offset (integer, optional): Start offset (default: 0)</p>
+</li>
+<li>
+<p>limit (integer, optional): Max records per page (default: 100)</p>
+</li>
+<li>
+<p>job.cancel: Cancel an in-progress async job
+Parameters:</p>
+</li>
+<li>
+<p>jobId (string, required): Job ID to cancel</p>
+</li>
+<li>
+<p>job.list: List all tracked jobs with their status
+Parameters: none</p>
+<div class="literalblock">
+<div class="content">
+<pre>INFO METHODS:</pre>
+</div>
+</div>
+</li>
+<li>
+<p>fcli.listCommands: List available fcli commands with optional filtering
+Parameters:</p>
+</li>
+<li>
+<p>module (string, optional): Filter by module (e.g., "ssc", "fod")</p>
+</li>
+<li>
+<p>runnableOnly (boolean, optional): If true, only return runnable (leaf) commands</p>
+</li>
+<li>
+<p>includeHidden (boolean, optional): If true, include hidden commands</p>
+</li>
+<li>
+<p>fcli.getCommandDetails: Get detailed usage information for a specific fcli command
+Parameters:</p>
+</li>
+<li>
+<p>command (string, required): The fcli command to get details for (e.g., "ssc appversion list")</p>
+</li>
+<li>
+<p>fcli.buildInfo: Get fcli version and build information
+Parameters: none</p>
+</li>
+<li>
+<p>rpc.listMethods: List available RPC methods
+Parameters: none</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>PUSH NOTIFICATIONS (server-to-client, no id field):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>job.started: Sent when a job begins execution (params: jobId, description)</p>
+</li>
+<li>
+<p>job.records: Batch of records produced by a running job (params: jobId, records, count)</p>
+</li>
+<li>
+<p>job.progress: Progress message from a running job (params: jobId, message)</p>
+</li>
+<li>
+<p>job.complete: Sent when a job finishes (params: jobId, exitCode, stderr?, stdout?)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Typical workflow:
+1. Establish fcli sessions using standard fcli session login commands through fcli.execute
+2. Execute commands via fcli.execute (always async, returns jobId)
+3. Poll job.getPage for results, or listen for push notifications (job.started, job.records, job.complete)</p>
+</div>
+<div class="paragraph">
+<p>Example JSON-RPC requests:</p>
+</div>
+<div class="paragraph">
+<p>{"jsonrpc":"2.0","method":"fcli.execute","params":{"command":"ssc appversion list","collectRecords":true},"id":1}
+{"jsonrpc":"2.0","method":"job.getPage","params":{"jobId":"&lt;jobId from above&gt;","offset":0,"limit":100},"id":2}
+{"jsonrpc":"2.0","method":"job.list","id":3}
+{"jsonrpc":"2.0","method":"fcli.getCommandDetails","params":{"command":"ssc appversion list"},"id":4}
+{"jsonrpc":"2.0","method":"rpc.listMethods","id":5}</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--async-bg-threads</strong>=<em>&lt;bgThreads&gt;</em></dt>
+<dd>
+<p>Number of background threads for running async jobs. Increase if IDE clients submit many concurrent async commands. Default: 4.</p>
+</dd>
+<dt class="hdlist1"><strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Action YAML files to import. Exported functions are accessible via the fn.call and fn.list RPC methods.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options_also_see_documentation_link_below"><a class="anchor" href="#_generic_fcli_options_also_see_documentation_link_below"></a>Generic fcli options (also see documentation link below)</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--debug</strong></dt>
+<dd>
+<p>Enable collection of debug logs.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em></dt>
+<dd>
+<p>Prefix for resolving default option values. Default value: FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Use 'fcli [command] -h' to display help for fcli (sub-)commands.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>Write log output to file. Default: ./fcli.log if logging is enabled.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level: TRACE, DEBUG, INFO, WARN, ERROR, NONE.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-mask</strong>=<em>&lt;level&gt;</em></dt>
+<dd>
+<p>Log mask level: high, medium, low, none. Default: medium. Masking is done on a best-effort basis; no guarantee that all sensitive data will be masked.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+{% endraw %}
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2026-04-15 15:20:02 UTC
+</div>
+</div>
+</body>
+</html>
