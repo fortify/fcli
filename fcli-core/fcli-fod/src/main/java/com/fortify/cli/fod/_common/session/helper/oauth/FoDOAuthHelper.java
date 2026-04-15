@@ -15,18 +15,35 @@ package com.fortify.cli.fod._common.session.helper.oauth;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
+import com.fortify.cli.fod._common.rest.FoDUrls;
 
 import kong.unirest.UnirestInstance;
 
 // TODO Consider moving all classes in this package to a more appropriate package,
 //      for example as a sub-package of the 'rest' package.
 public class FoDOAuthHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(FoDOAuthHelper.class);
+    public static final boolean validateToken(IUrlConfig urlConfig, String accessToken) {
+        try ( var unirest = UnirestHelper.createUnirestInstance() ) {
+            configureUnirest(unirest, urlConfig);
+            unirest.config().setDefaultHeader("Authorization", "Bearer " + accessToken);
+            unirest.get(FoDUrls.LOOKUP_ITEMS).queryString("limit", 1).asString();
+            return true;
+        } catch ( Exception e ) {
+            LOG.debug("Error validating FoD session token", e);
+            return false;
+        }
+    }
+
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, scopes);
     try ( var unirest = UnirestHelper.createUnirestInstance() ) {
