@@ -35,6 +35,7 @@ import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
@@ -99,6 +100,13 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         if (module == null && (importFiles == null || importFiles.isEmpty())) {
             throw new FcliSimpleException("At least one of --module or --import must be specified");
         }
+        // Redirect progress output to stderr to prevent progress messages
+        // from corrupting the MCP protocol on the stdout channel
+        FcliExecutionOutputContext.installIfNeeded();
+        var originalErr = FcliExecutionOutputContext.getOriginalErr();
+        FcliExecutionOutputContext.setProgressOut(originalErr);
+        FcliExecutionOutputContext.setProgressErr(originalErr);
+
         long safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(jobSafeReturnPeriod);
         long progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(progressIntervalPeriod);
         if ( safeReturnMillis<=0 ) {

@@ -65,8 +65,8 @@ public enum ProgressWriterType {
 
         protected AbstractProgressWriter() {
             FcliExecutionOutputContext.installIfNeeded();
-            this.originalStdout = FcliExecutionOutputContext.getOriginalOut();
-            this.originalStderr = FcliExecutionOutputContext.getOriginalErr();
+            this.originalStdout = FcliExecutionOutputContext.getProgressOut();
+            this.originalStderr = FcliExecutionOutputContext.getProgressErr();
             var currentOut = FcliExecutionOutputContext.currentOut();
             var currentErr = FcliExecutionOutputContext.currentErr();
             this.stdout = new ProgressWriterPrintStreamWrapper(currentOut, this);

@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.DisableTest;
@@ -82,9 +83,19 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
             importFiles.forEach(registryBuilder::importAction);
         }
 
+        FcliExecutionOutputContext.installIfNeeded();
+        var originalOut = FcliExecutionOutputContext.getOriginalOut();
+        var originalErr = FcliExecutionOutputContext.getOriginalErr();
+        // Redirect progress output to stderr to prevent progress messages
+        // from corrupting the JSON-RPC protocol on the stdout channel
+        FcliExecutionOutputContext.setProgressOut(originalErr);
+        FcliExecutionOutputContext.setProgressErr(originalErr);
+
         var input = inputOverride != null ? inputOverride : System.in;
-        var output = outputOverride != null ? outputOverride : System.out;
-        var statusOutput = statusOutputOverride != null ? statusOutputOverride : System.err;
+        // Use originalOut to bypass the DelegatingPrintStream/MaskingPrintStream
+        // stack, ensuring RPC JSON responses are never corrupted by masking
+        var output = outputOverride != null ? outputOverride : originalOut;
+        var statusOutput = statusOutputOverride != null ? statusOutputOverride : originalErr;
         new RPCServer(registryBuilder.build()).start(input, output, statusOutput);
 
         return 0;
