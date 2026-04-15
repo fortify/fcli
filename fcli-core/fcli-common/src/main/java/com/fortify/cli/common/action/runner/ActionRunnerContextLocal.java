@@ -236,7 +236,8 @@ public class ActionRunnerContextLocal implements AutoCloseable {
                 spelContext.setVariable("action", new ActionRunnerContextSpelFunctions(actionRunnerContext));
                 registerCiVariables(spelContext, actionRunnerContext);
             }
-            spelContext.setVariable("fs", new ActionFileSystemSpelFunctions());
+            spelContext.setVariable("fs", ActionFileSystemSpelFunctions.INSTANCE);
+            spelContext.setVariable("fcli", FcliCommandsSpelFunctions.INSTANCE);
         }
 
         private void registerCiVariables(SimpleEvaluationContext spelContext, ActionRunnerContextLocal ctx) {

@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.model;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,5 +70,10 @@ public final class ActionStepRecordsForEach extends AbstractActionStepElementFor
          *  JsonNode to be processed, and terminate processing if the given function
          *  returns false. */ 
         public void process(Function<JsonNode, Boolean> consumer);
+
+        /** Wraps a {@link Stream} of {@link JsonNode}s into an {@link IActionStepForEachProcessor}. */
+        static IActionStepForEachProcessor fromStream(Stream<? extends JsonNode> stream) {
+            return consumer -> stream.allMatch(consumer::apply);
+        }
     }
 }

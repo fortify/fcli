@@ -93,12 +93,25 @@ public final class CommandSpecDescriptor {
 
         String qualifiedName = spec.qualifiedName(" ");
         String[] nameComponents = qualifiedName.split(" ");
+        boolean isRunnable = FcliCommandSpecHelper.isRunnable(spec);
         String module = nameComponents.length > 1 ? nameComponents[1] : "";
         String entity = nameComponents.length > 2 ? nameComponents[2] : "";
         String action = nameComponents.length > 3 ? nameComponents[3] : "";
+        // For leaf commands at depth 3 (fcli <module> <action>), the module skips
+        // the entity level, so what landed in 'entity' is actually the action verb.
+        if (nameComponents.length == 3 && isRunnable) {
+            action = entity;
+            entity = "";
+        }
+        String type = switch (nameComponents.length) {
+            case 1 -> "root";
+            case 2 -> "module";
+            default -> isRunnable ? "command" : "entity";
+        };
 
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("command", spec.qualifiedName(" "));
+        result.put("type", type);
         result.put("module", module);
         result.put("entity", entity);
         result.put("action", action);
@@ -106,7 +119,7 @@ public final class CommandSpecDescriptor {
         result.put("hiddenParent", hiddenParent);
         result.put("hiddenSelf", hiddenSelf);
         result.put("mcpIgnored", mcpIgnored);
-        result.put("runnable", FcliCommandSpecHelper.isRunnable(spec));
+        result.put("runnable", isRunnable);
         result.put("usageHeader", normalizeNewlines(String.join("\n", spec.usageMessage().header())));
         result.put("usageDescription", normalizeNewlines(String.join("\n", spec.usageMessage().description())));
         result.set("aliases", Stream.of(spec.aliases()).map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
