@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  */
-package com.fortify.cli.util.rpc_server.unit;
+package com.fortify.cli.util.rpc_server.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,9 +25,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.util.rpc_server.helper.IRPCMethodHandler;
-import com.fortify.cli.util.rpc_server.helper.RPCMethodHandlerRegistry;
-import com.fortify.cli.util.rpc_server.helper.RPCServer;
 
 /**
  * Unit tests for {@link RPCServer}. Tests the JSON-RPC 2.0 protocol handling

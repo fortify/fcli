@@ -18,6 +18,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,14 +37,17 @@ import lombok.extern.slf4j.Slf4j;
  * A lightweight JSON-RPC 2.0 server that reads requests from an input stream
  * and writes responses to an output stream (typically stdin/stdout for IDE integration).
  *
- * This implementation:
- * - Supports JSON-RPC 2.0 specification
- * - Handles single requests and batch requests
- * - Supports notifications (requests without id)
- * - Is compatible with GraalVM native image compilation
- * - Processes requests synchronously (appropriate for stdio-based IDE integration)
+ * <p>This implementation:
+ * <ul>
+ *   <li>Supports JSON-RPC 2.0 specification</li>
+ *   <li>Handles single requests and batch requests</li>
+ *   <li>Supports notifications (requests without id)</li>
+ *   <li>Is compatible with GraalVM native image compilation</li>
+ *   <li>Dispatches requests to a thread pool for concurrent processing</li>
+ *   <li>Serializes all output through a single writer thread to prevent interleaving</li>
+ * </ul>
  *
- * Method handlers and the shared cache are managed by {@link RPCMethodHandlerRegistry},
+ * <p>Method handlers and the shared cache are managed by {@link RPCMethodHandlerRegistry},
  * which is built via {@link RPCMethodHandlerRegistry#builder()} and passed to the
  * constructor.
  *
@@ -48,8 +56,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class RPCServer {
     private static final ObjectMapper OM = JsonHelper.getObjectMapper();
+    private static final int REQUEST_POOL_SIZE = 8;
     private final RPCMethodHandlerRegistry registry;
     private final AtomicBoolean running = new AtomicBoolean(false);
+    private volatile RPCOutputWriter outputWriter;
 
     public RPCServer(RPCMethodHandlerRegistry registry) {
         this.registry = registry;
@@ -59,7 +69,6 @@ public final class RPCServer {
      * Start the server, reading from the given input stream and writing to the output stream.
      * Status messages (like the startup message) are written to {@code System.err}.
      * This method blocks until the input stream is closed or an error occurs.
-     * Requests are processed synchronously in the order they are received.
      */
     public void start(InputStream input, OutputStream output) {
         start(input, output, System.err);
@@ -69,7 +78,8 @@ public final class RPCServer {
      * Start the server, reading from the given input stream and writing to the output stream.
      * Status messages (like the startup message) are written to {@code statusOutput}.
      * This method blocks until the input stream is closed or an error occurs.
-     * Requests are processed synchronously in the order they are received.
+     * Requests are dispatched to a thread pool; all output is serialized through a
+     * single writer thread.
      */
     public void start(InputStream input, OutputStream output, OutputStream statusOutput) {
         running.set(true);
@@ -78,8 +88,16 @@ public final class RPCServer {
         statusWriter.println("Fcli JSON-RPC server running on stdio. Hit Ctrl-C to exit.");
         statusWriter.flush();
         
-        try (var reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
-             var writer = new PrintWriter(output, true, StandardCharsets.UTF_8)) {
+        outputWriter = new RPCOutputWriter(output);
+        registry.setOutputWriter(outputWriter);
+        var requestPool = Executors.newFixedThreadPool(REQUEST_POOL_SIZE, r -> {
+            var t = new Thread(r, "fcli-rpc-request");
+            t.setDaemon(true);
+            return t;
+        });
+        
+        try (var reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+            outputWriter.start();
             
             String line;
             while (running.get() && (line = reader.readLine()) != null) {
@@ -88,17 +106,15 @@ public final class RPCServer {
                 }
                 
                 log.debug("Received request: {}", line);
-                
-                String responseJson = processRequest(line);
-                if (responseJson != null) {
-                    log.debug("Sending response: {}", responseJson);
-                    writer.println(responseJson);
-                }
+                dispatchRequest(line, requestPool);
             }
         } catch (Exception e) {
             log.error("Error in JSON-RPC server", e);
         } finally {
             running.set(false);
+            shutdownRequestPool(requestPool);
+            outputWriter.stop();
+            registry.setOutputWriter(null);
             registry.getAsyncJobManager().shutdown();
             log.info("JSON-RPC server stopped");
         }
@@ -112,10 +128,26 @@ public final class RPCServer {
     }
     
     /**
+     * Dispatch a raw JSON-RPC request line to the thread pool for processing.
+     */
+    private void dispatchRequest(String requestJson, ExecutorService requestPool) {
+        requestPool.submit(() -> {
+            try {
+                var responseJson = processRequest(requestJson);
+                if (responseJson != null) {
+                    outputWriter.send(responseJson);
+                }
+            } catch (Exception e) {
+                log.error("Uncaught error processing request", e);
+            }
+        });
+    }
+    
+    /**
      * Process a single JSON-RPC request line and return the response JSON.
      * Returns null for notifications (requests without id).
      */
-    public String processRequest(String requestJson) {
+    String processRequest(String requestJson) {
         try {
             JsonNode requestNode = OM.readTree(requestJson);
             
@@ -202,11 +234,92 @@ public final class RPCServer {
             return OM.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize response", e);
-            // Fallback to a hardcoded error response to avoid infinite recursion
-            // if serialization itself fails
             return String.format(
                 "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":%d,\"message\":\"Internal error: serialization failed\"},\"id\":null}",
                 RPCError.INTERNAL_ERROR);
+        }
+    }
+    
+    private void shutdownRequestPool(ExecutorService pool) {
+        pool.shutdown();
+        try {
+            if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+                pool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            pool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+    
+    /**
+     * Thread-safe output writer that serializes all JSON-RPC messages (responses and
+     * notifications) through a single writer thread via a blocking queue. This prevents
+     * interleaving of messages when multiple request threads produce output concurrently.
+     *
+     * <p>Use {@link #send(String)} from any thread to enqueue a message for writing.
+     * The writer thread drains the queue and writes each message as a single line.
+     */
+    static final class RPCOutputWriter {
+        private final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+        private final OutputStream output;
+        private volatile Thread writerThread;
+        private final AtomicBoolean active = new AtomicBoolean(false);
+        
+        RPCOutputWriter(OutputStream output) {
+            this.output = output;
+        }
+        
+        /** Start the writer thread. Must be called before {@link #send}. */
+        void start() {
+            active.set(true);
+            writerThread = new Thread(this::writerLoop, "fcli-rpc-writer");
+            writerThread.setDaemon(true);
+            writerThread.start();
+        }
+        
+        /** Enqueue a JSON message for writing. Thread-safe. */
+        void send(String json) {
+            if (!active.get()) {
+                log.warn("Attempted to send on inactive output writer; dropping message");
+                return;
+            }
+            log.debug("Sending response: {}", json);
+            queue.add(json);
+        }
+        
+        /** Stop the writer thread, flushing any remaining messages. */
+        void stop() {
+            active.set(false);
+            if (writerThread != null) {
+                writerThread.interrupt();
+                try {
+                    writerThread.join(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        
+        private void writerLoop() {
+            try (var writer = new PrintWriter(output, true, StandardCharsets.UTF_8)) {
+                while (active.get() || !queue.isEmpty()) {
+                    try {
+                        var message = queue.poll(100, TimeUnit.MILLISECONDS);
+                        if (message != null) {
+                            writer.println(message);
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+                // Drain any remaining messages
+                String remaining;
+                while ((remaining = queue.poll()) != null) {
+                    writer.println(remaining);
+                }
+            }
         }
     }
 }

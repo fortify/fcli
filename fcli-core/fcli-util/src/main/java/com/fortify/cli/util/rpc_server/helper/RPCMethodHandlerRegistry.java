@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class RPCMethodHandlerRegistry {
     private final Map<String, IRPCMethodHandler> handlers;
     private final AsyncJobManager asyncJobManager;
+    private volatile RPCServer.RPCOutputWriter outputWriter;
 
     private RPCMethodHandlerRegistry(Map<String, IRPCMethodHandler> handlers, AsyncJobManager asyncJobManager) {
         this.handlers = handlers;
@@ -60,6 +61,22 @@ public final class RPCMethodHandlerRegistry {
 
     public AsyncJobManager getAsyncJobManager() {
         return asyncJobManager;
+    }
+
+    /**
+     * Return the current output writer, or {@code null} if the server is not running.
+     * Method handlers can use this to send notifications (server-to-client messages
+     * without a request id) at any time from any thread.
+     */
+    public RPCServer.RPCOutputWriter getOutputWriter() {
+        return outputWriter;
+    }
+
+    /**
+     * Set the output writer. Called by {@link RPCServer} on start/stop.
+     */
+    void setOutputWriter(RPCServer.RPCOutputWriter writer) {
+        this.outputWriter = writer;
     }
 
     public static Builder builder() {
