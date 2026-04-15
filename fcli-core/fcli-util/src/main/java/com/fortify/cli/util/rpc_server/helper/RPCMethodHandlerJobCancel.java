@@ -13,7 +13,6 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
@@ -22,9 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * RPC method handler for cancelling an in-progress collection.
+ * RPC method handler for cancelling a running job.
  *
- * Method: async.cancel
+ * Method: job.cancel
  * Params:
  *   - jobId (string, required): Job ID of the async job to cancel
  *
@@ -37,13 +36,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RequiredArgsConstructor
-public final class RPCMethodHandlerAsyncCancel implements IRPCMethodHandler {
-    private static final ObjectMapper OM = JsonHelper.getObjectMapper();
+public final class RPCMethodHandlerJobCancel implements IRPCMethodHandler {
     private final AsyncJobManager asyncJobManager;
 
     @Override
     public String description() {
-        return "Cancel an in-progress async job by jobId";
+        return "Cancel a running async job by jobId";
     }
 
     @Override
@@ -57,16 +55,16 @@ public final class RPCMethodHandlerAsyncCancel implements IRPCMethodHandler {
             throw RPCMethodException.invalidParams("'jobId' cannot be empty");
         }
 
-        log.debug("Cancelling async job: jobId={}", jobId);
+        log.debug("Cancelling job: jobId={}", jobId);
 
         var cancelled = asyncJobManager.cancel(jobId);
 
-        ObjectNode result = OM.createObjectNode();
+        ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.put("success", cancelled);
         result.put("jobId", jobId);
         result.put("message", cancelled
-            ? "Async job cancelled successfully"
-            : "No in-progress async job found for this jobId");
+            ? "Job cancelled successfully"
+            : "No running job found for this jobId");
 
         return result;
     }

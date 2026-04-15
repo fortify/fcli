@@ -124,7 +124,7 @@ class RPCServerHelper implements Closeable {
     }
 
     /**
-     * Send a JSON-RPC request and read the response.
+     * Send a JSON-RPC request and read the response, skipping any notifications.
      * @param method RPC method name
      * @param params Parameter map (can be null)
      * @param id Request ID
@@ -138,18 +138,28 @@ class RPCServerHelper implements Closeable {
         if (params != null) {
             request.set("params", objectMapper.valueToTree(params))
         }
-        return sendAndReceive(objectMapper.writeValueAsString(request))
+        return sendAndReceive(objectMapper.writeValueAsString(request), id)
     }
 
-    private JsonNode sendAndReceive(String jsonLine) {
+    private JsonNode sendAndReceive(String jsonLine, int expectedId) {
         writer.write(jsonLine)
         writer.newLine()
         writer.flush()
-        def responseLine = readLineWithTimeout(10_000)
-        if (responseLine == null) {
-            throw new RuntimeException("No response received within timeout")
+        // Read lines until we find the response with matching id (skip notifications)
+        def deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline) {
+            def responseLine = readLineWithTimeout(deadline - System.currentTimeMillis())
+            if (responseLine == null) {
+                throw new RuntimeException("No response received within timeout")
+            }
+            def node = objectMapper.readTree(responseLine)
+            // Skip notifications (no id field or null id)
+            if (!node.has("id") || node.get("id").isNull()) {
+                continue
+            }
+            return node
         }
-        return objectMapper.readTree(responseLine)
+        throw new RuntimeException("No response received within timeout")
     }
 
     private String readLineWithTimeout(long timeoutMs) {
@@ -161,6 +171,35 @@ class RPCServerHelper implements Closeable {
             Thread.sleep(50)
         }
         return null
+    }
+
+    /**
+     * Start an async job (fcli.execute or fn.call), wait for completion via job.getPage polling,
+     * and return the final job.getPage result.
+     * @param method RPC method name (e.g. "fcli.execute" or "fn.call")
+     * @param params Parameter map
+     * @param startId Request ID for the start call
+     * @param pageId Request ID for the getPage call
+     * @param timeoutMs Maximum time to wait for completion
+     * @return The final job.getPage result node (with status, records, stdout, etc.)
+     */
+    JsonNode executeAndWait(String method, Map<String, Object> params, int startId, int pageId, long timeoutMs = 10_000) {
+        def startResponse = rpcCall(method, params, startId)
+        assert startResponse.get("error") == null : "Unexpected error starting job: ${startResponse}"
+        def jobId = startResponse.get("result").get("jobId").asText()
+        assert jobId != null && !jobId.isEmpty()
+
+        def deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            def pageResponse = rpcCall("job.getPage", [jobId: jobId, offset: 0, limit: 10000], pageId)
+            assert pageResponse.get("error") == null : "Unexpected error polling job: ${pageResponse}"
+            def result = pageResponse.get("result")
+            if (result.get("pagination")?.get("complete")?.asBoolean()) {
+                return result
+            }
+            Thread.sleep(100)
+        }
+        throw new RuntimeException("Job ${jobId} did not complete within ${timeoutMs}ms")
     }
 
     @Override

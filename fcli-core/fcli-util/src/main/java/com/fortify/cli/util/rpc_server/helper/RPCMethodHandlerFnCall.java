@@ -12,39 +12,31 @@
  */
 package com.fortify.cli.util.rpc_server.helper;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.AsyncTaskActionFunction;
+import com.fortify.cli.util._common.helper.IJobEventListener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * RPC method handler for {@code fn.call}.
- * <p>
- * Dispatches to an imported action function by name, keeping RPC-level parameters
- * ({@code name}, {@code async}) cleanly separate from function arguments ({@code args}).
+ * RPC method handler for {@code fn.call}. Always runs asynchronously: returns
+ * a {@code jobId} immediately, and pushes records/completion as JSON-RPC
+ * notifications via the configured {@link IJobEventListener}.
  *
  * Method: fn.call
  * Params:
  *   - name (string, required): Name of the exported function to call (see fn.list)
  *   - args (object, optional): Function arguments as key/value pairs
- *   - async (boolean, optional): If true, run in background and return a jobId (default: false)
  *
- * Synchronous response (async=false):
- *   - For non-streaming functions: the function's return value directly
- *   - For streaming functions: {@code {"records": [...]}} with all collected records
- *
- * Async response (async=true):
- *   - jobId (string): Key for use with async.getPage or async.getResult
+ * Response:
+ *   - jobId (string): Identifier for tracking via job.getPage / job.cancel / job.list
  *   - status (string): "started"
  *   - jobType (string): "records"
  *
@@ -55,10 +47,11 @@ import lombok.extern.slf4j.Slf4j;
 public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
     private final Map<String, ActionFunctionExecutor> functions;
     private final AsyncJobManager asyncJobManager;
+    private final IJobEventListener listener;
 
     @Override
     public String description() {
-        return "Call an imported function by name; use fn.list to see available functions";
+        return "Call an imported function by name (always async); use fn.list to see available functions";
     }
 
     @Override
@@ -71,17 +64,18 @@ public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
         if (executor == null) {
             throw RPCMethodException.methodNotFound("Function not found: " + name);
         }
-        log.debug("Executing action function: {}", name);
+        log.debug("Executing action function (async): {}", name);
         try {
             var argsNode = buildArgsNode(params);
-            var async = params.has("async") && params.get("async").asBoolean(false);
-            if (async) {
-                return executeAsync(executor, argsNode);
-            } else if (executor.getFunction().isStreaming()) {
-                return executeStreamingSync(executor, argsNode);
-            } else {
-                return executeNonStreamingSync(executor, argsNode);
-            }
+            var task = new AsyncTaskActionFunction(executor, argsNode);
+            var description = "fn:" + name;
+            var jobId = asyncJobManager.startBackground(task, listener, description);
+
+            var response = JsonHelper.getObjectMapper().createObjectNode();
+            response.put("jobId", jobId);
+            response.put("status", "started");
+            response.put("jobType", "records");
+            return response;
         } catch (Exception e) {
             log.error("Error executing action function: {}", name, e);
             throw RPCMethodException.internalError("Function execution failed: " + e.getMessage(), e);
@@ -94,38 +88,5 @@ public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
             return on;
         }
         return JsonHelper.getObjectMapper().createObjectNode();
-    }
-
-    private JsonNode executeNonStreamingSync(ActionFunctionExecutor executor, ObjectNode argsNode) {
-        var result = executor.execute(argsNode);
-        if (result instanceof JsonNode jn) {
-            return jn;
-        } else if (result != null) {
-            return JsonHelper.getObjectMapper().valueToTree(result);
-        }
-        return JsonHelper.getObjectMapper().createObjectNode();
-    }
-
-    private JsonNode executeStreamingSync(ActionFunctionExecutor executor, ObjectNode argsNode) {
-        var records = new ArrayList<JsonNode>();
-        var result = executor.execute(argsNode);
-        if (result instanceof IActionStepForEachProcessor p) {
-            p.process(node -> { records.add(node); return true; });
-        }
-        var response = JsonHelper.getObjectMapper().createObjectNode();
-        ArrayNode recordsArray = response.putArray("records");
-        records.forEach(recordsArray::add);
-        return response;
-    }
-
-    private JsonNode executeAsync(ActionFunctionExecutor executor, ObjectNode argsNode) {
-        var task = new AsyncTaskActionFunction(executor, argsNode);
-        var jobId = asyncJobManager.startBackground(task);
-        var response = JsonHelper.getObjectMapper().createObjectNode();
-        response.put("jobId", jobId);
-        response.put("status", "started");
-        response.put("jobType", "records");
-        log.debug("Started async function: fn={} jobId={}", executor.getFunction().getKey(), jobId);
-        return response;
     }
 }

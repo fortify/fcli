@@ -163,9 +163,9 @@ class JRPCServerTest {
 
     @Test
     void shouldReturnInvalidParamsForZeroLimit() throws Exception {
-        // Test limit validation in async.getPage
+        // Test limit validation in job.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{\"jobId\":\"test-key\",\"limit\":0},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"job.getPage\",\"params\":{\"jobId\":\"test-key\",\"limit\":0},\"id\":1}");
 
         assertNotNull(response);
         var node = objectMapper.readTree(response);
@@ -176,9 +176,9 @@ class JRPCServerTest {
 
     @Test
     void shouldReturnInvalidParamsForNegativeOffset() throws Exception {
-        // Test offset validation in async.getPage
+        // Test offset validation in job.getPage
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{\"jobId\":\"test-key\",\"offset\":-5},\"id\":1}");
+            "{\"jsonrpc\":\"2.0\",\"method\":\"job.getPage\",\"params\":{\"jobId\":\"test-key\",\"offset\":-5},\"id\":1}");
 
         assertNotNull(response);
         var node = objectMapper.readTree(response);
@@ -284,24 +284,10 @@ class JRPCServerTest {
     }
 
     @Test
-    void shouldReturnInvalidParamsForExecuteAsyncWithoutCommand() throws Exception {
-        // Act
-        String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"fcli.execute\",\"params\":{\"async\":true},\"id\":1}"
-        );
-
-        // Assert
-        assertNotNull(response);
-        var node = objectMapper.readTree(response);
-        assertNotNull(node.get("error"));
-        assertEquals(-32602, node.get("error").get("code").asInt());
-    }
-
-    @Test
     void shouldReturnNotFoundForGetPageWithInvalidJobId() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{\"jobId\":\"non-existent-key\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"job.getPage\",\"params\":{\"jobId\":\"non-existent-key\"},\"id\":1}"
         );
 
         // Assert
@@ -315,7 +301,7 @@ class JRPCServerTest {
     void shouldReturnInvalidParamsForGetPageWithoutJobId() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"async.getPage\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"job.getPage\",\"params\":{},\"id\":1}"
         );
 
         // Assert
@@ -329,7 +315,7 @@ class JRPCServerTest {
     void shouldHandleCancelForNonExistentKey() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"async.cancel\",\"params\":{\"jobId\":\"non-existent-key\"},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"job.cancel\",\"params\":{\"jobId\":\"non-existent-key\"},\"id\":1}"
         );
 
         // Assert
@@ -340,21 +326,18 @@ class JRPCServerTest {
     }
 
     @Test
-    void shouldHandleClearCacheAll() throws Exception {
+    void shouldReturnEmptyJobList() throws Exception {
         // Act
         String response = server.processRequest(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"async.clear\",\"params\":{},\"id\":1}"
+            "{\"jsonrpc\":\"2.0\",\"method\":\"job.list\",\"params\":{},\"id\":1}"
         );
 
         // Assert
         assertNotNull(response);
         var node = objectMapper.readTree(response);
         assertNotNull(node.get("result"));
-        assertEquals(true, node.get("result").get("success").asBoolean());
-        var stats = node.get("result").get("stats");
-        assertNotNull(stats);
-        assertTrue(stats.has("completedEntries"), "stats should have completedEntries");
-        assertTrue(stats.has("runningEntries"), "stats should have runningEntries");
+        assertTrue(node.get("result").has("jobs"));
+        assertEquals(0, node.get("result").get("totalJobs").asInt());
     }
 
     @Test
@@ -371,25 +354,22 @@ class JRPCServerTest {
 
         var methods = node.get("result").get("methods");
         assertTrue(methods.isArray());
-        assertTrue(methods.size() >= 8, "Should have at least 8 methods including async ones");
+        assertTrue(methods.size() >= 8, "Should have at least 8 methods including job ones");
 
         boolean hasGetPage = false;
         boolean hasCancel = false;
-        boolean hasClear = false;
-        boolean hasGetResult = false;
+        boolean hasJobList = false;
 
         for (var method : methods) {
             String name = method.get("name").asText();
-            if ("async.getPage".equals(name)) hasGetPage = true;
-            if ("async.cancel".equals(name)) hasCancel = true;
-            if ("async.clear".equals(name)) hasClear = true;
-            if ("async.getResult".equals(name)) hasGetResult = true;
+            if ("job.getPage".equals(name)) hasGetPage = true;
+            if ("job.cancel".equals(name)) hasCancel = true;
+            if ("job.list".equals(name)) hasJobList = true;
         }
 
-        assertTrue(hasGetPage, "async.getPage method should be present");
-        assertTrue(hasCancel, "async.cancel method should be present");
-        assertTrue(hasClear, "async.clear method should be present");
-        assertTrue(hasGetResult, "async.getResult method should be present");
+        assertTrue(hasGetPage, "job.getPage method should be present");
+        assertTrue(hasCancel, "job.cancel method should be present");
+        assertTrue(hasJobList, "job.list method should be present");
     }
 
     @Nested

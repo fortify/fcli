@@ -12,8 +12,6 @@
  */
 package com.fortify.cli.util._common.cli.mixin;
 
-import com.fortify.cli.common.util.DateTimePeriodHelper;
-import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 
 import picocli.CommandLine.Option;
@@ -26,12 +24,7 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 public class AsyncJobManagerMixin {
-    private static final DateTimePeriodHelper PERIOD_HELPER =
-        DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
-
-    @Option(names = "--async-max-jobs") private Integer maxJobs;
     @Option(names = "--async-bg-threads") private Integer bgThreads;
-    @Option(names = "--async-job-ttl") private String jobTtl;
 
     /**
      * Build an {@link AsyncJobManager} whose configuration merges explicit CLI values (when
@@ -39,11 +32,7 @@ public class AsyncJobManagerMixin {
      */
     public AsyncJobManager buildAsyncJobManager(AsyncJobManager.Config defaults) {
         var config = AsyncJobManager.Config.builder()
-            .maxEntries(maxJobs != null ? maxJobs : defaults.getMaxEntries())
             .bgThreads(bgThreads != null ? bgThreads : defaults.getBgThreads())
-            .ttlMillis(jobTtl != null && !jobTtl.isBlank()
-                ? PERIOD_HELPER.parsePeriodToMillis(jobTtl)
-                : defaults.getTtlMillis())
             .build();
         return new AsyncJobManager(config);
     }

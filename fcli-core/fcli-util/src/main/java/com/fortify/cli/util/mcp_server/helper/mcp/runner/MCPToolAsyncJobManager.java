@@ -18,18 +18,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
-import com.fortify.cli.util._common.helper.FcliExecutionResult;
+import com.fortify.cli.util._common.helper.CachingJobEventListener;
 import com.fortify.cli.util._common.helper.IAsyncTask;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 
 /**
- * Thin adapter over {@link AsyncJobManager} for MCP tool use. Translates between
- * {@link FcliExecutionResult} and {@link MCPToolResult}, and registers background loading
+ * Thin adapter over {@link AsyncJobManager} for MCP tool use. Uses a
+ * {@link CachingJobEventListener} to cache records, and registers background
  * futures with {@link MCPJobManager} for progress and cancellation support.
  */
 public class MCPToolAsyncJobManager {
     private final AsyncJobManager delegate;
     private final MCPJobManager jobManager;
+    private final CachingJobEventListener cachingListener = new CachingJobEventListener();
     private final Map<String, String> jobTokens = new ConcurrentHashMap<>();
 
     public MCPToolAsyncJobManager(MCPJobManager jobManager, AsyncJobManager delegate) {
@@ -41,8 +42,15 @@ public class MCPToolAsyncJobManager {
      * Return completed result if present and valid, or null.
      */
     public MCPToolResult getCached(String jobId) {
-        var result = delegate.getCompleted(jobId);
-        return result == null ? null : toMCPResult(result);
+        if (!cachingListener.isComplete(jobId)) {
+            return null;
+        }
+        var page = cachingListener.getPage(jobId, 0, Integer.MAX_VALUE);
+        return MCPToolResult.builder()
+            .exitCode(page.getExitCode())
+            .stderr(page.getStderr())
+            .records(page.getRecords())
+            .build();
     }
 
     /**
@@ -51,17 +59,25 @@ public class MCPToolAsyncJobManager {
      * background job is in progress or was just started.
      */
     public InProgressEntry getOrStartBackground(String jobId, boolean refresh, IAsyncTask task) {
-        var entry = delegate.getOrStartBackground(jobId, refresh, task);
-        if (entry == null) return null;
-        return trackEntry(jobId, entry);
-    }
-
-    private InProgressEntry trackEntry(String jobId, AsyncJobManager.InProgressEntry entry) {
-        var jobToken = jobTokens.computeIfAbsent(jobId,
-            k -> jobManager.trackFuture("async_job", entry.getFuture(),
-                () -> entry.getRecords().size()));
-        entry.getFuture().whenComplete((r, t) -> jobTokens.remove(jobId));
-        return new InProgressEntry(entry, jobToken);
+        if (!refresh && cachingListener.isComplete(jobId)) {
+            return null;
+        }
+        if (refresh) {
+            cachingListener.remove(jobId);
+        }
+        if (delegate.isRunning(jobId)) {
+            return new InProgressEntry(jobId, cachingListener, jobTokens.get(jobId));
+        }
+        // Start new background job with the semantic jobId
+        delegate.startBackground(jobId, task, cachingListener, "mcp:" + jobId);
+        var future = delegate.getFuture(jobId);
+        if (future != null) {
+            var jobToken = jobManager.trackFuture("async_job", future,
+                    () -> cachingListener.getLoadedCount(jobId));
+            jobTokens.put(jobId, jobToken);
+            future.whenComplete((r, t) -> jobTokens.remove(jobId));
+        }
+        return new InProgressEntry(jobId, cachingListener, jobTokens.get(jobId));
     }
 
     /** Cancel a background async job if running. */
@@ -74,28 +90,39 @@ public class MCPToolAsyncJobManager {
         delegate.shutdown();
     }
 
-    private static MCPToolResult toMCPResult(FcliExecutionResult result) {
-        return MCPToolResult.builder()
-            .exitCode(result.getExitCode())
-            .stderr(result.getStderr())
-            .records(result.getRecords())
-            .build();
-    }
-
-    /** Thin wrapper giving access to background collection state and its job tracking token. */
+    /** Thin wrapper giving access to background collection state via CachingJobEventListener. */
     public static final class InProgressEntry {
-        private final AsyncJobManager.InProgressEntry delegate;
+        private final String jobId;
+        private final CachingJobEventListener cachingListener;
         private final String jobToken;
 
-        InProgressEntry(AsyncJobManager.InProgressEntry delegate, String jobToken) {
-            this.delegate = delegate;
+        InProgressEntry(String jobId, CachingJobEventListener cachingListener, String jobToken) {
+            this.jobId = jobId;
+            this.cachingListener = cachingListener;
             this.jobToken = jobToken;
         }
 
-        public List<JsonNode> getRecords() { return delegate.getRecords(); }
-        public boolean isCompleted() { return delegate.isCompleted(); }
-        public int getExitCode() { return delegate.getExitCode(); }
-        public String getStderr() { return delegate.getStderr(); }
+        public List<JsonNode> getRecords() {
+            var page = cachingListener.getPage(jobId, 0, Integer.MAX_VALUE);
+            return page.getRecords();
+        }
+
+        public int getLoadedCount() {
+            return cachingListener.getLoadedCount(jobId);
+        }
+
+        public boolean isCompleted() { return cachingListener.isComplete(jobId); }
+
+        public int getExitCode() {
+            var page = cachingListener.getPage(jobId, 0, 0);
+            return page.getExitCode();
+        }
+
+        public String getStderr() {
+            var page = cachingListener.getPage(jobId, 0, 0);
+            return page.getStderr();
+        }
+
         public String getJobToken() { return jobToken; }
     }
 }

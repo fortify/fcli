@@ -114,9 +114,8 @@ final class MCPToolFcliPagedHelper {
 
     private void waitForSufficientRecords(
             MCPToolAsyncJobManager.InProgressEntry inProgress, PageParams params) throws InterruptedException {
-        var records = inProgress.getRecords();
         var requiredCount = params.offset + params.limit + 1;
-        while (records.size() < requiredCount && !inProgress.isCompleted()) {
+        while (inProgress.getLoadedCount() < requiredCount && !inProgress.isCompleted()) {
             Thread.sleep(50);
         }
     }

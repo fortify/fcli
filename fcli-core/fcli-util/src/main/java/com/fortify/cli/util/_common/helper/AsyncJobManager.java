@@ -12,19 +12,15 @@
  */
 package com.fortify.cli.util._common.helper;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
 
 import lombok.Builder;
@@ -34,29 +30,25 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Manager for async background jobs. Provides background loading with progressive
- * record access for streaming jobs, and atomic result retrieval for non-streaming
- * jobs. Suitable for both MCP and RPC servers.
+ * Pure execution engine for async background jobs. Manages a thread pool, tracks
+ * in-progress jobs, and dispatches lifecycle events to an {@link IJobEventListener}.
+ * No caching — record storage is delegated to listeners (e.g. {@link CachingJobEventListener}).
+ *
+ * <p>Suitable for both MCP and RPC servers.</p>
  *
  * @author Ruud Senden
  */
 @Slf4j
 public class AsyncJobManager {
-    public static final long DEFAULT_TTL = 10 * 60 * 1000; // 10 minutes
-    public static final int DEFAULT_MAX_ENTRIES = 5;
     public static final int DEFAULT_BG_THREADS = 2;
 
     /** Immutable configuration; use {@link Config#builder()} to construct. */
     @Value @Builder
     public static class Config {
-        @Builder.Default int maxEntries = DEFAULT_MAX_ENTRIES;
-        @Builder.Default long ttlMillis = DEFAULT_TTL;
         @Builder.Default int bgThreads = DEFAULT_BG_THREADS;
     }
 
-    private final long ttl;
-    private final Map<String, CompletedJobEntry> completedJobs;
-    private final Map<String, InProgressEntry> inProgress = new ConcurrentHashMap<>();
+    private final Map<String, JobEntry> jobs = new ConcurrentHashMap<>();
     private final ExecutorService backgroundExecutor;
 
     public AsyncJobManager() {
@@ -64,229 +56,121 @@ public class AsyncJobManager {
     }
 
     public AsyncJobManager(Config config) {
-        this.ttl = config.ttlMillis;
-        this.completedJobs = new LinkedHashMap<>(config.maxEntries, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, CompletedJobEntry> eldest) {
-                return size() > config.maxEntries;
-            }
-        };
         this.backgroundExecutor = Executors.newFixedThreadPool(config.bgThreads, r -> {
             var t = new Thread(r, "fcli-async-job");
             t.setDaemon(true);
             return t;
         });
-        log.info("Initialized AsyncJobManager: maxEntries={} ttl={}ms bgThreads={}",
-            config.maxEntries, config.ttlMillis, config.bgThreads);
+        log.info("Initialized AsyncJobManager: bgThreads={}", config.bgThreads);
     }
 
     /**
-     * Return a completed result for the given jobId if present and not expired, or start a
-     * new background job via the given task. Returns {@code null} if already completed
-     * (caller should look up the result via {@link #getCompleted}). Returns the
-     * {@link InProgressEntry} if a job is running or was just started.
+     * Start a background job with the given {@code jobId}, dispatching events to the listener.
+     * Use this when the caller needs a deterministic/semantic job identifier.
      */
-    public InProgressEntry getOrStartBackground(String jobId, boolean refresh, IAsyncTask task) {
-        var completed = getCompleted(jobId);
-        if (!refresh && completed != null) {
-            return null;
-        }
-        var existing = inProgress.get(jobId);
-        if (existing != null && !existing.isExpired(ttl)) {
-            return existing;
-        }
-        return startNewBackgroundJob(jobId, task);
-    }
+    public String startBackground(String jobId, IAsyncTask task, IJobEventListener listener, String description) {
+        var entry = new JobEntry(jobId, description);
+        jobs.put(jobId, entry);
 
-    /**
-     * Start a background job and return a fresh {@code jobId} that can be used to
-     * retrieve the result via {@link #getCompleted} or {@link #waitForCompletion}.
-     */
-    public String startBackground(IAsyncTask task) {
-        var jobId = UUID.randomUUID().toString();
-        getOrStartBackground(jobId, false, task);
-        return jobId;
-    }
+        listener.onJobStarted(jobId, description);
 
-    private InProgressEntry startNewBackgroundJob(String jobId, IAsyncTask task) {
-        var entry = new InProgressEntry(jobId);
-        inProgress.put(jobId, entry);
-        var future = buildJobFuture(entry, task);
-        future.whenComplete(createCompletionHandler(entry, jobId));
-        entry.setFuture(future);
-        log.debug("Started async job: jobId={}", jobId);
-        return entry;
-    }
-
-    private CompletableFuture<FcliExecutionResult> buildJobFuture(InProgressEntry entry, IAsyncTask task) {
-        return CompletableFuture.supplyAsync(() -> {
+        var future = CompletableFuture.runAsync(() -> {
             FcliExecutionContextHolder.pushNew();
             try {
-                var records = entry.getRecords();
                 var result = task.run(record -> {
                     if (!Thread.currentThread().isInterrupted()) {
-                        records.add(record);
+                        listener.onRecord(jobId, record);
                     }
                 });
-                if (Thread.currentThread().isInterrupted()) {
-                    return null;
+                if (!Thread.currentThread().isInterrupted()) {
+                    int exitCode = result.getExitCode();
+                    String stderr = result.getErr();
+                    String stdout = result.getOut();
+                    if (stdout != null && !stdout.isBlank()) {
+                        entry.stdout = stdout;
+                    }
+                    entry.exitCode = exitCode;
+                    entry.stderr = stderr;
+                    listener.onJobComplete(jobId, exitCode, stderr, stdout);
                 }
-                var fullResult = records.isEmpty() && result.getOut() != null && !result.getOut().isBlank()
-                    ? FcliExecutionResult.fromPlainText(result)
-                    : FcliExecutionResult.fromRecords(result, records);
-                if (result.getExitCode() == 0) {
-                    putCompleted(entry.getJobId(), fullResult);
-                }
-                return fullResult;
+            } catch (Exception e) {
+                log.error("Async job failed: jobId={}", jobId, e);
+                entry.exitCode = 999;
+                entry.stderr = e.getMessage() != null ? e.getMessage() : "Async job failed";
+                listener.onJobComplete(jobId, 999, entry.stderr, null);
             } finally {
+                entry.completed = true;
                 FcliExecutionContextHolder.pop();
             }
         }, backgroundExecutor);
-    }
 
-    private BiConsumer<FcliExecutionResult, Throwable> createCompletionHandler(InProgressEntry entry, String jobId) {
-        return (result, throwable) -> {
-            entry.setCompleted(true);
-            captureExecutionResult(entry, result, throwable);
-            cleanupFailedJob(entry, jobId);
-            log.debug("Async job completed: jobId={} exitCode={}", jobId, entry.getExitCode());
-        };
-    }
-
-    private void captureExecutionResult(InProgressEntry entry, FcliExecutionResult result, Throwable throwable) {
-        if (throwable != null) {
-            entry.setExitCode(999);
-            entry.setStderr(throwable.getMessage() != null ? throwable.getMessage() : "Async job failed");
-        } else if (result != null) {
-            entry.setExitCode(result.getExitCode());
-            entry.setStderr(result.getStderr());
-        } else {
-            entry.setExitCode(999);
-            entry.setStderr("Cancelled");
-        }
-    }
-
-    private void cleanupFailedJob(InProgressEntry entry, String jobId) {
-        if (entry.getExitCode() != 0) {
-            inProgress.remove(jobId);
-        }
-    }
-
-    private void putCompleted(String jobId, FcliExecutionResult result) {
-        if (result == null) {
-            return;
-        }
-        synchronized (completedJobs) {
-            completedJobs.put(jobId, new CompletedJobEntry(result));
-        }
-        log.debug("Async job stored: jobId={} records={}", jobId, result.getRecords() != null ? result.getRecords().size() : 0);
+        entry.future = future;
+        log.debug("Started async job: jobId={} description={}", jobId, description);
+        return jobId;
     }
 
     /**
-     * Return the completed result for {@code jobId} if present and not expired, or {@code null}.
+     * Start a background job, dispatching events to the given listener.
+     * Returns a fresh {@code jobId}.
      */
-    public FcliExecutionResult getCompleted(String jobId) {
-        synchronized (completedJobs) {
-            var entry = completedJobs.get(jobId);
-            return entry == null || entry.isExpired(ttl) ? null : entry.getResult();
-        }
+    public String startBackground(IAsyncTask task, IJobEventListener listener, String description) {
+        return startBackground(UUID.randomUUID().toString(), task, listener, description);
     }
 
     /**
-     * Return the in-progress tracking entry for {@code jobId}, or {@code null} if not running.
+     * Start a background job with no-op listener and no description.
      */
-    public InProgressEntry getInProgress(String jobId) {
-        return inProgress.get(jobId);
-    }
-
-    /**
-     * Wait up to {@code maxWaitMs} for the job to complete and return its result.
-     * Returns {@code null} if the job is still running when the timeout expires.
-     * For failed jobs (non-zero exit code) a result is still returned.
-     */
-    public FcliExecutionResult waitForCompletion(String jobId, long maxWaitMs) {
-        var entry = inProgress.get(jobId);
-        if (entry == null) {
-            return getCompleted(jobId);
-        }
-
-        long start = System.currentTimeMillis();
-        while (!entry.isCompleted() && System.currentTimeMillis() - start < maxWaitMs) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        if (entry.isCompleted()) {
-            inProgress.remove(jobId);
-            var completed = getCompleted(jobId);
-            if (completed != null) return completed;
-            // Job completed with non-zero exit code (not stored in completedJobs)
-            return FcliExecutionResult.builder()
-                .exitCode(entry.getExitCode())
-                .stderr(entry.getStderr())
-                .records(entry.getRecordsSnapshot())
-                .build();
-        }
-
-        return null; // Still running / timed out
+    public String startBackground(IAsyncTask task) {
+        return startBackground(task, IJobEventListener.NOOP, "");
     }
 
     /**
      * Cancel a running job. Returns {@code true} if the job was found and cancelled.
      */
     public boolean cancel(String jobId) {
-        var entry = inProgress.get(jobId);
-        if (entry != null) {
-            entry.cancel();
-            inProgress.remove(jobId);
+        var entry = jobs.get(jobId);
+        if (entry != null && !entry.completed) {
+            if (entry.future != null) {
+                entry.future.cancel(true);
+            }
+            jobs.remove(jobId);
             log.debug("Cancelled async job: jobId={}", jobId);
             return true;
         }
         return false;
     }
 
-    /**
-     * Remove the result for a specific jobId (cancels if still running).
-     * Returns {@code true} if anything was removed.
-     */
-    public boolean clear(String jobId) {
-        boolean removed = false;
-        synchronized (completedJobs) {
-            removed = completedJobs.remove(jobId) != null;
-        }
-        var inProg = inProgress.remove(jobId);
-        if (inProg != null) {
-            inProg.cancel();
-            removed = true;
-        }
-        return removed;
+    /** Whether a job is currently running (not completed). */
+    public boolean isRunning(String jobId) {
+        var entry = jobs.get(jobId);
+        return entry != null && !entry.completed;
     }
 
-    /**
-     * Remove all completed results and cancel all running jobs.
-     */
-    public void clearAll() {
-        synchronized (completedJobs) {
-            completedJobs.clear();
-        }
-        inProgress.values().forEach(InProgressEntry::cancel);
-        inProgress.clear();
-        log.debug("Cleared all async jobs");
+    /** Return the future for a job, or null if not found. */
+    public java.util.concurrent.CompletableFuture<Void> getFuture(String jobId) {
+        var entry = jobs.get(jobId);
+        return entry != null ? entry.future : null;
     }
 
-    /**
-     * Return current job counts.
-     */
-    public JobStats getStats() {
-        int completed;
-        synchronized (completedJobs) {
-            completed = completedJobs.size();
+    /** Return info about all tracked jobs. */
+    public List<JobInfo> listJobs() {
+        return jobs.values().stream()
+                .map(e -> new JobInfo(e.jobId, e.description, e.completed, e.exitCode, e.created))
+                .toList();
+    }
+
+    /** Remove a completed job from tracking. */
+    public void removeJob(String jobId) {
+        var entry = jobs.get(jobId);
+        if (entry != null && entry.completed) {
+            jobs.remove(jobId);
         }
-        return new JobStats(completed, inProgress.size());
+    }
+
+    /** Return the stdout captured for a completed job, or null. */
+    public String getStdout(String jobId) {
+        var entry = jobs.get(jobId);
+        return entry != null ? entry.stdout : null;
     }
 
     /**
@@ -303,61 +187,30 @@ public class AsyncJobManager {
         log.info("AsyncJobManager shutdown complete");
     }
 
-    /**
-     * Tracks a running async job: partial records, completion state, exit code, and stderr.
-     */
-    @Data
-    public static final class InProgressEntry {
-        private final String jobId;
-        private final long created = System.currentTimeMillis();
-        private final CopyOnWriteArrayList<JsonNode> records = new CopyOnWriteArrayList<>();
-        private volatile CompletableFuture<FcliExecutionResult> future;
-        private volatile boolean completed = false;
-        private volatile int exitCode = 0;
-        private volatile String stderr = "";
+    /** Internal tracking for a running job. */
+    private static final class JobEntry {
+        final String jobId;
+        final String description;
+        final long created = System.currentTimeMillis();
+        volatile CompletableFuture<Void> future;
+        volatile boolean completed;
+        volatile int exitCode;
+        volatile String stderr;
+        volatile String stdout;
 
-        public InProgressEntry(String jobId) {
+        JobEntry(String jobId, String description) {
             this.jobId = jobId;
-        }
-
-        public boolean isExpired(long ttl) {
-            return System.currentTimeMillis() > created + ttl;
-        }
-
-        public void setFuture(CompletableFuture<FcliExecutionResult> f) {
-            this.future = f;
-        }
-
-        public void cancel() {
-            if (future != null) {
-                future.cancel(true);
-            }
-        }
-
-        public int getLoadedCount() {
-            return records.size();
-        }
-
-        public List<JsonNode> getRecordsSnapshot() {
-            return List.copyOf(records);
+            this.description = description;
         }
     }
 
-    @Data
-    @RequiredArgsConstructor
-    private static final class CompletedJobEntry {
-        private final FcliExecutionResult result;
-        private final long created = System.currentTimeMillis();
-
-        public boolean isExpired(long ttl) {
-            return System.currentTimeMillis() > created + ttl;
-        }
-    }
-
-    @Data
-    @RequiredArgsConstructor
-    public static final class JobStats {
-        private final int completedEntries;
-        private final int runningEntries;
+    /** Snapshot of job metadata for listing. */
+    @Data @RequiredArgsConstructor
+    public static final class JobInfo {
+        private final String jobId;
+        private final String description;
+        private final boolean completed;
+        private final int exitCode;
+        private final long createdMillis;
     }
 }

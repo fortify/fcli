@@ -72,7 +72,7 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
     @Mixin private AsyncJobManagerMixin asyncJobManagerMixin;
 
     private static final AsyncJobManager.Config RPC_ASYNC_DEFAULTS = AsyncJobManager.Config.builder()
-        .maxEntries(20).bgThreads(4).ttlMillis(30 * 60 * 1000L).build();
+        .bgThreads(4).build();
 
     @Override
     public Integer call() throws Exception {

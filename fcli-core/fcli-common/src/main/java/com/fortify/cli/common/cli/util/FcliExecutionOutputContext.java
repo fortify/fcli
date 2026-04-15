@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
  * <h3>Progress streams</h3>
  * <p>{@link #getProgressOut()} / {@link #getProgressErr()} default to the original streams,
  * but can be overridden via {@link #setProgressOut} / {@link #setProgressErr} to redirect
- * progress messages. The RPC server sets these to stderr so that progress output does not
- * interfere with the JSON-RPC response channel.</p>
+ * progress messages. The RPC & MCP servers set these to avoid progress output from interfering
+ * with the JSON-RPC response channel.</p>
  *
  * @author Ruud Senden
  */
