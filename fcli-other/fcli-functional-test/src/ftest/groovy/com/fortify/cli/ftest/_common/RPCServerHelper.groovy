@@ -141,6 +141,76 @@ class RPCServerHelper implements Closeable {
         return sendAndReceive(objectMapper.writeValueAsString(request), id)
     }
 
+    /**
+     * Send a JSON-RPC request and collect both the response and any notifications
+     * received before/after the response. Useful for testing push notifications.
+     * @param method RPC method name
+     * @param params Parameter map (can be null)
+     * @param id Request ID
+     * @param postResponseWaitMs How long to wait for additional notifications after the response
+     * @return Map with 'response' (JsonNode) and 'notifications' (List<JsonNode>)
+     */
+    Map<String, Object> rpcCallWithNotifications(String method, Map<String, Object> params, int id, long postResponseWaitMs = 500) {
+        def request = objectMapper.createObjectNode()
+        request.put("jsonrpc", "2.0")
+        request.put("method", method)
+        request.put("id", id)
+        if (params != null) {
+            request.set("params", objectMapper.valueToTree(params))
+        }
+        writer.write(objectMapper.writeValueAsString(request))
+        writer.newLine()
+        writer.flush()
+
+        def notifications = []
+        JsonNode response = null
+        def deadline = System.currentTimeMillis() + 10_000
+        while (System.currentTimeMillis() < deadline) {
+            def line = readLineWithTimeout(deadline - System.currentTimeMillis())
+            if (line == null) break
+            def node = objectMapper.readTree(line)
+            if (!node.has("id") || node.get("id").isNull()) {
+                notifications.add(node)
+            } else {
+                response = node
+                break
+            }
+        }
+        // After getting the response, continue reading notifications for a short while
+        if (response != null) {
+            def notifDeadline = System.currentTimeMillis() + postResponseWaitMs
+            while (System.currentTimeMillis() < notifDeadline) {
+                def line = readLineWithTimeout(notifDeadline - System.currentTimeMillis())
+                if (line == null) break
+                def node = objectMapper.readTree(line)
+                if (!node.has("id") || node.get("id").isNull()) {
+                    notifications.add(node)
+                }
+            }
+        }
+        return [response: response, notifications: notifications]
+    }
+
+    /**
+     * Drain any pending notifications from the stream (non-blocking).
+     * Call this between rpcCall invocations to clear notifications from the previous job.
+     * @param waitMs How long to wait for notifications
+     * @return List of notification JsonNodes received
+     */
+    List<JsonNode> drainNotifications(long waitMs = 500) {
+        def notifications = []
+        def deadline = System.currentTimeMillis() + waitMs
+        while (System.currentTimeMillis() < deadline) {
+            def line = readLineWithTimeout(deadline - System.currentTimeMillis())
+            if (line == null) break
+            def node = objectMapper.readTree(line)
+            if (!node.has("id") || node.get("id").isNull()) {
+                notifications.add(node)
+            }
+        }
+        return notifications
+    }
+
     private JsonNode sendAndReceive(String jsonLine, int expectedId) {
         writer.write(jsonLine)
         writer.newLine()

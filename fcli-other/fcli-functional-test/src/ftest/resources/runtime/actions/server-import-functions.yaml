@@ -37,6 +37,19 @@ functions:
           do:
             - fn.yield: ${'item-' + _item}
 
+  generateManyItems:
+    description: Stream items with a delay between each (for cancel tests)
+    streaming: true
+    args:
+      items: { required: true }
+    steps:
+      - records.for-each:
+          from: ${args.items}
+          record.var-name: _i
+          do:
+            - sleep: 100
+            - fn.yield: ${'item-' + _i}
+
   _helperInternal:
     export: false
     return: ${_result}

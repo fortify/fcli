@@ -75,6 +75,7 @@ public class AsyncJobManager {
         listener.onJobStarted(jobId, description);
 
         var future = CompletableFuture.runAsync(() -> {
+            entry.thread = Thread.currentThread();
             FcliExecutionContextHolder.pushNew();
             try {
                 var result = task.run(record -> {
@@ -130,6 +131,10 @@ public class AsyncJobManager {
     public boolean cancel(String jobId) {
         var entry = jobs.get(jobId);
         if (entry != null && !entry.completed) {
+            var thread = entry.thread;
+            if (thread != null) {
+                thread.interrupt();
+            }
             if (entry.future != null) {
                 entry.future.cancel(true);
             }
@@ -193,6 +198,7 @@ public class AsyncJobManager {
         final String description;
         final long created = System.currentTimeMillis();
         volatile CompletableFuture<Void> future;
+        volatile Thread thread;
         volatile boolean completed;
         volatile int exitCode;
         volatile String stderr;

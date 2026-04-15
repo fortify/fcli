@@ -443,6 +443,16 @@ public final class ActionStep extends AbstractActionStepElement {
         """)
     @JsonProperty(value = "exit", required = false) private TemplateExpression _exit;
     
+    @JsonPropertyDescription("""
+        Sleep for the specified duration in milliseconds. The value is evaluated as a SpEL expression.
+        """)
+    @SampleYamlSnippets("""
+        do:
+          - sleep: 1000
+          - sleep: ${delayMs}
+        """)
+    @JsonProperty(value = "sleep", required = false) private TemplateExpression _sleep;
+    
     /**
      * This method is invoked by the parent element (which may either be another
      * step element, or the top-level {@link Action} instance).

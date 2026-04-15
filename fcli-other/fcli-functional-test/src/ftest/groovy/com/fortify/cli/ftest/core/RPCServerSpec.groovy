@@ -327,4 +327,218 @@ class RPCServerSpec extends FcliBaseSpec {
                 server.close()
             }
     }
+
+    def "job.cancel on non-existent job returns success=false"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("job.cancel", [jobId: "non-existent-job-id"], 40)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("success").asBoolean() == false
+                assert result.get("jobId").asText() == "non-existent-job-id"
+            } finally {
+                server.close()
+            }
+    }
+
+    def "job.cancel cancels a running streaming job"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                // Start a job that generates items with 100ms delay each (50 items = ~5s)
+                def items = (0..<50).collect { it }
+                def startResponse = server.rpcCall("fn.call",
+                    [name: "generateManyItems", args: [items: items]], 41)
+                assert startResponse.get("error") == null
+                def jobId = startResponse.get("result").get("jobId").asText()
+
+                // Wait a bit for some items to be produced, then cancel
+                Thread.sleep(500)
+
+                def cancelResponse = server.rpcCall("job.cancel", [jobId: jobId], 42)
+                assert cancelResponse.get("error") == null
+                assert cancelResponse.get("result").get("success").asBoolean() == true
+                assert cancelResponse.get("result").get("jobId").asText() == jobId
+
+                // Drain any remaining notifications
+                server.drainNotifications(2000)
+            } finally {
+                server.close()
+            }
+    }
+
+    def "job.list shows tracked jobs"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                // Start a job and wait for it to complete
+                server.executeAndWait("fn.call", [name: "echo", args: [message: "test"]], 50, 51)
+
+                // Drain any notifications from the echo job
+                server.drainNotifications(500)
+
+                // List jobs — should show the completed job
+                def listResponse = server.rpcCall("job.list", [:], 52)
+                assert listResponse.get("error") == null
+                def result = listResponse.get("result")
+                assert result.get("totalJobs").asInt() >= 1
+                def jobs = result.get("jobs")
+                assert jobs.isArray()
+                assert jobs.size() >= 1
+                // Find the completed job
+                def completedJob = null
+                for (def j : jobs) {
+                    if (j.get("completed").asBoolean()) {
+                        completedJob = j
+                        break
+                    }
+                }
+                assert completedJob != null : "Expected at least one completed job in: ${jobs}"
+                assert completedJob.has("jobId")
+                assert completedJob.has("description")
+                assert completedJob.has("createdMillis")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "job.getPage with unknown jobId returns not_found status"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("job.getPage", [jobId: "does-not-exist", offset: 0, limit: 10], 60)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "not_found"
+                assert result.get("jobId").asText() == "does-not-exist"
+            } finally {
+                server.close()
+            }
+    }
+
+    def "job.getPage without jobId returns error"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("job.getPage", [:], 61)
+                assert response.get("error") != null
+                assert response.get("error").get("code").asInt() == -32602 // invalid params
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with invalid command returns non-zero exit code"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def result = server.executeAndWait("fcli.execute",
+                    [command: "this-command-does-not-exist"], 70, 71)
+                assert result.get("exitCode").asInt() != 0
+                assert result.has("stderr")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "push notifications are received for async jobs"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                // Start a streaming function that produces multiple items with delays,
+                // ensuring records arrive as push notifications before job completion
+                def items = (0..<5).collect { it }
+                def callResult = server.rpcCallWithNotifications("fn.call",
+                    [name: "generateManyItems", args: [items: items]], 80, 5000)
+                assert callResult.response != null
+                assert callResult.response.get("error") == null
+                def jobId = callResult.response.get("result").get("jobId").asText()
+
+                // Collect all notifications (pre-response + post-response)
+                def notifications = callResult.notifications
+
+                // Also drain any remaining notifications
+                notifications.addAll(server.drainNotifications(5000))
+
+                // Should have job.started, job.records, and job.complete notifications
+                def methods = notifications.collect { it.get("method")?.asText() } as Set
+                assert methods.contains("job.started") : "Expected job.started notification, got: ${methods}"
+                assert methods.contains("job.records") : "Expected job.records notification (streaming records should be pushed), got: ${methods}"
+                assert methods.contains("job.complete") : "Expected job.complete notification, got: ${methods}"
+
+                // Verify job.started has correct jobId
+                def startedNotif = notifications.find { it.get("method")?.asText() == "job.started" }
+                assert startedNotif.get("params").get("jobId").asText() == jobId
+
+                // Verify job.records has correct jobId and records array
+                def recordNotifs = notifications.findAll { it.get("method")?.asText() == "job.records" }
+                def totalPushedRecords = 0
+                for (def notif : recordNotifs) {
+                    assert notif.get("params").get("jobId").asText() == jobId
+                    assert notif.get("params").get("records").isArray()
+                    totalPushedRecords += notif.get("params").get("records").size()
+                }
+                assert totalPushedRecords == 5 : "Expected 5 records total in job.records notifications, got: ${totalPushedRecords}"
+
+                // Verify job.complete has correct jobId and exitCode
+                def completeNotif = notifications.find { it.get("method")?.asText() == "job.complete" }
+                assert completeNotif.get("params").get("jobId").asText() == jobId
+                assert completeNotif.get("params").get("exitCode").asInt() == 0
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.getCommandDetails returns usage info"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.getCommandDetails",
+                    [command: "util sample-data list"], 90)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result != null
+                assert result.has("command")
+                assert result.get("command").asText().contains("sample-data")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.getCommandDetails with invalid command returns error"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.getCommandDetails",
+                    [command: "nonexistent command path"], 91)
+                assert response.get("error") != null
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.buildInfo returns version information"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.buildInfo", [:], 95)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result != null
+                assert result.has("version")
+            } finally {
+                server.close()
+            }
+    }
 }
