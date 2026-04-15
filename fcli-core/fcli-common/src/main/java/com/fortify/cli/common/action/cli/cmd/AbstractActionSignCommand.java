@@ -43,7 +43,7 @@ import picocli.CommandLine.Option;
 public class AbstractActionSignCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(AbstractActionSignCommand.class);
-    @Getter @Mixin OutputHelperMixins.TableNoQuery outputHelper;
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Option(names = "--in", required=true, descriptionKey="fcli.action.sign.in") 
     private Path actionFileToSign;
     @Option(names = "--out", required=true, descriptionKey="fcli.action.sign.out")
