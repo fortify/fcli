@@ -150,7 +150,7 @@ class RPCServerSpec extends FcliBaseSpec {
             def server = RPCServerHelper.start("util rpc-server start")
         then:
             try {
-                def result = server.executeAndWait("fcli.execute", [command: "util sample-data list"], 7, 8)
+                def result = server.executeAndWait("fcli.execute", [command: "util sample-data list", collectRecords: false], 7, 8)
                 assert result.get("exitCode").asInt() == 0
                 assert result.has("stdout")
             } finally {
