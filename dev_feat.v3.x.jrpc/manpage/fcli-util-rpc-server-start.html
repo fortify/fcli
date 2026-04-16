@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260416.150802-dev_feat.v3.x.jrpc" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260416.163636-dev_feat.v3.x.jrpc" %}
 
 
 <div id="header">
@@ -77,8 +77,21 @@ fcli_version:
       By default, stdout is suppressed and records are collected
       if supported by the fcli command, unless this parameter is
       set to false.
+    - cache (object, optional)
+      Enable record caching for retrieval via job.getPage.
+      Omitted: no caching.
+      {ttl: "&lt;period&gt;"}: cache with specified TTL (e.g., "30s",
+      "5m", "1h", "1d"). TTL is required.
+      Cached records are automatically evicted after TTL.
+      Use job.remove to clear the cache before TTL expires.
+    - push (boolean, optional, default: true)
+      Enable push notifications (job.started, job.records,
+      job.progress, job.complete). Set to false to disable all
+      push notifications and rely on job.getStatus/job.getPage
+      for polling.
   Response:
-    jobId, status="started", jobType ("records" or "stdout")</pre>
+    jobId, status="started", jobType ("records" or "stdout"),
+    cached (boolean)</pre>
 </div>
 </div>
 <div class="literalblock">
@@ -126,8 +139,15 @@ fcli_version:
       Function name (see fn.list)
     - args (object, optional)
       Function arguments as key/value pairs
+    - cache (object, optional)
+      Enable record caching for retrieval via job.getPage.
+      Same options as fcli.execute cache parameter.
+    - push (boolean, optional, default: true)
+      Enable push notifications. Same as fcli.execute push
+      parameter.
   Response:
-    jobId, status="started", jobType="records"</pre>
+    jobId, status="started", jobType="records",
+    cached (boolean)</pre>
 </div>
 </div>
 <div class="literalblock">
@@ -145,7 +165,10 @@ fcli_version:
 <div class="literalblock">
 <div class="content">
 <pre>job.getPage:
-  Retrieve a page of records from a running or completed job
+  Retrieve a page of records from a running or completed job.
+  Only available for jobs started with cache enabled.
+  Returns status="not_found" if caching was not enabled or
+  if the cache has been evicted (TTL expired).
   Parameters:
     - jobId (string, required)
       Job ID from fcli.execute or fn.call
@@ -166,6 +189,28 @@ fcli_version:
   Parameters:
     - jobId (string, required)
       Job ID to cancel
+  Response: success, jobId, message</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>job.getStatus:
+  Get the status of a single job
+  Parameters:
+    - jobId (string, required)
+      Job ID to query
+  Response:
+    jobId, status ("running", "complete", "error", or "not_found"),
+    description, completed, exitCode, cached, createdMillis</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>job.remove:
+  Remove a completed job from tracking and clear its record cache
+  Parameters:
+    - jobId (string, required)
+      Job ID to remove (must be completed; cancel running jobs first)
   Response: success, jobId, message</pre>
 </div>
 </div>
@@ -195,7 +240,7 @@ fcli_version:
 <p>PUSH NOTIFICATIONS (server-to-client, no id field):</p>
 </div>
 <div class="paragraph">
-<p>The fcli.execute and fn.call methods are asynchronous and will return immediately with a jobId. During execution, the following messages will be actively pushed to the client to inform the client about the progress and results of the job.</p>
+<p>The fcli.execute and fn.call methods are asynchronous and will return immediately with a jobId. By default (push: true), the following notifications are actively pushed to the client during job execution. Set push: false to disable all push notifications and use job.getStatus / job.getPage for polling instead.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -296,7 +341,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-16 15:10:53 UTC
+Last updated 2026-04-16 16:39:12 UTC
 </div>
 </div>
 </body>
