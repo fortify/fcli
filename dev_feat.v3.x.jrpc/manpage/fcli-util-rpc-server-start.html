@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260415.151753-dev_feat.v3.x.jrpc" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260416.132047-dev_feat.v3.x.jrpc" %}
 
 
 <div id="header">
@@ -57,104 +57,145 @@ fcli_version:
 <p>The fcli JSON-RPC server provides a simple JSON-RPC 2.0 interface for IDE plugins and other tools to interact with Fortify products through fcli. Unlike the MCP server which is designed for LLM integration, the RPC server exposes a smaller set of general-purpose methods suitable for programmatic access from IDE plugins.</p>
 </div>
 <div class="paragraph">
-<p>The server reads JSON-RPC requests from stdin and writes responses to stdout, one JSON object per line. Sessions must be established in advance using the standard fcli session login commands.</p>
+<p>The server reads JSON-RPC 2.0 requests from stdin and writes responses to stdout, one JSON object per line.</p>
 </div>
 <div class="paragraph">
-<p>Available RPC methods:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>EXECUTION METHODS:</pre>
-</div>
+<p>AVAILABLE RPC METHODS</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>fcli.execute: Execute an fcli command asynchronously
-Parameters:</p>
-</li>
-<li>
-<p>command (string, required): The fcli command to execute (e.g., "ssc appversion list")</p>
-</li>
-<li>
-<p>collectRecords (boolean, optional): Collect structured records instead of stdout (default: false)
-Response: jobId, status="started", jobType ("records" or "stdout")</p>
-</li>
-<li>
-<p>fn.call: Call an imported action function (if --import was used)
-Parameters: name (string, required), plus function-specific args
-Response: jobId, status="started", jobType</p>
-</li>
-<li>
-<p>fn.list: List available imported functions
-Parameters: none</p>
+<p>FCLI METHODS (fcli.*):</p>
 <div class="literalblock">
 <div class="content">
-<pre>JOB METHODS:</pre>
+<pre>fcli.execute:
+  Execute an fcli command asynchronously
+  Parameters:
+    - command (string, required)
+      The fcli command to execute (e.g., "ssc appversion list")
+    - collectRecords (boolean, optional)
+      By default, stdout is suppressed and records are collected
+      if supported by the fcli command, unless this parameter is
+      set to false.
+  Response:
+    jobId, status="started", jobType ("records" or "stdout")</pre>
 </div>
 </div>
-</li>
-<li>
-<p>job.getPage: Retrieve a page of records/results from an async job
-Parameters:</p>
-</li>
-<li>
-<p>jobId (string, required): Job ID from fcli.execute or fn.call</p>
-</li>
-<li>
-<p>offset (integer, optional): Start offset (default: 0)</p>
-</li>
-<li>
-<p>limit (integer, optional): Max records per page (default: 100)</p>
-</li>
-<li>
-<p>job.cancel: Cancel an in-progress async job
-Parameters:</p>
-</li>
-<li>
-<p>jobId (string, required): Job ID to cancel</p>
-</li>
-<li>
-<p>job.list: List all tracked jobs with their status
-Parameters: none</p>
 <div class="literalblock">
 <div class="content">
-<pre>INFO METHODS:</pre>
+<pre>fcli.listCommands:
+  List available fcli commands with optional SpEL query filtering
+  Parameters:
+    - query (string, optional)
+      SpEL expression to filter commands (e.g., '!hidden &amp;&amp; runnable',
+      'module=="ssc"'). See 'fcli util all-commands list -o json' for
+      available properties.
+  Response:
+    commands (array of command descriptors), count</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>fcli.getCommandDetails:
+  Get detailed spec and argument information for a specific fcli command
+  Parameters:
+    - command (string, required)
+      The fcli command to describe (e.g., "ssc appversion list")
+  Response:
+    command, commandSpec, commandArgs</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>fcli.buildInfo:
+  Get fcli build information
+  Parameters: none
+  Response:
+    projectName, version, buildDate, actionSchemaVersion, actionSchemaUrl, docBaseUrl, sourceCodeBaseUrl</pre>
 </div>
 </div>
 </li>
 <li>
-<p>fcli.listCommands: List available fcli commands with optional filtering
-Parameters:</p>
+<p>FUNCTION METHODS (fn.*) — only available when --import is used:</p>
+<div class="literalblock">
+<div class="content">
+<pre>fn.call:
+  Call an imported action function asynchronously
+  Parameters:
+    - name (string, required)
+      Function name (see fn.list)
+    - args (object, optional)
+      Function arguments as key/value pairs
+  Response:
+    jobId, status="started", jobType="records"</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>fn.list:
+  List available imported action functions
+  Parameters: none
+  Response:
+    functions (array of {name, description, streaming}), count</pre>
+</div>
+</div>
 </li>
 <li>
-<p>module (string, optional): Filter by module (e.g., "ssc", "fod")</p>
+<p>JOB METHODS (job.*):</p>
+<div class="literalblock">
+<div class="content">
+<pre>job.getPage:
+  Retrieve a page of records from a running or completed job
+  Parameters:
+    - jobId (string, required)
+      Job ID from fcli.execute or fn.call
+    - offset (integer, optional)
+      Start offset (default: 0)
+    - limit (integer, optional)
+      Max records per page (default: 100)
+  Response:
+    status ("complete", "loading", "error", or "not_found"), jobId, records,
+    pagination ({offset, limit, loadedCount, hasMore, complete}),
+    exitCode (if complete), stderr (if any), stdout (for stdout-mode jobs, if complete)</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>job.cancel:
+  Cancel a running job
+  Parameters:
+    - jobId (string, required)
+      Job ID to cancel
+  Response: success, jobId, message</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>job.list:
+  List all tracked jobs
+  Parameters: none
+  Response: jobs (array of {jobId, description, completed, exitCode, createdMillis}), totalJobs</pre>
+</div>
+</div>
 </li>
 <li>
-<p>runnableOnly (boolean, optional): If true, only return runnable (leaf) commands</p>
-</li>
-<li>
-<p>includeHidden (boolean, optional): If true, include hidden commands</p>
-</li>
-<li>
-<p>fcli.getCommandDetails: Get detailed usage information for a specific fcli command
-Parameters:</p>
-</li>
-<li>
-<p>command (string, required): The fcli command to get details for (e.g., "ssc appversion list")</p>
-</li>
-<li>
-<p>fcli.buildInfo: Get fcli version and build information
-Parameters: none</p>
-</li>
-<li>
-<p>rpc.listMethods: List available RPC methods
-Parameters: none</p>
+<p>RPC METHODS (rpc.*):</p>
+<div class="literalblock">
+<div class="content">
+<pre>rpc.listMethods:
+  List all available RPC methods with descriptions
+  Parameters: none
+  Response: methods (array of {name, description}), count</pre>
+</div>
+</div>
 </li>
 </ul>
 </div>
 <div class="paragraph">
 <p>PUSH NOTIFICATIONS (server-to-client, no id field):</p>
+</div>
+<div class="paragraph">
+<p>The fcli.execute and fn.call methods are asynchronous and will return immediately with a jobId. During execution, the following messages will be actively pushed to the client to inform the client about the progress and results of the job.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -173,13 +214,23 @@ Parameters: none</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>Typical workflow:
-1. Establish fcli sessions using standard fcli session login commands through fcli.execute
-2. Execute commands via fcli.execute (always async, returns jobId)
-3. Poll job.getPage for results, or listen for push notifications (job.started, job.records, job.complete)</p>
+<p>TYPICAL WORKFLOW:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Establish fcli sessions using standard fcli session login commands via fcli.execute</p>
+</li>
+<li>
+<p>Execute commands and functions via fcli.execute and fn.call (always async, returns jobId)</p>
+</li>
+<li>
+<p>Listen for push notifications (job.started, job.records, job.complete)</p>
+</li>
+</ol>
 </div>
 <div class="paragraph">
-<p>Example JSON-RPC requests:</p>
+<p>EXAMPLE JSON-RPC REQUESTS:</p>
 </div>
 <div class="paragraph">
 <p>{"jsonrpc":"2.0","method":"fcli.execute","params":{"command":"ssc appversion list","collectRecords":true},"id":1}
@@ -245,7 +296,7 @@ Parameters: none</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-15 15:20:02 UTC
+Last updated 2026-04-16 13:23:22 UTC
 </div>
 </div>
 </body>
