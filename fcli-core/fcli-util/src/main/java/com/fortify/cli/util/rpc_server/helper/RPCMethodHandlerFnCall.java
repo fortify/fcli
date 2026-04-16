@@ -20,7 +20,6 @@ import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.AsyncTaskActionFunction;
-import com.fortify.cli.util._common.helper.IJobEventListener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,17 +27,23 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for {@code fn.call}. Always runs asynchronously: returns
  * a {@code jobId} immediately, and pushes records/completion as JSON-RPC
- * notifications via the configured {@link IJobEventListener}.
+ * notifications.
+ *
+ * <p>Supports optional {@code cache} and {@code push} parameters to control
+ * record caching and push notification behavior.</p>
  *
  * Method: fn.call
  * Params:
  *   - name (string, required): Name of the exported function to call (see fn.list)
  *   - args (object, optional): Function arguments as key/value pairs
+ *   - cache (boolean|object, optional): Enable record caching. true for default 10m TTL, {ttl: "5m"} for custom TTL
+ *   - push (boolean, optional): Enable push notifications (default: true)
  *
  * Response:
  *   - jobId (string): Identifier for tracking via job.getPage / job.cancel / job.list
  *   - status (string): "started"
  *   - jobType (string): "records"
+ *   - cached (boolean): Whether records are being cached for this job
  *
  * @author Ruud Senden
  */
@@ -47,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
     private final Map<String, ActionFunctionExecutor> functions;
     private final AsyncJobManager asyncJobManager;
-    private final IJobEventListener listener;
+    private final RPCJobEventListenerFactory listenerFactory;
 
     @Override
     public String description() {
@@ -66,6 +71,9 @@ public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
         }
         log.debug("Executing action function (async): {}", name);
         try {
+            var cacheConfig = RPCJobEventListenerFactory.parseCacheParam(params);
+            var push = RPCJobEventListenerFactory.parsePushParam(params);
+            var listener = listenerFactory.createListener(cacheConfig, push);
             var argsNode = buildArgsNode(params);
             var task = new AsyncTaskActionFunction(executor, argsNode);
             var description = "fn:" + name;
@@ -75,6 +83,7 @@ public final class RPCMethodHandlerFnCall implements IRPCMethodHandler {
             response.put("jobId", jobId);
             response.put("status", "started");
             response.put("jobType", "records");
+            response.put("cached", cacheConfig != null);
             return response;
         } catch (Exception e) {
             log.error("Error executing action function: {}", name, e);

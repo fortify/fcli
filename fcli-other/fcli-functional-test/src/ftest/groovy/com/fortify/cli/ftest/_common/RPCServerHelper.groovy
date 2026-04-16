@@ -254,7 +254,12 @@ class RPCServerHelper implements Closeable {
      * @return The final job.getPage result node (with status, records, stdout, etc.)
      */
     JsonNode executeAndWait(String method, Map<String, Object> params, int startId, int pageId, long timeoutMs = 10_000) {
-        def startResponse = rpcCall(method, params, startId)
+        // Ensure caching is enabled so job.getPage can retrieve results
+        def effectiveParams = new LinkedHashMap<String, Object>(params ?: [:])
+        if (!effectiveParams.containsKey("cache")) {
+            effectiveParams.put("cache", [ttl: "10m"])
+        }
+        def startResponse = rpcCall(method, effectiveParams, startId)
         assert startResponse.get("error") == null : "Unexpected error starting job: ${startResponse}"
         def jobId = startResponse.get("result").get("jobId").asText()
         assert jobId != null && !jobId.isEmpty()

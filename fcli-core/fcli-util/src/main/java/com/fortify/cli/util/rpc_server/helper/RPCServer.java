@@ -116,6 +116,7 @@ public final class RPCServer {
             outputWriter.stop();
             registry.setOutputWriter(null);
             registry.getAsyncJobManager().shutdown();
+            registry.getCachingListener().shutdown();
             log.info("JSON-RPC server stopped");
         }
     }

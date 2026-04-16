@@ -13,6 +13,7 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -354,7 +355,7 @@ class JRPCServerTest {
 
         var methods = node.get("result").get("methods");
         assertTrue(methods.isArray());
-        assertTrue(methods.size() >= 8, "Should have at least 8 methods including job ones");
+        assertTrue(methods.size() >= 10, "Should have at least 10 methods including job ones");
 
         boolean hasGetPage = false;
         boolean hasCancel = false;
@@ -422,6 +423,75 @@ class JRPCServerTest {
             var node = objectMapper.readTree(response);
             assertNotNull(node.get("result"));
             assertEquals(42, node.get("result").get("value").asInt());
+        }
+    }
+
+    @Nested
+    class JobGetStatusMethod {
+        @Test
+        void shouldReturnNotFoundForUnknownJobId() throws Exception {
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"job.getStatus\",\"params\":{\"jobId\":\"unknown\"},\"id\":1}");
+
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("result"));
+            assertEquals("not_found", node.get("result").get("status").asText());
+            assertEquals("unknown", node.get("result").get("jobId").asText());
+        }
+
+        @Test
+        void shouldReturnInvalidParamsWithoutJobId() throws Exception {
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"job.getStatus\",\"params\":{},\"id\":1}");
+
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("error"));
+            assertEquals(-32602, node.get("error").get("code").asInt());
+        }
+    }
+
+    @Nested
+    class JobRemoveMethod {
+        @Test
+        void shouldReturnNotFoundForUnknownJob() throws Exception {
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"job.remove\",\"params\":{\"jobId\":\"unknown\"},\"id\":1}");
+
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("result"));
+            assertFalse(node.get("result").get("success").asBoolean());
+        }
+
+        @Test
+        void shouldReturnInvalidParamsWithoutJobId() throws Exception {
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"job.remove\",\"params\":{},\"id\":1}");
+
+            assertNotNull(response);
+            var node = objectMapper.readTree(response);
+            assertNotNull(node.get("error"));
+            assertEquals(-32602, node.get("error").get("code").asInt());
+        }
+    }
+
+    @Nested
+    class MethodDiscovery {
+        @Test
+        void shouldListNewMethodsInRpcListMethods() throws Exception {
+            String response = server.processRequest(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"rpc.listMethods\",\"id\":1}");
+
+            var node = objectMapper.readTree(response);
+            var methods = node.get("result").get("methods");
+            Set<String> methodNames = new HashSet<>();
+            for (var method : methods) {
+                methodNames.add(method.get("name").asText());
+            }
+            assertTrue(methodNames.contains("job.getStatus"), "job.getStatus should be listed");
+            assertTrue(methodNames.contains("job.remove"), "job.remove should be listed");
         }
     }
 

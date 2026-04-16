@@ -164,6 +164,14 @@ public class AsyncJobManager {
                 .toList();
     }
 
+    /** Return info about a single tracked job, or null if not found. */
+    public JobInfo getJobInfo(String jobId) {
+        var entry = jobs.get(jobId);
+        return entry != null
+                ? new JobInfo(entry.jobId, entry.description, entry.completed, entry.exitCode, entry.created)
+                : null;
+    }
+
     /** Remove a completed job from tracking. */
     public void removeJob(String jobId) {
         var entry = jobs.get(jobId);

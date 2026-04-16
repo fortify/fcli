@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
-import com.fortify.cli.util._common.helper.IJobEventListener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +23,23 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * RPC method handler for executing fcli commands. Always runs asynchronously:
  * returns a {@code jobId} immediately, and pushes records/progress/completion
- * as JSON-RPC notifications via the configured {@link IJobEventListener}.
+ * as JSON-RPC notifications.
+ *
+ * <p>Supports optional {@code cache} and {@code push} parameters to control
+ * record caching and push notification behavior.</p>
  *
  * Method: fcli.execute
  * Params:
  *   - command (string, required): The fcli command to execute (e.g., "ssc appversion list")
  *   - collectRecords (boolean, optional): If true, collect structured records; if false, collect stdout (default: true)
+ *   - cache (boolean|object, optional): Enable record caching. true for default 10m TTL, {ttl: "5m"} for custom TTL
+ *   - push (boolean, optional): Enable push notifications (default: true)
  *
  * Response:
  *   - jobId (string): Identifier for tracking via job.getPage / job.cancel / job.list
  *   - status (string): "started"
  *   - jobType (string): "records" or "stdout"
+ *   - cached (boolean): Whether records are being cached for this job
  *
  * @author Ruud Senden
  */
@@ -42,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
     private final AsyncJobManager asyncJobManager;
-    private final IJobEventListener listener;
+    private final RPCJobEventListenerFactory listenerFactory;
 
     @Override
     public String description() {
@@ -62,7 +67,11 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
             throw RPCMethodException.invalidParams("'command' cannot be empty");
         }
 
-        log.debug("Executing fcli command (async): {} (collectRecords={})", command, collectRecords);
+        var cacheConfig = RPCJobEventListenerFactory.parseCacheParam(params);
+        var push = RPCJobEventListenerFactory.parsePushParam(params);
+        var listener = listenerFactory.createListener(cacheConfig, push);
+
+        log.debug("Executing fcli command (async): {} (collectRecords={}, cached={}, push={})", command, collectRecords, cacheConfig != null, push);
 
         var task = new AsyncTaskFcliCommand(command, collectRecords);
         var description = "fcli " + command;
@@ -72,6 +81,7 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
         response.put("jobId", jobId);
         response.put("status", "started");
         response.put("jobType", collectRecords ? "records" : "stdout");
+        response.put("cached", cacheConfig != null);
         return response;
     }
 }

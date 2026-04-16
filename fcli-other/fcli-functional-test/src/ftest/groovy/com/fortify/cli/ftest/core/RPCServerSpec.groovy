@@ -47,7 +47,7 @@ class RPCServerSpec extends FcliBaseSpec {
             try {
                 // fn.call always starts an async job now;
                 // results are retrieved via job.getPage
-                def streamResponse = server.rpcCall("fn.call", [name: "generateItems", args: [items: [0, 1, 2]]], 3)
+                def streamResponse = server.rpcCall("fn.call", [name: "generateItems", args: [items: [0, 1, 2]], cache: [ttl: "10m"]], 3)
                 assert streamResponse.get("result") != null
                 assert streamResponse.get("error") == null
                 def jobId = streamResponse.get("result").get("jobId").asText()
@@ -178,7 +178,7 @@ class RPCServerSpec extends FcliBaseSpec {
             def server = RPCServerHelper.start("util rpc-server start")
         then:
             try {
-                def startResponse = server.rpcCall("fcli.execute", [command: "util sample-data list", collectRecords: true], 11)
+                def startResponse = server.rpcCall("fcli.execute", [command: "util sample-data list", collectRecords: true, cache: [ttl: "10m"]], 11)
                 def jobId = startResponse.get("result").get("jobId").asText()
 
                 // Poll until complete
@@ -537,6 +537,245 @@ class RPCServerSpec extends FcliBaseSpec {
                 def result = response.get("result")
                 assert result != null
                 assert result.has("version")
+            } finally {
+                server.close()
+            }
+    }
+
+    // --- Cache and push parameter tests ---
+
+    def "fcli.execute with cache returns cached=true and records via job.getPage"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def startResponse = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", cache: [ttl: "10m"], push: false], 100)
+                assert startResponse.get("error") == null
+                def startResult = startResponse.get("result")
+                assert startResult.get("cached").asBoolean() == true
+
+                def jobId = startResult.get("jobId").asText()
+                def result = server.executeAndWait("fcli.execute",
+                    [command: "util sample-data list", cache: [ttl: "10m"], push: false], 101, 102)
+                assert result.get("exitCode").asInt() == 0
+                assert result.get("records").isArray()
+                assert result.get("records").size() > 0
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute without cache returns cached=false and getPage returns not_found"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def startResponse = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list"], 110)
+                assert startResponse.get("error") == null
+                def startResult = startResponse.get("result")
+                assert startResult.get("cached").asBoolean() == false
+
+                def jobId = startResult.get("jobId").asText()
+
+                // Wait for completion via job.getStatus polling
+                def deadline = System.currentTimeMillis() + 10_000
+                while (System.currentTimeMillis() < deadline) {
+                    def statusResp = server.rpcCall("job.getStatus", [jobId: jobId], 111)
+                    if (statusResp.get("result")?.get("completed")?.asBoolean()) break
+                    Thread.sleep(100)
+                }
+
+                // Drain push notifications
+                server.drainNotifications(1000)
+
+                // job.getPage should return not_found since cache was not enabled
+                def pageResponse = server.rpcCall("job.getPage", [jobId: jobId, offset: 0, limit: 10], 112)
+                assert pageResponse.get("error") == null
+                assert pageResponse.get("result").get("status").asText() == "not_found"
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with cache accepts different TTL values"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def startResponse = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", cache: [ttl: "5m"]], 120)
+                assert startResponse.get("error") == null
+                assert startResponse.get("result").get("cached").asBoolean() == true
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with cache:true without TTL returns error"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", cache: true], 125)
+                assert response.get("error") != null
+                assert response.get("error").get("code").asInt() == -32602
+                assert response.get("error").get("message").asText().contains("ttl")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with push false suppresses notifications"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def callResult = server.rpcCallWithNotifications("fcli.execute",
+                    [command: "util sample-data list", push: false, cache: [ttl: "10m"]], 130, 3000)
+                assert callResult.response.get("error") == null
+                def jobId = callResult.response.get("result").get("jobId").asText()
+
+                // Wait for job to complete
+                def deadline = System.currentTimeMillis() + 10_000
+                while (System.currentTimeMillis() < deadline) {
+                    def statusResp = server.rpcCall("job.getStatus", [jobId: jobId], 131)
+                    if (statusResp.get("result")?.get("completed")?.asBoolean()) break
+                    Thread.sleep(100)
+                }
+
+                // Drain any remaining notifications
+                def allNotifications = callResult.notifications + server.drainNotifications(1000)
+
+                // With push:false, there should be no push notifications for this job
+                def jobNotifications = allNotifications.findAll {
+                    it.get("params")?.get("jobId")?.asText() == jobId
+                }
+                assert jobNotifications.isEmpty() : "Expected no push notifications with push:false, got: ${jobNotifications.size()}"
+            } finally {
+                server.close()
+            }
+    }
+
+    // --- job.getStatus tests ---
+
+    def "job.getStatus returns status for a completed job"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def result = server.executeAndWait("fcli.execute",
+                    [command: "util sample-data list"], 140, 141)
+                // executeAndWait uses job.getPage internally; get the jobId from a fresh call
+                def startResponse = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", cache: [ttl: "10m"]], 142)
+                def jobId = startResponse.get("result").get("jobId").asText()
+
+                def deadline = System.currentTimeMillis() + 10_000
+                while (System.currentTimeMillis() < deadline) {
+                    def statusResp = server.rpcCall("job.getStatus", [jobId: jobId], 143)
+                    def statusResult = statusResp.get("result")
+                    if (statusResult.get("completed")?.asBoolean()) {
+                        assert statusResult.get("status").asText() == "complete"
+                        assert statusResult.get("jobId").asText() == jobId
+                        assert statusResult.has("cached")
+                        assert statusResult.has("createdMillis")
+                        assert statusResult.get("exitCode").asInt() == 0
+                        return
+                    }
+                    Thread.sleep(100)
+                }
+                assert false : "Job did not complete within timeout"
+            } finally {
+                server.close()
+            }
+    }
+
+    def "job.getStatus returns not_found for unknown jobId"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("job.getStatus", [jobId: "does-not-exist"], 150)
+                assert response.get("error") == null
+                assert response.get("result").get("status").asText() == "not_found"
+            } finally {
+                server.close()
+            }
+    }
+
+    // --- job.remove tests ---
+
+    def "job.remove removes a completed job and its cache"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def result = server.executeAndWait("fcli.execute",
+                    [command: "util sample-data list", cache: [ttl: "10m"]], 160, 161)
+                assert result.get("exitCode").asInt() == 0
+
+                // Get the jobId — we need to start another job since executeAndWait doesn't return it
+                def startResponse = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", cache: [ttl: "10m"]], 162)
+                def jobId = startResponse.get("result").get("jobId").asText()
+
+                // Wait for completion
+                def deadline = System.currentTimeMillis() + 10_000
+                while (System.currentTimeMillis() < deadline) {
+                    def statusResp = server.rpcCall("job.getStatus", [jobId: jobId], 163)
+                    if (statusResp.get("result")?.get("completed")?.asBoolean()) break
+                    Thread.sleep(100)
+                }
+                server.drainNotifications(500)
+
+                // Remove the job
+                def removeResponse = server.rpcCall("job.remove", [jobId: jobId], 164)
+                assert removeResponse.get("error") == null
+                assert removeResponse.get("result").get("success").asBoolean() == true
+
+                // Verify it's gone from both job tracking and cache
+                def statusResponse = server.rpcCall("job.getStatus", [jobId: jobId], 165)
+                assert statusResponse.get("result").get("status").asText() == "not_found"
+
+                def pageResponse = server.rpcCall("job.getPage", [jobId: jobId, offset: 0, limit: 10], 166)
+                assert pageResponse.get("result").get("status").asText() == "not_found"
+            } finally {
+                server.close()
+            }
+    }
+
+    def "job.remove returns failure for unknown job"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("job.remove", [jobId: "does-not-exist"], 170)
+                assert response.get("error") == null
+                assert response.get("result").get("success").asBoolean() == false
+            } finally {
+                server.close()
+            }
+    }
+
+    // --- rpc.listMethods includes new methods ---
+
+    def "rpc.listMethods includes job.getStatus and job.remove"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("rpc.listMethods", null, 180)
+                assert response.get("result") != null
+                def methods = response.get("result").get("methods")
+                def methodNames = [] as Set
+                for (def m : methods) {
+                    methodNames.add(m.get("name").asText())
+                }
+                assert methodNames.contains("job.getStatus")
+                assert methodNames.contains("job.remove")
             } finally {
                 server.close()
             }

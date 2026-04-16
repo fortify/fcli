@@ -12,10 +12,14 @@
  */
 package com.fortify.cli.util._common.helper;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -33,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class CachingJobEventListener implements IJobEventListener {
     private final Map<String, JobRecordCache> caches = new ConcurrentHashMap<>();
+    private volatile ScheduledExecutorService evictionScheduler;
 
     @Override
     public void onJobStarted(String jobId, String description) {
@@ -118,6 +123,42 @@ public final class CachingJobEventListener implements IJobEventListener {
     /** Remove all caches. */
     public void clear() {
         caches.clear();
+    }
+
+    /**
+     * Schedule cache removal for the given job after the specified TTL.
+     * The eviction runs asynchronously on a daemon thread.
+     */
+    public void scheduleEviction(String jobId, Duration ttl) {
+        getEvictionScheduler().schedule(() -> {
+            remove(jobId);
+            log.debug("Evicted cache for job {} after TTL of {}ms", jobId, ttl.toMillis());
+        }, ttl.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /** Shut down the eviction scheduler if active. */
+    public void shutdown() {
+        var scheduler = evictionScheduler;
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+    }
+
+    private ScheduledExecutorService getEvictionScheduler() {
+        var scheduler = evictionScheduler;
+        if (scheduler != null) { return scheduler; }
+        synchronized (this) {
+            scheduler = evictionScheduler;
+            if (scheduler == null) {
+                scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                    var t = new Thread(r, "cache-eviction");
+                    t.setDaemon(true);
+                    return t;
+                });
+                evictionScheduler = scheduler;
+            }
+            return scheduler;
+        }
     }
 
     private static final class JobRecordCache {
