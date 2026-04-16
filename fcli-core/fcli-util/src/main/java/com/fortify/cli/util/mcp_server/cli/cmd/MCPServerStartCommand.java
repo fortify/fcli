@@ -12,11 +12,14 @@
  */
 package com.fortify.cli.util.mcp_server.cli.cmd;
 
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -103,7 +106,10 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         // Redirect progress output to stderr to prevent progress messages
         // from corrupting the MCP protocol on the stdout channel
         FcliExecutionOutputContext.installIfNeeded();
+        var originalOut = FcliExecutionOutputContext.getOriginalOut();
         var originalErr = FcliExecutionOutputContext.getOriginalErr();
+        // Redirect progress output to stderr to prevent progress messages
+        // from corrupting the MCP protocol on the stdout channel
         FcliExecutionOutputContext.setProgressOut(originalErr);
         FcliExecutionOutputContext.setProgressErr(originalErr);
 
@@ -123,7 +129,19 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         var hasResources = !resourceTemplateSpecs.isEmpty();
         var objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var serverBuilder = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper)))
+        // Wrap System.in so we can detect EOF (client disconnect) and unblock the main thread.
+        var latch = new CountDownLatch(1);
+        var wrappedIn = new FilterInputStream(System.in) {
+            @Override public int read() throws IOException {
+                int b = super.read(); if (b == -1) { latch.countDown(); } return b;
+            }
+            @Override public int read(byte[] b, int off, int len) throws IOException {
+                int n = super.read(b, off, len); if (n == -1) { latch.countDown(); } return n;
+            }
+        };
+        // Use originalOut to bypass the DelegatingPrintStream/MaskingPrintStream
+        // stack, ensuring MCP JSON-RPC responses are never corrupted by masking
+        var serverBuilder = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper), wrappedIn, originalOut))
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("""
@@ -136,19 +154,17 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             serverBuilder.resourceTemplates(resourceTemplateSpecs);
         }
         var server = serverBuilder.build();
-    log.debug("Initialized MCP server instance: {}", server);
-    log.info("Fcli MCP server running on stdio");
+        log.debug("Initialized MCP server instance: {}", server);
+        log.info("Fcli MCP server running on stdio");
         System.err.println("Fcli MCP server running on stdio. Hit Ctrl-C to exit.");
-        Thread.getAllStackTraces().keySet().stream()
-            .filter(t->!t.isDaemon() && t!=Thread.currentThread())
-            .forEach(t-> {
-                try {
-                    t.join();
-                } catch (InterruptedException e) {
-                    log.warn("Interrupted while joining thread {}", t.getName(), e);
-                    Thread.currentThread().interrupt();
-                }
-            });
+        // Block the main thread until the MCP client disconnects (stdin EOF) or the process
+        // receives SIGTERM/SIGINT. The StdioServerTransportProvider schedules its inbound/
+        // outbound threads asynchronously; the old Thread.getAllStackTraces() join loop raced
+        // against those threads not yet being visible in the JVM thread list, causing premature
+        // process exit (System.exit is called after call() returns) before the initialization
+        // handshake could complete. The latch approach eliminates that race entirely.
+        Runtime.getRuntime().addShutdownHook(new Thread(latch::countDown, "mcp-shutdown-hook"));
+        latch.await();
         return 0;
     }
 
