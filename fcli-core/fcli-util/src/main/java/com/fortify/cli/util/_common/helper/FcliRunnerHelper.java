@@ -68,7 +68,8 @@ public class FcliRunnerHelper {
     public static Result collectRecords(String fullCmd, Consumer<ObjectNode> recordConsumer, Map<String, String> defaultOptions) {
         var builder = FcliCommandExecutorFactory.builder()
             .cmd(fullCmd)
-            .stdoutOutputType(OutputType.suppress)
+            .stdoutOutputTypeIfRecordCollectionSupported(OutputType.suppress)
+            .stdoutOutputTypeIfRecordCollectionNotSupported(OutputType.collect)
             .stderrOutputType(OutputType.collect)
             .createInvocationContext(true)
             .recordConsumer(recordConsumer)

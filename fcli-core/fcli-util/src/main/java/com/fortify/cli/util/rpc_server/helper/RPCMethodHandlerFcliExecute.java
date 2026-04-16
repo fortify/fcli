@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  * Method: fcli.execute
  * Params:
  *   - command (string, required): The fcli command to execute (e.g., "ssc appversion list")
- *   - collectRecords (boolean, optional): If true, collect structured records; if false, collect stdout (default: false)
+ *   - collectRecords (boolean, optional): If true, collect structured records; if false, collect stdout (default: true)
  *
  * Response:
  *   - jobId (string): Identifier for tracking via job.getPage / job.cancel / job.list
@@ -56,7 +56,7 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
         }
 
         var command = params.get("command").asText();
-        var collectRecords = params.has("collectRecords") && params.get("collectRecords").asBoolean(false);
+        var collectRecords = !params.has("collectRecords") || params.get("collectRecords").asBoolean(true);
 
         if (command == null || command.isBlank()) {
             throw RPCMethodException.invalidParams("'command' cannot be empty");
