@@ -52,7 +52,7 @@ public class SSCCustomTagUpdateCommand extends AbstractSSCJsonNodeOutputCommand 
     private Boolean hidden;
     @Option(names = {"--requires-comment"}, required = false, negatable = true)
     private Boolean requiresComment;
-    @Option(names = {"--extensible"}, required = false)
+    @Option(names = {"--extensible"}, required = false, negatable = true)
     private Boolean extensible;
 
     @Override
