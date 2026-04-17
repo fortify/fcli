@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.variable.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
@@ -26,6 +27,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCVariableListCommand extends AbstractSSCBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     @Override

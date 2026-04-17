@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.rest.paging.IPagingSuppressor;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
@@ -41,6 +42,7 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
     @Singular private final List<IHttpRequestUpdater> requestUpdaters;
     private final INextPageRequestProducer nextPageRequestProducer;
     private final INextPageUrlProducer nextPageUrlProducer;
+    private final boolean pagingSuppressed;
     // Test-only support: if configured, simulate multi-page responses without performing HTTP requests
     @Singular private final List<JsonNode> testPageBodies;
 
@@ -52,6 +54,10 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
             return;
         }
         HttpRequest<?> request = applyRequestUpdaters(baseRequest);
+        if ( pagingSuppressed ) {
+            request.asObject(JsonNode.class).ifSuccess(r->handleResponse(r, consumer)).ifFailure(IfFailureHandler::handle);
+            return;
+        }
         INextPageRequestProducer effectiveNextPageRequestProducer = nextPageRequestProducer;
         if ( effectiveNextPageRequestProducer==null && nextPageUrlProducer!=null && unirestInstance!=null ) {
             effectiveNextPageRequestProducer = PagingHelper.asNextPageRequestProducer(unirestInstance, nextPageUrlProducer);
@@ -83,29 +89,14 @@ public class RequestObjectNodeProducer extends AbstractObjectNodeProducer {
             var ch = getRequiredCommandHelper();
             ch.getCommandAs(IUnirestInstanceSupplier.class)
                 .ifPresent(s -> super.unirestInstance(s.getUnirestInstance()));
-            applyRequestUpdatersFrom(applyFrom);
-            applyNextPageUrlProducerFrom(applyFrom);
+            applyFrom.getSourceStream(ch, getExplicitProductHelper()).forEach(this::applyFromObject);
             return self();
         }
 
-        private void applyNextPageUrlProducerFrom(ObjectNodeProducerApplyFrom applyFrom) {
-            applyFrom.getSourceStream(getRequiredCommandHelper(), getExplicitProductHelper()).forEach(this::addNextPageUrlProducerFromObject);
-        }
-
-        public void applyRequestUpdatersFrom(ObjectNodeProducerApplyFrom applyFrom) {
-            applyFrom.getSourceStream(getRequiredCommandHelper(), getExplicitProductHelper()).forEach(this::addRequestUpdaterFromObject);
-        }
-
-        private void addRequestUpdaterFromObject(Object o) {
-            if (o instanceof IHttpRequestUpdater u) {
-                requestUpdater(u);
-            }
-        }
-
-        private void addNextPageUrlProducerFromObject(Object o) {
-            if (o instanceof INextPageUrlProducerSupplier s) {
-                nextPageUrlProducer(s.getNextPageUrlProducer());
-            }
+        private void applyFromObject(Object o) {
+            if (o instanceof IHttpRequestUpdater u) { requestUpdater(u); }
+            if (o instanceof INextPageUrlProducerSupplier s) { nextPageUrlProducer(s.getNextPageUrlProducer()); }
+            if (o instanceof IPagingSuppressor s && s.isPagingSuppressed()) { pagingSuppressed(true); }
         }
 
         /** Configure unirest instance to enable streaming paging conversion. */

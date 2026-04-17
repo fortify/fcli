@@ -14,6 +14,7 @@ package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.fod._common.cli.mixin.FoDFetchRangeMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
@@ -28,6 +29,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list-scans", aliases = "lss") @CommandGroup("scan")
 public class FoDAppScanListCommand extends AbstractFoDBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
+    @Mixin private FoDFetchRangeMixin fetchRangeMixin;
     @Mixin private FoDAppResolverMixin.RequiredOption appResolver;
     
     @Override

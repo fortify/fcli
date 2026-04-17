@@ -16,6 +16,7 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamValueGenerators;
@@ -30,6 +31,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.ListDefinitions.CMD_NAME) @CommandGroup("definition")
 public class SSCAttributeDefinitionListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.ListDefinitions outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
@@ -41,7 +43,7 @@ public class SSCAttributeDefinitionListCommand extends AbstractSSCBaseRequestOut
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/attributeDefinitions?limit=100&orderby=category,name");
+        return unirest.get("/api/v1/attributeDefinitions?orderby=category,name");
     }
     
     @Override

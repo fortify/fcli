@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.access_control.cli.mixin.SSCRoleResolverMixin;
@@ -32,6 +33,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list-permissions", aliases = {"lsp"}) @CommandGroup("permission")
 public class SSCPermissionListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCRoleResolverMixin.OptionalOption roleResolverMixin;
     
     @Override

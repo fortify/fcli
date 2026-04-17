@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.issue.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
@@ -27,6 +28,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list-filtersets", aliases = {"lsfs"}) @CommandGroup("filter-set")
 public class SSCIssueFilterSetListCommand extends AbstractSSCBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     @Override

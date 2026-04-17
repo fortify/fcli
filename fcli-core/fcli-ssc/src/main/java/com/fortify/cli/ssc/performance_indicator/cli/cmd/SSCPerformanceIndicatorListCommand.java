@@ -15,6 +15,7 @@ package com.fortify.cli.ssc.performance_indicator.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
@@ -29,6 +30,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCPerformanceIndicatorListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     @Override

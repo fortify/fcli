@@ -15,6 +15,7 @@ package com.fortify.cli.ssc.app.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc._common.rest.ssc.query.SSCQParamGenerator;
@@ -30,6 +31,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCAppListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
