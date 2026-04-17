@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260413.090259-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260417.115230-dev_v3.x" %}
 
 
 <div id="header">
@@ -45,8 +45,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc custom-tag create</strong> [<strong>--[no-]hidden</strong>] [<strong>--[no-]requires-comment</strong>] [<strong>--[no-]</strong>
-                    *       restricted*] [<strong>-d</strong>=<em>&lt;description&gt;</em>] <strong>-t</strong>=<em>&lt;valueType&gt;</em>
+<p><strong>fcli ssc custom-tag create</strong> [<strong>--[no-]extensible</strong>] [<strong>--[no-]hidden</strong>] [<strong>--[no-]</strong>
+                    *       requires-comment*] [<strong>--[no-]restricted</strong>]
+                           [<strong>-d</strong>=<em>&lt;description&gt;</em>] <strong>-t</strong>=<em>&lt;valueType&gt;</em>
                            [<strong>--values</strong>=<em>&lt;values&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                            [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
@@ -70,6 +71,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
 <p>Description for the new custom tag.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]extensible</strong></dt>
+<dd>
+<p>Whether the tag is extensible (LIST type only).</p>
 </dd>
 <dt class="hdlist1"><strong>--[no-]hidden</strong></dt>
 <dd>
@@ -184,7 +189,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-13 09:05:42 UTC
+Last updated 2026-04-17 11:55:15 UTC
 </div>
 </div>
 </body>
