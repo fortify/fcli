@@ -38,14 +38,17 @@ public abstract class AbstractRecordWriterJackson<T extends JsonGenerator> exten
     @Override
     protected void close(T out) throws IOException {
         writeEnd(out);
+        writeEnvelopeEnd(out);
         out.close();
     }
     
     @Override
     protected void closeWithNoData(Writer writer) throws IOException {
         var out = createGenerator(writer);
+        writeEnvelopeStart(out);
         writeStart(out);
         writeEnd(out);
+        writeEnvelopeEnd(out);
         writer.flush();
         out.close();
     }
@@ -54,8 +57,35 @@ public abstract class AbstractRecordWriterJackson<T extends JsonGenerator> exten
     protected T createOut(Writer writer, ObjectNode formattedRecord) throws IOException {
         if ( formattedRecord==null ) { return null; }
         var result = createGenerator(writer);
+        writeEnvelopeStart(result);
         writeStart(result);
         return result;
+    }
+
+    private void writeEnvelopeStart(T out) throws IOException {
+        if ( getConfig().getStyle().isEnvelope() ) {
+            doWriteEnvelopeStart(out);
+        }
+    }
+    
+    private void writeEnvelopeEnd(T out) throws IOException {
+        if ( getConfig().getStyle().isEnvelope() ) {
+            doWriteEnvelopeEnd(out);
+        }
+    }
+
+    protected void doWriteEnvelopeStart(T out) throws IOException {
+        out.writeStartObject();
+        out.writeFieldName("records");
+    }
+
+    protected void doWriteEnvelopeEnd(T out) throws IOException {
+        var metadata = getResponseMetadata();
+        if ( metadata!=null ) {
+            out.writeFieldName("metadata");
+            out.writeTree(metadata);
+        }
+        out.writeEndObject();
     }
 
     protected abstract T createGenerator(Writer writer) throws IOException;

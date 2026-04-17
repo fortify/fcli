@@ -23,7 +23,6 @@ import picocli.CommandLine.Option;
 
 public abstract class AbstractFetchRangeMixin implements IHttpRequestUpdater, IPagingSuppressor {
     @Option(names = "--fetch", paramLabel = "<fetch-range>",
-            description = "Limit the number of records fetched from the server. Format: [<start>-]<end>, where start and end are 1-based, inclusive record numbers. Examples: 10 (first 10 records), 1-10 (same), 21-30 (records 21 through 30). By default, all records are fetched using API paging.",
             converter = FetchRangeConverter.class)
     private FetchRange fetchRange;
 

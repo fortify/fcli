@@ -15,6 +15,7 @@ package com.fortify.cli.common.output.writer.output.standard;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
@@ -51,6 +52,7 @@ public class StandardOutputWriter implements IOutputWriter {
     private final IOutputOptions outputOptions;
     private final IMessageResolver messageResolver;
     private final IRecordWriter recordCollector; // instance-level collector, may be null
+    private final Consumer<ObjectNode> metadataConsumer; // programmatic metadata callback, may be null
     private final boolean suppressOutput;
 
     public StandardOutputWriter(CommandSpec commandSpec, IOutputOptions outputOptions, StandardOutputConfig defaultOutputConfig) {
@@ -72,9 +74,11 @@ public class StandardOutputWriter implements IOutputWriter {
                 }
             };
             this.suppressOutput = rcs.isStdoutSuppressedForRecordCollection();
+            this.metadataConsumer = rcs.getMetadataConsumer();
         } else {
             this.recordCollector = null;
             this.suppressOutput = false;
+            this.metadataConsumer = null;
         }
     }
 
@@ -89,6 +93,11 @@ public class StandardOutputWriter implements IOutputWriter {
         }
         try (IRecordWriter rw = new OutputAndVariableRecordWriter()) {
             recordProducer.forEach(recordConsumer(rw));
+            var metadata = recordProducer.getResponseMetadata();
+            rw.setResponseMetadata(metadata);
+            if (metadataConsumer != null && metadata != null) {
+                metadataConsumer.accept(metadata);
+            }
         }
     }
 
@@ -145,6 +154,13 @@ public class StandardOutputWriter implements IOutputWriter {
             }
             if (variableRecordWriter.isEnabled()) {
                 variableRecordWriter.close();
+            }
+        }
+
+        @Override
+        public void setResponseMetadata(ObjectNode metadata) {
+            if (outputRecordWriter != null) {
+                outputRecordWriter.setResponseMetadata(metadata);
             }
         }
 

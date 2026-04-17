@@ -57,4 +57,21 @@ public class RecordWriterXml extends AbstractRecordWriterJackson<ToXmlGenerator>
     protected void writeEnd(ToXmlGenerator out) throws IOException {
         out.writeEndObject();
     }
+
+    @Override
+    protected void doWriteEnvelopeStart(ToXmlGenerator out) throws IOException {
+        out.setNextName(new QName(null, "envelope"));
+        out.writeStartObject();
+        out.writeFieldName("records");
+    }
+    
+    @Override
+    protected void doWriteEnvelopeEnd(ToXmlGenerator out) throws IOException {
+        var metadata = getResponseMetadata();
+        if ( metadata!=null ) {
+            out.writeFieldName("metadata");
+            out.writeTree(metadata);
+        }
+        out.writeEndObject();
+    }
 }

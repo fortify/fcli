@@ -56,6 +56,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private static final String FMT_DEPENDENCY_SKIP_REASON = "%s.dependencySkipReason";
     private static final String FMT_EXIT_CODE = "%s.exitCode";
     private static final String FMT_RECORDS = "%s.records";
+    private static final String FMT_METADATA = "%s.metadata";
     private static final String FMT_STDOUT = "%s.stdout";
     private static final String FMT_STDERR = "%s.stderr";
     
@@ -95,6 +96,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private FcliCommandExecutor createCmdExecutor(ActionStepRunFcliEntry entry, String cmd, FcliRecordConsumer recordConsumer) {
         var stdoutOutputType = getOutputTypeOrDefault(entry.getStdoutOutputType(), recordConsumer==null ? OutputType.show : OutputType.suppress );
         var stderrOutputType = getOutputTypeOrDefault(entry.getStderrOutputType(), OutputType.show );
+        ObjectNode[] metadataHolder = {null};
         try {
             return FcliCommandExecutorFactory.builder()
                     .cmd(cmd)
@@ -102,11 +104,13 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
                     .defaultOptionsIfNotPresent(ctx.getConfig().getDefaultFcliRunOptions())
                     .stdoutOutputType(stdoutOutputType)
                     .stderrOutputType(stderrOutputType)
-                    .onResult(r->onFcliResult(entry, recordConsumer, r))
+                    .onResult(r->onFcliResult(entry, recordConsumer, metadataHolder, r))
                     .onSuccess(r->onFcliSuccess(entry))
                     .onException(e->onFcliException(entry, e))
                     .onFail(r->onFcliFail(entry, recordConsumer, r))
-                    .recordConsumer(recordConsumer).build().create();
+                    .recordConsumer(recordConsumer)
+                    .metadataConsumer(m->metadataHolder[0]=m)
+                    .build().create();
         } catch ( Exception e ) {
             onFcliException(entry, e);
             return null;
@@ -205,14 +209,15 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         }
     }
     
-    private void onFcliResult(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, Result result) {
-        setResultVars(fcli, recordConsumer, result);
+    private void onFcliResult(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, ObjectNode[] metadataHolder, Result result) {
+        setResultVars(fcli, recordConsumer, metadataHolder, result);
         logStatus(fcli, result);
     }
 
-    private void setResultVars(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, Result result) {
+    private void setResultVars(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, ObjectNode[] metadataHolder, Result result) {
         var name = fcli.getKey();
         vars.set(String.format(FMT_RECORDS, name), recordConsumer!=null ? recordConsumer.getRecords() : JsonHelper.getObjectMapper().createArrayNode());
+        vars.set(String.format(FMT_METADATA, name), metadataHolder[0]!=null ? metadataHolder[0] : NullNode.instance);
         vars.set(String.format(FMT_STDOUT, name), result.getOut());
         vars.set(String.format(FMT_STDERR, name), result.getErr());
         vars.set(String.format(FMT_EXIT_CODE, name), new IntNode(result.getExitCode()));
