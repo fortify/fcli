@@ -38,7 +38,7 @@ import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.cli.util.FcliExecutionContext;
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
@@ -103,15 +103,12 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         if (module == null && (importFiles == null || importFiles.isEmpty())) {
             throw new FcliSimpleException("At least one of --module or --import must be specified");
         }
+        var rawOut = StdioHelper.getRawOut();
+        var rawErr = StdioHelper.getRawErr();
         // Redirect progress output to stderr to prevent progress messages
         // from corrupting the MCP protocol on the stdout channel
-        FcliExecutionOutputContext.installIfNeeded();
-        var originalOut = FcliExecutionOutputContext.getOriginalOut();
-        var originalErr = FcliExecutionOutputContext.getOriginalErr();
-        // Redirect progress output to stderr to prevent progress messages
-        // from corrupting the MCP protocol on the stdout channel
-        FcliExecutionOutputContext.setProgressOut(originalErr);
-        FcliExecutionOutputContext.setProgressErr(originalErr);
+        StdioHelper.setProgressOut(rawErr);
+        StdioHelper.setProgressErr(rawErr);
 
         long safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(jobSafeReturnPeriod);
         long progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(progressIntervalPeriod);
@@ -139,9 +136,9 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
                 int n = super.read(b, off, len); if (n == -1) { latch.countDown(); } return n;
             }
         };
-        // Use originalOut to bypass the DelegatingPrintStream/MaskingPrintStream
-        // stack, ensuring MCP JSON-RPC responses are never corrupted by masking
-        var serverBuilder = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper), wrappedIn, originalOut))
+        // Use rawOut to bypass the delegation/masking stack, ensuring
+        // MCP JSON-RPC responses are never corrupted by masking
+        var serverBuilder = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper), wrappedIn, rawOut))
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("""

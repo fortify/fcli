@@ -17,7 +17,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.DisableTest;
@@ -83,19 +83,18 @@ public class RPCServerStartCommand extends AbstractRunnableCommand {
             importFiles.forEach(registryBuilder::importAction);
         }
 
-        FcliExecutionOutputContext.installIfNeeded();
-        var originalOut = FcliExecutionOutputContext.getOriginalOut();
-        var originalErr = FcliExecutionOutputContext.getOriginalErr();
+        var rawOut = StdioHelper.getRawOut();
+        var rawErr = StdioHelper.getRawErr();
         // Redirect progress output to stderr to prevent progress messages
         // from corrupting the JSON-RPC protocol on the stdout channel
-        FcliExecutionOutputContext.setProgressOut(originalErr);
-        FcliExecutionOutputContext.setProgressErr(originalErr);
+        StdioHelper.setProgressOut(rawErr);
+        StdioHelper.setProgressErr(rawErr);
 
         var input = inputOverride != null ? inputOverride : System.in;
-        // Use originalOut to bypass the DelegatingPrintStream/MaskingPrintStream
-        // stack, ensuring RPC JSON responses are never corrupted by masking
-        var output = outputOverride != null ? outputOverride : originalOut;
-        var statusOutput = statusOutputOverride != null ? statusOutputOverride : originalErr;
+        // Use rawOut to bypass the delegation/masking stack, ensuring
+        // RPC JSON responses are never corrupted by masking
+        var output = outputOverride != null ? outputOverride : rawOut;
+        var statusOutput = statusOutputOverride != null ? statusOutputOverride : rawErr;
         new RPCServer(registryBuilder.build()).start(input, output, statusOutput);
 
         return 0;

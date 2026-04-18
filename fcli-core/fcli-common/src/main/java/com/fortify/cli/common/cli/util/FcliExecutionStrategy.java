@@ -55,7 +55,6 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
         var leaf = getLeafParseResult(parseResult);
         var leafSpec = leaf.commandSpec();
         var execCtx = FcliExecutionContextHolder.current();
-        FcliExecutionOutputContext.installIfNeeded();
         try {
             log.debug("Starting command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
             initializeCommand(leafSpec);

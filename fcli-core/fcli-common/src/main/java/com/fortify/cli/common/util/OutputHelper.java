@@ -21,7 +21,7 @@ import java.util.concurrent.Callable;
 import org.apache.commons.io.output.NullOutputStream;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 
 import lombok.Builder;
 import lombok.Data;
@@ -38,19 +38,18 @@ public class OutputHelper {
     @Builder.Default private final Charset charset = StandardCharsets.UTF_8;
     
     public final Result call(Callable<Integer> callable) throws Exception {
-        FcliExecutionOutputContext.installIfNeeded();
         var stdoutPS = stdoutType.createStream();
         var stderrPS = stderrType.createStream();
-        if (stdoutPS != null) FcliExecutionOutputContext.pushOut(stdoutPS);
-        if (stderrPS != null) FcliExecutionOutputContext.pushErr(stderrPS);
+        if (stdoutPS != null) StdioHelper.pushOut(stdoutPS);
+        if (stderrPS != null) StdioHelper.pushErr(stderrPS);
         try {
             int exitCode = callable.call();
             System.out.flush();
             System.err.flush();
             return new Result(exitCode, getCollectedString(stdoutPS), getCollectedString(stderrPS));
         } finally {
-            if (stderrPS != null) { FcliExecutionOutputContext.popErr(); stderrPS.close(); }
-            if (stdoutPS != null) { FcliExecutionOutputContext.popOut(); stdoutPS.close(); }
+            if (stderrPS != null) { StdioHelper.popErr(); stderrPS.close(); }
+            if (stdoutPS != null) { StdioHelper.popOut(); stdoutPS.close(); }
         }
     }
     

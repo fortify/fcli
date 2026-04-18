@@ -33,7 +33,7 @@ import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory.FcliCommandExecutor;
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
@@ -292,12 +292,12 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         }
         
         private final class TempRestoreOutput implements AutoCloseable {
-            private final PrintStream poppedOut = FcliExecutionOutputContext.popOut();
-            private final PrintStream poppedErr = FcliExecutionOutputContext.popErr();
+            private final PrintStream poppedOut = StdioHelper.popOut();
+            private final PrintStream poppedErr = StdioHelper.popErr();
             @Override
             public void close() {
-                FcliExecutionOutputContext.pushErr(poppedErr);
-                FcliExecutionOutputContext.pushOut(poppedOut);
+                StdioHelper.pushErr(poppedErr);
+                StdioHelper.pushOut(poppedOut);
             }
         }
     }
