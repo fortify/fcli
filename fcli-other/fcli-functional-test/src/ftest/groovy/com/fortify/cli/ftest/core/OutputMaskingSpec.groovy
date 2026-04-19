@@ -144,10 +144,10 @@ class OutputMaskingSpec extends FcliBaseSpec {
         // masked stdout, NOT the CollectingPrintStream pushed by OutputHelper.
         // In the reflective test runner, progressOut writes to rawOut (the pre-install
         // System.out), which bypasses the DelegatingPrintStream and thus the test capturer,
-        // so we can't assert where progress ended up. In external mode, subprocess stderr
+        // so we can't assert where progress ended up. In external mode, subprocess stdout
         // is fully captured, so we can verify progress output arrived there (masked).
         when:
-            def result = runWrapper("progress", true)
+            def result = runWrapper("progress")
         then:
             verifyAll(result) {
                 // Secret must not appear in raw form anywhere
@@ -159,12 +159,11 @@ class OutputMaskingSpec extends FcliBaseSpec {
                 stdout.any { it == "collected-stdout:" }
                 stdout.any { it == "collected-stderr:" }
             }
-            // In external mode, progress output is visible on the subprocess's stderr
-            // (progressOut → maskedOut → rawOut, which is the process's real stdout,
-            // but SimpleProgressWriter writes to progressOut which after install() is
-            // maskedOut wrapping rawOut). Verify it arrived there, masked.
+            // In external mode, progress output is visible on the subprocess's stdout
+            // (progressOut → maskedOut → rawOut, which is the process's real stdout).
+            // Verify it arrived there, masked.
             if ( !Fcli.isReflective() ) {
-                assert result.stderr.any { it.contains(MASKED) }
+                assert result.stdout.any { it.contains(MASKED) }
             }
     }
 }
