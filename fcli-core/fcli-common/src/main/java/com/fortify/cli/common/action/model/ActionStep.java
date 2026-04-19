@@ -367,16 +367,22 @@ public final class ActionStep extends AbstractActionStepElement {
     
     @JsonPropertyDescription("""
         Yield a single record from a streaming function. Only valid inside functions with \
-        streaming enabled. The expression is evaluated and emitted to the consumer. \
-        If the consumer signals termination, remaining steps are skipped.
+        streaming enabled. The value is evaluated, optionally formatted, and emitted to the consumer. \
+        If the consumer signals termination, remaining steps are skipped. \
+        Can be specified as a simple expression string or as an object with 'value' and/or 'fmt' properties.
         """)
-    @SampleYamlSnippets("""
+    @SampleYamlSnippets({"""
         functions:
           myStreamingFn:
             steps:
               - fn.yield: ${currentRecord}
-        """)
-    @JsonProperty(value = "fn.yield", required = false) private TemplateExpression fnYield;
+        """, """
+        functions:
+          myStreamingFn:
+            steps:
+              - fn.yield: {fmt: myFormatter}
+        """})
+    @JsonProperty(value = "fn.yield", required = false) private TemplateExpressionWithFormatter fnYield;
     
     @JsonPropertyDescription("""
         This instruction may only be used from within a with:do, with the with:writers instruction defining the writers \

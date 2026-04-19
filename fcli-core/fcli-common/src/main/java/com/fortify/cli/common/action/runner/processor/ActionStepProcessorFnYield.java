@@ -12,30 +12,30 @@
  */
 package com.fortify.cli.common.action.runner.processor;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.action.model.TemplateExpressionWithFormatter;
 import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
+import com.fortify.cli.common.action.runner.ActionRunnerHelper;
 import com.fortify.cli.common.action.runner.ActionStepBreakException;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
-import com.fortify.cli.common.spel.wrapper.TemplateExpression;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Processor for the {@code fn.yield} step. Evaluates the expression and
- * emits the result to the current yield consumer. Throws
- * {@link ActionStepBreakException} if the consumer signals early termination.
+ * Processor for the {@code fn.yield} step. Evaluates the expression,
+ * optionally formats it, and emits the result to the current yield consumer.
+ * Throws {@link ActionStepBreakException} if the consumer signals early termination.
  */
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorFnYield extends AbstractActionStepProcessor {
     private final ActionRunnerContextLocal ctx;
-    private final TemplateExpression fnYield;
+    private final TemplateExpressionWithFormatter fnYield;
 
     @Override
     public void process() {
-        var value = getVars().eval(fnYield, JsonNode.class);
+        var value = ActionRunnerHelper.formatValueAsJsonNode(ctx, getVars(), fnYield);
         var consumer = ctx.getYieldConsumer();
         if (consumer == null) {
             throw new FcliActionStepException("fn.yield can only be used inside streaming functions");
