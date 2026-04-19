@@ -52,6 +52,8 @@ public class SSCCustomTagUpdateCommand extends AbstractSSCJsonNodeOutputCommand 
     private Boolean hidden;
     @Option(names = {"--requires-comment"}, required = false, negatable = true)
     private Boolean requiresComment;
+    @Option(names = {"--extensible"}, required = false, negatable = true)
+    private Boolean extensible;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -81,6 +83,7 @@ public class SSCCustomTagUpdateCommand extends AbstractSSCJsonNodeOutputCommand 
         if (restriction != null) { body.put("restriction", restriction); }
         if (hidden != null) { body.put("hidden", hidden); }
         if (requiresComment != null) { body.put("requiresComment", requiresComment); }
+        if (extensible != null && "LIST".equalsIgnoreCase(body.path("valueType").asText())) { body.put("extensible", extensible); }
         if ("LIST".equalsIgnoreCase(body.path("valueType").asText())) {
             body.set("valueList", buildValueList(body));
         }
