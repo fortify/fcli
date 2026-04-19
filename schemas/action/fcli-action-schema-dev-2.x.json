@@ -153,8 +153,8 @@
           "description" : "Terminate action execution and return the given exit code.\n"
         },
         "fn.yield" : {
-          "$ref" : "#/$defs/TemplateExpression",
-          "description" : "Yield a single record from a streaming function. Only valid inside functions with streaming enabled. The expression is evaluated and emitted to the consumer. If the consumer signals termination, remaining steps are skipped.\n"
+          "$ref" : "#/$defs/TemplateExpressionWithFormatter",
+          "description" : "Yield a single record from a streaming function. Only valid inside functions with streaming enabled. The value is evaluated, optionally formatted, and emitted to the consumer. If the consumer signals termination, remaining steps are skipped. Can be specified as a simple expression string or as an object with 'value' and/or 'fmt' properties.\n"
         },
         "if" : {
           "$ref" : "#/$defs/TemplateExpression",
