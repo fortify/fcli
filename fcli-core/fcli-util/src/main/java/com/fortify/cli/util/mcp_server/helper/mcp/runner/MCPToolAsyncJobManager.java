@@ -46,11 +46,15 @@ public class MCPToolAsyncJobManager {
             return null;
         }
         var page = cachingListener.getPage(jobId, 0, Integer.MAX_VALUE);
-        return MCPToolResult.builder()
+        var builder = MCPToolResult.builder()
             .exitCode(page.getExitCode())
             .stderr(page.getStderr())
-            .records(page.getRecords())
-            .build();
+            .records(page.getRecords());
+        if (page.getExitCode() != 0) {
+            builder.error(page.getStderr())
+                .errorGuidance("The command failed; records may be incomplete.");
+        }
+        return builder.build();
     }
 
     /**

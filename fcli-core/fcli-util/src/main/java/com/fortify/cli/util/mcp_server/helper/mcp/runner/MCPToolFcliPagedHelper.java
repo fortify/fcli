@@ -112,10 +112,14 @@ final class MCPToolFcliPagedHelper {
             .or(() -> Optional.of(MCPToolResult.fromError("Async job completed but no completed result found").asCallToolResult()));
     }
 
+    private static final long WAIT_TIMEOUT_MS = 300_000;
+
     private void waitForSufficientRecords(
             MCPToolAsyncJobManager.InProgressEntry inProgress, PageParams params) throws InterruptedException {
         var requiredCount = params.offset + params.limit + 1;
-        while (inProgress.getLoadedCount() < requiredCount && !inProgress.isCompleted()) {
+        var deadline = System.currentTimeMillis() + WAIT_TIMEOUT_MS;
+        while (inProgress.getLoadedCount() < requiredCount && !inProgress.isCompleted()
+                && System.currentTimeMillis() < deadline) {
             Thread.sleep(50);
         }
     }

@@ -17,6 +17,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.action.model.ActionFunctionArg;
 import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -59,11 +60,27 @@ public final class RPCMethodHandlerFnList implements IRPCMethodHandler {
                 desc.put("description", function.getDescription());
             }
             desc.put("streaming", function.isStreaming());
+            desc.set("args", buildArgsDescriptor(function.getArgsOrEmpty()));
             fns.add(desc);
         }
         ObjectNode result = JsonHelper.getObjectMapper().createObjectNode();
         result.set("functions", fns);
         result.put("count", fns.size());
         return result;
+    }
+
+    private static ObjectNode buildArgsDescriptor(Map<String, ActionFunctionArg> args) {
+        var node = JsonHelper.getObjectMapper().createObjectNode();
+        for (var entry : args.entrySet()) {
+            var argDef = entry.getValue();
+            var argNode = JsonHelper.getObjectMapper().createObjectNode();
+            argNode.put("type", argDef.getType() != null ? argDef.getType() : "string");
+            argNode.put("required", Boolean.TRUE.equals(argDef.getRequired()));
+            if (argDef.getDescription() != null) {
+                argNode.put("description", argDef.getDescription());
+            }
+            node.set(entry.getKey(), argNode);
+        }
+        return node;
     }
 }

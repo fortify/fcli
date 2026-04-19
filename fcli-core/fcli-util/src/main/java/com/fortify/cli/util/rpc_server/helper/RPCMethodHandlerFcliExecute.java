@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  * Params:
  *   - command (string, required): The fcli command to execute (e.g., "ssc appversion list")
  *   - collectRecords (boolean, optional): If true, collect structured records; if false, collect stdout (default: true)
- *   - cache (boolean|object, optional): Enable record caching. true for default 10m TTL, {ttl: "5m"} for custom TTL
+ *   - cache (object, optional): Enable record caching; use {ttl: "5m"} to specify TTL
  *   - push (boolean, optional): Enable push notifications (default: true)
  *
  * Response:

@@ -141,8 +141,7 @@ public final class CommandSpecDescriptor {
 
         Map<OptionSpec, Boolean> requiredByOption = new HashMap<>();
         for (OptionSpec option : spec.options()) {
-            boolean required = isEffectivelyRequired(option, spec.argGroups());
-            requiredByOption.put(option, required);
+            requiredByOption.put(option, FcliCommandSpecHelper.isEffectivelyRequired(option));
         }
 
         List<ArgGroupSpec> exclusiveGroups = new ArrayList<>();
@@ -397,33 +396,6 @@ public final class CommandSpecDescriptor {
             return computeTitleFromOption(firstOption);
         }
         return "Arguments";
-    }
-
-    private final static boolean isEffectivelyRequired(OptionSpec option, Collection<ArgGroupSpec> rootGroups) {
-        if (!option.required()) {
-            return false;
-        }
-        return !isInOptionalGroup(option, rootGroups, false);
-    }
-
-    private final static boolean isInOptionalGroup(
-            OptionSpec option,
-            Collection<ArgGroupSpec> groups,
-            boolean parentOptional) {
-        for (ArgGroupSpec g : groups) {
-            boolean thisOptional = parentOptional;
-            var multiplicity = g.multiplicity();
-            if (multiplicity != null && multiplicity.min() == 0) {
-                thisOptional = true;
-            }
-            if (g.options().contains(option)) {
-                return thisOptional;
-            }
-            if (isInOptionalGroup(option, g.subgroups(), thisOptional)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private final static String getPrimaryName(OptionSpec option) {
