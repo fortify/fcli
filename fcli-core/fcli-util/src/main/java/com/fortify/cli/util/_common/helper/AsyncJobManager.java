@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.fortify.cli.common.cli.util.FcliExecutionContextHolder;
+import com.fortify.cli.common.cli.util.StdioHelper;
 
 import lombok.Builder;
 import lombok.Data;
@@ -77,6 +78,11 @@ public class AsyncJobManager {
         var future = CompletableFuture.runAsync(() -> {
             entry.thread = Thread.currentThread();
             FcliExecutionContextHolder.pushNew();
+            // Register per-thread progress callback so that progress writer
+            // messages are forwarded to the job event listener as notifications.
+            // Masking is applied by StdioHelper before invoking the callback.
+            StdioHelper.setProgressCallback(msg ->
+                listener.onProgress(jobId, msg));
             try {
                 var result = task.run(record -> {
                     if (!Thread.currentThread().isInterrupted()) {
@@ -100,6 +106,7 @@ public class AsyncJobManager {
                 entry.stderr = e.getMessage() != null ? e.getMessage() : "Async job failed";
                 listener.onJobComplete(jobId, 999, entry.stderr, null);
             } finally {
+                StdioHelper.clearProgressCallback();
                 entry.completed = true;
                 FcliExecutionContextHolder.pop();
             }

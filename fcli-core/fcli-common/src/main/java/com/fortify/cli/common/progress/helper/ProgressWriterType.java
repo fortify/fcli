@@ -100,6 +100,10 @@ public enum ProgressWriterType {
         public final void writeProgress(String message, Object... args) {
             var formattedMessage = format(message, args);
             LOG.debug("writeProgress: {}", formattedMessage);
+            var callback = StdioHelper.getProgressCallback();
+            if (callback != null) {
+                callback.accept(formattedMessage);
+            }
             writeProgress(formattedMessage);
         }
         

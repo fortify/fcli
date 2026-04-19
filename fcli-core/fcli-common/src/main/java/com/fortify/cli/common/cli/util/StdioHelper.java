@@ -15,6 +15,7 @@ package com.fortify.cli.common.cli.util;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ public final class StdioHelper {
 
     private static final ThreadLocal<Deque<PrintStream>> outStack = ThreadLocal.withInitial(ArrayDeque::new);
     private static final ThreadLocal<Deque<PrintStream>> errStack = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<Consumer<String>> progressCallback = new ThreadLocal<>();
 
     private static volatile boolean installed = false;
     private static PrintStream rawOut = System.out;
@@ -145,6 +147,26 @@ public final class StdioHelper {
     public static void setProgressErr(PrintStream ps) {
         LOG.trace("setProgressErr: {}", System.identityHashCode(ps));
         progressErr = wrapWithMasking(ps);
+    }
+
+    /**
+     * Set a per-thread callback invoked by progress writers on each
+     * {@code writeProgress()} call. Used by the async job manager to forward
+     * progress messages as structured notifications (e.g. JSON-RPC).
+     * Masking is applied automatically before the callback is invoked.
+     */
+    public static void setProgressCallback(Consumer<String> callback) {
+        progressCallback.set(msg -> callback.accept(mask(msg)));
+    }
+
+    /** Remove the per-thread progress callback. */
+    public static void clearProgressCallback() {
+        progressCallback.remove();
+    }
+
+    /** Return the per-thread progress callback, or {@code null} if none is set. */
+    public static Consumer<String> getProgressCallback() {
+        return progressCallback.get();
     }
 
     /** Return the current effective stdout for this thread (top of stack or raw). */
