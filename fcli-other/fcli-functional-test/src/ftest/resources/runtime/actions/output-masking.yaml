@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+# Test action that writes a sensitive option value to various output channels.
+# Used by OutputMaskingSpec to verify that sensitive values are properly masked
+# across all channels and that output is routed to the correct stream.
+
+author: ftest
+usage:
+  header: Ftest output masking
+  description: Writes a masked --secret value to a selected output channel.
+
+cli.options:
+  secret:
+    names: --secret
+    description: Sensitive value that should be masked in all output channels.
+    required: true
+    mask: {sensitivity: high}
+  mode:
+    names: --mode
+    description: |
+      Selects which output channel to write the secret to:
+        stdout   - writes via out.write to stdout
+        stderr   - writes via out.write to stderr
+        info     - writes via log.info (routed to stdout through progress writer)
+        warn     - writes via log.warn (routed to stderr through progress writer)
+        progress - writes via log.progress (routed to progressOut, bypassing stdout/stderr stack)
+    required: true
+
+steps:
+  # out.write to stdout: goes through System.out → DelegatingPrintStream → stack → MaskingPrintStream
+  - if: ${cli.mode == 'stdout'}
+    out.write:
+      stdout: "value=${cli.secret}\n"
+
+  # out.write to stderr: goes through System.err → DelegatingPrintStream → stack → MaskingPrintStream
+  - if: ${cli.mode == 'stderr'}
+    out.write:
+      stderr: "value=${cli.secret}\n"
+
+  # log.info: calls progressWriter.writeInfo() → System.out.println() → masked via stack
+  - if: ${cli.mode == 'info'}
+    log.info: "value=${cli.secret}"
+
+  # log.warn: calls progressWriter.writeWarning() → System.err.println() → masked via stack
+  - if: ${cli.mode == 'warn'}
+    log.warn: "value=${cli.secret}"
+
+  # log.progress: calls progressWriter.writeProgress() → progressOut → bypasses stdout/stderr stack
+  # Only produces visible output with --progress=simple or similar (not --progress=none)
+  - if: ${cli.mode == 'progress'}
+    log.progress: "value=${cli.secret}"
