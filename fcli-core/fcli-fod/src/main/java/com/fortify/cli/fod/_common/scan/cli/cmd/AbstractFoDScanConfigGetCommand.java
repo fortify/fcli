@@ -14,6 +14,7 @@ package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
@@ -32,7 +33,11 @@ public abstract class AbstractFoDScanConfigGetCommand extends AbstractFoDJsonNod
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         var releaseId = releaseResolver.getReleaseId(unirest);
-        var result = getDescriptor(unirest, releaseId).asObjectNode();
+        var descriptor = getDescriptor(unirest, releaseId);
+        if ( descriptor==null ) {
+            throw new FcliSimpleException("Release does not have any saved scan settings");
+        }
+        var result = descriptor.asObjectNode();
         return result.get("assessmentTypeId").asText().equals("0")
                 ? result.put("state", "Not configured")
                 : result.put("state", "Configured");

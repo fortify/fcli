@@ -51,7 +51,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
             if (e.getStatus() == 400) {
                 // use the internal FoD "errorCode" to determine if any settings have been defined
                 if (e.getMessage().contains("errorCode: 6000")) {
-                    return null;
+                    throw new FcliSimpleException("Release does not have any saved scan settings");
                 }
                 throw new FcliSimpleException("Bad request. Error: " + e.getMessage());
             }
