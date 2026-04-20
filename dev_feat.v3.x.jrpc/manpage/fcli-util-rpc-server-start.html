@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260419.161848-dev_feat.v3.x.jrpc" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260420.121048-dev_feat.v3.x.jrpc" %}
 
 
 <div id="header">
@@ -89,9 +89,20 @@ fcli_version:
       job.progress, job.complete). Set to false to disable all
       push notifications and rely on job.getStatus/job.getPage
       for polling.
-  Response:
+    - wait (boolean|object, optional)
+      Wait for job completion and return results inline.
+      Omitted or false: async (default, returns jobId).
+      true or {}: wait indefinitely for completion.
+      {timeout: "&lt;period&gt;"}: wait up to the given duration
+      (e.g., "30s", "5m"). If the timeout elapses before
+      completion, falls back to the async response (jobId).
+  Response (async, default):
     jobId, status="started", jobType ("records" or "stdout"),
-    cached (boolean)</pre>
+    cached (boolean)
+  Response (wait, on completion):
+    status ("completed" or "failed"), exitCode,
+    stderr (if any), stdout (if any),
+    records (array, if collectRecords), recordCount</pre>
 </div>
 </div>
 <div class="literalblock">
@@ -145,9 +156,15 @@ fcli_version:
     - push (boolean, optional, default: true)
       Enable push notifications. Same as fcli.execute push
       parameter.
-  Response:
+    - wait (boolean|object, optional)
+      Wait for completion. Same as fcli.execute wait parameter.
+  Response (async, default):
     jobId, status="started", jobType="records",
-    cached (boolean)</pre>
+    cached (boolean)
+  Response (wait, on completion):
+    status ("completed" or "failed"), exitCode,
+    stderr (if any), stdout (if any),
+    records (array), recordCount</pre>
 </div>
 </div>
 <div class="literalblock">
@@ -240,7 +257,7 @@ fcli_version:
 <p>PUSH NOTIFICATIONS (server-to-client, no id field):</p>
 </div>
 <div class="paragraph">
-<p>The fcli.execute and fn.call methods are asynchronous and will return immediately with a jobId. By default (push: true), the following notifications are actively pushed to the client during job execution. Set push: false to disable all push notifications and use job.getStatus / job.getPage for polling instead.</p>
+<p>The fcli.execute and fn.call methods are asynchronous by default and return immediately with a jobId. Use the wait parameter to block until completion and receive results inline instead. In async mode (default), with push: true, the following notifications are actively pushed to the client during job execution. Set push: false to disable all push notifications and use job.getStatus / job.getPage for polling instead.</p>
 </div>
 <div class="ulist">
 <ul>
@@ -267,7 +284,7 @@ fcli_version:
 <p>Establish fcli sessions using standard fcli session login commands via fcli.execute</p>
 </li>
 <li>
-<p>Execute commands and functions via fcli.execute and fn.call (always async, returns jobId)</p>
+<p>Execute commands and functions via fcli.execute and fn.call (async by default; use wait param for sync)</p>
 </li>
 <li>
 <p>Listen for push notifications (job.started, job.records, job.complete)</p>
@@ -279,10 +296,12 @@ fcli_version:
 </div>
 <div class="paragraph">
 <p>{"jsonrpc":"2.0","method":"fcli.execute","params":{"command":"ssc appversion list","collectRecords":true},"id":1}
-{"jsonrpc":"2.0","method":"job.getPage","params":{"jobId":"&lt;jobId from above&gt;","offset":0,"limit":100},"id":2}
-{"jsonrpc":"2.0","method":"job.list","id":3}
-{"jsonrpc":"2.0","method":"fcli.getCommandDetails","params":{"command":"ssc appversion list"},"id":4}
-{"jsonrpc":"2.0","method":"rpc.listMethods","id":5}</p>
+{"jsonrpc":"2.0","method":"fcli.execute","params":{"command":"ssc appversion list","collectRecords":true,"wait":true},"id":2}
+{"jsonrpc":"2.0","method":"fcli.execute","params":{"command":"ssc appversion list","wait":{"timeout":"30s"}},"id":3}
+{"jsonrpc":"2.0","method":"job.getPage","params":{"jobId":"&lt;jobId from above&gt;","offset":0,"limit":100},"id":4}
+{"jsonrpc":"2.0","method":"job.list","id":5}
+{"jsonrpc":"2.0","method":"fcli.getCommandDetails","params":{"command":"ssc appversion list"},"id":6}
+{"jsonrpc":"2.0","method":"rpc.listMethods","id":7}</p>
 </div>
 </div>
 </div>
@@ -341,7 +360,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-19 16:21:30 UTC
+Last updated 2026-04-20 12:13:31 UTC
 </div>
 </div>
 </body>
