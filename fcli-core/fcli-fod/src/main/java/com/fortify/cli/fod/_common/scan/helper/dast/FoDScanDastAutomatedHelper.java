@@ -51,7 +51,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
             if (e.getStatus() == 400) {
                 // use the internal FoD "errorCode" to determine if any settings have been defined
                 if (e.getMessage().contains("errorCode: 6000")) {
-                    throw new FcliSimpleException("Release does not have any saved scan settings");
+                    return null;
                 }
                 throw new FcliSimpleException("Bad request. Error: " + e.getMessage());
             }
@@ -86,7 +86,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
             for (JsonNode node : itemsNode) {
                 if (!"Dynamic".equals(node.path("scanType").asText())) continue;
                 String status = node.path("analysisStatusType").asText();
-                
+
                 if (isActiveStatus(status)) {
                     foundActive = true;
                     FoDScanDescriptor result = handleActiveScan(
