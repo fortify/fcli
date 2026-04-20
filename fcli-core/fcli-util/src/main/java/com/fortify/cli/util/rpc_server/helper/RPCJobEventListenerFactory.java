@@ -99,6 +99,46 @@ final class RPCJobEventListenerFactory {
     }
 
     /**
+     * Wait configuration parsed from the {@code wait} request parameter.
+     * When present, the handler blocks until the job completes (or the timeout elapses)
+     * and returns results inline instead of returning a job handle.
+     *
+     * @param timeout if {@code null}, wait indefinitely; otherwise the maximum duration to wait
+     */
+    record WaitConfig(Duration timeout) {
+        boolean hasTimeout() { return timeout != null; }
+    }
+
+    /**
+     * Parse the {@code wait} parameter from RPC request params.
+     *
+     * <p>Accepted forms:
+     * <ul>
+     *   <li>Absent or {@code false} → {@code null} (async, default)</li>
+     *   <li>{@code true} or {@code {}} → {@link WaitConfig} with no timeout</li>
+     *   <li>{@code {timeout: "30s"}} → {@link WaitConfig} with the given timeout</li>
+     * </ul>
+     */
+    static WaitConfig parseWaitParam(JsonNode params) throws RPCMethodException {
+        if (params == null || !params.has("wait")) {
+            return null;
+        }
+        var waitNode = params.get("wait");
+        if (waitNode.isBoolean()) {
+            return waitNode.asBoolean() ? new WaitConfig(null) : null;
+        }
+        if (waitNode instanceof ObjectNode obj) {
+            if (obj.has("timeout")) {
+                var millis = PERIOD_HELPER.parsePeriodToEpochMillis(obj.get("timeout").asText());
+                return new WaitConfig(Duration.ofMillis(millis));
+            }
+            return new WaitConfig(null);
+        }
+        throw RPCMethodException.invalidParams(
+                "wait parameter must be a boolean or object, e.g. wait: true or wait: {timeout: \"30s\"}");
+    }
+
+    /**
      * Create a job event listener based on the cache and push configuration.
      */
     IJobEventListener createListener(CacheConfig cacheConfig, boolean push) {

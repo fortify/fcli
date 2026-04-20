@@ -13,20 +13,25 @@
 package com.fortify.cli.util.rpc_server.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util._common.helper.AsyncTaskFcliCommand;
+import com.fortify.cli.util._common.helper.CollectingJobEventListener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * RPC method handler for executing fcli commands. Always runs asynchronously:
+ * RPC method handler for executing fcli commands. By default runs asynchronously:
  * returns a {@code jobId} immediately, and pushes records/progress/completion
  * as JSON-RPC notifications.
  *
- * <p>Supports optional {@code cache} and {@code push} parameters to control
- * record caching and push notification behavior.</p>
+ * <p>Supports optional {@code cache}, {@code push}, and {@code wait} parameters to control
+ * record caching, push notification behavior, and synchronous wait mode.</p>
+ *
+ * <p>When {@code wait} is specified, the handler blocks until the job completes (or the
+ * timeout elapses) and returns all results inline. If the timeout elapses before
+ * completion, the normal async response ({@code jobId}/{@code status: "started"}) is
+ * returned instead, so the caller can fall back to polling.</p>
  *
  * Method: fcli.execute
  * Params:
@@ -34,12 +39,7 @@ import lombok.extern.slf4j.Slf4j;
  *   - collectRecords (boolean, optional): If true, collect structured records; if false, collect stdout (default: true)
  *   - cache (object, optional): Enable record caching; use {ttl: "5m"} to specify TTL
  *   - push (boolean, optional): Enable push notifications (default: true)
- *
- * Response:
- *   - jobId (string): Identifier for tracking via job.getPage / job.cancel / job.list
- *   - status (string): "started"
- *   - jobType (string): "records" or "stdout"
- *   - cached (boolean): Whether records are being cached for this job
+ *   - wait (boolean|object, optional): Wait for completion; use true for indefinite, {timeout: "30s"} for bounded wait
  *
  * @author Ruud Senden
  */
@@ -51,7 +51,7 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
 
     @Override
     public String description() {
-        return "Execute an fcli command asynchronously; results are pushed as job.records notifications, or use job.getPage to retrieve pages";
+        return "Execute an fcli command; by default async with push notifications, or use wait param to block for results";
     }
 
     @Override
@@ -69,19 +69,24 @@ public final class RPCMethodHandlerFcliExecute implements IRPCMethodHandler {
 
         var cacheConfig = RPCJobEventListenerFactory.parseCacheParam(params);
         var push = RPCJobEventListenerFactory.parsePushParam(params);
+        var waitConfig = RPCJobEventListenerFactory.parseWaitParam(params);
         var listener = listenerFactory.createListener(cacheConfig, push);
 
-        log.debug("Executing fcli command (async): {} (collectRecords={}, cached={}, push={})", command, collectRecords, cacheConfig != null, push);
+        // When waiting, wrap the listener to collect records and signal completion
+        var collector = waitConfig != null ? new CollectingJobEventListener(listener) : null;
+        var effectiveListener = collector != null ? collector : listener;
+        var jobType = collectRecords ? "records" : "stdout";
+
+        log.debug("Executing fcli command: {} (collectRecords={}, cached={}, push={}, wait={})",
+                command, collectRecords, cacheConfig != null, push, waitConfig != null);
 
         var task = new AsyncTaskFcliCommand(command, collectRecords);
         var description = "fcli " + command;
-        var jobId = asyncJobManager.startBackground(task, listener, description);
+        var jobId = asyncJobManager.startBackground(task, effectiveListener, description);
 
-        var response = JsonHelper.getObjectMapper().createObjectNode();
-        response.put("jobId", jobId);
-        response.put("status", "started");
-        response.put("jobType", collectRecords ? "records" : "stdout");
-        response.put("cached", cacheConfig != null);
-        return response;
+        if (collector != null) {
+            return RPCWaitHelper.awaitOrFallback(collector, waitConfig, jobId, jobType, cacheConfig, collectRecords);
+        }
+        return RPCWaitHelper.buildAsyncResponse(jobId, jobType, cacheConfig);
     }
 }

@@ -780,4 +780,160 @@ class RPCServerSpec extends FcliBaseSpec {
                 server.close()
             }
     }
+
+    // --- wait parameter tests ---
+
+    def "fcli.execute with wait:true returns inline results"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", collectRecords: true, wait: true], 200)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "completed"
+                assert result.get("exitCode").asInt() == 0
+                assert result.has("records")
+                assert result.get("records").isArray()
+                assert result.get("records").size() > 0
+                assert result.has("recordCount")
+                assert result.get("recordCount").asInt() == result.get("records").size()
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with wait:true and collectRecords:false returns stdout inline"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", collectRecords: false, wait: true], 210)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "completed"
+                assert result.get("exitCode").asInt() == 0
+                assert result.has("stdout")
+                assert !result.has("records")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with wait:{timeout:'30s'} returns inline results for fast command"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", collectRecords: true, wait: [timeout: "30s"]], 220)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "completed"
+                assert result.get("exitCode").asInt() == 0
+                assert result.has("records")
+                assert result.get("records").isArray()
+                assert result.get("records").size() > 0
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with wait:{timeout:'1s'} falls back to async for slow command"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                // generateManyItems with 50 items (~5s total) should exceed a 1s timeout
+                def items = (0..<50).collect { it }
+                def response = server.rpcCall("fn.call",
+                    [name: "generateManyItems", args: [items: items], wait: [timeout: "1s"], cache: [ttl: "10m"]], 230)
+                assert response.get("error") == null
+                def result = response.get("result")
+                // Should fall back to async response with jobId
+                assert result.has("jobId")
+                assert result.get("status").asText() == "started"
+
+                // Drain notifications and let the job finish
+                server.drainNotifications(5000)
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fn.call with wait:true returns inline results"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                def response = server.rpcCall("fn.call",
+                    [name: "echo", args: [message: "wait-test"], wait: true], 240)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "completed"
+                assert result.get("exitCode").asInt() == 0
+                assert result.has("records")
+                assert result.get("records").size() > 0
+                assert result.get("records").get(0).asText().contains("wait-test")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fn.call with wait:{timeout:'30s'} returns inline results for fast function"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start --import ${importActionPath}")
+        then:
+            try {
+                def response = server.rpcCall("fn.call",
+                    [name: "multiply", args: [x: 3, y: 4], wait: [timeout: "30s"]], 250)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "completed"
+                assert result.get("exitCode").asInt() == 0
+                assert result.has("records")
+                assert result.get("records").size() > 0
+                assert result.get("records").get(0).asText().contains("12")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with wait:true and failed command returns failed status"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.execute",
+                    [command: "this-command-does-not-exist", wait: true], 260)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.get("status").asText() == "failed"
+                assert result.get("exitCode").asInt() != 0
+                assert result.has("stderr")
+            } finally {
+                server.close()
+            }
+    }
+
+    def "fcli.execute with wait:false behaves like default async mode"() {
+        when:
+            def server = RPCServerHelper.start("util rpc-server start")
+        then:
+            try {
+                def response = server.rpcCall("fcli.execute",
+                    [command: "util sample-data list", wait: false], 270)
+                assert response.get("error") == null
+                def result = response.get("result")
+                assert result.has("jobId")
+                assert result.get("status").asText() == "started"
+
+                // Drain notifications
+                server.drainNotifications(5000)
+            } finally {
+                server.close()
+            }
+    }
 }
