@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260420.121048-dev_feat.v3.x.jrpc" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.104700-dev_feat.v3.x.jrpc" %}
 
 
 <div id="header">
@@ -44,7 +44,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod issue list</strong> [<strong>--aggregate</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<p><strong>fcli fod issue list</strong> [<strong>--aggregate</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--fetch</strong>=<em>&lt;fetch-range&gt;</em>]
                     [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
                     [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                     [<strong>-i</strong>=<em>&lt;status&gt;</em>[,<em>&lt;status&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
@@ -104,6 +104,10 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <dd>
 <p>Embed extra issue data. Due to FoD rate limits, this may significantly affect performance. Allowed values: allData, summary, details, recommendations, history, requestResponse, headers, parameters, traces. Using the --output option, this extra data can be included in the output. Using the --query option, this extra data can be queried upon. To get an understanding of the structure and contents of the embedded data, use the --output json or --output yaml options.</p>
 </dd>
+<dt class="hdlist1"><strong>--fetch</strong>=<em>&lt;fetch-range&gt;</em></dt>
+<dd>
+<p>Limit the number of records fetched from the server. Format: [&lt;start&gt;-]&lt;end&gt;, where start and end are 1-based, inclusive record numbers. Examples: 10 (first 10 records), 1-10 (same), 21-30 (records 21 through 30). By default, all records are fetched.</p>
+</dd>
 <dt class="hdlist1"><strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em></dt>
 <dd>
 <p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See the Fortify on Demand REST API documentation for information on supported formats.</p>
@@ -152,7 +156,7 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 </dd>
 <dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
 <dd>
-<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output, envelope, no-envelope.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -200,7 +204,7 @@ The --app option is currently in PREVIEW. If you wish to use this option it is r
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-20 12:13:28 UTC
+Last updated 2026-04-21 10:49:45 UTC
 </div>
 </div>
 </body>
