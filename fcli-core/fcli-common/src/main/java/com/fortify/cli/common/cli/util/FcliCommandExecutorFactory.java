@@ -48,6 +48,7 @@ import picocli.CommandLine.ParseResult;
 public final class FcliCommandExecutorFactory { 
     @NonNull private final String cmd;
     private final Consumer<ObjectNode> recordConsumer;
+    private final Consumer<ObjectNode> metadataConsumer;
     @Builder.Default private final OutputType stdoutOutputTypeIfRecordCollectionSupported = OutputType.show;
     @Builder.Default private final OutputType stdoutOutputTypeIfRecordCollectionNotSupported = OutputType.show;
     @Builder.Default private final OutputType stderrOutputType = OutputType.show;
@@ -115,7 +116,7 @@ public final class FcliCommandExecutorFactory {
 
         public final Result execute() {
             if ( parseErrorResult!=null ) { return parseErrorResult; }
-            if ( recordConsumer!=null && canCollectRecords() ) { setPerCommandRecordConsumer(); }
+            if ( (recordConsumer!=null || metadataConsumer!=null) && canCollectRecords() ) { setPerCommandConsumers(); }
             return call(()->_execute());
         }
 
@@ -205,10 +206,15 @@ public final class FcliCommandExecutorFactory {
                     : stdoutOutputTypeIfRecordCollectionNotSupported;
         }
 
-        private void setPerCommandRecordConsumer() {
+        private void setPerCommandConsumers() {
             var userObj = replicatedLeafCommandSpec.userObject();
-            if ( userObj instanceof IRecordCollectionSupport ) {
-                ((IRecordCollectionSupport)userObj).setRecordConsumer(recordConsumer, stdoutOutputTypeIfRecordCollectionSupported!=OutputType.show);
+            if ( userObj instanceof IRecordCollectionSupport rcs ) {
+                if ( recordConsumer!=null ) {
+                    rcs.setRecordConsumer(recordConsumer, stdoutOutputTypeIfRecordCollectionSupported!=OutputType.show);
+                }
+                if ( metadataConsumer!=null ) {
+                    rcs.setMetadataConsumer(metadataConsumer);
+                }
             }
         }
         

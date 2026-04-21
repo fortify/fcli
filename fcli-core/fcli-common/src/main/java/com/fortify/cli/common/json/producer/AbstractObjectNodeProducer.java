@@ -24,6 +24,7 @@ import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.json.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.product.IProductHelper;
+import com.fortify.cli.common.output.product.IResponseMetadataCollector;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -50,12 +51,18 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
     @Getter @Singular private final List<UnaryOperator<JsonNode>> inputTransformers;
     @Getter @Singular private final List<UnaryOperator<JsonNode>> recordTransformers;
     @Getter private final QueryExpression queryExpression;
+    @Getter private final IResponseMetadataCollector responseMetadataCollector;
+    private ObjectNode responseMetadata;
+
+    @Override
+    public ObjectNode getResponseMetadata() { return responseMetadata; }
 
     /**
      * Template method used by subclasses to feed input JSON to this base class for processing.
      */
     protected final void process(JsonNode input, IObjectNodeConsumer consumer) {
         if ( input==null ) { return; }
+        collectMetadata(input);
         JsonNode transformed = applyInputTransformers(input);
         if ( transformed==null || transformed.isNull() ) { return; }
         if ( transformed.isObject() ) {
@@ -81,6 +88,12 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
         JsonNode current = input;
         for ( var t : inputTransformers ) { current = t.apply(current); if ( current==null ) { break; } }
         return current;
+    }
+
+    private void collectMetadata(JsonNode rawInput) {
+        if ( responseMetadata==null && responseMetadataCollector!=null ) {
+            responseMetadata = responseMetadataCollector.collectResponseMetadata(rawInput);
+        }
     }
 
     protected Break processSingleRecord(ObjectNode node, IObjectNodeConsumer consumer) {
@@ -136,6 +149,7 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
             applyRecordTransformationsFrom(applyFrom);
             applyQueryFrom(applyFrom);
             applyActionCommandResultSupplierFrom(applyFrom);
+            applyResponseMetadataCollectorFrom(applyFrom);
             return self();
         }
         private void applyActionCommandResultSupplierFrom(ObjectNodeProducerApplyFrom applyFrom) {
@@ -158,6 +172,10 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
             }
             return self();
         }
+        public B applyResponseMetadataCollectorFrom(ObjectNodeProducerApplyFrom applyFrom) {
+            applyFrom.getSourceStream(getRequiredCommandHelper(), explicitProductHelper).forEach(this::addResponseMetadataCollectorFromObject);
+            return self();
+        }
         protected ICommandHelper getRequiredCommandHelper() {
             if ( commandHelper==null ) {
                 throw new FcliBugException("CommandHelper not configured; call commandHelper(<helper>) before apply*From()");
@@ -172,6 +190,11 @@ public abstract class AbstractObjectNodeProducer implements IObjectNodeProducer 
         }
         private void addRecordTransformersFromObject(Object o) {
             if ( o instanceof IRecordTransformer rt ) { recordTransformer(n->rt.transformRecord(n)); }
+        }
+        private void addResponseMetadataCollectorFromObject(Object o) {
+            if ( o instanceof IResponseMetadataCollector rmc && this.responseMetadataCollector==null ) {
+                responseMetadataCollector(rmc);
+            }
         }
     }
 }

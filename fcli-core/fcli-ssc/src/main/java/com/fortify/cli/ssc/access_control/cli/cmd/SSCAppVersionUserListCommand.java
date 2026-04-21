@@ -27,6 +27,8 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list-appversion-users", aliases = "lsavu") @CommandGroup("appversion-user")
 public class SSCAppVersionUserListCommand extends AbstractSSCBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
+    // SSC does not support paging for this endpoint, so we cannot use the fetch range mixin here
+    //@Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     // TODO Can we do any server-side filtering?

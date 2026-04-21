@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.producer.AbstractObjectNodeProducer.AbstractObjectNodeProducerBuilder;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
@@ -33,6 +34,7 @@ import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.fod._common.cli.mixin.FoDAppOrReleaseMixin;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.cli.mixin.FoDFetchRangeMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
@@ -54,6 +56,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class FoDIssueListCommand extends AbstractFoDOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    @Mixin private FoDFetchRangeMixin fetchRangeMixin;
     @Mixin private FoDDelimiterMixin delimiterMixin;
     @Mixin @Getter private FoDAppOrReleaseMixin appOrRelease;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
@@ -75,6 +78,9 @@ public class FoDIssueListCommand extends AbstractFoDOutputCommand implements ISe
     @Override
     protected IObjectNodeProducer getObjectNodeProducer(UnirestInstance unirest) {
         boolean releaseSpecified = appOrRelease.isReleaseSpecified();
+        if (!releaseSpecified && fetchRangeMixin.isFetchSpecified()) {
+            throw new FcliSimpleException("--fetch cannot be combined with --app; use --release to specify a single release");
+        }
         var result = releaseSpecified
                 ? singleReleaseProducerBuilder(unirest, appOrRelease.getReleaseId(unirest))
                 : applicationProducerBuilder(unirest, appOrRelease.getAppId(unirest));

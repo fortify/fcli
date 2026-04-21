@@ -19,4 +19,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public interface IRecordWriter extends Closeable {
     void append(ObjectNode node);
     void close();
+    /**
+     * Set response-level metadata to be included in the output when envelope
+     * style is active. Must be called before {@link #close()} for the metadata
+     * to be written. Writers that do not support envelope style ignore this.
+     */
+    default void setResponseMetadata(ObjectNode metadata) {}
 }

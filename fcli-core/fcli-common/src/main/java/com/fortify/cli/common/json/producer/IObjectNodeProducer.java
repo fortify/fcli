@@ -21,6 +21,13 @@ import com.fortify.cli.common.util.Break;
 public interface IObjectNodeProducer {
     void forEach(IObjectNodeConsumer consumer);
 
+    /**
+     * Return response-level metadata (e.g., total count, paging links) captured from
+     * the underlying data source. Available after {@link #forEach} has been invoked.
+     * Returns {@code null} if no metadata was captured.
+     */
+    default ObjectNode getResponseMetadata() { return null; }
+
     @FunctionalInterface
     interface IObjectNodeConsumer { Break accept(ObjectNode node); }
 }

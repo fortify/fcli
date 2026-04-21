@@ -27,12 +27,14 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
 //TODO Do proper exception handling instead of @SneakyThrows
 @RequiredArgsConstructor
 public abstract class AbstractRecordWriter<T> implements IRecordWriter {
     @Getter(value = AccessLevel.PRIVATE, lazy=true) private final Writer writer = createWriter();
+    @Getter(value = AccessLevel.PROTECTED) @Setter private ObjectNode responseMetadata;
     private T out;
     private Function<ObjectNode, ObjectNode> recordFormatter;
     

@@ -61,7 +61,7 @@ Currently supported CI/CD platforms:
 // This list should include all available CI integrations, pointing to the latest version of each.
 // When adding new CI systems or versions, ensure this list is updated accordingly.
 // See fcli-core/fcli-app/src/main/resources/com/fortify/cli/app/actions/build-time/ci-doc.yaml for CI system definitions.
-* link:ci/github/v3.0.x/index.html[*Fortify GitHub Actions*]: Seamless integration for GitHub Actions workflows
+* link:ci/github/v4.0.x/index.html[*Fortify GitHub Actions*]: Seamless integration for GitHub Actions workflows
 * link:ci/gitlab/v2.0.x/index.html[*Fortify GitLab Components*]: Native GitLab CI/CD pipeline components
 * link:ci/ado/script/index.html[*Fortify Azure DevOps*]: Script-based integration for Azure DevOps pipelines
 
