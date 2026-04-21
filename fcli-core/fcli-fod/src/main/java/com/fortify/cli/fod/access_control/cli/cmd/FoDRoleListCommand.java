@@ -19,7 +19,6 @@ import com.fortify.cli.common.json.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.fod._common.cli.mixin.FoDFetchRangeMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
@@ -36,7 +35,8 @@ public class FoDRoleListCommand extends AbstractFoDBaseRequestOutputCommand impl
     private static final RenameFieldsTransformer RECORD_TRANSFORMER = new RenameFieldsTransformer(
             new String[] {"value:id", "text:name"});
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
-    @Mixin private FoDFetchRangeMixin fetchRangeMixin;
+    // FoD does not support paging for this endpoint, so we cannot use the fetch range mixin here
+    //@Mixin private FoDFetchRangeMixin fetchRangeMixin;
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

@@ -15,7 +15,6 @@ package com.fortify.cli.fod.report.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.fod._common.cli.mixin.FoDFetchRangeMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -32,7 +31,8 @@ import picocli.CommandLine.Option;
 @Command(name = "list-templates", aliases = "lst") @CommandGroup("report-template")
 public final class FoDReportTemplateListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private FoDOutputHelperMixins.Lookup outputHelper;
-    @Mixin private FoDFetchRangeMixin fetchRangeMixin;
+    // FoD does not support paging for this endpoint, so we cannot use the fetch range mixin here
+    //@Mixin private FoDFetchRangeMixin fetchRangeMixin;
 
     @Option(names = {"--group"}, defaultValue = "All")
     FoDReportTemplateGroupType groupType;
