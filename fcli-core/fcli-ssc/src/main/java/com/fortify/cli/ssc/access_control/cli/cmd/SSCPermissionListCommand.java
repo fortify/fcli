@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
@@ -27,6 +28,7 @@ import com.fortify.cli.ssc.access_control.helper.SSCRolePermissionHelper;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -41,6 +43,9 @@ public class SSCPermissionListCommand extends AbstractSSCBaseRequestOutputComman
         if ( StringUtils.isBlank(roleResolverMixin.getRoleNameOrId()) ) {
             return unirest.get(SSCUrls.PERMISSIONS);
         } else {
+            if ( fetchRangeMixin.isFetchSpecified() ) {
+                throw new FcliSimpleException("--fetch cannot be used in combination with --role/-r");
+            }
             return unirest.get(SSCUrls.ROLE_PERMISSIONS(roleResolverMixin.getRoleId(unirest)));
         }
     }
