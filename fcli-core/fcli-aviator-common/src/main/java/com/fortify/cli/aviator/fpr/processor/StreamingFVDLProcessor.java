@@ -297,6 +297,14 @@ public class StreamingFVDLProcessor {
                             logger.debug("Pass 1: Parsing EngineData");
                             parseEngineData(reader);
                             break;
+                        case "Run":
+                            logger.debug("Pass 1: Parsing Run for analysis type");
+                            parseRun(reader);
+                            break;
+                        case "RuntimeConfiguration":
+                            logger.debug("Pass 1: Parsing RuntimeConfiguration for analysis type");
+                            parseRuntimeConfiguration(reader);
+                            break;
                         case "Build":
                             logger.debug("Pass 1: Skipping Build");
                             // Build is already skipped in parseEngineData
@@ -374,7 +382,30 @@ public class StreamingFVDLProcessor {
      * Delegates to MetadataParser.
      */
     private void parseEngineData(XMLStreamReader reader) throws XMLStreamException {
-        metadataParser.parseEngineData(reader, fvdlMetadata.getRuleMetadata());
+        metadataParser.parseEngineData(reader, fvdlMetadata);
+    }
+
+    private void parseRun(XMLStreamReader reader) throws XMLStreamException {
+        while (reader.hasNext()) {
+            int event = reader.next();
+
+            if (event == XMLStreamConstants.START_ELEMENT && "EngineName".equals(reader.getLocalName())) {
+                updateAnalysisType(readElementText(reader));
+            } else if (event == XMLStreamConstants.END_ELEMENT && "Run".equals(reader.getLocalName())) {
+                return;
+            }
+        }
+    }
+
+    private void parseRuntimeConfiguration(XMLStreamReader reader) throws XMLStreamException {
+        updateAnalysisType("SECURITYSCOPE");
+        skipSection(reader, "RuntimeConfiguration");
+    }
+
+    private void updateAnalysisType(String analysisType) {
+        if (analysisType != null && !analysisType.isBlank()) {
+            fvdlMetadata.setAnalysisType(analysisType.trim());
+        }
     }
 
     /**
@@ -1075,6 +1106,7 @@ public class StreamingFVDLProcessor {
             .instanceSeverity(streamedVuln.getInstanceSeverity())
             .confidence(streamedVuln.getConfidence())
             .analysis(streamedVuln.getShortDescription())
+            .analysisType(fvdlMetadata.getAnalysisType())
             .build();
 
         // 1. Get the base metadata from streaming-parsed ruleMetadata in FVDLMetadata

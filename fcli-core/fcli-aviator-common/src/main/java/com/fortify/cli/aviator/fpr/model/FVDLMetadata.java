@@ -28,6 +28,7 @@ public class FVDLMetadata {
     private String projectName;
     private String projectVersion;
     private String engineVersion;
+    private String analysisType = "SCA";
 
     // Rule metadata cache: classId -> metadata map
     private Map<String, Map<String, String>> ruleMetadata = new ConcurrentHashMap<>();

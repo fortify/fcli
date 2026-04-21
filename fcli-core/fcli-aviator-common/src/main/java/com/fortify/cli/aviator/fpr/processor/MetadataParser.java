@@ -13,6 +13,7 @@
 package com.fortify.cli.aviator.fpr.processor;
 
 import static com.fortify.cli.aviator.fpr.processor.XmlParserUtils.readElementText;
+import static com.fortify.cli.aviator.fpr.processor.XmlParserUtils.skipSection;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,8 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fortify.cli.aviator.fpr.model.FVDLMetadata;
 
 /**
  * Parses metadata sections from FVDL XML.
@@ -35,36 +38,51 @@ public class MetadataParser {
      * Parse EngineData section for rule metadata.
      * Collects Rule metadata with format: ruleId -> Map<groupName, groupValue>
      */
-    public void parseEngineData(XMLStreamReader reader, Map<String, Map<String, String>> ruleMetadata)
+    public void parseEngineData(XMLStreamReader reader, FVDLMetadata fvdlMetadata)
             throws XMLStreamException {
         logger.debug("Streaming EngineData parsing started");
-        int depth = 1;
         String currentRuleId = null;
         Map<String, String> currentMetadata = null;
+        Map<String, Map<String, String>> ruleMetadata = fvdlMetadata.getRuleMetadata();
 
-        while (reader.hasNext() && depth > 0) {
+        while (reader.hasNext()) {
             int event = reader.next();
 
             if (event == XMLStreamConstants.START_ELEMENT) {
                 String localName = reader.getLocalName();
 
-                if ("Rule".equals(localName)) {
-                    currentRuleId = reader.getAttributeValue(null, "id");
-                    currentMetadata = new HashMap<>();
-                } else if ("Group".equals(localName) && currentMetadata != null) {
-                    String groupName = reader.getAttributeValue(null, "name");
-                    String groupValue = readElementText(reader);
-                    if (groupName != null && groupValue != null) {
-                        currentMetadata.put(groupName, groupValue);
-                    }
+                switch (localName) {
+                    case "EngineVersion":
+                        fvdlMetadata.setEngineVersion(readElementText(reader));
+                        break;
+                    case "Properties":
+                        skipSection(reader, localName);
+                        break;
+                    case "Rule":
+                        currentRuleId = reader.getAttributeValue(null, "id");
+                        currentMetadata = new HashMap<>();
+                        break;
+                    case "Group":
+                        if (currentMetadata != null) {
+                            String groupName = reader.getAttributeValue(null, "name");
+                            String groupValue = readElementText(reader);
+                            if (groupName != null && groupValue != null) {
+                                currentMetadata.put(groupName, groupValue);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                 }
-                depth++;
             } else if (event == XMLStreamConstants.END_ELEMENT) {
-                depth--;
-                if ("Rule".equals(reader.getLocalName()) && currentRuleId != null && currentMetadata != null) {
+                String localName = reader.getLocalName();
+                if ("Rule".equals(localName) && currentRuleId != null && currentMetadata != null) {
                     ruleMetadata.put(currentRuleId, currentMetadata);
                     currentRuleId = null;
                     currentMetadata = null;
+                } else if ("EngineData".equals(localName)) {
+                    logger.debug("Streaming Engine Data parsing completed");
+                    return;
                 }
             }
         }

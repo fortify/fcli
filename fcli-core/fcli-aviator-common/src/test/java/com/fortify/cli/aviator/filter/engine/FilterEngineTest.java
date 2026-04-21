@@ -128,6 +128,25 @@ class FilterEngineTest {
             assertEquals(1, result.size());
         }
 
+        @Test
+        void testAnalysisTypeFilterMatchesOnlyMatchingVulnerability() {
+            Vulnerability scaVuln = new Vulnerability();
+            scaVuln.setInstanceID("SCA_VULN");
+            scaVuln.setAnalysisType("SCA");
+
+            Vulnerability webInspectVuln = new Vulnerability();
+            webInspectVuln.setInstanceID("WEBINSPECT_VULN");
+            webInspectVuln.setAnalysisType("WEBINSPECT");
+
+            List<Vulnerability> result = VulnerabilityFilterer.filter(
+                List.of(scaVuln, webInspectVuln),
+                "[analysis type]:SCA"
+            );
+
+            assertEquals(1, result.size());
+            assertEquals("SCA_VULN", result.get(0).getInstanceID());
+        }
+
         // Null Attr Handling
         @Test
         void testNullAttrNotContains() {
