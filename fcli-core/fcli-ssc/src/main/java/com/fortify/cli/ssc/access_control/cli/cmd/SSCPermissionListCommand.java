@@ -28,7 +28,6 @@ import com.fortify.cli.ssc.access_control.helper.SSCRolePermissionHelper;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
