@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.084821-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.100126-dev_v3.x" %}
 
 
 <div id="header">
@@ -44,8 +44,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion list</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>]
-                         [<strong>-e</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+<p><strong>fcli ssc appversion list</strong> [<strong>--fetch</strong>=<em>&lt;fetch-range&gt;</em>] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
+                         [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [<strong>-e</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                          [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                          [<strong>-i</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
@@ -107,6 +107,10 @@ fcli_version:
 <dd>
 <p>Embed extra application version data. Allowed values: attrs, attrValuesByName, attrValuesByGuid, bugtracker, customTags, filterSets, folders, resultProcessingRules.</p>
 </dd>
+<dt class="hdlist1"><strong>--fetch</strong>=<em>&lt;fetch-range&gt;</em></dt>
+<dd>
+<p>Limit the number of records fetched from the server. Format: [&lt;start&gt;-]&lt;end&gt;, where start and end are 1-based, inclusive record numbers. Examples: 10 (first 10 records), 1-10 (same), 21-30 (records 21 through 30). By default, all records are fetched.</p>
+</dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--include</strong>=<em>&lt;values&gt;</em>[,<em>&lt;values&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>List either active (default), inactive, or both active and inactive versions. Allowed values: active, inactive.</p>
@@ -151,7 +155,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
 <dd>
-<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output, envelope, no-envelope.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -199,7 +203,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-21 08:50:57 UTC
+Last updated 2026-04-21 10:03:48 UTC
 </div>
 </div>
 </body>

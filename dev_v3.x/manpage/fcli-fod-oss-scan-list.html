@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.084821-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.100126-dev_v3.x" %}
 
 
 <div id="header">
@@ -44,10 +44,10 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod oss-scan list</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] <strong>--rel</strong>=<em>id|app</em>
-                 _      [:ms]:rel_ [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                       [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+<p><strong>fcli fod oss-scan list</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--fetch</strong>=<em>&lt;fetch-range&gt;</em>] [<strong>-q</strong>=<em>&lt;SpEL _
+                 _      expression&gt;</em>] <strong>--rel</strong>=<em>id|app[:ms]:rel</em> [[<strong>-h</strong>]
+                       [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
                        [[<strong>--fod-session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
                        [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
                        [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
@@ -68,6 +68,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--fetch</strong>=<em>&lt;fetch-range&gt;</em></dt>
+<dd>
+<p>Limit the number of records fetched from the server. Format: [&lt;start&gt;-]&lt;end&gt;, where start and end are 1-based, inclusive record numbers. Examples: 10 (first 10 records), 1-10 (same), 21-30 (records 21 through 30). By default, all records are fetched.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
@@ -109,7 +113,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1">*--style*<em>=&lt;style&gt;,&#8230;&#8203;</em></dt>
 <dd>
-<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output.</p>
+<p>Select output style: header, no-header, pretty, no-pretty, flat, no-flat, array, single, border, no-border, md-border, wrap, no-wrap, fast-output, no-fast-output, envelope, no-envelope.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -157,7 +161,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-21 08:50:57 UTC
+Last updated 2026-04-21 10:03:47 UTC
 </div>
 </div>
 </body>
