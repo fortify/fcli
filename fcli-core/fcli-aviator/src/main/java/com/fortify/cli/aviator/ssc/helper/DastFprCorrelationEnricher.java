@@ -16,10 +16,12 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -47,8 +49,11 @@ import lombok.SneakyThrows;
  * upload/parse pipeline will read the {@code <ExternalFindings>} and create
  * correlation records without any SSC code changes.
  */
-public class ExternalFindingsInjector {
-    private static final Logger LOG = LoggerFactory.getLogger(ExternalFindingsInjector.class);
+public class DastFprCorrelationEnricher {
+    private static final Logger LOG = LoggerFactory.getLogger(DastFprCorrelationEnricher.class);
+    private static final String AI_CORRELATION_SESSION_ID = "AI_CORRELATION_METADATA";
+    private static final DateTimeFormatter HTTP_DATE_FORMATTER =
+        DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH);
 
     /**
      * Injects correlation data into the DAST FPR and returns the path to
@@ -78,6 +83,7 @@ public class ExternalFindingsInjector {
 
             Document doc = parseXml(webinspectPath);
             int injectedCount = injectAll(doc, pairsByDastId);
+            upsertCorrelationMetadataSession(doc);
             writeXml(doc, webinspectPath);
 
             LOG.info("Injected ExternalFindings for {} DAST issues ({} total pairs)",
@@ -166,5 +172,87 @@ public class ExternalFindingsInjector {
         try (OutputStream os = Files.newOutputStream(path)) {
             transformer.transform(new DOMSource(doc), new StreamResult(os));
         }
+    }
+
+    /**
+     * Appends a synthetic {@code <Session requestId="AI_CORRELATION_METADATA">} at the end
+     * of the document root if one does not already exist, or updates its Date header if it does.
+     * This session acts as a lightweight metadata marker for when the AI correlation was run,
+     * allowing SSC to merge without requiring deletion of the prior DAST scan.
+     */
+    private void upsertCorrelationMetadataSession(Document doc) {
+        String nowHttpDate = OffsetDateTime.now(ZoneOffset.UTC).format(HTTP_DATE_FORMATTER);
+        Element root = doc.getDocumentElement();
+
+        // Check if the metadata session already exists — update if so
+        NodeList sessions = root.getElementsByTagName("Session");
+        for (int i = 0; i < sessions.getLength(); i++) {
+            if (!(sessions.item(i) instanceof Element s)) continue;
+            if (AI_CORRELATION_SESSION_ID.equals(s.getAttribute("requestId"))) {
+                updateDateHeader(s, nowHttpDate);
+                LOG.info("Updated existing AI_CORRELATION_METADATA session Date header to: {}", nowHttpDate);
+                return;
+            }
+        }
+
+        // Not found — append a new synthetic session at the end of the root element
+        root.appendChild(buildCorrelationMetadataSession(doc, nowHttpDate));
+        LOG.info("Appended new AI_CORRELATION_METADATA session with Date: {}", nowHttpDate);
+    }
+
+    private void updateDateHeader(Element sessionElement, String newDate) {
+        NodeList headers = sessionElement.getElementsByTagName("Header");
+        for (int i = 0; i < headers.getLength(); i++) {
+            if (!(headers.item(i) instanceof Element header)) continue;
+            NodeList names = header.getElementsByTagName("Name");
+            if (names.getLength() > 0 && "Date".equals(names.item(0).getTextContent())) {
+                NodeList values = header.getElementsByTagName("Value");
+                if (values.getLength() > 0) {
+                    values.item(0).setTextContent(newDate);
+                }
+                return;
+            }
+        }
+    }
+
+    private Element buildCorrelationMetadataSession(Document doc, String httpDate) {
+        Element session = doc.createElement("Session");
+        session.setAttribute("requestId", AI_CORRELATION_SESSION_ID);
+
+        // Empty structural elements required by the WebInspect schema
+        for (String tag : new String[]{"URL", "Scheme", "Host", "Port", "AttackParamDescriptor", "Issues", "RawResponse"}) {
+            session.appendChild(doc.createElement(tag));
+        }
+
+        // RawRequest with matching requestId
+        Element rawRequest = doc.createElement("RawRequest");
+        rawRequest.setAttribute("id", AI_CORRELATION_SESSION_ID);
+        session.appendChild(rawRequest);
+
+        // Request with all required empty children
+        Element request = doc.createElement("Request");
+        for (String tag : new String[]{"Method", "Path", "File", "Ext", "PageMark", "HTTPVersion",
+                "FullQuery", "FullPostData", "XMLPostData", "MultiPartPostData",
+                "RawASCIIPostData", "Cookie", "Queries", "Headers", "Cookies"}) {
+            request.appendChild(doc.createElement(tag));
+        }
+        session.appendChild(request);
+
+        // Response with Date header
+        Element response = doc.createElement("Response");
+        for (String tag : new String[]{"HTTPVersion", "StatusCode", "StatusDescription", "SetCookie"}) {
+            response.appendChild(doc.createElement(tag));
+        }
+        Element responseHeaders = doc.createElement("Headers");
+        Element header = doc.createElement("Header");
+        appendChildElement(doc, header, "Name", "Date");
+        appendChildElement(doc, header, "Value", httpDate);
+        responseHeaders.appendChild(header);
+        response.appendChild(responseHeaders);
+        response.appendChild(doc.createElement("SetCookies"));
+        response.appendChild(doc.createElement("Forms"));
+        session.appendChild(response);
+
+        return session;
     }
 }

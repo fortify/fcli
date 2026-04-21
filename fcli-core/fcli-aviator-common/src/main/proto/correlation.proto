@@ -147,9 +147,9 @@ message DastUrlCandidate {
 }
 
 message CorrelationCandidateMatch {
-  string url = 2;
-  string rationale = 3;
-  string confidence = 4;
+  string url = 1;
+  string rationale = 2;
+  string confidence = 3;
 }
 
 message DastIssueContext {

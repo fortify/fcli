@@ -37,7 +37,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
-import com.fortify.cli.aviator.ssc.helper.ExternalFindingsInjector;
+import com.fortify.cli.aviator.ssc.helper.DastFprCorrelationEnricher;
 
 /**
  * Tests the enriched DAST FPR upload flow by:
@@ -45,7 +45,7 @@ import com.fortify.cli.aviator.ssc.helper.ExternalFindingsInjector;
  *   <li>Packaging the test webinspect.xml into a minimal DAST FPR (ZIP)</li>
  *   <li>Creating mock {@link CorrelatedPair} objects using real IDs from
  *       the test audit.fvdl (SAST) and webinspect.xml (DAST)</li>
- *   <li>Running {@link ExternalFindingsInjector} to inject {@code <ExternalFindings>}</li>
+ *   <li>Running {@link DastFprCorrelationEnricher} to inject {@code <ExternalFindings>}</li>
  *   <li>Verifying the modified webinspect.xml contains the expected correlation data</li>
  * </ol>
  */
@@ -86,7 +86,7 @@ class ExternalFindingsInjectionTest {
             new CorrelatedPair(SAST_INSTANCE_2, DAST_ISSUE_2, SAST_SCAN_GUID, "MEDIUM", "Partial category overlap")
         );
 
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         Path result = injector.injectAndRepackage(dastFprPath, pairs);
 
         assertNotNull(result);
@@ -128,7 +128,7 @@ class ExternalFindingsInjectionTest {
             new CorrelatedPair(SAST_INSTANCE_3, DAST_ISSUE_1, SAST_SCAN_GUID, "LOW", "Tertiary match")
         );
 
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         injector.injectAndRepackage(dastFprPath, pairs);
 
         Document modifiedDoc = readWebInspectFromFpr(dastFprPath);
@@ -157,7 +157,7 @@ class ExternalFindingsInjectionTest {
 
     @Test
     void testInjectExternalFindings_emptyPairsList() throws Exception {
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         Path result = injector.injectAndRepackage(dastFprPath, List.of());
 
         assertEquals(dastFprPath, result, "Empty pairs should return unmodified FPR path");
@@ -170,7 +170,7 @@ class ExternalFindingsInjectionTest {
 
     @Test
     void testInjectExternalFindings_nullPairsList() throws Exception {
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         Path result = injector.injectAndRepackage(dastFprPath, null);
 
         assertEquals(dastFprPath, result, "Null pairs should return unmodified FPR path");
@@ -182,7 +182,7 @@ class ExternalFindingsInjectionTest {
             new CorrelatedPair(SAST_INSTANCE_1, DAST_ISSUE_1, SAST_SCAN_GUID, "HIGH", "Match")
         );
 
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
 
         // First injection
         injector.injectAndRepackage(dastFprPath, pairs);
@@ -207,7 +207,7 @@ class ExternalFindingsInjectionTest {
             new CorrelatedPair(SAST_INSTANCE_1, "nonexistent-dast-id-000", SAST_SCAN_GUID, "HIGH", "No match expected")
         );
 
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         injector.injectAndRepackage(dastFprPath, pairs);
 
         // Should succeed without error; no ExternalFindings injected for non-matching ID
@@ -223,7 +223,7 @@ class ExternalFindingsInjectionTest {
             new CorrelatedPair(SAST_INSTANCE_2, DAST_ISSUE_2, SAST_SCAN_GUID, "MEDIUM", "Test")
         );
 
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         injector.injectAndRepackage(dastFprPath, pairs);
 
         // Verify the FPR is still a valid ZIP and contains webinspect.xml

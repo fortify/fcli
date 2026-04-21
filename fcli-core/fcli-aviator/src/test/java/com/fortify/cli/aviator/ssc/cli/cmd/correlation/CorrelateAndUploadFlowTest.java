@@ -40,7 +40,7 @@ import org.w3c.dom.NodeList;
 import com.fortify.cli.aviator.dast.DastIssue;
 import com.fortify.cli.aviator.dast.StreamingWebInspectParser;
 import com.fortify.cli.aviator.grpc.CorrelatedPair;
-import com.fortify.cli.aviator.ssc.helper.ExternalFindingsInjector;
+import com.fortify.cli.aviator.ssc.helper.DastFprCorrelationEnricher;
 import com.fortify.cli.aviator.util.FprHandle;
 
 /**
@@ -49,7 +49,7 @@ import com.fortify.cli.aviator.util.FprHandle;
  *   <li>Package test webinspect.xml into a DAST FPR</li>
  *   <li>Parse DAST issues from the FPR using {@link StreamingWebInspectParser}</li>
  *   <li>Create mock {@link CorrelatedPair} objects using <b>real</b> parsed DAST issue IDs</li>
- *   <li>Inject {@code <ExternalFindings>} via {@link ExternalFindingsInjector}</li>
+ *   <li>Inject {@code <ExternalFindings>} via {@link DastFprCorrelationEnricher}</li>
  *   <li>Verify the enriched FPR is valid and ready for SSC upload (old artifact deletion + re-upload)</li>
  * </ol>
  */
@@ -104,7 +104,7 @@ class CorrelateAndUploadFlowTest {
         );
 
         // Step 3: Inject ExternalFindings
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         Path enrichedFpr = injector.injectAndRepackage(dastFprPath, mockPairs);
 
         assertNotNull(enrichedFpr);
@@ -158,7 +158,7 @@ class CorrelateAndUploadFlowTest {
             new CorrelatedPair(SAST_INSTANCE_1, "fe1603fe-9a9e-b066-5741-75f228f5de86",
                 SAST_SCAN_GUID, "HIGH", "Test")
         );
-        new ExternalFindingsInjector().injectAndRepackage(dastFprPath, pairs);
+        new DastFprCorrelationEnricher().injectAndRepackage(dastFprPath, pairs);
 
         // Verify all original issues are preserved
         Document doc = readWebInspectFromFpr(dastFprPath);
@@ -171,7 +171,7 @@ class CorrelateAndUploadFlowTest {
     void testDeleteAndReuploadReadiness() throws Exception {
         List<CorrelatedPair> pairs = ExternalFindingsInjectionTest.createMockCorrelatedPairs();
 
-        ExternalFindingsInjector injector = new ExternalFindingsInjector();
+        DastFprCorrelationEnricher injector = new DastFprCorrelationEnricher();
         Path enrichedFpr = injector.injectAndRepackage(dastFprPath, pairs);
 
         // Simulate the delete+upload flow validation:

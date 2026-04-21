@@ -95,6 +95,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
     private Map<String, List<DastIssue>> urlToDastIssues;
     private final java.util.concurrent.ConcurrentHashMap<String, String> validationRequestToDastId =
         new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile CompletableFuture<List<CorrelatedPair>> resultFuture;
 
     public CorrelationStreamProcessor(
             AviatorGrpcClient client,
@@ -129,6 +130,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         this.correlationWorkItems = workItems;
         this.urlToDastIssues = buildUrlToDastMap(mixedBuckets);
 
+        LOG.debug("Checking URL to DAST issue map");
+        urlToDastIssues.forEach((k,v)->LOG.debug(" For url {} no. of dast issues {}", k, v.size()));
         if (workItems.isEmpty()) {
             LOG.info("No SAST findings in mixed buckets; skipping correlation stream.");
             return CompletableFuture.completedFuture(List.of());
@@ -141,6 +144,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         logger.info("Starting correlation stream — " + workItems.size() + " SAST findings to correlate");
 
         CompletableFuture<List<CorrelatedPair>> resultFuture = new CompletableFuture<>();
+        this.resultFuture = resultFuture;
         this.streamLatch = new CountDownLatch(1);
 
         startStream(resultFuture, scanGuid);
@@ -208,7 +212,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
         if (validationItems.isEmpty()) {
             logger.info("No candidates to validate. Completing stream.");
+            if (!resultFuture.isDone()) {
+                resultFuture.complete(new ArrayList<>(state.confirmedPairs));
+            }
             requestHandler.complete();
+            streamLatch.countDown();
             return;
         }
 
@@ -274,7 +282,9 @@ public class CorrelationStreamProcessor implements AutoCloseable {
             stopPingPong();
             state.currentPhase = CorrelationStreamState.Phase.COMPLETE;
             logger.info("Correlation stream completed — " + state.confirmedPairs.size() + " confirmed pairs");
-            resultFuture.complete(new ArrayList<>(state.confirmedPairs));
+            if (!resultFuture.isDone()) {
+                resultFuture.complete(new ArrayList<>(state.confirmedPairs));
+            }
             streamLatch.countDown();
         }
     }
@@ -301,6 +311,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         LOG.debug("Correlation response {}/{} for SAST {}: status={}",
             received, state.totalCorrelationRequests, resp.getSastId(), resp.getStatus());
 
+        logger.progress("Correlating " + received + " of " + state.totalCorrelationRequests + " SAST findings");
+
         if ("OK".equalsIgnoreCase(resp.getStatus()) || "SUCCESS".equalsIgnoreCase(resp.getStatus())) {
             for (CorrelationCandidateMatch match : resp.getMatchesList()) {
                 state.candidateMatches.add(new CandidateMatch(
@@ -326,9 +338,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
 
     private void handleValidationResponse(CorrelationValidationResponse resp, String scanGuid) {
         int received = state.receivedValidations.incrementAndGet();
-        LOG.debug("Validation response {}/{} for SAST {}: confirmed={}",
+        LOG.info("Validation response {}/{} for SAST {}: confirmed={}",
             received, state.totalValidationRequests, resp.getSastId(),
             resp.hasDecision() && resp.getDecision().getConfirmed());
+
+        logger.progress("Validating " + received + " of " + state.totalValidationRequests + " correlation candidates");
 
         if (resp.hasDecision() && resp.getDecision().getConfirmed()) {
             // We need to find the DAST issue ID from the validation work item
@@ -349,7 +363,11 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         if (received >= state.totalValidationRequests) {
             logger.info("All " + received + " validation responses received. " +
                 state.confirmedPairs.size() + " confirmed pairs.");
+            if (!resultFuture.isDone()) {
+                resultFuture.complete(new ArrayList<>(state.confirmedPairs));
+            }
             requestHandler.complete();
+            streamLatch.countDown();
         }
     }
 
@@ -360,6 +378,7 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         resultFuture.completeExceptionally(
             new AviatorSimpleException("Correlation error: " + resp.getStatusMessage())
         );
+        streamLatch.countDown();
     }
 
     private void handlePongResponse(CorrelationPongResponse pong) {
@@ -532,6 +551,8 @@ public class CorrelationStreamProcessor implements AutoCloseable {
         List<ValidationWorkItem> items = new ArrayList<>();
 
         for (CandidateMatch match : state.candidateMatches) {
+            LOG.debug("Match URL {}", match.url());
+
             List<DastIssue> issues = urlToDastIssues.get(match.url());
             if (issues == null || issues.isEmpty()) continue;
 
