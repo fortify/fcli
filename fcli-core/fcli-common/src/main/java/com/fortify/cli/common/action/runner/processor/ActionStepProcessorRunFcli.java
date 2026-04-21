@@ -15,6 +15,7 @@ import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -96,7 +97,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private FcliCommandExecutor createCmdExecutor(ActionStepRunFcliEntry entry, String cmd, FcliRecordConsumer recordConsumer) {
         var stdoutOutputType = getOutputTypeOrDefault(entry.getStdoutOutputType(), recordConsumer==null ? OutputType.show : OutputType.suppress );
         var stderrOutputType = getOutputTypeOrDefault(entry.getStderrOutputType(), OutputType.show );
-        ObjectNode[] metadataHolder = {null};
+        var metadataHolder = new AtomicReference<ObjectNode>();
         try {
             return FcliCommandExecutorFactory.builder()
                     .cmd(cmd)
@@ -109,7 +110,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
                     .onException(e->onFcliException(entry, e))
                     .onFail(r->onFcliFail(entry, recordConsumer, r))
                     .recordConsumer(recordConsumer)
-                    .metadataConsumer(m->metadataHolder[0]=m)
+                    .metadataConsumer(metadataHolder::set)
                     .build().create();
         } catch ( Exception e ) {
             onFcliException(entry, e);
@@ -209,15 +210,15 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         }
     }
     
-    private void onFcliResult(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, ObjectNode[] metadataHolder, Result result) {
+    private void onFcliResult(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, AtomicReference<ObjectNode> metadataHolder, Result result) {
         setResultVars(fcli, recordConsumer, metadataHolder, result);
         logStatus(fcli, result);
     }
 
-    private void setResultVars(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, ObjectNode[] metadataHolder, Result result) {
+    private void setResultVars(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, AtomicReference<ObjectNode> metadataHolder, Result result) {
         var name = fcli.getKey();
         vars.set(String.format(FMT_RECORDS, name), recordConsumer!=null ? recordConsumer.getRecords() : JsonHelper.getObjectMapper().createArrayNode());
-        vars.set(String.format(FMT_METADATA, name), metadataHolder[0]!=null ? metadataHolder[0] : NullNode.instance);
+        vars.set(String.format(FMT_METADATA, name), metadataHolder.get()!=null ? metadataHolder.get() : NullNode.instance);
         vars.set(String.format(FMT_STDOUT, name), result.getOut());
         vars.set(String.format(FMT_STDERR, name), result.getErr());
         vars.set(String.format(FMT_EXIT_CODE, name), new IntNode(result.getExitCode()));

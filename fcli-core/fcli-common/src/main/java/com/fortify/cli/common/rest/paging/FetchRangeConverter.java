@@ -33,9 +33,7 @@ public class FetchRangeConverter implements ITypeConverter<FetchRange> {
                 if ( end < start ) throw new FcliSimpleException("--fetch end must be >= start (%d)".formatted(start));
             }
             return new FetchRange(start - 1, end - start + 1);
-        } catch ( FcliSimpleException e ) {
-            throw e;
-        } catch ( Exception e ) {
+        } catch ( NumberFormatException e ) {
             throw new FcliSimpleException("Invalid --fetch value '%s'. Expected format: [<start>-]<end>".formatted(value));
         }
     }

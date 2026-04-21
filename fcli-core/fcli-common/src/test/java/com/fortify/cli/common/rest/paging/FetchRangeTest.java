@@ -52,26 +52,31 @@ public class FetchRangeTest {
 
     @Test
     void zeroEndRejected() {
-        assertThrows(FcliSimpleException.class, () -> converter.convert("0"));
+        var ex = assertThrows(FcliSimpleException.class, () -> converter.convert("0"));
+        assertEquals("--fetch value must be >= 1", ex.getMessage());
     }
 
     @Test
     void zeroStartRejected() {
-        assertThrows(FcliSimpleException.class, () -> converter.convert("0-10"));
+        var ex = assertThrows(FcliSimpleException.class, () -> converter.convert("0-10"));
+        assertEquals("--fetch start must be >= 1", ex.getMessage());
     }
 
     @Test
     void endBeforeStartRejected() {
-        assertThrows(FcliSimpleException.class, () -> converter.convert("30-21"));
+        var ex = assertThrows(FcliSimpleException.class, () -> converter.convert("30-21"));
+        assertEquals("--fetch end must be >= start (30)", ex.getMessage());
     }
 
     @Test
     void nonNumericRejected() {
-        assertThrows(FcliSimpleException.class, () -> converter.convert("abc"));
+        var ex = assertThrows(FcliSimpleException.class, () -> converter.convert("abc"));
+        assertEquals("Invalid --fetch value 'abc'. Expected format: [<start>-]<end>", ex.getMessage());
     }
 
     @Test
     void extraSeparatorRejected() {
-        assertThrows(FcliSimpleException.class, () -> converter.convert("1-2-3"));
+        var ex = assertThrows(FcliSimpleException.class, () -> converter.convert("1-2-3"));
+        assertEquals("Invalid --fetch value '1-2-3'. Expected format: [<start>-]<end>", ex.getMessage());
     }
 }

@@ -37,6 +37,8 @@ public abstract class AbstractFetchRangeMixin implements IHttpRequestUpdater, IP
 
     @Override
     public final HttpRequest<?> updateRequest(HttpRequest<?> request) {
+        // We always assert to catch any erraneous paging params early,
+        // even if fetchRange is not specified
         assertNoExistingPagingParams(request);
         if ( fetchRange == null ) { return request; }
         return applyFetchParams(request, fetchRange);
