@@ -1,6 +1,6 @@
 ---
 title: 'fortify/github-action/setup'
-fcli_version: 0.20260421.100126-dev_v3.x
+fcli_version: 0.20260422.120605-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260421.100126-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.100126-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.120605-dev_v3.x" %}
 
 
 <div id="header">
 <h1>fortify/github-action/setup</h1>
 <div class="details">
-<span id="revnumber">version 0.20260421.100126-dev_v3.x</span>
+<span id="revnumber">version 0.20260422.120605-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -52,7 +52,7 @@ fcli_version: 0.20260421.100126-dev_v3.x
 <h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>fortify/github-action/setup@v4</code> action allows for setting up fcli and various other Fortify tools for use in custom CI/CD workflows.
+<p>The <code>fortify/github-action/setup@v3</code> action allows for setting up fcli and various other Fortify tools for use in custom CI/CD workflows.
 This allows you to implement fully customized AST scan workflows or other automation workflows that interact with Fortify products.</p>
 </div>
 <div class="paragraph">
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: fortify/github-action/setup@v4
+      - uses: fortify/github-action/setup@v3
         with:
           fcli: bootstrapped               # Set up bootstrapped fcli version. May also specify specific version, but
                                            # then fcli may be downloaded twice (bootstrap version and requested version).
@@ -252,9 +252,9 @@ This GitHub Action requires at least fcli v3.15.0 to function correctly.
 <h2 id="_migrating_from_fortifygithub_actionsetupv3"><a class="anchor" href="#_migrating_from_fortifygithub_actionsetupv3"></a>Migrating from fortify/github-action/setup@v3</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>fortify/github-action/setup@v4</code> action is functionally identical to v3.x.y versions — no changes to action
-inputs, environment variables, or bootstrapping behavior. Updating your workflow simply requires changing the
-version reference from <code>@v3</code> to <code>@v4</code>.</p>
+<p>The <code>fortify/github-action/setup@v3</code> action v3.1.x is functionally identical to v3.0.x versions — no changes
+to action inputs, environment variables, or bootstrapping behavior. No workflow changes are required; the <code>@v3</code>
+tag now points to v3.1.x.</p>
 </div>
 </div>
 </div>
@@ -280,8 +280,8 @@ version reference from <code>@v3</code> to <code>@v4</code>.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260421.100126-dev_v3.x<br>
-Last updated 2026-04-21 10:04:44 UTC
+Version 0.20260422.120605-dev_v3.x<br>
+Last updated 2026-04-22 12:09:34 UTC
 </div>
 </div>
 </body>

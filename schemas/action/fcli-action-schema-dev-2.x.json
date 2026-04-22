@@ -41,72 +41,6 @@
       "description" : "Define command-line options supported by this action.",
       "additionalProperties" : false
     },
-    "ActionFunction" : {
-      "type" : "object",
-      "properties" : {
-        "args" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "$ref" : "#/$defs/ActionFunctionArg"
-          },
-          "description" : "Function arguments, keyed by argument name. Preserves declaration order for positional invocation."
-        },
-        "description" : {
-          "type" : "string",
-          "description" : "Human-readable description of this function."
-        },
-        "export" : {
-          "type" : "boolean",
-          "description" : "Whether this function is exported for external use (RPC/MCP). Defaults to true."
-        },
-        "meta" : {
-          "type" : "object",
-          "additionalProperties" : false,
-          "description" : "Generic metadata map for server exposure configuration (e.g., mcp.resource, mcp.prompt)."
-        },
-        "return" : {
-          "$ref" : "#/$defs/TemplateExpression",
-          "description" : "SpEL template expression for the return value. Defaults to ${_result} if omitted."
-        },
-        "steps" : {
-          "description" : "Steps to execute when the function is called.",
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/$defs/ActionStep"
-          }
-        },
-        "streaming" : {
-          "type" : "boolean",
-          "description" : "Whether this function uses streaming (fn.yield). Auto-detected if omitted."
-        }
-      },
-      "required" : [ "steps" ],
-      "description" : "Define a reusable function that can be called from action steps.",
-      "additionalProperties" : false
-    },
-    "ActionFunctionArg" : {
-      "type" : "object",
-      "properties" : {
-        "default" : {
-          "$ref" : "#/$defs/TemplateExpression",
-          "description" : "Default value expression, used when the argument is not provided."
-        },
-        "description" : {
-          "type" : "string",
-          "description" : "Description of this argument."
-        },
-        "required" : {
-          "type" : "boolean",
-          "description" : "Whether this argument is required."
-        },
-        "type" : {
-          "type" : "string",
-          "description" : "Argument type: string (default), boolean, int, long, double, float, array, or object."
-        }
-      },
-      "description" : "Define an argument for an action function.",
-      "additionalProperties" : false
-    },
     "ActionInputMask" : {
       "type" : "object",
       "properties" : {
@@ -151,10 +85,6 @@
         "exit" : {
           "$ref" : "#/$defs/TemplateExpression",
           "description" : "Terminate action execution and return the given exit code.\n"
-        },
-        "fn.yield" : {
-          "$ref" : "#/$defs/TemplateExpressionWithFormatter",
-          "description" : "Yield a single record from a streaming function. Only valid inside functions with streaming enabled. The value is evaluated, optionally formatted, and emitted to the consumer. If the consumer signals termination, remaining steps are skipped. Can be specified as a simple expression string or as an object with 'value' and/or 'fmt' properties.\n"
         },
         "if" : {
           "$ref" : "#/$defs/TemplateExpression",
@@ -264,10 +194,6 @@
           },
           "description" : "Execute one or more fcli commands. This step takes a map, with map keys defining an identifier for the fcli invocation, and values defining the fcli command to run and how to process the output and exit code. The identifier can be used in later steps (or later fcli invocations in the same 'run.fcli' step) to access the output of the fcli command, like stdout, stderr, and exit code that were produced by the fcli command, depending on step configuration. For example,\ngiven an fcli invocation identifier named 'x', the following action variables may be set:\n\nx.records: Array of records produced by the fcli invocation if 'records.collect' is set to 'true'\nx.stdout: Output produced on stdout by the fcli invocation if 'stdout' is set to 'collect'\nx.stderr: Output produced on stderr by the fcli invocation if 'stderr' is set to 'collect'\nx.exitCode: Exit code of the fcli invocation\n\nThe following action variables may also be set by this fcli step, but these are considered preview functionality and may be removed or renamed at any time. For now, these are meant to be used only by built-in fcli actions; custom actions using these action variables may fail to run on other fcli 3.x versions.\n\nx.skipped: Boolean value indicating whether execution was skipped due to skip.if-reason configuration\nx.skipReason: Reason why execution was skipped; will be null if x.skipped==true (deprecated; see x.statusReason)\nx.status: Set to either SKIPPED (x.skipped==true), SUCCESS (x.exitCode==0), or FAILED (x.exitCode!=0)\nx.statusReason: Reason why execution failed or was skipped; will be null if step was executed successfully\nx.dependencySkipReason: Optional skip reason for steps that are dependent on this fcli invocation\nx.success: Set to true if fcli invocation was successful, false if failed\nx.failed: Set to true if fcli invocation failed, false if successfull\n\n"
         },
-        "sleep" : {
-          "$ref" : "#/$defs/TemplateExpression",
-          "description" : "Sleep for the specified duration in milliseconds. The value is evaluated as a SpEL expression.\n"
-        },
         "throw" : {
           "$ref" : "#/$defs/MessageWithCause",
           "description" : "Throw an exception, thereby terminating action execution. This instruction can be specified as either a simple SpEL template expression that evaluates to a message string, or as a structured object with `msg` and/or `cause` properties. When only `cause` is specified without `msg`, the exception will be rethrown preserving its original type (if FcliException) or wrapped.\n"
@@ -363,51 +289,6 @@
             "additionalProperties" : false
           }, {
             "description" : "This step allows for running initialization and cleanup steps around the steps listed in the 'do' block. This includes the ability to run the do-block within the context of an fcli session, with the session being created before running the do-block and being terminated afterwards, and the ability to define writers than can output data in various formats like CSV, appending data to those writers in the do-block, and closing those writers once the steps in the do-block have completed. Compared to the 'out.write' instruction, these writers support more output formats, and, depending on writer type and configuration, allows for streaming output, rather than having to collect all data in memory first.\n"
-          } ]
-        },
-        "with.product" : {
-          "allOf" : [ {
-            "type" : "object",
-            "properties" : {
-              "do" : {
-                "description" : "Steps to execute within the product context.",
-                "type" : "array",
-                "items" : {
-                  "$ref" : "#/$defs/ActionStep"
-                }
-              },
-              "if" : {
-                "$ref" : "#/$defs/TemplateExpression",
-                "description" : "Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'\n"
-              },
-              "name" : {
-                "type" : "string",
-                "description" : "Product name (e.g., 'ssc', 'fod')."
-              },
-              "on.fail" : {
-                "description" : "Optional list: Steps to be executed if this element's execution fails, for example\ndue to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically\nresult in action execution termination, but `on.fail` steps may for example include the\n`throw` step to (conditionally) rethrow the exception.\n\nSteps executed in `on.fail` can access exception details via the following properties:\n- `lastException.type`: Java simple class name of the exception\n- `lastException.message`: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - `lastException.pojo`: The Java exception object itself, for example for use in `log.*` or `throw` steps\nFor named elements, '<name>_exception' is also available with the same properties.\n",
-                "type" : "array",
-                "items" : {
-                  "$ref" : "#/$defs/ActionStep"
-                }
-              },
-              "on.success" : {
-                "description" : "Optional list: Steps to be executed if this element's execution succeeds.\n",
-                "type" : "array",
-                "items" : {
-                  "$ref" : "#/$defs/ActionStep"
-                }
-              },
-              "session" : {
-                "$ref" : "#/$defs/TemplateExpression",
-                "description" : "Session name to use. Defaults to 'default' if not specified."
-              }
-            },
-            "required" : [ "do", "name" ],
-            "description" : "Run the steps in the `do` block within the context of a product session (e.g., SSC or FoD).",
-            "additionalProperties" : false
-          }, {
-            "description" : "Run the steps in the 'do' block within the context of a product session (e.g., SSC or FoD). This makes product-specific SpEL functions (like #ssc.appVersion() or #fod.release()) and REST targets (like 'ssc' or 'fod') available within the 'do' block. The product context is automatically cleaned up when the 'do' block completes.\n"
           } ]
         },
         "writer.append" : {
@@ -782,7 +663,7 @@
     },
     "TemplateExpression" : {
       "format" : "spelTemplateExpression",
-      "description" : "Spring template expression, like 'Hello ${name}'.\nSee https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html for expression language reference. Expressions may invoke the following fcli-provided functions: \nobject #_ci.detect()\nobject #ado.env\nstring #ado.type\nobject #ado.project()\nobject #ado.project().addPrThread(string comment)\nobject #ado.project().publishTestResults(string testRunner, string testResults)\nobject #ado.repo()\nobject #ado.repo().uploadSarif(string sarifContent)\nobject #bitbucket.env\nstring #bitbucket.type\nobject #bitbucket.repo()\nobject #bitbucket.repo().addReportAnnotations(string reportId, string annotationsContent)\nobject #bitbucket.repo().uploadReport(string reportId, string reportContent)\nobject #github.env\nstring #github.type\nobject #github.repo()\nobject #github.repo().addPrComment(string body)\nobject #github.repo().addReviewComment(string path, object line, string body)\nobject #github.repo().createCheckRun(object body)\nobject #github.repo().uploadSarif(string sarifContent)\nobject #gitlab.env\nstring #gitlab.type\nobject #gitlab.project()\nobject #gitlab.project().addMrComment(string body)\nobject #gitlab.project().uploadCodeQualityReport(string reportContent)\nobject #gitlab.project().uploadSecurityReport(string reportType, string reportContent)\nstring #currentDateTime()\nobject #date(string input)\nstring #formatDateTime(string fmt[, string input])\nstring #formatDateTimeAsUTC(string fmt, string input)\nstring #formatDateTimeWithZoneId(string fmt, string input, object tz)\nstring #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)\nobject #now([string period])\nobject #action.fmt(string formatterName, object input)\nstring #copyright()\nstring #decrypt(string input)\nstring #encrypt(string input)\nobject #fcli.commandArgs\nobject #fcli.commandSpec\nobject #fcli.listCommands()\nobject #fcli.listCommands(string query)\nobject #fcliBuildProperties()\nboolean #isDebugEnabled()\nobject #var(string name)\nstring #cleanIssueDescription(string issueDescription)\nstring #cleanRuleDescription(string ruleDescription)\nstring #fod.appBrowserUrl(object rel)\nstring #fod.issueBrowserUrl(object issue)\nobject #fod.release(string nameOrId)\nstring #fod.releaseBrowserUrl(object rel)\nobject #issueSourceFileResolver(map config)\nboolean #issueSourceFileResolver().exists(string issuePath, object lineNumber)\nstring #issueSourceFileResolver().resolve(string issuePath)\nobject #normalizeAndMergeTraceNodes(object input)\nobject #normalizeTraceNodes(object input)\nobject #ssc.appVersion(string nameOrId)\nstring #ssc.appversionBrowserUrl(object av, object fs)\nobject #ssc.filterSet(object av, string titleOrId)\nstring #ssc.issueBrowserUrl(object issue, object fs)\nobject #ssc.ruleDescriptionsProcessor(string avId)\nstring #abbreviate(string input, object maxLength)\nstring #fmt(string fmt, array args)\nstring #htmlToSingleLineText(string html)\nstring #htmlToText(string html)\nstring #ifBlank(string input, string default)\nstring #indent(object input, string prefix)\nboolean #isBlank(string input)\nboolean #isNotBlank(string input)\nstring #join(string delimiter, array input)\nstring #joinOrNull(string delimiter, array input)\nstring #numberedList(array input)\nstring #regexQuote(string input)\nstring #repeat(string input, object count)\nstring #replaceAllFromRegExMap(string input, map<string,string> replacements)\nstring #substringAfter(string input, string separator)\nstring #substringBefore(string input, string separator)\nstring #env(string name)\nboolean #fs.exists(string path)\nboolean #fs.isDirectory(string path)\nboolean #fs.isFile(string path)\nboolean #fs.isReadable(string path)\nboolean #fs.isReadableFile(string path)\nboolean #fs.isWritable(string path)\nboolean #fs.isWritableDir(string path)\nstring #jsonStringify(object input[, boolean pretty])\nobject #properties(object input)\nstring #resolveAgainstCurrentWorkDir(string path)\nstring #uriPart(string uri, string part)\nstring #uuid()\nstring #action.copyParametersFromGroup(string group)\nstring #action.runID()\nstring #actionCmd(string envPrefix, string moduleName, string actionName)\nstring #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)\nstring #actionOrNull(string moduleName, string actionName)\nboolean #check(boolean throwError, string msg)\nstring #extraOpts(string envPrefix)\nstring #fcliCmd(string envPrefix, string cmd)\nstring #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #opt(string name, string value)\nstring #optsFromEnv(string input)\nstring #skipBlankEnvReason(string arg0)\nstring #skipReasonIf(boolean skip, string reason)\n\nReturn type structures for functions that return complex objects:\nobject #ado.env:\n{\n  \"buildId\" : \"string\",\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"organization\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"project\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryId\" : \"string\"\n}\n\nobject #bitbucket.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineUuid\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryFullName\" : \"string\",\n  \"repositoryOwner\" : \"string\",\n  \"repositorySlug\" : \"string\",\n  \"workspace\" : \"string\"\n}\n\nobject #github.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"jobSummaryFile\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nobject #gitlab.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineId\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"projectId\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nSee fcli custom action development documentation for more information.\n",
+      "description" : "Spring template expression, like 'Hello ${name}'.\nSee https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html for expression language reference. Expressions may invoke the following fcli-provided functions: \nobject #_ci.detect()\nobject #ado.env\nstring #ado.type\nobject #ado.project()\nobject #ado.project().addPrThread(string comment)\nobject #ado.project().publishTestResults(string testRunner, string testResults)\nobject #ado.repo()\nobject #ado.repo().uploadSarif(string sarifContent)\nobject #bitbucket.env\nstring #bitbucket.type\nobject #bitbucket.repo()\nobject #bitbucket.repo().addReportAnnotations(string reportId, string annotationsContent)\nobject #bitbucket.repo().uploadReport(string reportId, string reportContent)\nobject #github.env\nstring #github.type\nobject #github.repo()\nobject #github.repo().addPrComment(string body)\nobject #github.repo().addReviewComment(string path, object line, string body)\nobject #github.repo().createCheckRun(object body)\nobject #github.repo().uploadSarif(string sarifContent)\nobject #gitlab.env\nstring #gitlab.type\nobject #gitlab.project()\nobject #gitlab.project().addMrComment(string body)\nobject #gitlab.project().uploadCodeQualityReport(string reportContent)\nobject #gitlab.project().uploadSecurityReport(string reportType, string reportContent)\nstring #currentDateTime()\nobject #date(string input)\nstring #formatDateTime(string fmt[, string input])\nstring #formatDateTimeAsUTC(string fmt, string input)\nstring #formatDateTimeWithZoneId(string fmt, string input, object tz)\nstring #formatDateTimewithZoneIdAsUTC(string fmt, string input, object tz)\nobject #now([string period])\nobject #action.fmt(string formatterName, object input)\nstring #copyright()\nstring #decrypt(string input)\nstring #encrypt(string input)\nobject #fcliBuildProperties()\nboolean #isDebugEnabled()\nobject #var(string name)\nstring #cleanIssueDescription(string issueDescription)\nstring #cleanRuleDescription(string ruleDescription)\nstring #fod.appBrowserUrl(object rel)\nstring #fod.issueBrowserUrl(object issue)\nobject #fod.release(string nameOrId)\nstring #fod.releaseBrowserUrl(object rel)\nobject #issueSourceFileResolver(map config)\nboolean #issueSourceFileResolver().exists(string issuePath, object lineNumber)\nstring #issueSourceFileResolver().resolve(string issuePath)\nobject #normalizeAndMergeTraceNodes(object input)\nobject #normalizeTraceNodes(object input)\nobject #ssc.appVersion(string nameOrId)\nstring #ssc.appversionBrowserUrl(object av, object fs)\nobject #ssc.filterSet(object av, string titleOrId)\nstring #ssc.issueBrowserUrl(object issue, object fs)\nobject #ssc.ruleDescriptionsProcessor(string avId)\nstring #abbreviate(string input, object maxLength)\nstring #fmt(string fmt, array args)\nstring #htmlToSingleLineText(string html)\nstring #htmlToText(string html)\nstring #ifBlank(string input, string default)\nstring #indent(object input, string prefix)\nboolean #isBlank(string input)\nboolean #isNotBlank(string input)\nstring #join(string delimiter, array input)\nstring #joinOrNull(string delimiter, array input)\nstring #numberedList(array input)\nstring #regexQuote(string input)\nstring #repeat(string input, object count)\nstring #replaceAllFromRegExMap(string input, map<string,string> replacements)\nstring #substringAfter(string input, string separator)\nstring #substringBefore(string input, string separator)\nstring #env(string name)\nboolean #fs.exists(string path)\nboolean #fs.isDirectory(string path)\nboolean #fs.isFile(string path)\nboolean #fs.isReadable(string path)\nboolean #fs.isReadableFile(string path)\nboolean #fs.isWritable(string path)\nboolean #fs.isWritableDir(string path)\nstring #jsonStringify(object input[, boolean pretty])\nobject #properties(object input)\nstring #resolveAgainstCurrentWorkDir(string path)\nstring #uriPart(string uri, string part)\nstring #uuid()\nstring #action.copyParametersFromGroup(string group)\nstring #action.runID()\nstring #actionCmd(string envPrefix, string moduleName, string actionName)\nstring #actionCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #actionCmdSkipNoActionReason(string envPrefix, string moduleName, string actionName)\nstring #actionOrNull(string moduleName, string actionName)\nboolean #check(boolean throwError, string msg)\nstring #extraOpts(string envPrefix)\nstring #fcliCmd(string envPrefix, string cmd)\nstring #fcliCmdSkipFromEnvReason(string envPrefix, boolean skipByDefault)\nstring #opt(string name, string value)\nstring #optsFromEnv(string input)\nstring #skipBlankEnvReason(string arg0)\nstring #skipReasonIf(boolean skip, string reason)\n\nReturn type structures for functions that return complex objects:\nobject #ado.env:\n{\n  \"buildId\" : \"string\",\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"organization\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"project\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryId\" : \"string\"\n}\n\nobject #bitbucket.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineUuid\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  },\n  \"repositoryFullName\" : \"string\",\n  \"repositoryOwner\" : \"string\",\n  \"repositorySlug\" : \"string\",\n  \"workspace\" : \"string\"\n}\n\nobject #github.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"jobSummaryFile\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nobject #gitlab.env:\n{\n  \"ciBranch\" : {\n    \"full\" : \"string\",\n    \"short\" : \"string\"\n  },\n  \"ciCommit\" : {\n    \"author\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"committer\" : {\n      \"email\" : \"string\",\n      \"name\" : \"string\",\n      \"when\" : \"string\"\n    },\n    \"headId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"mergeId\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"message\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    }\n  },\n  \"ciId\" : \"string\",\n  \"ciName\" : \"string\",\n  \"ciRepository\" : {\n    \"name\" : {\n      \"full\" : \"string\",\n      \"short\" : \"string\"\n    },\n    \"remoteUrl\" : \"string\",\n    \"workspaceDir\" : \"string\"\n  },\n  \"pipelineId\" : \"string\",\n  \"prTerminology\" : \"string\",\n  \"projectId\" : \"string\",\n  \"pullRequest\" : {\n    \"active\" : \"boolean\",\n    \"id\" : \"string\",\n    \"target\" : \"string\"\n  }\n}\n\nSee fcli custom action development documentation for more information.\n",
       "type" : [ "boolean", "integer", "string", "number", "null" ]
     },
     "TemplateExpressionWithFormatter" : {
@@ -871,13 +752,6 @@
         "type" : [ "object", "string" ]
       },
       "description" : "Optional map: Formatters that can be referenced in action steps to format data. Map keys define formatter name, map values define how the data should be formatted. Each formatter can be defined as either a single string or a structured YAML object. Every string value in the formatter will be processed as a Spring Expression Language expression, allowing access to current action variables and SpEL functions. For example, if action variable 'name' is currently set to 'John Doe', a formatter node like 'hello: Hello ${name}' will set the property 'hello' to 'Hello John Doe'.\n"
-    },
-    "functions" : {
-      "type" : "object",
-      "additionalProperties" : {
-        "$ref" : "#/$defs/ActionFunction"
-      },
-      "description" : "Optional map: Reusable functions that can be called from action steps via #fn.call() SpEL expressions. Map keys define function names, map values define function arguments, steps, and return expressions.\n"
     },
     "steps" : {
       "description" : "Required list: Steps to be executed when this action is being run. Each list item should consist of a single instruction to be executed, optionally together with the 'if:' instruction to allow for conditional execution. Note that the YAML schema allows for multiple instructions to be present within a single list item, but this will result in an error.\n",
