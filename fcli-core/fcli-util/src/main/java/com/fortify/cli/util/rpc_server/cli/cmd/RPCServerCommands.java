@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
  */
 @Command(
         name = "rpc-server",
+        hidden = true,
         subcommands = {
             RPCServerStartCommand.class
         }
