@@ -30,12 +30,11 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry;
 import com.fortify.cli.common.action.model.ActionStepRunFcliEntry.ActionStepFcliForEachDescriptor;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory;
 import com.fortify.cli.common.cli.util.FcliCommandExecutorFactory.FcliCommandExecutor;
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.OutputHelper.OutputType;
 import com.fortify.cli.common.util.OutputHelper.Result;
@@ -61,8 +60,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private static final String FMT_STDOUT = "%s.stdout";
     private static final String FMT_STDERR = "%s.stderr";
     
-    private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String,ActionStepRunFcliEntry> map;
     
     /**
@@ -78,7 +76,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     protected final void process(String name, ActionStepRunFcliEntry entry) {
         if ( isSkipped(entry) ) { return; }
         logStatus(entry, "START");
-        var cmd = vars.eval(entry.getCmd(), String.class);
+        var cmd = getVars().eval(entry.getCmd(), String.class);
         ctx.getProgressWriter().writeProgress("Executing fcli %s",
                 // Replace all whitespace (including newlines) with single space
                 //   to avoid errors on single-line progress writer
@@ -121,8 +119,8 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     private final boolean isSkipped(ActionStepRunFcliEntry entry) {
         var plainSkipMessage = getSkipMessage(entry);
         if ( StringUtils.isBlank(plainSkipMessage) ) { 
-            vars.set(String.format(FMT_SKIPPED, entry.getKey()), BooleanNode.FALSE);
-            vars.set(String.format(FMT_SKIP_REASON, entry.getKey()), NullNode.instance);
+            getVars().set(String.format(FMT_SKIPPED, entry.getKey()), BooleanNode.FALSE);
+            getVars().set(String.format(FMT_SKIP_REASON, entry.getKey()), NullNode.instance);
             // status & dependencySkipReason are set by setFcliVars after execution
             return false; 
         } else {
@@ -131,11 +129,11 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
             var dependencySkipReason = String.format("%s was skipped", entry.getKey());
             LOG.info(fullSkipMessage);
             System.out.println(fullSkipMessage);
-            vars.set(String.format(FMT_STATUS, entry.getKey()), new TextNode("SKIPPED"));
-            vars.set(String.format(FMT_SKIPPED, entry.getKey()), BooleanNode.TRUE);
-            vars.set(String.format(FMT_SKIP_REASON, entry.getKey()), new TextNode(plainSkipMessage)); // Legacy; see statusReason below
-            vars.set(String.format(FMT_STATUS_REASON, entry.getKey()), new TextNode(plainSkipMessage));
-            vars.set(String.format(FMT_DEPENDENCY_SKIP_REASON, entry.getKey()), new TextNode(dependencySkipReason));
+            getVars().set(String.format(FMT_STATUS, entry.getKey()), new TextNode("SKIPPED"));
+            getVars().set(String.format(FMT_SKIPPED, entry.getKey()), BooleanNode.TRUE);
+            getVars().set(String.format(FMT_SKIP_REASON, entry.getKey()), new TextNode(plainSkipMessage)); // Legacy; see statusReason below
+            getVars().set(String.format(FMT_STATUS_REASON, entry.getKey()), new TextNode(plainSkipMessage));
+            getVars().set(String.format(FMT_DEPENDENCY_SKIP_REASON, entry.getKey()), new TextNode(dependencySkipReason));
             setGroupVars(entry);
             return true;
         }
@@ -146,7 +144,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         if ( skipIfReason!=null ) {
             return skipIfReason.stream()
                     .filter(Objects::nonNull)
-                    .map(t->vars.eval(t, String.class))
+                    .map(t->getVars().eval(t, String.class))
                     .filter(StringUtils::isNotBlank)
                     .findFirst()
                     .orElse(null);
@@ -170,7 +168,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
             if ( failOnError(fcli) ) {
                 throw new FcliActionStepException(msg).exitCode(result.getExitCode());
             } else {
-                vars.set(String.format(FMT_STATUS_REASON, fcli.getKey()), new TextNode(msg));
+                getVars().set(String.format(FMT_STATUS_REASON, fcli.getKey()), new TextNode(msg));
             }
         }
     }
@@ -184,7 +182,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     }
 
     private String getFcliCmdWithoutOpts(ActionStepRunFcliEntry fcli) {
-        var result = vars.eval(fcli.getCmd(), String.class).replaceAll("\s+-.*", "");
+        var result = getVars().eval(fcli.getCmd(), String.class).replaceAll("\s+-.*", "");
         return result.startsWith("fcli") ? result : String.format("fcli %s", result);
     }
 
@@ -196,12 +194,12 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         msg = msg==null 
             ? "Fcli command terminated with an exception"
             : String.format("Exception: %s", msg.split("\n", 2)[0]); // Get first line only
-        vars.set(String.format(FMT_STATUS_REASON, name), new TextNode(msg));
-        vars.set(String.format(FMT_EXIT_CODE, name), new IntNode(1));
-        vars.set(String.format(FMT_STATUS, name), "FAILED");
-        vars.set(String.format(FMT_SUCCESS, name), BooleanNode.FALSE);
-        vars.set(String.format(FMT_FAILED, name), BooleanNode.TRUE);
-        vars.set(String.format(FMT_DEPENDENCY_SKIP_REASON, name), new TextNode(String.format("%s failed", name)));
+        getVars().set(String.format(FMT_STATUS_REASON, name), new TextNode(msg));
+        getVars().set(String.format(FMT_EXIT_CODE, name), new IntNode(1));
+        getVars().set(String.format(FMT_STATUS, name), "FAILED");
+        getVars().set(String.format(FMT_SUCCESS, name), BooleanNode.FALSE);
+        getVars().set(String.format(FMT_FAILED, name), BooleanNode.TRUE);
+        getVars().set(String.format(FMT_DEPENDENCY_SKIP_REASON, name), new TextNode(String.format("%s failed", name)));
         setGroupVars(fcli);
         if ( failOnError(fcli) ) {
             throw new FcliActionStepException("Fcli command terminated with an exception", t);
@@ -217,15 +215,15 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
 
     private void setResultVars(ActionStepRunFcliEntry fcli, FcliRecordConsumer recordConsumer, AtomicReference<ObjectNode> metadataHolder, Result result) {
         var name = fcli.getKey();
-        vars.set(String.format(FMT_RECORDS, name), recordConsumer!=null ? recordConsumer.getRecords() : JsonHelper.getObjectMapper().createArrayNode());
-        vars.set(String.format(FMT_METADATA, name), metadataHolder.get()!=null ? metadataHolder.get() : NullNode.instance);
-        vars.set(String.format(FMT_STDOUT, name), result.getOut());
-        vars.set(String.format(FMT_STDERR, name), result.getErr());
-        vars.set(String.format(FMT_EXIT_CODE, name), new IntNode(result.getExitCode()));
-        vars.set(String.format(FMT_STATUS, name), getStatusString(result));
-        vars.set(String.format(FMT_SUCCESS, name), BooleanNode.valueOf(result.getExitCode()==0));
-        vars.set(String.format(FMT_FAILED, name), BooleanNode.valueOf(result.getExitCode()!=0));
-        vars.set(String.format(FMT_DEPENDENCY_SKIP_REASON, name), result.getExitCode()==0 ? NullNode.instance : new TextNode(String.format("%s failed", name)));
+        getVars().set(String.format(FMT_RECORDS, name), recordConsumer!=null ? recordConsumer.getRecords() : JsonHelper.getObjectMapper().createArrayNode());
+        getVars().set(String.format(FMT_METADATA, name), metadataHolder.get()!=null ? metadataHolder.get() : NullNode.instance);
+        getVars().set(String.format(FMT_STDOUT, name), result.getOut());
+        getVars().set(String.format(FMT_STDERR, name), result.getErr());
+        getVars().set(String.format(FMT_EXIT_CODE, name), new IntNode(result.getExitCode()));
+        getVars().set(String.format(FMT_STATUS, name), getStatusString(result));
+        getVars().set(String.format(FMT_SUCCESS, name), BooleanNode.valueOf(result.getExitCode()==0));
+        getVars().set(String.format(FMT_FAILED, name), BooleanNode.valueOf(result.getExitCode()!=0));
+        getVars().set(String.format(FMT_DEPENDENCY_SKIP_REASON, name), result.getExitCode()==0 ? NullNode.instance : new TextNode(String.format("%s failed", name)));
         setGroupVars(fcli);
     }
     
@@ -235,7 +233,7 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         group = StringUtils.isNotBlank(group) ? group : groupFromConfig;
         if ( StringUtils.isNotBlank(group) ) {
             var key = entry.getKey();
-            vars.set(String.format("%s.%s", group, key), vars.eval(String.format("#root['%s']", key), ObjectNode.class));
+            getVars().set(String.format("%s.%s", group, key), getVars().eval(String.format("#root['%s']", key), ObjectNode.class));
         }
     }
     
@@ -277,8 +275,6 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
     }
     @RequiredArgsConstructor
     private class FcliRecordConsumer implements Consumer<ObjectNode> {
-        private final PrintStream stdout = System.out;
-        private final PrintStream stderr = System.err;
         private final ActionStepFcliForEachDescriptor fcliForEach;
         private final boolean collectRecords;
         @Getter(lazy=true) private final ArrayNode records = JsonHelper.getObjectMapper().createArrayNode();
@@ -302,18 +298,12 @@ public class ActionStepProcessorRunFcli extends AbstractActionStepProcessorMapEn
         }
         
         private final class TempRestoreOutput implements AutoCloseable {
-            private final PrintStream prevThreadOut = FcliExecutionOutputContext.getThreadOut();
-            private final PrintStream prevThreadErr = FcliExecutionOutputContext.getThreadErr();
-            public TempRestoreOutput() {
-                FcliExecutionOutputContext.setThreadOut(stdout);
-                FcliExecutionOutputContext.setThreadErr(stderr);
-            }
+            private final PrintStream poppedOut = StdioHelper.popOut();
+            private final PrintStream poppedErr = StdioHelper.popErr();
             @Override
             public void close() {
-                if ( prevThreadOut==null ) { FcliExecutionOutputContext.clearThreadOut(); }
-                else { FcliExecutionOutputContext.setThreadOut(prevThreadOut); }
-                if ( prevThreadErr==null ) { FcliExecutionOutputContext.clearThreadErr(); }
-                else { FcliExecutionOutputContext.setThreadErr(prevThreadErr); }
+                StdioHelper.pushErr(poppedErr);
+                StdioHelper.pushOut(poppedOut);
             }
         }
     }

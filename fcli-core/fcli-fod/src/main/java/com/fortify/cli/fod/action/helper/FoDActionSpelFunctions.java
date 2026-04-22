@@ -14,9 +14,11 @@ package com.fortify.cli.fod.action.helper;
 
 import static com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction.SpelFunctionCategory.fortify;
 
+import java.util.function.Supplier;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.spel.SpelHelper;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunction;
 import com.fortify.cli.common.spel.fn.descriptor.annotation.SpelFunctionParam;
@@ -25,20 +27,37 @@ import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
-import lombok.RequiredArgsConstructor;
+import kong.unirest.UnirestInstance;
 
-@RequiredArgsConstructor @Reflectable
+@Reflectable
 @SpelFunctionPrefix("fod.")
 public final class FoDActionSpelFunctions {
-    private final FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
-    private final ActionRunnerContext ctx;
+    private final Supplier<UnirestInstance> fodUnirestSupplier;
+    private final Supplier<String> baseUrlSupplier;
+    private final ActionRunnerContextLocal ctx;
+    
+    /** Constructor for picocli mixin usage (existing FoDActionRunCommand pattern). */
+    public FoDActionSpelFunctions(FoDUnirestInstanceSupplierMixin mixin, ActionRunnerContextLocal ctx) {
+        this(mixin::getUnirestInstance,
+             () -> mixin.getSessionDescriptor().getUrlConfig().getUrl(),
+             ctx);
+    }
+    
+    /** Constructor for programmatic usage (product context provider). */
+    public FoDActionSpelFunctions(Supplier<UnirestInstance> fodUnirestSupplier,
+                                   Supplier<String> baseUrlSupplier,
+                                   ActionRunnerContextLocal ctx) {
+        this.fodUnirestSupplier = fodUnirestSupplier;
+        this.baseUrlSupplier = baseUrlSupplier;
+        this.ctx = ctx;
+    }
     
     @SpelFunction(cat=fortify, returns="FoD release object for the given release name or id") 
     public final ObjectNode release(
             @SpelFunctionParam(name="nameOrId", desc="the name or ID of the release to load") String nameOrId)
     {
         ctx.getProgressWriter().writeProgress("Loading release %s", nameOrId);
-        var result = FoDReleaseHelper.getReleaseDescriptor(unirestInstanceSupplier.getUnirestInstance(), nameOrId, ":", true);
+        var result = FoDReleaseHelper.getReleaseDescriptor(fodUnirestSupplier.get(), nameOrId, ":", true);
         ctx.getProgressWriter().writeProgress("Loaded release %s", result.getQualifiedName());
         return result.asObjectNode();
     }
@@ -70,6 +89,6 @@ public final class FoDActionSpelFunctions {
         return ctx.getSpelEvaluator().evaluate(SpelHelper.parseTemplateExpression(deepLinkExpression), release, String.class);
     }
     private String baseUrl() {
-        return FoDProductHelper.INSTANCE.getBrowserUrl(unirestInstanceSupplier.getSessionDescriptor().getUrlConfig().getUrl());
+        return FoDProductHelper.INSTANCE.getBrowserUrl(baseUrlSupplier.get());
     }
 }

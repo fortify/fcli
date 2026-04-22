@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest with.product (SSC)
+  description: Tests with.product step for SSC product context
+
+cli.options:
+  mode:
+    names: --mode
+    description: Test mode to run (rest or spel)
+    required: true
+  id:
+    names: --id
+    description: App version id
+    required: false
+
+steps:
+  - if: ${cli.mode == 'rest'}
+    do:
+      - with.product:
+          name: ssc
+          do:
+            - rest.call:
+                versions:
+                  target: ssc
+                  uri: /api/v1/projectVersions?limit=1
+                  on.success:
+                    - out.write:
+                        stdout: "SSC-REST-OK count=${versions_raw.count}\n"
+
+  - if: ${cli.mode == 'spel'}
+    do:
+      - with.product:
+          name: ssc
+          do:
+            - var.set:
+                av: ${#ssc.appVersion(cli.id)}
+            - out.write:
+                stdout: "SSC-SPEL-OK name=${av.project.name}:${av.name}\n"

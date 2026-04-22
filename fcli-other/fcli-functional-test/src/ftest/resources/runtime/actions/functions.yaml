@@ -1,0 +1,104 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest action functions
+  description: "Tests function declaration, #fn.call SpEL, streaming, and export control"
+
+functions:
+  # Simple non-streaming function returning a computed value
+  add:
+    description: Add two numbers
+    args:
+      a: { required: true, type: int }
+      b: { required: true, type: int }
+    return: ${_result}
+    steps:
+      - var.set:
+          _result: ${args.a + args.b}
+
+  # Function returning a greeting string
+  greet:
+    description: Greet someone
+    args:
+      name: { required: true }
+    return: ${_result}
+    steps:
+      - var.set:
+          _result: ${'Hello, ' + args.name + '!'}
+
+  # Streaming function that logs before each yield, for verifying lazy evaluation
+  eachWithLog:
+    description: Yield each element, logging before each yield
+    streaming: true
+    args:
+      items: { required: true, type: array }
+    steps:
+      - records.for-each:
+          from: ${args.items}
+          record.var-name: _item
+          do:
+            - out.write:
+                stdout: "Yield: ${_item}\n"
+            - fn.yield: ${_item}
+
+  # Internal (non-exported) helper
+  _internal:
+    export: false
+    return: ${_result}
+    steps:
+      - var.set:
+          _result: internal-value
+
+  # Function that calls another function
+  addAndGreet:
+    description: Calls add and greet functions
+    args:
+      a: { required: true, type: int }
+      b: { required: true, type: int }
+      name: { required: true }
+    return: ${_result}
+    steps:
+      - var.set:
+          sum: ${#fn.call('add', args.a, args.b)}
+          greeting: ${#fn.call('greet', args.name)}
+      - var.set:
+          _result: ${greeting + ' Sum=' + sum}
+
+cli.options:
+  mode:
+    names: --mode
+    description: Test mode to run
+    required: true
+
+steps:
+  # Mode: fn-call-spel - test #fn.call() SpEL function
+  - if: ${cli.mode == 'fn-call-spel'}
+    do:
+      - var.set:
+          result: ${#fn.call('greet', 'World')}
+      - out.write:
+          stdout: ${result}
+
+  # Mode: fn-call-streaming-spel - test streaming from #fn.call in records.for-each,
+  # verifying lazy evaluation (each yield immediately followed by processing)
+  - if: ${cli.mode == 'fn-call-streaming-spel'}
+    do:
+      - records.for-each:
+          from: ${#fn.call('eachWithLog', {10, 20, 30})}
+          record.var-name: item
+          do:
+            - out.write:
+                stdout: "Process: ${item}\n"
+
+  # Mode: fn-call-composed - test function calling other functions
+  - if: ${cli.mode == 'fn-call-composed'}
+    do:
+      - out.write:
+          stdout: ${#fn.call('addAndGreet', 10, 20, 'Test')}
+
+  # Mode: fn-call-internal - test that internal function is callable from steps
+  - if: ${cli.mode == 'fn-call-internal'}
+    do:
+      - out.write:
+          stdout: ${#fn.call('_internal')}

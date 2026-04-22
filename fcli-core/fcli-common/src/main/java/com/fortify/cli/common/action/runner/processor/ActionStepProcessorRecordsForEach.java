@@ -14,12 +14,15 @@ package com.fortify.cli.common.action.runner.processor;
 
 import java.util.Collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.POJONode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach;
 import com.fortify.cli.common.action.model.ActionStepRecordsForEach.IActionStepForEachProcessor;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
-import com.fortify.cli.common.action.runner.ActionRunnerVars;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -29,15 +32,21 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcessor {
-    private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
+    private static final Logger LOG = LoggerFactory.getLogger(ActionStepProcessorRecordsForEach.class);
+    private final ActionRunnerContextLocal ctx;
     private final ActionStepRecordsForEach step;
 
     @Override
     public void process() {
     // TODO Clean up this method
-        var from = vars.eval(step.getFrom(), Object.class);
+        var from = getVars().eval(step.getFrom(), Object.class);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("records.for-each 'from' evaluated to: {} (class={})", from, from==null?"null":from.getClass().getName());
+        }
         if ( from==null ) { return; }
+        if ( from instanceof POJONode ) {
+            from = ((POJONode) from).getPojo();
+        }
         if ( from instanceof IActionStepForEachProcessor ) {
             ((IActionStepForEachProcessor)from).process(node->processForEachStepNode(step, node));
             return;
@@ -49,7 +58,8 @@ public class ActionStepProcessorRecordsForEach extends AbstractActionStepProcess
             JsonHelper.stream((ArrayNode)from)
                 .allMatch(value->processForEachStepNode(step, value));
         } else {
-            throw new FcliActionStepException("steps:records.for-each:from must evaluate to either an array or IActionStepForEachProcessor instance");
+            LOG.trace("records.for-each unexpected 'from' type: {}", from.getClass().getName());
+            throw new FcliActionStepException("steps:records.for-each:from must evaluate to either an array or IActionStepForEachProcessor instance; actual type: " + from.getClass().getName());
         }
     }
 }

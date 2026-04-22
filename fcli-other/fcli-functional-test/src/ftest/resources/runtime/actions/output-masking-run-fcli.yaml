@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+# Wrapper action for testing run.fcli stdout/stderr collection behavior.
+# Invokes the output-masking action via run.fcli with stdout/stderr collection,
+# then writes the collected output to this action's stdout for test verification.
+#
+# Tests verify that:
+#   - run.fcli properly captures inner command output via stdout/stderr: collect
+#   - Captured output is masked when written back through the normal output path
+
+author: ftest
+usage:
+  header: Ftest run.fcli collection wrapper
+  description: Invokes the output-masking action via run.fcli with collection settings.
+
+cli.options:
+  actionPath:
+    names: --action-path
+    description: Absolute path to the output-masking test action.
+    required: true
+  secret:
+    names: --secret
+    description: Sensitive value forwarded to the inner action.
+    required: true
+    mask: {sensitivity: high}
+  innerMode:
+    names: --inner-mode
+    description: Output mode for the inner action (stdout, stderr, info, warn).
+    required: true
+
+steps:
+  # Determine the --progress value for the inner command: use 'simple' for progress mode
+  # (so writeProgress produces output), 'none' otherwise.
+  - var.set:
+      progressType: "${cli.innerMode == 'progress' ? 'simple' : 'none'}"
+  # Run the inner action with both stdout and stderr collection enabled.
+  # The inner command's output goes to CollectingPrintStream (above MaskingPrintStream
+  # in the stack), so collected values are raw/unmasked at this point.
+  - run.fcli:
+      inner:
+        cmd: action run ${cli.actionPath} --on-unsigned=ignore --on-invalid-version=ignore --progress=${progressType} --mode ${cli.innerMode} --secret ${cli.secret}
+        stdout: collect
+        stderr: collect
+  # Write collected output back to this action's stdout.
+  # At this point, the CollectingPrintStream has been popped, so output flows through
+  # MaskingPrintStream which applies masking to any sensitive values in the collected strings.
+  - out.write:
+      stdout: "collected-stdout:${inner.stdout.trim()}\ncollected-stderr:${inner.stderr.trim()}\n"

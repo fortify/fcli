@@ -47,17 +47,17 @@ public class ActionRunnerConfig {
     /** Callback to handle validation errors */
     @NonNull private final Function<OptionsParseResult, RuntimeException> onValidationErrors;
     /** Action context configurers. Main purpose is to register request helpers on the context. */
-    @Singular private final Collection<Consumer<ActionRunnerContext>> actionContextConfigurers;
+    @Singular private final Collection<Consumer<ActionRunnerContextLocal>> actionContextConfigurers;
     /** SpEL configuration functions for configuring the {@link ISpelEvaluator} instances provided by
-     *  {@link ActionRunnerConfig} and {@link ActionRunnerContext} through their getSpelEvaluator()
+     *  {@link ActionRunnerConfig} and {@link ActionRunnerContextLocal} through their getSpelEvaluator()
      *  methods. Note that these configurers may not call getSpelEvaluator() during the configuration phase, 
      *  but they may register functions/classes that call getSpelEvaluator() */
     @Singular private final Collection<BiConsumer<ActionRunnerConfig, SimpleEvaluationContext>> actionConfigSpelEvaluatorConfigurers;
     /** SpEL configuration functions for configuring the {@link ISpelEvaluator} instance provided by
-     *  {@link ActionRunnerContext}. Note that these configurers may not call the getSpelEvaluator() method 
-     *  on {@link ActionRunnerContext} during the configuration phase, but they may call getSpelEvaluator()
-     *  on the {@link ActionRunnerConfig} as returned by the {@link ActionRunnerContext#getConfig()} method. */
-    @Singular private final Collection<BiConsumer<ActionRunnerContext, SimpleEvaluationContext>> actionContextSpelEvaluatorConfigurers;
+     *  {@link ActionRunnerContextLocal}. Note that these configurers may not call the getSpelEvaluator() method 
+     *  on {@link ActionRunnerContextLocal} during the configuration phase, but they may call getSpelEvaluator()
+     *  on the {@link ActionRunnerConfig} as returned by the {@link ActionRunnerContextLocal#getConfig()} method. */
+    @Singular private final Collection<BiConsumer<ActionRunnerContextLocal, SimpleEvaluationContext>> actionContextSpelEvaluatorConfigurers;
     /** Default options to pass to fcli commands in run.fcli steps (if the fcli command supports that option) */ 
     @Singular private final Map<String,String> defaultFcliRunOptions;
     /** Injected UnirestContext for REST targets and related helpers */

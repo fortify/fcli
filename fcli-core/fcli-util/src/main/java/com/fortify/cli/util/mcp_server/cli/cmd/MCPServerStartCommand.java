@@ -12,37 +12,54 @@
  */
 package com.fortify.cli.util.mcp_server.cli.cmd;
 
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.ActionCliOption;
+import com.fortify.cli.common.action.model.ActionFunction;
 import com.fortify.cli.common.action.model.ActionMcpIncludeExclude;
+import com.fortify.cli.common.action.runner.ActionFunctionExecutor;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
+import com.fortify.cli.common.cli.util.FcliExecutionContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.exception.FcliBugException;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.mcp.MCPExclude;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.FcliBuildProperties;
+import com.fortify.cli.util._common.cli.mixin.AsyncJobManagerMixin;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.IMCPToolArgHandler;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerActionOption;
+import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlerPaging;
 import com.fortify.cli.util.mcp_server.helper.mcp.arg.MCPToolArgHandlers;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.IMCPToolRunner;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPResourceFcliRunnerFunction;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerAction;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerFunction;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerFunctionStreaming;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerPlainText;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecords;
 import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecordsPaged;
@@ -50,14 +67,17 @@ import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRunnerRecord
 import io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpServerFeatures.SyncResourceTemplateSpecification;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.JsonSchema;
+import io.modelcontextprotocol.spec.McpSchema.ResourceTemplate;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
@@ -65,16 +85,31 @@ import picocli.CommandLine.Option;
 @MCPExclude // Doesn't make sense to allow mcp-server start command to be called from MCP server
 @Slf4j
 public class MCPServerStartCommand extends AbstractRunnableCommand {
-    @Option(names={"--module", "-m"}, required = true) private McpModule module;
+    @Option(names={"--module", "-m"}, required = false) private McpModule module;
+    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names={"--import"}, split=",") private List<String> importFiles;
     @Option(names={"--work-threads"}, defaultValue="10") private int workThreads;
     @Option(names={"--progress-threads"}, defaultValue="4") private int progressThreads;
     @Option(names={"--job-safe-return"}, defaultValue="25s") private String jobSafeReturnPeriod;
     @Option(names={"--progress-interval"}, defaultValue="5s") private String progressIntervalPeriod;
+    @Mixin private AsyncJobManagerMixin asyncJobManagerMixin;
+    private static final AsyncJobManager.Config MCP_ASYNC_DEFAULTS = AsyncJobManager.Config.builder().build();
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MILLISECONDS, Period.MINUTES);
+    private final FcliExecutionContext sharedFunctionContext = new FcliExecutionContext();
     private MCPJobManager jobManager;
 
     @Override
     public Integer call() throws Exception {
+        if (module == null && (importFiles == null || importFiles.isEmpty())) {
+            throw new FcliSimpleException("At least one of --module or --import must be specified");
+        }
+        var rawOut = StdioHelper.getRawOut();
+        var rawErr = StdioHelper.getRawErr();
+        // Redirect progress output to stderr to prevent progress messages
+        // from corrupting the MCP protocol on the stdout channel
+        StdioHelper.setProgressOut(rawErr);
+        StdioHelper.setProgressErr(rawErr);
+
         long safeReturnMillis = PERIOD_HELPER.parsePeriodToMillis(jobSafeReturnPeriod);
         long progressIntervalMillis = PERIOD_HELPER.parsePeriodToMillis(progressIntervalPeriod);
         if ( safeReturnMillis<=0 ) {
@@ -83,40 +118,56 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
         if ( progressIntervalMillis<=0 ) {
             progressIntervalMillis = 500;
         }
+        var asyncConfig = asyncJobManagerMixin.buildAsyncJobManager(MCP_ASYNC_DEFAULTS);
         // Instantiate job manager prior to building tool specs so we can include job tool spec
-        this.jobManager = new MCPJobManager(module.toString(), workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
+        this.jobManager = new MCPJobManager(workThreads, progressThreads, safeReturnMillis, progressIntervalMillis, asyncConfig);
         var toolSpecs = createToolSpecs();
+        var resourceTemplateSpecs = createResourceTemplateSpecs();
+        var hasResources = !resourceTemplateSpecs.isEmpty();
         var objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var server = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper)))
+        // Wrap System.in so we can detect EOF (client disconnect) and unblock the main thread.
+        var latch = new CountDownLatch(1);
+        var wrappedIn = new FilterInputStream(System.in) {
+            @Override public int read() throws IOException {
+                int b = super.read(); if (b == -1) { latch.countDown(); } return b;
+            }
+            @Override public int read(byte[] b, int off, int len) throws IOException {
+                int n = super.read(b, off, len); if (n == -1) { latch.countDown(); } return n;
+            }
+        };
+        // Use rawOut to bypass the delegation/masking stack, ensuring
+        // MCP JSON-RPC responses are never corrupted by masking
+        var serverBuilder = McpServer.sync(new StdioServerTransportProvider(new JacksonMcpJsonMapper(objectMapper), wrappedIn, rawOut))
                 .serverInfo("fcli", FcliBuildProperties.INSTANCE.getFcliVersion())
                 .requestTimeout(Duration.ofSeconds(120))
                 .instructions("""
                         - For tools that accept a --*-session option and user hasn't asked for a specific \
                         session, inform the user that the 'default' session will be used.
                         """)
-                .capabilities(getServerCapabilities())
-                .tools(toolSpecs)
-                .build();
-    log.debug("Initialized MCP server instance: {}", server);
-    log.info("Fcli MCP server running on stdio");
+                .capabilities(getServerCapabilities(hasResources))
+                .tools(toolSpecs);
+        if (hasResources) {
+            serverBuilder.resourceTemplates(resourceTemplateSpecs);
+        }
+        var server = serverBuilder.build();
+        log.debug("Initialized MCP server instance: {}", server);
+        log.info("Fcli MCP server running on stdio");
         System.err.println("Fcli MCP server running on stdio. Hit Ctrl-C to exit.");
-        Thread.getAllStackTraces().keySet().stream()
-            .filter(t->!t.isDaemon() && t!=Thread.currentThread())
-            .forEach(t-> {
-                try {
-                    t.join();
-                } catch (InterruptedException e) {
-                    log.warn("Interrupted while joining thread {}", t.getName(), e);
-                    Thread.currentThread().interrupt();
-                }
-            });
+        // Block the main thread until the MCP client disconnects (stdin EOF) or the process
+        // receives SIGTERM/SIGINT. The StdioServerTransportProvider schedules its inbound/
+        // outbound threads asynchronously; the old Thread.getAllStackTraces() join loop raced
+        // against those threads not yet being visible in the JVM thread list, causing premature
+        // process exit (System.exit is called after call() returns) before the initialization
+        // handshake could complete. The latch approach eliminates that race entirely.
+        Runtime.getRuntime().addShutdownHook(new Thread(latch::countDown, "mcp-shutdown-hook"));
+        latch.await();
         return 0;
     }
 
-    private static ServerCapabilities getServerCapabilities() {
+    private static ServerCapabilities getServerCapabilities(boolean hasResources) {
         return ServerCapabilities.builder()
-                .resources(false, false)
+                .resources(hasResources, false)
                 .prompts(false)
                 .tools(true)
                 .build();
@@ -124,16 +175,36 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
 
     private List<SyncToolSpecification> createToolSpecs() {
         var result = new ArrayList<SyncToolSpecification>();
-        result.addAll(module.getSubcommandsStream()
-                .filter(spec->!FcliCommandSpecHelper.isMcpIgnored(spec))
-                .map(this::createCommandToolSpec)
-                .peek(s->log.debug("Registering cmd tool: {}", s.tool().name()))
-                .toList());
-        if ( module.hasActionCmd() ) {
-            result.addAll(createActionToolSpecs());
+        if (module != null) {
+            result.addAll(module.getSubcommandsStream()
+                    .filter(spec->!FcliCommandSpecHelper.isMcpIgnored(spec))
+                    .map(this::createCommandToolSpec)
+                    .peek(s->log.debug("Registering cmd tool: {}", s.tool().name()))
+                    .toList());
+            if ( module.hasActionCmd() ) {
+                result.addAll(createActionToolSpecs());
+            }
+        }
+        // Register function tools from --import files
+        if (importFiles != null) {
+            for (var importFile : importFiles) {
+                var action = loadImportedAction(importFile);
+                result.addAll(createImportedFunctionToolSpecs(action));
+            }
         }
         // Job management tool
         result.add(jobManager.getJobToolSpecification());
+        return result;
+    }
+
+    private List<SyncResourceTemplateSpecification> createResourceTemplateSpecs() {
+        var result = new ArrayList<SyncResourceTemplateSpecification>();
+        if (importFiles != null) {
+            for (var importFile : importFiles) {
+                var action = loadImportedAction(importFile);
+                result.addAll(createImportedFunctionResourceTemplateSpecs(action));
+            }
+        }
         return result;
     }
 
@@ -159,6 +230,116 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
     private SyncToolSpecification createCommandToolSpec(CommandSpec spec) {
         return new CommandToolSpecHelper(spec).createToolSpec();
     }
+
+    private Action loadImportedAction(String importFile) {
+        var sources = ActionSource.externalActionSources(importFile);
+        var validationHandler = ActionValidationHandler.WARN;
+        return ActionLoaderHelper.load(sources, importFile, validationHandler).getAction();
+    }
+
+    private List<SyncToolSpecification> createImportedFunctionToolSpecs(Action action) {
+        var result = new ArrayList<SyncToolSpecification>();
+        for (var entry : action.getFunctions().entrySet()) {
+            var function = entry.getValue();
+            if (!function.isExported()) { continue; }
+            if (hasMcpResourceMeta(function)) { continue; } // Resources handled separately
+            var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+            var toolName = "fcli_fn_" + function.getKey().replace('-', '_');
+            var schema = buildFunctionArgsSchema(function);
+            var description = function.getDescription() != null ? function.getDescription() : function.getKey();
+            IMCPToolRunner runner;
+            if (function.isStreaming()) {
+                new MCPToolArgHandlerPaging().updateSchema(schema);
+                description = description + "\nPaging Guidance: This function streams records. "
+                        + "When pagination.totalRecords is null, use the pagination.jobToken to wait for loading to complete.";
+                runner = new MCPToolFcliRunnerFunctionStreaming(executor, jobManager, toolName);
+            } else {
+                runner = new MCPToolFcliRunnerFunction(executor, jobManager, toolName);
+            }
+            var tool = Tool.builder()
+                    .name(toolName)
+                    .description(description)
+                    .inputSchema(schema)
+                    .build();
+            result.add(McpServerFeatures.SyncToolSpecification.builder()
+                    .tool(tool)
+                    .callHandler(runner::run)
+                    .build());
+            log.debug("Registering function tool: {} (streaming={})", toolName, function.isStreaming());
+        }
+        return result;
+    }
+
+    private List<SyncResourceTemplateSpecification> createImportedFunctionResourceTemplateSpecs(Action action) {
+        var result = new ArrayList<SyncResourceTemplateSpecification>();
+        for (var entry : action.getFunctions().entrySet()) {
+            var function = entry.getValue();
+            if (!function.isExported()) { continue; }
+            if (!hasMcpResourceMeta(function)) { continue; }
+            var resourceMeta = getMcpResourceMeta(function);
+            var uriTemplate = getMetaString(resourceMeta, "uri-template");
+            if (uriTemplate == null) { continue; }
+            var name = getMetaString(resourceMeta, "name");
+            var mimeType = getMetaString(resourceMeta, "mime-type");
+            var executor = new ActionFunctionExecutor(action, function, sharedFunctionContext);
+            var template = ResourceTemplate.builder()
+                    .uriTemplate(uriTemplate)
+                    .name(name != null ? name : function.getKey())
+                    .description(function.getDescription())
+                    .mimeType(mimeType != null ? mimeType : "application/json")
+                    .build();
+            var handler = new MCPResourceFcliRunnerFunction(executor, uriTemplate, mimeType);
+            result.add(new SyncResourceTemplateSpecification(template, handler::read));
+            log.debug("Registering function resource template: {}", uriTemplate);
+        }
+        return result;
+    }
+
+    private boolean hasMcpResourceMeta(ActionFunction function) {
+        return function.getMeta() != null && function.getMeta().has("mcp.resource");
+    }
+
+    private JsonNode getMcpResourceMeta(ActionFunction function) {
+        return function.getMeta().get("mcp.resource");
+    }
+
+    private String getMetaString(JsonNode meta, String key) {
+        if (meta == null || !meta.has(key)) { return null; }
+        var node = meta.get(key);
+        return node.isTextual() ? node.asText() : null;
+    }
+
+    private JsonSchema buildFunctionArgsSchema(ActionFunction function) {
+        var properties = new LinkedHashMap<String, Object>();
+        var required = new ArrayList<String>();
+        for (var argEntry : function.getArgsOrEmpty().entrySet()) {
+            var argName = argEntry.getKey();
+            var argDef = argEntry.getValue();
+            var propNode = new LinkedHashMap<String, Object>();
+            propNode.put("type", mapArgType(argDef.getType()));
+            if (argDef.getDescription() != null) {
+                propNode.put("description", argDef.getDescription());
+            }
+            properties.put(argName, propNode);
+            if (Boolean.TRUE.equals(argDef.getRequired())) {
+                required.add(argName);
+            }
+        }
+        return new JsonSchema("object", properties, required, false,
+                new LinkedHashMap<>(), new LinkedHashMap<>());
+    }
+
+    private static String mapArgType(String type) {
+        if (type == null) { return "string"; }
+        return switch (type) {
+            case "boolean" -> "boolean";
+            case "int", "long" -> "integer";
+            case "double", "float" -> "number";
+            case "array" -> "string";
+            default -> "string";
+        };
+    }
+
 
     private final class CommandToolSpecHelper {
         private final CommandSpec commandSpec;
@@ -186,7 +367,7 @@ public class MCPServerStartCommand extends AbstractRunnableCommand {
             if ( toolSpecArgHelper.isPaged() ) {
                 // Append paging guidance for LLM/client
                 base = base + "\nPaging Guidance: This tool may return partial results if background record collection is still in progress. "
-                        + "When pagination.totalRecords is null, call the job tool 'fcli_"+module.toString().replace('-', '_')+"_mcp_job' with operation=wait and the pagination.jobToken value to finalize loading and obtain totalRecords & totalPages.";
+                        + "When pagination.totalRecords is null, call the job tool '"+MCPJobManager.JOB_TOOL_NAME+"' with operation=wait and the pagination.jobToken value to finalize loading and obtain totalRecords & totalPages.";
             }
             return base;
         }

@@ -49,8 +49,18 @@ public final class FcliCommandExecutorFactory {
     @NonNull private final String cmd;
     private final Consumer<ObjectNode> recordConsumer;
     private final Consumer<ObjectNode> metadataConsumer;
-    @Builder.Default private final OutputType stdoutOutputType = OutputType.show;
+    @Builder.Default private final OutputType stdoutOutputTypeIfRecordCollectionSupported = OutputType.show;
+    @Builder.Default private final OutputType stdoutOutputTypeIfRecordCollectionNotSupported = OutputType.show;
     @Builder.Default private final OutputType stderrOutputType = OutputType.show;
+
+    // Partial builder class; Lombok adds the generated field methods to this.
+    public static class FcliCommandExecutorFactoryBuilder {
+        /** Convenience method: sets the same stdout type regardless of whether the command supports record collection. */
+        public FcliCommandExecutorFactoryBuilder stdoutOutputType(OutputType type) {
+            return stdoutOutputTypeIfRecordCollectionSupported(type)
+                    .stdoutOutputTypeIfRecordCollectionNotSupported(type);
+        }
+    }
     private final Consumer<Result> onResult; // Always executed if fcli command didn't throw exception
     private final Consumer<Result> onSuccess; // Executed after onResult, if 0 exit code
     private final Consumer<Result> onFail; // Executed after onResult, if non-zero exit code
@@ -121,7 +131,7 @@ public final class FcliCommandExecutorFactory {
                 try {
                     result = OutputHelper.builder()
                             .stderrType(stderrOutputType)
-                            .stdoutType(stdoutOutputType)
+                            .stdoutType(resolveStdoutOutputType())
                             .build().call(f);
                 } catch ( Throwable t ) {
                     if ( t instanceof ExecutionException ) {
@@ -190,11 +200,17 @@ public final class FcliCommandExecutorFactory {
             return FcliCommandSpecHelper.canCollectRecords(replicatedLeafCommandSpec);
         }
 
+        private OutputType resolveStdoutOutputType() {
+            return replicatedLeafCommandSpec!=null && canCollectRecords()
+                    ? stdoutOutputTypeIfRecordCollectionSupported
+                    : stdoutOutputTypeIfRecordCollectionNotSupported;
+        }
+
         private void setPerCommandConsumers() {
             var userObj = replicatedLeafCommandSpec.userObject();
             if ( userObj instanceof IRecordCollectionSupport rcs ) {
                 if ( recordConsumer!=null ) {
-                    rcs.setRecordConsumer(recordConsumer, stdoutOutputType!=OutputType.show);
+                    rcs.setRecordConsumer(recordConsumer, stdoutOutputTypeIfRecordCollectionSupported!=OutputType.show);
                 }
                 if ( metadataConsumer!=null ) {
                     rcs.setMetadataConsumer(metadataConsumer);

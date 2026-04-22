@@ -14,20 +14,23 @@ package com.fortify.cli.common.progress.helper;
 
 import java.io.PrintStream;
 
-import com.fortify.cli.common.util.NonClosingPrintStream;
-
-public class ProgressWriterPrintStreamWrapper extends NonClosingPrintStream {
+public class ProgressWriterPrintStreamWrapper extends PrintStream {
     private final PrintStream original;
     private final IProgressWriter progressWriter;
 
-    public ProgressWriterPrintStreamWrapper(String name, PrintStream original, IProgressWriter progressWriter) {
-        super(name, original);
+    public ProgressWriterPrintStreamWrapper(PrintStream original, IProgressWriter progressWriter) {
+        super(original);
         this.original = original;
         this.progressWriter = progressWriter;
     }
 
     private void clearProgress() {
         progressWriter.clearProgress();
+    }
+
+    @Override
+    public void close() {
+        original.flush();
     }
 
     @Override
