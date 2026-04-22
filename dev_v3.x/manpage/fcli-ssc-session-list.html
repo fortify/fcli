@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.120605-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.130508-dev_v3.x" %}
 
 
 <div id="header">
@@ -43,11 +43,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc session list</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>]
-                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                      [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]] [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>]
-                      [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;[:&lt;prop&gt;">]
-                      [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli ssc session list</strong> [<strong>--validate</strong>] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>]
+                      [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>] [<strong>--debug</strong>]]
+                      [[<strong>-o</strong>=<em>&lt;type+args&gt;</em>] [<strong>--style*<em>=&lt;style&gt;,&#8230;&#8203;</em>]&#8230;&#8203; <em class="</strong>--store*=_&lt;var&gt;_
+                 _     [:&lt;prop&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -58,10 +58,10 @@ fcli_version:
 <p>This commands lists all SSC sessions created through the <code>login</code> command, as long as they haven&#8217;t been explicitly terminated through the 'logout' command.</p>
 </div>
 <div class="paragraph">
-<p>For sessions created using user name and password, the output of this command will show session expiry date and status, based on the data provided by SSC at the time the login command was issued. Any changes to the generated token will not be reflected in the output of this command. Even if a session is no longer valid because the generated token was revoked (through SSC UI or 'fcli ssc access-control revoke-token' command), the output of this command may still show the session as not having expired. Similarly, any changes to token validity will not be reflected in the output of this command.</p>
+<p>For sessions created using user name and password, the output of this command will show session expiry date and status, based on the data provided by SSC at the time the login command was issued. Any changes to the generated token will not be reflected in the output of this command. Even if a session is no longer valid because the generated token was revoked (through SSC UI or 'fcli ssc access-control revoke-token' command), the output of this command may still show the session as not having expired. Similarly, any changes to token validity will not be reflected in the output of this command. Use --validate to verify the actual session status.</p>
 </div>
 <div class="paragraph">
-<p>For sessions created using a pre-generated token, fcli cannot display session expiration date or status, as SSC doesn&#8217;t allow for obtaining this information.</p>
+<p>For sessions created using a pre-generated token, fcli cannot determine session expiration locally. Use --validate to check session status and retrieve expiry information from SSC.</p>
 </div>
 </div>
 </div>
@@ -70,6 +70,10 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--validate</strong></dt>
+<dd>
+<p>Verify the actual session status against the server.</p>
+</dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
 <p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
@@ -141,7 +145,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-22 12:08:35 UTC
+Last updated 2026-04-22 13:07:54 UTC
 </div>
 </div>
 </body>
