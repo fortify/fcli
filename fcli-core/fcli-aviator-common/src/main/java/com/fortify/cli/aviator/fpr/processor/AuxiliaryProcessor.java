@@ -29,8 +29,8 @@ import com.fortify.cli.aviator.fpr.jaxb.SourceLocationType;
 import com.fortify.cli.aviator.fpr.jaxb.Vulnerability;
 
 /**
- * Processor for AuxiliaryData and ExternalEntries in FVDL Vulnerability.
- * Populates auxiliaryData and externalEntries in the custom Vulnerability model.
+ * Processor for AuxiliaryData and ExternalEntries in an FVDL vulnerability.
+ * Populates auxiliaryData and externalEntries on the target Vulnerability instance.
  */
 public class AuxiliaryProcessor {
     private static final Logger logger = LoggerFactory.getLogger(AuxiliaryProcessor.class);
@@ -39,7 +39,7 @@ public class AuxiliaryProcessor {
      * Processes AuxiliaryData and ExternalEntries for a vulnerability.
      *
      * @param vulnJAXB JAXB Vulnerability object
-     * @param vulnCustom Custom Vulnerability model to populate
+     * @param vulnCustom Target Vulnerability instance to populate
      */
     public void process(Vulnerability vulnJAXB, com.fortify.cli.aviator.fpr.Vulnerability vulnCustom) {
         // Process AuxiliaryData

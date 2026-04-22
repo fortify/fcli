@@ -22,10 +22,10 @@ public class ContainsSearchComparer implements SearchComparer {
 
     @Override
     public boolean matches(Object attributeValue) {
-        if (!(attributeValue instanceof String)) {
+        if (attributeValue == null) {
             return false;
         }
-        boolean result = ((String) attributeValue).toLowerCase().contains(searchTerm);
+        boolean result = attributeValue.toString().toLowerCase().contains(searchTerm);
         return result;
     }
 

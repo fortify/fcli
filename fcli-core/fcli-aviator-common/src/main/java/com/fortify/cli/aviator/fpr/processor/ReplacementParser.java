@@ -21,7 +21,7 @@ import com.fortify.cli.aviator.fpr.model.ReplacementData;
 
 /**
  * Parses the <ReplacementDefinitions> section of a vulnerability's AnalysisInfo
- * and populates the clean ReplacementData model. This class acts as the bridge
+ * and populates a ReplacementData instance. This class acts as the bridge
  * between the raw JAXB format and the application's internal data structure.
  */
 public final class ReplacementParser {

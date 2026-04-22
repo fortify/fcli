@@ -112,10 +112,10 @@ public class VulnFinalizer {
         vuln.setPriority(priority);
 
         // 4. Derive package name (logic remains the same)
-        if (vuln.getProjectName() == null || vuln.getProjectName().isEmpty()) {
+        if (vuln.getPackageName() == null || vuln.getPackageName().isEmpty()) {
             if (vuln.getFiles() != null && !vuln.getFiles().isEmpty()) {
                 String firstFilePath = vuln.getFiles().get(0).getName();
-                vuln.setProjectName(initPackageName(firstFilePath));
+                vuln.setPackageName(initPackageName(firstFilePath));
             }
         }
     }
