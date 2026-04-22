@@ -14,6 +14,7 @@ package com.fortify.cli.aviator.fpr.model;
 
 
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.Data;
@@ -28,6 +29,7 @@ public class FVDLMetadata {
     private String projectName;
     private String projectVersion;
     private String engineVersion;
+    private String analysisType = "SCA";
 
     // Rule metadata cache: classId -> metadata map
     private Map<String, Map<String, String>> ruleMetadata = new ConcurrentHashMap<>();
@@ -37,6 +39,9 @@ public class FVDLMetadata {
 
     // Trace pool: traceId -> StreamedTrace
     private Map<String, StreamedTrace> tracePool = new ConcurrentHashMap<>();
+
+    // Context pool: contextId -> parsed context information
+    private Map<String, ContextInfo> contextPool = new ConcurrentHashMap<>();
 
     // Description cache: classID -> StreamedDescription
     private Map<String, StreamedDescription> descriptionCache = new ConcurrentHashMap<>();
@@ -57,5 +62,50 @@ public class FVDLMetadata {
         private Integer colEnd;
         private String actionType;
         private String label;
+    }
+
+    @Data
+    public static class ContextInfo {
+        private String id;
+        private String namespace;
+        private String className;
+        private String functionName;
+        private String filename;
+        private Integer startLine;
+
+        public String getContextString() {
+            return joinNonBlank(namespace, className, functionName);
+        }
+
+        public String getQualifiedClassName() {
+            return joinNonBlank(namespace, className);
+        }
+
+        public String getQualifiedFunctionName() {
+            if (functionName == null || functionName.isBlank()) {
+                return getQualifiedClassName();
+            }
+
+            String qualifiedClassName = getQualifiedClassName();
+            StringBuilder builder = new StringBuilder();
+            if (!qualifiedClassName.isBlank()) {
+                builder.append(qualifiedClassName).append('.');
+            }
+            builder.append(functionName);
+            if (!functionName.startsWith("http")) {
+                builder.append("()");
+            }
+            return builder.toString();
+        }
+
+        private String joinNonBlank(String... parts) {
+            StringJoiner joiner = new StringJoiner(".");
+            for (String part : parts) {
+                if (part != null && !part.isBlank()) {
+                    joiner.add(part);
+                }
+            }
+            return joiner.toString();
+        }
     }
 }

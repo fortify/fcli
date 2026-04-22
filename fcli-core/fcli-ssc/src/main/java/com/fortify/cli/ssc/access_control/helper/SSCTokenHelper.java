@@ -172,7 +172,7 @@ public class SSCTokenHelper {
     private static SSCTokenData getTokenData(UnirestInstance unirest, IUrlConfig urlConfig, char[] token) {
         configureUnirest(unirest, urlConfig, token);
         try {
-            var result = unirest.post("/api/v1/userSession/tokenData")
+            var result = unirest.post(SSCUrls.USER_SESSION_TOKEN_DATA)
                     .body(JsonHelper.getObjectMapper().createObjectNode())
                     .asObject(SSCTokenGetOrCreateResponse.class)
                     .getBody().getData();
