@@ -1,6 +1,6 @@
 ---
 title: 'Fcli Action Development Guide'
-fcli_version: 0.20260422.130508-dev_v3.x
+fcli_version: 0.20260422.134840-dev_v3.x
 ---
 
 <!DOCTYPE html>
@@ -17,13 +17,13 @@ fcli_version: 0.20260422.130508-dev_v3.x
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.130508-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.134840-dev_v3.x" %}
 
 
 <div id="header">
 <h1>Fcli Action Development Guide</h1>
 <div class="details">
-<span id="revnumber">version 0.20260422.130508-dev_v3.x</span>
+<span id="revnumber">version 0.20260422.134840-dev_v3.x</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -42,6 +42,7 @@ fcli_version: 0.20260422.130508-dev_v3.x
 <li><a href="#_usage"><code>usage</code></a></li>
 <li><a href="#_config"><code>config</code></a></li>
 <li><a href="#_cli_options"><code>cli.options</code></a></li>
+<li><a href="#_functions"><code>functions</code></a></li>
 <li><a href="#_steps"><code>steps</code></a></li>
 <li><a href="#_formatters"><code>formatters</code></a></li>
 </ul>
@@ -61,10 +62,13 @@ fcli_version: 0.20260422.130508-dev_v3.x
 <li><a href="#_step_check"><code>[step] check</code></a></li>
 <li><a href="#_step_records_for_each"><code>[step] records.for-each</code></a></li>
 <li><a href="#_step_with"><code>[step] with</code></a></li>
+<li><a href="#_step_with_product"><code>[step] with.product</code></a></li>
+<li><a href="#_step_fn_yield"><code>[step] fn.yield</code></a></li>
 <li><a href="#_step_writer_append"><code>[step] writer.append</code></a></li>
 <li><a href="#_step_do"><code>[step] do</code></a></li>
 <li><a href="#_step_throw"><code>[step] throw</code></a></li>
 <li><a href="#_step_exit"><code>[step] exit</code></a></li>
+<li><a href="#_step_sleep"><code>[step] sleep</code></a></li>
 </ul>
 </li>
 <li><a href="#type-step">YAML step control instructions</a>
@@ -76,6 +80,8 @@ fcli_version: 0.20260422.130508-dev_v3.x
 </li>
 <li><a href="#yaml-types">YAML types</a>
 <ul class="sectlevel2">
+<li><a href="#type-ActionFunction"><code>[type] ActionFunction</code></a></li>
+<li><a href="#type-ActionFunctionArg"><code>[type] ActionFunctionArg</code></a></li>
 <li><a href="#type-check"><code>[type] check</code></a></li>
 <li><a href="#type-cli.option"><code>[type] cli.option</code></a></li>
 <li><a href="#type-config"><code>[type] config</code></a></li>
@@ -93,6 +99,7 @@ fcli_version: 0.20260422.130508-dev_v3.x
 <li><a href="#type-with"><code>[type] with</code></a></li>
 <li><a href="#type-with-session"><code>[type] with-session</code></a></li>
 <li><a href="#type-with-writer"><code>[type] with-writer</code></a></li>
+<li><a href="#type-withProduct"><code>[type] withProduct</code></a></li>
 </ul>
 </li>
 <li><a href="#expression">Expressions</a>
@@ -127,6 +134,10 @@ fcli_version: 0.20260422.130508-dev_v3.x
 <li><a href="#_copyright"><code>copyright</code></a></li>
 <li><a href="#_decrypt"><code>decrypt</code></a></li>
 <li><a href="#_encrypt"><code>encrypt</code></a></li>
+<li><a href="#_fcli_commandargs"><code>fcli.commandArgs</code></a></li>
+<li><a href="#_fcli_commandspec"><code>fcli.commandSpec</code></a></li>
+<li><a href="#_fcli_listcommands"><code>fcli.listCommands</code></a></li>
+<li><a href="#_fcli_listcommands_2"><code>fcli.listCommands</code></a></li>
 <li><a href="#_fclibuildproperties"><code>fcliBuildProperties</code></a></li>
 <li><a href="#_isdebugenabled"><code>isDebugEnabled</code></a></li>
 <li><a href="#_var"><code>var</code></a></li>
@@ -225,7 +236,7 @@ fcli_version: 0.20260422.130508-dev_v3.x
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260422.130508-dev_v3.x</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.20260422.134840-dev_v3.x</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2.8.0</p></td>
 </tr>
 </tbody>
@@ -347,7 +358,7 @@ your action YAML file, your IDE or YAML editor may automatically provide support
 YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
 </div>
 <div class="paragraph">
-<p>As shown in the sample schema statements above, the current fcli version 0.20260422.130508-dev_v3.x supports
+<p>As shown in the sample schema statements above, the current fcli version 0.20260422.134840-dev_v3.x supports
 schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json">2.8.0</a>. Other
 fcli versions may support different schema versions. In general, fcli provides backward compatibility for earlier schema
 versions with the same schema major version range, and forward compatibility for later schema patch versions within the
@@ -567,6 +578,39 @@ provide more details on the expected contents for each property type.</p>
     description: Output file name
     required: false
     default: somefile.txt</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_functions"><a class="anchor" href="#_functions"></a><code>functions</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>functions</code> - map&lt;string,<a href="#type-ActionFunction">ActionFunction</a>&gt;</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional map: Reusable functions that can be called from action steps via #fn.call() SpEL expressions. Map keys define function names, map values define function arguments, steps, and return expressions.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Sample snippet</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">functions:
+  myFunction:
+    args:
+      arg1: { required: true }
+      arg2: { default: "defaultValue" }
+    steps:
+      - var.set:
+          _result: ${args.arg1} - ${args.arg2}</code></pre>
 </div>
 </div></div></td>
 </tr>
@@ -1173,6 +1217,79 @@ x.failed: Set to true if fcli invocation failed, false if successfull</p></td>
 </table>
 </div>
 <div class="sect2">
+<h3 id="_step_with_product"><a class="anchor" href="#_step_with_product"></a><code>[step] with.product</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] with.product</code> - <a href="#type-with">with</a>Product</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Run the steps in the 'do' block within the context of a product session (e.g., SSC or FoD). This makes product-specific SpEL functions (like #ssc.appVersion() or #fod.release()) and REST targets (like 'ssc' or 'fod') available within the 'do' block. The product context is automatically cleaned up when the 'do' block completes.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Sample snippet</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
+  - with.product:
+      name: ssc
+      session: default
+    do:
+      - var.set:
+          av: ${#ssc.appVersion(cli.appversion)}
+      - rest.call:
+          result:
+            target: ssc
+            uri: /api/v1/projectVersions/${av.id}/issues</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_step_fn_yield"><a class="anchor" href="#_step_fn_yield"></a><code>[step] fn.yield</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] fn.yield</code> - <a href="#type-value-fmt">value-fmt</a></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yield a single record from a streaming function. Only valid inside functions with streaming enabled. The value is evaluated, optionally formatted, and emitted to the consumer. If the consumer signals termination, remaining steps are skipped. Can be specified as a simple expression string or as an object with 'value' and/or 'fmt' properties.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Sample snippets</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">functions:
+  myStreamingFn:
+    steps:
+      - fn.yield: ${currentRecord}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">functions:
+  myStreamingFn:
+    steps:
+      - fn.yield: {fmt: myFormatter}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
 <h3 id="_step_writer_append"><a class="anchor" href="#_step_writer_append"></a><code>[step] writer.append</code></h3>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
@@ -1306,6 +1423,34 @@ do:
 </tbody>
 </table>
 </div>
+<div class="sect2">
+<h3 id="_step_sleep"><a class="anchor" href="#_step_sleep"></a><code>[step] sleep</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 100%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>[step] sleep</code> - <a href="#expression">expression</a></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sleep for the specified duration in milliseconds. The value is evaluated as a SpEL expression.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><strong>Sample snippet</strong></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">do:
+  - sleep: 1000
+  - sleep: ${delayMs}</code></pre>
+</div>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1394,6 +1539,111 @@ For named elements, '&lt;name&gt;_exception' is also available with the same pro
 <p>The sections below list the various YAML types supported by the current fcli (schema) version. Where
 applicable, the <code>Type</code> column provides links to other <a href="#yaml-types">YAML types</a> sub-sections that provide
 more details on the expected contents for each property type.</p>
+</div>
+<div class="sect2">
+<h3 id="type-ActionFunction"><a class="anchor" href="#type-ActionFunction"></a><code>[type] ActionFunction</code></h3>
+<div class="paragraph">
+<p>Define a reusable function that can be called from action steps.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Human-readable description of this function.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">args</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">map&lt;string,<a href="#type-ActionFunction">ActionFunction</a>Arg&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Function arguments, keyed by argument name. Preserves declaration order for positional invocation.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">return</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SpEL template expression for the return value. Defaults to ${_result} if omitted.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">steps</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Steps to execute when the function is called.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">streaming</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether this function uses streaming (fn.yield). Auto-detected if omitted.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">export</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether this function is exported for external use (RPC/MCP). Defaults to true.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">meta</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Generic metadata map for server exposure configuration (e.g., mcp.resource, mcp.prompt).</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em><sup>* Generated from com.fortify.cli.common.action.model.ActionFunction</sup></em></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="type-ActionFunctionArg"><a class="anchor" href="#type-ActionFunctionArg"></a><code>[type] ActionFunctionArg</code></h3>
+<div class="paragraph">
+<p>Define an argument for an action function.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Argument type: string (default), boolean, int, long, double, float, array, or object.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">required</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether this argument is required.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default value expression, used when the argument is not provided.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description of this argument.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em><sup>* Generated from com.fortify.cli.common.action.model.ActionFunctionArg</sup></em></p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="type-check"><a class="anchor" href="#type-check"></a><code>[type] check</code></h3>
@@ -2814,6 +3064,68 @@ For named elements, '&lt;name&gt;_exception' is also available with the same pro
 <p><em><sup>* Generated from com.fortify.cli.common.action.model.ActionStepWithWriter</sup></em></p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="type-withProduct"><a class="anchor" href="#type-withProduct"></a><code>[type] withProduct</code></h3>
+<div class="paragraph">
+<p>Run the steps in the <code>do</code> block within the context of a product session (e.g., SSC or FoD).</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Product name (e.g., 'ssc', 'fod').</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">session</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Session name to use. Defaults to 'default' if not specified.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">do</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Steps to execute within the product context.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">if</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#expression">expression</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional SpEL template expression: Only execute this instruction if the given if-expression evaluates to 'true'<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.fail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution fails, for example<br>
+due to an exception or step-specific failure. If not specified, the exception will propagate and action execution will terminate (fail-fast behavior). If specified, failure of the current step will not automatically<br>
+result in action execution termination, but <code>on.fail</code> steps may for example include the<br>
+<code>throw</code> step to (conditionally) rethrow the exception.</p>
+<p class="tableblock">Steps executed in <code>on.fail</code> can access exception details via the following properties:<br>
+- <code>lastException.type</code>: Java simple class name of the exception<br>
+- <code>lastException.message</code>: The exception message (the exception object, e.g., ${lastException.message}, ${lastException.getClass().simpleName}). - <code>lastException.pojo</code>: The Java exception object itself, for example for use in <code>log.*</code> or <code>throw</code> steps<br>
+For named elements, '&lt;name&gt;_exception' is also available with the same properties.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">on.success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array&lt;<a href="#type-step">step</a>&gt;</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional list: Steps to be executed if this element&#8217;s execution succeeds.<br></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><em><sup>* Generated from com.fortify.cli.common.action.model.ActionStepWithProduct</sup></em></p>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -4057,6 +4369,119 @@ default time zone id will be used.</p>
 <tr>
 <td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
 <p>Encrypts the given string using the fcli encryption mechanism, compatible with the 'fcli util crypto' commands.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fcli_commandargs"><a class="anchor" href="#_fcli_commandargs"></a><code>fcli.commandArgs</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.commandArgs</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string command</em> - fully-qualified command name, e.g. "fcli ssc app list"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ObjectNode with 'parameters' and 'optionGroups' fields, or null if command not found</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns the command args node for the given fully-qualified command name, or null if not found. The node contains a 'parameters' array and an 'optionGroups' array, each option having: title, names, primaryName, valueFormat, description, required, datatype, secret, multiselect, allowedValues.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fcli_commandspec"><a class="anchor" href="#_fcli_commandspec"></a><code>fcli.commandSpec</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.commandSpec</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string command</em> - fully-qualified command name, e.g. "fcli ssc app list"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ObjectNode with command spec fields, or null if command not found</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>Returns the command spec node for the given fully-qualified command name, or null if not found. The node contains fields: command, module, entity, action, hidden, runnable, usageHeader, usageDescription, aliases, options, metadata.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fcli_listcommands"><a class="anchor" href="#_fcli_listcommands"></a><code>fcli.listCommands</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.listCommands()</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over all available fcli command descriptors</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>The return value of this function can be passed to a <code>records.for-each::from</code> instruction to \
+iterate over all available fcli commands. Each record produced by the processor will be an \
+ObjectNode with the same same fields as returned by <code>fcli util all-commands list --json</code>.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fcli_listcommands_2"><a class="anchor" href="#_fcli_listcommands_2"></a><code>fcli.listCommands</code></h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 1%;">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Signature</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong><code>object #fcli.listCommands(string query)</code></strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Parameters</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>string query</em> - SpEL filter expression, e.g. "module=='ssc' &amp;&amp; !hidden"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Returns</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Processor for iterating over matching fcli command descriptors</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" colspan="2"><div class="content"><div class="paragraph">
+<p>The return value of this function can be passed to a <code>records.for-each::from</code> instruction to \
+iterate over fcli commands matching the given SpEL query expression, similar to the <code>--query</code> \
+option of <code>fcli util all-commands list</code>. Each record produced by the processor will be an \
+ObjectNode with the same same fields as returned by <code>fcli util all-commands list --json</code>.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -6146,8 +6571,8 @@ commit: {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260422.130508-dev_v3.x<br>
-Last updated 2026-04-22 13:08:03 UTC
+Version 0.20260422.134840-dev_v3.x<br>
+Last updated 2026-04-22 13:51:37 UTC
 </div>
 </div>
 </body>

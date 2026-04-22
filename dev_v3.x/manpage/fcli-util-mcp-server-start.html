@@ -17,7 +17,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.130508-dev_v3.x" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.134840-dev_v3.x" %}
 
 
 <div id="header">
@@ -42,11 +42,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli util mcp-server start</strong> [<strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em>]
-                           <strong>-m</strong>=<em>&lt;module&gt;</em>
+<p><strong>fcli util mcp-server start</strong> [<strong>--async-bg-threads</strong>=<em>&lt;bgThreads&gt;</em>]
+                           [<strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em>]
+                           [<strong>-m</strong>=<em>&lt;module&gt;</em>]
                            [<strong>--progress-interval</strong>=<em>&lt;progressIntervalPeriod&gt;</em>]
                            [<strong>--progress-threads</strong>=<em>&lt;progressThreads&gt;</em>]
-                           [<strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em>] [[<strong>-h</strong>]
+                           [<strong>--work-threads</strong>=<em>&lt;workThreads&gt;</em>]
+                           [<strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                            [<strong>--env-prefix</strong>=<em>&lt;prefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-mask</strong>=<em>&lt;level&gt;</em>]
                            [<strong>--debug</strong>]]</p>
@@ -105,7 +107,7 @@ fcli_version:
 <p>As LLMs pose limits on the number of enabled tools, and clients often allow for easily enabling or disabling all tools provided by a given MCP server, each fcli MCP server instance only supports a single fcli module. For example, you can configure separate MCP servers for ssc, sc-sast, and sc-dast modules, but keep the sc-dast MCP tools disabled until you need them.</p>
 </div>
 <div class="paragraph">
-<p>In a future fcli version, we plan on adding support for registering fcli actions as MCP tools, as well as adding new fcli actions for running various types of scans. For example, once we&#8217;ve introduced a sast-scan or debricked-scan action, LLMs would then be able to simply invoke a single MCP tool to run such a scan, with the fcli action taking care of combining commands for installing and running tools, submitting scan requests, and optionally waiting for scan completion and importing results into SSC.</p>
+<p>Fcli action functions can be registered as MCP tools using the --import option, with those functions defining for example custom REST operations or complete workflows for executing multiple fcli commands in a specific sequence. This allows for easily exposing custom operations as MCP tools without needing to implement a custom MCP server outside of fcli.</p>
 </div>
 </div>
 </div>
@@ -114,6 +116,14 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--async-bg-threads</strong>=<em>&lt;bgThreads&gt;</em></dt>
+<dd>
+<p>Number of background threads for running async streaming jobs. Default: 2.</p>
+</dd>
+<dt class="hdlist1"><strong>--import</strong>=<em>&lt;importFiles&gt;</em>[,<em>&lt;importFiles&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Action YAML files to import. Exported functions are registered as MCP tools or resources based on function metadata.</p>
+</dd>
 <dt class="hdlist1"><strong>--job-safe-return</strong>=<em>&lt;jobSafeReturnPeriod&gt;</em></dt>
 <dd>
 <p>Maximum time to wait synchronously for a job result before returning an in_progress placeholder. Specify duration like 25s, 2m, 1h.</p>
@@ -176,7 +186,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2026-04-22 13:07:55 UTC
+Last updated 2026-04-22 13:51:29 UTC
 </div>
 </div>
 </body>
