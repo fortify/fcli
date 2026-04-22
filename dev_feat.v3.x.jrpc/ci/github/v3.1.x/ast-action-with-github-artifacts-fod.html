@@ -1,6 +1,6 @@
 ---
-title: 'fortify/github-action/with-debug-upload-github'
-fcli_version: 0.20260421.104700-dev_feat.v3.x.jrpc
+title: 'fortify/github-action/with-github-artifacts'
+fcli_version: 0.20260422.130716-dev_feat.v3.x.jrpc
 ---
 
 <!DOCTYPE html>
@@ -9,7 +9,7 @@ fcli_version: 0.20260421.104700-dev_feat.v3.x.jrpc
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fortify/github-action/with-debug-upload-github (FoD)</title>
+<title>fortify/github-action/with-github-artifacts (FoD)</title>
 
 {% include asciidoc-head.html %}
 {% include fcli-enhancements.html %}
@@ -17,20 +17,21 @@ fcli_version: 0.20260421.104700-dev_feat.v3.x.jrpc
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260421.104700-dev_feat.v3.x.jrpc" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20260422.130716-dev_feat.v3.x.jrpc" %}
 
 
 <div id="header">
-<h1>fortify/github-action/with-debug-upload-github</h1>
+<h1>fortify/github-action/with-github-artifacts</h1>
 <div class="subtitle">OpenText Core Application Security (Fortify on Demand)</div>
 <div class="details">
-<span id="revnumber">version 0.20260421.104700-dev_feat.v3.x.jrpc</span>
+<span id="revnumber">version 0.20260422.130716-dev_feat.v3.x.jrpc</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_overview">Overview</a></li>
 <li><a href="#_quick_start_example">Quick Start Example</a></li>
+<li><a href="#_artifact_storage">Artifact Storage</a></li>
 <li><a href="#_tips_recommendations">Tips &amp; Recommendations</a>
 <ul class="sectlevel2">
 <li><a href="#_centralized_configuration_management">Centralized Configuration Management</a></li>
@@ -48,7 +49,7 @@ fcli_version: 0.20260421.104700-dev_feat.v3.x.jrpc
 <li><a href="#_post_scan_actions">Post-Scan Actions</a></li>
 </ul>
 </li>
-<li><a href="#_migrating_from_fortifygithub_actionv3">Migrating from fortify/github-action@v3</a></li>
+<li><a href="#_migrating_from_fortifygithub_actionv2">Migrating from fortify/github-action@v2</a></li>
 <li><a href="#_resources">Resources</a></li>
 </ul>
 </div>
@@ -59,16 +60,11 @@ fcli_version: 0.20260421.104700-dev_feat.v3.x.jrpc
 <h2 id="_overview"><a class="anchor" href="#_overview"></a>Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The <code>fortify/github-action/with-debug-upload-github@v4</code> GitHub Action is a convenience wrapper around the
-<a href="ast-action-fod.html">fortify/github-action</a> action. It runs the full OpenText Core Application Security (Fortify on Demand) AST scan and then
+<p>The <code>fortify/github-action/with-github-artifacts@v3</code> GitHub Action runs the full OpenText Core Application Security (Fortify on Demand) AST scan and then
 automatically uploads debug artifacts to GitHub.com artifact storage
 using <code>actions/upload-artifact@v7</code> when debug output is enabled
-(either via the <code>debug</code> input or GitHub&#8217;s "Enable debug logging" re-run option).</p>
-</div>
-<div class="paragraph">
-<p>If you need to upload debug artifacts to a different storage backend, use the
-<a href="ast-action-fod.html">fortify/github-action</a> action directly and add a custom upload step using the
-<code>upload-debug-artifacts</code> and <code>debug-artifacts-dir</code> outputs it exposes.</p>
+(either via the <code>debug</code> input or GitHub&#8217;s "Enable debug logging" re-run option).
+For alternative artifact storage options, see the <a href="#_artifact_storage">Artifact Storage</a> section.</p>
 </div>
 </div>
 </div>
@@ -97,7 +93,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6            # Check out source code
       - uses: actions/setup-&lt;build-tool&gt;@vX  # Set up build tool(s) required to build your project
-      - uses: fortify/github-action/with-debug-upload-github@v4
+        # Bootstrap fcli, run the fcli-based Fortify CI workflow, and upload any debug artifacts
+        # to GitHub artifact storage (see artifact storage section below for alternative options)
+      - uses: fortify/github-action/with-github-artifacts@v3
         name: Run Fortify Scan
         env:
           FOD_URL: ${{ vars.FOD_URL }}
@@ -107,6 +105,44 @@ jobs:
           # FCLI_BOOTSTRAP_VERSION: v3.15  # Optional if you prefer stability over latest</code></pre>
 </div>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_artifact_storage"><a class="anchor" href="#_artifact_storage"></a>Artifact Storage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If debugging is enabled (either via the <code>debug: true</code> action input or by re-running the workflow with GitHub&#8217;s "Enable debug logging" option), debug artifacts are collected during workflow execution and optionally uploaded after the scan completes, depending on what GitHub Action variant is being used as shown in the following table:</p>
+</div>
+<table class="tableblock frame-all grid-all fit-content">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Sub-action</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="ast-action-$eval{product}.html">fortify/github-action</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Default. Uploads to GitHub.com artifact storage using <code>actions/upload-artifact@v7</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="ast-action-with-github-artifacts-$eval{product}.html">fortify/github-action/with-github-artifacts</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Identical to the default; use this when you want to make the artifact storage choice explicit in your workflow.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="ast-action-with-ghes-artifacts-$eval{product}.html">fortify/github-action/with-ghes-artifacts</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uploads to GHES-compatible artifact storage using <code>actions/upload-artifact@v3</code>. Use this on GitHub Enterprise Server.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="ast-action-without-artifacts-$eval{product}.html">fortify/github-action/without-artifacts</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Does not upload artifacts. Exposes <code>upload-debug-artifacts</code> and <code>debug-artifacts-dir</code> outputs so you can add your own upload step targeting any storage backend.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect1">
@@ -152,7 +188,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: fortify/github-action/with-debug-upload-github@v4.0.0 # Centrally managed version
+      - uses: fortify/github-action/with-github-artifacts@v3.1.0 # Centrally managed version
         env:
           FOD_URL: ${{ vars.FOD_URL }}
           FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
@@ -244,7 +280,7 @@ This GitHub Action requires at least fcli v3.15.0 to function correctly.
 <div class="title">Note</div>
 </td>
 <td class="content">
-Environment variables listed in the subsequent sections are for fcli 0.20260421.104700-dev_feat.v3.x.jrpc; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
+Environment variables listed in the subsequent sections are for fcli 0.20260422.130716-dev_feat.v3.x.jrpc; if your bootstrap settings install another fcli version, please refer to to the fcli <a href="https://fortify.github.io/fcli/latest_dev/generic-actions.html#_ci">ci</a> action documentation for that version.
 </td>
 </tr>
 </table>
@@ -539,32 +575,54 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_migrating_from_fortifygithub_actionv3"><a class="anchor" href="#_migrating_from_fortifygithub_actionv3"></a>Migrating from fortify/github-action@v3</h2>
+<h2 id="_migrating_from_fortifygithub_actionv2"><a class="anchor" href="#_migrating_from_fortifygithub_actionv2"></a>Migrating from fortify/github-action@v2</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This action is new in v4; it replaces the built-in debug artifact upload that was part of
-<code>fortify/github-action@v3</code>. Most users should simply replace:</p>
+<p>Migrating from v2.x.y to v3.x.y versions of the <code>fortify/github-action</code> should be fairly
+straightforward, as most of the environment-based configuration remains the same. However,
+there are some important changes to be aware of:</p>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">- uses: fortify/github-action@v3
-  env:
-    # ... your env vars ...</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>with:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-yaml" data-lang="yaml">- uses: fortify/github-action/with-debug-upload-github@v4
-  env:
-    # ... your env vars ...</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>debug-artifact-name</code> and <code>debug-retention-days</code> inputs behave the same as in v3.</p>
-</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">fortify/github-action@v2</th>
+<th class="tableblock halign-left valign-top">fortify/github-action@v3</th>
+<th class="tableblock halign-left valign-top">Recommended Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pinned to specific fcli release</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses latest fcli v3.x.y release by default</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set <code>FCLI_BOOTSTRAP_VERSION</code> if you prefer stability over latest features</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses action inputs to specify scan types (e.g., <code>sast-scan: true</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses environment variables (e.g., <code>DO_SAST_SCAN</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update workflow to use environment variables for scan configuration</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>DO_PACKAGE_DEBUG</code> environment variable to enable packaging debug logging and artifact upload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses <code>debug</code> action input to enable full debug logging (fcli, packaging, &#8230;&#8203;) and artifact upload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Change <code>DO_PACKAGE_DEBUG: true</code> to action input <code>debug: true</code>, or enable via GitHub&#8217;s "Re-run jobs" → "Enable debug logging" UI</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supports deprecated <code>EXTRA_*_OPTS</code> variables</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only supports <code>*_EXTRA_OPTS</code> variables</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Rename all <code>EXTRA_*_OPTS</code> to <code>*_EXTRA_OPTS</code> format</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses custom scripts for AST scan workflow</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Uses standardized fcli <code>ci</code> action</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Review environment variables against this documentation; behavior should be similar but variable names may differ slightly</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect1">
@@ -589,8 +647,8 @@ SAST_EXPORT_EXTRA_OPTS</p></td>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20260421.104700-dev_feat.v3.x.jrpc<br>
-Last updated 2026-04-21 10:50:49 UTC
+Version 0.20260422.130716-dev_feat.v3.x.jrpc<br>
+Last updated 2026-04-22 13:11:05 UTC
 </div>
 </div>
 </body>
