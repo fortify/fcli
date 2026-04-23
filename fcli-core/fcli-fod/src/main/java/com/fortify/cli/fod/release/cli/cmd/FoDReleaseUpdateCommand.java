@@ -12,12 +12,6 @@
  */
 package com.fortify.cli.fod.release.cli.cmd;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,7 +25,6 @@ import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputComma
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -69,31 +62,10 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-        ArrayList<FoDAttributeDescriptor> releaseAttrsCurrent = releaseDescriptor.getAttributes();
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
-        Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
-        boolean autoReqdAttrs = autoRequiredAttrsOption.isAutoRequiredAttrs();
-        JsonNode jsonAttrs;
-        if (autoReqdAttrs || (attributeUpdates != null && !attributeUpdates.isEmpty())) {
-            Map<String, String> combinedUpdates = new LinkedHashMap<>();
-            if (autoReqdAttrs) {
-                Set<String> currentAttrNamesWithValues = releaseAttrsCurrent.stream()
-                        .filter(a -> StringUtils.isNotBlank(a.getValue()))
-                        .map(FoDAttributeDescriptor::getName)
-                        .collect(Collectors.toSet());
-                FoDAttributeHelper.getRequiredAttributesDefaultValues(unirest, FoDEnums.AttributeTypes.Release)
-                        .forEach((k, v) -> { if (!currentAttrNamesWithValues.contains(k)) combinedUpdates.put(k, v); });
-            }
-            if (attributeUpdates != null) {
-                combinedUpdates.putAll(attributeUpdates);
-            }
-            jsonAttrs = combinedUpdates.isEmpty()
-                    ? FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Release, releaseAttrsCurrent)
-                    : FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Release,
-                            releaseAttrsCurrent, combinedUpdates);
-        } else {
-            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Release, releaseAttrsCurrent);
-        }
+        JsonNode jsonAttrs = FoDAttributeHelper.getAttributesNodeForUpdate(unirest, FoDEnums.AttributeTypes.Release,
+                releaseDescriptor.getAttributes(), appAttrsUpdate.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs());
+
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
                 .releaseName(StringUtils.isNotBlank(releaseName) ? getUnqualifiedReleaseName(releaseName, releaseDescriptor) : releaseDescriptor.getReleaseName())
                 .releaseDescription(StringUtils.isNotBlank(description) ? description : releaseDescriptor.getReleaseDescription())
