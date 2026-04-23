@@ -15,12 +15,15 @@ package com.fortify.cli.fod.app.cli.cmd;
 import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -46,7 +49,7 @@ import picocli.CommandLine.Option;
 public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Option(names = {"--name", "-n"})
     private String applicationNameUpdate;
@@ -68,10 +71,24 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
         // new values to replace
         FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
         Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs = objectMapper.createArrayNode();
-        if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
-            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Application, appAttrsCurrent, 
-                attributeUpdates);
+        boolean autoReqdAttrs = autoRequiredAttrsOption.isAutoRequiredAttrs();
+        JsonNode jsonAttrs;
+        if (autoReqdAttrs || (attributeUpdates != null && !attributeUpdates.isEmpty())) {
+            Map<String, String> combinedUpdates = new LinkedHashMap<>();
+            if (autoReqdAttrs) {
+                Set<String> currentAttrNamesWithValues = appAttrsCurrent.stream()
+                        .filter(a -> StringUtils.isNotBlank(a.getValue()))
+                        .map(FoDAttributeDescriptor::getName)
+                        .collect(Collectors.toSet());
+                FoDAttributeHelper.getRequiredAttributesDefaultValues(unirest, FoDEnums.AttributeTypes.Application)
+                        .forEach((k, v) -> { if (!currentAttrNamesWithValues.contains(k)) combinedUpdates.put(k, v); });
+            }
+            if (attributeUpdates != null) {
+                combinedUpdates.putAll(attributeUpdates);
+            }
+            jsonAttrs = combinedUpdates.isEmpty()
+                    ? FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Application, appAttrsCurrent)
+                    : FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Application, appAttrsCurrent, combinedUpdates);
         } else {
             jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Application, appAttrsCurrent);
         }
