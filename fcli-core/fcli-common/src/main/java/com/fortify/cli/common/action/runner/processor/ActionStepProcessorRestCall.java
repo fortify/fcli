@@ -33,7 +33,7 @@ import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepReq
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRequestType;
 import com.fortify.cli.common.action.model.ActionStepRestCallEntry.ActionStepRestCallLogProgressDescriptor;
 import com.fortify.cli.common.action.model.FcliActionValidationException;
-import com.fortify.cli.common.action.runner.ActionRunnerContext;
+import com.fortify.cli.common.action.runner.ActionRunnerContextLocal;
 import com.fortify.cli.common.action.runner.ActionRunnerVars;
 import com.fortify.cli.common.action.runner.FcliActionStepException;
 import com.fortify.cli.common.action.runner.processor.IActionRequestHelper.ActionRequestDescriptor;
@@ -46,15 +46,14 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data @EqualsAndHashCode(callSuper = true) @Reflectable
 public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
-    private final ActionRunnerContext ctx;
-    private final ActionRunnerVars vars;
+    private final ActionRunnerContextLocal ctx;
     private final LinkedHashMap<String, ActionStepRestCallEntry> requests;
 
     @Override
     public void process() {
         if ( requests!=null ) {
             var requestsProcessor = new ActionStepRequestsProcessor(ctx);
-            requestsProcessor.addRequests(requests, this::processResponse, this::processFailure, vars);
+            requestsProcessor.addRequests(requests, this::processResponse, this::processFailure, ctx);
             requestsProcessor.executeRequests();
         }
     }
@@ -62,8 +61,8 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     private final void processResponse(ActionStepRestCallEntry requestDescriptor, JsonNode rawBody) {
         var name = requestDescriptor.getKey();
         var body = ctx.getRequestHelper(requestDescriptor.getTarget()).transformInput(rawBody);
-        vars.setLocal(name+"_raw", rawBody);
-        vars.setLocal(name, body);
+        getVars().setLocal(name+"_raw", rawBody);
+        getVars().setLocal(name, body);
         processOnResponse(requestDescriptor);
         processRequestStepForEach(requestDescriptor);
     }
@@ -84,7 +83,7 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     private final void processRequestStepForEach(ActionStepRestCallEntry requestDescriptor) {
         var forEach = requestDescriptor.getForEach();
         if ( forEach!=null ) {
-            var input = vars.get(requestDescriptor.getKey());
+            var input = getVars().get(requestDescriptor.getKey());
             if ( input!=null ) {
                 if ( input instanceof ArrayNode ) {
                     updateRequestStepForEachTotalCount(forEach, (ArrayNode)input);
@@ -108,61 +107,61 @@ public class ActionStepProcessorRestCall extends AbstractActionStepProcessor {
     
     @FunctionalInterface
     private interface IRequestStepForEachEntryProcessor {
-        void process(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerVars vars);
+        void process(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerContextLocal childCtx);
     }
     
     private final void processRequestStepForEach(ActionStepRequestForEachResponseRecord forEach, ArrayNode source, IRequestStepForEachEntryProcessor entryProcessor) {
         for ( int i = 0 ; i < source.size(); i++ ) {
             var currentNode = source.get(i);
-            var newVars = vars.createChild();
-            newVars.setLocal(forEach.getVarName(), currentNode);
+            var childCtx = ctx.createChild();
+            childCtx.getVars().setLocal(forEach.getVarName(), currentNode);
             var breakIf = forEach.getBreakIf();
-            if ( breakIf!=null && newVars.eval(breakIf, Boolean.class) ) {
+            if ( breakIf!=null && childCtx.getVars().eval(breakIf, Boolean.class) ) {
                 break;
             }
             var _if = forEach.get_if(); 
-            if ( _if==null || newVars.eval(_if, Boolean.class) ) {
-                entryProcessor.process(forEach, currentNode, newVars);
+            if ( _if==null || childCtx.getVars().eval(_if, Boolean.class) ) {
+                entryProcessor.process(forEach, currentNode, childCtx);
             }
         }
     }
     
     private void updateRequestStepForEachTotalCount(ActionStepRequestForEachResponseRecord forEach, ArrayNode array) {
         var totalCountName = String.format("total%sCount", StringUtils.capitalize(forEach.getVarName()));
-        var totalCount = vars.get(totalCountName);
+        var totalCount = getVars().get(totalCountName);
         if ( totalCount==null ) { totalCount = new IntNode(0); }
-        vars.setLocal(totalCountName, new IntNode(totalCount.asInt()+array.size()));
+        getVars().setLocal(totalCountName, new IntNode(totalCount.asInt()+array.size()));
     }
 
-    private void processRequestStepForEachEntryDo(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerVars newVars) {
-        new ActionStepProcessorSteps(ctx, newVars, forEach.get_do()).process();
+    private void processRequestStepForEachEntryDo(ActionStepRequestForEachResponseRecord forEach, JsonNode currentNode, ActionRunnerContextLocal childCtx) {
+        new ActionStepProcessorSteps(childCtx, forEach.get_do()).process();
     }
     
     private IRequestStepForEachEntryProcessor getRequestForEachEntryEmbedProcessor(ActionStepRequestsProcessor requestExecutor) {
-        return (forEach, currentNode, newVars) -> {
+        return (forEach, currentNode, childCtx) -> {
             if ( !currentNode.isObject() ) {
-                // TODO Improve exception message?
                 throw new FcliActionStepException("Cannot embed data on non-object nodes: "+forEach.getVarName());
             }
             requestExecutor.addRequests(forEach.getEmbed(), 
                     (rd,r)->((ObjectNode)currentNode).set(rd.getKey(), ctx.getRequestHelper(rd.getTarget()).transformInput(r)), 
-                    this::processFailure, newVars);
+                    this::processFailure, childCtx);
         };
     }
     
     @RequiredArgsConstructor
     private static final class ActionStepRequestsProcessor {
-        private final ActionRunnerContext ctx;
+        private final ActionRunnerContextLocal ctx;
         private final Map<String, List<IActionRequestHelper.ActionRequestDescriptor>> simpleRequests = new LinkedHashMap<>();
         private final Map<String, List<IActionRequestHelper.ActionRequestDescriptor>> pagedRequests = new LinkedHashMap<>();
         
-        final void addRequests(Map<String, ActionStepRestCallEntry> requestDescriptors, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerVars vars) {
+        final void addRequests(Map<String, ActionStepRestCallEntry> requestDescriptors, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContextLocal reqCtx) {
             if ( requestDescriptors!=null ) {
-                requestDescriptors.values().forEach(r->addRequest(r, responseConsumer, failureConsumer, vars));
+                requestDescriptors.values().forEach(r->addRequest(r, responseConsumer, failureConsumer, reqCtx));
             }
         }
         
-        private final void addRequest(ActionStepRestCallEntry requestDescriptor, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerVars vars) {
+        private final void addRequest(ActionStepRestCallEntry requestDescriptor, BiConsumer<ActionStepRestCallEntry, JsonNode> responseConsumer, BiConsumer<ActionStepRestCallEntry, UnirestException> failureConsumer, ActionRunnerContextLocal reqCtx) {
+            var vars = reqCtx.getVars();
             var _if = requestDescriptor.get_if();
             if ( _if==null || vars.eval(_if, Boolean.class) ) {
                 var method = requestDescriptor.getMethod();

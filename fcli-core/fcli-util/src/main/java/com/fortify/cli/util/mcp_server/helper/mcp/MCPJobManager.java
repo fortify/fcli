@@ -31,7 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolFcliRecordsCache;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
+import com.fortify.cli.util.mcp_server.helper.mcp.runner.MCPToolAsyncJobManager;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -47,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
  * Minimal asynchronous job manager for MCP tools. This implementation:
  * - Wraps synchronous tool execution in a worker thread
  * - Returns an in_progress result if execution exceeds the safe-return threshold
- * - Exposes a unified job tool (fcli_<module>_mcp_job) with status|wait|cancel operations
+ * - Exposes a unified job tool (fcli_mcp_job) with status|wait|cancel operations
  * - Tracks simple progress either through a record counter or ticking strategy
  * - Best-effort cancellation via thread interrupt
  *
@@ -55,28 +56,27 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MCPJobManager {
-    private final String moduleName;
+    public static final String JOB_TOOL_NAME = "fcli_mcp_job";
     private final ExecutorService workExecutor;
     private final ScheduledExecutorService progressExecutor;
     private final long safeReturnMillis;
     private final long progressIntervalMillis;
     private final Map<String, JobExecution> jobs = new ConcurrentHashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final MCPToolFcliRecordsCache recordsCache;
+    private final MCPToolAsyncJobManager asyncJobManager;
 
-    public MCPJobManager(String moduleName, int workThreads, int progressThreads, long safeReturnMillis, long progressIntervalMillis) {
-        this.moduleName = moduleName;
+    public MCPJobManager(int workThreads, int progressThreads, long safeReturnMillis, long progressIntervalMillis, AsyncJobManager asyncJobManager) {
         this.workExecutor = Executors.newFixedThreadPool(workThreads);
         this.progressExecutor = Executors.newScheduledThreadPool(progressThreads);
         this.safeReturnMillis = safeReturnMillis;
         this.progressIntervalMillis = progressIntervalMillis;
-        this.recordsCache = new MCPToolFcliRecordsCache(this);
-        log.info("Initialized MCPJobManager for module={} workThreads={} progressThreads={} safeReturnMillis={} progressIntervalMillis={}",
-                moduleName, workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
+        this.asyncJobManager = new MCPToolAsyncJobManager(this, asyncJobManager);
+        log.info("Initialized MCPJobManager workThreads={} progressThreads={} safeReturnMillis={} progressIntervalMillis={}",
+                workThreads, progressThreads, safeReturnMillis, progressIntervalMillis);
     }
 
-    public MCPToolFcliRecordsCache getRecordsCache() {
-        return recordsCache;
+    public MCPToolAsyncJobManager getAsyncJobManager() {
+        return asyncJobManager;
     }
 
     // Public API for runners
@@ -186,13 +186,13 @@ public class MCPJobManager {
         n.put("job_token", exec.token);
         n.put("tool", exec.toolName);
         n.put("progress", exec.progress.get());
-        n.put("message", "Operation still running; call fcli_"+moduleName+"_mcp_job for status|wait|cancel");
+        n.put("message", "Operation still running; call "+JOB_TOOL_NAME+" for status|wait|cancel");
         return CallToolResult.builder().addTextContent(n.toPrettyString()).isError(false).build();
     }
 
     /**
      * Track an existing future (background work started elsewhere) as a job so the
-     * fcli_<module>_mcp_job tool can report status|wait|cancel. The provided progressStrategy
+     * fcli_mcp_job tool can report status|wait|cancel. The provided progressStrategy
      * is sampled periodically for progress updates. Completion of the future sets a final
      * tool_result summary; cancellation interrupts progress sampling and marks the job cancelled.
      *
@@ -256,7 +256,7 @@ public class MCPJobManager {
     public SyncToolSpecification getJobToolSpecification() {
         return McpServerFeatures.SyncToolSpecification.builder()
             .tool(Tool.builder()
-                .name("fcli_"+moduleName+"_mcp_job")
+                .name(JOB_TOOL_NAME)
                 .description("Manage long-running fcli MCP jobs (status|wait|cancel)")
                 .inputSchema(createJobToolSchema())
                 .build())

@@ -12,8 +12,6 @@
  */
 package com.fortify.cli.aviator.fpr.model;
 
-
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +51,7 @@ public class StreamedTrace {
         @Builder
         public static class Entry {
             private String nodeId;      // For backward compatibility and debugging (can be null for inline nodes)
-            private Node node;           // CHANGED: Full Node object (from com.fortify.aviator.cli.fpr.models.Node)
+            private Node node;           // Parsed node data, including inline nodes without IDs
             private boolean isDefault;
 
             /**

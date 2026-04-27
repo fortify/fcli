@@ -13,22 +13,18 @@
 package com.fortify.cli.common.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.apache.commons.io.output.NullOutputStream;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Helper class that allows for showing, collecting or suppressing output while running a given {@link Callable}.
@@ -41,35 +37,47 @@ public class OutputHelper {
     private final OutputType stderrType;
     @Builder.Default private final Charset charset = StandardCharsets.UTF_8;
     
-    public final <T extends OutputStream> Result call(Callable<Integer> callable) throws Exception {
-        FcliExecutionOutputContext.installIfNeeded();
-        var orgStdout = FcliExecutionOutputContext.getOriginalOut();
-        var orgStderr = FcliExecutionOutputContext.getOriginalErr();
-        try ( var stdoutStream = stdoutType.streamSupplier.apply(new NonClosingPrintStream(false, "System.out", orgStdout));
-            var stderrStream = stderrType.streamSupplier.apply(new NonClosingPrintStream(false, "System.err", orgStderr));
-            var stdoutPS = new PrintStream(stdoutStream);
-            var stderrPS = new PrintStream(stderrStream) ) {
-            // Set per-thread delegates so other threads are unaffected
-            FcliExecutionOutputContext.setThreadOut(stdoutPS);
-            FcliExecutionOutputContext.setThreadErr(stderrPS);
+    public final Result call(Callable<Integer> callable) throws Exception {
+        var stdoutPS = stdoutType.createStream();
+        var stderrPS = stderrType.createStream();
+        if (stdoutPS != null) StdioHelper.pushOut(stdoutPS);
+        if (stderrPS != null) StdioHelper.pushErr(stderrPS);
+        try {
             int exitCode = callable.call();
-            stdoutPS.flush();
-            stderrPS.flush();
-            return new Result(exitCode, stdoutType.stringFunction.apply(stdoutStream, charset), stderrType.stringFunction.apply(stderrStream, charset));
+            System.out.flush();
+            System.err.flush();
+            return new Result(exitCode, getCollectedString(stdoutPS), getCollectedString(stderrPS));
         } finally {
-            FcliExecutionOutputContext.clearThreadOut();
-            FcliExecutionOutputContext.clearThreadErr();
+            if (stderrPS != null) { StdioHelper.popErr(); stderrPS.close(); }
+            if (stdoutPS != null) { StdioHelper.popOut(); stdoutPS.close(); }
         }
     }
     
-    @RequiredArgsConstructor
+    private String getCollectedString(PrintStream stream) {
+        return stream instanceof CollectingPrintStream cps ? cps.getOutput(charset) : "";
+    }
+    
     public static enum OutputType {
-        show(o->o, (s,c)->""), 
-        collect(o->new ByteArrayOutputStream(), (s,c)->((ByteArrayOutputStream)s).toString(c)), 
-        suppress(o->NullOutputStream.INSTANCE, (s,c)->"");
+        show, collect, suppress;
         
-        private final Function<OutputStream,OutputStream> streamSupplier;
-        private final BiFunction<OutputStream,Charset,String> stringFunction;
+        PrintStream createStream() {
+            return switch (this) {
+                case show -> null;
+                case collect -> new CollectingPrintStream();
+                case suppress -> new PrintStream(NullOutputStream.INSTANCE);
+            };
+        }
+    }
+    
+    private static final class CollectingPrintStream extends PrintStream {
+        CollectingPrintStream() {
+            super(new ByteArrayOutputStream());
+        }
+        
+        String getOutput(Charset charset) {
+            flush();
+            return ((ByteArrayOutputStream) out).toString(charset);
+        }
     }
     
     @Data @Reflectable

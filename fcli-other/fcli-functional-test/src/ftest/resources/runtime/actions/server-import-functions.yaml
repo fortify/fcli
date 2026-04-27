@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest server import functions
+  description: Functions for testing RPC/MCP server --import functionality
+
+functions:
+  echo:
+    description: Echo the input message
+    args:
+      message: { required: true }
+    return: ${_result}
+    steps:
+      - var.set:
+          _result: ${args.message}
+
+  multiply:
+    description: Multiply two numbers
+    args:
+      x: { required: true, type: int }
+      y: { required: true, type: int }
+    return: ${_result}
+    steps:
+      - var.set:
+          _result: ${args.x * args.y}
+
+  generateItems:
+    description: Stream a sequence of items
+    streaming: true
+    args:
+      items: { required: true }
+    steps:
+      - records.for-each:
+          from: ${args.items}
+          record.var-name: _item
+          do:
+            - fn.yield: ${'item-' + _item}
+
+  generateManyItems:
+    description: Stream items with a delay between each (for cancel tests)
+    streaming: true
+    args:
+      items: { required: true }
+    steps:
+      - records.for-each:
+          from: ${args.items}
+          record.var-name: _i
+          do:
+            - sleep: 100
+            - fn.yield: ${'item-' + _i}
+
+  _helperInternal:
+    export: false
+    return: ${_result}
+    steps:
+      - var.set:
+          _result: should-not-be-exposed
+
+steps: []

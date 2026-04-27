@@ -131,18 +131,16 @@ public class FoDAttributeHelper {
         return attrArray;
     }
 
-    public static JsonNode getAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType, 
-        Map<String, String> attributesMap, boolean autoReqdAttributes) {
-        Map<String, String> combinedAttributesMap = new LinkedHashMap<>();
-        if (autoReqdAttributes) {
-            // find any required attributes
-            combinedAttributesMap.putAll(getRequiredAttributesDefaultValues(unirest, attrType));
-        }
-        if ( attributesMap!=null && !attributesMap.isEmpty() ) {
-            combinedAttributesMap.putAll(attributesMap);
-        }
+    /**
+     * For create commands: amends user-provided attribute values with server-side defaults
+     * for any required attributes not already specified by the user.
+     * Resolves attribute names to IDs and filters by attrType.
+     */
+    public static JsonNode getAttributesNode(UnirestInstance unirest, FoDEnums.AttributeTypes attrType,
+            Map<String, String> attributesMap, boolean autoReqdAttributes) {
+        var effectiveMap = buildEffectiveAttributeUpdates(unirest, attrType, null, attributesMap, autoReqdAttributes);
         ArrayNode attrArray = JsonHelper.getObjectMapper().createArrayNode();
-        for (Map.Entry<String, String> attr : combinedAttributesMap.entrySet()) {
+        for (Map.Entry<String, String> attr : effectiveMap.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
             // filter out any attributes that aren't valid for the entity we are working on, e.g. Application or Release
@@ -152,10 +150,54 @@ public class FoDAttributeHelper {
                 attrArray.add(attrObj);
             } else {
                 LOG.debug("Skipping attribute '"+attributeDescriptor.getName()+"' as it is not a "+attrType.toString()+" attribute");
-
-            }   
+            }
         }
         return attrArray;
+    }
+
+    /**
+     * For update commands: merges user-supplied attribute values with the entity's existing
+     * attribute values, then amends with server-side defaults for any required attributes
+     * not already covered by either the current values or user-supplied updates.
+     */
+    public static JsonNode getAttributesNodeForUpdate(UnirestInstance unirest, FoDEnums.AttributeTypes attrType,
+            ArrayList<FoDAttributeDescriptor> currentAttributes, Map<String, String> userSuppliedUpdates,
+            boolean autoReqdAttributes) {
+        var effectiveUpdates = buildEffectiveAttributeUpdates(
+                unirest, attrType, currentAttributes, userSuppliedUpdates, autoReqdAttributes);
+        return effectiveUpdates.isEmpty()
+                ? getAttributesNode(attrType, currentAttributes)
+                : mergeAttributesNode(unirest, attrType, currentAttributes, effectiveUpdates);
+    }
+
+    /**
+     * Computes the effective attribute updates to apply. For required attributes not already
+     * covered by current entity values or user-supplied updates, server-side defaults are added.
+     * User-supplied updates always take highest priority.
+     * Pass {@code currentAttributes=null} for create scenarios.
+     */
+    private static Map<String, String> buildEffectiveAttributeUpdates(UnirestInstance unirest,
+            FoDEnums.AttributeTypes attrType, ArrayList<FoDAttributeDescriptor> currentAttributes,
+            Map<String, String> userSuppliedUpdates, boolean autoReqdAttributes) {
+        var effective = new LinkedHashMap<String, String>();
+        if (autoReqdAttributes) {
+            Set<String> covered = new HashSet<>();
+            if (currentAttributes != null) {
+                currentAttributes.stream()
+                        .filter(a -> StringUtils.isNotBlank(a.getValue()))
+                        .map(FoDAttributeDescriptor::getName)
+                        .forEach(covered::add);
+            }
+            if (userSuppliedUpdates != null) {
+                covered.addAll(userSuppliedUpdates.keySet());
+            }
+            getRequiredAttributesDefaultValues(unirest, attrType)
+                    .forEach((k, v) -> { if (!covered.contains(k)) effective.put(k, v); });
+        }
+        if (userSuppliedUpdates != null) {
+            effective.putAll(userSuppliedUpdates);
+        }
+        return effective;
     }
 
     public static FoDAttributeDescriptor createAttribute(UnirestInstance unirest, FoDAttributeCreateRequest request) {

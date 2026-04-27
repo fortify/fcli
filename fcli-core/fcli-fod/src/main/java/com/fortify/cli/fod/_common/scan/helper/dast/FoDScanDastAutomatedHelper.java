@@ -86,7 +86,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
             for (JsonNode node : itemsNode) {
                 if (!"Dynamic".equals(node.path("scanType").asText())) continue;
                 String status = node.path("analysisStatusType").asText();
-                
+
                 if (isActiveStatus(status)) {
                     foundActive = true;
                     FoDScanDescriptor result = handleActiveScan(

@@ -25,4 +25,6 @@ public interface IRecordCollectionSupport {
     void setRecordConsumer(Consumer<ObjectNode> consumer, boolean suppressStdout);
     Consumer<ObjectNode> getRecordConsumer();
     boolean isStdoutSuppressedForRecordCollection();
+    default void setMetadataConsumer(Consumer<ObjectNode> consumer) {}
+    default Consumer<ObjectNode> getMetadataConsumer() { return null; }
 }

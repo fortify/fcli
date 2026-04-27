@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest with.product (FoD)
+  description: Tests with.product step for FoD product context
+
+cli.options:
+  mode:
+    names: --mode
+    description: Test mode to run (rest or spel)
+    required: true
+  id:
+    names: --id
+    description: Release id
+    required: false
+
+steps:
+  - if: ${cli.mode == 'rest'}
+    do:
+      - with.product:
+          name: fod
+          do:
+            - rest.call:
+                apps:
+                  target: fod
+                  uri: /api/v3/applications?limit=1
+                  on.success:
+                    - out.write:
+                        stdout: "FOD-REST-OK count=${apps_raw.totalCount}\n"
+
+  - if: ${cli.mode == 'spel'}
+    do:
+      - with.product:
+          name: fod
+          do:
+            - var.set:
+                rel: ${#fod.release(cli.id)}
+            - out.write:
+                stdout: "FOD-SPEL-OK name=${rel.applicationName}:${rel.releaseName}\n"

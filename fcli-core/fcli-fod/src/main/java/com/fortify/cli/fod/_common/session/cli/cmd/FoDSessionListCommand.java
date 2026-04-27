@@ -14,6 +14,8 @@ package com.fortify.cli.fod._common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
+import com.fortify.cli.common.session.cli.mixin.AbstractSessionValidatorMixin;
+import com.fortify.cli.fod._common.session.cli.mixin.FoDSessionValidatorMixin;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
 
@@ -24,5 +26,11 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME, sortOptions = false)
 public class FoDSessionListCommand extends AbstractSessionListCommand<FoDSessionDescriptor> {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    @Mixin private FoDSessionValidatorMixin validatorMixin;
     @Getter private FoDSessionHelper sessionHelper = FoDSessionHelper.instance();
+
+    @Override
+    protected AbstractSessionValidatorMixin<FoDSessionDescriptor> getSessionValidatorMixin() {
+        return validatorMixin;
+    }
 }

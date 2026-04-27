@@ -438,6 +438,7 @@ public class SSCUrls {
     public static final String USER_SESSION_INFO = ApiBase + "/userSession/info";
     public static final String USER_SESSION_PREFS = ApiBase + "/userSession/prefs";
     public static final String USER_SESSION_STATE = ApiBase + "/userSession/state";
+    public static final String USER_SESSION_TOKEN_DATA = ApiBase + "/userSession/tokenData";
     public static final String VALIDATE_EQUATION = ApiBase + "/validateEquation";
     public static final String VALIDATE_SEARCH_STRING = ApiBase + "/validateSearchString";
     public static final String VARIABLES = ApiBase + "/variables";

@@ -14,6 +14,8 @@ package com.fortify.cli.ssc._common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
+import com.fortify.cli.common.session.cli.mixin.AbstractSessionValidatorMixin;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCSessionValidatorMixin;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCAndScanCentralSessionHelper;
 
@@ -24,5 +26,11 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME, sortOptions = false)
 public class SSCSessionListCommand extends AbstractSessionListCommand<SSCAndScanCentralSessionDescriptor> {
     @Mixin @Getter private OutputHelperMixins.List outputHelper;
+    @Mixin private SSCSessionValidatorMixin validatorMixin;
     @Getter private SSCAndScanCentralSessionHelper sessionHelper = SSCAndScanCentralSessionHelper.instance();
+
+    @Override
+    protected AbstractSessionValidatorMixin<SSCAndScanCentralSessionDescriptor> getSessionValidatorMixin() {
+        return validatorMixin;
+    }
 }

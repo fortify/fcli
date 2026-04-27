@@ -15,12 +15,11 @@ package com.fortify.cli.fod.app.cli.cmd;
 import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -33,7 +32,6 @@ import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.helper.FoDAppUpdateRequest;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 
 import kong.unirest.UnirestInstance;
@@ -46,7 +44,7 @@ import picocli.CommandLine.Option;
 public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Mixin private CommonOptionMixins.AutoRequiredAttrsOption autoRequiredAttrsOption;
 
     @Option(names = {"--name", "-n"})
     private String applicationNameUpdate;
@@ -60,21 +58,10 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-
-        // current values of app being updated
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
-        ArrayList<FoDAttributeDescriptor> appAttrsCurrent = appDescriptor.getAttributes();
-
-        // new values to replace
         FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
-        Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs = objectMapper.createArrayNode();
-        if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
-            jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, FoDEnums.AttributeTypes.Application, appAttrsCurrent, 
-                attributeUpdates);
-        } else {
-            jsonAttrs = FoDAttributeHelper.getAttributesNode(FoDEnums.AttributeTypes.Application, appAttrsCurrent);
-        }
+        JsonNode jsonAttrs = FoDAttributeHelper.getAttributesNodeForUpdate(unirest, FoDEnums.AttributeTypes.Application,
+                appDescriptor.getAttributes(), appAttrsUpdate.getAttributes(), autoRequiredAttrsOption.isAutoRequiredAttrs());
         String appEmailListNew = FoDAppHelper.getEmailList(notificationsUpdate);
 
         FoDAppUpdateRequest appUpdateRequest = FoDAppUpdateRequest.builder()

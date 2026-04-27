@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.util._common.helper.AsyncJobManager;
 import com.fortify.cli.util.mcp_server.helper.mcp.MCPJobManager;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -41,7 +42,7 @@ class MCPJobManagerTest {
     @BeforeEach
     void setUp() {
         // Create job manager with short timeout for testing
-        jobManager = new MCPJobManager("test", 4, 2, 500, 100);
+        jobManager = new MCPJobManager(4, 2, 500, 100, new AsyncJobManager());
         objectMapper = new ObjectMapper();
     }
     

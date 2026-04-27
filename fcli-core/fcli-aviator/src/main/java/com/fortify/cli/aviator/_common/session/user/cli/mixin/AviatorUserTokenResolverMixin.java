@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
 import com.fortify.cli.common.exception.FcliSimpleException;
+import com.fortify.cli.common.log.LogSensitivityLevel;
+import com.fortify.cli.common.log.MaskValue;
 
 import picocli.CommandLine.Option;
 
@@ -24,6 +26,7 @@ import picocli.CommandLine.Option;
  */
 public class AviatorUserTokenResolverMixin extends AbstractTextResolverMixin {
     @Option(names = {"--token", "-t"}, descriptionKey = "fcli.aviator.session.login.token", paramLabel = "source", required = true, order = 1)
+    @MaskValue(sensitivity = LogSensitivityLevel.high, description = "AVIATOR TOKEN")
     private String textSource;
 
     @Override

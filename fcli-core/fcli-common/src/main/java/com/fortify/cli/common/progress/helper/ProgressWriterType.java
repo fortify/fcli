@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.common.cli.util.FcliExecutionOutputContext;
+import com.fortify.cli.common.cli.util.StdioHelper;
 import com.fortify.cli.common.exception.FcliBugException;
 import com.fortify.cli.common.util.ConsoleHelper;
 
@@ -58,25 +58,24 @@ public enum ProgressWriterType {
     
     private static abstract class AbstractProgressWriter implements IProgressWriter {
         private static final Logger LOG = LoggerFactory.getLogger(AbstractProgressWriter.class);
-        protected final PrintStream stdout;
-        protected final PrintStream stderr;
-        protected final PrintStream originalStdout;
-        protected final PrintStream originalStderr;
+        protected final PrintStream progressOut;
+        protected final PrintStream progressErr;
 
         protected AbstractProgressWriter() {
-            FcliExecutionOutputContext.installIfNeeded();
-            this.originalStdout = FcliExecutionOutputContext.getOriginalOut();
-            this.originalStderr = FcliExecutionOutputContext.getOriginalErr();
-            this.stdout = new ProgressWriterPrintStreamWrapper("System.out", originalStdout, this);
-            this.stderr = new ProgressWriterPrintStreamWrapper("System.err", originalStderr, this);
-            FcliExecutionOutputContext.setThreadOut(stdout);
-            FcliExecutionOutputContext.setThreadErr(stderr);
+            this.progressOut = StdioHelper.getProgressOut();
+            this.progressErr = StdioHelper.getProgressErr();
+            var currentOut = StdioHelper.currentOut();
+            var currentErr = StdioHelper.currentErr();
+            var wrappedOut = new ProgressWriterPrintStreamWrapper(currentOut, this);
+            var wrappedErr = new ProgressWriterPrintStreamWrapper(currentErr, this);
+            StdioHelper.pushOut(wrappedOut);
+            StdioHelper.pushErr(wrappedErr);
         }
 
         @Override
         public void close() {
-            FcliExecutionOutputContext.clearThreadOut();
-            FcliExecutionOutputContext.clearThreadErr();
+            StdioHelper.popOut();
+            StdioHelper.popErr();
             clearProgress();
         }
         
@@ -84,18 +83,16 @@ public enum ProgressWriterType {
         public final void writeWarning(String message, Object... args) {
             var formattedMessage = format(message, args);
             LOG.debug("writeWarning: {}", formattedMessage);
-            clearProgress();
-            originalStderr.println(formattedMessage);
+            System.err.println(formattedMessage);
         }
         
         @Override
         public final void writeWarningWithException(String message, Throwable cause, Object... args) {
             var formattedMessage = format(message, args);
             LOG.debug("writeWarningWithException: {}", formattedMessage, cause);
-            clearProgress();
-            originalStderr.println(formattedMessage);
+            System.err.println(formattedMessage);
             if (cause != null) {
-                originalStderr.println("Cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
+                System.err.println("Cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
             }
         }
         
@@ -103,6 +100,10 @@ public enum ProgressWriterType {
         public final void writeProgress(String message, Object... args) {
             var formattedMessage = format(message, args);
             LOG.debug("writeProgress: {}", formattedMessage);
+            var callback = StdioHelper.getProgressCallback();
+            if (callback != null) {
+                callback.accept(formattedMessage);
+            }
             writeProgress(formattedMessage);
         }
         
@@ -112,18 +113,16 @@ public enum ProgressWriterType {
         public final void writeInfo(String message, Object... args) {
             var formattedMessage = format(message, args);
             LOG.debug("writeInfo: {}", formattedMessage);
-            clearProgress();
-            originalStdout.println(formattedMessage);
+            System.out.println(formattedMessage);
         }
         
         @Override
         public final void writeInfoWithException(String message, Throwable cause, Object... args) {
             var formattedMessage = format(message, args);
             LOG.debug("writeInfoWithException: {}", formattedMessage, cause);
-            clearProgress();
-            originalStdout.println(formattedMessage);
+            System.out.println(formattedMessage);
             if (cause != null) {
-                originalStdout.println("Cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
+                System.out.println("Cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
             }
         }
         
@@ -168,7 +167,7 @@ public enum ProgressWriterType {
             if ( message.indexOf('\n') > 0 ) {
                 message += "\n";
             }
-            originalStdout.println(message);
+            progressOut.println(message);
         }
         @Override
         public void clearProgress() {}
@@ -187,7 +186,7 @@ public enum ProgressWriterType {
             if ( message.indexOf('\n') > 0 ) {
                 message += "\n";
             }
-            originalStderr.println(message);
+            progressErr.println(message);
         }
         @Override
         public void clearProgress() {}
@@ -209,13 +208,13 @@ public enum ProgressWriterType {
             clearProgress();
             var terminalWidth = ConsoleHelper.getTerminalWidth();
             var abbreviatedMessage = terminalWidth==null ? message : StringUtils.abbreviate(message, terminalWidth);
-            originalStdout.print(abbreviatedMessage);
+            progressOut.print(abbreviatedMessage);
             this.lastNumberOfChars = abbreviatedMessage.length();
         }
         @Override
         public void clearProgress() {
             if ( lastNumberOfChars>0 ) {
-                originalStdout.print(LINE_START+" ".repeat(lastNumberOfChars)+LINE_START);
+                progressOut.print(LINE_START+" ".repeat(lastNumberOfChars)+LINE_START);
                 lastNumberOfChars = 0;
             }
         }
@@ -250,15 +249,15 @@ public enum ProgressWriterType {
         @Override
         public void writeProgress(String message) {
             clearProgress();
-            originalStdout.print(WRAP_DISABLE+message+WRAP_ENABLE);
-            //originalStdout.print(SAVE_CURSOR + message);
+            progressOut.print(WRAP_DISABLE+message+WRAP_ENABLE);
+            //progressOut.print(SAVE_CURSOR + message);
             this.lastNumberOfLines = (int)message.chars().filter(ch -> ch == '\n').count()+1;
         }
         @Override
         public void clearProgress() {
             if ( lastNumberOfLines>0 ) {
-                originalStdout.print((LINE_CLEAR+LINE_UP).repeat(lastNumberOfLines-1)+LINE_CLEAR+LINE_START);
-                //originalStdout.print(RESTORE_CURSOR + ERASE_DOWN);
+                progressOut.print((LINE_CLEAR+LINE_UP).repeat(lastNumberOfLines-1)+LINE_CLEAR+LINE_START);
+                //progressOut.print(RESTORE_CURSOR + ERASE_DOWN);
                 lastNumberOfLines = 0;
             }
         }

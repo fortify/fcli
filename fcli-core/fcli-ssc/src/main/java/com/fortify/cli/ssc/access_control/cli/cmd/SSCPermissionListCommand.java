@@ -16,8 +16,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc._common.cli.mixin.SSCFetchRangeMixin;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.ssc.SSCUrls;
 import com.fortify.cli.ssc.access_control.cli.mixin.SSCRoleResolverMixin;
@@ -32,6 +34,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list-permissions", aliases = {"lsp"}) @CommandGroup("permission")
 public class SSCPermissionListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
+    @Mixin private SSCFetchRangeMixin fetchRangeMixin;
     @Mixin private SSCRoleResolverMixin.OptionalOption roleResolverMixin;
     
     @Override
@@ -39,6 +42,9 @@ public class SSCPermissionListCommand extends AbstractSSCBaseRequestOutputComman
         if ( StringUtils.isBlank(roleResolverMixin.getRoleNameOrId()) ) {
             return unirest.get(SSCUrls.PERMISSIONS);
         } else {
+            if ( fetchRangeMixin.isFetchSpecified() ) {
+                throw new FcliSimpleException("--fetch cannot be used in combination with --role/-r");
+            }
             return unirest.get(SSCUrls.ROLE_PERMISSIONS(roleResolverMixin.getRoleId(unirest)));
         }
     }

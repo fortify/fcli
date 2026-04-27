@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fortify.cli.common.cli.util.FcliCommandSpecHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.mcp.MCPDefaultValue;
 import com.fortify.cli.common.util.ReflectionHelper;
@@ -118,7 +119,7 @@ abstract class AbstractMCPToolArgHandlerFcli implements IMCPToolArgHandler {
     }
 
     protected boolean isRequired() {
-        return getArgSpec().required(); // TODO If option is contained in exclusive arggroup, we need to consider it as optional
+        return FcliCommandSpecHelper.isEffectivelyRequired(getArgSpec());
     }
     
     protected String getDescription() {

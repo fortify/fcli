@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.common.cli.util;
 
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
@@ -22,7 +21,6 @@ import com.fortify.cli.common.log.MaskValue;
 import com.fortify.cli.common.util.FcliBuildProperties;
 import com.fortify.cli.common.util.FcliDockerHelper;
 import com.fortify.cli.common.util.JavaHelper;
-import com.fortify.cli.common.util.NonClosingPrintStream;
 
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -57,7 +55,7 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
         var leaf = getLeafParseResult(parseResult);
         var leafSpec = leaf.commandSpec();
         var execCtx = FcliExecutionContextHolder.current();
-        try (var outHandler = new NonClosingOutHandler()) {  
+        try {
             log.debug("Starting command execution; execInfo={} command={}", execCtx.info(), leafSpec.qualifiedName());
             initializeCommand(leafSpec);
             return delegate.execute(parseResult);
@@ -103,30 +101,5 @@ public final class FcliExecutionStrategy implements IExecutionStrategy {
 
     private static void registerLogMask(Field field, Object value) {
         LogMaskHelper.INSTANCE.registerValue(field.getAnnotation(MaskValue.class), LogMaskSource.CLI_OPTION, value);
-    }
-    
-    
-    private static final class NonClosingOutHandler implements AutoCloseable {
-        private final PrintStream orgOut;
-        private final PrintStream orgErr;
-
-        public NonClosingOutHandler() {
-            // Ensure delegating streams are installed once per JVM
-            FcliExecutionOutputContext.installIfNeeded();
-            log.debug("Installing NonClosingPrintStream delegates for stdout/stderr");
-            this.orgOut = FcliExecutionOutputContext.getOriginalOut();
-            this.orgErr = FcliExecutionOutputContext.getOriginalErr();
-            // Instead of globally replacing System.out/err, set per-thread delegates
-            FcliExecutionOutputContext.setThreadOut(new NonClosingPrintStream("System.out", orgOut));
-            FcliExecutionOutputContext.setThreadErr(new NonClosingPrintStream("System.err", orgErr));
-        }
-
-        @Override
-        public void close() {
-            // Clear thread-local delegates so delegating streams fall back to originals
-            FcliExecutionOutputContext.clearThreadOut();
-            FcliExecutionOutputContext.clearThreadErr();
-            log.debug("Cleared thread-local stdout/stderr delegates");
-        }
     }
 }

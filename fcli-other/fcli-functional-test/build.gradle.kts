@@ -17,11 +17,20 @@ testing {
         register<JvmTestSuite>("ftest") {
             useJUnitJupiter()
             dependencies {
+                val bomRef = project.findProperty("fcliBomRef") as String
+                implementation(platform(project(bomRef)))
                 implementation(platform("org.apache.groovy:groovy-bom:4.0.20"))
                 implementation("org.apache.groovy:groovy")
                 implementation(platform("org.spockframework:spock-bom:2.3-groovy-4.0"))
                 implementation("org.spockframework:spock-core")
                 implementation("org.junit.platform:junit-platform-launcher:1.10.2")
+                implementation("com.fasterxml.jackson.core:jackson-databind")
+                implementation("io.modelcontextprotocol.sdk:mcp-core") {
+                    exclude(group = "org.slf4j", module = "slf4j-api")
+                }
+                implementation("io.modelcontextprotocol.sdk:mcp-json-jackson2") {
+                    exclude(group = "org.slf4j", module = "slf4j-api")
+                }
                 val fcliProp = project.findProperty("ftest.fcli")?.toString()
                 if (fcliProp == null || fcliProp == "build") {
                     val appRef = project.findProperty("fcliAppRef") as String

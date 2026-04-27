@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev-2.x.json
+
+author: ftest
+usage:
+  header: Ftest global variable isolation
+  description: |
+    Action for testing FcliExecutionContext isolation in RPC server.
+    - When run via 'fcli action run', each invocation should start with clean global vars.
+    - When invoked as an imported function, global vars should persist between calls.
+
+functions:
+  setAndGetGlobal:
+    description: Set a global variable and return both old and new values
+    args:
+      key:   { required: true }
+      value: { required: true }
+    return: ${_result}
+    steps:
+      - var.set:
+          _oldRaw: ${global[args.key]}
+      - var.set:
+          "global.${args.key}": ${args.value}
+      - var.set:
+          _result: "old=${_oldRaw},new=${args.value}"
+
+  getGlobal:
+    description: Get the current value of a global variable
+    args:
+      key: { required: true }
+    return: ${global[args.key]}
+    steps: []
+
+cli.options:
+  key:
+    names: --key
+    description: Global variable key
+    required: true
+  value:
+    names: --value
+    description: Global variable value
+    required: true
+
+steps:
+  - var.set:
+      _oldRaw: ${global[cli.key]}
+  - var.set:
+      "global.${cli.key}": ${cli.value}
+  - out.write:
+      stdout: "old=${_oldRaw},new=${cli.value}"

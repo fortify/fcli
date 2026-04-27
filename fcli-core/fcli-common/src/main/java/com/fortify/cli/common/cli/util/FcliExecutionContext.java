@@ -21,16 +21,19 @@ import java.util.Base64;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.crypto.helper.EncryptionHelper;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnirestContext;
 
 /**
  * Per-top-level execution context holding mutable execution-scoped state.
+ * The {@code globalValues} ObjectNode is backed by a {@link ConcurrentHashMap}
+ * to allow safe concurrent access from multiple threads (e.g. async jobs,
+ * server request handlers).
  */
 public final class FcliExecutionContext {
-    private final ObjectNode globalValues = JsonHelper.getObjectMapper().createObjectNode();
+    private final ObjectNode globalValues = new ObjectNode(JsonNodeFactory.instance, new ConcurrentHashMap<>());
     private final UnirestContext unirestContext = new UnirestContext();
     // Encryption helper used for encrypt/decrypt in this execution. Default to global DEFAULT.
     private volatile EncryptionHelper encryptionHelper = EncryptionHelper.DEFAULT;
