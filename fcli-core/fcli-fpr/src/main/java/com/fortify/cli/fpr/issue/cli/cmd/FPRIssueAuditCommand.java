@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
 import com.fortify.cli.aviator.util.Constants;
 import com.fortify.cli.common.exception.FcliSimpleException;
@@ -32,6 +33,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fpr._common.cli.mixin.FPRFileMixin;
+import com.fortify.cli.fpr._common.helper.FPRHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -64,20 +66,28 @@ public class FPRIssueAuditCommand extends AbstractOutputCommand {
     @Option(names = {"--instance-ids"}, required = true, split = ",", order = 2)
     private List<String> instanceIds;
 
-    @Option(names = {"--analysis"}, required = true, order = 3)
+    @Option(names = {"--analysis"}, order = 3)
     private String analysis;
 
-    @Option(names = {"--comment"}, order = 4)
+    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names = {"--custom-tags", "-t"}, split = ",", paramLabel = "TAG=VALUE", order = 4)
+    private Map<String, String> customTags;
+
+    @Option(names = {"--comment"}, order = 5)
     private String comment;
 
-    @Option(names = {"--suppress"}, order = 5)
+    @Option(names = {"--suppress"}, order = 6)
     private boolean suppress;
 
-    @Option(names = {"--user"}, order = 6)
+    @Option(names = {"--user"}, order = 7)
     private String user;
+
+    @Option(names = {"--assign-user"}, order = 8)
+    private String assignUser;
 
     @Override
     protected IObjectNodeProducer getObjectNodeProducer() {
+        validateAtLeastOneAction();
         var canonicalAnalysis = validateAnalysis(analysis);
         var username = resolveUsername();
         var uniqueIds = dedupePreservingOrder(instanceIds);
@@ -91,14 +101,18 @@ public class FPRIssueAuditCommand extends AbstractOutputCommand {
         try (var fprHandle = fprFileMixin.createFprHandle()) {
             var auditProcessor = new AuditProcessor(fprHandle);
             auditProcessor.processAuditXML();
+
+            // Resolve all custom-tag inputs to canonical (tagId, tagValue) pairs once.
+            Map<String, String> resolvedTags = resolveTagsForFpr(fprHandle, canonicalAnalysis);
+
             var results = new ArrayList<ObjectNode>(ids.size());
             boolean anyChanged = false;
             for (var id : ids) {
-                boolean changed = auditProcessor.auditIssue(id, Constants.ANALYSIS_TAG_ID,
-                        canonicalAnalysis, comment, username, suppress);
+                boolean changed = auditProcessor.auditIssueMulti(id, resolvedTags, comment, username, suppress, assignUser);
                 anyChanged |= changed;
-                results.add(buildResultRow(id, canonicalAnalysis, username, changed));
+                results.add(buildResultRow(id, canonicalAnalysis, resolvedTags, username, changed));
             }
+            // (assignedUser already included by buildResultRow when set)
             if (anyChanged) {
                 auditProcessor.saveAuditXml();
             }
@@ -108,15 +122,60 @@ public class FPRIssueAuditCommand extends AbstractOutputCommand {
         }
     }
 
-    private ObjectNode buildResultRow(String id, String canonicalAnalysis, String username, boolean changed) {
+    private Map<String, String> resolveTagsForFpr(com.fortify.cli.aviator.util.FprHandle fprHandle,
+                                                  String canonicalAnalysis) {
+        var tags = new LinkedHashMap<String, String>();
+        if (canonicalAnalysis != null) {
+            tags.put(Constants.ANALYSIS_TAG_ID, canonicalAnalysis);
+        }
+        if (customTags == null || customTags.isEmpty()) {
+            return tags;
+        }
+        FilterTemplate filterTemplate = FPRHelper.loadFilterTemplate(fprHandle).orElse(null);
+        for (var entry : customTags.entrySet()) {
+            try {
+                var resolved = FPRHelper.resolveCustomTag(filterTemplate, entry.getKey(), entry.getValue());
+                tags.put(resolved.getKey(), resolved.getValue());
+            } catch (IllegalArgumentException e) {
+                throw new FcliSimpleException(e.getMessage());
+            }
+        }
+        return tags;
+    }
+
+    private ObjectNode buildResultRow(String id, String canonicalAnalysis, Map<String, String> resolvedTags,
+                                      String username, boolean changed) {
         var row = MAPPER.createObjectNode();
         row.put("instanceId", id);
-        row.put("analysis", canonicalAnalysis);
+        row.put("analysis", canonicalAnalysis != null ? canonicalAnalysis : "");
+        if (customTags != null && !customTags.isEmpty()) {
+            var tagsNode = MAPPER.createObjectNode();
+            for (var entry : resolvedTags.entrySet()) {
+                if (!Constants.ANALYSIS_TAG_ID.equals(entry.getKey())) {
+                    tagsNode.put(entry.getKey(), entry.getValue());
+                }
+            }
+            row.set("customTags", tagsNode);
+        }
         row.put("comment", comment != null ? comment : "");
         row.put("suppressed", suppress);
+        if (assignUser != null) {
+            row.put("assignedUser", assignUser);
+        }
         row.put("user", username);
         row.put("__action__", changed ? "AUDITED" : "UNCHANGED");
         return row;
+    }
+
+    private void validateAtLeastOneAction() {
+        boolean hasAnalysis = analysis != null && !analysis.isBlank();
+        boolean hasTags = customTags != null && !customTags.isEmpty();
+        boolean hasComment = comment != null && !comment.isBlank();
+        boolean hasAssign = assignUser != null;
+        if (!hasAnalysis && !hasTags && !hasComment && !suppress && !hasAssign) {
+            throw new FcliSimpleException(
+                    "At least one of --analysis, --custom-tags, --comment, --suppress, or --assign-user must be provided");
+        }
     }
 
     private static List<String> dedupePreservingOrder(List<String> ids) {
@@ -133,7 +192,7 @@ public class FPRIssueAuditCommand extends AbstractOutputCommand {
     }
 
     private String validateAnalysis(String value) {
-        if (value == null) { return null; }
+        if (value == null || value.isBlank()) { return null; }
         var canonical = VALID_ANALYSIS_VALUES.get(value.toLowerCase());
         if (canonical == null) {
             throw new FcliSimpleException("Invalid --analysis value '" + value

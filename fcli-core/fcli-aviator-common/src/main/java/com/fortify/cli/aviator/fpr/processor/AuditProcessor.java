@@ -185,6 +185,9 @@ public class AuditProcessor {
         AuditIssue.AuditIssueBuilder auditIssueBuilder = AuditIssue.builder();
 
         auditIssueBuilder.instanceId(issueElement.getAttribute("instanceId"));
+        if (issueElement.hasAttribute("assignedUser")) {
+            auditIssueBuilder.assignedUser(issueElement.getAttribute("assignedUser"));
+        }
         auditIssueBuilder.suppressed(Boolean.parseBoolean(issueElement.getAttribute("suppressed")));
 
         String revisionStr = issueElement.getAttribute("revision");
@@ -281,21 +284,64 @@ public class AuditProcessor {
      */
     public boolean auditIssue(String instanceId, String tagId, String tagValue,
                               String comment, String username, boolean suppress) {
+        return auditIssueMulti(instanceId, java.util.Map.of(tagId, tagValue), comment, username, suppress, null);
+    }
+
+    /**
+     * Backwards-compatible overload without an assigned user.
+     */
+    public boolean auditIssueMulti(String instanceId, java.util.Map<String, String> tagIdToValue,
+                                   String comment, String username, boolean suppress) {
+        return auditIssueMulti(instanceId, tagIdToValue, comment, username, suppress, null);
+    }
+
+    /**
+     * Audits a single issue, applying multiple tag changes atomically: bumps revision once,
+     * writes only the tags whose value actually changes (and a TagHistory entry for each),
+     * appends an optional comment once, optionally suppresses the issue, and optionally
+     * assigns the issue to a user (stored as the {@code assignedUser} attribute on the
+     * {@code <Issue>} element). Returns true if anything changed, false if the call was a no-op.
+     */
+    public boolean auditIssueMulti(String instanceId, java.util.Map<String, String> tagIdToValue,
+                                   String comment, String username, boolean suppress,
+                                   String assignedUser) {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("username must be provided");
         }
+        if (tagIdToValue == null) { tagIdToValue = java.util.Map.of(); }
+
         Element issueElement = findIssueElement(instanceId);
         boolean issueCreated = false;
         if (issueElement == null) {
             issueElement = createSimpleIssueElement(instanceId);
             issueCreated = true;
         }
-        String currentTagValue = getCurrentTagValue(issueElement, tagId);
-        boolean tagChanged = !java.util.Objects.equals(tagValue, currentTagValue);
+
+        java.util.Map<String, String> changedTags = new java.util.LinkedHashMap<>();
+        for (var entry : tagIdToValue.entrySet()) {
+            String tagId = entry.getKey();
+            String tagValue = entry.getValue();
+            if (tagId == null || tagId.isBlank() || tagValue == null) { continue; }
+            String currentTagValue = getCurrentTagValue(issueElement, tagId);
+            if (!java.util.Objects.equals(tagValue, currentTagValue)) {
+                changedTags.put(tagId, tagValue);
+            }
+        }
+
         boolean suppressChanged = suppress && !"true".equalsIgnoreCase(issueElement.getAttribute("suppressed"));
         boolean commentAdded = comment != null && !comment.isBlank();
 
-        if (!tagChanged && !suppressChanged && !commentAdded) {
+        boolean assignChanged = false;
+        if (assignedUser != null) {
+            String currentAssigned = issueElement.hasAttribute("assignedUser")
+                    ? issueElement.getAttribute("assignedUser") : "";
+            // Empty string clears the assignment.
+            if (!assignedUser.equals(currentAssigned)) {
+                assignChanged = true;
+            }
+        }
+
+        if (changedTags.isEmpty() && !suppressChanged && !commentAdded && !assignChanged) {
             return false;
         }
 
@@ -305,10 +351,12 @@ public class AuditProcessor {
                 .orElse(0);
         issueElement.setAttribute("revision", String.valueOf(revision + 1));
 
-        if (tagChanged) {
-            updateOrAddTag(issueElement, tagId, tagValue);
+        if (!changedTags.isEmpty()) {
             Element clientAuditTrail = getClientAuditTrailElement(issueElement);
-            addTagHistory(clientAuditTrail, tagId, tagValue, username);
+            for (var ct : changedTags.entrySet()) {
+                updateOrAddTag(issueElement, ct.getKey(), ct.getValue());
+                addTagHistory(clientAuditTrail, ct.getKey(), ct.getValue(), username);
+            }
         }
         if (commentAdded) {
             addCommentToIssueElement(issueElement, comment, username);
@@ -316,7 +364,14 @@ public class AuditProcessor {
         if (suppressChanged) {
             issueElement.setAttribute("suppressed", "true");
         }
-        return tagChanged || suppressChanged || commentAdded || issueCreated;
+        if (assignChanged) {
+            if (assignedUser.isEmpty()) {
+                issueElement.removeAttribute("assignedUser");
+            } else {
+                issueElement.setAttribute("assignedUser", assignedUser);
+            }
+        }
+        return !changedTags.isEmpty() || suppressChanged || commentAdded || assignChanged || issueCreated;
     }
 
     private String getCurrentTagValue(Element issueElement, String tagId) {

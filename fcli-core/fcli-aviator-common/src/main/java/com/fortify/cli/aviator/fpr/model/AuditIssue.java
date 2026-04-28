@@ -32,6 +32,7 @@ public class AuditIssue {
     @Builder.Default private Map<String, String> tags = new HashMap<>();
     @Builder.Default private List<Comment> threadedComments = new ArrayList<>();
     @Builder.Default private List<TagHistoryEntry> tagHistory = new ArrayList<>();
+    private String assignedUser;
 
     public void addTag(String tagId, String tagValue) {
         if (tagId != null) {

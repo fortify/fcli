@@ -20,8 +20,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.fpr.FPRProcessor;
 import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.aviator.fpr.filter.FilterTemplate;
+import com.fortify.cli.aviator.fpr.filter.TagDefinition;
+import com.fortify.cli.aviator.fpr.filter.TagValue;
 import com.fortify.cli.aviator.fpr.model.AuditIssue;
 import com.fortify.cli.aviator.fpr.processor.AuditProcessor;
+import com.fortify.cli.aviator.fpr.processor.FilterTemplateParser;
 import com.fortify.cli.aviator.fpr.processor.StreamingFVDLProcessor;
 import com.fortify.cli.aviator.util.FprHandle;
 
@@ -186,6 +190,9 @@ public final class FPRHelper {
         if (auditIssue == null) { return; }
 
         node.put("revision", auditIssue.getRevision());
+        if (auditIssue.getAssignedUser() != null && !auditIssue.getAssignedUser().isBlank()) {
+            node.put("assignedUser", auditIssue.getAssignedUser());
+        }
 
         if (!auditIssue.getTags().isEmpty()) {
             var tagsNode = MAPPER.createObjectNode();
@@ -219,5 +226,59 @@ public final class FPRHelper {
             }
             node.set("tagHistory", historyArray);
         }
+    }
+    /**
+     * Loads the FPR's filter template (if present), exposing tag definitions
+     * for resolving custom-tag names and their valid values. Returns an empty
+     * Optional if the FPR has no filtertemplate.xml.
+     */
+    public static java.util.Optional<FilterTemplate> loadFilterTemplate(FprHandle fprHandle) {
+        var auditProcessor = new com.fortify.cli.aviator.fpr.processor.AuditProcessor(fprHandle);
+        auditProcessor.processAuditXML();
+        return new FilterTemplateParser(fprHandle, auditProcessor).parseFilterTemplate();
+    }
+
+    /**
+     * Resolves a user-supplied tag name (or GUID) and value to the canonical
+     * tagId / tagValue pair for use with AuditProcessor. Tag and value lookups
+     * are case-insensitive. If the tag is not found in the filter template,
+     * the input is treated as a raw GUID. If the value is not in the tag's
+     * defined values and the tag is not extensible, throws IllegalArgumentException.
+     */
+    public static java.util.Map.Entry<String, String> resolveCustomTag(
+            FilterTemplate filterTemplate, String tagNameOrId, String value) {
+        if (tagNameOrId == null || tagNameOrId.isBlank()) {
+            throw new IllegalArgumentException("Tag name/id must not be blank");
+        }
+        if (value == null) {
+            throw new IllegalArgumentException("Tag value must not be null for tag '" + tagNameOrId + "'");
+        }
+        if (filterTemplate == null || filterTemplate.getTagDefinitions() == null) {
+            return java.util.Map.entry(tagNameOrId, value);
+        }
+        TagDefinition match = null;
+        for (var def : filterTemplate.getTagDefinitions()) {
+            if (tagNameOrId.equalsIgnoreCase(def.getName()) || tagNameOrId.equalsIgnoreCase(def.getId())) {
+                match = def;
+                break;
+            }
+        }
+        if (match == null) {
+            return java.util.Map.entry(tagNameOrId, value);
+        }
+        if (match.getValues() != null) {
+            for (TagValue tv : match.getValues()) {
+                if (tv.getValue() != null && tv.getValue().equalsIgnoreCase(value)) {
+                    return java.util.Map.entry(match.getId(), tv.getValue());
+                }
+            }
+        }
+        if (!match.isExtensible()) {
+            var allowed = match.getValues() == null ? java.util.List.<String>of()
+                    : match.getValues().stream().map(TagValue::getValue).toList();
+            throw new IllegalArgumentException("Invalid value '" + value + "' for tag '"
+                    + match.getName() + "'; valid values: " + String.join(", ", allowed));
+        }
+        return java.util.Map.entry(match.getId(), value);
     }
 }
