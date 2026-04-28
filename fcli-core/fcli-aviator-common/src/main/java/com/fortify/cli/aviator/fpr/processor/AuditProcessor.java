@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.aviator.fpr.processor;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,20 +94,21 @@ public class AuditProcessor {
             if (!Files.exists(auditPath)) {
                 logger.debug("audit.xml not found. Creating a default audit.xml.");
                 auditDoc = createDefaultAuditXml();
-            }
+            } else {
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setXIncludeAware(false);
-            factory.setExpandEntityReferences(false);
-            factory.setNamespaceAware(true);
-            DocumentBuilder builder = factory.newDocumentBuilder();
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                factory.setXIncludeAware(false);
+                factory.setExpandEntityReferences(false);
+                factory.setNamespaceAware(true);
+                DocumentBuilder builder = factory.newDocumentBuilder();
 
-            try (InputStream auditStream = Files.newInputStream(auditPath)) {
-                auditDoc = builder.parse(auditStream);
+                try (InputStream auditStream = Files.newInputStream(auditPath)) {
+                    auditDoc = builder.parse(auditStream);
+                }
             }
             NodeList issueNodes = auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Issue");
             for (int i = 0; i < issueNodes.getLength(); i++) {
@@ -211,6 +213,31 @@ public class AuditProcessor {
         }
         auditIssueBuilder.threadedComments(threadedComments);
 
+        List<AuditIssue.TagHistoryEntry> tagHistoryEntries = new ArrayList<>();
+        NodeList clientAuditTrailNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "ClientAuditTrail");
+        if (clientAuditTrailNodes.getLength() > 0) {
+            Element catElement = (Element) clientAuditTrailNodes.item(0);
+            NodeList thNodes = catElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "TagHistory");
+            for (int j = 0; j < thNodes.getLength(); j++) {
+                Element thElement = (Element) thNodes.item(j);
+                String thTagId = "";
+                String thTagValue = "";
+                NodeList thTagNodes = thElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
+                if (thTagNodes.getLength() > 0) {
+                    Element thTagElement = (Element) thTagNodes.item(0);
+                    thTagId = thTagElement.getAttribute("id");
+                    thTagValue = Optional.ofNullable(getTagValue(thTagElement)).orElse("");
+                }
+                tagHistoryEntries.add(AuditIssue.TagHistoryEntry.builder()
+                        .tagId(thTagId)
+                        .tagValue(thTagValue)
+                        .editTime(Optional.ofNullable(getFirstElementContentNS(thElement, "EditTime")).orElse(""))
+                        .username(Optional.ofNullable(getFirstElementContentNS(thElement, "Username")).orElse(""))
+                        .build());
+            }
+        }
+        auditIssueBuilder.tagHistory(tagHistoryEntries);
+
         return auditIssueBuilder.build();
     }
 
@@ -245,6 +272,100 @@ public class AuditProcessor {
         }
 
         updateOrAddTag(issueElement, tagId, tagValue);
+    }
+
+    /**
+     * Performs a simple audit on a single issue: sets the given tag value,
+     * optionally adds a comment, and optionally suppresses the issue.
+     * The tag and comment are recorded in ClientAuditTrail for history.
+     */
+    public boolean auditIssue(String instanceId, String tagId, String tagValue,
+                              String comment, String username, boolean suppress) {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("username must be provided");
+        }
+        Element issueElement = findIssueElement(instanceId);
+        boolean issueCreated = false;
+        if (issueElement == null) {
+            issueElement = createSimpleIssueElement(instanceId);
+            issueCreated = true;
+        }
+        String currentTagValue = getCurrentTagValue(issueElement, tagId);
+        boolean tagChanged = !java.util.Objects.equals(tagValue, currentTagValue);
+        boolean suppressChanged = suppress && !"true".equalsIgnoreCase(issueElement.getAttribute("suppressed"));
+        boolean commentAdded = comment != null && !comment.isBlank();
+
+        if (!tagChanged && !suppressChanged && !commentAdded) {
+            return false;
+        }
+
+        int revision = Optional.ofNullable(issueElement.getAttribute("revision"))
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .orElse(0);
+        issueElement.setAttribute("revision", String.valueOf(revision + 1));
+
+        if (tagChanged) {
+            updateOrAddTag(issueElement, tagId, tagValue);
+            Element clientAuditTrail = getClientAuditTrailElement(issueElement);
+            addTagHistory(clientAuditTrail, tagId, tagValue, username);
+        }
+        if (commentAdded) {
+            addCommentToIssueElement(issueElement, comment, username);
+        }
+        if (suppressChanged) {
+            issueElement.setAttribute("suppressed", "true");
+        }
+        return tagChanged || suppressChanged || commentAdded || issueCreated;
+    }
+
+    private String getCurrentTagValue(Element issueElement, String tagId) {
+        NodeList tagNodes = issueElement.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Tag");
+        for (int i = 0; i < tagNodes.getLength(); i++) {
+            Element tag = (Element) tagNodes.item(i);
+            if (tag.getAttribute("id").equalsIgnoreCase(tagId)) {
+                NodeList valueNodes = tag.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "Value");
+                if (valueNodes.getLength() > 0) {
+                    return valueNodes.item(0).getTextContent();
+                }
+            }
+        }
+        return null;
+    }
+
+    private Element createSimpleIssueElement(String instanceId) {
+        Element issueList = (Element) auditDoc.getElementsByTagNameNS(AUDIT_NAMESPACE_URI, "IssueList").item(0);
+        if (issueList == null) {
+            issueList = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "IssueList");
+            auditDoc.getDocumentElement().appendChild(issueList);
+        }
+        Element newIssue = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Issue");
+        newIssue.setAttribute("instanceId", instanceId);
+        newIssue.setAttribute("revision", "0");
+        newIssue.setAttribute("suppressed", "false");
+        issueList.appendChild(newIssue);
+        return newIssue;
+    }
+
+    /**
+     * Writes the in-memory audit.xml back into the FPR file.
+     */
+    public void saveAuditXml() {
+        // Serialize to memory first; only write to FPR if serialization succeeds,
+        // to avoid leaving a corrupted/truncated audit.xml inside the FPR file.
+        byte[] serialized;
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            transformDomToStream(auditDoc, buffer);
+            serialized = buffer.toByteArray();
+        } catch (Exception e) {
+            throw new AviatorTechnicalException("Failed to serialize audit.xml", e);
+        }
+        try (OutputStream os = Files.newOutputStream(fprHandle.getPath("/audit.xml"))) {
+            os.write(serialized);
+        } catch (IOException e) {
+            throw new AviatorTechnicalException("Failed to write audit.xml back into the FPR file", e);
+        }
     }
 
     private Map<String, String> updateAuditXml(Map<String, AuditResponse> auditResponses, TagMappingConfig tagMappingConfig) throws AviatorTechnicalException {
@@ -391,6 +512,10 @@ public class AuditProcessor {
     }
 
     private void addTagHistory(Element clientAuditTrail, String tagId, String tagValue) {
+        addTagHistory(clientAuditTrail, tagId, tagValue, Constants.USER_NAME);
+    }
+
+    private void addTagHistory(Element clientAuditTrail, String tagId, String tagValue, String username) {
         Element tagHistory = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "TagHistory");
 
         Element tag = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Tag");
@@ -405,9 +530,9 @@ public class AuditProcessor {
         editTime.setTextContent(dateFormat.format(new Date()));
         tagHistory.appendChild(editTime);
 
-        Element username = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
-        username.setTextContent("Fortify Aviator");
-        tagHistory.appendChild(username);
+        Element usernameElement = auditDoc.createElementNS(AUDIT_NAMESPACE_URI, "Username");
+        usernameElement.setTextContent(username);
+        tagHistory.appendChild(usernameElement);
 
         clientAuditTrail.appendChild(tagHistory);
     }
