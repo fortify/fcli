@@ -40,8 +40,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "audit")
-public class FPRIssueAuditCommand extends AbstractOutputCommand {
+@Command(name = "update")
+public class FPRIssueUpdateCommand extends AbstractOutputCommand {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     // Canonical SSC analysis tag values; lookup is case-insensitive.
     private static final Map<String, String> VALID_ANALYSIS_VALUES;
@@ -112,7 +112,6 @@ public class FPRIssueAuditCommand extends AbstractOutputCommand {
                 anyChanged |= changed;
                 results.add(buildResultRow(id, canonicalAnalysis, resolvedTags, username, changed));
             }
-            // (assignedUser already included by buildResultRow when set)
             if (anyChanged) {
                 auditProcessor.saveAuditXml();
             }

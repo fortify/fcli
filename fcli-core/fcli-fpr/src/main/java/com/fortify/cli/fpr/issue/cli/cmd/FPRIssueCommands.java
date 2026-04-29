@@ -22,7 +22,7 @@ import picocli.CommandLine.Command;
                 FPRIssueGetCommand.class,
                 FPRIssueListCommand.class,
                 FPRIssueCountCommand.class,
-                FPRIssueAuditCommand.class
+                FPRIssueUpdateCommand.class
         }
 )
 public class FPRIssueCommands extends AbstractContainerCommand {}
