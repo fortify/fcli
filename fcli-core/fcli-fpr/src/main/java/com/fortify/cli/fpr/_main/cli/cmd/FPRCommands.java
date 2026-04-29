@@ -16,6 +16,7 @@ import static com.fortify.cli.common.cli.util.FcliModuleCategories.UTIL;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.cli.util.FcliModuleCategory;
+import com.fortify.cli.fpr.information.cli.cmd.FPRInformationCommands;
 import com.fortify.cli.fpr.issue.cli.cmd.FPRIssueCommands;
 
 import picocli.CommandLine.Command;
@@ -25,7 +26,15 @@ import picocli.CommandLine.Command;
         name = "fpr",
         resourceBundle = "com.fortify.cli.fpr.i18n.FPRMessages",
         subcommands = {
-                FPRIssueCommands.class
+                FPRIssueCommands.class,
+                
+                
+                
+                
+                
+                
+                
+                FPRInformationCommands.class
         }
 )
 public class FPRCommands extends AbstractContainerCommand {}

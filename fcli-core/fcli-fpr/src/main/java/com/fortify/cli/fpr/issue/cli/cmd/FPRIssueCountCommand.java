@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.aviator.fpr.Vulnerability;
+import com.fortify.cli.common.exception.FcliSimpleException;
 import com.fortify.cli.common.exception.FcliTechnicalException;
 import com.fortify.cli.common.json.producer.IObjectNodeProducer;
 import com.fortify.cli.common.json.producer.ObjectNodeProducerApplyFrom;
@@ -32,6 +33,7 @@ import com.fortify.cli.fpr._common.helper.FPRHelper;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = "count")
 public class FPRIssueCountCommand extends AbstractOutputCommand {
@@ -39,14 +41,18 @@ public class FPRIssueCountCommand extends AbstractOutputCommand {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private FPRFileMixin fprFileMixin;
 
+    @Option(names = {"--by"}, defaultValue = "category", order = 2)
+    private String groupBy;
+
     @Override
     protected IObjectNodeProducer getObjectNodeProducer() {
+        validateGroupBy();
         List<Vulnerability> vulnerabilities = loadVulnerabilities();
         Map<String, long[]> counts = new LinkedHashMap<>();
         for (var vuln : vulnerabilities) {
-            var category = vuln.getCategory() != null ? vuln.getCategory() : "Unknown";
-            counts.computeIfAbsent(category, k -> new long[3]);
-            long[] c = counts.get(category);
+            var key = resolveGroupKey(vuln);
+            counts.computeIfAbsent(key, k -> new long[3]);
+            long[] c = counts.get(key);
             c[0]++;
             if (vuln.isAudited()) { c[1]++; }
             if (vuln.isSuppressed()) { c[2]++; }
@@ -55,6 +61,19 @@ public class FPRIssueCountCommand extends AbstractOutputCommand {
         return streamingObjectNodeProducerBuilder(ObjectNodeProducerApplyFrom.SPEC)
                 .streamSupplier(() -> toStream(counts, total))
                 .build();
+    }
+
+    private void validateGroupBy() {
+        if (!"category".equalsIgnoreCase(groupBy) && !"analyzer".equalsIgnoreCase(groupBy)) {
+            throw new FcliSimpleException("Invalid --by value '" + groupBy + "'; valid values: category, analyzer");
+        }
+    }
+
+    private String resolveGroupKey(Vulnerability vuln) {
+        if ("analyzer".equalsIgnoreCase(groupBy)) {
+            return vuln.getAnalyzerName() != null ? vuln.getAnalyzerName() : "Unknown";
+        }
+        return vuln.getCategory() != null ? vuln.getCategory() : "Unknown";
     }
 
     private List<Vulnerability> loadVulnerabilities() {
@@ -66,16 +85,17 @@ public class FPRIssueCountCommand extends AbstractOutputCommand {
     }
 
     private Stream<ObjectNode> toStream(Map<String, long[]> counts, int total) {
+        String label = "group";
         var summary = counts.entrySet().stream().map(e -> {
             var node = MAPPER.createObjectNode();
-            node.put("category", e.getKey());
+            node.put(label, e.getKey());
             node.put("total", e.getValue()[0]);
             node.put("audited", e.getValue()[1]);
             node.put("suppressed", e.getValue()[2]);
             return node;
         });
         var totalNode = MAPPER.createObjectNode();
-        totalNode.put("category", "TOTAL");
+        totalNode.put(label, "TOTAL");
         totalNode.put("total", total);
         totalNode.put("audited", counts.values().stream().mapToLong(c -> c[1]).sum());
         totalNode.put("suppressed", counts.values().stream().mapToLong(c -> c[2]).sum());
